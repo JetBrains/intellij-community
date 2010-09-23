@@ -109,7 +109,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {
-      return PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
+      return PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace, resolveContext);
     }
     return true;
   }

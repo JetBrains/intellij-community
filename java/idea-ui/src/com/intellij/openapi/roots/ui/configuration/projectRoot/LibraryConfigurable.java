@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +86,10 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public void disposeUIResources() {
-    myLibraryEditor = null;
+    if (myLibraryEditor != null) {
+      Disposer.dispose(myLibraryEditor);
+      myLibraryEditor = null;
+    }
   }
 
   public void setDisplayName(final String name) {

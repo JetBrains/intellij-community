@@ -26,8 +26,13 @@ public class LightFilePointer  {
   private final String myUrl;
   private VirtualFile myFile;
 
-  public LightFilePointer(String url) {
+  public LightFilePointer(@NotNull String url) {
     myUrl = url;
+  }
+
+  public LightFilePointer(@NotNull VirtualFile file) {
+    myUrl = file.getUrl();
+    myFile = file;
   }
 
   public VirtualFile getFile() {
@@ -74,5 +79,19 @@ public class LightFilePointer  {
     if (myFile != null && myFile.isValid()) return;
     VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(myUrl);
     myFile = virtualFile != null && virtualFile.isValid() ? virtualFile : null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof LightFilePointer)) return false;
+
+    return myUrl.equals(((LightFilePointer)o).myUrl);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return myUrl.hashCode();
   }
 }

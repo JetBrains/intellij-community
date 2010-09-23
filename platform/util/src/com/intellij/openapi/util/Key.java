@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * @author max
  * @author Konstantin Bulenkov
@@ -56,6 +58,11 @@ public class Key<T> {
     return holder == null ? null : holder.getUserData(this);
   }
 
+  @Nullable
+  public T get(@Nullable Map<Key, Object> holder) {
+    return holder == null ? null : (T)holder.get(this);
+  }
+
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     final T t = get(holder);
     return t == null ? defaultValue : t;
@@ -76,6 +83,12 @@ public class Key<T> {
   public void set(@Nullable UserDataHolder holder, T value) {
     if (holder != null) {
       holder.putUserData(this, value);
+    }
+  }
+
+  public void set(@Nullable Map<Key, Object> holder, T value) {
+    if (holder != null) {
+      holder.put(this, value);
     }
   }
 }

@@ -68,6 +68,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
+  private boolean myOneLineMode;
   private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
@@ -81,15 +82,20 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public EditorTextField(@NotNull String text, Project project, FileType fileType) {
-    this(EditorFactory.getInstance().createDocument(text), project, fileType, false);
+    this(EditorFactory.getInstance().createDocument(text), project, fileType, false, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType) {
-    this(document, project, fileType, false);
+    this(document, project, fileType, false, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
+    this(document, project, fileType, isViewer, true);
+  }
+
+  public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
     myIsViewer = isViewer;
+    myOneLineMode = oneLineMode;
     setDocument(document);
     myProject = project;
     myFileType = fileType;
@@ -397,7 +403,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       });
     }
 
-    editor.setOneLineMode(true);
+    editor.setOneLineMode(myOneLineMode);
     editor.getCaretModel().moveToOffset(myDocument.getTextLength());
 
     if (!shouldHaveBorder()) {

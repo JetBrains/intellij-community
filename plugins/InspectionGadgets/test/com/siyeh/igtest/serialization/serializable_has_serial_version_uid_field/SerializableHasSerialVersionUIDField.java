@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class SerializableHasSerialVersionUIDField<T extends Serializable> implements Serializable {
 
 
-    public abstract class DoNotWarnOnMe implements Serializable { }
+    public abstract class DoWarnOnMe implements Serializable { }
 
     public interface X extends Serializable {}
 }

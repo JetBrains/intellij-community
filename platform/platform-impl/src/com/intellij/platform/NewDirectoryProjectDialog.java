@@ -81,7 +81,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        myLocationField.setText(new File(myBaseDir, myProjectNameTextField.getText()).getPath());
+        File f = new File(myLocationField.getText());
+        myLocationField.setText(new File(f.getParent(), myProjectNameTextField.getText()).getPath());
       }
     });
 

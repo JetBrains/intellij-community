@@ -18,28 +18,25 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.LightFilePointer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class NewLibraryEditor implements LibraryEditor {
   private String myLibraryName;
-  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private final MultiMap<OrderRootType, LightFilePointer> myRoots;
   private final Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
 
   public NewLibraryEditor() {
-    myRoots = new HashMap<OrderRootType, VirtualFilePointerContainer>();
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      myRoots.put(rootType, VirtualFilePointerManager.getInstance().createContainer(this));
-    }
+    myRoots = new MultiMap<OrderRootType, LightFilePointer>();
   }
 
   @Override
@@ -49,12 +46,29 @@ public class NewLibraryEditor implements LibraryEditor {
 
   @Override
   public String[] getUrls(OrderRootType rootType) {
-    return myRoots.get(rootType).getUrls();
+    final Collection<LightFilePointer> pointers = myRoots.get(rootType);
+    List<String> urls = new ArrayList<String>();
+    for (LightFilePointer pointer : pointers) {
+      urls.add(pointer.getUrl());
+    }
+    return ArrayUtil.toStringArray(urls);
   }
 
   @Override
   public VirtualFile[] getFiles(OrderRootType rootType) {
-    return LibraryImpl.getRootFiles(myRoots.get(rootType), myJarDirectories);
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (LightFilePointer pointer : myRoots.get(rootType)) {
+      final VirtualFile file = pointer.getFile();
+      if (file.isDirectory()) {
+        final Boolean recursively = myJarDirectories.get(file.getUrl());
+        if (recursively != null) {
+          LibraryImpl.collectJarFiles(file, result, recursively);
+          continue;
+        }
+      }
+      result.add(file);
+    }
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   @Override
@@ -64,12 +78,12 @@ public class NewLibraryEditor implements LibraryEditor {
 
   @Override
   public void addRoot(VirtualFile file, OrderRootType rootType) {
-    myRoots.get(rootType).add(file);
+    myRoots.putValue(rootType, new LightFilePointer(file));
   }
 
   @Override
   public void addRoot(String url, OrderRootType rootType) {
-    myRoots.get(rootType).add(url);
+    myRoots.putValue(rootType, new LightFilePointer(url));
   }
 
   @Override
@@ -79,18 +93,14 @@ public class NewLibraryEditor implements LibraryEditor {
 
   @Override
   public void addJarDirectory(final String url, boolean recursive) {
-    myRoots.get(OrderRootType.CLASSES).add(url);
+    addRoot(url, OrderRootType.CLASSES);
     myJarDirectories.put(url, recursive);
   }
 
   @Override
   public void removeRoot(String url, OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myRoots.get(rootType);
-    final VirtualFilePointer pointer = container.findByUrl(url);
-    if (pointer != null) {
-      myJarDirectories.remove(pointer.getUrl());
-      container.remove(pointer);
-    }
+    myRoots.removeValue(rootType, new LightFilePointer(url));
+    myJarDirectories.remove(url);
   }
 
   @Override
@@ -105,19 +115,20 @@ public class NewLibraryEditor implements LibraryEditor {
 
   @Override
   public boolean isValid(String url, OrderRootType orderRootType) {
-    final VirtualFilePointer pointer = myRoots.get(orderRootType).findByUrl(url);
-    return pointer != null && pointer.isValid();
-  }
-
-  @Override
-  public void dispose() {
+    final Collection<LightFilePointer> pointers = myRoots.get(orderRootType);
+    for (LightFilePointer pointer : pointers) {
+      if (pointer.getUrl().equals(url)) {
+        return pointer.isValid();
+      }
+    }
+    return false;
   }
 
   public void apply(@NotNull Library.ModifiableModel model) {
     model.setName(myLibraryName);
-    for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : myRoots.entrySet()) {
-      for (String url : entry.getValue().getUrls()) {
-        model.addRoot(url, entry.getKey());
+    for (OrderRootType type : myRoots.keySet()) {
+      for (LightFilePointer pointer : myRoots.get(type)) {
+        model.addRoot(pointer.getUrl(), type);
       }
     }
     for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {

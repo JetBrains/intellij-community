@@ -20,13 +20,20 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -49,6 +55,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -59,13 +66,77 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private PsiElement positionElement = null;
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
-    if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection()) {
+      final int offset = editor.getCaretModel().getOffset();
+
+
+      if (!selectionModel.hasSelection()) {
+        final List<GrExpression> expressions = collectExpressions(file, editor, offset);
+        if (expressions.isEmpty()) {
+          selectionModel.selectLineAtCaret();
+        } else if (expressions.size() == 1) {
+          final TextRange textRange = expressions.get(0).getTextRange();
+          selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+        }
+        else {
+          IntroduceTargetChooser.showChooser(editor, expressions,
+                                             new Pass<GrExpression>() {
+                                               public void pass(final GrExpression selectedValue) {
+                                                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(),
+                                                        selectedValue.getTextRange().getEndOffset());
+                                               }
+                                             },
+                                             new Function<GrExpression, String>() {
+                                               @Override
+                                               public String fun(GrExpression grExpression) {
+                                                 return grExpression.getText();
+                                               }
+                                             });
+          return;
+        }
+      }
     }
-    GroovyRefactoringUtil.trimSpacesAndComments(editor, file, true);
-    invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
   }
+
+  public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset) {
+    Document document = editor.getDocument();
+    CharSequence text = document.getCharsSequence();
+    int correctedOffset = offset;
+    int textLength = document.getTextLength();
+    if (offset >= textLength) {
+      correctedOffset = textLength - 1;
+    }
+    else if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
+      correctedOffset--;
+    }
+    if (correctedOffset < 0) {
+      correctedOffset = offset;
+    }
+    else if (!Character.isJavaIdentifierPart(text.charAt(correctedOffset))) {
+      if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
+        correctedOffset--;
+      }
+      if (text.charAt(correctedOffset) != ')') {
+        correctedOffset = offset;
+      }
+    }
+    final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+    final List<GrExpression> expressions = new ArrayList<GrExpression>();
+    GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
+    while (expression != null) {
+      if (!expressions.contains(expression) && !(expression instanceof GrParenthesizedExpression) && !(expression instanceof GrSuperReferenceExpression) && expression.getType() != PsiType.VOID) {
+        if (!(expression instanceof GrReferenceExpression && (expression.getParent() instanceof GrMethodCallExpression ||((GrReferenceExpression)expression).resolve() instanceof PsiClass))&& !(expression instanceof GrAssignmentExpression)) {
+          expressions.add(expression);
+        }
+      }
+      expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class);
+    }
+    return expressions;
+  }
+
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -147,8 +218,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
     // Find occurrences
-    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(
-      (GrExpression)PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+    final PsiElement[] occurrences =
+      GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     if (occurrences == null || occurrences.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("no.occurences.found"));
       showErrorMessage(project, editor, message);

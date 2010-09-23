@@ -76,7 +76,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
                                         @NotNull final Project project,
                                         @NotNull final EditorCustomization.Feature... features)
   {
-    return new LanguageTextField(language, project, "") {
+    return new LanguageTextField(language, project, "", false) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();

@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
@@ -29,7 +30,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -455,12 +455,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     protected void collectSubfilesToSave(final List<IFile> result) throws IOException { }
 
     public SaveSession save() throws IOException {
+      final ProjectImpl.UnableToSaveProjectNotification[] notifications =
+        NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
+      if (notifications.length > 0) throw new SaveCancelledException();
+
       final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
       if (operationStatus == null) {
         throw new IOException();
       }
       else if (operationStatus.hasReadonlyFiles()) {
-        MessagesEx.error(myProject, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
+        ProjectImpl.dropUnableToSaveProjectNotification(myProject, operationStatus.getReadonlyFiles());
         throw new SaveCancelledException();
       }
 
@@ -611,7 +615,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
 
       if (!componentNames.isEmpty()) {
-        StorageUtil.logStateDiffInfo(changedFiles, componentNames);        
+        StorageUtil.logStateDiffInfo(changedFiles, componentNames);
       }
 
       if (!isReloadPossible(componentNames)) {
@@ -637,7 +641,5 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     return true;
   }
-
-
 }
 

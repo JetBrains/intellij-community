@@ -245,14 +245,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitClass(PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof JspClass) return;
-    if (aClass.isAnnotationType()) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        HighlightInfo info = HighlightInfo
-            .createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), JavaErrorMessages.message("annotations.prior.15"));
-        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-        myHolder.add(info);
-      }
-    }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));
@@ -391,10 +383,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkVariableAlreadyDefined((PsiVariable)parent));
     }
     else if (parent instanceof PsiClass) {
-      myHolder.add(HighlightClassUtil.checkClassAlreadyImported((PsiClass)parent, identifier));
-      myHolder.add(HighlightClassUtil.checkExternalizableHasPublicNoArgsConstructor((PsiClass)parent, identifier));
-      if (!(parent instanceof PsiAnonymousClass)) {
-        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)parent, ((PsiClass)parent).getNameIdentifier()));
+      PsiClass aClass = (PsiClass)parent;
+      if (aClass.isAnnotationType() && !PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, identifier, JavaErrorMessages.message("annotations.prior.15"));
+        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+        myHolder.add(info);
+      }
+
+      myHolder.add(HighlightClassUtil.checkClassAlreadyImported(aClass, identifier));
+      myHolder.add(HighlightClassUtil.checkExternalizableHasPublicNoArgsConstructor(aClass, identifier));
+      if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
+        myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier));
       }
     }
     else if (parent instanceof PsiMethod) {

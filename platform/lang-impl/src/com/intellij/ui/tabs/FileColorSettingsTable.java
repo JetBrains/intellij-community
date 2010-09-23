@@ -273,7 +273,7 @@ public abstract class FileColorSettingsTable extends StripeTable {
 
       final FileColorConfiguration configuration = (FileColorConfiguration)value;
       setIconColor(myManager.getColor(configuration.getColorName()));
-      setText(configuration.getColorName());
+      setText(configuration.getColorPresentableName());
 
       return this;
     }

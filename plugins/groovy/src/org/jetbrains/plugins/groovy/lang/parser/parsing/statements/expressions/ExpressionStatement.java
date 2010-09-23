@@ -67,7 +67,7 @@ public class ExpressionStatement implements GroovyElementTypes {
     final IElementType result = parseExpressionStatement(builder, parser);
     if (result != CALL_EXPRESSION) {
       marker.drop();
-      return result != null;
+      return result != WRONGWAY;
     }
 
     while (true) {

@@ -26,11 +26,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author oleg
  */
-public class ToggleStickToEolToolbarAction extends ToggleAction {
+public class ToggleAutoScrollToTheEndToolbarAction extends ToggleAction {
 
-  public ToggleStickToEolToolbarAction() {
+  public ToggleAutoScrollToTheEndToolbarAction() {
     super();
-    final String message = ActionsBundle.message("action.EditorConsoleToggleStickToEndOfOutput.text");
+    final String message = ActionsBundle.message("action.EditorConsoleAutoScrollToTheEnd.text");
     getTemplatePresentation().setDescription(message);
     getTemplatePresentation().setText(message);
     getTemplatePresentation().setIcon(IconLoader.getIcon("/runConfigurations/scroll_down.png"));

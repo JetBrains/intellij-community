@@ -33,11 +33,11 @@ public class ProcessingContext {
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  public Object get(@NotNull @NonNls final String key) {
+  public Object get(@NotNull @NonNls final Object key) {
     return myMap == null? null : myMap.get(key);
   }
 
-  public void put(@NotNull @NonNls final String key, @NotNull final Object value) {
+  public void put(@NotNull @NonNls final Object key, @NotNull final Object value) {
     checkMapInitialized();
     myMap.put(key, value);
   }

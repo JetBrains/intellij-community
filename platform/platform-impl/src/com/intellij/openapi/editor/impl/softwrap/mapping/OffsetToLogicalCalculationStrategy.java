@@ -39,7 +39,8 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     super(new Computable<Pair<CacheEntry, LogicalPosition>>() {
       @Override
       public Pair<CacheEntry, LogicalPosition> compute() {
-        if (targetOffset >= editor.getDocument().getTextLength()) {
+        Document document = editor.getDocument();
+        if (targetOffset >= document.getTextLength()) {
           if (cache.isEmpty()) {
             return new Pair<CacheEntry, LogicalPosition>(null, new LogicalPosition(0, 0, 0, 0, 0, 0, 0));
           }
@@ -49,6 +50,16 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
               lastEntry.endLogicalLine, lastEntry.endLogicalColumn + 1, lastEntry.endSoftWrapLinesBefore,
               lastEntry.endSoftWrapLinesCurrent, lastEntry.endSoftWrapColumnDiff, lastEntry.endFoldedLines,
               lastEntry.endFoldingColumnDiff
+            );
+            return new Pair<CacheEntry, LogicalPosition>(null, eager);
+          }
+        }
+        else if (!cache.isEmpty()) {
+          CacheEntry lastEntry = cache.get(cache.size() - 1);
+          if (targetOffset > lastEntry.endOffset) {
+            LogicalPosition eager = new LogicalPosition(
+              lastEntry.endLogicalLine + 1, 0, lastEntry.endSoftWrapLinesBefore + lastEntry.endSoftWrapLinesCurrent,
+              0, 0, lastEntry.endFoldedLines, 0
             );
             return new Pair<CacheEntry, LogicalPosition>(null, eager);
           }
