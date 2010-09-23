@@ -277,12 +277,12 @@ public class ResolveImportUtil {
     PythonPathCache cache = null;
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
-      cache = PythonPathCache.getInstance(module);
+      cache = PythonModulePathCache.getInstance(module);
     }
     else {
       final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
       if (sdk != null) {
-        cache = PythonPathCache.getInstance(foothold.getProject(), sdk);
+        cache = PythonSdkPathCache.getInstance(foothold.getProject(), sdk);
       }
     }
     if (cache != null) {
@@ -544,7 +544,7 @@ public class ResolveImportUtil {
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
       ret = ((PyFile)parent).getElementNamed(referencedName);
-      if (PyUtil.instanceOf(ret, PyFunction.class, PyClass.class)) return ret;
+      if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class)) return ret;
       if (possible_ret != null) return possible_ret;
     }
     else if (parent instanceof PsiDirectory) {
@@ -561,7 +561,9 @@ public class ResolveImportUtil {
     if (dir != null) {
       final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
-      return result;
+      if (result != null) {
+        return result;
+      }
     }
     return ret;
   }

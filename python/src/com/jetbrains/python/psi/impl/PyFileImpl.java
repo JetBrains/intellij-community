@@ -12,7 +12,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.*;
@@ -34,7 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -148,15 +150,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     for(PyFromImportStatement e: getFromImports()) {
       if (e == lastParent) continue;
       if (!e.processDeclarations(processor, substitutor, null, this)) return false;
-    }
-
-    // if we're in a stmt (not place itself), try buitins:
-    if (lastParent != null && ! substitutor.get(KEY_EXCLUDE_BUILTINS)) {
-      final String fileName = getName();
-      if (!fileName.equals("__builtin__.py")) {
-        final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-        if (builtins != null && !builtins.processDeclarations(processor, substitutor, null, place)) return false;
-      }
     }
 
     return true;

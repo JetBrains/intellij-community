@@ -218,6 +218,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTrailingCommaInList() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

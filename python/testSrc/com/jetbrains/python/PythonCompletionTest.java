@@ -213,4 +213,20 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/importItself.after.py");
   }
+
+  public void testImportedFile() { // PY-1955
+    final String dirname = "completion/";
+    myFixture.copyDirectoryToProject(dirname + "root", dirname + "root");
+    myFixture.configureByFile(dirname + "importedFile.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(dirname + "importedFile.after.py");
+  }
+
+  public void testImportedModule() {  // PY-1956
+    final String dirname = "completion/";
+    myFixture.copyDirectoryToProject(dirname + "root", dirname + "root");
+    myFixture.configureByFile(dirname + "importedModule.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(dirname + "importedModule.after.py");
+  }
 }

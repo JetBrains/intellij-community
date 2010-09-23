@@ -12,7 +12,7 @@ class TeamcityTestResult(TestResult):
         TestResult.__init__(self)
 
         self.output = stream
-        self.messages = TeamcityServiceMessages(self.output)
+        self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
         self.current_suite = None
     
     def formatErr(self, err):

@@ -1,0 +1,16 @@
+PyFile:TrailingCommaInList.py
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyListLiteralExpression
+      PsiElement(Py:LBRACKET)('[')
+      PyStringLiteralExpression: a
+        PsiElement(Py:STRING_LITERAL)(''a'')
+      PsiElement(Py:COMMA)(',')
+      PyStringLiteralExpression: b
+        PsiElement(Py:STRING_LITERAL)(''b'')
+      PsiElement(Py:COMMA)(',')
+      PsiElement(Py:RBRACKET)(']')
