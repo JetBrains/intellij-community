@@ -131,6 +131,19 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertEquals("silicate", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  public void testModuleValueCollision() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyTargetExpression);
+    PsiElement value = ((PyTargetExpression)element).findAssignedValue();
+    assertEquals("only kidding", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  public void testModuleClassCollision() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyClass);
+    assertEquals("boo", ((PyClass)element).getName());
+  }
+
   public void testDirectoryVsClass() throws Exception {
     assertResolvesTo(PyClass.class, "Context");
   }
