@@ -581,4 +581,17 @@ set<caret>Foo(2)
     PsiElement resolved = ref.resolve()
     assertInstanceOf resolved, PsiField
   }
+
+  public void testFieldAccessInStaticContext() {
+    def ref = configureByFile("fieldAccessInStaticContext/A.groovy")
+    def resolveResult = ref.advancedResolve()
+    assertTrue !resolveResult.staticsOK
+  }
+
+  public void testFieldAccessInClosureVsStaticContext() {
+    def ref = configureByFile("fieldAccessInClosureVsStaticContext/A.groovy")
+    def resolveResult = ref.advancedResolve()
+    assertTrue resolveResult.staticsOK
+  }
+
 }

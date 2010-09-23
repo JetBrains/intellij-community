@@ -602,11 +602,6 @@ class Zoo {
     assertInstanceOf resolved, GrVariable
   }
 
-  private PsiElement resolve(String fileName) {
-    PsiReference ref = configureByFile("${getTestName(true)}/$fileName");
-    ref.resolve()
-  }
-
   public void testCommandExpressionStatement1() {
     PsiElement method = resolve("A.groovy")
     assertInstanceOf method, GrMethod

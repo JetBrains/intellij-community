@@ -178,6 +178,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           registerAccessFix(annotation, referenceExpression, ((PsiMember)resolved));
         }
       }
+
+      //todo uncomment when correct isStatic() is working
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(GrModifier.STATIC)) {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression,
