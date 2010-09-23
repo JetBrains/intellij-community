@@ -213,16 +213,18 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyInitNewSignatureInspection() throws Exception {
+  public void testPyInitNewSignatureInspection() {
     LocalInspectionTool inspection = new PyInitNewSignatureInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyCallByClassInspection() throws Exception {
-    doTest(getTestName(false), new PyCallByClassInspection());
+  public void testPyCallByClassInspection() {
+    myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+    myFixture.enableInspections(PyCallByClassInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testPyCallingNonCallableInspection() throws Exception {
+  public void testPyCallingNonCallableInspection() {
     doHighlightingTest(PyCallingNonCallableInspection.class, LanguageLevel.PYTHON26);
   }
 
