@@ -175,7 +175,7 @@
     <internalFileTemplate name="Python Unit Test"/>
 
     <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
-                   serviceImplementation="com.jetbrains.python.psi.resolve.PythonPathCache"/>
+                   serviceImplementation="com.jetbrains.python.psi.resolve.PythonModulePathCache"/>
 
     <preserveIndentOnPaste fileType="Python"/>
 
