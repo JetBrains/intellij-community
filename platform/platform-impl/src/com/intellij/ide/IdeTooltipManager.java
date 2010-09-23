@@ -325,6 +325,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     };
 
+    myShowRequest = null;
+
     if (me != null) {
       myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
     } else {
