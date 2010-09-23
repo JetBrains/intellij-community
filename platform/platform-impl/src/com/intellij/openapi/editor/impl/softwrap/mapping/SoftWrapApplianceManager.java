@@ -78,6 +78,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   private boolean myCustomIndentUsedLastTime;
   private int myCustomIndentValueUsedLastTime;
   private int myVisibleAreaWidth;
+  private long myLastDocumentStamp;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
@@ -109,6 +110,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return;
     }
 
+    myLastDocumentStamp = myEditor.getDocument().getModificationStamp();
     //TODO den think about sorting and merging dirty ranges here.
     for (DirtyRegion dirtyRegion : myDirtyRegions) {
       recalculateSoftWraps(dirtyRegion);
@@ -454,12 +456,18 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     context.softWrapColumnDiff += softWrap.getIndentInColumns();
   }
 
+  public void dropDataIfNecessary() {
+    dropDataIfNecessary(myEditor.getDocument().getModificationStamp());
+  }
+
   /**
    * There is a possible case that we need to reparse the whole document (e.g. visible area width is changed or user-defined
    * soft wrap indent is changed etc). This method encapsulates that logic, i.e. it checks if necessary conditions are satisfied
    * and updates internal state as necessary.
+   *
+   * @param documentStamp     document modification stamp to use if document was changed while soft wrapping was off
    */
-  public void dropDataIfNecessary() {
+  public void dropDataIfNecessary(long documentStamp) {
     // Check if we need to recalculate soft wraps due to indent settings change.
     boolean indentChanged = false;
     IndentType currentIndentType = getIndentToUse();
@@ -473,7 +481,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     // Check if we need to recalculate soft wraps due to visible area width change.
     int currentVisibleAreaWidth = myWidthProvider.getVisibleAreaWidth();
-    if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
+    if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth && documentStamp == myLastDocumentStamp) {
       return;
     }
 
@@ -585,6 +593,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    dropDataIfNecessary(event.getOldTimeStamp());
     recalculateSoftWraps();
   }
 
@@ -625,7 +634,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       int endLine = document.getLineNumber(endRange.getEndOffset());
       int endOffset = document.getLineEndOffset(endLine);
       int textLength = document.getTextLength();
-      if (textLength > 0 && endOffset > textLength) {
+      if (textLength > 0 && endOffset >= textLength) {
         endOffset = textLength - 1;
       }
       endRange = new TextRange(document.getLineStartOffset(startLine), endOffset);
