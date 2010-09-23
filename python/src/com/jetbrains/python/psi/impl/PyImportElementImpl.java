@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyAsScopeProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
@@ -114,28 +113,6 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (importRef != null) {
       final PsiElement element = importRef.getReference().resolve();
       if (element != null) {
-        if (processor instanceof PyAsScopeProcessor) {
-          PyTargetExpression asName = getAsNameElement();
-          if (asName != null) {
-            return ((PyAsScopeProcessor)processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
-          }
-          // maybe the incoming name is qualified
-          PyReferenceExpression place_ref = PsiTreeUtil.getChildOfType(place, PyReferenceExpression.class);
-          if (place_ref != null) {
-            // unfold all qualifiers of import and reference and compare them
-            List<String> place_path = PyResolveUtil.unwindQualifiersAsStrList(place_ref);
-            List<String> ref_path = PyResolveUtil.unwindQualifiersAsStrList(importRef);
-            if (PyResolveUtil.pathsMatchStr(place_path, ref_path)) {
-              assert ref_path != null; // extraneous, but makes npe inspection happy
-              for (PyReferenceExpression rex : PyResolveUtil
-                .unwindQualifiers(importRef)) { // the thing the processor is looking for must be somewhere here
-                final PsiElement elt = rex.getReference().resolve();
-                if (!processor.execute(elt, state)) return false;
-              }
-              return true; // none matched
-            }
-          }
-        }
         return processor.execute(element, state);
       }
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResolveProcessor implements PyAsScopeProcessor {
+public class ResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private PsiElement myResult = null;
   private final List<NameDefiner> myDefiners;
@@ -110,13 +111,6 @@ public class ResolveProcessor implements PyAsScopeProcessor {
       }
     }
 
-    return true;
-  }
-
-  public boolean execute(final PsiElement element, final String asName) {
-    if (asName.equals(myName)) {
-      return setResult(element);
-    }
     return true;
   }
 
