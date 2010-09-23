@@ -53,7 +53,7 @@ public class DefaultLineWrapPositionStrategyTest {
   @Test
   public void preferWrapOnComma() {
     String document =
-      "int variable = testMethod(var1 + var2,<WRAP> var3 + va<EDGE>r4);";
+      "int variable = testMethod(var1 + var2, <WRAP>var3 + va<EDGE>r4);";
     doTest(document);
   }
 
