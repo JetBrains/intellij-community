@@ -32,17 +32,17 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
     myContext = context;
   }
 
-  protected ClasspathTableItem createTableItem(final Library item) {
+  protected ClasspathTableItem<?> createTableItem(final Library item) {
     final OrderEntry[] entries = myClasspathPanel.getRootModel().getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         if (item.equals(libraryOrderEntry.getLibrary())) {
-          return ClasspathTableItem.createLibItem(libraryOrderEntry);
+          return ClasspathTableItem.createLibItem(libraryOrderEntry, myContext);
         }
       }
     }
-    return ClasspathTableItem.createLibItem(myClasspathPanel.getRootModel().addLibraryEntry(item));
+    return ClasspathTableItem.createLibItem(myClasspathPanel.getRootModel().addLibraryEntry(item), myContext);
   }
 
   protected ClasspathElementChooser<Library> createChooser() {

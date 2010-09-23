@@ -117,8 +117,6 @@ class WhiteSpace {
     myInitial = model.getText(range);
 
     if (!coveredByBlock(model)) {
-      //TODO den remove
-      coveredByBlock(model);
       InitialInfoBuilder.assertInvalidRanges(myStart,
         myEnd,
         model,

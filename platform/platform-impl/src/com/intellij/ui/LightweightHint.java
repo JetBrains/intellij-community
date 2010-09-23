@@ -15,10 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -127,8 +127,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       if (hintInfo.isAwtTooltip()) {
         IdeTooltip tooltip = new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
           @Override
-          protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
-            return me.getComponent() != hintInfo.getOriginalComponent() && !isInsideBalloon;
+          protected boolean canAutohideOn(TooltipEvent event) {
+            if (event.getInputEvent() instanceof MouseEvent) {
+              return !(hintInfo.isContentActive() && event.isIsEventInsideBalloon());
+            } else {
+              return true;
+            }
           }
 
           @Override
@@ -302,6 +306,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public boolean canControlAutoHide() {
-    return myCurrentIdeTooltip != null;
+    return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing() ;
   }
 }

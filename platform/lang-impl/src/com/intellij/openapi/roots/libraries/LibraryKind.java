@@ -36,4 +36,8 @@ public class LibraryKind<P extends LibraryProperties> {
   public String toString() {
     return "LibraryKind:" + myKindId;
   }
+
+  public static <P extends LibraryProperties> LibraryKind<P> create(@NotNull @NonNls String kindId) {
+    return new LibraryKind<P>(kindId);
+  }
 }

@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.roots.libraries.LibraryDetectionManager;
-import com.intellij.openapi.roots.libraries.LibraryDetector;
-import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -56,10 +53,10 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
 
   private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<VirtualFile> files) {
     final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<Pair<LibraryKind, LibraryProperties>>();
-    for (LibraryDetector detector : LibraryDetector.EP_NAME.getExtensions()) {
-      final LibraryProperties properties = detector.detect(files);
+    for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
+      final LibraryProperties properties = provider.detect(files);
       if (properties != null) {
-        result.add(Pair.create(detector.getKind(), properties));
+        result.add(Pair.create(provider.getKind(), properties));
       }
     }
     return result;

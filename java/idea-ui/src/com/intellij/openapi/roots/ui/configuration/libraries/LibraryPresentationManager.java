@@ -16,7 +16,9 @@
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -32,6 +35,9 @@ public abstract class LibraryPresentationManager {
   public static LibraryPresentationManager getInstance() {
     return ServiceManager.getService(LibraryPresentationManager.class);
   }
+
+  @NotNull
+  public abstract Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
 
   @Nullable
   public abstract Icon getCustomIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
@@ -44,4 +50,6 @@ public abstract class LibraryPresentationManager {
 
   @NotNull
   public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots);
+
+  public abstract List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 }

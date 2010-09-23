@@ -17,6 +17,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a model of the document containing the formatted text, as seen by the
@@ -66,11 +67,25 @@ public interface FormattingDocumentModel {
   boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset);
 
   /**
-   * Allows to answer if given symbol is treated by the current model as white space symbol during formatting.
+   * There is a possible case that white space to apply because of formatter processing should be additionally adjusted. That is
+   * true, for example, for Python where it may be mandatory to use <code>'\'</code> symbol at multi-line expression.
+   * <p/>
+   * Current method adjusts given white space text if necessary.
    *
-   * @param symbol    symbols to check
-   * @return          <code>true</code> if given symbol is treated by the current model as white space symbol during formatting;
-   *                  <code>false</code> otherwise
+   * @param whiteSpaceText    white space text to use by default
+   * @param startOffset       start offset of the document text that is intended to be replaced by the given white space text (inclusive)
+   * @param endOffset         end offset of the document text that is intended to be replaced by the given white space text (exclusive)
+   * @return                  white space to use for replacing document symbols at <code>[startOffset; endOffset)</code> region
    */
-  boolean isWhiteSpaceSymbol(char symbol);
+  @NotNull
+  CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset);
+
+  ///**
+  // * Allows to answer if given symbol is treated by the current model as white space symbol during formatting.
+  // *
+  // * @param symbol    symbols to check
+  // * @return          <code>true</code> if given symbol is treated by the current model as white space symbol during formatting;
+  // *                  <code>false</code> otherwise
+  // */
+  //boolean isWhiteSpaceSymbol(char symbol);
 }

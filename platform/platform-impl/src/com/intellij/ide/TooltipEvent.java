@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.classpath;
+package com.intellij.ide;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import java.awt.event.InputEvent;
 
-import javax.swing.*;
-import java.util.List;
+public class TooltipEvent {
 
-/**
- * @author nik
- */
-public interface ClasspathPanel {
-  void runClasspathPanelAction(Runnable action);
+  private InputEvent myInputEvent;
+  private boolean myIsEventInsideBalloon;
 
-  void addItems(List<ClasspathTableItem<?>> toAdd);
+  public TooltipEvent(InputEvent inputEvent) {
+    myInputEvent = inputEvent;
+  }
 
-  ModifiableRootModel getRootModel();
+  public TooltipEvent(InputEvent inputEvent, boolean isInside) {
+    myInputEvent = inputEvent;
+    myIsEventInsideBalloon = isInside;
+  }
 
-  Project getProject();
+  public InputEvent getInputEvent() {
+    return myInputEvent;
+  }
 
-  JComponent getComponent();
+  public boolean isIsEventInsideBalloon() {
+    return myIsEventInsideBalloon;
+  }
 }

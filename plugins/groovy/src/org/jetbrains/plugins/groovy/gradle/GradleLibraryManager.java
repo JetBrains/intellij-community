@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -156,13 +157,13 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   }
 
   @Override
-  protected void fillLibrary(String path, Library.ModifiableModel model) {
+  protected void fillLibrary(String path, LibraryEditor libraryEditor) {
     File lib = new File(path + "/lib");
     File[] jars = lib.exists() ? lib.listFiles() : new File[0];
     if (jars != null) {
       for (File file : jars) {
         if (file.getName().endsWith(".jar")) {
-          model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+          libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
         }
       }
     }

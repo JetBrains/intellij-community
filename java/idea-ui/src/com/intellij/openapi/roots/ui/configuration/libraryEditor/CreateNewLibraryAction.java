@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -55,7 +56,7 @@ public class CreateNewLibraryAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final LibrariesModifiableModel modifiableModel = myModelProvider.getModifiableModel();
-    final String initial = LibraryRootsComponent.suggestNewLibraryName(modifiableModel);
+    final String initial = LibraryEditingUtil.suggestNewLibraryName(modifiableModel);
     final String prompt = ProjectBundle.message("library.name.prompt");
     final String title = ProjectBundle.message("library.create.library.action").replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     final Icon icon = Messages.getQuestionIcon();
@@ -68,7 +69,7 @@ public class CreateNewLibraryAction extends AnAction {
           Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error"), ProjectBundle.message("library.name.not.specified.title"));
           return false;
         }
-        if (LibraryRootsComponent.libraryAlreadyExists(modifiableModel, inputString)) {
+        if (LibraryEditingUtil.libraryAlreadyExists(modifiableModel, inputString)) {
           Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", inputString), ProjectBundle.message("library.name.already.exists.title"));
           return false;
         }

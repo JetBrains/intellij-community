@@ -74,8 +74,13 @@ public class NewLibraryEditor implements LibraryEditor {
 
   @Override
   public void addJarDirectory(VirtualFile file, boolean recursive) {
-    myRoots.get(OrderRootType.CLASSES).add(file);
-    myJarDirectories.put(file.getUrl(), recursive);
+    addJarDirectory(file.getUrl(), recursive);
+  }
+
+  @Override
+  public void addJarDirectory(final String url, boolean recursive) {
+    myRoots.get(OrderRootType.CLASSES).add(url);
+    myJarDirectories.put(url, recursive);
   }
 
   @Override

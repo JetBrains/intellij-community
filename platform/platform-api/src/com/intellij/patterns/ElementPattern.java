@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.util.ProcessingContext;
 
 /**
- * @see StandardPatterns and its extenders
+ * @see {@link com.intellij.patterns.StandardPatterns} and its extenders
  *
  * @author peter
  */

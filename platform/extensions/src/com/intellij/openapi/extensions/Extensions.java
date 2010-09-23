@@ -99,6 +99,16 @@ public class Extensions {
     return extensionPoint.getExtensions();
   }
 
+  public static <T, U extends T> U findExtension(ExtensionPointName<T> extensionPointName, Class<U> extClass) {
+    for (T t : getExtensions(extensionPointName)) {
+      if (extClass.isInstance(t)) {
+        //noinspection unchecked
+        return (U) t;
+      }
+    }
+    throw new IllegalArgumentException("could not find extension implementation " + extClass);
+  }
+
   public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);

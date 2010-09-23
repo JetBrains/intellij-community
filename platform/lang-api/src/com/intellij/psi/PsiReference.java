@@ -24,9 +24,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A reference to a PSI element. For example, the variable name used in an expression.
  * The "Go to Declaration" action can be used to go from a reference to the element it references.
+ * Generally returned from {@link PsiElement#getReferences()} and {@link com.intellij.psi.PsiReferenceService#getReferences},
+ * but may be contributed to some elements by third party plugins via {@link com.intellij.psi.PsiReferenceContributor}
  *
  * @see PsiElement#getReference()
  * @see PsiElement#getReferences() 
+ * @see com.intellij.psi.PsiReferenceService#getReferences
+ * @see com.intellij.psi.PsiReferenceBase
+ * @see com.intellij.psi.PsiReferenceContributor
  */
 
 public interface PsiReference {

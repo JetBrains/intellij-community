@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.google.common.base.Predicate;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -23,9 +24,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,13 +38,13 @@ import java.awt.event.KeyEvent;
  */
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private StructureConfigurableContext myContext;
-  private Condition<Library> myAcceptedLibraries;
+  private Predicate<Library> myAcceptedLibraries;
   private AddNewLibraryItemAction myNewLibraryAction;
 
   public ProjectStructureChooseLibrariesDialog(JComponent parentComponent,
                                                @Nullable Project project,
                                                StructureConfigurableContext context,
-                                               Condition<Library> acceptedLibraries, AddNewLibraryItemAction newLibraryAction) {
+                                               Predicate<Library> acceptedLibraries, AddNewLibraryItemAction newLibraryAction) {
     super(parentComponent, "Choose Libraries", project, true);
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
@@ -70,7 +69,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   protected boolean acceptsElement(Object element) {
     if (element instanceof Library) {
       final Library library = (Library)element;
-      return myAcceptedLibraries.value(library);
+      return myAcceptedLibraries.apply(library);
     }
     return true;
   }
@@ -108,10 +107,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
                                       String libraryName, StructureConfigurableContext context) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(element, context);
-      if (icon == null) {
-        icon = Icons.LIBRARY_ICON;
-      }
+      Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(element, context);
       templatePresentation.setIcons(icon);
       templatePresentation.addText(libraryName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

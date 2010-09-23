@@ -79,7 +79,7 @@ public class IdeTooltip {
     return this;
   }
 
-  protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
+  protected boolean canAutohideOn(TooltipEvent event) {
     return true;
   }
 

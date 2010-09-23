@@ -32,17 +32,16 @@ import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.CharBuffer;
 import java.util.*;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
-  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.asList(
+  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
     new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
   );
 
   private final CompositeWhiteSpaceFormattingStrategy myWhiteSpaceStrategy = new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
-  private final CharBuffer myBuffer = CharBuffer.allocate(1);
+  //private final CharBuffer myBuffer = CharBuffer.allocate(1);
   private final Document myDocument;
   private final PsiFile myFile;
 
@@ -125,11 +124,17 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     return myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
   }
 
+  @NotNull
   @Override
-  public boolean isWhiteSpaceSymbol(char symbol) {
-    myBuffer.put(0, symbol);
-    return myWhiteSpaceStrategy.check(myBuffer, 0, 1) > 0;
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset) {
+    return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset);
   }
+
+  //@Override
+  //public boolean isWhiteSpaceSymbol(char symbol) {
+  //  myBuffer.put(0, symbol);
+  //  return myWhiteSpaceStrategy.check(myBuffer, 0, 1) > 0;
+  //}
 
   public static boolean canUseDocumentModel(@NotNull Document document,@NotNull PsiFile file) {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());

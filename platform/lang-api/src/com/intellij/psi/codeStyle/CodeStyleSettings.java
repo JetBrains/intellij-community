@@ -289,7 +289,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 //----------------- WRAPPING ---------------------------
   public int RIGHT_MARGIN = 120;
-  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN = false;
+  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 
 
