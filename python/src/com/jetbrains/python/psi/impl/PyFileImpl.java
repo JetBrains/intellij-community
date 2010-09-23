@@ -151,7 +151,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     // if we're in a stmt (not place itself), try buitins:
-    if (lastParent != null && ! substitutor.get(KEY_EXCLUDE_BUILTINS)) {
+    if (lastParent != null) {
       final String fileName = getName();
       if (!fileName.equals("__builtin__.py")) {
         final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();

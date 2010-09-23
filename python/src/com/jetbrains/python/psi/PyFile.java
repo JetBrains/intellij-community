@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner, NameDefiner {
-  
-  Key<Boolean> KEY_EXCLUDE_BUILTINS = Key.create("Don't include builtins to processDeclaration results");
-
   List<PyStatement> getStatements();
 
   List<PyClass> getTopLevelClasses();
