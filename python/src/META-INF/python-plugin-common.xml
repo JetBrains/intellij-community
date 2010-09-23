@@ -291,8 +291,8 @@
 
     <colorSettingsPage implementation="com.jetbrains.appengine.lang.gql.highlighting.GqlColorsPage"/>
 
-    <projectService serviceInterface="com.jetbrains.appengine.model.AppEngineElementGenerator"
-                    serviceImplementation="com.jetbrains.appengine.model.AppEngineElementGenerator"/>
+    <projectService serviceInterface="org.jetbrains.yaml.YAMLElementGenerator"
+                    serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
     <!-- Buildout -->
     <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
