@@ -561,7 +561,9 @@ public class ResolveImportUtil {
     if (dir != null) {
       final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
-      return result;
+      if (result != null) {
+        return result;
+      }
     }
     return ret;
   }
