@@ -34,7 +34,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+<<<<<<< HEAD
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
+=======
+import com.intellij.openapi.editor.actions.ToggleAutoScrollToTheEndToolbarAction;
+>>>>>>> 6f09e97... Cosmetics
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
