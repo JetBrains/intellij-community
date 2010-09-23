@@ -63,7 +63,13 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     }
 
     PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+    if (isCommentOnOtherLine(doc, offset, wrappableBefore)) {
+      return Result.Continue;
+    }
     PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+    if (isCommentOnOtherLine(doc, offset, wrappableAfter)) {
+      return Result.Continue;
+    }
     while (wrappableBefore != null) {
       PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
       if (next == null) {
@@ -85,6 +91,17 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     return Result.Continue;
   }
 
+  private static boolean isCommentOnOtherLine(Document doc, int offset, PsiElement other) {
+    if (other instanceof PsiComment) {
+      int otherLine = doc.getLineNumber(other.getTextRange().getStartOffset());
+      int thisLine = doc.getLineNumber(offset);
+      if (otherLine != thisLine) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private static PsiElement findStatementBeforeCaret(PsiFile file, int offset) {
     return findBeforeCaret(file, offset, PyStatement.class);
@@ -100,8 +117,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     while(offset > 0) {
       offset--;
       final PsiElement element = file.findElementAt(offset);
-      if (!(element instanceof PsiWhiteSpace)) {
-        return PsiTreeUtil.getParentOfType(element, classes);
+      if (element != null && !(element instanceof PsiWhiteSpace)) {
+        return PsiTreeUtil.getNonStrictParentOfType(element, classes);
       }
     }
     return null;
@@ -111,8 +128,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
   private static PsiElement findAfterCaret(PsiFile file, int offset, Class<? extends PsiElement>... classes) {
     while(offset < file.getTextLength()) {
       final PsiElement element = file.findElementAt(offset);
-      if (!(element instanceof PsiWhiteSpace)) {
-        return PsiTreeUtil.getParentOfType(element, classes);
+      if (element != null && !(element instanceof PsiWhiteSpace)) {
+        return PsiTreeUtil.getNonStrictParentOfType(element, classes);
       }
       offset++;
     }

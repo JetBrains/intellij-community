@@ -120,6 +120,14 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("z=1 <caret>2", "z=1 \n2");
   }
 
+  public void testEnterAtStartOfComment() {
+    doTestEnter("# bar\n<caret># foo", "# bar\n\n# foo");
+  }
+
+  public void testEnterAtEndOfComment() {
+    doTestEnter("# bar<caret>\n# foo", "# bar\n\n# foo");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
