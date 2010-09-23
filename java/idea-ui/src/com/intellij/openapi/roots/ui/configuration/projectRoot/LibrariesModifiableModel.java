@@ -137,7 +137,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   private void removeLibraryEditor(final Library library) {
-    final LibraryEditor libraryEditor = myLibrary2EditorMap.remove(library);
+    final ExistingLibraryEditor libraryEditor = myLibrary2EditorMap.remove(library);
     if (libraryEditor != null) {
       Disposer.dispose(libraryEditor);
     }
@@ -162,7 +162,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
         Disposer.dispose(library);
       }
 
-      final LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
+      final ExistingLibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
       if (libraryEditor != null) {
         Disposer.dispose(libraryEditor);
       }

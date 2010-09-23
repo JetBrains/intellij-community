@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-public class ExistingLibraryEditor implements LibraryEditor {
+public class ExistingLibraryEditor implements LibraryEditor, Disposable {
   private final Library myLibrary;
   private final LibraryEditorListener myListener;
   private String myLibraryName = null;

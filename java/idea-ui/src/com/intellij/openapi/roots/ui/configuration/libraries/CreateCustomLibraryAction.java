@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibrar
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.util.*;
@@ -74,13 +73,11 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
     dialog.show();
     if (dialog.isOK()) {
       final Library library = dialog.createLibrary(myContext.getModifiableLibraryTable(dialog.getSelectedTable()));
-      Disposer.dispose(libraryEditor);
       final ModifiableRootModel rootModel = myContext.getModulesConfigurator().getOrCreateModuleEditor(myModule).getModifiableRootModelProxy();
       final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(library);
       myModuleStructureConfigurable.selectOrderEntry(myModule, orderEntry);
     }
     else {
-      Disposer.dispose(libraryEditor);
     }
   }
 

@@ -70,7 +70,6 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
     editor.setName(model.getName());
     fillLibrary(path, editor);
     editor.apply(model);
-    Disposer.dispose(editor);
   }
 
   protected abstract void fillLibrary(String path, LibraryEditor libraryEditor);

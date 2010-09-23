@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
  */
-public interface LibraryEditor extends Disposable {
+public interface LibraryEditor {
   String getName();
 
   String[] getUrls(OrderRootType rootType);

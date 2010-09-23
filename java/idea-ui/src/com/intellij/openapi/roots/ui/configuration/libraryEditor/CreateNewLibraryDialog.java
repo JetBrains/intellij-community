@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +36,10 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   private NewLibraryEditor myLibraryEditor;
   private ComboBox myLibraryLevelCombobox;
 
-  public static CreateNewLibraryDialog createDialog(JComponent parent, @Nullable Project project, @NotNull Disposable parentDisposable,
+  public static CreateNewLibraryDialog createDialog(JComponent parent, @Nullable Project project,
                                                     @NotNull List<LibraryTable> libraryTables,
                                                     int selectedTable) {
-    NewLibraryEditor libraryEditor = new NewLibraryEditor();
-    Disposer.register(parentDisposable, libraryEditor);
-    return new CreateNewLibraryDialog(parent, project, libraryEditor, libraryTables, selectedTable);
+    return new CreateNewLibraryDialog(parent, project, new NewLibraryEditor(), libraryTables, selectedTable);
   }
 
   public CreateNewLibraryDialog(@NotNull JComponent parent, @Nullable Project project, @NotNull NewLibraryEditor libraryEditor,
