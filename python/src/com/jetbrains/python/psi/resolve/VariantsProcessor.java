@@ -104,12 +104,12 @@ public class VariantsProcessor implements PsiScopeProcessor {
       if (element instanceof PyImportElement) {
         PyReferenceExpression ref = ((PyImportElement)element).getImportReference();
         if (ref != null) {
-          final String name = ref.getName();
-          if (nameIsAcceptable(name)) {
+          String name = ref.getName();
+          if (name != null && nameIsAcceptable(name)) {
             PsiElement resolved = ref.getReference().resolve();
             if (resolved instanceof PsiNamedElement) {
               handled_as_imported = true;
-              myVariants.put(name, setupItem(LookupElementBuilder.create((PsiNamedElement)resolved)));
+              myVariants.put(name, setupItem(LookupElementBuilder.create(resolved, name).setIcon(resolved.getIcon(0))));
             }
           }
         }
