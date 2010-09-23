@@ -18,11 +18,10 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -52,7 +51,7 @@ public class LibraryCompositionSettings implements Disposable {
   private final Icon myIcon;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
-  private Library myLibrary;
+  private NewLibraryEditor myLibraryEditor;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
@@ -66,16 +65,10 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   public void addFilesToLibrary(VirtualFile[] files, OrderRootType orderRootType) {
-    final Library.ModifiableModel modifiableModel = getOrCreateLibrary().getModifiableModel();
+    final NewLibraryEditor libraryEditor = getOrCreateLibrary();
     for (VirtualFile file : files) {
-      modifiableModel.addRoot(file, orderRootType);
+      libraryEditor.addRoot(file, orderRootType);
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        modifiableModel.commit();
-      }
-    });
   }
 
   @NotNull
@@ -156,9 +149,8 @@ public class LibraryCompositionSettings implements Disposable {
 
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
-    if (myLibrary != null) {
-      VirtualFile[] roots = myLibrary.getFiles(OrderRootType.CLASSES);
-      myLibrary.dispose();
+    if (myLibraryEditor != null) {
+      VirtualFile[] roots = myLibraryEditor.getFiles(OrderRootType.CLASSES);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }
@@ -217,25 +209,19 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   @Nullable
-  public Library getLibrary() {
-    return myLibrary;
+  public NewLibraryEditor getLibraryEditor() {
+    return myLibraryEditor;
   }
 
   @NotNull
-  public Library getOrCreateLibrary() {
-    if (myLibrary == null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myLibrary = new ApplicationLibraryTable().createLibrary();
-        }
-      });
+  public NewLibraryEditor getOrCreateLibrary() {
+    if (myLibraryEditor == null) {
+      myLibraryEditor = new NewLibraryEditor();
     }
-    return myLibrary;
+    return myLibraryEditor;
   }
 
   @Override
   public void dispose() {
-    System.out.println("I'm disposed!");
   }
 }

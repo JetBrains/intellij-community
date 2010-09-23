@@ -15,8 +15,6 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -39,9 +37,7 @@ public class EditLibraryDialog extends DialogWrapper {
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings) {
     super(parent, true);
     mySettings = settings;
-    final Library library = settings.getOrCreateLibrary();
-
-    myLibraryRootsComponent = LibraryRootsComponent.createComponent(new ExistingLibraryEditor(library, null));
+    myLibraryRootsComponent = LibraryRootsComponent.createComponent(settings.getOrCreateLibrary());
 
     Disposer.register(getDisposable(), myLibraryRootsComponent);
 
