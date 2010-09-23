@@ -34,7 +34,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.actions.ToggleStickToEolToolbarAction;
+import com.intellij.openapi.editor.actions.ToggleAutoScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -1454,7 +1454,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
       }
     };
-    final AnAction stickToEolAction = new ToggleStickToEolToolbarAction() {
+    final AnAction autoScrollToTheEndAction = new ToggleAutoScrollToTheEndToolbarAction() {
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
@@ -1475,7 +1475,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions[0] = prevAction;
     consoleActions[1] = nextAction;
     consoleActions[2] = switchSoftWrapsAction;
-    consoleActions[3] = stickToEolAction;
+    consoleActions[3] = autoScrollToTheEndAction;
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 4] = customActions.get(i);
     }
