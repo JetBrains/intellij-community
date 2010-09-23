@@ -63,8 +63,10 @@ public class NewLibraryEditor implements LibraryEditor {
         final Boolean recursively = myJarDirectories.get(file.getUrl());
         if (recursively != null) {
           LibraryImpl.collectJarFiles(file, result, recursively);
+          continue;
         }
       }
+      result.add(file);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
