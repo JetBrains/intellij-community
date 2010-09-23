@@ -20,6 +20,7 @@ public class PythonAllTestsSuite {
     PythonParsingTest.class,
     PyStringLiteralTest.class,
     PyIndentTest.class,
+    PyWrapTest.class,
     PyStatementPartsTest.class,
     PythonHighlightingTest.class,
     PyStubsTest.class,

@@ -103,10 +103,10 @@ public class ExpressionParsing extends Parsing {
     }
     else {
       while (builder.getTokenType() != PyTokenTypes.RBRACKET) {
-        if (builder.getTokenType() == PyTokenTypes.COMMA) {
-          builder.advanceLexer();
+        if (!matchToken(PyTokenTypes.COMMA)) {
+          builder.error("expected ',' or ']'");
         }
-        else if (!parseSingleExpression(isTargetExpression)) {
+        if (!parseSingleExpression(isTargetExpression)) {
           builder.error(message("PARSE.expected.expr.or.comma.or.bracket"));
           break;
         }

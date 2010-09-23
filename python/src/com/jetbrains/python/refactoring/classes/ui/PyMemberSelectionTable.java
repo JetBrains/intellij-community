@@ -5,8 +5,8 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.ui.RowIcon;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
-import org.python.core.PyFunction;
 
 import javax.swing.*;
 import java.util.List;

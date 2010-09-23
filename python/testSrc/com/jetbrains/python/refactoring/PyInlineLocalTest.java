@@ -1,37 +1,27 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
-
-import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
  */
-public class PyInlineLocalTest extends LightMarkedTestCase {
-  private void doTest() throws Exception {
+public class PyInlineLocalTest extends PyLightFixtureTestCase {
+  private void doTest() {
     doTest(null);
   }
 
-  private void doTest(String expectedError) throws Exception {
+  private void doTest(String expectedError) {
     final String name = getTestName(true);
-    final Map<String,PsiElement> map = configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
+    myFixture.configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
     try {
-      PsiElement element = map.values().iterator().next().getParent();
-      PyReferenceExpression ref = null;
-      while (element instanceof PyReferenceExpression) {
-        ref = (PyReferenceExpression)element;
-        PsiElement newElement = ((PyReferenceExpression)element).getReference().resolve();
-        if (element == newElement) {
-          break;
-        }
-        element = newElement;
-      }
-      PyInlineLocalHandler.invoke(myFixture.getProject(), myFixture.getEditor(), (PyTargetExpression)element, ref);
+      PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
+                                                                   TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+      PyInlineLocalHandler handler = PyInlineLocalHandler.getInstance();
+      handler.inlineElement(myFixture.getProject(), myFixture.getEditor(), element);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
     }
     catch (Exception e) {
@@ -44,27 +34,31 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
     myFixture.checkResultByFile("/refactoring/inlinelocal/" + name + ".after.py");
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testPriority() throws Exception {
+  public void testPriority() {
     doTest();
   }
 
-  public void testNoDominator() throws Exception {
+  public void testNoDominator() {
     doTest("Cannot perform refactoring.\nCannot find a single definition to inline.");
   }
 
-  public void testDoubleDefinition() throws Exception {
+  public void testDoubleDefinition() {
     doTest("Cannot perform refactoring.\nAnother variable 'foo' definition is used together with inlined one.");
   }
 
-  public void testMultiple() throws Exception {
+  public void testMultiple() {
     doTest();
   }
 
-  public void testPy994() throws Exception {
+  public void testPy994() {
+    doTest();
+  }
+
+  public void testPy1585() {
     doTest();
   }
 }

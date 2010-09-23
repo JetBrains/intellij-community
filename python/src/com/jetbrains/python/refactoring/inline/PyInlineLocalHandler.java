@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
@@ -44,6 +45,10 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);
 
+  public static PyInlineLocalHandler getInstance() {
+    return Extensions.findExtension(EP_NAME, PyInlineLocalHandler.class);
+  }
+
   @Override
   public boolean isEnabledForLanguage(Language l) {
     return l instanceof PythonLanguage;
@@ -60,7 +65,13 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       return;
     }
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
-    final PyReferenceExpression refExpr = psiReference instanceof PyReferenceExpression ? ((PyReferenceExpression)psiReference) : null;
+    PyReferenceExpression refExpr = null;
+    if (psiReference != null) {
+      final PsiElement refElement = psiReference.getElement();
+      if (refElement instanceof PyReferenceExpression) {
+        refExpr = (PyReferenceExpression) refElement;
+      }
+    }
     invoke(project, editor, (PyTargetExpression)element, refExpr);
   }
 

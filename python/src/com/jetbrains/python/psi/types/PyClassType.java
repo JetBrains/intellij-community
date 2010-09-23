@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -35,6 +36,13 @@ public class PyClassType implements PyType {
 
   protected final PyClass myClass;
   protected final boolean myIsDefinition;
+
+  private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
+    @Override
+    protected Set<Pair<PyClass, String>> initialValue() {
+      return new HashSet<Pair<PyClass, String>>();
+    }
+  };
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -72,39 +80,50 @@ public class PyClassType implements PyType {
 
   @Nullable
   public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
-    assert myClass != null;
-    if (resolveContext.allowProperties()) {
-      Property property = myClass.findProperty(name);
-      if (property != null) {
-        Maybe<PyFunction> accessor = property.getByDirection(direction);
-        if (accessor.isDefined()) {
-          Callable accessor_code = accessor.value();
-          SmartList<PsiElement> ret = new SmartList<PsiElement>();
-          if (accessor_code != null) ret.add(accessor_code);
-          PyTargetExpression site = property.getDefinitionSite();
-          if (site != null) ret.add(site);
-          if (ret.size() > 0) {
-            return ret;
+    final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
+    final Pair<PyClass, String> key = Pair.create(myClass, name);
+    if (resolving.contains(key)) {
+      return Collections.emptyList();
+    }
+    resolving.add(key);
+    try {
+      assert myClass != null;
+      if (resolveContext.allowProperties()) {
+        Property property = myClass.findProperty(name);
+        if (property != null) {
+          Maybe<PyFunction> accessor = property.getByDirection(direction);
+          if (accessor.isDefined()) {
+            Callable accessor_code = accessor.value();
+            SmartList<PsiElement> ret = new SmartList<PsiElement>();
+            if (accessor_code != null) ret.add(accessor_code);
+            PyTargetExpression site = property.getDefinitionSite();
+            if (site != null) ret.add(site);
+            if (ret.size() > 0) {
+              return ret;
+            }
+            else {
+              return null;
+            } // property is found, but the required accessor is explicitly absent
           }
-          else {
-            return null;
-          } // property is found, but the required accessor is explicitly absent
         }
       }
-    }
 
-    final PsiElement classMember = resolveClassMember(myClass, name);
-    if (classMember != null) {
-      return new SmartList<PsiElement>(classMember);
-    }
-
-    for (PyClass superClass : myClass.iterateAncestors()) {
-      PsiElement superMember = resolveClassMember(superClass, name);
-      if (superMember != null) {
-        return new SmartList<PsiElement>(superMember);
+      final PsiElement classMember = resolveClassMember(myClass, name);
+      if (classMember != null) {
+        return new SmartList<PsiElement>(classMember);
       }
+
+      for (PyClass superClass : myClass.iterateAncestors()) {
+        PsiElement superMember = resolveClassMember(superClass, name);
+        if (superMember != null) {
+          return new SmartList<PsiElement>(superMember);
+        }
+      }
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
+    finally {
+      resolving.remove(key);
+    }
   }
 
   @Nullable

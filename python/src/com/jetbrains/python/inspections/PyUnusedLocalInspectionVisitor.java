@@ -257,20 +257,22 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (myIgnoreLambdaParameters && PsiTreeUtil.getParentOfType(element, Callable.class) instanceof PyLambdaExpression) {
             continue;
           }
-          boolean isInitMethod = false;
+          boolean mayBeField = false;
           PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
             if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
-              isInitMethod = true;
+              if (!namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
+                mayBeField = true;
+              }
             }
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
               continue;
             }
           }
-          final LocalQuickFix[] fixes = isInitMethod
+          final LocalQuickFix[] fixes = mayBeField
                                   ? new LocalQuickFix[] { new AddFieldQuickFix(name, containingClass, name) }
                                   : LocalQuickFix.EMPTY_ARRAY;
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);

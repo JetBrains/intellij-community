@@ -358,7 +358,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public boolean characterNeedsEscaping(char c) {
-    return c == ']' || c == '}';
+    return c == ']' || c == '}' || c == '\"';
   }
 
   public boolean supportsPerl5EmbeddedComments() {

@@ -33,7 +33,7 @@ public class PyBlock implements ASTBlock {
   private final Wrap _wrap;
   private final CodeStyleSettings mySettings;
   private List<PyBlock> _subBlocks = null;
-  private final Alignment _childListAlignment;
+  private Alignment myChildAlignment;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
 
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
@@ -61,7 +61,6 @@ public class PyBlock implements ASTBlock {
     _node = node;
     _wrap = wrap;
     mySettings = settings;
-    _childListAlignment = Alignment.createAlignment();
   }
 
   @NotNull
@@ -72,6 +71,13 @@ public class PyBlock implements ASTBlock {
   @NotNull
   public TextRange getTextRange() {
     return _node.getTextRange();
+  }
+
+  private Alignment getAlignmentForChildren() {
+    if (myChildAlignment == null) {
+      myChildAlignment = Alignment.createAlignment();
+    }
+    return myChildAlignment;
   }
 
   @NotNull
@@ -131,8 +137,11 @@ public class PyBlock implements ASTBlock {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child)) {
-        childAlignment = _childListAlignment;
+        childAlignment = getAlignmentForChildren();
       }
+    }
+    else if (parentType == PyElementTypes.BINARY_EXPRESSION && PyElementTypes.EXPRESSIONS.contains(childType)) {
+      childAlignment = getAlignmentForChildren();
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
@@ -452,7 +461,7 @@ public class PyBlock implements ASTBlock {
 
   private Alignment getChildAlignment() {
     if (ourListElementTypes.contains(_node.getElementType())) {
-      return _childListAlignment;
+      return getAlignmentForChildren();
     }
     return null;
   }
