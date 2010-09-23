@@ -33,6 +33,8 @@ public class HintHint {
   private boolean myAwtTooltip = false;
   private Balloon.Position myPreferredPosition = Balloon.Position.below;
 
+  private boolean myContentActive = true;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -102,6 +104,15 @@ public class HintHint {
 
   public Font getTextFont() {
     return getTooltipManager().getTextFont(myAwtTooltip);
+  }
+
+  public boolean isContentActive() {
+    return myContentActive;
+  }
+
+  public HintHint setContentActive(boolean active) {
+    myContentActive = active;
+    return this;
   }
 
   private IdeTooltipManager getTooltipManager() {

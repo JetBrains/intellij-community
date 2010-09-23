@@ -1310,8 +1310,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
-    int yEndLine = logicalLineToY(endLine);
-    int height = Math.max(getLineHeight(), yEndLine - yStartLine) + WAVE_HEIGHT;
+    int endVisLine;
+    if (myDocument.getTextLength() <= 0) {
+      endVisLine = 0;
+    }
+    else {
+      endVisLine = offsetToVisualPosition(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine))).line;
+    }
+    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + WAVE_HEIGHT;
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
@@ -4287,7 +4293,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseExited(e);
       }
 
-      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP);
+      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
     private void runMousePressedCommand(final MouseEvent e) {
       myMousePressedEvent = e;
@@ -4522,7 +4528,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
         }
         else {
-          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP);
+          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
         }
       }
 

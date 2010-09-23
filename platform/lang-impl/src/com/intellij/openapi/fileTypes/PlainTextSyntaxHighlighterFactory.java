@@ -44,7 +44,6 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
       public Lexer getHighlightingLexer() {
         ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
         tokenParsers.add(new WhitespaceParser());
-        tokenParsers.add(new NumberParser("", false));
         tokenParsers.add(new PunctuationParser());
         tokenParsers.add(new IdentifierParser());
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -42,8 +43,10 @@ public class TooltipController {
     hideCurrentTooltip();
   }
 
-  public void cancelTooltip(@NotNull TooltipGroup groupId) {
+  public void cancelTooltip(@NotNull TooltipGroup groupId, MouseEvent mouseEvent, boolean forced) {
     if (groupId.equals(myCurrentTooltipGroup)) {
+      if (!forced && myCurrentTooltip != null && myCurrentTooltip.canControlAutoHide()) return;
+
       cancelTooltips();
     }
   }
@@ -82,6 +85,7 @@ public class TooltipController {
       myCurrentTooltip = null;
       currentTooltip.hide();
       myCurrentTooltipGroup = null;
+      IdeTooltipManager.getInstance().hide(null);
     }
   }
 

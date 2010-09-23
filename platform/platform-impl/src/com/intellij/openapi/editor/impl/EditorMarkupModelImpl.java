@@ -630,7 +630,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
       final TooltipController tooltipController = TooltipController.getInstance();
       if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
-        tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
+        tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP, e, true);
       }
     }
 

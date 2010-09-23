@@ -61,7 +61,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     List<LibraryTable> tables = Arrays.asList(myRootModel.getModuleLibraryTable(),
                                               registrar.getLibraryTable(myProject),
                                               registrar.getLibraryTable());
-    CreateNewLibraryDialog dialog = CreateNewLibraryDialog.createDialog(myParentComponent, myProject, this, tables, 1);
+    CreateNewLibraryDialog dialog = CreateNewLibraryDialog.createDialog(myParentComponent, myProject, tables, 1);
     final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
     dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
     dialog.show();

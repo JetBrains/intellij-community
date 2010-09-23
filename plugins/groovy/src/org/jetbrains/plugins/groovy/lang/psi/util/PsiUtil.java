@@ -48,10 +48,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -66,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -972,4 +975,34 @@ public class PsiUtil {
       return element;
     }
   }
+
+  @Nullable
+  public static PsiElement getNamedArgumentValue(GrNamedArgument otherNamedArgument, String argumentName) {
+    PsiElement parent = otherNamedArgument.getParent();
+
+    GrNamedArgument[] arguments;
+    if (parent instanceof GrArgumentList) {
+      arguments = ((GrArgumentList)parent).getNamedArguments();
+    }
+    else {
+      arguments = ((GrListOrMap)parent).getNamedArguments();
+    }
+
+    return getNamedArgumentValue(arguments, argumentName);
+  }
+
+  @Nullable
+  public static PsiElement getNamedArgumentValue(GrNamedArgument[] arguments, String argumentName) {
+    for (GrNamedArgument namedArgument : arguments) {
+      GrArgumentLabel label = namedArgument.getLabel();
+      if (label != null) {
+        if (argumentName.equals(label.getName())) {
+          return namedArgument.getExpression();
+        }
+      }
+    }
+
+    return null;
+  }
+
 }
