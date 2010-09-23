@@ -21,7 +21,6 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.StripeTable;
-import com.intellij.ui.CheckBoxWithColorChooser;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +37,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private FileColorManagerImpl myManager;
   private final JCheckBox myEnabledCheckBox;
   private final JCheckBox myTabsEnabledCheckBox;
-  private final CheckBoxWithColorChooser myHighlightNonProjectFilesCheckBox;
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
@@ -59,9 +57,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
 
-    myHighlightNonProjectFilesCheckBox = new CheckBoxWithColorChooser("Highlight Non-Project Files", false, myManager.getNonProjectFilesColor());
-    myHighlightNonProjectFilesCheckBox.setMnemonic('N');
-    topPanel.add(myHighlightNonProjectFilesCheckBox);
     topPanel.add(Box.createHorizontalGlue());
 
     add(topPanel, BorderLayout.NORTH);
@@ -70,7 +65,8 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     mainPanel.setPreferredSize(new Dimension(300, 500));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    myLocalTable = new FileColorSettingsTable(manager, manager.getLocalConfigurations()) {
+    final List<FileColorConfiguration> local = manager.getLocalConfigurations();
+    myLocalTable = new FileColorSettingsTable(manager, local) {
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
         final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
         for (final FileColorConfiguration configuration : configurations) {
@@ -128,7 +124,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel warningPanel = new JPanel(new BorderLayout());
     warningPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     warningPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
-                             MessageType.WARNING.getDefaultIcon(), SwingConstants.LEFT));
+                                MessageType.WARNING.getDefaultIcon(), SwingConstants.LEFT));
     final JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -138,6 +134,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     warningPanel.add(editScopes, BorderLayout.EAST);
     add(warningPanel, BorderLayout.SOUTH);
   }
+
 
   private static JButton createAddButton(final FileColorSettingsTable table, final FileColorManagerImpl manager) {
     final JButton addButton = new JButton("Add...");
@@ -235,9 +232,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     modified = myEnabledCheckBox.isSelected() != myManager.isEnabled();
     modified |= myTabsEnabledCheckBox.isSelected() != myManager.isEnabledForTabs();
-    modified |= myHighlightNonProjectFilesCheckBox.isSelected() != myManager.isHighlightNonProjectFiles();
     modified |= myLocalTable.isModified() || mySharedTable.isModified();
-    modified |= myHighlightNonProjectFilesCheckBox.getColor().getRGB() != myManager.getNonProjectFilesColor().getRGB();
 
     return modified;
   }
@@ -245,8 +240,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
-    myManager.setHighlightNonProjectFiles(myHighlightNonProjectFilesCheckBox.isSelected());
-    myManager.setNonProjectFilesColor(myHighlightNonProjectFilesCheckBox.getColor());
 
     myLocalTable.apply();
     mySharedTable.apply();
@@ -257,9 +250,8 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void reset() {
     myEnabledCheckBox.setSelected(myManager.isEnabled());
     myTabsEnabledCheckBox.setSelected(myManager.isEnabledForTabs());
-    myHighlightNonProjectFilesCheckBox.setSelected(myManager.isHighlightNonProjectFiles());
 
-    if(myLocalTable.isModified()) myLocalTable.reset();
-    if(mySharedTable.isModified()) mySharedTable.reset();
+    if (myLocalTable.isModified()) myLocalTable.reset();
+    if (mySharedTable.isModified()) mySharedTable.reset();
   }
 }
