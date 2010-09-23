@@ -47,6 +47,13 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     if (element == null) {
       return Result.Continue;
     }
+    if (offset > 0) {
+      final PsiElement beforeCaret = file.findElementAt(offset-1);
+      if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
+        // we've got a backslash at EOL already, don't need another one
+        return Result.Continue;
+      }
+    }
     PsiElement statementBefore = findStatementBeforeCaret(file, offset);
     PsiElement statementAfter = findStatementAfterCaret(file, offset);
     if (statementBefore != statementAfter) {  // Enter pressed at statement break

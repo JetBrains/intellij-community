@@ -120,12 +120,16 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("z=1 <caret>2", "z=1 \n2");
   }
 
-  public void testEnterAtStartOfComment() {
+  public void testEnterAtStartOfComment() {  // PY-1958
     doTestEnter("# bar\n<caret># foo", "# bar\n\n# foo");
   }
 
-  public void testEnterAtEndOfComment() {
+  public void testEnterAtEndOfComment() {  // PY-1958
     doTestEnter("# bar<caret>\n# foo", "# bar\n\n# foo");
+  }
+
+  public void testEnterAfterBackslash() {  // PY-1960
+    doTestEnter("s = \\<caret>\n'some string'", "s = \\\n\n'some string'");
   }
 
   private void doTestEnter(String before, final String after) {
