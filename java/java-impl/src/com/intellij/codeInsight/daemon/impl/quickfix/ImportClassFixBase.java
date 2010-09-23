@@ -103,7 +103,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   public enum Result {
     POPUP_SHOWN,
-    CLASS_IMPORTED,
+    CLASS_AUTO_IMPORTED,
     POPUP_NOT_SHOWN
   }
 
@@ -149,7 +149,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
           action.execute();
         }
       });
-      return Result.CLASS_IMPORTED;
+      return Result.CLASS_AUTO_IMPORTED;
     }
 
     if (doShow && canImportHere) {
@@ -174,7 +174,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       return false;
     }
     Result result = doFix(editor, true, false);
-    return result == Result.POPUP_SHOWN || result == Result.CLASS_IMPORTED;
+    return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 
   @NotNull
