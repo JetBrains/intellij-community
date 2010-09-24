@@ -15,24 +15,31 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiClass;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.extractclass.ExtractClassHandler;
+import com.intellij.refactoring.lang.ElementsHandler;
+import org.jetbrains.annotations.NotNull;
 
-public class ExtractClassAction extends BaseRefactoringAction{
+public class ExtractClassAction extends BasePlatformRefactoringAction {
 
-  protected RefactoringActionHandler getHandler(DataContext context){
-        return new ExtractClassHandler();
-    }
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return provider.getExtractClassHandler();
+  }
 
   public boolean isAvailableInEditorOnly(){
       return false;
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiClass.class, false) != null;
+    if (elements.length > 0) {
+      final Language language = elements[0].getLanguage();
+      final RefactoringActionHandler handler = getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language));
+      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
+    }
+    return false;
   }
 }
