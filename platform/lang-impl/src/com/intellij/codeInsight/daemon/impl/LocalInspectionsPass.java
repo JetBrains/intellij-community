@@ -222,7 +222,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         indicator.checkCanceled();
         ProgressIndicator localIndicator = progressManager.getProgressIndicator();
 
-        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
+        ProgressIndicator original = localIndicator instanceof ProgressWrapper ?    // TODO [cdr]
+                                     ((ProgressWrapper)localIndicator).getOriginalProgressIndicator():localIndicator;
         LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
