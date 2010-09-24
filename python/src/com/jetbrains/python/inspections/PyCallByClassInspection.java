@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -90,6 +91,15 @@ public class PyCallByClassInspection extends PyInspection {
                             }
                             PyClass first_arg_class = first_arg_class_type.getPyClass();
                             if (first_arg_class != null && first_arg_class != qual_class) {
+                              // in constructors it's fine
+                              if (markedCallee.getCallable() instanceof PyFunction) {
+                                if (PyNames.INIT.equals(markedCallee.getCallable().getName())) {
+                                  if (first_arg_class.isSubclass(qual_class)) {
+                                    break;
+                                  }
+                                }
+                              }
+                              // otherwise, it's not
                               registerProblem(
                                 first_arg,
                                 PyBundle.message(
@@ -99,6 +109,7 @@ public class PyCallByClassInspection extends PyInspection {
                               );
                             }
                           }
+                          break; // once we found the first parameter, we don't need the rest
                         }
                       }
                     }
