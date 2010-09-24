@@ -21,10 +21,7 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.TableCell;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -111,7 +108,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
             rowSorter.setSortKeys(Arrays.asList(sortKey));
           }
         }
-      } else {
+      }
+      else {
         final RowSorter<? extends TableModel> rowSorter = getRowSorter();
         if (rowSorter instanceof DefaultColumnInfoBasedRowSorter) {
           setRowSorter(null);
@@ -225,6 +223,33 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return true;
     }
     return false;
+  }
+
+  @Override
+  public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+    final Component result = super.prepareRenderer(renderer, row, column);
+    if (!myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column))) return result;
+
+    return new JComponent() {
+      {
+        add(result);
+        setOpaque(false);
+        setLayout(new AbstractLayoutManager() {
+          @Override
+          public Dimension preferredLayoutSize(Container parent) {
+            return result.getPreferredSize();
+          }
+
+          @Override
+          public void layoutContainer(Container parent) {
+            Dimension size = parent.getSize();
+            Insets i = parent.getInsets();
+            Dimension pref = result.getPreferredSize();
+            result.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
+          }
+        });
+      }
+    };
   }
 
   private final class MyCellEditorRemover implements PropertyChangeListener {
@@ -369,5 +394,4 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     }
   }
-
 }
