@@ -96,7 +96,7 @@ public class UpdateHighlightersUtil {
     }
   };
 
-  public static void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
+  static void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
     if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     final FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -120,8 +120,6 @@ public class UpdateHighlightersUtil {
                                              int endOffset,
                                              @NotNull Collection<HighlightInfo> highlights,
                                              int group) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    cleanFileLevelHighlights(project, group, psiFile);
     setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
 
@@ -166,7 +164,7 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static void addHighlighterToEditorIncrementally(@NotNull Project project,
+  static void addHighlighterToEditorIncrementally(@NotNull Project project,
                                                          @NotNull Document document,
                                                          @NotNull PsiFile file,
                                                          int startOffset,
@@ -204,6 +202,9 @@ public class UpdateHighlightersUtil {
                                       final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    cleanFileLevelHighlights(project, group, psiFile);
+
     final List<TextRange> ranges = new ArrayList<TextRange>(infos.keySet());
     Collections.sort(ranges, BY_START_OFFSET);
     //merge intersecting
@@ -235,11 +236,12 @@ public class UpdateHighlightersUtil {
   }
 
   // set highlights inside startOffset,endOffset but outside range
-  public static void setHighlightersToEditorOutsideRange(@NotNull Project project,
-                                                         @NotNull Document document,
-                                                         @NotNull Collection<HighlightInfo> infos,
-                                                         int startOffset, int endOffset, @NotNull ProperTextRange range,
-                                                         final int group) {
+  static void setHighlightersToEditorOutsideRange(@NotNull Project project,
+                                                  @NotNull Document document,
+                                                  @NotNull Collection<HighlightInfo> infos,
+                                                  int startOffset, int endOffset,
+                                                  @NotNull ProperTextRange range,
+                                                  final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -251,7 +253,7 @@ public class UpdateHighlightersUtil {
     setHighlightersOutsideRange(startOffset, endOffset, range, infos, (MarkupModelEx)markup, group, document, project);
   }
 
-  public static void setHighlightersInRange(final TextRange range,
+  static void setHighlightersInRange(final TextRange range,
                                              Collection<HighlightInfo> highlightsCo,
                                              final MarkupModelEx markup,
                                              final int group,
@@ -359,12 +361,7 @@ public class UpdateHighlightersUtil {
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
       public boolean generate(final Processor<HighlightInfo> processor) {
-        return ContainerUtil.process(highlights, new Processor<HighlightInfo>() {
-          @Override
-          public boolean process(HighlightInfo info) {
-            return info.getStartOffset() < startOffset || info.getEndOffset() > endOffset || processor.process(info);
-          }
-        });
+        return ContainerUtil.process(highlights, processor);
       }
     }, new MarkupModelEx.SweepProcessor<HighlightInfo>() {
       @Override
@@ -535,12 +532,12 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static void setLineMarkersToEditor(@NotNull Project project,
-                                            @NotNull Document document,
-                                            int startOffset,
-                                            int endOffset,
-                                            @NotNull Collection<LineMarkerInfo> markers,
-                                            int group) {
+  static void setLineMarkersToEditor(@NotNull Project project,
+                                     @NotNull Document document,
+                                     int startOffset,
+                                     int endOffset,
+                                     @NotNull Collection<LineMarkerInfo> markers,
+                                     int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
@@ -603,7 +600,7 @@ public class UpdateHighlightersUtil {
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");
-  public static boolean isWhitespaceOptimizationAllowed(final Document document) {
+  static boolean isWhitespaceOptimizationAllowed(final Document document) {
     return document.getUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED) == null;
   }
   private static void disableWhiteSpaceOptimization(Document document) {
@@ -613,7 +610,7 @@ public class UpdateHighlightersUtil {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, null);
   }
 
-  public static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
+  static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Document document = e.getDocument();
@@ -692,7 +689,7 @@ public class UpdateHighlightersUtil {
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getFileLeveleHighlights(Project project, PsiFile file) {
+  static List<HighlightInfo> getFileLeveleHighlights(Project project, PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
