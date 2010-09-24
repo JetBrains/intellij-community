@@ -23,11 +23,13 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -230,18 +232,18 @@ public class FindUtil {
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
 
-  public static void searchBack(Project project, FileEditor fileEditor) {
+  public static void searchBack(Project project, FileEditor fileEditor, @Nullable DataContext dataContext) {
     if (!(fileEditor instanceof TextEditor)) return;
     TextEditor textEditor = (TextEditor)fileEditor;
     Editor editor = textEditor.getEditor();
 
-    searchBack(project, editor);
+    searchBack(project, editor, dataContext);
   }
 
-  public static void searchBack(final Project project, final Editor editor) {
+  public static void searchBack(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed()) {
-      find(project, editor);
+      new IncrementalFindAction().getHandler().execute(editor, context);
       return;
     }
 
@@ -272,18 +274,18 @@ public class FindUtil {
     searchAgain(project, editor, offset, model);
   }
 
-  public static boolean searchAgain(Project project, FileEditor fileEditor) {
+  public static boolean searchAgain(Project project, FileEditor fileEditor, @Nullable DataContext context) {
     if (!(fileEditor instanceof TextEditor)) return false;
     TextEditor textEditor = (TextEditor)fileEditor;
     Editor editor = textEditor.getEditor();
 
-    return searchAgain(project, editor);
+    return searchAgain(project, editor, context);
   }
 
-  public static boolean searchAgain(final Project project, final Editor editor) {
+  public static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed()) {
-      find(project, editor);
+      new IncrementalFindAction().getHandler().execute(editor, context);
       return false;
     }
 
