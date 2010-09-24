@@ -99,7 +99,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
     psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
   private static final ElementPattern<PsiElement> IN_MAP_KEY_ARGUMENT_LIST_OF_CALL =
-    psiElement().withParent(psiElement(GrArgumentLabel.class).withParent(psiElement(GrNamedArgument.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class))));
+    psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(psiElement(GrNamedArgument.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class))));
 
   private static final String[] THIS_SUPER = {"this", "super"};
   private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
