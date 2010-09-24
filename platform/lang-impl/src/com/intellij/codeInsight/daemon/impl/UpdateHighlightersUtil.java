@@ -120,6 +120,8 @@ public class UpdateHighlightersUtil {
                                              int endOffset,
                                              @NotNull Collection<HighlightInfo> highlights,
                                              int group) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    cleanFileLevelHighlights(project, group, psiFile);
     setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
 
@@ -196,14 +198,11 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
   }
 
-  public static void setHighlightersToEditor(@NotNull Project project,
-                                             @NotNull Document document,
-                                             @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
-                                             final int group) {
+  static void setHighlightersToEditor(@NotNull Project project,
+                                      @NotNull Document document,
+                                      @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
+                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    cleanFileLevelHighlights(project, group, psiFile);
 
     final List<TextRange> ranges = new ArrayList<TextRange>(infos.keySet());
     Collections.sort(ranges, BY_START_OFFSET);
