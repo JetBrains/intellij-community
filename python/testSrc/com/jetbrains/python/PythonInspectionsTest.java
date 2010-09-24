@@ -213,19 +213,16 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyInitNewSignatureInspection() throws Exception {
+  public void testPyInitNewSignatureInspection() {
     LocalInspectionTool inspection = new PyInitNewSignatureInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyCallByClassInspection() throws Exception {
-    doTest(getTestName(false), new PyCallByClassInspection());
-    // I'd gladly use doHighlightingTest,
-    // but I have to handle two simultaneous highlights of the same element:
-    // the lines become insanely long
+  public void testPyCallByClassInspection() {
+    doHighlightingTest(PyCallByClassInspection.class); // ok, we can handle insanely long lines :)
   }
 
-  public void testPyCallingNonCallableInspection() throws Exception {
+  public void testPyCallingNonCallableInspection() {
     doHighlightingTest(PyCallingNonCallableInspection.class, LanguageLevel.PYTHON26);
   }
 

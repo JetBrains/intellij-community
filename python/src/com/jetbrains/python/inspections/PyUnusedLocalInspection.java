@@ -31,7 +31,11 @@ public class PyUnusedLocalInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder, ignoreTupleUnpacking, ignoreLambdaParameters,
                                                                                       ignoreLoopIterationVariables);
-    session.putUserData(KEY, visitor);
+    // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
+    final PyUnusedLocalInspectionVisitor existingVisitor = session.getUserData(KEY);
+    if (existingVisitor == null) {
+      session.putUserData(KEY, visitor);
+    }
     return visitor;
   }
 

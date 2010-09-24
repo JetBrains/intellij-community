@@ -132,6 +132,10 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("s = \\<caret>\n'some string'", "s = \\\n\n'some string'");
   }
 
+  public void testEnterBetweenCommentAndStatement() { // PY-1958
+    doTestEnter("def test(a):\n <caret># some comment\n if a: return", "def test(a):\n \n # some comment\n if a: return");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
