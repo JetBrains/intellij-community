@@ -17,7 +17,8 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.lookup.LookupElement
 
 /**
  * @author Maxim.Medvedev
@@ -285,4 +286,41 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
       defField<caret>
     """
   }
+
+  public void testCompletionNamedArgument1() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: 1, arg<caret>: 2,   arg333: 3) }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: 1, arg222: 2,   arg333: 3) }
+}
+""", file.text
+  }
+
+  public void testCompletionNamedArgument2() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg111: 1, arg<caret>: 2,   arg333: 3 }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg111: 1, arg222: 2,   arg333: 3 }
+}
+""", file.text
+  }
+
 }
