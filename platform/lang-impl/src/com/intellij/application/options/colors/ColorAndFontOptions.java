@@ -316,15 +316,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     result.addAll(new ArrayList<SearchableConfigurable>(mySubPanelFactories.values()));
-    for (final Configurable configurable : result) {
-      Disposer.register(myDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          configurable.disposeUIResources();
-        }
-      });
-    }
-
     return result.toArray(new Configurable[result.size()]);
   }
 
