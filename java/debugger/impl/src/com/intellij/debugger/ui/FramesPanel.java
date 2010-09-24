@@ -173,7 +173,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     if (!paused || !isRefresh) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
-        myFramesList.clear();
+        myFramesList.getModel().clear();
       }
     }
 
@@ -451,7 +451,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       final int totalFramesCount = frames.size();
       int index = 0;
       final IndexCounter indexCounter = new IndexCounter(totalFramesCount);
-      final long timestamp = Math.abs(System.nanoTime());
+      final long timestamp = System.currentTimeMillis();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
         managerThread.schedule(
           new AppendFrameCommand(
