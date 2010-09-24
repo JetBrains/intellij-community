@@ -209,7 +209,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 public void run() {
                   if (progress.isCanceled()) return;
                   MarkupModel markupModel = myDocument.getMarkupModel(myProject);
-                  UpdateHighlightersUtil.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL, myFile);
 
                   UpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, toApply, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
                 }
@@ -229,19 +228,33 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             myApplyCommand = new Runnable() {
               @Override
               public void run() {
-                UpdateHighlightersUtil.setHighlightersToEditorOutsideRange(myProject, myDocument, result, myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
-                Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new HashMap<TextRange, Collection<HighlightInfo>>();
-                for (HighlightInfo info : injectedOutsideInfos) {
-                  TextRange textRange = new TextRange(info.getStartOffset(), info.getEndOffset());
-                  Collection<HighlightInfo> storedInfos = myInjectedPsiHighlights.get(textRange);
-                  if (storedInfos == null) {
-                    storedInfos = new SmartList<HighlightInfo>();
-                    myInjectedPsiHighlights.put(textRange, storedInfos);
+                final List<HighlightInfo> insideInfos = new ArrayList<HighlightInfo>(result.size());
+                final List<HighlightInfo> toApply = new ArrayList<HighlightInfo>(result.size());
+
+                ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
+
+                for (HighlightInfo info : result) {
+                  if (!range.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
+                  if (myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
+                    insideInfos.add(info);
                   }
-                  storedInfos.add(info);
+                  else {
+                    toApply.add(info);
+                  }
                 }
 
-                UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+                toApply.addAll(injectedOutsideInfos);
+
+                /*
+                if (!insideInfos.isEmpty()) {
+                  // some one has reported highlights inside range while running annotators for outside range - bad, bad annotator!
+                  for (HighlightInfo info : insideInfos) {
+                    toApply.add(info);
+                  }
+                }
+                */
+
+                UpdateHighlightersUtil.setHighlightersToEditorOutsideRange(myProject, myDocument, toApply, myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
               }
             };
           }
