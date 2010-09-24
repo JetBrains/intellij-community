@@ -347,9 +347,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
             }
             if (method instanceof GrMethod) {
               for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
-                final LookupElementBuilder lookup =
-                  LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
-                result.addElement(lookup);
+                if (!usedNames.contains(parameter)) {
+                  final LookupElementBuilder lookup =
+                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+                  result.addElement(lookup);
+                }
               }
             }
           }
