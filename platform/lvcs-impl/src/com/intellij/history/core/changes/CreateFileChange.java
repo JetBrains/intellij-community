@@ -16,8 +16,6 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.storage.StreamUtil;
-
 import java.io.DataInput;
 import java.io.IOException;
 

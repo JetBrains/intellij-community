@@ -403,7 +403,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                      final int x,
                      final int y,
                      final JComponent focusBackComponent,
-                     @NotNull HintHint hintInfo) {
+                     @NotNull HintHint hintHint) {
       myVisible = true;
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();

@@ -16,6 +16,8 @@
 
 package com.intellij.history.core.storage;
 
+import com.intellij.history.core.Content;
+
 import java.util.Arrays;
 
 public class TestContent extends Content {

@@ -47,7 +47,7 @@ public class SettingsImpl implements EditorSettings {
   private int     myLineCursorWidth               = 2;
   private boolean myLineMarkerAreaShown           = true;
   private boolean myAllowSingleLogicalLineFolding = false;
-  private boolean myForceScrollToEnd              = false;
+  private boolean myForceScrollToEnd              = true;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;

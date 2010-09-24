@@ -282,6 +282,7 @@
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+      <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
       <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
       <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
       <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>

@@ -15,19 +15,19 @@
  */
 package com.intellij.historyIntegrTests;
 
-import com.intellij.history.core.LinkedStorage;
+import com.intellij.history.core.LocalHistoryStorage;
 import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public class LinkedStorageTest extends IntegrationTestCase {
-  private LinkedStorage myStorage;
+public class LocalHistoryStorageTest extends IntegrationTestCase {
+  private LocalHistoryStorage myStorage;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myStorage = new LinkedStorage(myRoot.getPath() + "/storage");
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
   }
 
   @Override
@@ -105,7 +105,7 @@ public class LinkedStorageTest extends IntegrationTestCase {
     myStorage.deleteRecord(r2);
 
     myStorage.dispose();
-    myStorage = new LinkedStorage(myRoot.getPath() + "/storage");
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r1, r3);
     assertRecord(r3, r1, 0);
@@ -114,7 +114,7 @@ public class LinkedStorageTest extends IntegrationTestCase {
     myStorage.deleteRecord(r1);
 
     myStorage.dispose();
-    myStorage = new LinkedStorage(myRoot.getPath() + "/storage");
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r3, r3);
     assertRecord(r3, 0, 0);
@@ -122,7 +122,7 @@ public class LinkedStorageTest extends IntegrationTestCase {
     int r4 = createRecord();
 
     myStorage.dispose();
-    myStorage = new LinkedStorage(myRoot.getPath() + "/storage");
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r3, r4);
     assertRecord(r4, r3, 0);

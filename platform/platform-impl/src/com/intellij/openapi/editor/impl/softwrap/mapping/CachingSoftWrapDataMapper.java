@@ -97,6 +97,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
+    // There is a possible case that this method is called during the first refresh (the cache is empty). So, we delegate it to
+    // soft wraps-unaware code.
+    if (myCache.isEmpty()) {
+      return myEditor.offsetToLogicalPosition(offset, false);
+    }
     return calculate(new OffsetToLogicalCalculationStrategy(offset, myEditor, myRepresentationHelper, myCache, myStorage));
   }
 
@@ -395,6 +400,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
     //System.out.println("After Applying state change");
     //dumpCache();
+
+    myBeforeChangeState.valid = false;
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UnusedDeclaration", "CallToPrintStackTrace"})

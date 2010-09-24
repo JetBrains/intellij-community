@@ -198,7 +198,6 @@ public class RevisionsList {
     private final JLabel myLabelLabel = new JLabel();
 
     private final ExpandableItemsHandler<TableCell> myToolTipHandler;
-    private boolean isToolTipShown;
 
     public MyCellRenderer(JBTable table) {
       myToolTipHandler = table.getExpandableItemsHandler();
@@ -242,7 +241,6 @@ public class RevisionsList {
       layoutPanel.add(headersPanel, BorderLayout.NORTH);
       layoutPanel.add(myItemPanel, BorderLayout.CENTER);
 
-      myWrapperPanel.add(layoutPanel);
       myWrapperPanel.setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {
@@ -254,13 +252,10 @@ public class RevisionsList {
           Dimension size = parent.getSize();
           Insets i = parent.getInsets();
           Dimension pref = layoutPanel.getPreferredSize();
-          if (isToolTipShown) {
-            layoutPanel.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), pref.height);
-          } else {
-            layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
-          }
+          layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
         }
       });
+      myWrapperPanel.add(layoutPanel);
 
       myItemPanel.setBorder(myBorder);
       myItemPanel.setLayout(new BorderLayout());
@@ -336,12 +331,10 @@ public class RevisionsList {
 
       myItemPanel.setBackground(bg);
 
-      isToolTipShown = myToolTipHandler.getExpandedItems().contains(new TableCell(row, column));
-
       myWrapperPanel.doLayout();
       int height = myWrapperPanel.getPreferredSize().height;
-      // table.setRowHeight causes extra repaint of the table, so we try to avoid it.
-      if (table.getRowHeight(row) != height) {
+      //table.setRowHeight causes extra repaint of the table, so we try to avoid it.
+      if (table.getRowHeight(row) != height && height > 0) {
         table.setRowHeight(row, height);
       }
 

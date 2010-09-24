@@ -41,6 +41,13 @@ public class PurgingTest extends IntegrationTestCase {
   }
 
   @Test
+  public void testPurgeSeveral() {
+    createChangesWithTimestamps(1, 2, 3);
+    getVcs().getChangeListInTests().purgeObsolete(1);
+    assertRemainedChangesTimestamps(3);
+  }
+
+  @Test
   public void testPurgeNothing() {
     createChangesWithTimestamps(1, 2, 3);
     getVcs().getChangeListInTests().purgeObsolete(10);

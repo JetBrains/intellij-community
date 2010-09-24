@@ -94,7 +94,7 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     return rowIndex != -1 ? new Integer(rowIndex) : null;
   }
 
-  protected Pair<Component, Rectangle> getRendererAndBounds(Integer key) {
+  protected Pair<Component, Rectangle> getCellRendererAndBounds(Integer key) {
     int rowIndex = key.intValue();
 
     Rectangle bounds = myComponent.getCellBounds(rowIndex, rowIndex);

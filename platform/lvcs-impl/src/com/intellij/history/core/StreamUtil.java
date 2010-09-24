@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.intellij.history.core.storage;
+package com.intellij.history.core;
 
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -95,20 +97,22 @@ public class StreamUtil {
     change.write(out);
   }
 
+  @NotNull
   public static String readString(DataInput in) throws IOException {
     return in.readUTF();
   }
 
-  public static void writeString(DataOutput out, String s) throws IOException {
+  public static void writeString(DataOutput out, @NotNull String s) throws IOException {
     out.writeUTF(s);
   }
 
+  @Nullable
   public static String readStringOrNull(DataInput in) throws IOException {
     if (!in.readBoolean()) return null;
     return readString(in);
   }
 
-  public static void writeStringOrNull(DataOutput out, String s) throws IOException {
+  public static void writeStringOrNull(DataOutput out, @Nullable String s) throws IOException {
     out.writeBoolean(s != null);
     if (s != null) writeString(out, s);
   }

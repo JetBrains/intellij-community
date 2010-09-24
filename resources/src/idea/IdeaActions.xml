@@ -186,10 +186,6 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
     </action>
 
-    <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ReplaceMethodWithMethodObject"/>
-    </action>
-
     <group id="BuildMenu" popup="true">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>

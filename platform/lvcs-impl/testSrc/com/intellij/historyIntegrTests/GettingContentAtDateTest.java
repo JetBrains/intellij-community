@@ -49,14 +49,14 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
   }
 
   public void testGettingFirstAvailableContentAfterPurge() throws Exception {
-    Clock.setCurrentTimestamp(10);
+    Clock.setCurrentTimestamp(1);
     setContent(f, "1", TIMESTAMP_INCREMENT);
-    Clock.setCurrentTimestamp(20);
+    Clock.setCurrentTimestamp(2);
     setContent(f, "2", TIMESTAMP_INCREMENT * 2);
-    Clock.setCurrentTimestamp(30);
+    Clock.setCurrentTimestamp(3);
     setContent(f, "3", TIMESTAMP_INCREMENT * 3);
 
-    getVcs().getChangeListInTests().purgeObsolete(5);
+    getVcs().getChangeListInTests().purgeObsolete(2);
 
     assertContentAt(TIMESTAMP_INCREMENT, null);
     assertContentAt(TIMESTAMP_INCREMENT * 2, "2");

@@ -16,8 +16,8 @@
 
 package com.intellij.history.integration;
 
+import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;

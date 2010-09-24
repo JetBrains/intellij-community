@@ -29,7 +29,7 @@ import javax.swing.*;
 public class ProjectJdkListRenderer extends ColoredListCellRenderer {
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (value == null || value instanceof Sdk) {
-      OrderEntryCellAppearanceUtils.forJdk((Sdk)value, false, selected).customize(this);
+      OrderEntryCellAppearanceUtils.forJdk((Sdk)value, false, selected, index != -1).customize(this);
     }
     else {
       final String str = value.toString();

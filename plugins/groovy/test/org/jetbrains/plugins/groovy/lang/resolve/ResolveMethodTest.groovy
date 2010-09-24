@@ -613,4 +613,12 @@ class Zoo {
     assertInstanceOf method, GrMethod
     assertEquals "foo3", method.name
   }
+
+  public void testUpperCaseFieldAndGetter() {
+    assertTrue resolve("A.groovy") instanceof GrMethod
+  }
+
+  public void testUpperCaseFieldWithoutGetter() {
+    assertTrue resolve("A.groovy") instanceof GrAccessorMethod
+  }
 }

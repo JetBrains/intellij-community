@@ -27,6 +27,7 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.extractclass.ExtractClassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
@@ -89,6 +90,11 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public ChangeSignatureHandler getChangeSignatureHandler() {
     return new JavaChangeSignatureHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getExtractClassHandler() {
+    return new ExtractClassHandler();
   }
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {

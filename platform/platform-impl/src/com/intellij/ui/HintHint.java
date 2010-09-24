@@ -35,6 +35,8 @@ public class HintHint {
 
   private boolean myContentActive = true;
 
+  private boolean myQuickHint = false;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -113,6 +115,15 @@ public class HintHint {
   public HintHint setContentActive(boolean active) {
     myContentActive = active;
     return this;
+  }
+
+  public HintHint setHighlighterType(boolean highlighter) {
+    myQuickHint = highlighter;
+    return this;
+  }
+
+  public boolean isHightlighterType() {
+    return myQuickHint;
   }
 
   private IdeTooltipManager getTooltipManager() {

@@ -100,7 +100,7 @@ public class OrderEntryCellAppearanceUtils {
     return testSource ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
   }
 
-  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
+  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
     if (jdk == null) {
       return SimpleTextCellAppearance.invalid(NO_JDK, CellAppearanceUtils.INVALID_ICON);
     }
@@ -112,12 +112,18 @@ public class OrderEntryCellAppearanceUtils {
         homeDirectory != null && homeDirectory.isValid() ? CellAppearanceUtils.createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);
-    String versionString = jdk.getVersionString();
-    if (versionString != null && !versionString.equals(name)) {
-      SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-      ending.addComment(versionString, textAttributes);
+    if (showVersion) {
+      String versionString = jdk.getVersionString();
+      if (versionString != null && !versionString.equals(name)) {
+        SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        ending.addComment(versionString, textAttributes);
+      }
     }
     return ending.getAppearance();
+  }
+
+  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
+    return forJdk(jdk, isInComboBox, selected, true);
   }
 
   public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {

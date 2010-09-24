@@ -30,7 +30,7 @@ import java.io.IOException;
 
 class DataTable implements Disposable, Forceable {
   private static final int HEADER_SIZE = 32;
-  private static final int CONNECTED_MAGIC = 0x12ad34e4;
+  private static final int DIRTY_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
 
   private final RandomAccessDataFile myFile;
@@ -43,8 +43,7 @@ class DataTable implements Disposable, Forceable {
   public DataTable(final File filePath, final PagePool pool) throws IOException {
     myFile = new RandomAccessDataFile(filePath, pool);
     if (myFile.length() == 0) {
-      fillInHeader(CONNECTED_MAGIC, 0);
-      myIsDirty = true;
+      markDirty();
     }
     else {
       readInHeader(filePath);
@@ -125,7 +124,7 @@ class DataTable implements Disposable, Forceable {
   private void markDirty() {
     if (!myIsDirty) {
       myIsDirty = true;
-      fillInHeader(CONNECTED_MAGIC, 0);
+      fillInHeader(DIRTY_MAGIC, 0);
     }
   }
 

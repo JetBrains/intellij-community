@@ -15,14 +15,13 @@
  */
 package com.intellij.history.core;
 
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 
 import java.io.File;
 import java.io.IOException;
 
-public class LinkedRecordsTable extends AbstractRecordsTable {
+public class LocalHistoryRecordsTable extends AbstractRecordsTable {
   private static final int VERSION = 4;
 
   private static final int ID_COUNTER_OFFSET = DEFAULT_HEADER_SIZE;
@@ -38,7 +37,7 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
   private static final int RECORD_SIZE = TIMESTAMP_OFFSET + 8;
   private static final byte[] ZEROS = new byte[RECORD_SIZE];
 
-  public LinkedRecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
+  public LocalHistoryRecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
     super(storageFilePath, pool);
   }
 
@@ -62,11 +61,11 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
     return ZEROS;
   }
 
-  @Override
-  protected void clearDeletedRecord(int record) {
-    setTimestamp(record, 0);
-    setNextRecord(record, 0);
-    setPrevRecord(record, 0);
+  public long nextId() {
+    markDirty();
+    long result = myStorage.getLong(ID_COUNTER_OFFSET);
+    myStorage.putLong(ID_COUNTER_OFFSET, result + 1);
+    return result;
   }
 
   public void setFSTimestamp(long timestamp) {
@@ -121,13 +120,6 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
 
   public long getTimestamp(int record) {
     return myStorage.getLong(getOffset(record, TIMESTAMP_OFFSET));
-  }
-
-  public long nextId() {
-    markDirty();
-    long result = myStorage.getLong(ID_COUNTER_OFFSET);
-    myStorage.putLong(ID_COUNTER_OFFSET, result + 1);
-    return result;
   }
 }
 

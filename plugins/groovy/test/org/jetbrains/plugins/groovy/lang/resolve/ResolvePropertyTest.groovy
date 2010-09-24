@@ -594,4 +594,15 @@ set<caret>Foo(2)
     assertTrue resolveResult.staticsOK
   }
 
+  public void testUpperCaseFieldAndGetter() {
+    assertTrue resolve("A.groovy") instanceof GrField
+  }
+
+  public void testUpperCaseFieldWithoutGetter() {
+    assertTrue resolve("A.groovy") instanceof GrAccessorMethod
+  }
+
+  public void testGetterWithUpperCaseFieldReference() {
+    assertNull resolve("A.groovy")
+  }
 }
