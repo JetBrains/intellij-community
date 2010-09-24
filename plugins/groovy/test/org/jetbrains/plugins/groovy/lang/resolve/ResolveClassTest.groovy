@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ven
@@ -142,6 +144,41 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testClassVsPropertyGetter() {
     doTest();
   }
+
+  public void testPackageVsProperty1() {
+    myFixture.addFileToProject("foo/Foo.groovy", """package foo
+class Referenced {
+  static def foo = new X()
+  static def bar = "bar"
+
+}
+
+class X {
+  def referenced = 3
+}
+""");
+    final PsiReference ref = configureByFile("packageVsProperty1/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf resolved, GrAccessorMethod;
+  }
+
+  public void testPackageVsProperty2() {
+    myFixture.addFileToProject("foo/Foo.groovy", """package foo
+class Referenced {
+  static def foo = new X()
+  static def bar = "bar"
+
+}
+
+class X {
+  def referenced = 3
+}
+""");
+    final PsiReference ref = configureByFile("packageVsProperty2/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf resolved, GrAccessorMethod;
+  }
+
 
   private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");

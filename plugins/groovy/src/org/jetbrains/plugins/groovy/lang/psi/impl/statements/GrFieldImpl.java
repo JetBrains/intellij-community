@@ -133,7 +133,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (clazz == null) return false;
     if (clazz.isInterface()) return false;
     final GrModifierList modifierList = getModifierList();
-    if (!GroovyPropertyUtils.isPropertyName(getName())) return false;
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
 
