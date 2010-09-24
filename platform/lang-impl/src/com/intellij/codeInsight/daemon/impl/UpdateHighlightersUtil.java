@@ -373,8 +373,7 @@ public class UpdateHighlightersUtil {
         if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
           return true;
         }
-        if (new TextRange(startOffset,endOffset).containsRange(info.getStartOffset(), info.getEndOffset()) &&
-            (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset())) {
+        if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
           createOrReuseHighlighterFor(info, document, group, psiFile, markup, infosToRemove,
                                           ranges2markersCache,
                                           severityRegistrar);
