@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternValuesIndex;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -138,16 +139,20 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         public boolean visitVariable(PsiVariable variable) {
           if (myConfiguration.isResolveReferences() && visitedVars.add(variable)) {
-            for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
-              final PsiElement element = psiReference.getElement();
-              if (element instanceof PsiExpression) {
-                final PsiExpression refExpression = (PsiExpression)element;
-                places.add(refExpression);
-                if (!myUnparsable) {
-                  myUnparsable = checkUnparsableReference(refExpression);
+            ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
+              @Override
+              public boolean process(PsiReference psiReference) {
+                final PsiElement element = psiReference.getElement();
+                if (element instanceof PsiExpression) {
+                  final PsiExpression refExpression = (PsiExpression)element;
+                  places.add(refExpression);
+                  if (!myUnparsable) {
+                    myUnparsable = checkUnparsableReference(refExpression);
+                  }
                 }
+                return true;
               }
-            }
+            });
           }
           if (areThereInjectionsWithName(variable.getName(), false)) {
             process(variable, null, -1);
