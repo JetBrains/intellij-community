@@ -71,7 +71,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
 
     final NavigationGutterIconRenderer renderer = (NavigationGutterIconRenderer)o;
 
-    if (myCellRenderer != null ? !myCellRenderer.equals(renderer.myCellRenderer) : renderer.myCellRenderer != null) return false;
     if (myEmptyText != null ? !myEmptyText.equals(renderer.myEmptyText) : renderer.myEmptyText != null) return false;
     if (!myPointers.getValue().equals(renderer.myPointers.getValue())) return false;
     if (myPopupTitle != null ? !myPopupTitle.equals(renderer.myPopupTitle) : renderer.myPopupTitle != null) return false;
@@ -83,7 +82,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     int result;
     result = (myPopupTitle != null ? myPopupTitle.hashCode() : 0);
     result = 31 * result + (myEmptyText != null ? myEmptyText.hashCode() : 0);
-    result = 31 * result + (myCellRenderer != null ? myCellRenderer.hashCode() : 0);
     result = 31 * result + myPointers.getValue().hashCode();
     return result;
   }
