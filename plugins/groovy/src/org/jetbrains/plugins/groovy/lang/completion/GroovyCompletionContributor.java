@@ -98,6 +98,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
     psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
+  private static final ElementPattern<PsiElement> IN_MAP_KEY_ARGUMENT_LIST_OF_CALL =
+    psiElement().withParent(psiElement(GrArgumentLabel.class).withParent(psiElement(GrNamedArgument.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class))));
 
   private static final String[] THIS_SUPER = {"this", "super"};
   private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
@@ -128,6 +130,84 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     }
   };
+
+  private static final CompletionProvider<CompletionParameters> MAP_ARGUMENT_COMPLETION_PROVIDER =
+    new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final GrArgumentList argumentList;
+
+        PsiElement parent = parameters.getPosition().getParent();
+        if (parent instanceof GrReferenceExpression) {
+          if (((GrReferenceExpression)parent).getQualifier() != null) return;
+          argumentList = (GrArgumentList)parent.getParent();
+        }
+        else {
+          argumentList = (GrArgumentList)parent.getParent().getParent();
+        }
+
+        final GrCall call = (GrCall)argumentList.getParent();
+        List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
+        //costructor call
+        if (call instanceof GrConstructorCall) {
+          GrConstructorCall constructorCall = (GrConstructorCall)call;
+          ContainerUtil.addAll(results, constructorCall.multiResolveConstructor());
+          ContainerUtil.addAll(results, constructorCall.multiResolveClass());
+        }
+        else if (call instanceof GrCallExpression) {
+          GrCallExpression constructorCall = (GrCallExpression)call;
+          ContainerUtil.addAll(results, constructorCall.getCallVariants(null));
+          final PsiType type = ((GrCallExpression)call).getType();
+          if (type instanceof PsiClassType) {
+            final PsiClass psiClass = ((PsiClassType)type).resolve();
+            results.add(new GroovyResolveResultImpl(psiClass, true));
+          }
+        }
+        else if (call instanceof GrApplicationStatement) {
+          final GrExpression element = ((GrApplicationStatement)call).getInvokedExpression();
+          if (element instanceof GrReferenceElement) {
+            ContainerUtil.addAll(results, ((GrReferenceElement)element).multiResolve(true));
+          }
+        }
+
+        Set<PsiClass> usedClasses = new HashSet<PsiClass>();
+        Set<String> usedNames = new HashSet<String>();
+        for (GrNamedArgument argument : argumentList.getNamedArguments()) {
+          final GrArgumentLabel label = argument.getLabel();
+          if (label != null) {
+            final String name = label.getName();
+            if (name != null) {
+              usedNames.add(name);
+            }
+          }
+        }
+
+        for (GroovyResolveResult resolveResult : results) {
+          PsiElement element = resolveResult.getElement();
+          if (element instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)element;
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+              addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            }
+            if (method instanceof GrMethod) {
+              for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
+                if (!usedNames.contains(parameter)) {
+                  final LookupElementBuilder lookup =
+                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+                  result.addElement(lookup);
+                }
+              }
+            }
+          }
+          else if (element instanceof PsiClass) {
+            addPropertiesForClass(result, usedClasses, usedNames, (PsiClass)element, call);
+          }
+        }
+      }
+    };
 
   public static boolean isReferenceInNewExpression(PsiElement reference) {
     if (!(reference instanceof GrCodeReferenceElement)) return false;
@@ -293,74 +373,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull CompletionResultSet result) {
-        final GrReferenceExpression refExpr = ((GrReferenceExpression)parameters.getPosition().getParent());
-        if (refExpr.getQualifier() != null) return;
-        final GrArgumentList argumentList = (GrArgumentList)refExpr.getParent();
-        final GrCall call = (GrCall)argumentList.getParent();
-        List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
-        //costructor call
-        if (call instanceof GrConstructorCall) {
-          GrConstructorCall constructorCall = (GrConstructorCall)call;
-          ContainerUtil.addAll(results, constructorCall.multiResolveConstructor());
-          ContainerUtil.addAll(results, constructorCall.multiResolveClass());
-        }
-        else if (call instanceof GrCallExpression) {
-          GrCallExpression constructorCall = (GrCallExpression)call;
-          ContainerUtil.addAll(results, constructorCall.getCallVariants(null));
-          final PsiType type = ((GrCallExpression)call).getType();
-          if (type instanceof PsiClassType) {
-            final PsiClass psiClass = ((PsiClassType)type).resolve();
-            results.add(new GroovyResolveResultImpl(psiClass, true));
-          }
-        }
-        else if (call instanceof GrApplicationStatement) {
-          final GrExpression element = ((GrApplicationStatement)call).getInvokedExpression();
-          if (element instanceof GrReferenceElement) {
-            ContainerUtil.addAll(results, ((GrReferenceElement)element).multiResolve(true));
-          }
-        }
-
-        Set<PsiClass> usedClasses = new HashSet<PsiClass>();
-        Set<String> usedNames = new HashSet<String>();
-        for (GrNamedArgument argument : argumentList.getNamedArguments()) {
-          final GrArgumentLabel label = argument.getLabel();
-          if (label != null) {
-            final String name = label.getName();
-            if (name != null) {
-              usedNames.add(name);
-            }
-          }
-        }
-
-        for (GroovyResolveResult resolveResult : results) {
-          PsiElement element = resolveResult.getElement();
-          if (element instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)element;
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass != null) {
-              addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
-            }
-            if (method instanceof GrMethod) {
-              for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
-                if (!usedNames.contains(parameter)) {
-                  final LookupElementBuilder lookup =
-                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
-                  result.addElement(lookup);
-                }
-              }
-            }
-          }
-          else if (element instanceof PsiClass) {
-            addPropertiesForClass(result, usedClasses, usedNames, (PsiClass)element, call);
-          }
-        }
-      }
-    });
+    extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, MAP_ARGUMENT_COMPLETION_PROVIDER);
+    extend(CompletionType.BASIC, IN_MAP_KEY_ARGUMENT_LIST_OF_CALL, MAP_ARGUMENT_COMPLETION_PROVIDER);
 
     extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
       @Override
