@@ -18,6 +18,6 @@
   <problem>
     <file>badarglist.py</file>
     <line>9</line>
-		<description>Passing src.badarglist.A instead of src.badarglist.Z. Is this intentional?</description>
+    <description>Passing src.badarglist.A instead of src.badarglist.Z. Is this intentional?</description>
   </problem>
 </problems>

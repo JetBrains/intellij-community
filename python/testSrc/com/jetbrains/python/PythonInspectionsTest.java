@@ -220,6 +220,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyCallByClassInspection() throws Exception {
     doTest(getTestName(false), new PyCallByClassInspection());
+    // I'd gladly use doHighlightingTest,
+    // but I have to handle two simultaneous highlights of the same element:
+    // the lines become insanely long
   }
 
   public void testPyCallingNonCallableInspection() throws Exception {
