@@ -27,8 +27,6 @@ import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -37,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +49,6 @@ import java.util.List;
 /**
  * @author nik
  */
-@State(
-    name = "FacetStructureConfigurable.UI",
-    storages = {
-      @Storage(
-          id = "other",
-          file = "$WORKSPACE_FILE$"
-      )
-    }
-)
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");//todo[nik] use facets icon
   private final ModuleManager myModuleManager;
@@ -67,6 +57,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
+    MasterDetailsStateService.getInstance(project).register("FacetStructureConfigurable.UI", this);
     myModuleManager = moduleManager;
   }
 
