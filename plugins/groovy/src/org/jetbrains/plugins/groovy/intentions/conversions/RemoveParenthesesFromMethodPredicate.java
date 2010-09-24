@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
@@ -34,6 +34,9 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
       return false;
     }
     final GrMethodCallExpression methodCallExpression = (GrMethodCallExpression)element;
+
+    if (methodCallExpression.getClosureArguments().length > 0) return false;
+
     final GrArgumentList argumentList = methodCallExpression.getArgumentList();
     if (argumentList == null) return false;
 
