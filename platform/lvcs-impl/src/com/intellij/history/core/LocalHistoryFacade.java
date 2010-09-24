@@ -18,10 +18,9 @@ package com.intellij.history.core;
 
 import com.intellij.history.ByteContent;
 import com.intellij.history.core.changes.*;
+import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.revisions.ChangeRevision;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.Disposable;

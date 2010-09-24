@@ -17,10 +17,10 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.Clock;
+import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.StoredContent;
+import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;

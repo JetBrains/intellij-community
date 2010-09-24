@@ -17,6 +17,8 @@
 package com.intellij.history.core.storage;
 
 import com.intellij.history.core.LocalHistoryTestCase;
+import com.intellij.history.core.StoredContent;
+import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;

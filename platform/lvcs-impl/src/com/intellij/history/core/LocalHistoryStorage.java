@@ -23,71 +23,71 @@ import com.intellij.util.io.storage.AbstractStorage;
 import java.io.File;
 import java.io.IOException;
 
-public class LinkedStorage extends AbstractStorage {
-  public LinkedStorage(String storageFilePath) throws IOException {
+public class LocalHistoryStorage extends AbstractStorage {
+  public LocalHistoryStorage(String storageFilePath) throws IOException {
     super(storageFilePath);
   }
 
-  public LinkedStorage(String storageFilePath, PagePool pool) throws IOException {
+  public LocalHistoryStorage(String storageFilePath, PagePool pool) throws IOException {
     super(storageFilePath, pool);
   }
 
   @Override
   protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
-    return new LinkedRecordsTable(recordsFile, pool);
+    return new LocalHistoryRecordsTable(recordsFile, pool);
   }
 
   public long getFSTimestamp() {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getFSTimestamp();
+      return ((LocalHistoryRecordsTable)myRecordsTable).getFSTimestamp();
     }
   }
 
   public void setFSTimestamp(long timestamp) {
     synchronized (myLock) {
-      ((LinkedRecordsTable)myRecordsTable).setFSTimestamp(timestamp);
+      ((LocalHistoryRecordsTable)myRecordsTable).setFSTimestamp(timestamp);
     }
   }
 
   public long nextId() {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).nextId();
+      return ((LocalHistoryRecordsTable)myRecordsTable).nextId();
     }
   }
 
   public int getFirstRecord() {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getFirstRecord();
+      return ((LocalHistoryRecordsTable)myRecordsTable).getFirstRecord();
     }
   }
 
   public int getLastRecord() {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getLastRecord();
+      return ((LocalHistoryRecordsTable)myRecordsTable).getLastRecord();
     }
   }
 
   public int getPrevRecord(int record) {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getPrevRecord(record);
+      return ((LocalHistoryRecordsTable)myRecordsTable).getPrevRecord(record);
     }
   }
 
   public int getNextRecord(int record) {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getNextRecord(record);
+      return ((LocalHistoryRecordsTable)myRecordsTable).getNextRecord(record);
     }
   }
 
   public long getTimestamp(int record) {
     synchronized (myLock) {
-      return ((LinkedRecordsTable)myRecordsTable).getTimestamp(record);
+      return ((LocalHistoryRecordsTable)myRecordsTable).getTimestamp(record);
     }
   }
 
   public int createNextRecord() throws IOException {
     synchronized (myLock) {
-      LinkedRecordsTable table = (LinkedRecordsTable)myRecordsTable;
+      LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
       int id = table.createNewRecord();
       int prev = table.getLastRecord();
 
@@ -108,7 +108,7 @@ public class LinkedStorage extends AbstractStorage {
 
   public void deleteRecord(int id) throws IOException {
     synchronized (myLock) {
-      LinkedRecordsTable table = (LinkedRecordsTable)myRecordsTable;
+      LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
 
       int prev = table.getPrevRecord(id);
       int next = table.getNextRecord(id);

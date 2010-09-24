@@ -27,12 +27,13 @@ import com.intellij.util.io.storage.AbstractStorage;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
   private static final String STORAGE_FILE = "changes";
-  
-  private final LinkedStorage myStorage;
+
+  private final LocalHistoryStorage myStorage;
 
   public ChangeListStorageImpl(File storageDir) {
     try {
@@ -43,22 +44,26 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  private static LinkedStorage createStorage(File storageDir) throws IOException {
+  private static LocalHistoryStorage createStorage(File storageDir) throws IOException {
     String path = storageDir.getPath() + "/" + STORAGE_FILE;
-    LinkedStorage result = new LinkedStorage(path);
+    LocalHistoryStorage result = new LocalHistoryStorage(path);
 
     long fsTimestamp = ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
 
-    boolean versionMismatch = result.getVersion() != VERSION;
+    int storedVersion = result.getVersion();
+    boolean versionMismatch = storedVersion != VERSION;
     boolean timestampMismatch = result.getFSTimestamp() != fsTimestamp;
     if (versionMismatch || timestampMismatch) {
-      if (versionMismatch) LocalHistoryLog.LOG.info("local history version mismatch, rebuilding...");
-      if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding clearing local history...");
+      if (versionMismatch) {
+        LocalHistoryLog.LOG.info(MessageFormat.format(
+          "local history version mismatch (was: {0}, expected: {1}), rebuilding...", storedVersion, VERSION));
+      }
+      if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...");
       result.dispose();
       if (!FileUtil.delete(storageDir)) {
         throw new IOException("cannot clear storage dir: " + storageDir);
       }
-      result = new LinkedStorage(path);
+      result = new LocalHistoryStorage(path);
       result.setVersion(VERSION);
       result.setFSTimestamp(fsTimestamp);
     }
@@ -74,7 +79,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     catch (Throwable ex) {
       LocalHistoryLog.LOG.error("cannot mark storage as broken", ex);
     }
-    throw new RuntimeException(e);
+    throw new RuntimeException("Local history is broken and will be rebuilt after restart (storage version: " + VERSION + ")", e);
   }
 
   public synchronized void close() {
@@ -128,8 +133,9 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     try {
       while (eachBlockId != 0) {
         processor.consume(doReadBlock(eachBlockId).changeSet);
-        myStorage.deleteRecord(eachBlockId);
+        int toDelete = eachBlockId;
         eachBlockId = myStorage.getPrevRecord(eachBlockId);
+        myStorage.deleteRecord(toDelete);
       }
     }
     catch (IOException e) {
@@ -149,6 +155,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       long delta = prevTimestamp - t;
       prevTimestamp = t;
 
+      // we sum only intervals between changes during one 'day' (intervalBetweenActivities) and add '1' between two 'days'
       length += delta < intervalBetweenActivities ? delta : 1;
 
       if (length >= period) return last;

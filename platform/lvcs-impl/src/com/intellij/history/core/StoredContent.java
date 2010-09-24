@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.history.core.storage;
+package com.intellij.history.core;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;

@@ -18,13 +18,13 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
+import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.StoredContent;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DirectoryEntryTest extends LocalHistoryTestCase {
   @Test

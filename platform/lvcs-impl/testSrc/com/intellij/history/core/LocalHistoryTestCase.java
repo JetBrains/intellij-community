@@ -19,7 +19,6 @@ package com.intellij.history.core;
 import com.intellij.history.Clock;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.TestContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;

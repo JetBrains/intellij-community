@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.history.core.storage;
+package com.intellij.history.core;
 
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
