@@ -226,7 +226,7 @@
     <action id="MoveStatementUp">
       <keyboard-shortcut first-keystroke="shift alt UP" />
     </action>
-    <action id="Generate">
+    <action id="NewElement">
       <keyboard-shortcut first-keystroke="alt INSERT" />
       <keyboard-shortcut first-keystroke="control N" />
     </action>

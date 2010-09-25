@@ -23,9 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -58,6 +60,7 @@ public class ActionsTree {
   private final JScrollPane myComponent;
   private Keymap myKeymap;
   private Group myMainGroup = new Group("", null, null);
+  private boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
 
   @NonNls
   private static final String ROOT = "ROOT";
@@ -73,6 +76,7 @@ public class ActionsTree {
         Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
         Icon icon = null;
         String text;
+        boolean bound = false;
         if (value instanceof DefaultMutableTreeNode) {
           Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
           boolean changed;
@@ -88,6 +92,7 @@ public class ActionsTree {
           }
           else if (userObject instanceof String) {
             String actionId = (String)userObject;
+            bound = myShowBoundActions && ((KeymapImpl)myKeymap).isActionBound(actionId);
             AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
             if (action != null) {
               text = action.getTemplatePresentation().getText();
@@ -132,6 +137,10 @@ public class ActionsTree {
             }
             else {
               foreground = UIUtil.getTreeForeground();
+            }
+
+            if (bound) {
+              foreground = Color.MAGENTA;
             }
           }
           SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground, selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
