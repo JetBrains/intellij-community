@@ -108,6 +108,9 @@
       <mouse-shortcut keystroke="ctrl button1"/>
       <mouse-shortcut keystroke="button2"/>
     </action>
+    <action id="NewElement">
+      <keyboard-shortcut first-keystroke="alt INSERT"/>
+    </action>
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="shift F3"/>
     </action>
