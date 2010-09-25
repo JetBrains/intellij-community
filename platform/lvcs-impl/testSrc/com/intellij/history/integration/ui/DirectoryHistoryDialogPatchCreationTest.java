@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
+import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
-import com.intellij.historyIntegrTests.PatchingTestCase;
 
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {

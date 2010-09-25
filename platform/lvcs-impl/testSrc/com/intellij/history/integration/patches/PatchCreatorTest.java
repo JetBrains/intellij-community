@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.patches;
+package com.intellij.history.integration.patches;
 
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.patches.PatchCreator;
-import com.intellij.historyIntegrTests.PatchingTestCase;
+import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 

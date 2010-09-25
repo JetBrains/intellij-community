@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.history.integration.ui.views.RecentChangeDialog;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 

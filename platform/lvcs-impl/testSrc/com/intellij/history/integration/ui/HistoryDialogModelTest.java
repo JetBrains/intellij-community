@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -133,11 +133,14 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     m.selectRevisions(2, 2);
     assertTrue(m.isRevertEnabled());
 
+    m.selectRevisions(0, 1);
+    assertTrue(m.isRevertEnabled());
+
     m.selectRevisions(0, 0);
-    assertFalse(m.isRevertEnabled());
+    assertTrue(m.isRevertEnabled());
 
     m.selectRevisions(-1, -1);
-    assertFalse(m.isRevertEnabled());
+    assertTrue(m.isRevertEnabled());
   }
 
   @Test
@@ -151,11 +154,14 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
     m.selectRevisions(1, 2);
     assertTrue(m.isCreatePatchEnabled());
 
+    m.selectRevisions(0, 1);
+    assertTrue(m.isRevertEnabled());
+
     m.selectRevisions(0, 0);
-    assertFalse(m.isCreatePatchEnabled());
+    assertTrue(m.isCreatePatchEnabled());
 
     m.selectRevisions(-1, -1);
-    assertFalse(m.isCreatePatchEnabled());
+    assertTrue(m.isCreatePatchEnabled());
   }
 
   private void initModelFor() {

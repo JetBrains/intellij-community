@@ -206,7 +206,7 @@ public abstract class HistoryDialogModel {
   }
 
   private boolean isCorrectSelectionForRevertAndPatch() {
-    return myLeftRevisionIndex > 0;
+    return myLeftRevisionIndex != -1;
   }
 
   public boolean canPerformCreatePatch() {

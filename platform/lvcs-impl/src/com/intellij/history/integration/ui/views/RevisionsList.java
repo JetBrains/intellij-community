@@ -17,7 +17,6 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
@@ -304,7 +303,7 @@ public class RevisionsList {
 
       myBorder.set(row == table.getModel().getRowCount() - 1);
 
-      myDateLabel.setText(ensureString(FormatUtil.formatRelativeTimestamp(r.revision.getTimestamp())));
+      myDateLabel.setText(ensureString(StringUtil.formatRelativeDateTime(r.revision.getTimestamp())));
       myFilesCountLabel.setText(ensureString(labelsAndColor.filesCount));
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));

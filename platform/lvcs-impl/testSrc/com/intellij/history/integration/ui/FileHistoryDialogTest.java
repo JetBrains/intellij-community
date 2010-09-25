@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -53,8 +54,10 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 2);
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
-    assertEquals("03.02.01 12:00 - old.txt", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals("04.03.02 14:00 - new.txt", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
+    assertEquals(StringUtil.formatRelativeDateTime(leftTime) + " - old.txt",
+                 m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+    assertEquals(StringUtil.formatRelativeDateTime(rightTime) + " - new.txt",
+                 m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
   public void testContent() throws IOException {

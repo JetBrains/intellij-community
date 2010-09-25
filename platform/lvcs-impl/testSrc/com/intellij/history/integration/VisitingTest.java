@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.historyIntegrTests;
+package com.intellij.history.integration;
 
 import com.intellij.history.Clock;
 import com.intellij.history.core.changes.ChangeSet;

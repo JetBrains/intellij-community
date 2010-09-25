@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.history.integration.ui.models.DirectoryChangeModel;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

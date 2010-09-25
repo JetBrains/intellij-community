@@ -1122,8 +1122,38 @@ public class StringUtil {
     return CommonBundle.message("format.file.size.mbytes", size);
   }
 
+  // do not expose this constants - they are very likely to be changed in future
+  private static final DateFormat DATE_FORMAT_GENERAL = DateFormat.getDateInstance(DateFormat.SHORT);
+  private static final DateFormat TIME_FORMAT_GENERAL = DateFormat.getTimeInstance(DateFormat.SHORT);
+  private static final DateFormat DATE_TIME_FORMAT_GENERAL = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
   @NotNull
-  public static String formatDate(long timestamp, DateFormat format) {
+  public static DateFormat getDateFormat() {
+    return DATE_FORMAT_GENERAL;
+  }
+
+  @NotNull
+  public static DateFormat getTimeFormat() {
+    return TIME_FORMAT_GENERAL;
+  }
+
+  @NotNull
+  public static DateFormat getDateTimeFormat() {
+    return DATE_TIME_FORMAT_GENERAL;
+  }
+
+  @NotNull
+  public static String formatDateTime(long timestamp) {
+    return getDateTimeFormat().format(new Date(timestamp));
+  }
+
+  @NotNull
+  public static String formatRelativeDateTime(long timestamp) {
+    return formatRelative(timestamp, getDateTimeFormat());
+  }
+
+  @NotNull
+  public static String formatRelative(long timestamp, @NotNull DateFormat format) {
     long minDelta = (new Date().getTime() - timestamp) / (1000 * 60);
 
     if (minDelta < 2) {

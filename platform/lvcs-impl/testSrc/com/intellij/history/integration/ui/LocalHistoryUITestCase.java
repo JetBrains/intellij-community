@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.intellij.history.integration;
+package com.intellij.history.integration.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.history.integration.IntegrationTestCase;
 
-import java.text.DateFormat;
-import java.util.Date;
+import java.awt.*;
 
-public class FormatUtil {
-  public static final DateFormat FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-
-  public static String formatTimestamp(long t) {
-    return FORMAT.format(new Date(t));
-  }
-
-  public static String formatRelativeTimestamp(long t) {
-    return StringUtil.formatDate(t, FORMAT);
+public abstract class LocalHistoryUITestCase extends IntegrationTestCase {
+  @Override
+  protected void runTest() throws Throwable {
+    if (GraphicsEnvironment.isHeadless()) {
+      System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
+      return;
+    }
+    super.runTest();
   }
 }

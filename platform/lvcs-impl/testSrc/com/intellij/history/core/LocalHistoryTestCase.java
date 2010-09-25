@@ -25,29 +25,14 @@ import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 
 public abstract class LocalHistoryTestCase extends Assert {
   private static long myCurrentId = 0;
-  private Locale myDefaultLocale;
-
-  @Before
-  public void setUpEnvironment() {
-    myDefaultLocale = Locale.getDefault();
-    Locale.setDefault(new Locale("ru", "RU"));
-  }
-
-  @After
-  public void restoreEnvironment() {
-    Locale.setDefault(myDefaultLocale);
-  }
 
   public static long nextId() {
     return myCurrentId++;
