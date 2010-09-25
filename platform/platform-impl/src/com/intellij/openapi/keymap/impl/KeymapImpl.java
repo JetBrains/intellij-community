@@ -493,23 +493,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return ids;
   }
 
-  private void gatherShortcuts(final String actionId, final Set<Shortcut> to) {
-    KeymapManagerEx keymapManager = getKeymapManager();
-    if (keymapManager.getBoundActions().contains(actionId)) {
-      final String actionBinding = keymapManager.getActionBinding(actionId);
-      to.addAll(Arrays.asList(getShortcutsForAction(actionBinding)));
-      gatherShortcuts(actionBinding, to);
-    }
-  }
-
   public Shortcut[] getShortcuts(String actionId) {
-    final Set<Shortcut> shortcuts = new HashSet<Shortcut>();
-    gatherShortcuts(actionId, shortcuts);
-    shortcuts.addAll(Arrays.asList(getShortcutsForAction(actionId)));
-    return shortcuts.toArray(new Shortcut[shortcuts.size()]);
-  }
-
-  private Shortcut[] getShortcutsForAction(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
 
     if (shortcuts == null) {
@@ -517,6 +501,11 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         return getParentShortcuts(actionId);
       }
       else {
+        KeymapManagerEx keymapManager = getKeymapManager();
+        if (keymapManager.getBoundActions().contains(actionId)) {
+          return getShortcuts(keymapManager.getActionBinding(actionId));
+        }
+
         return ourEmptyShortcutsArray;
       }
     }
