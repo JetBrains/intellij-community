@@ -146,6 +146,10 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
     if (myPluginManagerMain.isRequireShutdown()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
+      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
+      saveSorting(availablePluginsTable, true);
+      saveSorting(installedPluginTable, false);
       if (app.isRestartCapable()) {
         if (Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
                                      IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
