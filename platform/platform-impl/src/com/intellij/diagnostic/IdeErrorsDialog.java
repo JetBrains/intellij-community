@@ -181,7 +181,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (message != null) {
       StringBuffer txt = new StringBuffer();
       txt.append(DiagnosticBundle.message("error.list.message.info",
-                 DateFormatUtil.formatDateTime(message.getDate()), myModel.get(myIndex).size()));
+                 DateFormatUtil.formatPrettyDateTime(message.getDate()), myModel.get(myIndex).size()));
 
       if (message.isSubmitted()) {
         final SubmittedReportInfo info = message.getSubmissionInfo();

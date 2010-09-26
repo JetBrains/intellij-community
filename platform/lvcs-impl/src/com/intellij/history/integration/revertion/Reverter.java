@@ -97,7 +97,7 @@ public abstract class Reverter {
   public String getCommandName() {
     Revision to = getTargetRevision();
     String name = to.getChangeSetName();
-    String date = DateFormatUtil.formatExactDateTime(to.getTimestamp());
+    String date = DateFormatUtil.formatDateTime(to.getTimestamp());
     if (name != null) {
       return LocalHistoryBundle.message("system.label.revert.to.change.date", name, date);
     }

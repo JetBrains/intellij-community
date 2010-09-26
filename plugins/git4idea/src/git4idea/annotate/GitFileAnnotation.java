@@ -29,13 +29,12 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.text.SyncDateFormat;
+import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -46,10 +45,6 @@ import java.util.*;
 public class GitFileAnnotation implements FileAnnotation {
   private final static Logger LOG = Logger.getInstance("#git4idea.annotate.GitFileAnnotation");
 
-  /**
-   * the format of the date shown in annotations
-   */
-  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
   /**
    * annotated content
    */
@@ -89,7 +84,7 @@ public class GitFileAnnotation implements FileAnnotation {
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect() {
     public String doGetValue(LineInfo info) {
       final Date date = info.getDate();
-      return date == null ? "" : DATE_FORMAT.format(date);
+      return date == null ? "" : DateFormatUtil.formatPrettyDate(date);
     }
   };
 

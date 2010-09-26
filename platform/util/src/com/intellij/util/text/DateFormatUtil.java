@@ -25,9 +25,10 @@ import java.util.Date;
 
 public class DateFormatUtil {
   // do not expose this constants - they are very likely to be changed in future
-  private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
-  private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.SHORT);
-  private static final DateFormat DATE_TIME_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.SHORT));
+  private static final SyncDateFormat TIME_FORMAT = new SyncDateFormat(DateFormat.getTimeInstance(DateFormat.SHORT));
+  private static final SyncDateFormat DATE_TIME_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.SHORT,
+                                                                                                           DateFormat.SHORT));
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -48,18 +49,23 @@ public class DateFormatUtil {
   }
 
   @NotNull
-  public static DateFormat getDateFormat() {
+  public static SyncDateFormat getDateFormat() {
     return DATE_FORMAT;
   }
 
   @NotNull
-  public static DateFormat getTimeFormat() {
+  public static SyncDateFormat getTimeFormat() {
     return TIME_FORMAT;
   }
 
   @NotNull
-  public static DateFormat getDateTimeFormat() {
+  public static SyncDateFormat getDateTimeFormat() {
     return DATE_TIME_FORMAT;
+  }
+
+  @NotNull
+  public static String formatTime(@NotNull Date time) {
+    return formatTime(time.getTime());
   }
 
   @NotNull
@@ -68,27 +74,47 @@ public class DateFormatUtil {
   }
 
   @NotNull
+  public static String formatDate(@NotNull Date time) {
+    return formatDate(time.getTime());
+  }
+
+  @NotNull
   public static String formatDate(long time) {
     return getDateFormat().format(time);
   }
 
   @NotNull
-  public static String formatExactDateTime(long time) {
-    return getDateTimeFormat().format(time);
+  public static String formatPrettyDate(@NotNull Date date) {
+    return formatPrettyDate(date.getTime());
   }
 
   @NotNull
-  public static String formatDateTime(Date time) {
-    return formatDateTime(time.getTime());
+  public static String formatPrettyDate(long time) {
+    return doFormatPretty(time, false);
+  }
+
+  @NotNull
+  public static String formatDateTime(Date date) {
+    return formatDateTime(date.getTime());
   }
 
   @NotNull
   public static String formatDateTime(long time) {
-    return formatDateTime(time, DATE_TIME_FORMAT, TIME_FORMAT);
+    return getDateTimeFormat().format(time);
   }
 
   @NotNull
-  public static String formatDateTime(long time, @NotNull DateFormat dateTimeFormat, @NotNull DateFormat timeFormat) {
+  public static String formatPrettyDateTime(Date date) {
+    return formatPrettyDateTime(date.getTime());
+  }
+
+  @NotNull
+  public static String formatPrettyDateTime(long time) {
+    return doFormatPretty(time, true);
+  }
+
+  @NotNull
+  public static String doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
 
     Calendar c = Calendar.getInstance();
@@ -102,13 +128,18 @@ public class DateFormatUtil {
     int year = c.get(Calendar.YEAR);
     int dayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
-    long delta = currentTime - time;
-    if (delta <= HOUR) {
-      return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
+    if (formatTime) {
+      long delta = currentTime - time;
+      if (delta <= HOUR) {
+        return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
+      }
     }
 
-    if (currentDayOfYear == dayOfYear) {
-      return CommonBundle.message("date.format.today") + " " + timeFormat.format(time);
+    boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
+    if (isToday) {
+      String result = CommonBundle.message("date.format.today");
+      if (formatTime) result += " " + TIME_FORMAT.format(time);
+      return result;
     }
 
     boolean isYesterdayOnPreviousYear =
@@ -116,10 +147,12 @@ public class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
 
     if (isYesterday) {
-      return CommonBundle.message("date.format.yesterday") + " " + timeFormat.format(time);
+      String result = CommonBundle.message("date.format.yesterday");
+      if (formatTime) result += " " + TIME_FORMAT.format(time);
+      return result;
     }
 
-    return dateTimeFormat.format(time);
+    return formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time);
   }
 
   @NotNull

@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.text.SyncDateFormat;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +29,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final String myContents;
   private final MyPartiallyCreatedInfos myInfos;
-  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
   private final VirtualFile myFile;
@@ -49,7 +47,7 @@ public class SvnFileAnnotation implements FileAnnotation {
       }
       else {
         final LineInfo lineInfo = myInfos.get(lineNumber);
-        return (lineInfo == null) ? "" : DATE_FORMAT.format(lineInfo.getDate());
+        return (lineInfo == null) ? "" : DateFormatUtil.formatPrettyDate(lineInfo.getDate());
       }
     }
   };

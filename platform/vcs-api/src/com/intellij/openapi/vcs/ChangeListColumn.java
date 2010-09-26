@@ -25,9 +25,9 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.DateFormat;
 import java.util.Comparator;
 
 public abstract class ChangeListColumn<T extends ChangeList> {
@@ -47,7 +47,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
 
     public Object getValue(final CommittedChangeList changeList) {
-      return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(changeList.getCommitDate());
+      return DateFormatUtil.formatPrettyDateTime(changeList.getCommitDate());
     }
 
     public Comparator<CommittedChangeList> getComparator() {

@@ -58,7 +58,7 @@ public abstract class FileDifferenceModel {
   }
 
   private String formatTitle(Entry e, boolean isAvailable) {
-    String result = DateFormatUtil.formatDateTime(e.getTimestamp()) + " - " + e.getName();
+    String result = DateFormatUtil.formatPrettyDateTime(e.getTimestamp()) + " - " + e.getName();
     if (!isAvailable) {
       result += " - " + LocalHistoryBundle.message("content.not.available");
     }

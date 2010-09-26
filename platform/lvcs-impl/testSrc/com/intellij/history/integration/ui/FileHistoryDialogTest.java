@@ -54,9 +54,9 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 2);
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
-    assertEquals(DateFormatUtil.formatDateTime(leftTime) + " - old.txt",
+    assertEquals(DateFormatUtil.formatPrettyDateTime(leftTime) + " - old.txt",
                  m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals(DateFormatUtil.formatDateTime(rightTime) + " - new.txt",
+    assertEquals(DateFormatUtil.formatPrettyDateTime(rightTime) + " - new.txt",
                  m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 

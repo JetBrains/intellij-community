@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +42,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -304,7 +302,7 @@ public class SelectBranchPopup {
         SvnBranchItem item = (SvnBranchItem) value;
         myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
         final long creationMillis = item.getCreationDateMillis();
-        myDateLabel.setText((creationMillis > 0) ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(new Date(creationMillis)) : "");
+        myDateLabel.setText((creationMillis > 0) ? DateFormatUtil.formatDate(creationMillis) : "");
       }
       return this;
     }

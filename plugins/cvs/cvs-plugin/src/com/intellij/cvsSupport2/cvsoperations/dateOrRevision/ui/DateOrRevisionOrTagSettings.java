@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.SyncDateFormat;
 import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.NonNls;
@@ -28,12 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.beans.PropertyVetoException;
 
 /**
  * author: lesya
@@ -57,7 +57,7 @@ public class DateOrRevisionOrTagSettings {
   public DateOrRevisionOrTagSettings(TagsProvider tagsProvider, Project project, final boolean forTemporaryConfiguration) {
     myTagsProvider = tagsProvider;
     myProject = project;
-    myDatePicker.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
+    myDatePicker.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
 
     myUseBranch.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
