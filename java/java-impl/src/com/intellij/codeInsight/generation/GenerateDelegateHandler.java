@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,8 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -47,62 +43,27 @@ import java.util.Set;
 /**
  * @author mike
  */
-public class GenerateDelegateHandler implements ElementsHandler {
+public class GenerateDelegateHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
 
-  @Override
-  public boolean isEnabledOnElements(PsiElement[] elements) {
-    if (elements.length != 1) return false;
-    if (!(elements[0].getContainingFile() instanceof PsiJavaFile)) return false;
-    return OverrideImplementUtil.getContextClass(elements[0], false) != null && isApplicable(elements[0]);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doInvoke(project, null, elements[0].getContainingFile(), elements[0]);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    doInvoke(project, editor, file, null);
-  }
-
-  private void doInvoke(@NotNull Project project, @Nullable final Editor editor, final PsiFile file, @Nullable PsiElement element) {
-    Document document;
-    if (editor != null) {
-      document = editor.getDocument();
-    }
-    else {
-      document = PsiDocumentManager.getInstance(project).getDocument(file);
-    }
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiElement target;
-    if (editor != null) {
-      target = chooseTarget(file, editor, project);
-      int offset = editor.getCaretModel().getOffset();
-      element = file.findElementAt(offset);
-    } else {
-      target = chooseTarget(element);
-    }
+    final PsiElement target = chooseTarget(file, editor, project);
     if (target == null) return;
 
-    final PsiMethodMember[] candidates = chooseMethods(target, element, project);
+    final PsiMethodMember[] candidates = chooseMethods(target, file, editor, project);
     if (candidates == null || candidates.length == 0) return;
 
-    final int offset;
-    if (editor != null) {
-      offset = editor.getCaretModel().getOffset();
-    } else {
-      offset = element.getTextRange().getStartOffset();
-    }
 
-    final Runnable r = new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
+          int offset = editor.getCaretModel().getOffset();
+
           List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
           for (PsiMethodMember candidate : candidates) {
             prototypes.add(generateDelegatePrototype(candidate, target));
@@ -110,7 +71,7 @@ public class GenerateDelegateHandler implements ElementsHandler {
 
           List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
-          if (!results.isEmpty() && editor != null) {
+          if (!results.isEmpty()) {
             PsiMethod firstMethod = results.get(0).getPsiMember();
             final PsiCodeBlock block = firstMethod.getBody();
             assert block != null;
@@ -125,15 +86,11 @@ public class GenerateDelegateHandler implements ElementsHandler {
           LOG.error(e);
         }
       }
-    };
+    });
+  }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(r);
-      }
-    }, RefactoringBundle.message("delegate.methods.refactoring.name"), null);
-
-
+  public boolean startInWriteAction() {
+    return false;
   }
 
   private static PsiGenerationInfo<PsiMethod> generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
@@ -233,7 +190,7 @@ public class GenerateDelegateHandler implements ElementsHandler {
   }
 
   @Nullable
-  private static PsiMethodMember[] chooseMethods(PsiElement target, PsiElement element, Project project) {
+  private static PsiMethodMember[] chooseMethods(PsiElement target, PsiFile file, Editor editor, Project project) {
     PsiClassType.ClassResolveResult resolveResult = null;
 
     if (target instanceof PsiField) {
@@ -247,8 +204,10 @@ public class GenerateDelegateHandler implements ElementsHandler {
     PsiClass targetClass = resolveResult.getElement();
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
     List<PsiMethodMember> methodInstances = new ArrayList<PsiMethodMember>();
@@ -295,28 +254,16 @@ public class GenerateDelegateHandler implements ElementsHandler {
     return result;
   }
 
-  private static boolean isApplicable(PsiElement element) {
-    ClassMember[] targetElements = getTargetElements(element);
+  public static boolean isApplicable(PsiFile file, Editor editor) {
+    ClassMember[] targetElements = getTargetElements(file, editor);
     return targetElements != null && targetElements.length > 0;
   }
 
   @Nullable
   private static PsiElement chooseTarget(PsiFile file, Editor editor, Project project) {
-    final PsiElementClassMember[] targetElements = getTargetElements(file, editor);
-    return doChooseTarget(project, targetElements);
-  }
-
-  @Nullable
-  private static PsiElement chooseTarget(PsiElement element) {
-    final PsiElementClassMember[] targetElements = getTargetElements(element);
-    return doChooseTarget(element.getProject(), targetElements);
-  }
-
-  @Nullable
-  private static PsiElement doChooseTarget(Project project, PsiElementClassMember[] targetElements) {
-    if (targetElements == null || targetElements.length == 0) return null;
-
     PsiElement target = null;
+    final PsiElementClassMember[] targetElements = getTargetElements(file, editor);
+    if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(targetElements, false, false, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
@@ -340,11 +287,7 @@ public class GenerateDelegateHandler implements ElementsHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    return getTargetElements(element);
-  }
-
-  private static PsiElementClassMember[] getTargetElements(PsiElement element) {
-    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
     List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();

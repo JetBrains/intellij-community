@@ -696,12 +696,8 @@ public class OverrideImplementUtil {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return getContextClass(element, allowInterface);
-  }
-
-  public static PsiClass getContextClass(PsiElement element, boolean allowInterface) {
     do {
-      element = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+      element = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     }
     while (element instanceof PsiTypeParameter);
 
