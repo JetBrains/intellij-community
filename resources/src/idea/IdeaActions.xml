@@ -41,7 +41,6 @@
     </group>
 
     <group id="JavaGenerateGroup2">
-      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="last"/>

@@ -13,30 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.generation.actions;
+package com.intellij.refactoring.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.generation.GenerateDelegateHandler;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.lang.ElementsHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
-public class GenerateDelegateAction extends BaseCodeInsightAction {
-  private final GenerateDelegateHandler myHandler = new GenerateDelegateHandler();
+public class GenerateDelegateAction extends BasePlatformRefactoringAction {
 
-  protected CodeInsightActionHandler getHandler() {
-    return myHandler;
+  public GenerateDelegateAction() {
+    setInjectedContext(true);
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    return OverrideImplementUtil.getContextClass(project, editor, file, false) != null &&
-           myHandler.isApplicable(file, editor);
+  @Override
+  protected boolean isAvailableInEditorOnly() {
+    return false;
   }
+
+  @Override
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    if (elements.length > 0) {
+      final Language language = elements[0].getLanguage();
+      final RefactoringActionHandler handler = getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language));
+      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
+    }
+    return false;
+  }
+
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+    return provider.getGenerateDelegateHander();
+  }
+
 }

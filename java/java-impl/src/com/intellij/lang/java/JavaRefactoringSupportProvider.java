@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.java;
 
+import com.intellij.codeInsight.generation.GenerateDelegateHandler;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -95,6 +96,11 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getExtractClassHandler() {
     return new ExtractClassHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getGenerateDelegateHander() {
+    return new GenerateDelegateHandler();
   }
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {

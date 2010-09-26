@@ -133,4 +133,13 @@ public abstract class RefactoringSupportProvider {
   public RefactoringActionHandler getExtractClassHandler() {
     return null;
   }
+
+  /**
+   * @return  handler for generating delegate methods in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable
+  public RefactoringActionHandler getGenerateDelegateHander() {
+    return null;
+  }
 }
