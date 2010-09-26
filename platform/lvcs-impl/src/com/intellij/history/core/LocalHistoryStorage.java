@@ -15,7 +15,7 @@
  */
 package com.intellij.history.core;
 
-import com.intellij.history.Clock;
+import com.intellij.openapi.util.Clock;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.AbstractStorage;
@@ -100,7 +100,7 @@ public class LocalHistoryStorage extends AbstractStorage {
       }
       table.setLastRecord(id);
 
-      table.setTimestamp(id, Clock.getCurrentTimestamp());
+      table.setTimestamp(id, Clock.getTime());
 
       return id;
     }

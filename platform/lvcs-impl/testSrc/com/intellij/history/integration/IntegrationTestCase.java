@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests;
+package com.intellij.history.integration;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -32,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.PlatformTestCase;
@@ -41,13 +39,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
 public abstract class IntegrationTestCase extends PlatformTestCase {
   public static final int TIMESTAMP_INCREMENT = 3000;
   protected static final String FILTERED_DIR_NAME = "CVS";
 
-  private Locale myDefaultLocale;
   protected VirtualFile myRoot;
   protected IdeaGateway myGateway;
 
@@ -59,11 +55,8 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    Clock.useRealClock();
+    Clock.reset();
     Paths.useSystemCaseSensitivity();
-
-    myDefaultLocale = Locale.getDefault();
-    Locale.setDefault(new Locale("ru", "RU"));
 
     myGateway = new IdeaGateway();
 
@@ -86,8 +79,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Locale.setDefault(myDefaultLocale);
-    Clock.useRealClock();
+    Clock.reset();
     Paths.useSystemCaseSensitivity();
     super.tearDown();
   }

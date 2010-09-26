@@ -177,7 +177,12 @@
     <action id="ActivateMessagesToolWindow">
       <keyboard-shortcut first-keystroke="meta 0"/>
     </action>
-    <action id="ActivateProjectToolWindow">
+    <action id="NewElement">
+      <keyboard-shortcut first-keystroke="meta N"/>
+      <keyboard-shortcut first-keystroke="control N"/>
+      <keyboard-shortcut first-keystroke="control ENTER"/>
+    </action>
+     <action id="ActivateProjectToolWindow">
       <keyboard-shortcut first-keystroke="meta 1"/>
     </action>
     <action id="ActivateCommanderToolWindow">

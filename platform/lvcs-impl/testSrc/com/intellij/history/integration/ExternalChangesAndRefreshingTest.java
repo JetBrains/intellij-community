@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests;
+package com.intellij.history.integration;
 
 
 import com.intellij.history.core.Paths;

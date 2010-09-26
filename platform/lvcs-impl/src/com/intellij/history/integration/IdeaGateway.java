@@ -16,7 +16,6 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
@@ -33,6 +32,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -218,7 +218,7 @@ public class IdeaGateway {
   private void registerDocumentContents(LocalHistoryFacade vcs, VirtualFile f, Document d) {
     Content content = acquireAndUpdateActualContent(f, d);
     if (content != null) {
-      vcs.contentChanged(f.getPath(), content, Clock.getCurrentTimestamp());
+      vcs.contentChanged(f.getPath(), content, Clock.getTime());
     }
   }
 

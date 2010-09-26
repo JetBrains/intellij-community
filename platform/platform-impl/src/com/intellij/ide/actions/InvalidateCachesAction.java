@@ -20,31 +20,29 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 
-/**
- * @author yole
- */
 public class InvalidateCachesAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    FSRecords.invalidateCaches();
     final Application app = ApplicationManager.getApplication();
-    if (app.isRestartCapable()) {
-      int rc = Messages.showYesNoDialog(e.getData(PlatformDataKeys.PROJECT),
-                                        "The caches have been invalidated and will be rebuilt on the next startup. Would you like to restart " +
-                                        ApplicationNamesInfo.getInstance().getFullProductName() + " now?",
-                                        "Invalidate Caches", Messages.getInformationIcon());
-      if (rc == 0) {
-        app.restart();
-      }
+    String[] options = app.isRestartCapable() ? new String[]{"Invalidate and Restart", "Invalidate", "Cancel"}
+                                              : new String[]{"Invalidate and Exit", "Invalidate", "Cancel"};
+
+    int result = Messages.showDialog(e.getData(PlatformDataKeys.PROJECT),
+                                     "The caches will be invalidated and rebuilt on the next startup.\n" +
+                                     "WARNING: Local History will be also cleared.\n\n" +
+                                     "Would you like to continue?\n\n",
+                                     "Invalidate Caches",
+                                     options,
+                                     0,
+                                     Messages.getWarningIcon());
+
+    if (result == -1 || result == options.length - 1) {
+      return;
     }
-    else {
-      Messages.showMessageDialog(e.getData(PlatformDataKeys.PROJECT),
-                                 "The caches have been invalidated and will be rebuilt on the next startup",
-                                 "Invalidate Caches", Messages.getInformationIcon());
-    }
+    FSRecords.invalidateCaches();
+    if (result == 0) app.restart();
   }
 }

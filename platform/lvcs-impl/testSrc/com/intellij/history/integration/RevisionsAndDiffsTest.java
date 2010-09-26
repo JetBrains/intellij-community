@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests;
+package com.intellij.history.integration;
 
 
-import com.intellij.history.Clock;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   }
 
   public void testIncludingCurrentVersionIntoRevisionsAfterPurge() throws Exception {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     VirtualFile f = createFile("file.txt", "content");
     getVcs().getChangeListInTests().purgeObsolete(0);
 
@@ -71,7 +71,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   }
 
   public void testCurrentRevisionForDirectoryAfterPurge() throws Exception {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     VirtualFile f = createDirectory("dir");
     getVcs().getChangeListInTests().purgeObsolete(0);
 
@@ -88,9 +88,9 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   }
 
   public void testIncludingVersionBeforeFirstChangeAfterPurge() throws IOException {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     VirtualFile f = createFile("file.txt", "one");
-    Clock.setCurrentTimestamp(20);
+    Clock.setTime(20);
     setContent(f, "two");
 
     getVcs().getChangeListInTests().purgeObsolete(5);
@@ -117,13 +117,13 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   }
 
   public void testRevisionsTimestamp() throws IOException {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     VirtualFile f = createFile("file1.txt");
 
-    Clock.setCurrentTimestamp(20);
+    Clock.setTime(20);
     setContent(f, "a");
 
-    Clock.setCurrentTimestamp(30);
+    Clock.setTime(30);
     setContent(f, "b");
 
     List<Revision> rr = getRevisionsFor(f);
@@ -140,13 +140,13 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
   }
 
   public void testTimestampForLastRevisionAfterPurge() throws IOException {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     VirtualFile f = createFile("file1.txt");
 
-    Clock.setCurrentTimestamp(20);
+    Clock.setTime(20);
     setContent(f, "a");
 
-    Clock.setCurrentTimestamp(30);
+    Clock.setTime(30);
     setContent(f, "b");
 
     getVcs().getChangeListInTests().purgeObsolete(15);

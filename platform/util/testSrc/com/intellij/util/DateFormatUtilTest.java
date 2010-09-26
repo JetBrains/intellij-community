@@ -15,37 +15,38 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
 import junit.framework.TestCase;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class DateFormatUtilTest extends TestCase{
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
-  private Date myCurrentDate;
 
   protected void setUp() throws Exception {
     super.setUp();
   }
 
   public void test() throws ParseException {
-    myCurrentDate = DATE_FORMAT.parse("10.12.2004 15.53.27");
+    Clock.setTime(2004, 11, 10, 17, 0);
 
-    doTest("Today 3:00 PM", "10.12.2004 15.00.00");
+    doTest("Moments ago", "10.12.2004 16.59.31");
+    doTest("A minute ago", "10.12.2004 16.59.29");
+    doTest("5 minutes ago", "10.12.2004 16.55.00");
+    doTest("1 hour ago", "10.12.2004 16.00.00");
+    doTest("Today 3:55 PM", "10.12.2004 15.55.00");
     doTest("Yesterday 3:00 PM", "09.12.2004 15.00.00");
 
     doTest("12/8/04 3:00 PM", "08.12.2004 15.00.00");
     doTest("12/7/04 3:00 PM", "07.12.2004 15.00.00");
 
-    myCurrentDate = DATE_FORMAT.parse("01.01.2004 15.53.27");
-    
+    Clock.setTime(2004, 0, 1, 15, 53);
     doTest("Yesterday 3:00 PM", "31.12.2003 15.00.00");
   }
 
   private void doTest(String expected, String date) throws ParseException {
-    assertEquals(expected, DateFormatUtil.formatDate(myCurrentDate, DATE_FORMAT.parse(date), Locale.US));
+    assertEquals(expected, DateFormatUtil.formatDateTime(DATE_FORMAT.parse(date)));
   }
 }

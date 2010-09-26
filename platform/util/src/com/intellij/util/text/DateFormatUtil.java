@@ -16,14 +16,19 @@
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.util.Clock;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 public class DateFormatUtil {
+  // do not expose this constants - they are very likely to be changed in future
+  private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
+  private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.SHORT);
+  private static final DateFormat DATE_TIME_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
   public static final long HOUR = MINUTE * 60;
@@ -31,18 +36,93 @@ public class DateFormatUtil {
   public static final long WEEK = DAY * 7;
   public static final long MONTH = DAY * 30;
   public static final long YEAR = DAY * 365;
+  private static final long[] DELIMS = new long[]{YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
 
-  public static final long[] DELIMS = new long[] {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
+  private enum Period {
+    YEAR, MONTH, WEEK, DAY, HOUR, MINUTE
+  }
+
+  private static final Period[] PERIOD = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private DateFormatUtil() {
   }
 
-  enum Period {
-    YEAR, MONTH, WEEK, DAY, HOUR, MINUTE
+  @NotNull
+  public static DateFormat getDateFormat() {
+    return DATE_FORMAT;
   }
 
-  private static final Period[] PERIOD = new Period[] {Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
+  @NotNull
+  public static DateFormat getTimeFormat() {
+    return TIME_FORMAT;
+  }
 
+  @NotNull
+  public static DateFormat getDateTimeFormat() {
+    return DATE_TIME_FORMAT;
+  }
+
+  @NotNull
+  public static String formatTime(long time) {
+    return getTimeFormat().format(time);
+  }
+
+  @NotNull
+  public static String formatDate(long time) {
+    return getDateFormat().format(time);
+  }
+
+  @NotNull
+  public static String formatExactDateTime(long time) {
+    return getDateTimeFormat().format(time);
+  }
+
+  @NotNull
+  public static String formatDateTime(Date time) {
+    return formatDateTime(time.getTime());
+  }
+
+  @NotNull
+  public static String formatDateTime(long time) {
+    return formatDateTime(time, DATE_TIME_FORMAT, TIME_FORMAT);
+  }
+
+  @NotNull
+  public static String formatDateTime(long time, @NotNull DateFormat dateTimeFormat, @NotNull DateFormat timeFormat) {
+    long currentTime = Clock.getTime();
+
+    Calendar c = Calendar.getInstance();
+    c.setTimeInMillis(currentTime);
+
+    int currentYear = c.get(Calendar.YEAR);
+    int currentDayOfYear = c.get(Calendar.DAY_OF_YEAR);
+
+    c.setTimeInMillis(time);
+
+    int year = c.get(Calendar.YEAR);
+    int dayOfYear = c.get(Calendar.DAY_OF_YEAR);
+
+    long delta = currentTime - time;
+    if (delta <= HOUR) {
+      return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
+    }
+
+    if (currentDayOfYear == dayOfYear) {
+      return CommonBundle.message("date.format.today") + " " + timeFormat.format(time);
+    }
+
+    boolean isYesterdayOnPreviousYear =
+      (currentYear == year + 1) && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
+    boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
+
+    if (isYesterday) {
+      return CommonBundle.message("date.format.yesterday") + " " + timeFormat.format(time);
+    }
+
+    return dateTimeFormat.format(time);
+  }
+
+  @NotNull
   public static String formatDuration(long delta) {
     StringBuffer buf = new StringBuffer();
     for (int i = 0; i < DELIMS.length; i++) {
@@ -60,16 +140,28 @@ public class DateFormatUtil {
   }
 
   private static String composeDurationMessage(final Period period, final int n) {
-    switch(period) {
-      case DAY: return CommonBundle.message("date.format.n.days", n);
-      case MINUTE:return CommonBundle.message("date.format.n.minutes", n);
-      case HOUR:return CommonBundle.message("date.format.n.hours", n);
-      case MONTH:return CommonBundle.message("date.format.n.months", n);
-      case WEEK:return CommonBundle.message("date.format.n.weeks", n);
-      default:return CommonBundle.message("date.format.n.years", n);
+    switch (period) {
+      case DAY:
+        return CommonBundle.message("date.format.n.days", n);
+      case MINUTE:
+        return CommonBundle.message("date.format.n.minutes", n);
+      case HOUR:
+        return CommonBundle.message("date.format.n.hours", n);
+      case MONTH:
+        return CommonBundle.message("date.format.n.months", n);
+      case WEEK:
+        return CommonBundle.message("date.format.n.weeks", n);
+      default:
+        return CommonBundle.message("date.format.n.years", n);
     }
   }
 
+  @NotNull
+  public static String formatFrequency(long time) {
+    return CommonBundle.message("date.frequency", formatBetweenDates(time, 0));
+  }
+
+  @NotNull
   public static String formatBetweenDates(long d1, long d2) {
     long delta = Math.abs(d1 - d2);
     if (delta == 0) return CommonBundle.message("date.format.right.now");
@@ -87,83 +179,54 @@ public class DateFormatUtil {
     if (d2 > d1) {
       if (n <= 0) {
         return CommonBundle.message("date.format.a.few.moments.ago");
-      } else {
+      }
+      else {
         return someTimeAgoMessage(PERIOD[i], n);
       }
     }
     else if (d2 < d1) {
       if (n <= 0) {
         return CommonBundle.message("date.format.in.a.few.moments");
-      } else {
+      }
+      else {
         return composeInSomeTimeMessage(PERIOD[i], n);
       }
-
     }
 
     return "";
   }
 
-  private static String composeInSomeTimeMessage(final Period period, final int n) {
-    switch(period) {
-      case DAY: return CommonBundle.message("date.format.in.n.days", n);
-      case MINUTE:return CommonBundle.message("date.format.in.n.minutes", n);
-      case HOUR:return CommonBundle.message("date.format.in.n.hours", n);
-      case MONTH:return CommonBundle.message("date.format.in.n.months", n);
-      case WEEK:return CommonBundle.message("date.format.in.n.weeks", n);
-      default:return CommonBundle.message("date.format.in.n.years", n);
-    }
-  }
-
   private static String someTimeAgoMessage(final Period period, final int n) {
-    switch(period) {
-      case DAY: return CommonBundle.message("date.format.n.days.ago", n);
-      case MINUTE:return CommonBundle.message("date.format.n.minutes.ago", n);
-      case HOUR:return CommonBundle.message("date.format.n.hours.ago", n);
-      case MONTH:return CommonBundle.message("date.format.n.months.ago", n);
-      case WEEK:return CommonBundle.message("date.format.n.weeks.ago", n);
-      default:return CommonBundle.message("date.format.n.years.ago", n);
-    }
-
-  }
-
-  public static String formatDate(Date today, Date date, Locale locale) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(today);
-
-    int todayYear = calendar.get(Calendar.YEAR);
-    int todayDayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-
-    calendar.setTime(date);
-
-    int year = calendar.get(Calendar.YEAR);
-    int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-
-    DateFormat defaultDateFormat = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT,
-                                                                        SimpleDateFormat.SHORT,
-                                                                        locale);
-
-    DateFormat timeDefaultFormat = DateFormat.getTimeInstance(SimpleDateFormat.SHORT, locale);
-
-    boolean isYesterdayOnPreviousYear = (todayYear == year + 1) && todayDayOfYear == 1 && dayOfYear == calendar.getActualMaximum(Calendar.DAY_OF_YEAR);
-
-    boolean isYesterday = isYesterdayOnPreviousYear || (todayYear == year && todayDayOfYear == dayOfYear + 1);
-
-    if (isYesterday) {
-      return CommonBundle.message("date.format.yesterday") + " " + timeDefaultFormat.format(date);
-    } else if (year != todayYear) {
-      return defaultDateFormat.format(date);
-    } else if (todayDayOfYear == dayOfYear) {
-      return CommonBundle.message("date.format.today") + " " + timeDefaultFormat.format(date);
-    } else {
-      return defaultDateFormat.format(date);
+    switch (period) {
+      case DAY:
+        return CommonBundle.message("date.format.n.days.ago", n);
+      case MINUTE:
+        return CommonBundle.message("date.format.n.minutes.ago", n);
+      case HOUR:
+        return CommonBundle.message("date.format.n.hours.ago", n);
+      case MONTH:
+        return CommonBundle.message("date.format.n.months.ago", n);
+      case WEEK:
+        return CommonBundle.message("date.format.n.weeks.ago", n);
+      default:
+        return CommonBundle.message("date.format.n.years.ago", n);
     }
   }
 
-  public static String formatDate(Date current_date, Date date) {
-    return formatDate(current_date, date, Locale.getDefault());
-  }
-
-  public static String formatFrequency(final long tm) {
-    return CommonBundle.message("date.frequency", formatBetweenDates(tm, 0));
+  private static String composeInSomeTimeMessage(final Period period, final int n) {
+    switch (period) {
+      case DAY:
+        return CommonBundle.message("date.format.in.n.days", n);
+      case MINUTE:
+        return CommonBundle.message("date.format.in.n.minutes", n);
+      case HOUR:
+        return CommonBundle.message("date.format.in.n.hours", n);
+      case MONTH:
+        return CommonBundle.message("date.format.in.n.months", n);
+      case WEEK:
+        return CommonBundle.message("date.format.in.n.weeks", n);
+      default:
+        return CommonBundle.message("date.format.in.n.years", n);
+    }
   }
 }

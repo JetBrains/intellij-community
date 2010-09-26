@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.revertion;
+package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.revertion.DifferenceReverter;
-import com.intellij.historyIntegrTests.IntegrationTestCase;
+import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

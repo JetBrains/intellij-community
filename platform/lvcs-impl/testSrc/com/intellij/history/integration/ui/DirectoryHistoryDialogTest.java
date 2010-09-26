@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests.ui;
+package com.intellij.history.integration.ui;
 
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
-import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
-import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;

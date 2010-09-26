@@ -205,6 +205,10 @@
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
     </action>
+    <action id="NewElement">
+      <keyboard-shortcut first-keystroke="control N"/>
+      <keyboard-shortcut first-keystroke="control ENTER"/>
+    </action>
     <action id="Generate">
       <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>

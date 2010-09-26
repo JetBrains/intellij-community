@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1120,31 +1119,6 @@ public class StringUtil {
     long mbytes = fileSize * 100 / 1024 / 1024;
     final String size = mbytes / 100 + "." + formatMinor(mbytes % 100);
     return CommonBundle.message("format.file.size.mbytes", size);
-  }
-
-  @NotNull
-  public static String formatDate(long timestamp, DateFormat format) {
-    long minDelta = (new Date().getTime() - timestamp) / (1000 * 60);
-
-    if (minDelta < 2) {
-      return CommonBundle.message("format.date.momentsAgo");
-    }
-    if (minDelta < 10) {
-      return CommonBundle.message("format.date.fewMinutesAgo");
-    }
-
-    if (minDelta <= 30) {
-      return CommonBundle.message("format.date.last30Minutes");
-    }
-
-    int hoursDelta = Math.round(minDelta / 60f);
-    if (hoursDelta <= 1) {
-      return CommonBundle.message("format.date.lastHour");
-    }
-    if (hoursDelta < 5) {
-      return CommonBundle.message("format.date.hoursAgo", hoursDelta);
-    }
-    return format.format(timestamp);
   }
 
   @NotNull

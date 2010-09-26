@@ -19,13 +19,14 @@ package com.intellij.history.integration.revertion;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -93,7 +94,19 @@ public abstract class Reverter {
     }
   }
 
-  public abstract String getCommandName();
+  public String getCommandName() {
+    Revision to = getTargetRevision();
+    String name = to.getChangeSetName();
+    String date = DateFormatUtil.formatExactDateTime(to.getTimestamp());
+    if (name != null) {
+      return LocalHistoryBundle.message("system.label.revert.to.change.date", name, date);
+    }
+    else {
+      return LocalHistoryBundle.message("system.label.revert.to.date", date);
+    }
+  }
+
+  protected abstract Revision getTargetRevision();
 
   protected abstract void doRevert() throws IOException;
 }

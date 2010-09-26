@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.historyIntegrTests;
+package com.intellij.history.integration;
 
 
-import com.intellij.history.Clock;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class GettingContentAtDateTest extends IntegrationTestCase {
@@ -49,11 +49,11 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
   }
 
   public void testGettingFirstAvailableContentAfterPurge() throws Exception {
-    Clock.setCurrentTimestamp(1);
+    Clock.setTime(1);
     setContent(f, "1", TIMESTAMP_INCREMENT);
-    Clock.setCurrentTimestamp(2);
+    Clock.setTime(2);
     setContent(f, "2", TIMESTAMP_INCREMENT * 2);
-    Clock.setCurrentTimestamp(3);
+    Clock.setTime(3);
     setContent(f, "3", TIMESTAMP_INCREMENT * 3);
 
     getVcs().getChangeListInTests().purgeObsolete(2);
