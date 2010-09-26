@@ -45,4 +45,9 @@ public class ProgressWrapper extends ProgressIndicatorBase {
   public static ProgressWrapper wrap(@Nullable ProgressIndicator indicator) {
     return indicator == null ? null : new ProgressWrapper(indicator);
   }
+
+  public static ProgressIndicator unwrap(ProgressIndicator indicator) {
+    return indicator instanceof ProgressWrapper ?
+           ((ProgressWrapper)indicator).getOriginalProgressIndicator():indicator;
+  }
 }
