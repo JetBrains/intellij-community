@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,18 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantStringFormatCallInspection extends BaseInspection {
-    
+
     @Override
     @Nls
     @NotNull
@@ -90,6 +92,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
+            @NonNls
             final String methodName =
                     methodExpression.getReferenceName();
             if (!"format".equals(methodName)) {
@@ -124,13 +127,8 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
             if (firstType == null) {
                 return;
             }
-            if (firstArgument instanceof PsiLiteralExpression) {
-                final PsiLiteralExpression literalExpression =
-                        (PsiLiteralExpression)firstArgument;
-                final String expressionText = literalExpression.getText();
-                if (expressionText.contains("%n")) {
-                    return;
-                }
+            if (containsPercentN(firstArgument)) {
+                return;
             }
             if (firstType.equalsToText("java.lang.String") &&
                     arguments.length == 1) {
@@ -148,6 +146,35 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
                     registerMethodCallError(expression);
                 }
             }
+        }
+
+        private static boolean containsPercentN(PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+            if (expression instanceof PsiLiteralExpression) {
+                final PsiLiteralExpression literalExpression =
+                        (PsiLiteralExpression)expression;
+                @NonNls final String expressionText =
+                        literalExpression.getText();
+                return expressionText.contains("%n");
+            }
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) expression;
+                final IElementType tokenType =
+                        binaryExpression.getOperationTokenType();
+                if (!tokenType.equals(JavaTokenType.PLUS)) {
+                    return false;
+                }
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                if (containsPercentN(lhs)) {
+                    return true;
+                }
+                final PsiExpression rhs = binaryExpression.getROperand();
+                return containsPercentN(rhs);
+            }
+            return false;
         }
     }
 }
