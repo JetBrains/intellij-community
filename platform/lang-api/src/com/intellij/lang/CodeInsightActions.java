@@ -27,6 +27,9 @@ public class CodeInsightActions {
     OVERRIDE_METHOD = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.overrideMethod");
 
   public static final LanguageExtension<LanguageCodeInsightActionHandler>
+    DELEGATE_METHODS = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.delegateMethods");
+
+  public static final LanguageExtension<LanguageCodeInsightActionHandler>
     GOTO_SUPER = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.gotoSuper");
 
   private CodeInsightActions() {

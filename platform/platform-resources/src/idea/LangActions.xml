@@ -28,6 +28,7 @@
     <group id="GenerateGroup">
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
+      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
