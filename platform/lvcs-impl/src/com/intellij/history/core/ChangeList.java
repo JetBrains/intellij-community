@@ -16,12 +16,12 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Clock;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.TestOnly;
 
@@ -70,7 +70,7 @@ public class ChangeList {
   }
 
   private void doBeginChangeSet() {
-    myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getCurrentTimestamp());
+    myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getTime());
   }
 
   public synchronized boolean forceBeginChangeSet() {

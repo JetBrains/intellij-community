@@ -24,7 +24,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.DateFormatUtil;
 
 public abstract class FileDifferenceModel {
   protected final Project myProject;
@@ -58,7 +58,7 @@ public abstract class FileDifferenceModel {
   }
 
   private String formatTitle(Entry e, boolean isAvailable) {
-    String result = StringUtil.formatRelativeDateTime(e.getTimestamp()) + " - " + e.getName();
+    String result = DateFormatUtil.formatDateTime(e.getTimestamp()) + " - " + e.getName();
     if (!isAvailable) {
       result += " - " + LocalHistoryBundle.message("content.not.available");
     }

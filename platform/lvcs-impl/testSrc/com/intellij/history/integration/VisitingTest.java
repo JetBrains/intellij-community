@@ -15,11 +15,11 @@
  */
 package com.intellij.history.integration;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.CreateEntryChange;
 import com.intellij.history.core.changes.RenameChange;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -111,12 +111,12 @@ public class VisitingTest extends IntegrationTestCase {
 
   @Test
   public void testPurgingDuringVisit() throws Exception {
-    Clock.setCurrentTimestamp(10);
+    Clock.setTime(10);
     getVcs().beginChangeSet();
     createFile("f.txt");
     getVcs().endChangeSet(null);
 
-    Clock.setCurrentTimestamp(20);
+    Clock.setTime(20);
     getVcs().beginChangeSet();
     createFile("dir");
     getVcs().endChangeSet(null);

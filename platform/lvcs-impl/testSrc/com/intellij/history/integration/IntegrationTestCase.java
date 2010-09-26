@@ -16,7 +16,6 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
@@ -30,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.PlatformTestCase;
@@ -55,7 +55,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    Clock.useRealClock();
+    Clock.reset();
     Paths.useSystemCaseSensitivity();
 
     myGateway = new IdeaGateway();
@@ -79,7 +79,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Clock.useRealClock();
+    Clock.reset();
     Paths.useSystemCaseSensitivity();
     super.tearDown();
   }

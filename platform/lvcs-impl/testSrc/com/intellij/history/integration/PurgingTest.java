@@ -15,11 +15,11 @@
  */
 package com.intellij.history.integration;
 
-import com.intellij.history.Clock;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -98,11 +98,11 @@ public class PurgingTest extends IntegrationTestCase {
 
   @Test
   public void testChangesAfterPurge() throws IOException {
-    Clock.setCurrentTimestamp(1);
+    Clock.setTime(1);
     VirtualFile f = createFile("file.txt");
-    Clock.setCurrentTimestamp(2);
+    Clock.setTime(2);
     setContent(f, "1");
-    Clock.setCurrentTimestamp(3);
+    Clock.setTime(3);
     setContent(f, "2");
 
     assertEquals(3, LocalHistoryTestCase.collectChanges(getVcs(), f.getPath(), myProject.getLocationHash(), null).size());
@@ -114,10 +114,10 @@ public class PurgingTest extends IntegrationTestCase {
 
   @Test
   public void testLabelsAfterPurge() throws IOException {
-    Clock.setCurrentTimestamp(1);
+    Clock.setTime(1);
     VirtualFile file = createFile("file");
 
-    Clock.setCurrentTimestamp(2);
+    Clock.setTime(2);
     LocalHistory.getInstance().putUserLabel(myProject, "1");
 
     getVcs().getChangeListInTests().purgeObsolete(1);
@@ -129,7 +129,7 @@ public class PurgingTest extends IntegrationTestCase {
 
   private void createChangesWithTimestamps(long... tt) {
     for (long t : tt) {
-      Clock.setCurrentTimestamp(t);
+      Clock.setTime(t);
       getVcs().beginChangeSet();
       getVcs().putUserLabel("foo", "project");
       getVcs().endChangeSet(null);

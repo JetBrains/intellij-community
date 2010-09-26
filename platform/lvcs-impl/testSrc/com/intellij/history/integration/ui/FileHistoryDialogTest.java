@@ -25,8 +25,8 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 
 import java.io.IOException;
 import java.util.Date;
@@ -54,9 +54,9 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 2);
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
-    assertEquals(StringUtil.formatRelativeDateTime(leftTime) + " - old.txt",
+    assertEquals(DateFormatUtil.formatDateTime(leftTime) + " - old.txt",
                  m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals(StringUtil.formatRelativeDateTime(rightTime) + " - new.txt",
+    assertEquals(DateFormatUtil.formatDateTime(rightTime) + " - new.txt",
                  m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 

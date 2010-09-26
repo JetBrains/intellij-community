@@ -18,8 +18,6 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,10 +32,10 @@ public class StringUtilTest extends TestCase {
     assertEquals('A', StringUtil.toUpperCase('A'));
     assertEquals('K', StringUtil.toUpperCase('k'));
     assertEquals('K', StringUtil.toUpperCase('K'));
-    
+
     assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
   }
-  
+
   public void testToLowerCase() {
     assertEquals('/', StringUtil.toLowerCase('/'));
     assertEquals(':', StringUtil.toLowerCase(':'));
@@ -71,16 +69,5 @@ public class StringUtilTest extends TestCase {
     assertTrue(StringUtil.startsWithConcatenationOf("something", "something", ""));
     assertFalse(StringUtil.startsWithConcatenationOf("something", "something", "."));
     assertFalse(StringUtil.startsWithConcatenationOf("some", "something", ""));
-  }
-
-  public void testFormattingDate() throws Exception {
-    assertEquals("Moments ago", StringUtil.formatRelative(new Date().getTime(), SimpleDateFormat.getDateTimeInstance()));
-    assertEquals("Few minutes ago", StringUtil.formatRelative(new Date().getTime() - (60 * 1000 * 2), SimpleDateFormat.getDateTimeInstance()));
-    assertEquals("Last 30 minutes", StringUtil.formatRelative(new Date().getTime() - (60 * 1000 * 30), SimpleDateFormat.getDateTimeInstance()));
-    assertEquals("Last hour", StringUtil.formatRelative(new Date().getTime() - (60 * 1000 * 80), SimpleDateFormat.getDateTimeInstance()));
-    assertEquals("2 hours ago", StringUtil.formatRelative(new Date().getTime() - (60 * 1000 * 100), SimpleDateFormat.getDateTimeInstance()));
-    assertEquals("3 hours ago", StringUtil.formatRelative(new Date().getTime() - (60 * 1000 * 60 * 3), SimpleDateFormat.getDateTimeInstance()));
-    long t = new Date().getTime() - (60 * 1000 * 60 * 100);
-    assertEquals(SimpleDateFormat.getDateTimeInstance().format(t), StringUtil.formatRelative(t, SimpleDateFormat.getDateTimeInstance()));
   }
 }

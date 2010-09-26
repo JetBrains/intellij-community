@@ -16,7 +16,6 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.TestContent;
@@ -24,6 +23,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
+import com.intellij.openapi.util.Clock;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -164,7 +164,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   protected static void setCurrentTimestamp(long t) {
-    Clock.setCurrentTimestamp(t);
+    Clock.setTime(t);
   }
 
   protected static void assertContent(String expected, Entry e) {

@@ -23,8 +23,8 @@ import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -107,7 +107,7 @@ public class RecentChangesPopup {
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       RecentChange c = (RecentChange)val;
       myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(StringUtil.formatRelativeDateTime(c.getTimestamp()));
+      myDateLabel.setText(DateFormatUtil.formatDateTime(c.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

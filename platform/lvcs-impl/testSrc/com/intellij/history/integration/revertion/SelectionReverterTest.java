@@ -16,15 +16,15 @@
 
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
   public void testChangeSetName() throws IOException {
     long time = new Date(2001, 1, 11, 12, 30).getTime();
-    Clock.setCurrentTimestamp(time);
+    Clock.setTime(time);
 
     f.setBinaryContent("one".getBytes());
     f.setBinaryContent("two".getBytes());
@@ -78,7 +78,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
     List<Revision> rr = getRevisionsFor(f);
     assertEquals(5, rr.size());
-    assertEquals("Reverted to " + StringUtil.formatDateTime(time), rr.get(1).getChangeSetName());
+    assertEquals("Reverted to " + DateFormatUtil.formatExactDateTime(time), rr.get(1).getChangeSetName());
   }
 
   public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {
