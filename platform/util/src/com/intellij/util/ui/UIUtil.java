@@ -1400,7 +1400,7 @@ public class UIUtil {
           }
 
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
-          if (tree.isPathSelected(pressedPath)) return;
+          if (tree.isPathSelected(pressedPath) && (e.getModifiers() & MouseEvent.META_MASK) != MouseEvent.META_MASK) return;
 
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
@@ -1431,6 +1431,9 @@ public class UIUtil {
 
       tree.setShowsRootHandles(true);
       tree.addMouseListener(mySelectionListener);
+
+      //final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+      //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "clearSelection");
     }
 
     @Override
