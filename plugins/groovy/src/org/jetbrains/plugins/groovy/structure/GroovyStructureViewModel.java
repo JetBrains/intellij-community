@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -56,7 +57,7 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
 
   @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[]{Sorter.ALPHA_SORTER};
+    return new Sorter[]{GroovyKindSorter.INSTANCE, Sorter.ALPHA_SORTER};
   }
 
   @NotNull
@@ -74,6 +75,7 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
     return SUITABLE_CLASSES;
   }
 
+  @Nullable
   protected Object findAcceptableElement(PsiElement element) {
     while (element != null && !(element instanceof PsiDirectory)) {
       if (isSuitable(element)) {
