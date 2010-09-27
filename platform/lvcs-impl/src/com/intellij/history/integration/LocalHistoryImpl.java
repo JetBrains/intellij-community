@@ -99,8 +99,13 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private void validateStorage() {
     if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       LocalHistoryLog.LOG.info("Checking local history storage...");
-      myVcs.getChangeListInTests().getChangesInTests();
-      LocalHistoryLog.LOG.info("Local history storage seems to be ok");
+      try {
+        myVcs.getChangeListInTests().getChangesInTests();
+        LocalHistoryLog.LOG.info("Local history storage seems to be ok");
+      }
+      catch (Exception e) {
+        LocalHistoryLog.LOG.error(e);
+      }
     }
   }
 

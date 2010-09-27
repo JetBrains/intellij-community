@@ -74,6 +74,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     try {
       if (myStorage != null) {
         myStorage.setVersion(-1);
+        myStorage.force();
       }
     }
     catch (Throwable ex) {

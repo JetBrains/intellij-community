@@ -124,7 +124,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           }
         }
       } else if (myCurrentComponent == null) {
-        maybeShowFor(c, me);
+        //maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
@@ -306,7 +306,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
-    if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
+    myShowRequest = null;
+    if (myCurrentTooltip == null) return true;
+
+    if (me != null && myCurrentTipUi != null) {
       if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
         if (myHideRunnable != null) {
           myHideRunnable = null;
@@ -324,8 +327,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
       }
     };
-
-    myShowRequest = null;
 
     if (me != null) {
       myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
@@ -387,4 +388,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
   }
 
+  public void cancelAutoHide() {
+    myHideRunnable = null;
+  }
 }

@@ -36,12 +36,20 @@ public class SyncDateFormat {
     return myDelegate.parse(s);
   }
 
-  public synchronized String format(Date d) {
-    return myDelegate.format(d);
+  public synchronized String format(Date date) {
+    return myDelegate.format(date);
+  }
+
+  public synchronized String format(long time) {
+    return myDelegate.format(time);
   }
 
   public synchronized void setTimeZone(final TimeZone timeZone) {
     myDelegate.setTimeZone(timeZone);
+  }
+
+  public DateFormat getDelegate() {
+    return myDelegate;
   }
 
   public synchronized String toPattern() {

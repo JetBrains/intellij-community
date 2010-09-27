@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,10 +35,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -197,10 +196,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     private void updateLastCheckedLabel() {
-      final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
       final long lastChecked = UpdateSettings.getInstance().LAST_TIME_CHECKED;
       myLastCheckedDate
-        .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : dateFormat.format(new Date(lastChecked)));
+        .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(lastChecked));
     }
 
     public List<String> getPluginsHosts() {

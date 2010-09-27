@@ -697,6 +697,7 @@
 
     <codeInsight.overrideMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaImplementMethodsHandler"/>
+    <codeInsight.delegateMethods language="JAVA" implementationClass="com.intellij.codeInsight.generation.GenerateDelegateHandler"/>
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>

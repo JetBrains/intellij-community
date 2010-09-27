@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -43,8 +43,14 @@ import java.util.Set;
 /**
  * @author mike
  */
-public class GenerateDelegateHandler implements CodeInsightActionHandler {
+public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
+
+  @Override
+  public boolean isValidFor(Editor editor, PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
+    return OverrideImplementUtil.getContextClass(editor.getProject(), editor, file, false) != null && isApplicable(file, editor);
+  }
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {

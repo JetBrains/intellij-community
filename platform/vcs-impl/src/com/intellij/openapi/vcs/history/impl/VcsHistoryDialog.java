@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
@@ -52,8 +53,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -65,9 +64,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
-
-  private final static DateFormat DATE_FORMAT = SimpleDateFormat
-    .getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT, Locale.getDefault());
 
   private final DiffPanel myDiffPanel;
   private final Project myProject;
@@ -83,7 +79,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     public Object valueOf(Object object) {
       Date date = ((VcsFileRevision)object).getRevisionDate();
       if (date == null) return "";
-      return DATE_FORMAT.format(date);
+      return DateFormatUtil.formatPrettyDateTime(date);
     }
 
   };

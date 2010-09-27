@@ -35,6 +35,10 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,8 +49,13 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
@@ -85,6 +95,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean myLeftCtrlPressed = false;
   private boolean myRightAltPressed = false;
 
+  private boolean mySecondKeystrokeAutoPopupEnabled = Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled");
+
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
   private final KeyProcessorContext myContext = new KeyProcessorContext();
@@ -96,14 +108,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
         resetState();
         if (myContext != null) {
-          Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
-          if (project != null) {
-            StatusBar.Info.set(null, project);
-          }
+          final DataContext dataContext = myContext.getDataContext();
+          StatusBar.Info.set(null, dataContext == null ? null : PlatformDataKeys.PROJECT.getData(dataContext));
         }
       }
     }
   };
+
+  private final Alarm mySecondKeystrokePopupTimeout = new Alarm();
 
   public IdeKeyEventDispatcher(IdeEventQueue queue){
     myQueue = queue;
@@ -388,20 +400,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;
-      ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<Pair<AnAction,KeyStroke>>();
-      for (AnAction action : myContext.getActions()) {
-        Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
-            if (keyShortcut.getFirstKeyStroke().equals(myFirstKeyStroke)) {
-              secondKeyStrokes.add(new Pair<AnAction, KeyStroke>(action, keyShortcut.getSecondKeyStroke()));
-            }
-          }
-        }
-      }
+      final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
@@ -419,11 +420,43 @@ public final class IdeKeyEventDispatcher implements Disposable {
       mySecondStrokeTimeout.cancelAllRequests();
       mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimout"));
 
+      if (mySecondKeystrokeAutoPopupEnabled) {
+        mySecondKeystrokePopupTimeout.cancelAllRequests();
+        if (secondKeyStrokes.size() > 1) {
+          final DataContext oldContext = myContext.getDataContext();
+          mySecondKeystrokePopupTimeout.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+                StatusBar.Info.set(null, PlatformDataKeys.PROJECT.getData(oldContext));
+                new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
+              }
+            }
+          }, Registry.intValue("actionSystem.secondKeystrokePopupTimeout"));
+        }
+      }
+
       setState(KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE);
       return true;
     }else{
       return processAction(e, myActionProcessor);
     }
+  }
+
+  private ArrayList<Pair<AnAction, KeyStroke>> getSecondKeystrokeActions() {
+    ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<Pair<AnAction,KeyStroke>>();
+    for (AnAction action : myContext.getActions()) {
+      Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
+          if (keyShortcut.getFirstKeyStroke().equals(myFirstKeyStroke)) {
+            secondKeyStrokes.add(new Pair<AnAction, KeyStroke>(action, keyShortcut.getSecondKeyStroke()));
+          }
+        }
+      }
+    }
+    return secondKeyStrokes;
   }
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
@@ -599,6 +632,33 @@ public final class IdeKeyEventDispatcher implements Disposable {
         hasSecondStroke |= addAction(action, sc);
       }
     }
+
+    if (!hasSecondStroke && sc instanceof KeyboardShortcut) {
+      // little trick to invoke action which second stroke is a key w/o modifiers, but user still
+      // holds the modifier key(s) of the first stroke
+
+      final KeyboardShortcut keyboardShortcut = (KeyboardShortcut)sc;
+      final KeyStroke firstKeyStroke = keyboardShortcut.getFirstKeyStroke();
+      final KeyStroke secondKeyStroke = keyboardShortcut.getSecondKeyStroke();
+
+      if (secondKeyStroke != null && secondKeyStroke.getModifiers() != 0 && firstKeyStroke.getModifiers() != 0) {
+        final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke
+          .getKeyStroke(secondKeyStroke.getKeyCode(), 0));
+        final String[] additionalActions = keymap.getActionIds(altShortCut);
+
+        for (final String actionId : additionalActions) {
+          AnAction action = actionManager.getAction(actionId);
+          if (action != null) {
+            if (isModalContext && !action.isEnabledInModalContext()) {
+              continue;
+            }
+            hasSecondStroke |= addAction(action, altShortCut);
+          }
+        }
+      }
+
+    }
+
     myContext.setHasSecondStroke(hasSecondStroke);
 
     Comparator<? super AnAction> comparator = PlatformDataKeys.ACTIONS_SORTER.getData(myContext.getDataContext());
@@ -667,5 +727,99 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public boolean isReady() {
     return myState == KeyState.STATE_INIT || myState == KeyState.STATE_PROCESSED;
+  }
+
+  private static class SecondaryKeystrokePopup extends ListPopupImpl {
+    private SecondaryKeystrokePopup(@NotNull final KeyStroke firstKeystroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext context) {
+      super(buildStep(actions, context));
+      registerActions(firstKeystroke, actions, context);
+    }
+
+    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+      ContainerUtil.process(actions, new Processor<Pair<AnAction, KeyStroke>>() {
+        @Override
+        public boolean process(final Pair<AnAction, KeyStroke> pair) {
+          final String actionText = pair.getFirst().getTemplatePresentation().getText();
+          final AbstractAction a = new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+              cancel();
+              invokeAction(pair.getFirst(), ctx);
+            }
+          };
+
+          final KeyStroke keyStroke = pair.getSecond();
+          registerAction(actionText, keyStroke, a);
+
+          if (keyStroke.getModifiers() == 0) {
+            // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
+            // I want to be able to hold the Command while pressing 'R'
+
+            final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
+            final String _existing = getActionForKeyStroke(additionalKeyStroke);
+            if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
+          }
+
+          return true;
+        }
+      });
+    }
+
+    private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          final AnActionEvent event =
+            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, (Presentation)action.getTemplatePresentation().clone(),
+                              ActionManager.getInstance(), 0);
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+            action.actionPerformed(event);
+          }
+        }
+      });
+    }
+
+    @Override
+    protected ListCellRenderer getListElementRenderer() {
+      return new ActionListCellRenderer();
+    }
+
+    private static ListPopupStep buildStep(@NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+      return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, new Condition<Pair<AnAction, KeyStroke>>() {
+        @Override
+        public boolean value(Pair<AnAction, KeyStroke> pair) {
+          final AnAction action = pair.getFirst();
+          final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+          AnActionEvent event = new AnActionEvent(null, ctx,
+                                                  ActionPlaces.UNKNOWN,
+                                                  presentation,
+                                                  ActionManager.getInstance(),
+                                                  0);
+
+          ActionUtil.performDumbAwareUpdate(action, event, true);
+          return presentation.isEnabled() && presentation.isVisible();
+        }
+      })) {
+        @Override
+        public PopupStep onChosen(Pair<AnAction, KeyStroke> selectedValue, boolean finalChoice) {
+          invokeAction(selectedValue.getFirst(), ctx);
+          return FINAL_CHOICE;
+        }
+      };
+    }
+
+    private static class ActionListCellRenderer extends ColoredListCellRenderer {
+      @Override
+      protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+        if (value == null) return;
+        if (value instanceof Pair) {
+          final Pair<AnAction, KeyStroke> pair = (Pair<AnAction, KeyStroke>) value;
+          append(KeymapUtil.getShortcutText(new KeyboardShortcut(pair.getSecond(), null)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          appendAlign(30);
+          final String text = pair.getFirst().getTemplatePresentation().getText();
+          append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    }
   }
 }
