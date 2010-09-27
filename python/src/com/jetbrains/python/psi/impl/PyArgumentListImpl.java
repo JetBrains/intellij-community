@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -241,7 +242,11 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     if (call != null) {
       PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(context);
       if (resolved_callee != null) {
-        ret.mapArguments(arguments, resolved_callee);
+        PsiFile psifile = getContainingFile();
+        LanguageLevel level;
+        if (psifile instanceof PyFile) level = ((PyFile)psifile).getLanguageLevel();
+        else level = LanguageLevel.PYTHON24; // lowest common
+        ret.mapArguments(arguments, resolved_callee, level);
       }
     }
     return ret;

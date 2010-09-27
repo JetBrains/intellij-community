@@ -317,17 +317,17 @@ public class PyCallExpressionHelper {
             }
           }
         );
-        myResult.my_nested_mapped_params.put(arg, nested_mapped);
+        myResult.myNestedMappedParams.put(arg, nested_mapped);
       }
     }
 
     public void enterNamed(PyNamedParameter param) {
       if (myArgIterator.hasNext()) {
         PyExpression subarg = myArgIterator.next();
-        myResult.my_plain_mapped_params.put(subarg, param);
+        myResult.myPlainMappedParams.put(subarg, param);
       }
       else {
-        myResult.my_unmapped_params.add(param);
+        myResult.myUnmappedParams.add(param);
       }
       // ...and *arg or **arg just won't parse inside a tuple, no need to handle it here
     }
@@ -335,27 +335,27 @@ public class PyCallExpressionHelper {
 
   static class AnalysisResultImpl implements PyArgumentList.AnalysisResult {
 
-    private final Map<PyExpression, PyNamedParameter> my_plain_mapped_params; // one param per arg
-    private final Map<PyExpression, List<PyNamedParameter>> my_nested_mapped_params; // one arg sweeps a nested tuple of params
-    private PyStarArgument my_tuple_arg; // the *arg
-    private PyStarArgument my_kwd_arg;   // the **arg
-    private final List<PyNamedParameter> my_tuple_mapped_params; // params mapped to *arg
-    private final List<PyNamedParameter> my_kwd_mapped_params;   // params mapped to **arg
-    private final List<PyNamedParameter> my_unmapped_params;
-    private final Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> my_arg_flags; // flags of every arg
-    private PyCallExpression.PyMarkedCallee my_marked_callee;
-    private PyArgumentList my_argument_list;
+    private final Map<PyExpression, PyNamedParameter> myPlainMappedParams; // one param per arg
+    private final Map<PyExpression, List<PyNamedParameter>> myNestedMappedParams; // one arg sweeps a nested tuple of params
+    private PyStarArgument myTupleArg; // the *arg
+    private PyStarArgument myKwdArg;   // the **arg
+    private final List<PyNamedParameter> myTupleMappedParams; // params mapped to *arg
+    private final List<PyNamedParameter> myKwdMappedParams;   // params mapped to **arg
+    private final List<PyNamedParameter> myUnmappedParams;
+    private final Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> myArgFlags; // flags of every arg
+    private PyCallExpression.PyMarkedCallee myMarkedCallee;
+    private PyArgumentList myArgumentList;
 
     public AnalysisResultImpl(PyArgumentList arglist) {
       // full of empty containers
-      my_plain_mapped_params = new HashMap<PyExpression, PyNamedParameter>();
-      my_nested_mapped_params = new HashMap<PyExpression, List<PyNamedParameter>>();
-      my_tuple_mapped_params = new ArrayList<PyNamedParameter>();
-      my_kwd_mapped_params = new ArrayList<PyNamedParameter>();
-      my_unmapped_params = new ArrayList<PyNamedParameter>();
-      my_arg_flags = new HashMap<PyExpression, EnumSet<PyArgumentList.ArgFlag>>();
-      my_marked_callee = null;
-      my_argument_list = arglist;
+      myPlainMappedParams = new HashMap<PyExpression, PyNamedParameter>();
+      myNestedMappedParams = new HashMap<PyExpression, List<PyNamedParameter>>();
+      myTupleMappedParams = new ArrayList<PyNamedParameter>();
+      myKwdMappedParams = new ArrayList<PyNamedParameter>();
+      myUnmappedParams = new ArrayList<PyNamedParameter>();
+      myArgFlags = new HashMap<PyExpression, EnumSet<PyArgumentList.ArgFlag>>();
+      myMarkedCallee = null;
+      myArgumentList = arglist;
     }
 
     /**
@@ -364,8 +364,8 @@ public class PyCallExpressionHelper {
      * @param arguments what to map, get if from call site
      * @param resolved_callee
      */
-    void mapArguments(PyExpression[] arguments, PyCallExpression.PyMarkedCallee resolved_callee) {
-      my_marked_callee = resolved_callee;
+    void mapArguments(PyExpression[] arguments, PyCallExpression.PyMarkedCallee resolved_callee, LanguageLevel language_level) {
+      myMarkedCallee = resolved_callee;
       Callable callable = resolved_callee.getCallable();
       PyParameterList paramlist = callable.getParameterList();
       PyParameter[] params = paramlist.getParameters();
@@ -373,8 +373,8 @@ public class PyCallExpressionHelper {
       List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
       Collections.addAll(unmatched_args, arguments);
       Map<String, PyExpression> param_slots = new HashMap<String, PyExpression>();
-      PyNamedParameter kwd_slot = null; // the *tuple. might be just boolean, but this way debugging is easier
-      PyNamedParameter tuple_slot = null; // the **kwd
+      PyNamedParameter kwd_slot = null; // the **kwd
+      PyNamedParameter tuple_slot = null; // the *tuple. might be just boolean, but this way debugging is easier
       PyStarArgument kwd_arg = null;
       PyStarArgument tuple_arg = null;
       final List<PyExpression> unmatched_subargs = new LinkedList<PyExpression>(); // unmatched nested arguments will go here
@@ -443,7 +443,7 @@ public class PyCallExpressionHelper {
           }
           if (!seenSingleStar) {
             param_slots.put(n_param.getName(), arg); // it cannot yet contain this name unless function definition is broken
-            my_plain_mapped_params.put(arg, n_param);
+            myPlainMappedParams.put(arg, n_param);
           }
           else {
             param_index++;
@@ -472,9 +472,21 @@ public class PyCallExpressionHelper {
                 unmatched_arg_iter.previous(); // step back
                 break;
               }
-              my_plain_mapped_params.put(arg, tuple_slot);
+              myPlainMappedParams.put(arg, tuple_slot);
               unmatched_arg_iter.remove(); // consumed as nameless
             }
+          }
+        }
+        else if (tuple_slot != null) {
+          // if we have both *param and *arg, any parameters up to *param are mapped to *arg;
+          // syntax requires that any args before *arg can only be positional, for named params or not.
+          for (int i=0; params[i] != tuple_slot; i+=1) {
+            if (params[i] instanceof PyNamedParameter) {
+              PyNamedParameter param = (PyNamedParameter)params[i];
+              myPlainMappedParams.put(tuple_arg, param);
+              param_slots.put(param.getName(), tuple_arg);
+            }
+            // else: a non-named param is either *param or **param; further checks will handle these
           }
         }
         // check named args
@@ -482,12 +494,12 @@ public class PyCallExpressionHelper {
         while (unmatched_arg_iter.hasNext()) {
           PyExpression arg = unmatched_arg_iter.next();
           if (arg instanceof PyKeywordArgument) {
-            if (!seen_kwd_arg && !seen_tuple_arg) {
+            if (!seen_kwd_arg && (!seen_tuple_arg || language_level.isAtLeast(LanguageLevel.PYTHON30))) {
               final String argname = ((PyKeywordArgument)arg).getKeyword();
               if (param_slots.containsKey(argname)) { // slot is known
                 if (param_slots.get(argname) == null) { // slot is not filled
                   param_slots.put(argname, arg);
-                  // we'll put() it to ret.my_plain_mapped_params later
+                  // we'll put() it to ret.myPlainMappedParams later
                   seen_kwd = true;
                 }
                 else {
@@ -518,7 +530,7 @@ public class PyCallExpressionHelper {
           while (unmatched_arg_iter.hasNext()) {
             PyExpression arg = unmatched_arg_iter.next();
             if (arg instanceof PyKeywordArgument) {
-              my_plain_mapped_params.put(arg, kwd_slot);
+              myPlainMappedParams.put(arg, kwd_slot);
               unmatched_arg_iter.remove(); // consumed by **kwd
             }
             // no else: name errors are all detected above
@@ -581,15 +593,15 @@ public class PyCallExpressionHelper {
       }
       // *arg and **kwarg are not in slots list; write any *param or **param off to them if present.
       if (kwd_arg != null && kwd_slot != null) {
-        my_kwd_mapped_params.add(kwd_slot);
+        myKwdMappedParams.add(kwd_slot);
         unmatched_args.remove(kwd_arg);
       }
       if (tuple_arg != null && tuple_slot != null) {
-        my_tuple_mapped_params.add(tuple_slot);
+        myTupleMappedParams.add(tuple_slot);
         unmatched_args.remove(tuple_arg);
       }
       // maybe we did not map a star arg because all eligible params have defaults; time to be less picky now.
-      if (tuple_arg != null && my_tuple_mapped_params.isEmpty()) { // link remaining params to *arg if nothing else is mapped to it
+      if (tuple_arg != null && myTupleMappedParams.isEmpty()) { // link remaining params to *arg if nothing else is mapped to it
         for (PyParameter a_param : params) {
           PyNamedParameter n_param = a_param.getAsNamed();
           if (n_param != null) {
@@ -604,7 +616,7 @@ public class PyCallExpressionHelper {
           }
         }
       }
-      if (kwd_arg != null && my_kwd_mapped_params.isEmpty()) { // link remaining params to **kwarg if nothing else is mapped to it
+      if (kwd_arg != null && myKwdMappedParams.isEmpty()) { // link remaining params to **kwarg if nothing else is mapped to it
         for (PyParameter a_param : params) {
           PyNamedParameter n_param = a_param.getAsNamed();
           if (n_param != null) {
@@ -635,7 +647,7 @@ public class PyCallExpressionHelper {
       // any params still unfilled?
       for (final PyNamedParameter param : unfilled_params.values()) {
         // getHolder().createErrorAnnotation(close_paren, "parameter '" + param_name + "' unfilled");
-        my_unmapped_params.add(param);
+        myUnmappedParams.add(param);
       }
       // copy the mapping of args
       for (PyParameter a_param : params) {
@@ -645,24 +657,24 @@ public class PyCallExpressionHelper {
           if (arg != null) {
             if (arg instanceof PyStarArgument) {
               PyStarArgument star_arg = (PyStarArgument)arg;
-              if (star_arg.isKeyword()) my_kwd_mapped_params.add(n_param);
-              else my_tuple_mapped_params.add(n_param);
+              if (star_arg.isKeyword()) myKwdMappedParams.add(n_param);
+              else myTupleMappedParams.add(n_param);
             }
-            else my_plain_mapped_params.put(arg, n_param);
+            else myPlainMappedParams.put(arg, n_param);
           }
         }
       }
       // copy starred args
-      my_kwd_arg = kwd_arg;
-      my_tuple_arg = tuple_arg;
+      myKwdArg = kwd_arg;
+      myTupleArg = tuple_arg;
       // add unmatched nested arguments
       for (PyExpression subarg : unmatched_subargs) {
-        my_arg_flags.put(subarg, EnumSet.of(PyArgumentList.ArgFlag.IS_UNMAPPED));
+        myArgFlags.put(subarg, EnumSet.of(PyArgumentList.ArgFlag.IS_UNMAPPED));
       }
     }
 
     public boolean isImplicitlyResolved() {
-      return my_marked_callee == null ? false : my_marked_callee.isImplicitlyResolved();
+      return myMarkedCallee == null ? false : myMarkedCallee.isImplicitlyResolved();
     }
 
     /**
@@ -670,40 +682,40 @@ public class PyCallExpressionHelper {
      */
     public @NotNull
     Map<PyExpression, PyNamedParameter> getPlainMappedParams() {
-      return my_plain_mapped_params;
+      return myPlainMappedParams;
     }
 
     @NotNull
     public Map<PyExpression, List<PyNamedParameter>> getNestedMappedParams() {
-      return my_nested_mapped_params;
+      return myNestedMappedParams;
     }
 
     /**
      * @return First *arg, or null.
      */
     public PyStarArgument getTupleArg(){
-      return my_tuple_arg;
+      return myTupleArg;
     }
 
     /**
      * @return A list of parameters mapped to an *arg.
      */
     public @NotNull List<PyNamedParameter> getTupleMappedParams(){
-      return my_tuple_mapped_params;
+      return myTupleMappedParams;
     }
 
     /**
      * @return First **arg, or null.
      */
     public PyStarArgument getKwdArg(){
-      return my_kwd_arg;
+      return myKwdArg;
     }
 
     /**
      * @return A list of parameters mapped to an **arg.
      */
     public @NotNull List<PyNamedParameter> getKwdMappedParams(){
-      return my_kwd_mapped_params;
+      return myKwdMappedParams;
     }
 
     /**
@@ -711,7 +723,7 @@ public class PyCallExpressionHelper {
      */
     public @NotNull
     List<PyNamedParameter> getUnmappedParams(){
-      return my_unmapped_params;
+      return myUnmappedParams;
     }
 
     /**
@@ -719,27 +731,27 @@ public class PyCallExpressionHelper {
      */
     @Nullable
     public PyCallExpression.PyMarkedCallee getMarkedCallee() {
-      return my_marked_callee;
+      return myMarkedCallee;
     }
 
     /**
      * @return Lists all args with their flags.
      */
     public Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> getArgumentFlags(){
-      return my_arg_flags;
+      return myArgFlags;
     }
 
     public PyArgumentList getArgumentList() {
-      return my_argument_list; // that is, 'outer'
+      return myArgumentList; // that is, 'outer'
     }
 
     protected PyExpression markArgument(PyExpression arg, PyArgumentList.ArgFlag... flags) {
-      EnumSet<PyArgumentList.ArgFlag> argflags = my_arg_flags.get(arg);
+      EnumSet<PyArgumentList.ArgFlag> argflags = myArgFlags.get(arg);
       if (argflags == null) {
         argflags = EnumSet.noneOf(PyArgumentList.ArgFlag.class);
       }
       ContainerUtil.addAll(argflags, flags);
-      my_arg_flags.put(arg, argflags);
+      myArgFlags.put(arg, argflags);
       return arg;
     }
   }
