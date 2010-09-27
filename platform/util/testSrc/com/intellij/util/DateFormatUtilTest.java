@@ -31,9 +31,9 @@ public class DateFormatUtilTest extends TestCase{
     doTestDate("Today", "10.12.2004 17.00.00");
     doTestDate("Today", "10.12.2004 00.00.00");
     doTestDate("Yesterday", "09.12.2004 23.59.59");
-    doTestDate("12/8/04", "08.12.2004 23.59.59");
+    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("08.12.2004 23.59.59")), "08.12.2004 23.59.59");
 
-    doTestDate("12/10/03", "10.12.2003 17.00.00");
+    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
   }
 
   public void testPrettyDateTime() throws ParseException {
@@ -43,15 +43,15 @@ public class DateFormatUtilTest extends TestCase{
     doTestDateTime("A minute ago", "10.12.2004 16.59.29");
     doTestDateTime("5 minutes ago", "10.12.2004 16.55.00");
     doTestDateTime("1 hour ago", "10.12.2004 16.00.00");
-    doTestDateTime("Today 3:55 PM", "10.12.2004 15.55.00");
-    doTestDateTime("Yesterday 3:00 PM", "09.12.2004 15.00.00");
+    doTestDateTime("Today " + DateFormatUtil.formatTime(DATE_FORMAT.parse("10.12.2004 15.55.00")), "10.12.2004 15.55.00");
+    doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("09.12.2004 15.00.00")), "09.12.2004 15.00.00");
 
-    doTestDateTime("12/8/04 3:00 PM", "08.12.2004 15.00.00");
-    doTestDateTime("12/7/04 3:00 PM", "07.12.2004 15.00.00");
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("08.12.2004 15.00.00")), "08.12.2004 15.00.00");
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("07.12.2004 15.00.00")), "07.12.2004 15.00.00");
 
     Clock.setTime(2004, 0, 1, 15, 53);
-    doTestDateTime("1/1/03 3:53 PM", "01.01.2003 15.53.00");
-    doTestDateTime("Yesterday 3:00 PM", "31.12.2003 15.00.00");
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("01.01.2003 15.53.00")), "01.01.2003 15.53.00");
+    doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("31.12.2003 15.00.00")), "31.12.2003 15.00.00");
   }
 
   private void doTestDate(String expected, String date) throws ParseException {
