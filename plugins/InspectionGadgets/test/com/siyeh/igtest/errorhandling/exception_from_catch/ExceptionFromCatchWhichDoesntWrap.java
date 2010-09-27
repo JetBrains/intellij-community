@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.sql.SQLException;
 
-public class Test {
+public class ExceptionFromCatchWhichDoesntWrap {
     public final Iterator<String> iterator() {
         try {
             doStuff();
@@ -41,4 +41,13 @@ public class Test {
             throw new RuntimeException();
         }
     }
+
+    void ignore() {
+        try {
+            System.out.println("");
+        } catch (NullPointerException ignore) {
+            throw new RuntimeException();
+        }
+    }
+
 }
