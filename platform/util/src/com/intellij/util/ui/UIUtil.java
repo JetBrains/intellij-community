@@ -1400,8 +1400,6 @@ public class UIUtil {
           }
 
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
-          if (tree.isPathSelected(pressedPath) && (e.getModifiers() & MouseEvent.META_MASK) != MouseEvent.META_MASK) return;
-
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
 
@@ -1409,10 +1407,7 @@ public class UIUtil {
               return;
             }
 
-            if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
-              return;
-            }
-
+            if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) return;
             if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
               selectPathForEvent(pressedPath, e);
             }
