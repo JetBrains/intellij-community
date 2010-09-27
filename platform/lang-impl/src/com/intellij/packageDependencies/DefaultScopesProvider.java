@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 17-Jan-2008
- */
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
