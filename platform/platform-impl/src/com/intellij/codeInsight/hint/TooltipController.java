@@ -61,6 +61,7 @@ public class TooltipController {
     }
 
     if (Comparing.equal(tooltipObject, myCurrentTooltipObject)) {
+      IdeTooltipManager.getInstance().cancelAutoHide();
       return;
     }
     hideCurrentTooltip();

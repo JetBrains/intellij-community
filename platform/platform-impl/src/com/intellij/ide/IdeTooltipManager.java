@@ -306,6 +306,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
+    if (myCurrentTooltip == null) return true;
+
     if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
       if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
         if (myHideRunnable != null) {
@@ -387,4 +389,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
   }
 
+  public void cancelAutoHide() {
+    myHideRunnable = null;
+  }
 }
