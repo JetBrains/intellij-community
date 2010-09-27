@@ -20,7 +20,7 @@
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
   <depends>com.intellij.modules.vcs</depends>
-  <idea-version since-build="96.0" until-build="97.0" />
+  <idea-version since-build="96.0" until-build="99.0" />
 
   <extensions defaultExtensionNs="com.intellij">
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
