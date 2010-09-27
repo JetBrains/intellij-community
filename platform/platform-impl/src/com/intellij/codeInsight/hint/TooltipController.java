@@ -137,13 +137,6 @@ public class TooltipController {
   public boolean shouldSurvive(final MouseEvent e) {
     if (myCurrentTooltip != null) {
       if (myCurrentTooltip.canControlAutoHide()) return true;
-      final Point pointOnComponent = new RelativePoint(e).getPointOn(myCurrentTooltip.getComponent()).getPoint();
-      final Rectangle bounds = myCurrentTooltip.getBounds();
-      if (bounds.x - 10 < pointOnComponent.x && bounds.width + bounds.x + 10 > pointOnComponent.x) {//do not hide hovered tooltip
-        if (bounds.y - 10 < pointOnComponent.y && bounds.y + bounds.height + 10 > pointOnComponent.y) {
-          return true;
-        }
-      }
     }
     return false;
   }
