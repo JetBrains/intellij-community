@@ -29,84 +29,60 @@ import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author anna
+ * @author Konstantin Bulenkov
+ */
 public class DefaultScopesProvider implements CustomScopesProvider {
-  private NamedScope myProblemsScope;
-  private NamedScope myNonProjectFilesScope;
+  private final NamedScope myProblemsScope;
   private final Project myProject;
 
   public static DefaultScopesProvider getInstance(Project project) {
-    for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, project)) {
-      if (provider instanceof DefaultScopesProvider) return (DefaultScopesProvider)provider;
-    }
-    return null;
+    return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, DefaultScopesProvider.class);
   }
 
   public DefaultScopesProvider(Project project) {
     myProject = project;
+    final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text, myProject) {
+      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+        return file.getProject() == myProject
+               && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
+      }
+    });
   }
 
   @NotNull
   public List<NamedScope> getCustomScopes() {
-    final List<NamedScope> list = new ArrayList<NamedScope>();
-    list.add(getProblemsScope());
-    list.add(getAllScope());
-    list.add(getNonProjectFilesScope());
-    return list;
+    return Arrays.asList(getProblemsScope(), getAllScope());
   }
 
-  private static class NamedScopeHolder {
-    private static final NamedScope myAllScope = new NamedScope("All", new PackageSet() {
-      public boolean contains(final PsiFile file, final NamedScopesHolder holder) {
+  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+  private static class AllScopeHolder {
+    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, null, 0) {
+      public boolean contains(final PsiFile file, final NamedScopesHolder scopesHolder) {
         return true;
-      }
-
-      public PackageSet createCopy() {
-        return this;
-      }
-
-      public String getText() {
-        return FilePatternPackageSet.SCOPE_FILE + ":*//*";
-      }
-
-      public int getNodePriority() {
-        return 0;
       }
     });
   }
 
   public static NamedScope getAllScope() {
-    return NamedScopeHolder.myAllScope;
+    return AllScopeHolder.ALL;
   }
 
-   public NamedScope getProblemsScope() {
-    if (myProblemsScope == null) {
-      myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return FilePatternPackageSet.SCOPE_FILE + ":*//*";
-        }
-
-        public int getNodePriority() {
-          return 1;
-        }
-      });
-    }
+  public NamedScope getProblemsScope() {
     return myProblemsScope;
   }
 
-  public NamedScope getNonProjectFilesScope() {
-    if (myNonProjectFilesScope == null) {
-      myNonProjectFilesScope = new NonProjectFilesScope(myProject);
+  public List<NamedScope> getAllCustomScopes() {
+    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, myProject)) {
+      scopes.addAll(provider.getCustomScopes());
     }
-    return myNonProjectFilesScope;
+    return scopes;
   }
 }

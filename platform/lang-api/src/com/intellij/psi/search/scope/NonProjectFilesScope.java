@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packageDependencies;
+package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.Colored;
 import org.intellij.lang.annotations.RegExp;
 
@@ -35,26 +35,14 @@ public class NonProjectFilesScope extends NamedScope {
   @RegExp(prefix = "[0-9a-f]{6}")
   public static final String DEFAULT_COLOR = "ffffe4";
 
-  public NonProjectFilesScope(final Project project) {
-    super(NAME, new PackageSet() {
-        public boolean contains(PsiFile psiFile, NamedScopesHolder holder) {
-          final VirtualFile file = psiFile.getVirtualFile();
-          if (file == null) return true;
-          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-          return !(project.isInitialized() && !fileIndex.isIgnored(file) && fileIndex.getContentRootForFile(file) != null);
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return "NonProject";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
+  public NonProjectFilesScope(Project project) {
+    super(NAME, new AbstractPackageSet("NonProject", project) {
+      public boolean contains(PsiFile psiFile, NamedScopesHolder holder) {
+        final VirtualFile file = psiFile.getVirtualFile();
+        if (file == null) return true;
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+        return !(getProject().isInitialized() && !fileIndex.isIgnored(file) && fileIndex.getContentRootForFile(file) != null);
+      }
+    });
   }
 }
