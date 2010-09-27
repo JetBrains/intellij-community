@@ -19,7 +19,9 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -81,7 +83,7 @@ public class PyExtractSuperclassHelper {
     return newClassRef.get();
   }
 
-  private static PyClass placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile) {
+  private static PyClass placeNewClass(Project project, PyClass newClass, @NotNull PyClass clazz, String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
@@ -119,6 +121,10 @@ public class PyExtractSuperclassHelper {
       
       psiFile = psiDir.findFile(filename);
       psiFile = psiFile != null ? psiFile : psiDir.createFile(filename);
+      if ((file.findChild(PyNames.INIT_DOT_PY)) == null) {
+        //noinspection ConstantConditions
+        createInitIfNeeded(psiDir, true, NameSuggestorUtil.toUnderscoreCase(newClass.getName()));
+      }
     } else {
       // existing file
       psiFile = PsiManager.getInstance(project).findFile(file);
