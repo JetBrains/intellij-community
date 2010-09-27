@@ -2,7 +2,7 @@
 <problems>
 
     <problem>
-        <file>Test.java</file>
+        <file>ExceptionFromCatchWhichDoesntWrap.java</file>
         <line>41</line>
         <package>com.siyeh.igtest.errorhandling.exception_from_catch</package>
         <problem_class>'throw' inside 'catch' block which ignores the caught exception</problem_class>

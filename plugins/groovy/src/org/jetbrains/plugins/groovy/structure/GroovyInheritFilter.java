@@ -15,9 +15,10 @@
  */
 
 package org.jetbrains.plugins.groovy.structure;
+
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import org.jetbrains.plugins.groovy.structure.elements.impl.GroovyMethodStructureViewElement;
+import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -25,8 +26,8 @@ import org.jetbrains.plugins.groovy.structure.elements.impl.GroovyMethodStructur
 public class GroovyInheritFilter extends InheritedMembersFilter {
   @Override
   public boolean isVisible(TreeElement treeNode) {
-    if (treeNode instanceof GroovyMethodStructureViewElement){
-      return !((GroovyMethodStructureViewElement)treeNode).isInherit();
+    if (treeNode instanceof GroovyStructureViewElement){
+      return !((GroovyStructureViewElement)treeNode).isInherited();
     }
     return super.isVisible(treeNode);
   }

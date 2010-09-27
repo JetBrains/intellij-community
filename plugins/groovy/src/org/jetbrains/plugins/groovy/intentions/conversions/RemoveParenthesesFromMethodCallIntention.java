@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
@@ -47,16 +46,11 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
     newStatementText.append(expression.getInvokedExpression().getText());
     final GrArgumentList argumentList = expression.getArgumentList();
     if (argumentList != null) {
-      final GrExpression[] arguments = argumentList.getExpressionArguments();
-      if (arguments.length > 0) {
-        newStatementText.append(" ");
-        newStatementText.append(arguments[0].getText());
-        for (int i = 1; i < arguments.length; i++) {
-          newStatementText.append(",");
-          final GrExpression argument = arguments[i];
-          newStatementText.append(argument.getText());
-        }
-      }
+      final PsiElement leftParen = argumentList.getLeftParen();
+      final PsiElement rightParen = argumentList.getRightParen();
+      if (leftParen != null) leftParen.delete();
+      if (rightParen != null) rightParen.delete();
+      newStatementText.append(argumentList.getText());
     }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrStatement newStatement = factory.createStatementFromText(newStatementText.toString());
