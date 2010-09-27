@@ -485,7 +485,7 @@ public class ValidateXmlActionHandler {
     return null;
   }
 
-  private static XMLGrammarPool getGrammarPool(XmlFile file, boolean forceChecking) {
+  public static XMLGrammarPool getGrammarPool(XmlFile file, boolean forceChecking) {
     final XMLGrammarPool previousGrammarPool = file.getUserData(GRAMMAR_POOL_KEY);
     XMLGrammarPool grammarPool = null;
 
@@ -512,9 +512,7 @@ public class ValidateXmlActionHandler {
        ) {
       long dependentFilesTimestamp = calculateTimeStamp(files,myFile.getProject());
 
-      if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue() &&
-          dependentFilesTimestamp != 0
-        ) {
+      if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue()) {
         return false;
       }
     }
