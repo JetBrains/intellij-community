@@ -137,7 +137,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   private void change(PsiElement child) {
     if (myDeaf) return;
-    if (child == null) return;
+    if (child == null || !child.isValid()) return;
     final PsiFile file = child.getContainingFile();
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
