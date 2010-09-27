@@ -58,7 +58,7 @@ public class GroovyFileStructureViewElement extends GroovyStructureViewElement {
 
       } else if (topStatement instanceof GrVariableDeclaration) {
         for (final GrVariable variable : ((GrVariableDeclaration) topStatement).getVariables()) {
-          children.add(new GroovyVariableStructureViewElement(variable));
+          children.add(new GroovyVariableStructureViewElement(variable, false));
         }
       }
     }

@@ -18,15 +18,18 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureViewElement {
   public GroovyTypeDefinitionStructureViewElement(GrTypeDefinition typeDefinition) {
@@ -52,11 +55,19 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
       }
     }
 
-    for (GrField field : typeDefinition.getFields()) {
-      children.add(new GroovyVariableStructureViewElement(field));
+    Set<PsiField> fields = new HashSet<PsiField>();
+    ContainerUtil.addAll(fields, typeDefinition.getFields());
+
+    for (PsiField field : typeDefinition.getAllFields()) {
+      final boolean contains = fields.contains(field);
+      if (contains || !field.hasModifierProperty(GrModifier.PRIVATE)) {
+        children.add(new GroovyVariableStructureViewElement(field, !contains));
+      }
     }
 
-    List<PsiMethod> methods = Arrays.asList(typeDefinition.getMethods());
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    ContainerUtil.addAll(methods, typeDefinition.getMethods());
+
     for (PsiMethod method : typeDefinition.getAllMethods()) {
       if (!method.isPhysical()) continue;
 
