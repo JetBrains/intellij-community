@@ -46,7 +46,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -419,6 +421,8 @@ public class PythonSdkType extends SdkType {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
+  private final static Pattern PYTHON_NN_RE = Pattern.compile("python\\d\\.\\d.*");
+
   public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator, PythonSdkType sdkType) {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
@@ -447,9 +451,31 @@ public class PythonSdkType extends SdkType {
       assert builtins_root != null;
       sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
     }
-    if (not_in_unit_test_mode) sdkType.addHardcodedPaths(sdkModificator);
+    if (not_in_unit_test_mode) {
+      File venv_root = getVirtualEnvRoot(bin_path);
+      if (venv_root != null && venv_root.isDirectory()) {
+        File lib_root = new File(venv_root, "lib");
+        if (lib_root.isDirectory()) {
+          String[] inside = lib_root.list();
+          for (String s : inside) {
+            if (PYTHON_NN_RE.matcher(s).matches()) {
+              File py_lib_root = new File(lib_root, s);
+              String[] flag_files = py_lib_root.list(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String s) {
+                  return "no-global-site-packages.txt".equals(s);
+                }
+              });
+              if (flag_files != null) return; // don't add hardcoded paths
+            }
+          }
+        }
+      }
+      sdkType.addHardcodedPaths(sdkModificator);
+    }
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   protected void addHardcodedPaths(SdkModificator sdkModificator) {
     // Add python-django installed as package in Linux
     // NOTE: fragile and arbitrary
@@ -537,9 +563,9 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  protected List<String> getSysPathsFromScript(String bin_path) {
+  protected static List<String> getSysPathsFromScript(String bin_path) {
     String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
-    // in order to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
+    // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
     final ProcessOutput run_result = SdkUtil.getProcessOutput(
