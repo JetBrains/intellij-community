@@ -50,6 +50,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.FileNotFoundException;
@@ -353,7 +354,12 @@ public class ValidateXmlActionHandler {
     myXmlResourceResolver.setStopOnUnDeclaredResource( myErrorReporter.isStopOnUndeclaredResource() );
 
     try {
-      myParser = createParser();
+      try {
+        myParser = createParser();
+      }
+      catch (Exception e) {
+        filterAppException(e);
+      }
 
       if (myParser == null) return;
 
@@ -424,8 +430,7 @@ public class ValidateXmlActionHandler {
     }
   }
 
-  protected SAXParser createParser() {
-    try {
+  protected SAXParser createParser() throws SAXException, ParserConfigurationException {
       if (!needsDtdChecking() && !needsSchemaChecking() && !myForceChecking) {
         return null;
       }
@@ -478,12 +483,6 @@ public class ValidateXmlActionHandler {
       }
 
       return parser;
-    }
-    catch (Exception e) {
-      filterAppException(e);
-    }
-
-    return null;
   }
 
   public static XMLGrammarPool getGrammarPool(XmlFile file, boolean forceChecking) {
