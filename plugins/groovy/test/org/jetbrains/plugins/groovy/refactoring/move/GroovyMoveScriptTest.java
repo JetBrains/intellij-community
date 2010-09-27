@@ -56,6 +56,10 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     doTest("scriptWithClasses", new String[]{"a/Foo.groovy"}, "b");
   }
 
+  public void testFileWithTwoClasses() {
+    doTest("fileWithTwoClasses", new String[]{"a/Foo.groovy"}, "b");
+  }
+
   private void performAction(String[] fileNames, String newDirName, String dir) {
     final PsiFile[] files = new PsiFile[fileNames.length];
     for (int i = 0; i < files.length; i++) {
