@@ -261,13 +261,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
           final String newPropertyName = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
           if (newPropertyName != null && newPropertyName.length() > 0) {
-            return doHandleElementRename(newPropertyName);
+            return handleElementRenameInner(newPropertyName);
           } else {
             if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
               final PsiElement qualifier = getQualifier();
               String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
-              return replace(
-                GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(qualifierText + newElementName + "()"));
+              final GrMethodCallExpression replaced =
+                (GrMethodCallExpression)replace(
+                  GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(qualifierText + newElementName + "()"));
+              return replaced.getInvokedExpression();
             }
             else {
               final PsiElement parent = getParent();
@@ -276,9 +278,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
                 final GrExpression rValue = ((GrAssignmentExpression)parent).getRValue();
                 String rValueText = rValue != null ? rValue.getText() : "";
-                return parent.replace(
+                final GrMethodCallExpression replaced = ((GrMethodCallExpression)parent.replace(
                   GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(
-                    qualifierText + newElementName + "(" + rValueText + ")"));
+                    qualifierText + newElementName + "(" + rValueText + ")")));
+                return replaced.getInvokedExpression();
               }
             }
           }
@@ -289,14 +292,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final String oldName = getReferenceName();
       if (oldName != null && !oldName.equals(field.getName())) { //was accessor reference to property
         if (oldName.startsWith("get")) {
-          return doHandleElementRename("get" + StringUtil.capitalize(newElementName));
+          return handleElementRenameInner("get" + StringUtil.capitalize(newElementName));
         } else if (oldName.startsWith("set")) {
-          return doHandleElementRename("set" + StringUtil.capitalize(newElementName));
+          return handleElementRenameInner("set" + StringUtil.capitalize(newElementName));
         }
       }
     }
 
-    return doHandleElementRename(newElementName);
+    return handleElementRenameInner(newElementName);
   }
 
   @Override
@@ -310,14 +313,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return qualifiedRef;
   }
 
-  private PsiElement doHandleElementRename(String newElementName) throws IncorrectOperationException {
+  protected PsiElement handleElementRenameInner(String newElementName) throws IncorrectOperationException {
     if (!PsiUtil.isValidReferenceName(newElementName)) {
       PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteral(newElementName);
       getReferenceNameElement().replace(element);
       return this;
     }
 
-    return super.handleElementRename(newElementName);
+    return super.handleElementRenameInner(newElementName);
   }
 
   public int getTextOffset() {
