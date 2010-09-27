@@ -16,7 +16,7 @@
 
 package com.intellij.util;
 
-import com.intellij.util.containers.ConcurrentHashSet;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return process(consumer, new ConcurrentHashSet<M>(myHashingStrategy));
+    return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
   }
 
   private boolean process(final Processor<T> consumer, final Set<M> processedElements) {
@@ -71,10 +71,10 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @NotNull
   public Collection<T> findAll() {
     if (myMapper == ID) {
-      ConcurrentHashSet<M> collection = new ConcurrentHashSet<M>(myHashingStrategy);
-      process(CommonProcessors.<T>alwaysTrue(), collection);
+      Set<M> set = new THashSet<M>(myHashingStrategy);
+      process(CommonProcessors.<T>alwaysTrue(), Collections.synchronizedSet(set));
       //noinspection unchecked
-      return (Collection<T>)collection;
+      return (Collection<T>)set;
     }
     else {
       final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));

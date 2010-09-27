@@ -95,8 +95,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean myLeftCtrlPressed = false;
   private boolean myRightAltPressed = false;
 
-  private boolean mySecondKeystrokeAutoPopupEnabled = Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled");
-
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
   private final KeyProcessorContext myContext = new KeyProcessorContext();
@@ -420,7 +418,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       mySecondStrokeTimeout.cancelAllRequests();
       mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimout"));
 
-      if (mySecondKeystrokeAutoPopupEnabled) {
+      if (Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled")) {
         mySecondKeystrokePopupTimeout.cancelAllRequests();
         if (secondKeyStrokes.size() > 1) {
           final DataContext oldContext = myContext.getDataContext();

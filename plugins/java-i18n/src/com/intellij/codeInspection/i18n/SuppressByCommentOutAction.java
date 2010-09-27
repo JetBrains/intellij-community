@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -41,6 +42,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
 
   @Override
   public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
     element = findJavaCodeUpThere(element);
     PsiFile file = element.getContainingFile();
     editor = InjectedLanguageUtil.openEditorFor(file, project);

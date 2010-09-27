@@ -39,13 +39,15 @@ import java.util.Map;
  * Date: Sep 6, 2010
  */
 public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter implements ProjectComponent, EditorFactoryListener {
-  private final Project myProject;
   private final Map<PsiFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<PsiFile, MyDocumentChangeAdapter>();
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureGestureDetector.class.getName());
   private boolean myDeaf = false;
+  private final PsiDocumentManager myPsiDocumentManager;
+  private final PsiManager myPsiManager;
 
-  public ChangeSignatureGestureDetector(Project project) {
-    myProject = project;
+  public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager, final PsiManager psiManager) {
+    myPsiDocumentManager = psiDocumentManager;
+    myPsiManager = psiManager;
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -84,17 +86,16 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void projectOpened() {
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(this);
+    myPsiManager.addPsiTreeChangeListener(this);
     EditorFactory.getInstance().addEditorFactoryListener(this);
   }
 
   @Override
   public void projectClosed() {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     for (PsiFile file : myListenerMap.keySet()) {
       final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
       if (adapter != null) {
-        final Document document = documentManager.getDocument(file);
+        final Document document = myPsiDocumentManager.getDocument(file);
         if (document != null) {
           document.removeDocumentListener(adapter);
         }
@@ -102,7 +103,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     }
     myListenerMap.clear();
 
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(this);
+    myPsiManager.removePsiTreeChangeListener(this);
     EditorFactory.getInstance().removeEditorFactoryListener(this);
   }
 
@@ -137,7 +138,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   private void change(PsiElement child) {
     if (myDeaf) return;
-    if (child == null) return;
+    if (child == null || !child.isValid()) return;
     final PsiFile file = child.getContainingFile();
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
@@ -158,7 +159,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public void addDocListener(Document document) {
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final PsiFile file = myPsiDocumentManager.getPsiFile(document);
     if (file != null) {
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
       document.addDocumentListener(adapter);
@@ -172,7 +173,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public void removeDocListener(Document document) {
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final PsiFile file = myPsiDocumentManager.getPsiFile(document);
     final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
     if (adapter != null) {
       document.removeDocumentListener(adapter);
@@ -210,7 +211,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       if (myDeaf) return;
       if (myInitialText == null) {
         final Document document = e.getDocument();
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        final PsiDocumentManager documentManager = myPsiDocumentManager;
         if (!documentManager.isUncommited(document)) {
           final CommandProcessor processor = CommandProcessor.getInstance();
           final String currentCommandName = processor.getCurrentCommandName();

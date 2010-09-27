@@ -88,7 +88,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                 oldParameterTypes = info.getOldParameterTypes();
                 if (!method.isConstructor()) {
                   try {
-                    isReturnTypeChanged = info.isReturnTypeChanged || !info.getNewReturnType().equals(newReturnType);
+                    isReturnTypeChanged = info.isReturnTypeChanged ||
+                                          (info.getNewReturnType() != null
+                                             ? !Comparing.strEqual(info.getNewReturnType().getTypeText(), newReturnType.getTypeText())
+                                             : newReturnType != null);
                   }
                   catch (IncorrectOperationException e) {
                     isReturnTypeChanged = true;
