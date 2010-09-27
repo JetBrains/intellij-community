@@ -138,6 +138,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           @Override
           protected void onHidden() {
             fireHintHidden();
+            TooltipController.getInstance().resetCurrent();
           }
 
           @Override

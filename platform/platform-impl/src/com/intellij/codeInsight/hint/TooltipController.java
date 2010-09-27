@@ -146,4 +146,10 @@ public class TooltipController {
       hideCurrentTooltip();
     }
   }
+
+  public void resetCurrent() {
+    myCurrentTooltip = null;
+    myCurrentTooltipGroup = null;
+    myCurrentTooltipObject = null;
+  }
 }
