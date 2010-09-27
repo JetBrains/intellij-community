@@ -42,6 +42,7 @@ import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.apache.xerces.xni.grammars.XMLGrammarPool;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -423,7 +424,7 @@ public class ValidateXmlActionHandler {
     }
   }
 
-  private SAXParser createParser() {
+  protected SAXParser createParser() {
     try {
       if (!needsDtdChecking() && !needsSchemaChecking() && !myForceChecking) {
         return null;
@@ -486,7 +487,7 @@ public class ValidateXmlActionHandler {
   }
 
   public static XMLGrammarPool getGrammarPool(XmlFile file, boolean forceChecking) {
-    final XMLGrammarPool previousGrammarPool = file.getUserData(GRAMMAR_POOL_KEY);
+    final XMLGrammarPool previousGrammarPool = getGrammarPool(file);
     XMLGrammarPool grammarPool = null;
 
     // check if the pool is valid
@@ -501,6 +502,11 @@ public class ValidateXmlActionHandler {
       file.putUserData(GRAMMAR_POOL_KEY,grammarPool);
     }
     return grammarPool;
+  }
+
+  @Nullable
+  public static XMLGrammarPool getGrammarPool(XmlFile file) {
+    return file.getUserData(GRAMMAR_POOL_KEY);
   }
 
   public static boolean isValidationDependentFilesOutOfDate(XmlFile myFile) {
