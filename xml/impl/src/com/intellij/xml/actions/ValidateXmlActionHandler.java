@@ -28,12 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.content.*;
-import com.intellij.util.Function;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
@@ -42,6 +40,7 @@ import org.apache.xerces.impl.Constants;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
+import org.apache.xerces.xni.grammars.XMLGrammarPool;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -64,19 +63,19 @@ import java.util.concurrent.Future;
 /**
  * @author Mike
  */
-public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
+public class ValidateXmlActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.ValidateXmlAction");
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
   @NonNls private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
-  private static final Key<XMLGrammarPoolImpl> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
+  private static final Key<XMLGrammarPool> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
 
   private Project myProject;
   private XmlFile myFile;
   private ErrorReporter myErrorReporter;
-  private Object myParser;
+  private SAXParser myParser;
   private XmlResourceResolver myXmlResourceResolver;
   private final boolean myForceChecking;
   @NonNls
@@ -345,17 +344,9 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
     }
   }
 
-  public Void fun(PsiFile file) {
-    Project project = file.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    doValidate(project,file);
-    return null;
-  }
-
-  public void doValidate(Project project, PsiFile file) {
-    myProject = project;
-    myFile = (XmlFile)file;
+  public void doValidate(XmlFile file) {
+    myProject = file.getProject();
+    myFile = file;
 
     myXmlResourceResolver = new XmlResourceResolver(myFile, myProject, myErrorReporter);
     myXmlResourceResolver.setStopOnUnDeclaredResource( myErrorReporter.isStopOnUndeclaredResource() );
@@ -367,7 +358,7 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
 
       myErrorReporter.startProcessing();
     }
-    catch (XmlResourceResolver.IgnoredResourceException e) {
+    catch (XmlResourceResolver.IgnoredResourceException ignore) {
     }
     catch (Exception exception) {
       filterAppException(exception);
@@ -380,74 +371,59 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
     }
   }
 
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   private void doParse() {
     try {
-     if (myParser instanceof SAXParser) {
-        SAXParser parser = (SAXParser)myParser;
-
-        try {
-          parser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
-            public void warning(SAXParseException e) {
-              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, true);
-            }
-
-            public void error(SAXParseException e) {
-              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
-            }
-
-            public void fatalError(SAXParseException e) {
-              if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
-            }
-
-            public InputSource resolveEntity(String publicId, String systemId) {
-              final PsiFile psiFile =  myXmlResourceResolver.resolve(null, systemId);
-              if (psiFile == null) return null;
-              return new InputSource(new StringReader(psiFile.getText()));
-            }
-
-            public void startDocument() throws SAXException {
-              super.startDocument();
-              ((SAXParser)myParser).setProperty(
-                ENTITY_RESOLVER_PROPERTY_NAME,
-                myXmlResourceResolver
-              );
-            }
-
-
-          });
-
-          final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
-          if (resourcePaths.length > 0) { // if caches are used
-            final VirtualFile[] files = new VirtualFile[resourcePaths.length];
-            for(int i = 0; i < resourcePaths.length; ++i) {
-              files[i] = UriUtil.findRelativeFile(resourcePaths[i], null);
-            }
-
-            myFile.putUserData(DEPENDENT_FILES_KEY, files);
-            myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files,myProject)));
-          }
+      myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
+        public void warning(SAXParseException e) {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, true);
         }
-        catch (SAXException e) {
-          LOG.debug(e);
-//          processError(e.getMessage(), false, 0, 0);
+
+        public void error(SAXParseException e) {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
         }
+
+        public void fatalError(SAXParseException e) {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
+        }
+
+        public InputSource resolveEntity(String publicId, String systemId) {
+          final PsiFile psiFile = myXmlResourceResolver.resolve(null, systemId);
+          if (psiFile == null) return null;
+          return new InputSource(new StringReader(psiFile.getText()));
+        }
+
+        public void startDocument() throws SAXException {
+          super.startDocument();
+          myParser.setProperty(
+            ENTITY_RESOLVER_PROPERTY_NAME,
+            myXmlResourceResolver
+          );
+        }
+      });
+
+      final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
+      if (resourcePaths.length > 0) { // if caches are used
+        final VirtualFile[] files = new VirtualFile[resourcePaths.length];
+        for (int i = 0; i < resourcePaths.length; ++i) {
+          files[i] = UriUtil.findRelativeFile(resourcePaths[i], null);
+        }
+
+        myFile.putUserData(DEPENDENT_FILES_KEY, files);
+        myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files, myProject)));
       }
-      else {
-        LOG.error("unknown parser: " + myParser);
-      }
+    }
+    catch (SAXException e) {
+      LOG.debug(e);
     }
     catch (Exception exception) {
       filterAppException(exception);
-    } catch(StackOverflowError error) {
+    }
+    catch (StackOverflowError error) {
       // http://issues.apache.org/jira/browse/XERCESJ-589
     }
   }
 
-  private Object createParser() {
+  private SAXParser createParser() {
     try {
       if (!needsDtdChecking() && !needsSchemaChecking() && !myForceChecking) {
         return null;
@@ -466,7 +442,7 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
         //jdk 1.5 API
         try {
           factory.setXIncludeAware(true);
-        } catch(NoSuchMethodError e) {}
+        } catch(NoSuchMethodError ignore) {}
         schemaChecking = true;
       }
 
@@ -475,20 +451,7 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
       parser.setProperty(ENTITY_RESOLVER_PROPERTY_NAME, myXmlResourceResolver);
 
       if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2
-        final XMLGrammarPoolImpl previousGrammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
-        XMLGrammarPoolImpl grammarPool = null;
-
-        // check if the pool is valid
-        if (!myForceChecking &&
-            !isValidationDependentFilesOutOfDate(myFile)
-           ) {
-          grammarPool = previousGrammarPool;
-        }
-
-        if (grammarPool == null) {
-          grammarPool = new XMLGrammarPoolImpl();
-          myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
-        }
+        XMLGrammarPool grammarPool = getGrammarPool(myFile, myForceChecking);
 
         parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
       }
@@ -520,6 +483,24 @@ public class ValidateXmlActionHandler implements Function<PsiFile, Void> {
     }
 
     return null;
+  }
+
+  private static XMLGrammarPool getGrammarPool(XmlFile file, boolean forceChecking) {
+    final XMLGrammarPool previousGrammarPool = file.getUserData(GRAMMAR_POOL_KEY);
+    XMLGrammarPool grammarPool = null;
+
+    // check if the pool is valid
+    if (!forceChecking &&
+        !isValidationDependentFilesOutOfDate(file)
+       ) {
+      grammarPool = previousGrammarPool;
+    }
+
+    if (grammarPool == null) {
+      grammarPool = new XMLGrammarPoolImpl();
+      file.putUserData(GRAMMAR_POOL_KEY,grammarPool);
+    }
+    return grammarPool;
   }
 
   public static boolean isValidationDependentFilesOutOfDate(XmlFile myFile) {
