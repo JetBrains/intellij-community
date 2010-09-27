@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,23 +32,40 @@ import org.jetbrains.annotations.Nullable;
 public class IfStatementWithIdenticalBranchesInspection
         extends BaseInspection{
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
+        if (infos.length > 0) {
+            final PsiIfStatement elseIfStatement = (PsiIfStatement) infos[0];
+            return new CollapseIfFix(elseIfStatement);
+        }
         return new CollapseIfFix();
     }
 
     private static class CollapseIfFix extends InspectionGadgetsFix{
+
+        private final PsiIfStatement elseIfStatement;
+
+        public CollapseIfFix(PsiIfStatement elseIfStatement) {
+            this.elseIfStatement = elseIfStatement;
+        }
+
+        private CollapseIfFix() {
+            elseIfStatement = null;
+        }
 
         @NotNull
         public String getName(){
@@ -56,6 +73,7 @@ public class IfStatementWithIdenticalBranchesInspection
                     "if.statement.with.identical.branches.collapse.quickfix");
         }
 
+        @Override
         public void doFix(@NotNull Project project,
                           ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
@@ -69,31 +87,63 @@ public class IfStatementWithIdenticalBranchesInspection
             }
             final PsiStatement elseBranch = statement.getElseBranch();
             if (elseBranch == null) {
-	            // implicit else branch after the if
+                // implicit else branch after the if
                 statement.delete();
                 return;
             }
-	        final PsiElement parent = statement.getParent();
-	        if (thenBranch instanceof PsiBlockStatement) {
-		        final PsiBlockStatement blockStatement =
-				        (PsiBlockStatement) thenBranch;
-		        if (parent instanceof PsiCodeBlock) {
-			        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-			        final PsiStatement[] statements = codeBlock.getStatements();
-			        if (statements.length > 0) {
-				        parent.addRangeBefore(statements[0],
-						        statements[statements.length -1], statement);
-			        }
-			        statement.delete();
-		        } else {
-			        statement.replace(blockStatement);
-		        }
+            if (elseIfStatement == null) {
+                final PsiElement parent = statement.getParent();
+                if (thenBranch instanceof PsiBlockStatement) {
+                    final PsiBlockStatement blockStatement =
+                            (PsiBlockStatement) thenBranch;
+                    if (parent instanceof PsiCodeBlock) {
+                        final PsiCodeBlock codeBlock =
+                                blockStatement.getCodeBlock();
+                        final PsiStatement[] statements = codeBlock.getStatements();
+                        if (statements.length > 0) {
+                            parent.addRangeBefore(statements[0],
+                                    statements[statements.length -1], statement);
+                        }
+                        statement.delete();
+                    } else {
+                        statement.replace(blockStatement);
+                    }
+                } else {
+                    statement.replace(thenBranch);
+                }
             } else {
-		        statement.replace(thenBranch);
+                final PsiExpression condition1 = statement.getCondition();
+                final PsiExpression condition2 = elseIfStatement.getCondition();
+                if (condition1 == null) {
+                    return;
+                }
+                replaceExpression(condition1, buildOrExpressionText(
+                        condition1, condition2));
+                final PsiStatement elseElseBranch =
+                        elseIfStatement.getElseBranch();
+                if (elseElseBranch == null) {
+                    elseIfStatement.delete();
+                } else {
+                    elseIfStatement.replace(elseElseBranch);
+                }
             }
+        }
+
+        private static String buildOrExpressionText(PsiExpression expression1,
+                                                    PsiExpression expression2) {
+            final StringBuilder result = new StringBuilder();
+            if (expression1 != null) {
+                result.append(expression1.getText());
+            }
+            result.append("||");
+            if (expression2 != null) {
+                result.append(expression2.getText());
+            }
+            return result.toString();
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IfStatementWithIdenticalBranchesVisitor();
     }
@@ -101,26 +151,50 @@ public class IfStatementWithIdenticalBranchesInspection
     private static class IfStatementWithIdenticalBranchesVisitor
             extends BaseInspectionVisitor{
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement ifStatement){
+        @Override public void visitIfStatement(
+                @NotNull PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
             final PsiStatement thenBranch = ifStatement.getThenBranch();
-            final PsiStatement elseBranch = ifStatement.getElseBranch();
-            if(thenBranch == null) {
+            PsiStatement elseBranch = ifStatement.getElseBranch();
+            if (thenBranch == null) {
                 return;
             }
             if (elseBranch == null) {
                 checkIfStatementWithoutElseBranch(ifStatement);
-            } else if (EquivalenceChecker.statementsAreEquivalent(
+                return;
+            }
+            if (EquivalenceChecker.statementsAreEquivalent(
                     thenBranch, elseBranch)) {
                 registerStatementError(ifStatement);
+                return;
             }
+            final PsiStatement identicalElseIf =
+                    getIdenticalElseIfStatement(thenBranch, elseBranch);
+            if (identicalElseIf == null) {
+                return;
+            }
+            registerStatementError(ifStatement, identicalElseIf);
+        }
+
+        public static PsiStatement getIdenticalElseIfStatement(
+                PsiStatement thenBranch, PsiStatement elseBranch) {
+            while (elseBranch instanceof PsiIfStatement) {
+                final PsiIfStatement statement =
+                        (PsiIfStatement) elseBranch;
+                final PsiStatement branch = statement.getThenBranch();
+                if (EquivalenceChecker.statementsAreEquivalent(
+                        thenBranch, branch)) {
+                    return statement;
+                }
+                elseBranch = statement.getElseBranch();
+            }
+            return null;
         }
 
         private void checkIfStatementWithoutElseBranch(
                 PsiIfStatement ifStatement) {
             final PsiStatement thenBranch = ifStatement.getThenBranch();
-            if (ControlFlowUtils.statementMayCompleteNormally(
-                    thenBranch)) {
+            if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
                 return;
             }
             PsiStatement nextStatement = getNextStatement(ifStatement);
