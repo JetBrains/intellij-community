@@ -75,14 +75,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
   private final boolean myInvokedExplicitly;
+  final boolean focusLookup;
 
   public CodeCompletionHandlerBase(final CompletionType completionType) {
-    this(completionType, true);
+    this(completionType, true, true);
   }
 
-  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly) {
+  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean focusLookup) {
     myCompletionType = completionType;
     myInvokedExplicitly = invokedExplicitly;
+    this.focusLookup = focusLookup;
   }
 
   public final void invoke(final Project project, final Editor editor) {

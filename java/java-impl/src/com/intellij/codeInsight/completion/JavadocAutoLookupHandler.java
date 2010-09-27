@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.Editor;
  */
 public class JavadocAutoLookupHandler extends CodeCompletionHandlerBase {
   public JavadocAutoLookupHandler() {
-    super(CompletionType.BASIC, false);
+    super(CompletionType.BASIC, false, false);
   }
 
   protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final FileCopyPatcher dummyIdentifier,

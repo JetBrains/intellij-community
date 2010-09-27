@@ -93,7 +93,7 @@ public class AutoPopupController implements Disposable {
 
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           if (condition != null && !condition.value(editor)) return;
-          new CodeCompletionHandlerBase(CompletionType.BASIC, false).invoke(myProject, editor, file);
+          new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(myProject, editor, file);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action

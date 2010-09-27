@@ -115,6 +115,10 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean isSelected,
       boolean hasFocus) {
 
+    if (!myLookup.isFocused()) {
+      isSelected = false;
+    }
+
     final LookupElement item = (LookupElement)value;
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);

@@ -25,6 +25,6 @@ public class ClassNameCompleteMacro extends BaseCompleteMacro {
   }
 
   CodeInsightActionHandler getCompletionHandler() {
-    return new CodeCompletionHandlerBase(CompletionType.CLASS_NAME, false);
+    return new CodeCompletionHandlerBase(CompletionType.CLASS_NAME, false, true);
   }
 }

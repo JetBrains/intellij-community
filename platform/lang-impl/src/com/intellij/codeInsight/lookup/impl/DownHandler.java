@@ -26,6 +26,11 @@ public class DownHandler extends LookupActionHandler {
   }
 
   protected void executeInLookup(final LookupImpl lookup) {
-    ListScrollingUtil.moveDown(lookup.getList(), 0);
+    if (!lookup.isFocused()) {
+      lookup.setFocused(true);
+      lookup.getList().setSelectedIndex(0);
+    } else {
+      ListScrollingUtil.moveDown(lookup.getList(), 0);
+    }
   }
 }

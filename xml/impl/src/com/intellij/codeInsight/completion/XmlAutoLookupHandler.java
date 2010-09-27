@@ -32,7 +32,7 @@ import com.intellij.xml.util.XmlUtil;
  */
 public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
   public XmlAutoLookupHandler() {
-    super(CompletionType.BASIC, false);
+    super(CompletionType.BASIC, false, false);
   }
 
   protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final FileCopyPatcher dummyIdentifier, Editor editor,
