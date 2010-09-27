@@ -121,12 +121,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
 
         public void actionPerformed(final AnActionEvent e) {
-          hint.hide();
-          if (myCurrentWidth > 0) {
-            stripDescription();
-          }
-
-          TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()), alignToRight, group, hintHint);
+          expand(hint, editor, p, pane, alignToRight, group, hintHint);
         }
       });
 
@@ -139,13 +134,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           if (!expanded) { // more -> less
-            for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
-              if (handlerEP.handleLink(e.getDescription(), editor, pane)) {
-                myText = convertTextOnLinkHandled(myText);
-                pane.setText(myText);
-                return;
-              }
-            }
+            expand(hint, editor, p, pane, alignToRight, group, hintHint);
             if (e.getURL() != null) {
               BrowserUtil.launchBrowser(e.getURL().toString());
             }
@@ -186,6 +175,21 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                                 HintManager.HIDE_BY_OTHER_HINT |
                                                 HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
+  }
+
+  private void expand(LightweightHint hint,
+                      Editor editor,
+                      Point p,
+                      JEditorPane pane,
+                      boolean alignToRight,
+                      TooltipGroup group,
+                      HintHint hintHint) {
+    hint.hide();
+    if (myCurrentWidth > 0) {
+      stripDescription();
+    }
+
+    TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()), alignToRight, group, hintHint);
   }
 
   public static void correctLocation(Editor editor,
