@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -118,14 +119,6 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     dirtyFilesAndDirs.markDirty();
   }
 
-  @Nullable
-  private VcsDirtyScopeManager getManager(final VirtualFile file) {
-    if (file == null) { return null; }
-    final Project project = myProjectLocator.guessProjectForFile(file);
-    if (project == null) { return null; }
-    return VcsDirtyScopeManager.getInstance(project);
-  }
-
   /**
    * Stores VcsDirtyScopeManagers and files and directories which should be marked dirty by them.
    * Files will be marked dirty, directories will be marked recursively dirty, so if you need to mark dirty a directory, but
@@ -144,21 +137,23 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
      * @param addToFiles  If true, then add to dirty files even if it is a directory. Otherwise add to the proper set.
      */
     private void add(VirtualFile file, boolean addToFiles) {
-      final VcsDirtyScopeManager manager = getManager(file);
-      if (manager == null) { return; }
-      Pair<HashSet<FilePath>, HashSet<FilePath>> filesAndDirs = map.get(manager);
-      if (filesAndDirs == null) {
-        filesAndDirs = Pair.create(new HashSet<FilePath>(), new HashSet<FilePath>());
-        map.put(manager, filesAndDirs);
-      }
-
       final boolean isDirectory = file.isDirectory();
       // need to create FilePath explicitly without referring to VirtualFile because the path of VirtualFile may change
       final FilePathImpl path = new FilePathImpl(new File(file.getPath()), isDirectory);
-      if (addToFiles || isDirectory) {
-        filesAndDirs.first.add(path);
-      } else {
-        filesAndDirs.second.add(path);
+
+      final Collection<VcsDirtyScopeManager> managers = getManagers(file);
+      for (VcsDirtyScopeManager manager : managers) {
+        Pair<HashSet<FilePath>, HashSet<FilePath>> filesAndDirs = map.get(manager);
+        if (filesAndDirs == null) {
+          filesAndDirs = Pair.create(new HashSet<FilePath>(), new HashSet<FilePath>());
+          map.put(manager, filesAndDirs);
+        }
+
+        if (addToFiles || isDirectory) {
+          filesAndDirs.first.add(path);
+        } else {
+          filesAndDirs.second.add(path);
+        }
       }
     }
 
@@ -178,6 +173,25 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         manager.filePathsDirty(files, dirs);
       }
     }
+  }
+
+  /**
+   * Returns all VcsDirtyScopeManagers which serve the given file.
+   * There may be none of them or there may be several (if a file is contained in several open projects, for instance),
+   * though usually there is one.
+   */
+  @NotNull
+  private Collection<VcsDirtyScopeManager> getManagers(final VirtualFile file) {
+    final Collection<VcsDirtyScopeManager> result = new HashSet<VcsDirtyScopeManager>();
+    if (file == null) { return result; }
+    final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
+    for (Project project : projects) {
+      final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
+      if (manager != null) {
+        result.add(manager);
+      }
+    }
+    return result;
   }
 
 }

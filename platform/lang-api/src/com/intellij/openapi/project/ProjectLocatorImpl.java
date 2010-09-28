@@ -21,13 +21,19 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public class ProjectLocatorImpl extends ProjectLocator {
+
+  @Override
   @Nullable
   public Project guessProjectForFile(final VirtualFile file) {
     ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null) return null;
+    if (projectManager == null || file == null) return null;
     final Project[] projects = projectManager.getOpenProjects();
     if (projects.length == 0) return null;
     if (projects.length == 1 && !projects[0].isDisposed()) return projects[0];
@@ -39,5 +45,24 @@ public class ProjectLocatorImpl extends ProjectLocator {
     }
 
     return !projects[0].isDisposed() ? projects[0] : null;
+  }
+
+  @Override
+  @NotNull
+  public Collection<Project> getProjectsForFile(VirtualFile file) {
+    final Collection<Project> result = new HashSet<Project>();
+
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager == null || file == null) { return result; }
+    final Project[] openProjects = projectManager.getOpenProjects();
+    if (openProjects.length == 0) { return result; }
+
+    for (Project project : openProjects) {
+      if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        result.add(project);
+      }
+    }
+
+    return result;
   }
 }
