@@ -50,7 +50,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     }
 
     @Override
-    protected MavenDomDependency doGenerate(final MavenDomProjectModel mavenModel, final Editor editor) {
+    protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
       Set<MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
 
       List<MavenDomDependency> dependenciesToOverride =

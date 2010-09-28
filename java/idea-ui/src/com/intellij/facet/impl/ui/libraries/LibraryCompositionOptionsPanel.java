@@ -23,8 +23,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -53,7 +51,6 @@ import java.util.Set;
 public class LibraryCompositionOptionsPanel {
   private final MutualMap<LibrariesContainer.LibraryLevel, String> myLibraryLevels = new MutualMap<LibrariesContainer.LibraryLevel, String>(true);
   private JPanel myMainPanel;
-  private JButton myAddLibraryButton;
   private JButton myAddJarsButton;
   private JCheckBox myDownloadMissingJarsCheckBox;
   private TextFieldWithBrowseButton myDirectoryField;
@@ -66,10 +63,7 @@ public class LibraryCompositionOptionsPanel {
   private JLabel myMissingLibrariesLabel;
   private JLabel myHiddenLabel;
   private final List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
-  private final List<Library> myUsedLibraries = new ArrayList<Library>();
-  private final LibrariesContainer myLibrariesContainer;
   private final LibraryCompositionSettings myLibraryCompositionSettings;
-  private final List<Library> mySuitableLibraries;
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private List<RemoteRepositoryMirrorPanel> myMirrorPanelsList;
 
@@ -77,7 +71,6 @@ public class LibraryCompositionOptionsPanel {
                                         final @NotNull LibraryCompositionSettings libraryCompositionSettings,
                                         final @NotNull LibraryDownloadingMirrorsMap mirrorsMap) {
 
-    myLibrariesContainer = librariesContainer;
     myLibraryCompositionSettings = libraryCompositionSettings;
     myMirrorsMap = mirrorsMap;
     addMirrorsPanels();
@@ -85,15 +78,9 @@ public class LibraryCompositionOptionsPanel {
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myUsedLibraries.addAll(myLibraryCompositionSettings.getUsedLibraries());
     myAddJarsButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         showFileChooser();
-      }
-    });
-    myAddLibraryButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        showLibrariesChooser();
       }
     });
     myDownloadMissingJarsCheckBox.setSelected(myLibraryCompositionSettings.isDownloadLibraries());
@@ -102,9 +89,6 @@ public class LibraryCompositionOptionsPanel {
         updateAll();
       }
     });
-
-    mySuitableLibraries = calculateSuitableLibraries();
-    myAddLibraryButton.setEnabled(!mySuitableLibraries.isEmpty());
 
     myLibraryLevels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
     myLibraryLevels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
@@ -147,32 +131,6 @@ public class LibraryCompositionOptionsPanel {
     }
   }
 
-  private List<Library> calculateSuitableLibraries() {
-    LibraryInfo[] libraryInfos = myLibraryCompositionSettings.getLibraryInfos();
-    RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(libraryInfos);
-    List<Library> suitableLibraries = new ArrayList<Library>();
-    Library[] libraries = myLibrariesContainer.getAllLibraries();
-    for (Library library : libraries) {
-      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info =
-        requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES), false);
-      if (info == null || info.getLibraryInfos().length < libraryInfos.length) {
-        suitableLibraries.add(library);
-      }
-    }
-    return suitableLibraries;
-  }
-
-  private void showLibrariesChooser() {
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(myMainPanel, mySuitableLibraries);
-    dialog.markElements(myUsedLibraries);
-    dialog.show();
-    if (dialog.isOK()) {
-      myUsedLibraries.clear();
-      myUsedLibraries.addAll(dialog.getMarkedLibraries());
-      updateAll();
-    }
-  }
-
   private void showFileChooser() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
     descriptor.setTitle(IdeBundle.message("file.chooser.select.paths.title"));
@@ -197,9 +155,6 @@ public class LibraryCompositionOptionsPanel {
     String missingJarsText;
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedJars);
-    for (Library library : myUsedLibraries) {
-      ContainerUtil.addAll(roots, myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
-    }
     RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = new RequiredLibrariesInfo(myLibraryCompositionSettings.getLibraryInfos()).checkLibraries(
       VfsUtil.toVirtualFileArray(roots), false);
     if (info != null) {
@@ -222,12 +177,6 @@ public class LibraryCompositionOptionsPanel {
     UIUtil.setEnabled(myMirrorsPanel, myDownloadMissingJarsCheckBox.isSelected(), true);
   }
 
-  public void updateRepositoriesMirrors(final LibraryDownloadingMirrorsMap mirrorsMap) {
-    for (RemoteRepositoryMirrorPanel mirrorPanel : myMirrorPanelsList) {
-      mirrorPanel.updateComboBox(mirrorsMap);
-    }
-  }
-
   public void saveSelectedRepositoriesMirrors(final LibraryDownloadingMirrorsMap mirrorsMap) {
     for (RemoteRepositoryMirrorPanel mirrorPanel : myMirrorPanelsList) {
       mirrorsMap.setMirror(mirrorPanel.getRemoteRepository(), mirrorPanel.getSelectedMirror());
@@ -243,7 +192,6 @@ public class LibraryCompositionOptionsPanel {
     else {
       myLibraryCompositionSettings.setDownloadLibraries(false);
     }
-    myLibraryCompositionSettings.setUsedLibraries(myUsedLibraries);
     myLibraryCompositionSettings.setLibraryLevel(myLibraryLevels.getKey((String)myLibraryLevelComboBox.getSelectedItem()));
     myLibraryCompositionSettings.setLibraryName(myLibraryNameField.getText());
   }

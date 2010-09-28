@@ -26,13 +26,13 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -45,13 +45,13 @@ public class LibraryCompositionSettings implements Disposable {
   private final String myTitle;
   private String myDirectoryForDownloadedLibrariesPath;
   private boolean myDownloadLibraries = true;
-  private final Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
   private final Icon myIcon;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
   private NewLibraryEditor myLibraryEditor;
+  private Library mySelectedLibrary;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
@@ -93,9 +93,8 @@ public class LibraryCompositionSettings implements Disposable {
     myDownloadLibraries = downloadLibraries;
   }
 
-  public void setUsedLibraries(Collection<Library> addedLibraries) {
-    myUsedLibraries.clear();
-    myUsedLibraries.addAll(addedLibraries);
+  public void setSelectedExistingLibrary(Library library) {
+    mySelectedLibrary = library;
   }
 
   public void setLibraryLevel(final LibrariesContainer.LibraryLevel libraryLevel) {
@@ -124,9 +123,6 @@ public class LibraryCompositionSettings implements Disposable {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
       List<VirtualFile> roots = new ArrayList<VirtualFile>();
-      for (Library library : myUsedLibraries) {
-        ContainerUtil.addAll(roots, librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
-      }
       VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
       if (info != null) {
@@ -165,10 +161,6 @@ public class LibraryCompositionSettings implements Disposable {
     return myLibraryName;
   }
 
-  public Collection<Library> getUsedLibraries() {
-    return Collections.unmodifiableCollection(myUsedLibraries);
-  }
-
   public Icon getIcon() {
     return myIcon;
   }
@@ -185,9 +177,9 @@ public class LibraryCompositionSettings implements Disposable {
         rootModel.addLibraryEntry(library);
       }
     }
-    for (Library usedLibrary : getUsedLibraries()) {
-      addedLibraries.add(usedLibrary);
-      rootModel.addLibraryEntry(usedLibrary);
+    if (mySelectedLibrary != null) {
+      addedLibraries.add(mySelectedLibrary);
+      rootModel.addLibraryEntry(mySelectedLibrary);
     }
     return library;
   }
