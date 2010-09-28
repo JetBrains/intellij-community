@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,63 +29,64 @@ import java.util.List;
 @SuppressWarnings({"UnusedDeclaration"})
 class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosition> {
 
-  private final LogicalPosition myTargetLogical;
+  private LogicalPosition myTargetLogical;
 
   LogicalToVisualMappingStrategy(@NotNull final LogicalPosition logical, Editor editor, final SoftWrapsStorage storage,
                                  EditorTextRepresentationHelper representationHelper, final List<CacheEntry> cache)
     throws IllegalStateException
   {
-    super(new Computable<Pair<CacheEntry, VisualPosition>>() {
-      @Override
-      public Pair<CacheEntry, VisualPosition> compute() {
-        int start = 0;
-        int end = cache.size() - 1;
-
-        // We inline binary search here because profiling indicates that it becomes bottleneck to use Collections.binarySearch().
-        while (start <= end) {
-          int i = (end + start) >>> 1;
-          CacheEntry cacheEntry = cache.get(i);
-
-          // There is a possible case that single logical line is represented on multiple visual lines due to soft wraps processing.
-          // Hence, we check for bot logical line and logical columns during searching 'anchor' cache entry.
-
-          if (cacheEntry.endLogicalLine < logical.line
-              || (cacheEntry.endLogicalLine == logical.line && storage.getSoftWrap(cacheEntry.endOffset) != null
-                  && cacheEntry.endLogicalColumn <= logical.column))
-          {
-            start = i + 1;
-            continue;
-          }
-          if (cacheEntry.startLogicalLine > logical.line
-              || (cacheEntry.startLogicalLine == logical.line
-                  && cacheEntry.startLogicalColumn > logical.column))
-          {
-            end = i - 1;
-            continue;
-          }
-
-          // There is a possible case that currently found cache entry corresponds to soft-wrapped line and soft wrap occurred
-          // at target logical column. We need to return cache entry for the next visual line then (because single logical column
-          // is shared for 'before soft wrap' and 'after soft wrap' positions and we want to use the one that points to
-          // 'after soft wrap' position).
-          if (cacheEntry.endLogicalLine == logical.line && cacheEntry.endLogicalColumn == logical.column && i < cache.size() - 1) {
-            CacheEntry nextLineCacheEntry = cache.get(i + 1);
-            if (nextLineCacheEntry.startLogicalLine == logical.line
-                && nextLineCacheEntry.startLogicalColumn == logical.column)
-            {
-              return new Pair<CacheEntry, VisualPosition>(nextLineCacheEntry, null);
-            }
-          }
-          return new Pair<CacheEntry, VisualPosition>(cacheEntry, null);
-        }
-
-        throw new IllegalStateException(String.format(
-          "Can't map logical position (%s) to visual position. Reason: no cached information information about target visual "
-          + "line is found. Registered entries: %s", logical, cache
-        ));
-      }
-    }, editor, storage, representationHelper);
+    super(editor, storage, representationHelper);
     myTargetLogical = logical;
+  }
+
+  public void init(@NotNull final LogicalPosition logical, final @NotNull List<CacheEntry> cache) {
+    setEagerMatch(null);
+
+    myTargetLogical = logical;
+    int start = 0;
+    int end = cache.size() - 1;
+
+    // We inline binary search here because profiling indicates that it becomes bottleneck to use Collections.binarySearch().
+    while (start <= end) {
+      int i = (end + start) >>> 1;
+      CacheEntry cacheEntry = cache.get(i);
+
+      // There is a possible case that single logical line is represented on multiple visual lines due to soft wraps processing.
+      // Hence, we check for bot logical line and logical columns during searching 'anchor' cache entry.
+
+      if (cacheEntry.endLogicalLine < logical.line
+          || (cacheEntry.endLogicalLine == logical.line && myStorage.getSoftWrap(cacheEntry.endOffset) != null
+              && cacheEntry.endLogicalColumn <= logical.column)) {
+        start = i + 1;
+        continue;
+      }
+      if (cacheEntry.startLogicalLine > logical.line
+          || (cacheEntry.startLogicalLine == logical.line
+              && cacheEntry.startLogicalColumn > logical.column)) {
+        end = i - 1;
+        continue;
+      }
+
+      // There is a possible case that currently found cache entry corresponds to soft-wrapped line and soft wrap occurred
+      // at target logical column. We need to return cache entry for the next visual line then (because single logical column
+      // is shared for 'before soft wrap' and 'after soft wrap' positions and we want to use the one that points to
+      // 'after soft wrap' position).
+      if (cacheEntry.endLogicalLine == logical.line && cacheEntry.endLogicalColumn == logical.column && i < cache.size() - 1) {
+        CacheEntry nextLineCacheEntry = cache.get(i + 1);
+        if (nextLineCacheEntry.startLogicalLine == logical.line
+            && nextLineCacheEntry.startLogicalColumn == logical.column) {
+          setCacheEntry(nextLineCacheEntry);
+          return;
+        }
+      }
+      setCacheEntry(cacheEntry);
+      return;
+    }
+
+    throw new IllegalStateException(String.format(
+      "Can't map logical position (%s) to visual position. Reason: no cached information information about target visual "
+      + "line is found. Registered entries: %s", logical, cache
+    ));
   }
 
   @Override

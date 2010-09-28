@@ -969,7 +969,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     ConsoleFolding current = foldingForLine(getLineText(document, line, false));
-    myFolding.put(line, current);
+    if (current != null) {
+      myFolding.put(line, current);
+    }
 
     final ConsoleFolding prevFolding = myFolding.get(line - 1);
     if (current == null && prevFolding != null) {
