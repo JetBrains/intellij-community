@@ -46,6 +46,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -1024,8 +1025,11 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
+    URL resource = SystemInfo.class.getResource("/general/mdot.png");
+
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
-    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    //String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} li {list-style-image: " + resource.toExternalForm() +"}";
+    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} \nul {list-style-image: " + "file:///Users/kirillk/idea/community/out/production/icons/general/mdot.png;" +"}";
     String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }

@@ -42,6 +42,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.regex.Pattern;
 
 /**
  * @author cdr
@@ -415,7 +416,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     }
 
-    return result;
+
+
+    return result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
   public String getText() {
