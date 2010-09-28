@@ -577,6 +577,11 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderGTKLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("GTK");
+  }
+
   public static boolean isFullRowSelectionLAF() {
     return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
