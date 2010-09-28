@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -48,9 +49,9 @@ import java.util.ArrayList;
  * @author ilyas
  */
 public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
-  private static final Function<GrMethodCallExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrMethodCallExpressionImpl, PsiType>() {
+  public static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
     @Nullable
-    public PsiType fun(GrMethodCallExpressionImpl callExpression) {
+    public PsiType fun(GrMethodCall callExpression) {
       GrExpression invoked = callExpression.getInvokedExpression();
       if (invoked instanceof GrReferenceExpression) {
         GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
@@ -104,9 +105,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   };
 
   @Nullable
-  private static PsiType getClosureCallOrCurryReturnType(GrMethodCallExpressionImpl callExpression,
-                                                         GrReferenceExpression refExpr,
-                                                         PsiMethod resolved) {
+  private static PsiType getClosureCallOrCurryReturnType(GrMethodCall callExpression, GrReferenceExpression refExpr, PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
     if (clazz != null && GrClosableBlock.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
       if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
@@ -118,7 +117,8 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
               return ((GrClosureType)qType).getSignature().getReturnType();
             }
             else if ("curry".equals(resolved.getName())) {
-              return ((GrClosureType)qType).curry(callExpression.getExpressionArguments().length);
+              final GrArgumentList argumentList = callExpression.getArgumentList();
+              return ((GrClosureType)qType).curry(argumentList == null ? 0 : argumentList.getExpressionArguments().length);
             }
           }
         }
@@ -140,7 +140,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
+    return GroovyPsiManager.getInstance(getProject()).getType(this, METHOD_CALL_TYPES_CALCULATOR);
   }
 
   @Nullable

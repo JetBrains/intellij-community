@@ -605,4 +605,8 @@ set<caret>Foo(2)
   public void testGetterWithUpperCaseFieldReference() {
     assertNull resolve("A.groovy")
   }
+
+  public void testCommandExpressions() {
+    assertInstanceOf resolve("A.groovy"), GrField
+  }
 }
