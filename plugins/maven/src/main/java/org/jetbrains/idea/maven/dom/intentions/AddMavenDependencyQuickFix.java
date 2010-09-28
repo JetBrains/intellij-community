@@ -49,14 +49,16 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return MavenDomUtil.findContainingMavenizedModule(file) != null;
+    return MavenDomUtil.findContainingProject(file) != null;
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    MavenProject mavenProject = MavenDomUtil.findContainingProject(file);
+    if (mavenProject == null) return;
+
     MavenId dependency = MavenArtifactSearchDialog.searchForClass(project, getReferenceText());
     if (dependency == null) return;
 
-    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenDomUtil.findContainingMavenizedModule(file));
     MavenProjectsManager.getInstance(project).addDependency(mavenProject, dependency);
   }
 

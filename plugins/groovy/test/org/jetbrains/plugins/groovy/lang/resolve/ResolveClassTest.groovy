@@ -179,6 +179,9 @@ class X {
     assertInstanceOf resolved, GrAccessorMethod;
   }
 
+  public void testLowerCaseClassName() {
+    doTest()
+  }
 
   private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");

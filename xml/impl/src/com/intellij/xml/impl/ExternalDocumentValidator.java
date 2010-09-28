@@ -256,7 +256,7 @@ public class ExternalDocumentValidator {
 
     });
 
-    myHandler.doValidate(project, element.getContainingFile());
+    myHandler.doValidate((XmlFile)element.getContainingFile());
 
     myFile = file;
     myModificationStamp = myFile.getModificationStamp();

@@ -67,6 +67,7 @@ public class ProgressTipPanel {
     final HTMLEditorKit editorKit = new HTMLEditorKit();
     myBrowser.setEditorKit(editorKit);
     myBrowser.setContentType(UIUtil.HTML_MIME);
+    myBrowser.setBackground(UIUtil.getTextFieldBackground());
 
     myScrollPane.setPreferredSize(new Dimension(600, 200));
     myBrowser.setEditable(false);

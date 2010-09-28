@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author yole
@@ -323,17 +324,19 @@ public class AbstractVcsTestCase {
     }.execute();
   }
 
-  protected void copyFileInCommand(final VirtualFile file, final String toName) {
+  protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
+    final AtomicReference<VirtualFile> res = new AtomicReference<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
       protected void run() throws Throwable {
         try {
-          file.copy(this, file.getParent(), toName);
+          res.set(file.copy(this, file.getParent(), toName));
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
       }
     }.execute();
+    return res.get();
   }
 
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {

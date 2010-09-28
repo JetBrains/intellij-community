@@ -24,44 +24,36 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.List;
 
 /**
  * @author nik
 */
 public class LibraryCompositionSettings implements Disposable {
-
   @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final LibraryInfo[] myLibraryInfos;
   private final String myBaseDirectoryForDownloadedFiles;
-  private final String myTitle;
   private String myDirectoryForDownloadedLibrariesPath;
   private boolean myDownloadLibraries = true;
-  private final Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
-  private final Icon myIcon;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
   private NewLibraryEditor myLibraryEditor;
+  private Library mySelectedLibrary;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
-                                    final @NotNull String baseDirectoryForDownloadedFiles,
-                                    final String title, @Nullable Icon icon) {
+                                    final @NotNull String baseDirectoryForDownloadedFiles) {
     myLibraryInfos = libraryInfos;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
-    myTitle = title;
     myLibraryName = defaultLibraryName;
-    myIcon = icon;
   }
 
   public void addFilesToLibrary(VirtualFile[] files, OrderRootType orderRootType) {
@@ -93,9 +85,8 @@ public class LibraryCompositionSettings implements Disposable {
     myDownloadLibraries = downloadLibraries;
   }
 
-  public void setUsedLibraries(Collection<Library> addedLibraries) {
-    myUsedLibraries.clear();
-    myUsedLibraries.addAll(addedLibraries);
+  public void setSelectedExistingLibrary(Library library) {
+    mySelectedLibrary = library;
   }
 
   public void setLibraryLevel(final LibrariesContainer.LibraryLevel libraryLevel) {
@@ -113,28 +104,17 @@ public class LibraryCompositionSettings implements Disposable {
     return myDirectoryForDownloadedLibrariesPath;
   }
 
-  public String getTitle() {
-    return myTitle;
-  }
-
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap,
-                               @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent,
-                               boolean all) {
+  public boolean downloadFiles(final @NotNull JComponent parent, boolean all) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
-      List<VirtualFile> roots = new ArrayList<VirtualFile>();
-      for (Library library : myUsedLibraries) {
-        ContainerUtil.addAll(roots, librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
-      }
-      VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
+      VirtualFile[] jars = myLibraryEditor != null ? myLibraryEditor.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
         if (downloadingInfos.length > 0) {
           LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, parent,
-                                                               getDirectoryForDownloadedLibrariesPath(), myLibraryName,
-                                                               mirrorsMap);
+                                                               getDirectoryForDownloadedLibrariesPath(), myLibraryName);
           VirtualFile[] files = downloader.download();
           if (files.length != downloadingInfos.length) {
             return false;
@@ -165,14 +145,6 @@ public class LibraryCompositionSettings implements Disposable {
     return myLibraryName;
   }
 
-  public Collection<Library> getUsedLibraries() {
-    return Collections.unmodifiableCollection(myUsedLibraries);
-  }
-
-  public Icon getIcon() {
-    return myIcon;
-  }
-
   @Nullable
   public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
@@ -185,9 +157,9 @@ public class LibraryCompositionSettings implements Disposable {
         rootModel.addLibraryEntry(library);
       }
     }
-    for (Library usedLibrary : getUsedLibraries()) {
-      addedLibraries.add(usedLibrary);
-      rootModel.addLibraryEntry(usedLibrary);
+    if (mySelectedLibrary != null) {
+      addedLibraries.add(mySelectedLibrary);
+      rootModel.addLibraryEntry(mySelectedLibrary);
     }
     return library;
   }

@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final SynchronizedLife myLife;
 
   private final MyProgressHolder myProgressHolder;
+  private QueueProcessor<Consumer<DirtBuilder>> processor = new QueueProcessor<Consumer<DirtBuilder>>(new MyDirtyTaker(), false);
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -70,10 +72,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
     else {
+      processor.add(new Consumer<DirtBuilder>() {
+        @Override public void consume(DirtBuilder dirtBuilder) {
+          markEverythingDirty();
+        }
+      });
       StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
         public void run() {
           myLife.born();
-          markEverythingDirty();
+          processor.start();
         }
       });
     }
@@ -174,23 +181,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   private void takeDirt(final Consumer<DirtBuilder> filler) {
-    LockFreeRunnable.wrap(new Runnable() {
-      @Override
-      public void run() {
-        final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            filler.consume(myDirtBuilder);
-            wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
-          }
-        };
-        final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
-
-        if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-          myChangeListManager.scheduleUpdate();
-        }
-      }
-    }).run();
+    processor.add(filler);
   }
 
   private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
@@ -279,6 +270,23 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         dirtBuilder.addDirtyDirRecursively(root);
       }
     });
+  }
+
+  private class MyDirtyTaker implements Consumer<Consumer<DirtBuilder>> {
+    @Override public void consume(final Consumer<DirtBuilder> filler) {
+      final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          filler.consume(myDirtBuilder);
+          wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
+        }
+      };
+      final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
+
+      if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
+        myChangeListManager.scheduleUpdate();
+      }
+    }
   }
 
   private class MyProgressHolder {

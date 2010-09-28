@@ -22,7 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider{
 
@@ -51,13 +54,13 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
     return myProviders;
   }
 
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
-      String result = provider.getQuickNavigateInfo(element);
+      String result = provider.getQuickNavigateInfo(element, originalElement);
       if ( result != null ) return result;
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
-      final String result = provider.getQuickNavigateInfo(element);
+      final String result = provider.getQuickNavigateInfo(element, originalElement);
       if (result != null) return result;
     }
     return null;

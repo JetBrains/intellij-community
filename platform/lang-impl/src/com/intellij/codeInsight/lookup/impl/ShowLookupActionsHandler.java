@@ -39,6 +39,8 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
   }
 
   protected void executeInLookup(final LookupImpl lookup) {
+    if (!lookup.isFocused()) return;
+
     final LookupElement element = lookup.getCurrentItem();
     if (element == null) {
       return;

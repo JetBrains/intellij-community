@@ -20,99 +20,48 @@
  */
 package com.intellij.analysis;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
+import com.intellij.psi.search.scope.ProjectProductionScope;
+import com.intellij.psi.search.scope.TestsScope;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class PackagesScopesProvider implements CustomScopesProvider {
-  private NamedScope myProjectTestScope;
-  private NamedScope myProjectProductionScope;
- 
-
-  private final Project myProject;
+  private final NamedScope myProjectTestScope;
+  private final NamedScope myProjectProductionScope;
+  private final NamedScope myNonProjectScope;
+  private final List<NamedScope> myScopes;
 
   public static PackagesScopesProvider getInstance(Project project) {
-    for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, project)) {
-      if (provider instanceof PackagesScopesProvider) return (PackagesScopesProvider)provider;
-    }
-    return null;
+    return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, PackagesScopesProvider.class);
   }
 
   public PackagesScopesProvider(Project project) {
-    myProject = project;
+    myProjectTestScope = new TestsScope(project);
+    myProjectProductionScope = new ProjectProductionScope(project);
+    myNonProjectScope = new NonProjectFilesScope(project);
+    myScopes = Arrays.asList(myProjectProductionScope, myNonProjectScope, myProjectTestScope);
   }
 
   @NotNull
   public List<NamedScope> getCustomScopes() {
-    final List<NamedScope> list = new ArrayList<NamedScope>();
-    list.add(getProjectProductionScope());
-    list.add(getProjectTestScope());
-    return list;
+    return myScopes;
   }
 
-    public NamedScope getProjectTestScope() {
-    if (myProjectTestScope == null) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      myProjectTestScope = new NamedScope(IdeBundle.message("predefined.scope.tests.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          return file.getProject() == myProject && virtualFile != null && index.isInTestSourceContent(virtualFile);
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_TEST+":*..*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
+  public NamedScope getProjectTestScope() {
     return myProjectTestScope;
   }
 
   public NamedScope getProjectProductionScope() {
-    if (myProjectProductionScope == null) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      myProjectProductionScope = new NamedScope(IdeBundle.message("predefined.scope.production.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          return file.getProject() == myProject
-                 && virtualFile != null
-                 && !index.isInTestSourceContent(virtualFile)
-                 && !index.isInLibraryClasses(virtualFile)
-                 && !index.isInLibrarySource(virtualFile)
-            ;
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_SOURCE+":*..*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
     return myProjectProductionScope;
   }
-
-
 }

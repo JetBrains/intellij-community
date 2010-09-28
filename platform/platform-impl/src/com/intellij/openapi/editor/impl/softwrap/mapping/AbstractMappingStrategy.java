@@ -20,8 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,28 +39,37 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
   protected static final CacheEntry SEARCH_KEY = new CacheEntry(0, null, null, null);
 
-  protected final CacheEntry myCacheEntry;
   protected final Editor myEditor;
   protected final EditorTextRepresentationHelper myRepresentationHelper;
   protected final SoftWrapsStorage myStorage;
-  private final T myEagerMatch;
 
-  AbstractMappingStrategy(Computable<Pair<CacheEntry, T>> cacheEntryProvider, Editor editor, SoftWrapsStorage storage,
-                          EditorTextRepresentationHelper representationHelper) throws IllegalStateException
+  private CacheEntry myCacheEntry;
+  private T myEagerMatch;
+
+  AbstractMappingStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage,
+                          @NotNull EditorTextRepresentationHelper representationHelper) throws IllegalStateException
   {
     myEditor = editor;
     myStorage = storage;
     myRepresentationHelper = representationHelper;
-
-    Pair<CacheEntry, T> pair = cacheEntryProvider.compute();
-    myCacheEntry = pair.first;
-    myEagerMatch = pair.second;
   }
 
   @Nullable
   @Override
   public T eagerMatch() {
     return myEagerMatch;
+  }
+
+  protected void setEagerMatch(@Nullable T eagerMatch) {
+    myEagerMatch = eagerMatch;
+  }
+
+  protected CacheEntry getCacheEntry() {
+    return myCacheEntry;
+  }
+
+  protected void setCacheEntry(CacheEntry cacheEntry) {
+    myCacheEntry = cacheEntry;
   }
 
   @NotNull

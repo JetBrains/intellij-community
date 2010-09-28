@@ -102,6 +102,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     Rectangle cellRect = getCellRect(key);
 
     int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
+    final int modelRowIndex = myComponent.convertRowIndexToModel(key.row);
     TableModel model = myComponent.getModel();
     if (key.row < 0 || key.row >= model.getRowCount() || key.column < 0 || key.column >= model.getColumnCount()) {
       return null;
@@ -110,7 +111,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     Component renderer = myComponent
       .getCellRenderer(key.row, key.column)
       .getTableCellRendererComponent(myComponent,
-                                     model.getValueAt(key.row, modelColumnIndex),
+                                     model.getValueAt(modelRowIndex, modelColumnIndex),
                                      myComponent.getSelectionModel().isSelectedIndex(key.row),
                                      myComponent.hasFocus(),
                                      key.row, key.column);

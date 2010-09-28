@@ -15,29 +15,23 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author cdr
@@ -53,51 +47,46 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     return "UnusedProperty";
   }
 
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
-    if (!(file instanceof PropertiesFile)) return null;
-    final List<Property> properties = ((PropertiesFile)file).getProperties();
-    Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module == null) return null;
-    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        final boolean isOnTheFly,
+                                        final LocalInspectionToolSession session) {
+    final PsiFile file = session.getFile();
+    Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
-    final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
-    if (!JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
-      public boolean process(final Property property) {
+    final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
+    return new PsiElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (!(element instanceof Property)) return;
+        Property property = (Property)element;
+
+        final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
         if (original != null) {
-          if (original.isCanceled()) return false;
+          if (original.isCanceled()) return;
           original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
         }
 
         String name = property.getName();
-        if (name == null) return true;
-        PsiSearchHelper.SearchCostResult cheapEnough = file.getManager().getSearchHelper().isCheapEnoughToSearch(name, searchScope, file,
-                                                                                                                 original);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+        if (name == null) return;
+        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
 
         final PsiReference usage = cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ? null :
                                    ReferencesSearch.search(property, searchScope, false).findFirst();
-        if (usage != null) {
-          return true;
-        }
+        if (usage != null) return;
         final ASTNode propertyNode = property.getNode();
         assert propertyNode != null;
 
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
         String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                                       isOnTheFly);
-        synchronized (descriptors) {
-          descriptors.add(descriptor);
-        }
 
-        return true;
+        holder.registerProblem(key, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL,RemovePropertyLocalFix.INSTANCE);
       }
-    }, isOnTheFly)) throw new ProcessCanceledException();
-
-    synchronized (descriptors) {
-      return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
-    }
+    };
   }
 }

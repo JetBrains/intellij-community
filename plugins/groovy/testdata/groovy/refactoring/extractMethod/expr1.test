@@ -10,6 +10,6 @@ protected def getGeneratedFileNames(String name, int boo) {
     names
 }
 
-private ArrayList testMethod() {
+private ArrayList<String> testMethod() {
   return new ArrayList<String>()
 }

@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,45 +29,51 @@ import java.util.List;
 */
 class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
 
-  private final int myTargetOffset;
+  private int myTargetOffset;
 
-  OffsetToLogicalCalculationStrategy(final int targetOffset, final Editor editor, EditorTextRepresentationHelper representationHelper,
-                                     final List<CacheEntry> cache, SoftWrapsStorage storage)
-  {
-    super(new Computable<Pair<CacheEntry, LogicalPosition>>() {
-      @Override
-      public Pair<CacheEntry, LogicalPosition> compute() {
-        Document document = editor.getDocument();
-        if (targetOffset >= document.getTextLength()) {
-          if (cache.isEmpty()) {
-            return new Pair<CacheEntry, LogicalPosition>(null, new LogicalPosition(0, 0, 0, 0, 0, 0, 0));
-          }
-          else {
-            CacheEntry lastEntry = cache.get(cache.size() - 1);
-            LogicalPosition eager = new LogicalPosition(
-              lastEntry.endLogicalLine, lastEntry.endLogicalColumn + 1, lastEntry.endSoftWrapLinesBefore,
-              lastEntry.endSoftWrapLinesCurrent, lastEntry.endSoftWrapColumnDiff, lastEntry.endFoldedLines,
-              lastEntry.endFoldingColumnDiff
-            );
-            return new Pair<CacheEntry, LogicalPosition>(null, eager);
-          }
-        }
-        else if (!cache.isEmpty()) {
-          CacheEntry lastEntry = cache.get(cache.size() - 1);
-          if (targetOffset > lastEntry.endOffset) {
-            LogicalPosition eager = new LogicalPosition(
-              lastEntry.endLogicalLine + 1, 0, lastEntry.endSoftWrapLinesBefore + lastEntry.endSoftWrapLinesCurrent,
-              0, 0, lastEntry.endFoldedLines, 0
-            );
-            return new Pair<CacheEntry, LogicalPosition>(null, eager);
-          }
-        }
+  OffsetToLogicalCalculationStrategy(final Editor editor, SoftWrapsStorage storage, EditorTextRepresentationHelper representationHelper) {
+    super(editor, storage, representationHelper);
+  }
 
-        int i = MappingUtil.getCacheEntryIndexForOffset(targetOffset, editor.getDocument(), cache);
-        return new Pair<CacheEntry, LogicalPosition>(cache.get(i), null);
-      }
-    }, editor, storage, representationHelper);
+  public void init(final int targetOffset, final List<CacheEntry> cache) {
+    setEagerMatch(null);
+
     myTargetOffset = targetOffset;
+    Document document = myEditor.getDocument();
+    if (targetOffset == 0) {
+      LogicalPosition eager = new LogicalPosition(0, 0, 0, 0, 0, 0, 0);
+      setEagerMatch(eager);
+      return;
+    }
+    else if (targetOffset >= document.getTextLength()) {
+      if (cache.isEmpty()) {
+        setEagerMatch(new LogicalPosition(0, 0, 0, 0, 0, 0, 0));
+      }
+      else {
+        CacheEntry lastEntry = cache.get(cache.size() - 1);
+        LogicalPosition eager = new LogicalPosition(
+          lastEntry.endLogicalLine, lastEntry.endLogicalColumn + 1, lastEntry.endSoftWrapLinesBefore,
+          lastEntry.endSoftWrapLinesCurrent, lastEntry.endSoftWrapColumnDiff, lastEntry.endFoldedLines,
+          lastEntry.endFoldingColumnDiff
+        );
+        setEagerMatch(eager);
+      }
+      return;
+    }
+    else if (!cache.isEmpty()) {
+      CacheEntry lastEntry = cache.get(cache.size() - 1);
+      if (targetOffset > lastEntry.endOffset) {
+        LogicalPosition eager = new LogicalPosition(
+          lastEntry.endLogicalLine + 1, 0, lastEntry.endSoftWrapLinesBefore + lastEntry.endSoftWrapLinesCurrent,
+          0, 0, lastEntry.endFoldedLines, 0
+        );
+        setEagerMatch(eager);
+        return;
+      }
+    }
+
+    int i = MappingUtil.getCacheEntryIndexForOffset(targetOffset, myEditor.getDocument(), cache);
+    setCacheEntry(cache.get(i));
   }
 
   @Override
@@ -80,7 +84,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
     // Process use-case when target offset points to 'after soft wrap' position.
     SoftWrap softWrap = myStorage.getSoftWrap(offset);
-    if (softWrap != null && offset < myCacheEntry.endOffset) {
+    if (softWrap != null && offset < getCacheEntry().endOffset) {
       context.visualColumn = softWrap.getIndentInColumns();
       context.softWrapColumnDiff = context.visualColumn - context.logicalColumn;
       return context.buildLogicalPosition();
@@ -143,7 +147,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     if (softWrap.getStart() == myTargetOffset) {
       return context.buildLogicalPosition();
     }
-    if (softWrap.getStart() == myCacheEntry.startOffset) {
+    if (softWrap.getStart() == getCacheEntry().startOffset) {
       return null;
     }
     assert false;

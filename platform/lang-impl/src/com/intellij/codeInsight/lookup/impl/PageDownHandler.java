@@ -25,6 +25,8 @@ public class PageDownHandler extends LookupActionHandler {
   }
 
   protected void executeInLookup(final LookupImpl lookup) {
+    if (!lookup.isFocused()) return;
+
     ListScrollingUtil.movePageDown(lookup.getList());
   }
 }

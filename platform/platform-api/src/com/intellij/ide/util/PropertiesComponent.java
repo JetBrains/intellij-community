@@ -32,6 +32,10 @@ public abstract class PropertiesComponent {
     return Boolean.valueOf(getValue(name)).booleanValue();
   }
 
+  public final boolean getBoolean(@NonNls String name, boolean defaultValue) {
+    return isValueSet(name) ? isTrueValue(name) : defaultValue;
+  }
+
   public abstract boolean isValueSet(String name);
 
   public abstract String getValue(@NonNls String name);

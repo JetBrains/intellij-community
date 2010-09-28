@@ -21,6 +21,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -97,7 +98,7 @@ public class GitTestRepository {
     execute("add", ".");
   }
 
-  public void commit(String commitMessage) throws IOException {
+  public void commit(@Nullable String commitMessage) throws IOException {
     if (commitMessage == null) {
       commitMessage = "Sample commit message";
     }

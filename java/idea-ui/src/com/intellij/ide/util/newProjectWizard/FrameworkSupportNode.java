@@ -16,7 +16,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
-import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
@@ -75,12 +74,11 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public LibraryOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer,
-                                                                          LibraryDownloadingMirrorsMap mirrorsMap) {
+  public LibraryOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer) {
     final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
     if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
       if (libraryCompositionSettings != null) {
-        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer);
+        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer, true);
       }
       else {
         myLibraryCompositionOptionsPanel = null;
@@ -124,8 +122,8 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
       final LibraryInfo[] libraries = getLibraries();
       if (libraries.length != 0) {
-        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute(),
-                                                                      "Libraries", myProvider.getIcon());
+        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute()
+        );
         Disposer.register(myConfigurable, myLibraryCompositionSettings);
       }
       else {

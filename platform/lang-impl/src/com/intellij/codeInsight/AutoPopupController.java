@@ -16,8 +16,9 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.DotAutoLookupHandler;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
@@ -92,7 +93,7 @@ public class AutoPopupController implements Disposable {
 
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           if (condition != null && !condition.value(editor)) return;
-          new DotAutoLookupHandler().invoke(myProject, editor, file);
+          new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(myProject, editor, file);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action

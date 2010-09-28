@@ -23,7 +23,7 @@ contributor(ctype:hasAnnotation("groovy.lang.Category")) {
 contributor(ctype:hasAnnotation("groovy.lang.Mixin")) {
   def annotations = psiClass?.getAnnotations("groovy.lang.Mixin")
   for (a in annotations) {
-    refs = a.findAttributeValue("value")
+    def refs = a.findAttributeValue("value")
     for (c in refs.asList()) {
       delegatesTo c?.bind()
     }

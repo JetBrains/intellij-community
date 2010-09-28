@@ -35,5 +35,5 @@ public @interface Colored {
    * @return color as hex-string
    */
   @RegExp(prefix = "[0-9a-f]{6}")
-  String color() default "ffffff";
+  String color();
 }

@@ -33,7 +33,7 @@ import java.net.URISyntaxException;
 public class ImageDocumentationProvider extends QuickDocumentationProvider {
   private static final int MAX_IMAGE_SIZE = 300;
 
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

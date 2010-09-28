@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,51 +30,47 @@ import java.util.List;
 */
 class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
 
-  private final VisualPosition myTargetVisual;
+  private VisualPosition myTargetVisual;
 
-  VisualToLogicalCalculationStrategy(@NotNull final VisualPosition targetVisual, final List<CacheEntry> cache, Editor editor,
-                                     SoftWrapsStorage storage, EditorTextRepresentationHelper representationHelper) {
-    super(new Computable<Pair<CacheEntry, LogicalPosition>>() {
-      @Override
-      public Pair<CacheEntry, LogicalPosition> compute() {
-        SEARCH_KEY.visualLine = targetVisual.line;
-        int i = Collections.binarySearch(cache, SEARCH_KEY);
-        if (i >= 0) {
-          CacheEntry cacheEntry = cache.get(i);
-          LogicalPosition eager = null;
-          if (targetVisual.column == 0) {
-            eager = cacheEntry.buildStartLineContext().buildLogicalPosition();
-          }
-          return new Pair<CacheEntry, LogicalPosition>(cacheEntry, eager);
-        }
-
-        // Handle situation with corrupted cache.
-        throw new IllegalStateException(String.format(
-          "Can't map visual position (%s) to logical. Reason: no cached information information about target visual line is found. "
-          + "Registered entries: %s", targetVisual, cache
-        ));
-      }
-    }, editor, storage, representationHelper);
-    myTargetVisual = targetVisual;
+  VisualToLogicalCalculationStrategy(Editor editor, SoftWrapsStorage storage, EditorTextRepresentationHelper representationHelper) {
+    super(editor, storage, representationHelper);
   }
 
-  @Nullable
-  @Override
-  public LogicalPosition eagerMatch() {
-    return null;
+  public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
+    setEagerMatch(null);
+
+    myTargetVisual = targetVisual;
+    SEARCH_KEY.visualLine = targetVisual.line;
+    int i = Collections.binarySearch(cache, SEARCH_KEY);
+    if (i >= 0) {
+      CacheEntry cacheEntry = cache.get(i);
+      if (targetVisual.column == 0) {
+        setEagerMatch(cacheEntry.buildStartLineContext().buildLogicalPosition());
+      }
+      else {
+        setCacheEntry(cacheEntry);
+      }
+      return;
+    }
+
+    // Handle situation with corrupted cache.
+    throw new IllegalStateException(String.format(
+      "Can't map visual position (%s) to logical. Reason: no cached information information about target visual line is found. "
+      + "Registered entries: %s", targetVisual, cache
+    ));
   }
 
   @Override
   protected LogicalPosition buildIfExceeds(ProcessingContext context, int offset) {
     // There is a possible case that target visual line starts with soft wrap. We want to process that at 'processSoftWrap()' method.
-    if (offset == myCacheEntry.startOffset && myStorage.getSoftWrap(offset) != null) {
+    if (offset == getCacheEntry().startOffset && myStorage.getSoftWrap(offset) != null) {
       return null;
     }
 
     // Return eagerly if target visual position remains between current context position and the one defined by the given offset.
-    if (offset > myCacheEntry.endOffset || (context.visualColumn + offset - context.offset >= myTargetVisual.column)) {
+    if (offset > getCacheEntry().endOffset || (context.visualColumn + offset - context.offset >= myTargetVisual.column)) {
       int diff = myTargetVisual.column - context.visualColumn;
-      context.offset = Math.min(myCacheEntry.endOffset, context.offset + diff);
+      context.offset = Math.min(getCacheEntry().endOffset, context.offset + diff);
       context.logicalColumn += diff;
       context.visualColumn = myTargetVisual.column;
       return context.buildLogicalPosition();
@@ -89,9 +83,9 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   public LogicalPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
     // There is a possible case that current visual line starts with soft wrap and target visual position points to its
     // virtual space.
-    if (myCacheEntry.startOffset == softWrap.getStart()) {
+    if (getCacheEntry().startOffset == softWrap.getStart()) {
       if (myTargetVisual.column <= softWrap.getIndentInColumns()) {
-        ProcessingContext resultingContext = myCacheEntry.buildStartLineContext();
+        ProcessingContext resultingContext = getCacheEntry().buildStartLineContext();
         resultingContext.visualColumn = myTargetVisual.column;
         resultingContext.softWrapColumnDiff += myTargetVisual.column;
         return resultingContext.buildLogicalPosition();
@@ -105,7 +99,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
     // We assume that target visual position points to soft wrap-introduced virtual space if this method is called (we expect
     // to iterate only a single visual line and also expect soft wrap to have line feed symbol at the first position).
-    ProcessingContext targetContext = myCacheEntry.buildEndLineContext();
+    ProcessingContext targetContext = getCacheEntry().buildEndLineContext();
     targetContext.softWrapColumnDiff += myTargetVisual.column - targetContext.visualColumn;
     targetContext.visualColumn = myTargetVisual.column;
     return targetContext.buildLogicalPosition();

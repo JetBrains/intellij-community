@@ -136,6 +136,9 @@ public interface EditorEx extends Editor {
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
 
+  @NotNull
+  VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * @return true if caret cursor is blinking in this editor
    */

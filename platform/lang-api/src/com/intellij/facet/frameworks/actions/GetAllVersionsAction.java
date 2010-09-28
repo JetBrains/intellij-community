@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.facet.frameworks.actions;
 
-package com.intellij.codeInsight.completion;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
-public class DotAutoLookupHandler extends CodeCompletionHandlerBase{
-
-  public DotAutoLookupHandler() {
-    super(CompletionType.BASIC);
+public class GetAllVersionsAction extends AbstractAction {
+  private GetAllVersionsAction(@NotNull String id) {
+    super(Pair.create("id", id));
   }
 
-  protected boolean mayAutocompleteOnInvocation() {
-    return false;
-  }
+  public static GetAllVersionsAction create(@NotNull String id) {
+     return new GetAllVersionsAction(id);
+   }
 
-  protected boolean isAutocompleteCommonPrefixOnInvocation() {
-    return false;
-  }
-
-  protected void handleEmptyLookup(CompletionContext context, final CompletionParameters parameters,
-                                   final CompletionProgressIndicator indicator){
+  @NotNull
+  @Override
+  public String getActionName() {
+    return "ListVersions.action";
   }
 }

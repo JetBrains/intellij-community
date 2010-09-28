@@ -44,6 +44,11 @@ import java.util.List;
  */
 public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener {
 
+  /**
+   * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
+   */
+  @SuppressWarnings({"UnusedDeclaration"}) public static final String DEBUG_PROPERTY_NAME = "idea.editor.wrap.soft.debug";
+
   /** Upper boundary of time interval to check editor settings. */
   private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
 
@@ -71,12 +76,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           EditorTextRepresentationHelper representationHelper) {
-    this(
-      editor, storage, painter, new SoftWrapApplianceManager(storage, editor, painter, representationHelper),
-      new CachingSoftWrapDataMapper(editor, storage, representationHelper)
-    );
+                           @NotNull EditorTextRepresentationHelper representationHelper) {
+    this(editor, storage, painter, representationHelper, new CachingSoftWrapDataMapper(editor, storage, representationHelper));
     myApplianceManager.addListener(myDataMapper);
+  }
+
+  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
+                           @NotNull EditorTextRepresentationHelper representationHelper, @NotNull CachingSoftWrapDataMapper dataMapper)
+  {
+    this(editor, storage, painter, new SoftWrapApplianceManager(storage, editor, painter, representationHelper, dataMapper), dataMapper);
   }
 
   public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
@@ -309,12 +317,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   private boolean prepareToMapping() {
-    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0;
+    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0
+                           && myEditor.getFoldingModel().isFoldingEnabled();
     if (!useSoftWraps) {
       return useSoftWraps;
     }
 
-    myApplianceManager.dropDataIfNecessary();
+    myApplianceManager.recalculateIfNecessary();
     return true;
     //
     //Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
@@ -450,7 +459,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() || !region.isValid()) {
       return;
     }
     for (FoldingListener listener : myFoldListeners) {

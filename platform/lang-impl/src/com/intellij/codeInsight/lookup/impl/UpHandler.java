@@ -25,6 +25,8 @@ public class UpHandler extends LookupActionHandler {
   }
 
   protected void executeInLookup(final LookupImpl lookup) {
+    if (!lookup.isFocused()) return;
+
     ListScrollingUtil.moveUp(lookup.getList(), 0);
   }
 }

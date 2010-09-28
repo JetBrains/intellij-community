@@ -74,9 +74,17 @@ import java.util.List;
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
+  private final boolean myInvokedExplicitly;
+  final boolean focusLookup;
 
   public CodeCompletionHandlerBase(final CompletionType completionType) {
+    this(completionType, true, true);
+  }
+
+  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean focusLookup) {
     myCompletionType = completionType;
+    myInvokedExplicitly = invokedExplicitly;
+    this.focusLookup = focusLookup;
   }
 
   public final void invoke(final Project project, final Editor editor) {
@@ -454,15 +462,19 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
 
   protected boolean mayAutocompleteOnInvocation() {
-    return true;
+    return myInvokedExplicitly;
   }
 
   protected boolean isAutocompleteCommonPrefixOnInvocation() {
-    return CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
+    return myInvokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
   protected void handleEmptyLookup(CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!myInvokedExplicitly) {
+      return;
+    }
+
     Project project = context.project;
     Editor editor = context.editor;
     if (!ApplicationManager.getApplication().isUnitTestMode() && context.editor.getComponent().getRootPane() == null) {

@@ -47,6 +47,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method)) {
       if (PsiTreeUtil.hasErrorElements(method.getParameterList())) return changeInfo;
+      final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+      if (returnTypeElement != null && PsiTreeUtil.hasErrorElements(returnTypeElement)) return changeInfo;
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
       final CanonicalTypes.Type newReturnType;

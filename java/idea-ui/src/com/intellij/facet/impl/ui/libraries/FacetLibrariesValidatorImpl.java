@@ -87,14 +87,12 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
-    final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    LibraryCompositionSettings libraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, 
-                                                                                           myDescription.getDefaultLibraryName(), baseDirPath,
-                                                                                           myDescription.getDefaultLibraryName(), null);
-    return new ValidationResult(text, new LibrariesQuickFix(libraryCompositionSettings));
+    LibraryCompositionSettings libraryCompositionSettings = new LibraryCompositionSettings(missingLibraries,
+                                                                                           myDescription.getDefaultLibraryName(), baseDirPath);
+    return new ValidationResult(missingJars, new LibrariesQuickFix(libraryCompositionSettings));
   }
 
   private void onChange() {
@@ -132,33 +130,20 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
 
     public void run(final JComponent place) {
-      LibraryDownloadingMirrorsMap mirrorsMap = new LibraryDownloadingMirrorsMap();
-      for (LibraryInfo libraryInfo : myLibrarySettings.getLibraryInfos()) {
-        LibraryDownloadInfo downloadingInfo = libraryInfo.getDownloadingInfo();
-        if (downloadingInfo != null) {
-          RemoteRepositoryInfo repositoryInfo = downloadingInfo.getRemoteRepository();
-          if (repositoryInfo != null) {
-            mirrorsMap.registerRepository(repositoryInfo);
-          }
-        }
-      }
-      LibraryCompositionOptionsPanel panel = new LibraryCompositionOptionsPanel(myContext.getLibrariesContainer(), myLibrarySettings, mirrorsMap);
-      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, mirrorsMap);
+      LibraryOptionsPanel panel = new LibraryOptionsPanel(myLibrarySettings, myContext.getLibrariesContainer(), false);
+      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel);
       dialog.show();
       onChange();
     }
   }
 
   private class LibraryCompositionDialog extends DialogWrapper {
-    private final LibraryCompositionOptionsPanel myPanel;
-    private final LibraryDownloadingMirrorsMap myMirrorsMap;
+    private final LibraryOptionsPanel myPanel;
 
-    private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,
-                                     final LibraryDownloadingMirrorsMap mirrorsMap) {
+    private LibraryCompositionDialog(final JComponent parent, final LibraryOptionsPanel panel) {
       super(parent, true);
       setTitle(IdeBundle.message("specify.libraries.dialog.title"));
       myPanel = panel;
-      myMirrorsMap = mirrorsMap;
       init();
     }
 
@@ -168,9 +153,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     protected void doOKAction() {
       myPanel.apply();
-      final LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
+      final LibraryCompositionSettings settings = myPanel.getSettings();
       final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel(), false)) {
+      if (settings.downloadFiles(myPanel.getMainPanel(), false)) {
         ModifiableRootModel rootModel = myContext.getModifiableRootModel();
         if (rootModel == null) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();

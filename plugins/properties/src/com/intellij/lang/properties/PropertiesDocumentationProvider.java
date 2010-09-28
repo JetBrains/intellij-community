@@ -34,7 +34,7 @@ import java.awt.*;
 
 public class PropertiesDocumentationProvider extends QuickDocumentationProvider {
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof Property) {
       @NonNls String info = "\n\"" + ((Property)element).getValue() + "\"";
       PsiFile file = element.getContainingFile();

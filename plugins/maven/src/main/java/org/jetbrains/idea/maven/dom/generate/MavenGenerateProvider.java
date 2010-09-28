@@ -37,10 +37,12 @@ public abstract class MavenGenerateProvider<ELEMENT_TYPE extends DomElement> ext
 
   @Override
   public ELEMENT_TYPE generate(@Nullable DomElement parent, Editor editor) {
+    if (parent == null) return null;
     return doGenerate((MavenDomProjectModel)parent, editor);
   }
 
-  protected abstract ELEMENT_TYPE doGenerate(MavenDomProjectModel mavenModel, Editor editor);
+  @Nullable
+  protected abstract ELEMENT_TYPE doGenerate(@NotNull MavenDomProjectModel mavenModel, Editor editor);
 
   @Override
   public boolean isAvailableForElement(@NotNull DomElement el) {

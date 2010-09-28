@@ -32,8 +32,10 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -105,23 +107,20 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     }
     else if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
-      final Set<PsiParameter> parametersToDelete = new com.intellij.util.containers.HashSet<PsiParameter>();
+      final Set<PsiParameter> parametersToDelete = new HashSet<PsiParameter>();
       parametersToDelete.add((PsiParameter) element);
       final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
-      SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-        public boolean process(MethodSignatureBackedByPsiMethod signature) {
-          parametersToDelete.add(signature.getMethod().getParameterList().getParameters()[parameterIndex]);
-          return true;
-        }
-      });
+      for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+        parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
+        OverridingMethodsSearch.search(superMethod).forEach(new Processor<PsiMethod>() {
+          public boolean process(PsiMethod overrider) {
+            parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
+            return true;
+          }
+        });
+      }
 
-      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        public boolean process(PsiMethod overrider) {
-          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
-          return true;
-        }
-      });
-      if (parametersToDelete.size() > 1) {
+      if (parametersToDelete.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
         if (Messages.showYesNoDialog(project, message, SafeDeleteHandler.REFACTORING_NAME,
             Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return null;

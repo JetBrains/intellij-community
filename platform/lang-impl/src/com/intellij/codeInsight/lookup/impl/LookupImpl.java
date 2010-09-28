@@ -100,6 +100,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
+  private boolean myFocused;
   private String myAdditionalPrefix = "";
   private final AsyncProcessIcon myProcessIcon;
   private volatile boolean myCalculating;
@@ -145,6 +146,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final ListModel model = myList.getModel();
     addEmptyItem((DefaultListModel)model);
     updateListHeight(model);
+  }
+
+  public boolean isFocused() {
+    return myFocused;
+  }
+
+  public void setFocused(boolean focused) {
+    myFocused = focused;
   }
 
   public AsyncProcessIcon getProcessIcon() {
@@ -583,6 +592,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
+        setFocused(true);
+
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
         if (i >= 0) {

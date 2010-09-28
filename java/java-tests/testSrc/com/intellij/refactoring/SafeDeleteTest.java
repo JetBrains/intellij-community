@@ -56,6 +56,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
+  public void testParameterInHierarchy() throws Exception {
+    myDoCompare = false;
+    doTest("C2");
+  }
+
   public void testExtendsList() throws Exception {
     myDoCompare = false;
     doTest("B");
@@ -123,7 +128,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     final PsiElement psiElement = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
-    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, false);
+    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
   }
 
   protected String getTestRoot() {

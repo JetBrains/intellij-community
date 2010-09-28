@@ -97,6 +97,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.setResizable(false);
       myLookup.setForceLightweightPopup(false);
     }
+    myLookup.setFocused(handler.focusLookup);
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {

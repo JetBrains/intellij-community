@@ -79,11 +79,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     super(node);
   }
 
-  private boolean mayBeClassOrPackage() {
+  private boolean findClassOrPackageAtFirst() {
     final String name = getReferenceName();
     if (name == null || name.length() == 0 || hasAt()) return false;
     return Character.isUpperCase(name.charAt(0)) ||
-           getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).mayBeClassOrPackage();
+           getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).findClassOrPackageAtFirst();
   }
 
   public GroovyResolveResult[] resolveTypeOrProperty() {
@@ -91,15 +91,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    if (mayBeClassOrPackage()) {
-      EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
-                                             ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
-                                             : ResolverProcessor.RESOLVE_KINDS_CLASS;
-      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      resolveImpl(classProcessor);
-      GroovyResolveResult[] classCandidates = classProcessor.getCandidates();
-      if (classCandidates.length > 0) return classCandidates;
-    }
+    EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
+                                           ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
+                                           : ResolverProcessor.RESOLVE_KINDS_CLASS;
+    ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+    resolveImpl(classProcessor);
+    GroovyResolveResult[] classCandidates = classProcessor.getCandidates();
+    if (findClassOrPackageAtFirst() && classCandidates.length > 0) return classCandidates;
 
     ResolverProcessor processor = new PropertyResolverProcessor(name, this);
     resolveImpl(processor);
@@ -115,7 +113,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (element instanceof PsiField) {
         final PsiClass containingClass = ((PsiField)element).getContainingClass();
         if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return fieldCandidates;
-      } else {
+      }
+      else {
         return fieldCandidates;
       }
     }
@@ -140,7 +139,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
     if (hasFieldCandidates) return fieldCandidates;
-    if (accessorResults.size()>0)return new GroovyResolveResult[]{accessorResults.get(0)};
+    if (classCandidates.length > 0) return classCandidates;
+    if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
