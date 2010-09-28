@@ -645,6 +645,25 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                        getProjectPath() + "/target/testCustom");
   }
 
+  public void testDoNotExcludeExcludeOutputDirectoryWhenItPointstoRoot() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <outputDirectory>.</outputDirectory>" +
+                  "  <testOutputDirectory>.</testOutputDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertExcludes("project",
+                   "target");
+    assertModuleOutput("project",
+                       getProjectPath(),
+                       getProjectPath());
+  }
+
   public void testOutputDirsOutsideOfContentRoot() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

@@ -15,16 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.InitialPatternCondition;
-import com.intellij.patterns.PsiFilePattern;
-import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 public class GroovyPatterns extends PsiJavaPatterns {
 
@@ -45,6 +52,45 @@ public class GroovyPatterns extends PsiJavaPatterns {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GrLiteral
                && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
+      }
+    });
+  }
+
+  public static GroovyMethodCallPattern methodCall(final ElementPattern<? extends String> names, final String className) {
+    return new GroovyMethodCallPattern().with(new PatternCondition<GrCallExpression>("methodCall") {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
+        if (!(callExpression instanceof GrMethodCall)) return false;
+
+        GrExpression expression = ((GrMethodCall)callExpression).getInvokedExpression();
+        if (!(expression instanceof GrReferenceExpression)) return false;
+
+        GrReferenceExpression refExpression = (GrReferenceExpression)expression;
+
+        if (!names.accepts(refExpression.getName(), context)) return false;
+
+        PsiElement element = refExpression.resolve();
+
+        if (!(element instanceof PsiMethod)) return false;
+
+        PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+
+        if (containingClass == null) return false;
+
+        return InheritanceUtil.isInheritor(containingClass, className);
+      }
+    });
+  }
+
+  public static GroovyMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
+    return new GroovyMethodCallPattern().with(new PatternCondition<GrCallExpression>("methodCall") {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
+        final GroovyResolveResult[] results = callExpression.getCallVariants(null);
+        for (GroovyResolveResult result : results) {
+          if (method.getCondition().accepts(result.getElement(), context)) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   }
