@@ -777,6 +777,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void normalizeRangeMarkers() {
     myRangeMarkers.normalize();
+
+    MarkupModel model = getMarkupModel(null, false);
+    if (model != null) ((MarkupModelImpl)model).normalize();
+
+    for (MarkupModel markupModel : myProjectToMarkupModelMap.values()) {
+      ((MarkupModelImpl)markupModel).normalize();
+    }
   }
 }
 
