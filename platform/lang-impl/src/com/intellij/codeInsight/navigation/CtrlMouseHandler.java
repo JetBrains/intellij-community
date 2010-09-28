@@ -226,7 +226,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static String generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
 
-    String info = documentationProvider.getQuickNavigateInfo(element);
+    String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
     if (info != null) {
       return info;
     }

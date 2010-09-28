@@ -210,7 +210,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {  // todo!
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
     if (element instanceof PomTargetPsiElement) {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
       if (pomTarget instanceof DomTarget) {

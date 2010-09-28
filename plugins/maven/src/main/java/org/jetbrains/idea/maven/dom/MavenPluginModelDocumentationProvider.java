@@ -22,7 +22,7 @@ import com.intellij.psi.PsiManager;
 import java.util.List;
 
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, false);
   }
 
