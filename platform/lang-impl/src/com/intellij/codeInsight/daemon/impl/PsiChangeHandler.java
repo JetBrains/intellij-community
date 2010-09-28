@@ -179,7 +179,14 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       }, ModalityState.stateForComponent(editor.getComponent()));
     }
 
-    PsiFile file = child.getContainingFile();
+    PsiFile file;
+    try {
+      file = child.getContainingFile();
+    }
+    catch (PsiInvalidElementAccessException e) {
+      myFileStatusMap.markAllFilesDirty();
+      return;
+    }
     if (file == null || file instanceof PsiCompiledElement) {
       myFileStatusMap.markAllFilesDirty();
       return;
