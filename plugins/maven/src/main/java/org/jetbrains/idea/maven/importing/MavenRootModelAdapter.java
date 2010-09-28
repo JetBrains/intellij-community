@@ -142,6 +142,7 @@ public class MavenRootModelAdapter {
     Url url = toUrl(path);
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
+    if (e.getUrl().equals(url.getUrl())) return;
     e.addExcludeFolder(url.getUrl());
   }
 
