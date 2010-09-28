@@ -24,21 +24,18 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author nik
 */
 public class LibraryCompositionSettings implements Disposable {
-
   @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final LibraryInfo[] myLibraryInfos;
   private final String myBaseDirectoryForDownloadedFiles;
@@ -116,14 +113,11 @@ public class LibraryCompositionSettings implements Disposable {
     return myTitle;
   }
 
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap,
-                               @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent,
-                               boolean all) {
+  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, final @NotNull JComponent parent, boolean all) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
-      List<VirtualFile> roots = new ArrayList<VirtualFile>();
-      VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
+      VirtualFile[] jars = myLibraryEditor != null ? myLibraryEditor.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());

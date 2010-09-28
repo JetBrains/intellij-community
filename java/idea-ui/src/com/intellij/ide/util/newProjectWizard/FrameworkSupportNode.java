@@ -80,7 +80,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
     if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
       if (libraryCompositionSettings != null) {
-        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer);
+        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer, true);
       }
       else {
         myLibraryCompositionOptionsPanel = null;

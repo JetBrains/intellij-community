@@ -32,6 +32,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.RadioButtonEnumModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,11 +53,13 @@ public class LibraryOptionsPanel {
   private JButton myConfigureButton;
   private JComboBox myExistingLibraryComboBox;
   private JRadioButton myUseExistingLibraryRadioButton;
+  private JRadioButton myDoNotCreateRadioButton;
+  private JPanel myConfigurationPanel;
   private ButtonGroup myButtonGroup;
 
-  private LibraryCompositionSettings mySettings;
-  private LibrariesContainer myLibrariesContainer;
-  private List<Library> myLibraries;
+  private final LibraryCompositionSettings mySettings;
+  private final LibrariesContainer myLibrariesContainer;
+  private final List<Library> myLibraries;
 
   private enum Choice {
     USE_EXISTING,
@@ -67,7 +70,9 @@ public class LibraryOptionsPanel {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(LibraryCompositionSettings settings, LibrariesContainer librariesContainer) {
+  public LibraryOptionsPanel(@NotNull LibraryCompositionSettings settings,
+                             @NotNull LibrariesContainer librariesContainer,
+                             final boolean showDoNotCreateOption) {
     mySettings = settings;
     myLibrariesContainer = librariesContainer;
     myLibraries = calculateSuitableLibraries();
@@ -81,6 +86,7 @@ public class LibraryOptionsPanel {
     });
 
     final boolean librariesFound = !myLibraries.isEmpty();
+    myDoNotCreateRadioButton.setVisible(showDoNotCreateOption);
     myUseExistingLibraryRadioButton.setVisible(librariesFound);
     myExistingLibraryComboBox.setVisible(librariesFound);
     if (librariesFound) {
@@ -103,14 +109,14 @@ public class LibraryOptionsPanel {
       public void actionPerformed(final ActionEvent e) {
         switch (myButtonEnumModel.getSelected()) {
           case DOWNLOAD:
-            new DownloadingOptionsDialog(myConfigureButton, mySettings).show();
+            new DownloadingOptionsDialog(myPanel, mySettings).show();
             break;
           case PICK_FILES:
             if (mySettings.getLibraryEditor() == null) {
               VirtualFile[] files = showFileChooser();
               mySettings.addFilesToLibrary(files, OrderRootType.CLASSES);
             }
-            EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, mySettings);
+            EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings);
             dialog.show();
             break;
           default:
@@ -142,7 +148,7 @@ public class LibraryOptionsPanel {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
     descriptor.setTitle(IdeBundle.message("file.chooser.select.paths.title"));
     descriptor.setDescription(IdeBundle.message("file.chooser.multiselect.description"));
-    return FileChooser.chooseFiles(myConfigureButton, descriptor, getBaseDirectory());
+    return FileChooser.chooseFiles(myPanel, descriptor, getBaseDirectory());
   }
 
   @Nullable
@@ -158,34 +164,18 @@ public class LibraryOptionsPanel {
 
   private void updateState() {
     myMessageLabel.setForeground(Color.black);
-    myMessageLabel.setVisible(true);
-    myConfigureButton.setVisible(true);
 
     String message = "";
-
+    boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
-        final String downloadPath = mySettings.getDirectoryForDownloadedLibrariesPath();
-        final String basePath = mySettings.getBaseDirectoryForDownloadedFiles();
-        String path;
-        if (FileUtil.startsWith(downloadPath, basePath)) {
-          path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
-        }
-        else {
-          path = PathUtil.getFileName(downloadPath);
-        }
-        message = MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
-                                       "{2} library <b>{3}</b> will be created",
-                                       mySettings.getLibraryInfos().length,
-                                       path,
-                                       mySettings.getLibraryLevel(),
-                                       mySettings.getLibraryName());
+        message = getDownloadFilesMessage();
         break;
       case PICK_FILES:
         NewLibraryEditor libraryEditor = mySettings.getLibraryEditor();
         if (libraryEditor == null) {
           myMessageLabel.setForeground(Color.red);
-          message = "Press Configure button to add classes to the library";
+          message = "Press 'Configure' button to add classes to the library";
         }
         else {
           message = MessageFormat.format("{0} level library <b>{1}</b>" +
@@ -196,11 +186,31 @@ public class LibraryOptionsPanel {
         }
         break;
       default:
-        myMessageLabel.setVisible(false);
-        myConfigureButton.setVisible(false);
+        //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
+        message = getDownloadFilesMessage();
+        showConfigurePanel = false;
     }
 
+    ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");
     myMessageLabel.setText("<html>" + message + "</html>");
+  }
+
+  private String getDownloadFilesMessage() {
+    final String downloadPath = mySettings.getDirectoryForDownloadedLibrariesPath();
+    final String basePath = mySettings.getBaseDirectoryForDownloadedFiles();
+    String path;
+    if (FileUtil.startsWith(downloadPath, basePath)) {
+      path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
+    }
+    else {
+      path = PathUtil.getFileName(downloadPath);
+    }
+    return MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
+                                   "{2} library <b>{3}</b> will be created",
+                                   mySettings.getLibraryInfos().length,
+                                   path,
+                                   mySettings.getLibraryLevel(),
+                                   mySettings.getLibraryName());
   }
 
   public LibraryCompositionSettings getSettings() {

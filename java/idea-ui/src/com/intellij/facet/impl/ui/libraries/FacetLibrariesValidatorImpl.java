@@ -141,7 +141,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
           }
         }
       }
-      LibraryCompositionOptionsPanel panel = new LibraryCompositionOptionsPanel(myContext.getLibrariesContainer(), myLibrarySettings, mirrorsMap);
+      LibraryOptionsPanel panel = new LibraryOptionsPanel(myLibrarySettings, myContext.getLibrariesContainer(), false);
       LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, mirrorsMap);
       dialog.show();
       onChange();
@@ -149,10 +149,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibraryCompositionDialog extends DialogWrapper {
-    private final LibraryCompositionOptionsPanel myPanel;
+    private final LibraryOptionsPanel myPanel;
     private final LibraryDownloadingMirrorsMap myMirrorsMap;
 
-    private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,
+    private LibraryCompositionDialog(final JComponent parent, final LibraryOptionsPanel panel,
                                      final LibraryDownloadingMirrorsMap mirrorsMap) {
       super(parent, true);
       setTitle(IdeBundle.message("specify.libraries.dialog.title"));
@@ -167,9 +167,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     protected void doOKAction() {
       myPanel.apply();
-      final LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
+      final LibraryCompositionSettings settings = myPanel.getSettings();
       final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel(), false)) {
+      if (settings.downloadFiles(myMirrorsMap, myPanel.getMainPanel(), false)) {
         ModifiableRootModel rootModel = myContext.getModifiableRootModel();
         if (rootModel == null) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();
