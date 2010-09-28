@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -58,6 +59,7 @@ public class MavenEmbeddersManager {
     myEmbeddersToClear.addAll(myEmbeddersInUse);
   }
 
+  @NotNull
   public synchronized MavenEmbedderWrapper getEmbedder(Key kind) {
     MavenEmbedderWrapper result = myPool.get(kind);
     if (result == null) {
@@ -74,7 +76,7 @@ public class MavenEmbeddersManager {
     return result;
   }
 
-  public synchronized void release(MavenEmbedderWrapper embedder) {
+  public synchronized void release(@NotNull MavenEmbedderWrapper embedder) {
     if (!myEmbeddersInUse.contains(embedder)) {
       embedder.release();
       myEmbeddersToClear.remove(embedder);
