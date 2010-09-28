@@ -118,7 +118,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.getParameters().getCompletionType().equals(myCompletionType) && editor == indicator.getEditor()) {
+      if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
           return;
         }
@@ -260,7 +260,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
 
-      if (!myInvokedExplicitly || freezeSemaphore.waitFor(2000) || data.isNull()) {
+      if (!myInvokedExplicitly) {
+        return;
+      }
+
+      if (freezeSemaphore.waitFor(2000) || data.isNull()) {
         indicator.showLookup();
         return;
       }

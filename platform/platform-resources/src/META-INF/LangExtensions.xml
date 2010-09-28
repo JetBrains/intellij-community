@@ -487,6 +487,8 @@
   <!-- HighlightManagerActions -->
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="before hide-hints"/>
 
+  <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
+
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 
   <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.OtherContextType" order="last"/>

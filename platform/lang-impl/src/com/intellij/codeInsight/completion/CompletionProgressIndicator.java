@@ -80,6 +80,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldCaret;
   private int myOldStart;
   private int myOldEnd;
+  private boolean myPreventingAutoPopup;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
                                      final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
@@ -165,6 +166,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (isOutdated() || myEditor.getComponent().getRootPane() == null) {
+                  return;
+                }
+                if (!myLookup.isFocused() && !myInitialized) {
                   return;
                 }
                 updateLookup();
@@ -359,9 +363,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
-        if (isCanceled()) return;
+        if (myCount == 0 && !myLookup.isFocused()) {
+          myPreventingAutoPopup = true;
+          liveAfterDeath(null);
+          return;
+        }
 
-        if (myLookup.isVisible()) {
+        if (!isCanceled()) {
           myLookup.getProcessIcon().suspend();
           myLookup.getProcessIcon().setVisible(false);
           updateLookup();
@@ -434,4 +442,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myOldEnd = myEditor.getSelectionModel().getSelectionEnd();
   }
 
+  public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
+    return completionType == myParameters.getCompletionType() && editor == myEditor && !myPreventingAutoPopup;
+  }
 }
