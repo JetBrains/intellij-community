@@ -39,12 +39,10 @@ public class LibraryCompositionSettings implements Disposable {
   @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final LibraryInfo[] myLibraryInfos;
   private final String myBaseDirectoryForDownloadedFiles;
-  private final String myTitle;
   private String myDirectoryForDownloadedLibrariesPath;
   private boolean myDownloadLibraries = true;
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
-  private final Icon myIcon;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
   private NewLibraryEditor myLibraryEditor;
@@ -52,13 +50,10 @@ public class LibraryCompositionSettings implements Disposable {
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
-                                    final @NotNull String baseDirectoryForDownloadedFiles,
-                                    final String title, @Nullable Icon icon) {
+                                    final @NotNull String baseDirectoryForDownloadedFiles) {
     myLibraryInfos = libraryInfos;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
-    myTitle = title;
     myLibraryName = defaultLibraryName;
-    myIcon = icon;
   }
 
   public void addFilesToLibrary(VirtualFile[] files, OrderRootType orderRootType) {
@@ -109,11 +104,7 @@ public class LibraryCompositionSettings implements Disposable {
     return myDirectoryForDownloadedLibrariesPath;
   }
 
-  public String getTitle() {
-    return myTitle;
-  }
-
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, final @NotNull JComponent parent, boolean all) {
+  public boolean downloadFiles(final @NotNull JComponent parent, boolean all) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
@@ -123,8 +114,7 @@ public class LibraryCompositionSettings implements Disposable {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
         if (downloadingInfos.length > 0) {
           LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, parent,
-                                                               getDirectoryForDownloadedLibrariesPath(), myLibraryName,
-                                                               mirrorsMap);
+                                                               getDirectoryForDownloadedLibrariesPath(), myLibraryName);
           VirtualFile[] files = downloader.download();
           if (files.length != downloadingInfos.length) {
             return false;
@@ -153,10 +143,6 @@ public class LibraryCompositionSettings implements Disposable {
 
   public String getLibraryName() {
     return myLibraryName;
-  }
-
-  public Icon getIcon() {
-    return myIcon;
   }
 
   @Nullable
