@@ -24,12 +24,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
 import java.util.Collection;
@@ -76,51 +73,33 @@ public class ExtractMethodInfoHelper {
       i++;
     }
 
+    PsiType outputType = PsiType.VOID;
     if (outputInfo != null) {
       myOutputName = outputInfo.getName();
-      PsiType type = outputInfo.getType();
-      if (type == null) myOutputType = PsiType.VOID;
-      else myOutputType = type;
-    } else {
+      outputType = outputInfo.getType();
+    }
+    else if (ExtractMethodUtil.isSingleExpression(statements)) {
+      final GrStatement lastExpr = statements[statements.length - 1];
+      if (!(lastExpr.getParent() instanceof GrCodeBlock)) {
+        outputType = ((GrExpression)lastExpr).getType();
+      }
       myOutputName = null;
-      if (ExtractMethodUtil.isSingleExpression(statements) ||
-          statements.length == 1 && statements[0] instanceof GrExpression &&
-              !(statements[0] instanceof GrAssignmentExpression)) {
-        PsiType type = ((GrExpression) statements[0]).getType();
-        if (type != null) {
-          myOutputType = TypeConversionUtil.erasure(type);
-        } else {
-          myOutputType = PsiType.VOID;
+    }
+    else {
+      myOutputName = null;
+      if (isReturnStatement) {
+        assert myStatements.length > 0;
+        GrStatement finalStatement = myStatements[myStatements.length - 1];
+        if (finalStatement instanceof GrExpression) {
+          outputType = ((GrExpression)finalStatement).getType();
+          if (outputType != null) {
+            outputType = TypeConversionUtil.erasure(outputType);
+          }
         }
-      } else {
-        PsiType returnType = referTypeFromContext(myStatements);
-        myOutputType = returnType == null ? PsiType.VOID : returnType;
       }
     }
-    mySpecifyType = !(PsiType.VOID.equals(myOutputType) || myOutputType.equalsToText("java.lang.Object"));
-  }
-
-  private PsiType referTypeFromContext(GrStatement[] statements) {
-    assert statements.length > 0;
-    GrStatement finalStatement = statements[statements.length - 1];
-    if (finalStatement instanceof GrExpression) {
-      GrExpression expr = (GrExpression) finalStatement;
-      PsiElement parent = expr.getParent();
-      GrStatement[] grStatements = GrStatement.EMPTY_ARRAY;
-      if (parent instanceof GrClosableBlock) {
-        grStatements = ((GrClosableBlock) parent).getStatements();
-      } else if (parent instanceof GrOpenBlock && parent.getParent() instanceof GrMethod) {
-        grStatements = ((GrOpenBlock) parent).getStatements();
-      }
-      if (grStatements.length > 0 && grStatements[grStatements.length - 1] == expr) {
-        PsiType type = expr.getType();
-        if (type != null) {
-          type = TypeConversionUtil.erasure(type);
-        }
-        return type;
-      }
-    }
-    return null;
+    myOutputType = outputType != null ? outputType : PsiType.VOID;
+    mySpecifyType = !(PsiType.VOID.equals(outputType) || myOutputType.equalsToText("java.lang.Object"));
   }
 
   @NotNull
@@ -137,14 +116,6 @@ public class ExtractMethodInfoHelper {
       infos[position] = info;
     }
     return infos;
-  }
-
-  public boolean setNewName(@NotNull String oldName, @NotNull String newName) {
-    ParameterInfo info = myInputNamesMap.remove(oldName);
-    if (info == null) return false;
-    info.setNewName(newName);
-    myInputNamesMap.put(newName, info);
-    return true;
   }
 
   @Nullable
