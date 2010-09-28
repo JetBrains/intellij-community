@@ -56,6 +56,11 @@ public class VFileCreateEvent extends VFileEvent {
     return myParent.getPath() + "/" + myChildName;
   }
 
+  @Override
+  public VirtualFile getFile() {
+    return myParent.findChild(myChildName);
+  }
+
   public VirtualFileSystem getFileSystem() {
     return myParent.getFileSystem();
   }
