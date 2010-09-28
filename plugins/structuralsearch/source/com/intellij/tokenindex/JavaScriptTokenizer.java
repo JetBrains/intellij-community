@@ -21,10 +21,15 @@ public class JavaScriptTokenizer implements Tokenizer {
   private final MyVisitor myVisitor = new MyVisitor();
 
   public boolean visit(@NotNull PsiElement node, RecursiveTokenizingVisitor globalVisitor) {
-    myVisitor.myGlobalVisitor = globalVisitor;
-    myVisitor.myToVisitChildren = false;
-    node.accept(myVisitor);
-    return myVisitor.myToVisitChildren;
+    try {
+      myVisitor.myGlobalVisitor = globalVisitor;
+      myVisitor.myToVisitChildren = false;
+      node.accept(myVisitor);
+      return myVisitor.myToVisitChildren;
+    }
+    finally {
+      myVisitor.myGlobalVisitor = null;
+    }
   }
 
   public void elementFinished(@NotNull PsiElement element, RecursiveTokenizingVisitor globalVisitor) {
