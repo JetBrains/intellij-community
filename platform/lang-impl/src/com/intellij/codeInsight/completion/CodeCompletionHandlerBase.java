@@ -260,7 +260,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
 
-      if (!freezeSemaphore.waitFor(2000) || data.isNull()) {
+      if (!myInvokedExplicitly || freezeSemaphore.waitFor(2000) || data.isNull()) {
         indicator.showLookup();
         return;
       }
