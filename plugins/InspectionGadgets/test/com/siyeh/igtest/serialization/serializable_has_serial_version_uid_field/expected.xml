@@ -12,7 +12,7 @@
     <file>SerializableHasSerialVersionUIDField.java</file>
     <line>8</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Serializable class without 'serialVersionUID'</problem_class>
-    <description>&lt;code&gt;DoNotWarnOnMe&lt;/code&gt; does not define a 'serialVersionUID' field #loc</description>
+    <description>&lt;code&gt;DoWarnOnMe&lt;/code&gt; does not define a 'serialVersionUID' field #loc</description>
   </problem>
 
 </problems>
