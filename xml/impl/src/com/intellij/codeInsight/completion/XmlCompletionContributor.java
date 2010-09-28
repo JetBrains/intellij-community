@@ -185,7 +185,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     }
 
     else if (parameters.getCompletionType() == CompletionType.SMART) {
-//      new XmlSmartCompletionProvider().complete(parameters, result, element);
+      new XmlSmartCompletionProvider().complete(parameters, result, element);
     }
   }
 
