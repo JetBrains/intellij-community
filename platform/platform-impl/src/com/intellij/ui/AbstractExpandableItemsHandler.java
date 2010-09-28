@@ -36,6 +36,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Hint myHint;
 
   private KeyType myKey;
+  private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
 
   protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
@@ -74,7 +75,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         }
 
         public void mouseMoved(MouseEvent e) {
-          handleMouseEvent(e);
+          handleMouseEvent(e, false);
         }
       }
     );
@@ -130,7 +131,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private class TipComponent extends JComponent {
-
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }
@@ -146,7 +146,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     public void paint(Graphics g) {
       g.drawImage(myImage, 0, 0, null);
     }
-
   }
 
   protected abstract KeyType getCellKeyForPoint(Point point);
@@ -157,20 +156,19 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
   }
 
-  protected final void hideHint() {
-    if (myHint != null) {
-      myHint.hide();
-      myHint = null;
-    }
-    myKey = null;
-  }
-
   protected void updateCurrentSelection() {
     handleSelectionChange(myKey, true);
   }
 
   private void handleMouseEvent(MouseEvent e) {
-    handleSelectionChange(getCellKeyForPoint(e.getPoint()), true);
+    handleMouseEvent(e, true);
+  }
+
+  private void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
+    KeyType selected = getCellKeyForPoint(e.getPoint());
+    if (forceUpdate || !Comparing.equal(myKey, selected)) {
+      handleSelectionChange(selected, true);
+    }
   }
 
   protected void handleSelectionChange(KeyType selected) {
@@ -178,12 +176,15 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(KeyType selected, boolean processIfUnfocused) {
-    Object oldKey = myKey;
-    myKey = selected;
-    if (myKey == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
+    if (selected == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
       hideHint();
       return;
     }
+
+    if (!Comparing.equal(myKey, selected)) {
+      hideHint();
+    }
+    myKey = selected;
 
     Point location = createToolTipImage(myKey);
 
@@ -191,18 +192,23 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       hideHint();
     }
     else if (myHint == null) {
-      show(location);
-    }
-    else if (!Comparing.equal(oldKey, myKey)) {
-      hideHint();
-      show(location);
+      showHint(location);
     }
     else {
       repaintHint(location);
     }
   }
 
-  private void show(Point location) {
+  protected final void hideHint() {
+    if (myHint != null) {
+      myHint.hide();
+      myHint = null;
+      repaintKeyItem();
+    }
+    myKey = null;
+  }
+
+  private void showHint(Point location) {
     assert myHint == null;
 
     if (!myComponent.isShowing()) {
@@ -225,24 +231,34 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       myHint = new HeavyweightHint(myTipComponent, false);
     }
     myHint.show(myComponent, location.x, location.y, myComponent, new HintHint(myComponent, location));
+    repaintKeyItem();
   }
 
   private void repaintHint(Point location) {
     if (myHint != null && myKey != null && myComponent.isShowing()) {
       myHint.updateBounds(location.x, location.y);
       myTipComponent.repaint();
+      repaintKeyItem();
+    }
+  }
+
+  private void repaintKeyItem() {
+    if (myKeyItemBounds != null) {
+      myComponent.repaint(myKeyItemBounds);
     }
   }
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    Pair<Component, Rectangle> rendererAndBounds = getRendererAndBounds(key);
+    Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
     if (rendererAndBounds == null) return null;
 
     Component renderer = rendererAndBounds.first;
     if (!(renderer instanceof JComponent)) return null;
 
-    Rectangle cellBounds = rendererAndBounds.second;
+    myKeyItemBounds = rendererAndBounds.second;
+
+    Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
 
     int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
@@ -260,19 +276,17 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
     doPaintTooltipImage(renderer, cellBounds, height, g, key);
 
-    if (doPaintBorder(key)) {
-      g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
-      g.setColor(Color.GRAY);
-      int rightX = myImage.getWidth() - 1;
-      final int h = myImage.getHeight();
-      UIUtil.drawLine(g, 0, 0, rightX, 0);
-      UIUtil.drawLine(g, rightX, 0, rightX, h);
-      UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
-    }
+    // paint border
+    g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
+    g.setColor(Color.GRAY);
+    int rightX = myImage.getWidth() - 1;
+    final int h = myImage.getHeight();
+    UIUtil.drawLine(g, 0, 0, rightX, 0);
+    UIUtil.drawLine(g, rightX, 0, rightX, h);
+    UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
 
     g.dispose();
-
-    myComponent.remove(renderer);
+    myRendererPane.remove(renderer);
 
     return new Point(visibleRect.x + visibleRect.width, cellBounds.y);
   }
@@ -286,10 +300,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.fillRect(0, 0, width, height);
   }
 
-  protected boolean doPaintBorder(final KeyType row) {
-    return true;
-  }
-
   protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, int height, Graphics2D g, KeyType key) {
     myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, height, true);
   }
@@ -299,5 +309,5 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   @Nullable
-  protected abstract Pair<Component, Rectangle> getRendererAndBounds(KeyType key);
+  protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 }

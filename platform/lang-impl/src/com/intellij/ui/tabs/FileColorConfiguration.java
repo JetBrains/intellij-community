@@ -18,19 +18,21 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author spleaner
-*/
+ * @author spleaner
+ * @author Konstantin Bulenkov
+ */
 class FileColorConfiguration implements Cloneable {
   private static final String COLOR = "color";
+  private static final String SCOPE_NAME = "scope";
 
   private String myScopeName;
   private String myColorName;
-  private static final String SCOPE_NAME = "scope";
 
   public FileColorConfiguration() {
   }
@@ -50,6 +52,10 @@ class FileColorConfiguration implements Cloneable {
 
   public String getColorName() {
     return myColorName;
+  }
+
+  public String getColorPresentableName() {
+    return ColorUtil.fromHex(myColorName, null) == null ? myColorName : "Custom";
   }
 
   public void setColorName(final String colorName) {

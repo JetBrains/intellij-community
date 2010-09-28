@@ -175,7 +175,7 @@ public class ChangeListTest extends ChangeListTestCase {
   @Test
   public void testSavingDuringChangeSet() throws Exception {
     facade.beginChangeSet();
-    facade.getChangeListInTests().save();
+    facade.getChangeListInTests().flush();
     facade.endChangeSet(null); // should not throw exception.
   }
 }

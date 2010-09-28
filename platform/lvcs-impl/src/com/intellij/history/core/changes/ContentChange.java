@@ -16,8 +16,8 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.StoredContent;
+import com.intellij.history.core.Content;
+import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 
@@ -39,7 +39,7 @@ public class ContentChange extends StructuralChange {
 
   public ContentChange(DataInput in) throws IOException {
     super(in);
-    myOldContent = new StoredContent(in.readInt());
+    myOldContent = new StoredContent(in);
     myOldTimestamp = in.readLong();
   }
 

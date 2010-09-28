@@ -19,16 +19,14 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -42,6 +40,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -875,13 +874,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
       }
-      fireProjectClosing(project);
 
-      myOpenProjects.remove(project);
-      cacheOpenProjects();
+      if (ensureCouldCloseIfUnableToSave(project)) {
+        fireProjectClosing(project);
 
-      myChangedProjectFiles.remove(project);
-      fireProjectClosed(project);
+        myOpenProjects.remove(project);
+        cacheOpenProjects();
+
+        myChangedProjectFiles.remove(project);
+        fireProjectClosed(project);
+      }
+      else return false;
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());
@@ -978,6 +981,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return true;
+  }
+
+  private static boolean ensureCouldCloseIfUnableToSave(@NotNull final Project project) {
+    final ProjectImpl.UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) return true;
+
+    final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
+                                     ApplicationNamesInfo.getInstance().getProductName());
+    return MessagesEx.showDialog(project, msg, "Unsaved project!", new String[]{"Yes", "No"}, 0, 1, Messages.getWarningIcon()) == 0;
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {

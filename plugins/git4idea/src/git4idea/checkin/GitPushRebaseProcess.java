@@ -17,9 +17,11 @@ package git4idea.checkin;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -36,8 +38,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.text.DateFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This is subclass of {@link git4idea.update.GitBaseRebaseProcess} that implement rebase operation for {@link GitPushActiveBranchesDialog}.
@@ -145,7 +149,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
   @Override
   protected String makeStashMessage() {
     return "Uncommitted changes before rebase operation in push dialog at " +
-           DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).format(new Date());
+           DateFormatUtil.formatDateTime(Clock.getTime());
   }
 
   /**

@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
 
         @Override public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);
-            if (!ControlFlowUtils.isInCatchBlock(statement)) {
+            if (!isInCatchBlock(statement)) {
                 return;
             }
             final PsiExpression exception = statement.getException();
@@ -100,6 +101,22 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
                 }
             }
             return false;
+        }
+
+        public boolean isInCatchBlock(@NotNull PsiElement element){
+            final PsiCatchSection catchSection =
+                    PsiTreeUtil.getParentOfType(element, PsiCatchSection.class,
+                            true, PsiClass.class);
+            if (catchSection == null) {
+                return false;
+            }
+            final PsiParameter parameter = catchSection.getParameter();
+            if (parameter == null) {
+                return false;
+            }
+            @NonNls final String parameterName = parameter.getName();
+            return !("ignore".equals(parameterName) ||
+                    "ignored".equals(parameterName));
         }
     }
 

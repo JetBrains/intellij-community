@@ -20,8 +20,10 @@
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.lang.annotation.Annotation;
 
 /**
  * @author max
@@ -86,5 +88,14 @@ public class ColorUtil {
     } catch (Exception e) {
       return defaultValue;
     }
+  }
+
+  @Nullable
+  public static Color getColor(@NotNull Class<?> cls) {
+    final Annotation annotation = cls.getAnnotation(Colored.class);
+    if (annotation instanceof Colored) {
+      return fromHex(((Colored)annotation).color(), null);
+    }
+    return null;
   }
 }

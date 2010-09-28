@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -44,7 +45,7 @@ import java.util.Comparator;
  * @author Eugene Zhuravlev
  *         Date: May 18, 2005
  */
-class JdkComboBox extends JComboBox{
+class JdkComboBox extends ComboBoxWithWidePopup {
   private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
   public JdkComboBox(final ProjectSdksModel jdksModel) {

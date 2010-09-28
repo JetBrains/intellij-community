@@ -493,7 +493,7 @@ public class ContainerUtil {
 
   @NotNull
   public static <T> List<T> concat(@NotNull Iterable<? extends Collection<T>> list) {
-    final ArrayList<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<T>();
     for (final Collection<T> ts : list) {
       result.addAll(ts);
     }

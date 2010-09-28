@@ -18,15 +18,14 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.text.DateFormat;
 import java.util.Comparator;
-import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,7 +73,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       //  Base class IdeaPluginDescriptor does not declare this field.
       long date = (base instanceof PluginNode) ? ((PluginNode)base).getDate() : ((IdeaPluginDescriptorImpl)base).getDate();
       if (date != 0) {
-        return DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(date));
+        return DateFormatUtil.formatDate(date);
       }
       else {
         return IdeBundle.message("plugin.info.not.available");

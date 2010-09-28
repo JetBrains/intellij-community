@@ -40,7 +40,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     final TextAttributes attributes = new TextAttributes();
 
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    attributes.setEffectColor(Color.GRAY);
+    attributes.setEffectColor(new Color(0, 128, 0));
 
     result.add(new HighlightInfoType.HighlightInfoTypeImpl(TYPO,
                TextAttributesKey.createTextAttributesKey("TYPO", attributes)));

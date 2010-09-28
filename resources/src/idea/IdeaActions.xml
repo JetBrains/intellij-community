@@ -41,7 +41,6 @@
     </group>
 
     <group id="JavaGenerateGroup2">
-      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="last"/>
@@ -63,7 +62,7 @@
 
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" use-shortcut-of="Generate">
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
       <add-to-group group-id="OpenProjectGroup" anchor="after" relative-to-action="NewModule"/>
     </action>
 
@@ -184,10 +183,6 @@
 
     <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
-    </action>
-
-    <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ReplaceMethodWithMethodObject"/>
     </action>
 
     <group id="BuildMenu" popup="true">

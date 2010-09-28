@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.history.GitUsersComponent;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,6 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.DateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -720,8 +720,6 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private final static DateFormat ourDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-
   private class MyCompoundCellRenderer implements ListCellRenderer {
     private final JPanel myPanel;
     private final MyTextPartRenderer myTextPartRenderer;
@@ -831,7 +829,7 @@ public class GitLogTree implements GitTreeViewI {
       list.add(new Pair<String, SimpleTextAttributes>(node.getDescription() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES));
       list.add(new Pair<String, SimpleTextAttributes>(node.getAuthor() + ", ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
       // 7-8
-      list.add(new Pair<String, SimpleTextAttributes>(ourDateFormat.format(node.getDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES));
+      list.add(new Pair<String, SimpleTextAttributes>(DateFormatUtil.formatPrettyDateTime(node.getDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES));
       return new Description(1, list) {
         @Override
         public String getMaxString(int idx) {

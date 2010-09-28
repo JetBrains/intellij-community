@@ -66,7 +66,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     return new TextRange(0, getTextLength());
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  protected PsiElement handleElementRenameInner(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
@@ -78,14 +78,18 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     return this;
   }
 
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return handleElementRenameInner(newElementName);
+  }
+
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
 
     if (element instanceof PsiClass) {
       final String newName = ((PsiClass) element).getName();
-      handleElementRename(newName);
-      if (isReferenceTo(element)) return this;
-      return bindWithQualifiedRef(((PsiClass)element).getQualifiedName());
+      final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
+      if (newElement.isReferenceTo(element)) return newElement;
+      return newElement.bindWithQualifiedRef(((PsiClass)element).getQualifiedName());
     } else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
       if (!isPhysical()) {

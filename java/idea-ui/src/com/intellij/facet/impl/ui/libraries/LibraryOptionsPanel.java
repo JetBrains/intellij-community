@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
@@ -93,7 +94,7 @@ public class LibraryOptionsPanel {
             showDialog(new DownloadingOptionsDialog(myConfigureButton, mySettings));
             break;
           case PICK_FILES:
-            if (mySettings.getLibrary() == null) {
+            if (mySettings.getLibraryEditor() == null) {
               VirtualFile[] files = showFileChooser();
               mySettings.addFilesToLibrary(files, OrderRootType.CLASSES);
             }
@@ -175,8 +176,8 @@ public class LibraryOptionsPanel {
                                        mySettings.getLibraryName());
         break;
       case PICK_FILES:
-        Library library = mySettings.getLibrary();
-        if (library == null) {
+        NewLibraryEditor libraryEditor = mySettings.getLibraryEditor();
+        if (libraryEditor == null) {
           myMessage.setForeground(Color.red);
           message = "Press Configure button to add classes to the library";
         }
@@ -185,7 +186,7 @@ public class LibraryOptionsPanel {
                                          " with {2} file(s) will be created",
                                          mySettings.getLibraryLevel(),
                                          mySettings.getLibraryName(),
-                                         library.getFiles(OrderRootType.CLASSES).length);
+                                         libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         break;
       case DO_NOT_CREATE:

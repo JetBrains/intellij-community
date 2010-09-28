@@ -58,6 +58,16 @@ public class ExpressionUtils {
         return ClassUtils.isImmutable(type);
     }
 
+    public static boolean isDeclaredConstant(PsiExpression expression) {
+        final PsiField field =
+                PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field == null) {
+            return false;
+        }
+        return field.hasModifierProperty(PsiModifier.STATIC) &&
+                field.hasModifierProperty(PsiModifier.FINAL);
+    }
+
     public static boolean isEvaluatedAtCompileTime(
             @Nullable PsiExpression expression) {
         if (expression instanceof PsiLiteralExpression) {

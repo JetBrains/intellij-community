@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +46,10 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author: Roman Chernyatchik
@@ -199,9 +200,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     selectAndNotify(myTestsRootNode);
 
     myStartTime = System.currentTimeMillis();
-    final Date today = new Date(myStartTime);
     myTestsRootNode.addSystemOutput("Testing started at "
-                                    + DateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(today)
+                                    + DateFormatUtil.formatTime(myStartTime)
                                     + " ...\n");
 
     updateStatusLabel();

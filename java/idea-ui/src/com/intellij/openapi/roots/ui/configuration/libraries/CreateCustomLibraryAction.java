@@ -77,8 +77,6 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
       final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(library);
       myModuleStructureConfigurable.selectOrderEntry(myModule, orderEntry);
     }
-    else {
-    }
   }
 
   public static List<AnAction> getActions(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable) {

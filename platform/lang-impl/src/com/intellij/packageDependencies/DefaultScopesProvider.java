@@ -33,6 +33,7 @@ import java.util.List;
 
 public class DefaultScopesProvider implements CustomScopesProvider {
   private NamedScope myProblemsScope;
+  private NamedScope myNonProjectFilesScope;
   private final Project myProject;
 
   public static DefaultScopesProvider getInstance(Project project) {
@@ -51,6 +52,7 @@ public class DefaultScopesProvider implements CustomScopesProvider {
     final List<NamedScope> list = new ArrayList<NamedScope>();
     list.add(getProblemsScope());
     list.add(getAllScope());
+    list.add(getNonProjectFilesScope());
     return list;
   }
 
@@ -99,5 +101,12 @@ public class DefaultScopesProvider implements CustomScopesProvider {
       });
     }
     return myProblemsScope;
+  }
+
+  public NamedScope getNonProjectFilesScope() {
+    if (myNonProjectFilesScope == null) {
+      myNonProjectFilesScope = new NonProjectFilesScope(myProject);
+    }
+    return myNonProjectFilesScope;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,7 +325,7 @@ public class ControlFlowUtils{
         while(true){
             final PsiTryStatement tryStatement =
                     PsiTreeUtil.getParentOfType(currentElement,
-                                                PsiTryStatement.class);
+                            PsiTryStatement.class);
             if(tryStatement == null){
                 return false;
             }
@@ -334,10 +334,10 @@ public class ControlFlowUtils{
                 if(PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)){
                     final PsiMethod elementMethod =
                             PsiTreeUtil.getParentOfType(currentElement,
-                                                        PsiMethod.class);
+                                    PsiMethod.class);
                     final PsiMethod finallyMethod =
                             PsiTreeUtil.getParentOfType(finallyBlock,
-                                                        PsiMethod.class);
+                                    PsiMethod.class);
                     return elementMethod != null &&
                             elementMethod.equals(finallyMethod);
                 }
@@ -347,23 +347,10 @@ public class ControlFlowUtils{
     }
 
     public static boolean isInCatchBlock(@NotNull PsiElement element){
-        PsiElement currentElement = element;
-        while(true){
-            final PsiTryStatement tryStatement =
-                    PsiTreeUtil.getParentOfType(currentElement,
-                            PsiTryStatement.class,
-                            true, PsiClass.class);
-            if(tryStatement == null){
-                return false;
-            }
-            final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-            for(final PsiCodeBlock catchBlock : catchBlocks){
-                if(PsiTreeUtil.isAncestor(catchBlock, currentElement, true)){
-                    return true;
-                }
-            }
-            currentElement = tryStatement;
-        }
+        final PsiCatchSection catchSection =
+                PsiTreeUtil.getParentOfType(element, PsiCatchSection.class,
+                        true, PsiClass.class);
+        return catchSection != null;
     }
 
     public static boolean isInExitStatement(@NotNull PsiExpression expression){
@@ -418,7 +405,7 @@ public class ControlFlowUtils{
             }
             if(container instanceof PsiCodeBlock){
                 if(!statementIsLastInBlock((PsiCodeBlock) container,
-                                           (PsiStatement) statementToCheck)){
+                        (PsiStatement) statementToCheck)){
                     return false;
                 }
             }
@@ -447,7 +434,7 @@ public class ControlFlowUtils{
             }
             if(container instanceof PsiCodeBlock){
                 if(!statementIsLastInBlock((PsiCodeBlock) container,
-                                           (PsiStatement) statementToCheck)){
+                        (PsiStatement) statementToCheck)){
                     return false;
                 }
                 if(container.equals(body)){
@@ -455,7 +442,7 @@ public class ControlFlowUtils{
                 }
                 statementToCheck =
                         PsiTreeUtil.getParentOfType(container,
-                                                    PsiStatement.class);
+                                PsiStatement.class);
             } else{
                 statementToCheck = container;
             }
@@ -465,8 +452,8 @@ public class ControlFlowUtils{
     @Nullable
     private static PsiElement getContainingStatementOrBlock(
             @NotNull PsiElement statement){
-      return PsiTreeUtil.getParentOfType(
-              statement, PsiStatement.class, PsiCodeBlock.class);
+        return PsiTreeUtil.getParentOfType(
+                statement, PsiStatement.class, PsiCodeBlock.class);
     }
 
     private static boolean statementIsLastInBlock(
@@ -487,9 +474,9 @@ public class ControlFlowUtils{
     public static boolean methodAlwaysThrowsException(
             @NotNull PsiMethod method){
         final PsiCodeBlock body = method.getBody();
-	    if (body == null) {
-		    return true;
-	    }
+        if (body == null) {
+            return true;
+        }
         final ReturnFinder returnFinder = new ReturnFinder();
         body.accept(returnFinder);
         if(returnFinder.returnFound()){

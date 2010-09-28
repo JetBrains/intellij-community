@@ -602,11 +602,6 @@ class Zoo {
     assertInstanceOf resolved, GrVariable
   }
 
-  private PsiElement resolve(String fileName) {
-    PsiReference ref = configureByFile("${getTestName(true)}/$fileName");
-    ref.resolve()
-  }
-
   public void testCommandExpressionStatement1() {
     PsiElement method = resolve("A.groovy")
     assertInstanceOf method, GrMethod
@@ -617,5 +612,13 @@ class Zoo {
     PsiElement method = resolve("A.groovy")
     assertInstanceOf method, GrMethod
     assertEquals "foo3", method.name
+  }
+
+  public void testUpperCaseFieldAndGetter() {
+    assertTrue resolve("A.groovy") instanceof GrMethod
+  }
+
+  public void testUpperCaseFieldWithoutGetter() {
+    assertTrue resolve("A.groovy") instanceof GrAccessorMethod
   }
 }

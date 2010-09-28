@@ -78,6 +78,7 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
     myTypesToShowContent.addAll(typesToShowContent);
   }
 
+  @Tag("artifact-editor")
   public static class ArtifactEditorSettingsState {
     @Tag("show-sorted")
     public boolean mySortElements = true;

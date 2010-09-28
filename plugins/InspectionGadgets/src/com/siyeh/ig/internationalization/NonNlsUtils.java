@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,11 +187,7 @@ public class NonNlsUtils {
         if (parent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) parent;
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (isReferenceToNonNlsAnnotatedElement(qualifier)) {
+            if (isQualifierNonNlsAnnotated(methodCallExpression)) {
                 return true;
             }
             final PsiMethod method = methodCallExpression.resolveMethod();
@@ -228,6 +224,54 @@ public class NonNlsUtils {
             parameter = parameters[parameters.length - 1];
         }
         return isNonNlsAnnotatedModifierListOwner(parameter);
+    }
+
+    private static boolean isQualifierNonNlsAnnotated(
+            PsiMethodCallExpression methodCallExpression) {
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if (isReferenceToNonNlsAnnotatedElement(qualifier)) {
+            return true;
+        }
+        if (qualifier instanceof PsiMethodCallExpression) {
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            if (isChainable(method)) {
+                final PsiMethodCallExpression expression =
+                        (PsiMethodCallExpression) qualifier;
+                if (isQualifierNonNlsAnnotated(expression)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isChainable(PsiMethod method) {
+        if (method == null) {
+            return false;
+        }
+        method = (PsiMethod) method.getNavigationElement();
+        final PsiCodeBlock body = method.getBody();
+        if (body == null) {
+            return false;
+        }
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length == 0) {
+            return false;
+        }
+        final PsiStatement lastStatement = statements[statements.length - 1];
+        if (!(lastStatement instanceof PsiReturnStatement)) {
+            return false;
+        }
+        final PsiReturnStatement returnStatement =
+                (PsiReturnStatement) lastStatement;
+        final PsiExpression returnValue = returnStatement.getReturnValue();
+        return returnValue instanceof PsiThisExpression;
     }
 
     private static boolean isNonNlsAnnotatedModifierListOwner(

@@ -52,19 +52,21 @@ public class Divider {
       }
     }
   }
-  
+
   private static void getInsideAndOutside(@NotNull PsiFile root,
                                          int startOffset,
                                          int endOffset,
                                          @NotNull TextRange range,
                                          @NotNull List<PsiElement> inside,
-                                         @NotNull List<PsiElement> outside) {
+                                         @NotNull List<PsiElement> outside
+  ) {
     final int currentOffset = root.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(CollectHighlightsUtil.EP_NAME);
 
     int offset = currentOffset;
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    starts.push(startOffset);
     final Stack<PsiElement> elements = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
     final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
@@ -96,7 +98,6 @@ public class Divider {
           offset += element.getTextLength();
         }
 
-        if (elements.isEmpty()) break;
         int start = starts.pop();
         if (startOffset <= start && offset <= endOffset) {
           if (range.containsRange(start, offset)) {
@@ -107,6 +108,7 @@ public class Divider {
           }
         }
 
+        if (elements.isEmpty()) break;
         element = elements.pop();
         child = children.pop();
       }
@@ -120,7 +122,5 @@ public class Divider {
         child = PsiUtilBase.NULL_PSI_ELEMENT;
       }
     }
-
-    outside.add(root);
   }
 }

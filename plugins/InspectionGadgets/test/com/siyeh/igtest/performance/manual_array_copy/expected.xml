@@ -55,4 +55,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array copy</problem_class>
     <description>Manual array copy #loc</description>
   </problem>
+
+  <problem>
+    <file>ManualArrayCopy.java</file>
+    <line>87</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Manual array copy</problem_class>
+    <description>Manual array copy #loc</description>
+  </problem>
 </problems>

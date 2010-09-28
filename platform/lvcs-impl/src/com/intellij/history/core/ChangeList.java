@@ -16,13 +16,12 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.Clock;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Clock;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.TestOnly;
 
@@ -36,13 +35,13 @@ public class ChangeList {
   private int myChangeSetDepth;
   private ChangeSet myCurrentChangeSet;
 
-  private int myIntervalBetweenActivities = 12 * 60 * 60 * 1000; // one day
+  private int myIntervalBetweenActivities = 12 * 60 * 60 * 1000; // 12 hours
 
   public ChangeList(ChangeListStorage storage) {
     myStorage = storage;
   }
 
-  public synchronized void save() {
+  public synchronized void flush() {
     myStorage.flush();
   }
 
@@ -71,7 +70,7 @@ public class ChangeList {
   }
 
   private void doBeginChangeSet() {
-    myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getCurrentTimestamp());
+    myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getTime());
   }
 
   public synchronized boolean forceBeginChangeSet() {

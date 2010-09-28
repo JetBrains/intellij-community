@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,12 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
 
   protected PsiReference configureByFile(@NonNls String filePath) {
     return configureByFile(filePath, null);
+  }
+
+  @Nullable
+  protected PsiElement resolve(String fileName) {
+    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
+    return ref.resolve();
   }
 
 }

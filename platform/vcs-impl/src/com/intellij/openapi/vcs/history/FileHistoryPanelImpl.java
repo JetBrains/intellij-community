@@ -36,10 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -68,6 +65,7 @@ import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
@@ -95,8 +93,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -158,7 +154,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
-      return DATE_FORMAT.format(date);
+      return DateFormatUtil.formatPrettyDateTime(date);
     }
 
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
@@ -167,7 +163,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     @Override
     public String getPreferredStringValue() {
-      return DATE_FORMAT.format(new Date());
+      return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
     }
   };
 
@@ -258,7 +254,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private final DualViewColumnInfo[] COLUMNS;
 
-  private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
   public FileHistoryPanelImpl(AbstractVcs vcs,

@@ -17,9 +17,9 @@
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.LocalHistory;
+import com.intellij.history.core.Content;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.*;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VfsUtil;

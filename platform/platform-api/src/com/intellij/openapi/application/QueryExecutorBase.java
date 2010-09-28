@@ -37,15 +37,15 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
       }
     };
 
-    final Runnable search = new Runnable() {
-      public void run() {
-        processQuery(queryParameters, wrapper);
-      }
-    };
     if (myRequireReadAction) {
-      ApplicationManager.getApplication().runReadAction(search);
-    } else {
-      search.run();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          processQuery(queryParameters, wrapper);
+        }
+      });
+    }
+    else {
+      processQuery(queryParameters, wrapper);
     }
 
     return toContinue.get();

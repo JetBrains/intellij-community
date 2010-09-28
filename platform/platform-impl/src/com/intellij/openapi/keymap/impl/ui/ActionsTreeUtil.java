@@ -28,13 +28,16 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -113,6 +116,25 @@ public class ActionsTreeUtil {
     return group;
   }
 
+  @Nullable
+  private static Condition<AnAction> wrapFilter(@Nullable final Condition<AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
+    if (Registry.is("keymap.show.alias.actions")) return filter;
+
+    return new Condition<AnAction>() {
+      @Override
+      public boolean value(final AnAction action) {
+        if (action == null) return false;
+        final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        if (id != null) {
+          boolean actionBound = isActionBound(keymap, id);
+          return filter == null ? !actionBound : !actionBound && filter.value(action);
+        }
+
+        return filter == null ? true : filter.value(action);
+      }
+    };
+  }
+
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
     AnAction[] mainMenuTopGroups = actionGroup instanceof DefaultActionGroup
                                    ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
@@ -126,7 +148,6 @@ public class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
-
     return createGroup(actionGroup, getName(actionGroup), null, null, ignore, filtered);
   }
 
@@ -220,6 +241,12 @@ public class ActionsTreeUtil {
     }
 
     return group;
+  }
+
+  private static boolean isActionBound(final Keymap keymap, final String id) {
+    if (keymap == null) return false;
+    Keymap parent = keymap.getParent();
+    return ((KeymapImpl)keymap).isActionBound(id) || (parent != null && ((KeymapImpl)parent).isActionBound(id));
   }
 
   private static void addEditorActions(final Condition<AnAction> filtered,
@@ -397,20 +424,21 @@ public class ActionsTreeUtil {
                                       final String filter,
                                       final boolean forceFiltering,
                                       final Condition<AnAction> filtered) {
+    final Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap, ActionManager.getInstance());
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
-    mainGroup.addGroup(createEditorActionsGroup(filtered));
-    mainGroup.addGroup(createMainMenuGroup(filtered));
+    mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
+    mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
     for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
-      final Group group = createExtensionGroup(filtered, project, extension);
+      final Group group = createExtensionGroup(wrappedFilter, project, extension);
       if (group != null) {
         mainGroup.addGroup(group);
       }
     }
-    mainGroup.addGroup(createMacrosGroup(filtered));
-    mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));
-    final Group otherGroup = createOtherGroup(filtered, mainGroup, keymap);
+    mainGroup.addGroup(createMacrosGroup(wrappedFilter));
+    mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
+    final Group otherGroup = createOtherGroup(wrappedFilter, mainGroup, keymap);
     mainGroup.addGroup(otherGroup);
-    mainGroup.addGroup(createPluginsActionsGroup(filtered, otherGroup));
+    mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter, otherGroup));
     if (!StringUtil.isEmpty(filter) || filtered != null) {
       final ArrayList list = mainGroup.getChildren();
       for (Iterator i = list.iterator(); i.hasNext();) {

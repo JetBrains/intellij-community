@@ -16,15 +16,13 @@
 
 package com.intellij.history.integration.revertion;
 
+import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,9 +47,8 @@ public class DifferenceReverter extends Reverter {
   }
 
   @Override
-  public String getCommandName() {
-    String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
-    return LocalHistoryBundle.message("system.label.revert.to.date", date);
+  protected Revision getTargetRevision() {
+    return myLeftRevision;
   }
 
   @Override

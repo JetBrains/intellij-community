@@ -117,7 +117,13 @@ public class RecursiveFileHolder implements FileHolder {
     mySwitchRoots = new ArrayList<VirtualFile>(myFiles.keySet());
     Collections.sort(mySwitchRoots, FilePathComparator.getInstance());
 
-    preCheckFiles();
+    for (VirtualFile file : mySwitchRoots) {
+      // collapsing to common ancestors only makes sense if at least some of the files are directories
+      if (file.isDirectory()) {
+        preCheckFiles();
+        break;
+      }
+    }
 
     Collections.reverse(mySwitchRoots);
   }

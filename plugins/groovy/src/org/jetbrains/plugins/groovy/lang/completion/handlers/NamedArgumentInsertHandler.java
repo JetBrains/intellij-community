@@ -20,6 +20,13 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Maxim.Medvedev
@@ -34,9 +41,38 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     int tailOffset = context.getTailOffset();
+
+    PsiElement argumentList = context.getFile().findElementAt(tailOffset - 1);
+    while (argumentList != null && !(argumentList instanceof GrArgumentList) && !(argumentList instanceof GrListOrMap)) {
+      argumentList = argumentList.getParent();
+    }
+
     final Editor editor = context.getEditor();
-    editor.getDocument().insertString(tailOffset, ": ");
-    editor.getCaretModel().moveToOffset(tailOffset + 2);
+
+    if (argumentList != null) {
+      String argumentListText = argumentList.getText();
+
+      String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
+      s = StringUtil.trimEnd(s, ")");
+
+      if (s.trim().length() == 0) {
+        editor.getDocument().insertString(tailOffset, ": ");
+        editor.getCaretModel().moveToOffset(tailOffset + 2);
+      }
+      else {
+        Matcher m = Pattern.compile("(\\s*)(:)?(\\s*),?\\s?(\\s*)(.+)").matcher(s);
+        if (!m.matches()) throw new RuntimeException("This pattern must matches on any non-empty string!");
+
+        if (m.group(2) != null) {
+          editor.getCaretModel().moveToOffset(tailOffset + m.end(3));
+        }
+        else {
+          editor.getDocument().replaceString(tailOffset, tailOffset + m.start(4), ": , ");
+          editor.getCaretModel().moveToOffset(tailOffset + 2);
+        }
+      }
+    }
+
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
   }

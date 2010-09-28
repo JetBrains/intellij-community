@@ -18,14 +18,13 @@ package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -108,7 +107,7 @@ public class RecentChangesPopup {
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       RecentChange c = (RecentChange)val;
       myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(FormatUtil.formatRelativeTimestamp(c.getTimestamp()));
+      myDateLabel.setText(DateFormatUtil.formatPrettyDateTime(c.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

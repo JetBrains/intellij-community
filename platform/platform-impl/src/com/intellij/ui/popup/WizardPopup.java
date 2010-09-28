@@ -251,6 +251,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myActionMap.put(aActionName, aAction);
   }
 
+  protected String getActionForKeyStroke(final KeyStroke keyStroke) {
+    return (String) myInputMap.get(keyStroke);
+  }
+
   public final void registerAction(@NonNls String aActionName, KeyStroke keyStroke, Action aAction) {
     myInputMap.put(keyStroke, aActionName);
     myActionMap.put(aActionName, aAction);

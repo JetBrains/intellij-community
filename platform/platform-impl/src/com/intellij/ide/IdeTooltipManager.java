@@ -124,7 +124,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           }
         }
       } else if (myCurrentComponent == null) {
-        maybeShowFor(c, me);
+        //maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
@@ -189,7 +189,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (now) {
       myShowRequest.run();
     } else {
-      myAlarm.addRequest(myShowRequest, myShowDelay ? Registry.intValue("ide.tooltip.initialDelay") : Registry.intValue("ide.tooltip.initialReshowDelay"));
+      myAlarm.addRequest(myShowRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
     }
 
     return tooltip;
@@ -258,7 +258,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           hideCurrent(null);
         }
       }
-    }, Registry.intValue("ide.tooltip.dismissDelay"));
+    }, tooltip.getDismissDelay());
   }
 
 
@@ -306,7 +306,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
-    if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
+    myShowRequest = null;
+    if (myCurrentTooltip == null) return true;
+
+    if (me != null && myCurrentTipUi != null) {
       if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
         if (myHideRunnable != null) {
           myHideRunnable = null;
@@ -385,4 +388,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
   }
 
+  public void cancelAutoHide() {
+    myHideRunnable = null;
+  }
 }

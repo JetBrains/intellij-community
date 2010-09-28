@@ -29,7 +29,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -68,7 +67,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
     }
 
     final PsiClass[] classes = file.getClasses();
-    return classes.length > 0 && classes[0] instanceof GroovyScriptClass;
+    return classes.length > 1 || classes.length == 1 && classes[0] instanceof GroovyScriptClass;
   }
 
   @Override

@@ -18,23 +18,21 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,11 +48,6 @@ public class ResolveCache {
   private final PsiManagerEx myManager;
 
   private final List<Runnable> myRunnablesToRunOnDropCaches = ContainerUtil.createEmptyCOWList();
-  private static final ArrayFactory<Thread> THREAD_ARRAY_FACTORY = new ArrayFactory<Thread>() {
-    public Thread[] create(int count) {
-      return new Thread[count];
-    }
-  };
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
     TResult resolve(TRef ref, boolean incompleteCode);
@@ -95,6 +88,8 @@ public class ResolveCache {
     for (Runnable r : myRunnablesToRunOnDropCaches) {
       r.run();
     }
+
+    blockedElements.remove();
   }
 
   public void addRunnableToRunOnDropCaches(Runnable r) {
@@ -138,12 +133,6 @@ public class ResolveCache {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  public boolean isCached(PsiReference ref) {
-    Map[] maps = ref instanceof PsiPolyVariantReference ? myPolyVariantResolveMaps : myResolveMaps;
-    boolean physical = ref.getElement().isPhysical();
-    return getCached(ref, maps, physical, false) != null || getCached(ref, maps, physical, true) != null;
-  }
-
   public PsiElement resolveWithCaching(PsiReference ref,
                                        Resolver resolver,
                                        boolean needToPreventRecursion,
@@ -151,81 +140,21 @@ public class ResolveCache {
     return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode);
   }
 
-  private static final Key<Thread[]> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
+  private static final ThreadLocal<Set<PsiElement>> blockedElements = new ThreadLocal<Set<PsiElement>>() {
+    @Override
+    protected Set<PsiElement> initialValue() {
+      return new THashSet<PsiElement>();
+    }
+  };
 
   private static boolean lockElement(PsiReference ref) {
-    return lockElement(ref.getElement(), IS_BEING_RESOLVED_KEY);
-  }
-
-  /**
-   * Implementation of per thread lock to prevent element-analysing recursive algorithms from infinite looping.
-   * @see #unlockElement
-   * @param element
-   * @param key
-   * @return lock status
-   */
-  public static boolean lockElement(PsiElement element, Key<Thread[]> key) {
-    final Thread currentThread = Thread.currentThread();
-    while (true) {
-      Thread[] lockingThreads = element.getUserData(key);
-      Thread[] newThreads;
-      if (lockingThreads == null) {
-        newThreads = new Thread[]{currentThread};
-        if (((UserDataHolderEx)element).putUserDataIfAbsent(key, newThreads) == newThreads) {
-          break;
-        }
-      }
-      else {
-        if (ArrayUtil.find(lockingThreads, currentThread) != -1) {
-          return false;
-        }
-        newThreads = ArrayUtil.append(lockingThreads, currentThread, THREAD_ARRAY_FACTORY);
-        if (((UserDataHolderEx)element).replace(key, lockingThreads, newThreads)) {
-          break;
-        }
-      }
-    }
-    Thread[] data = element.getUserData(key);
-    int i = ArrayUtil.find(data, currentThread);
-    assert i != -1;
-    assert i == ArrayUtil.lastIndexOf(data, currentThread);
-
-    return true;
+    Set<PsiElement> blocked = blockedElements.get();
+    return blocked.add(ref.getElement());
   }
 
   private static void unlockElement(PsiReference ref) {
-    unlockElement(ref.getElement(), IS_BEING_RESOLVED_KEY);
-  }
-
-  /**
-   * @see #lockElement
-   * @param element
-   * @param key
-   */
-  public static void unlockElement(PsiElement element , Key<Thread[]> key) {
-    final Thread currentThread = Thread.currentThread();
-    while (true) {
-      Thread[] lockingThreads = element.getUserData(key);
-      Thread[] newThreads;
-      if (lockingThreads.length == 1) {
-        assert lockingThreads[0] == currentThread : "Locking thread = " + lockingThreads[0] + "; current=" + currentThread;
-        newThreads = null;
-      }
-      else {
-        int i = ArrayUtil.find(lockingThreads, currentThread);
-        assert i == ArrayUtil.lastIndexOf(lockingThreads, currentThread);
-        assert lockingThreads[i] == currentThread;
-        
-        newThreads = ArrayUtil.remove(lockingThreads, currentThread, THREAD_ARRAY_FACTORY);
-        assert newThreads.length == lockingThreads.length - 1 : "Locking threads = " + Arrays.asList(lockingThreads) + "; newThreads=" + Arrays.asList(newThreads);
-        assert ArrayUtil.find(newThreads, currentThread) == -1;
-      }
-      if (((UserDataHolderEx)element).replace(key, lockingThreads, newThreads)) {
-        break;
-      }
-    }
-    Thread[] data = element.getUserData(key);
-    assert data == null || ArrayUtil.find(data, currentThread) == -1;
+    Set<PsiElement> blocked = blockedElements.get();
+    blocked.remove(ref.getElement());
   }
 
   private static int getIndex(boolean physical, boolean incompleteCode){

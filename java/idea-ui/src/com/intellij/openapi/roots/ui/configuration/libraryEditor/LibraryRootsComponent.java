@@ -102,7 +102,7 @@ public class LibraryRootsComponent implements Disposable {
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
   private final LibraryEditor myLibraryEditor;
 
-  private LibraryRootsComponent(Project project, LibraryEditor libraryEditor) {
+  private LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     myProject = project;
     myLibraryEditor = libraryEditor;
     updateProperties();
@@ -122,9 +122,6 @@ public class LibraryRootsComponent implements Disposable {
   public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     LibraryRootsComponent rootsComponent = new LibraryRootsComponent(project, libraryEditor);
     rootsComponent.init(new LibraryTreeStructure(rootsComponent));
-    if (project != null) {
-      Disposer.register(project, rootsComponent);
-    }
     return rootsComponent;
   }
 

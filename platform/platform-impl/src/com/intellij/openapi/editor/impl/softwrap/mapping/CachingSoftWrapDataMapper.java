@@ -97,6 +97,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
+    // There is a possible case that this method is called during the first refresh (the cache is empty). So, we delegate it to
+    // soft wraps-unaware code.
+    if (myCache.isEmpty()) {
+      return myEditor.offsetToLogicalPosition(offset, false);
+    }
     return calculate(new OffsetToLogicalCalculationStrategy(offset, myEditor, myRepresentationHelper, myCache, myStorage));
   }
 
@@ -358,12 +363,18 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     if (!myBeforeChangeState.valid) {
       return;
     }
+
+    //System.out.println("Before recalculation (" + startOffset + "-" + endOffset + ")");
+    //dumpCache();
+
     myNotAffectedByUpdateTailCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
     myCache.subList(myBeforeChangeState.startCacheEntryIndex + 1, myCache.size()).clear();
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
       entry.locked = true;
     }
+
+    //System.out.println("Dropped all cache records starting from index " + (myBeforeChangeState.startCacheEntryIndex + 1));
   }
 
   @Override
@@ -381,45 +392,62 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
       entry.locked = false;
     }
+
+    //System.out.println("Before applying state change:");
+    //dumpCache();
+
     applyStateChange();
 
+    //System.out.println("After Applying state change");
+    //dumpCache();
 
-    //Document document = myEditor.getDocument();
-    //CharSequence text = document.getCharsSequence();
-    //System.out.println("--------------------------------------------------");
-    //System.out.println("|");
-    //System.out.println("|");
-    //System.out.println(text);
-    //System.out.println("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
-    //System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
-    //for (int i = 0; i < myCache.size(); i++) {
-    //  CacheEntry entry = myCache.get(i);
-    //  try {
-    //    System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
-    //                      text.subSequence(entry.startOffset,Math.min(entry.endOffset, text.length())));
-    //  }
-    //  catch (Throwable e) {
-    //    e.printStackTrace();
-    //  }
-    //}
-    //if (!myCache.isEmpty() && myCache.get(myCache.size() - 1).endOffset < text.length() - 1) {
-    //  System.out.printf("Incomplete re-parsing detected! Document length is %d but last processed offset is %s%n", text.length(),
-    //                    myCache.get(myCache.size() - 1).endOffset);
-    //}
+    myBeforeChangeState.valid = false;
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UnusedDeclaration", "CallToPrintStackTrace"})
+  private void dumpCache() {
+    Document document = myEditor.getDocument();
+    CharSequence text = document.getCharsSequence();
+    System.out.println("--------------------------------------------------");
+    System.out.println("|");
+    System.out.println("|");
+    System.out.println(text);
+    System.out.println("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+    System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
+    for (int i = 0; i < myCache.size(); i++) {
+      CacheEntry entry = myCache.get(i);
+      try {
+        System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
+                          text.subSequence(Math.min(text.length() - 1, entry.startOffset) ,Math.min(entry.endOffset, text.length() -  1)));
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }
+    if (!myCache.isEmpty() && myCache.get(myCache.size() - 1).endOffset < text.length() - 1) {
+      System.out.printf("Incomplete re-parsing detected! Document length is %d but last processed offset is %s%n", text.length(),
+                        myCache.get(myCache.size() - 1).endOffset);
+    }
 
 
-    //for (CacheEntry cacheEntry : myCache) {
-    //  if (cacheEntry.startOffset > 0) {
-    //    if (text.charAt(cacheEntry.startOffset - 1) != '\n' && myStorage.getSoftWrap(cacheEntry.startOffset) == null) {
-    //      assert false;
-    //    }
-    //  }
-    //  if (cacheEntry.endOffset < document.getTextLength()) {
-    //    if (text.charAt(cacheEntry.endOffset) != '\n' && myStorage.getSoftWrap(cacheEntry.endOffset) == null) {
-    //      assert false;
-    //    }
-    //  }
-    //}
+    for (CacheEntry cacheEntry : myCache) {
+      if (cacheEntry.startOffset > 0) {
+        if (text.charAt(cacheEntry.startOffset - 1) != '\n' && myStorage.getSoftWrap(cacheEntry.startOffset) == null) {
+          assert false;
+        }
+      }
+      if (cacheEntry.endOffset < document.getTextLength() - 1) {
+        if (text.charAt(cacheEntry.endOffset) != '\n' && myStorage.getSoftWrap(cacheEntry.endOffset) == null) {
+          assert false;
+        }
+      }
+    }
+
+    if (!myCache.isEmpty()) {
+      if (myCache.get(myCache.size() - 1).endOffset < myEditor.getDocument().getTextLength() - 1) {
+        assert false;
+      }
+    }
   }
 
   /**

@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,6 +50,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +60,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
@@ -790,7 +790,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
     int errors = getErrorCount();
     int warnings = getWarningCount();
-    final String theDateAsString = DateFormat.getTimeInstance().format(new Date());
+    final String theDateAsString = DateFormatUtil.formatDateTime(Clock.getTime());
 
     long buildTimeInSeconds = buildTimeInMilliseconds / 1000;
 

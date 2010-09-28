@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1123,31 +1122,6 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String formatDate(long timestamp, DateFormat format) {
-    long minDelta = (new Date().getTime() - timestamp) / (1000 * 60);
-
-    if (minDelta < 2) {
-      return CommonBundle.message("format.date.momentsAgo");
-    }
-    if (minDelta < 10) {
-      return CommonBundle.message("format.date.fewMinutesAgo");
-    }
-
-    if (minDelta <= 30) {
-      return CommonBundle.message("format.date.last30Minutes");
-    }
-
-    int hoursDelta = Math.round(minDelta / 60f);
-    if (hoursDelta <= 1) {
-      return CommonBundle.message("format.date.lastHour");
-    }
-    if (hoursDelta < 5) {
-      return CommonBundle.message("format.date.hoursAgo", hoursDelta);
-    }
-    return format.format(timestamp);
-  }
-
-  @NotNull
   private static String formatMinor(long number) {
     if (number > 0L && number <= 9L) {
       return "0" + number;
@@ -1259,11 +1233,11 @@ public class StringUtil {
   }
 
   /**
-   * Find position of the first charachter accepted by given filter
+   * Find position of the first character accepted by given filter.
    *
    * @param s      the string to search
-   * @param filter
-   * @return position of the first charachter accepted or -1 if not found
+   * @param filter search filter
+   * @return position of the first character accepted or -1 if not found
    */
   public static int findFirst(@NotNull final String s, @NotNull CharFilter filter) {
     for (int i = 0; i < s.length(); i++) {
@@ -1508,7 +1482,10 @@ public class StringUtil {
     return b.toString();
   }
 
-  // returns null if any of args is null
+  /**
+   * @param args Strings to join.
+   * @return {@code null} if any of given Strings is {@code null}.
+   */
   @Nullable
   public static String joinOrNull(@NotNull String... args) {
     StringBuilder r = new StringBuilder();
@@ -1580,7 +1557,7 @@ public class StringUtil {
    * Escape property name or key in property file. Unicode characters are escaped as well.
    *
    * @param input an input to escape
-   * @param isKey if true, they rules for key escaping are applied. The leading space is escaped in that case.
+   * @param isKey if true, the rules for key escaping are applied. The leading space is escaped in that case.
    * @return an escaped string
    */
   @NotNull

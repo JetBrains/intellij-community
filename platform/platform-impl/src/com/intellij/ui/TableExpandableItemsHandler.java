@@ -98,7 +98,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     return myComponent.getCellRect(tableCellKey.row, tableCellKey.column, false);
   }
 
-  public Pair<Component, Rectangle> getRendererAndBounds(TableCell key) {
+  public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
     Rectangle cellRect = getCellRect(key);
 
     int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);

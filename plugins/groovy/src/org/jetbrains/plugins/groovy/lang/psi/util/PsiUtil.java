@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -68,7 +67,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -384,6 +382,10 @@ public class PsiUtil {
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
+    return isStaticsOK(owner, place, owner);
+  }
+
+  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, PsiElement resolveContext) {
     if (owner instanceof PsiMember) {
       if (place instanceof GrReferenceExpression) {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
@@ -459,9 +461,14 @@ public class PsiUtil {
           if (((PsiMember)owner).getContainingClass() == null) return true;
           if (owner instanceof GrVariable && !(owner instanceof GrField)) return true;
           if (owner.hasModifierProperty(GrModifier.STATIC)) return true;
-          final GrMember placeOwner = PsiTreeUtil.getParentOfType(place, GrMember.class);
-          if (placeOwner == null) return true;
-          return !placeOwner.hasModifierProperty(GrModifier.STATIC);
+
+          PsiElement stopAt = resolveContext != null ? PsiTreeUtil.findCommonParent(place, resolveContext) : null;
+          while (place != null && place != stopAt && !(place instanceof GrMember)) {
+            if (place instanceof PsiFile) break;
+            place = place.getParent();
+          }
+          if (place == null || place instanceof PsiFile || place == stopAt) return true;
+          return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
         }
       }
     }

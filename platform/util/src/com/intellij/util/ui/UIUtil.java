@@ -1400,8 +1400,6 @@ public class UIUtil {
           }
 
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
-          if (tree.isPathSelected(pressedPath)) return;
-
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
 
@@ -1409,10 +1407,7 @@ public class UIUtil {
               return;
             }
 
-            if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
-              return;
-            }
-
+            if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) return;
             if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
               selectPathForEvent(pressedPath, e);
             }
@@ -1431,6 +1426,9 @@ public class UIUtil {
 
       tree.setShowsRootHandles(true);
       tree.addMouseListener(mySelectionListener);
+
+      //final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+      //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "clearSelection");
     }
 
     @Override

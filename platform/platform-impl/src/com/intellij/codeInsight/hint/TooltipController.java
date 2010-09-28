@@ -61,6 +61,7 @@ public class TooltipController {
     }
 
     if (Comparing.equal(tooltipObject, myCurrentTooltipObject)) {
+      IdeTooltipManager.getInstance().cancelAutoHide();
       return;
     }
     hideCurrentTooltip();
@@ -99,6 +100,11 @@ public class TooltipController {
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
+  public void showTooltip(final Editor editor, Point p, String text, int currentWidth, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+    TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
+    showTooltip(editor, p, tooltipRenderer, alignToRight, group, hintHint);
+  }
+
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
   }
@@ -131,13 +137,6 @@ public class TooltipController {
   public boolean shouldSurvive(final MouseEvent e) {
     if (myCurrentTooltip != null) {
       if (myCurrentTooltip.canControlAutoHide()) return true;
-      final Point pointOnComponent = new RelativePoint(e).getPointOn(myCurrentTooltip.getComponent()).getPoint();
-      final Rectangle bounds = myCurrentTooltip.getBounds();
-      if (bounds.x - 10 < pointOnComponent.x && bounds.width + bounds.x + 10 > pointOnComponent.x) {//do not hide hovered tooltip
-        if (bounds.y - 10 < pointOnComponent.y && bounds.y + bounds.height + 10 > pointOnComponent.y) {
-          return true;
-        }
-      }
     }
     return false;
   }
@@ -146,5 +145,11 @@ public class TooltipController {
     if (myCurrentTooltip != null && myCurrentTooltip.equals(lightweightHint)) {
       hideCurrentTooltip();
     }
+  }
+
+  public void resetCurrent() {
+    myCurrentTooltip = null;
+    myCurrentTooltipGroup = null;
+    myCurrentTooltipObject = null;
   }
 }

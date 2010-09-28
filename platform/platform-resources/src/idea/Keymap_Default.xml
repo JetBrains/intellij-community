@@ -733,6 +733,9 @@
   <action id="ActivateChangesToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
   </action>
+  <action id="NewElement">
+     <keyboard-shortcut first-keystroke="alt INSERT"/>
+   </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control alt INSERT"/>
   </action>

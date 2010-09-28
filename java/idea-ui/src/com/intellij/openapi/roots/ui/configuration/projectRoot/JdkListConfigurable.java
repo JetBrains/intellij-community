@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -32,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
@@ -46,20 +45,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-@State(
-  name = "JdkListConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)
 public class JdkListConfigurable extends BaseStructureConfigurable {
-
   private final ProjectSdksModel myJdksTreeModel;
-
-
-  SdkModel.Listener myListener = new SdkModel.Listener() {
+  private final SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
     }
 
@@ -87,6 +75,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   public JdkListConfigurable(final Project project, ProjectStructureConfigurable root) {
     super(project);
+    MasterDetailsStateService.getInstance(project).register("JdkListConfigurable.UI", this);
     myJdksTreeModel = root.getProjectJdksModel();
     myJdksTreeModel.addListener(myListener);
   }

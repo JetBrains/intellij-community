@@ -212,8 +212,7 @@ public class NavigationGutterIconBuilder<T> {
       myCellRenderer = new DefaultPsiElementCellRenderer();
     }
 
-    final MyNavigationGutterIconRenderer renderer = new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers);
-    return renderer;
+    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers);
   }
 
   private static class MyNavigationGutterIconRenderer extends NavigationGutterIconRenderer {
@@ -244,7 +243,6 @@ public class NavigationGutterIconBuilder<T> {
 
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
       if (!super.equals(o)) return false;
 
       final MyNavigationGutterIconRenderer that = (MyNavigationGutterIconRenderer)o;

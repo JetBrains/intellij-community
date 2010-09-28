@@ -26,6 +26,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,6 +34,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Tag("splitter-proportions")
 public class SplitterProportionsDataImpl implements SplitterProportionsData {
   private List<Float> proportions = new ArrayList<Float>();
   private static final String DATA_VERSION = "1";

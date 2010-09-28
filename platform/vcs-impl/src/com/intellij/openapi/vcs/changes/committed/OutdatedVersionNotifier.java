@@ -32,11 +32,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.DateFormat;
 import java.util.List;
 
 /**
@@ -185,7 +185,6 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     }
 
     private void updateLabelText(final Change c) {
-      final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
       String comment = myChangeList.getComment();
       int pos = comment.indexOf("\n");
       if (pos >= 0) {
@@ -193,7 +192,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       }
       final String key = c.getType() == Change.Type.DELETED ? "outdated.version.text.deleted" : "outdated.version.text";
       myLabel.setText(VcsBundle.message(key, myChangeList.getCommitterName(),
-                                        dateFormat.format(myChangeList.getCommitDate()), comment));
+                                        DateFormatUtil.formatPrettyDateTime(myChangeList.getCommitDate()), comment));
     }
 
     public void setChangeList(final CommittedChangeList changeList, final Change c) {

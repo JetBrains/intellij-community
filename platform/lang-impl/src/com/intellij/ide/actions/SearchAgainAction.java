@@ -36,7 +36,7 @@ public class SearchAgainAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -48,7 +48,8 @@ public class SearchAgainAction extends AnAction implements DumbAware {
           if(FindManager.getInstance(project).findNextUsageInEditor(editor)) {
             return;
           }
-          FindUtil.searchAgain(project, editor);
+
+          FindUtil.searchAgain(project, editor, e.getDataContext());
         }
       },
       IdeBundle.message("command.find.next"),

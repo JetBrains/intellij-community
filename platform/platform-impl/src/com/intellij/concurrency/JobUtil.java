@@ -104,6 +104,14 @@ public class JobUtil {
   public static <T> boolean invokeConcurrentlyUnderMyProgress(@NotNull List<T> things,
                                                               @NotNull final Processor<T> thingProcessor,
                                                               boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
+    if (things.isEmpty()) {
+      return true;
+    }
+    if (things.size() == 1) {
+      T t = things.get(0);
+      return thingProcessor.process(t);
+    }
+
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProgressWrapper wrapper = ProgressWrapper.wrap(indicator);
     boolean result = invokeConcurrentlyForAll(things, new Processor<T>() {

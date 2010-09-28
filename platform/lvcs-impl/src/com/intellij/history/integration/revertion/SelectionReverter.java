@@ -20,9 +20,7 @@ import com.intellij.diff.Block;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.Progress;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
@@ -56,9 +54,9 @@ public class SelectionReverter extends Reverter {
     myToLine = toLine;
   }
 
-  public String getCommandName() {
-    String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
-    return LocalHistoryBundle.message("system.label.revert.of.selection.to.date", date);
+  @Override
+  protected Revision getTargetRevision() {
+    return myLeftRevision;
   }
 
   @Override

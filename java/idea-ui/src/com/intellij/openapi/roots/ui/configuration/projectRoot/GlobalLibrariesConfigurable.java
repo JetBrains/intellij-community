@@ -16,29 +16,21 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-@State(
-  name = "GlobalLibrariesConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)
 public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   public GlobalLibrariesConfigurable(final Project project) {
     super(project);
+    MasterDetailsStateService.getInstance(project).register("GlobalLibrariesConfigurable.UI", this);
     myLevel = LibraryTablesRegistrar.APPLICATION_LEVEL;
   }
 

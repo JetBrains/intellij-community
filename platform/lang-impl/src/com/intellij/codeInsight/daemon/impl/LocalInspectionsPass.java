@@ -231,9 +231,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       public boolean process(final LocalInspectionTool tool) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
-        ProgressIndicator localIndicator = progressManager.getProgressIndicator();
 
-        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
+        ProgressIndicator original = ProgressWrapper.unwrap(progressManager.getProgressIndicator());  // TODO: cdr
         LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -287,9 +286,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         LocalInspectionTool tool = i.first;
         final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
-        ProgressIndicator localIndicator = progressManager.getProgressIndicator();
 
-        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
+        ProgressIndicator original = ProgressWrapper.unwrap(progressManager.getProgressIndicator()); // TODO: cdr
         LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();

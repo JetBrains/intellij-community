@@ -15,37 +15,50 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
 import junit.framework.TestCase;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class DateFormatUtilTest extends TestCase{
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
-  private Date myCurrentDate;
 
-  protected void setUp() throws Exception {
-    super.setUp();
+  public void testPrettyDate() throws ParseException {
+    Clock.setTime(2004, 11, 10, 17, 0);
+
+    doTestDate("Today", "10.12.2004 17.00.00");
+    doTestDate("Today", "10.12.2004 00.00.00");
+    doTestDate("Yesterday", "09.12.2004 23.59.59");
+    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("08.12.2004 23.59.59")), "08.12.2004 23.59.59");
+
+    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
   }
 
-  public void test() throws ParseException {
-    myCurrentDate = DATE_FORMAT.parse("10.12.2004 15.53.27");
+  public void testPrettyDateTime() throws ParseException {
+    Clock.setTime(2004, 11, 10, 17, 0);
 
-    doTest("Today 3:00 PM", "10.12.2004 15.00.00");
-    doTest("Yesterday 3:00 PM", "09.12.2004 15.00.00");
+    doTestDateTime("Moments ago", "10.12.2004 16.59.31");
+    doTestDateTime("A minute ago", "10.12.2004 16.59.29");
+    doTestDateTime("5 minutes ago", "10.12.2004 16.55.00");
+    doTestDateTime("1 hour ago", "10.12.2004 16.00.00");
+    doTestDateTime("Today " + DateFormatUtil.formatTime(DATE_FORMAT.parse("10.12.2004 15.55.00")), "10.12.2004 15.55.00");
+    doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("09.12.2004 15.00.00")), "09.12.2004 15.00.00");
 
-    doTest("12/8/04 3:00 PM", "08.12.2004 15.00.00");
-    doTest("12/7/04 3:00 PM", "07.12.2004 15.00.00");
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("08.12.2004 15.00.00")), "08.12.2004 15.00.00");
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("07.12.2004 15.00.00")), "07.12.2004 15.00.00");
 
-    myCurrentDate = DATE_FORMAT.parse("01.01.2004 15.53.27");
-    
-    doTest("Yesterday 3:00 PM", "31.12.2003 15.00.00");
+    Clock.setTime(2004, 0, 1, 15, 53);
+    doTestDateTime(DateFormatUtil.formatDateTime(DATE_FORMAT.parse("01.01.2003 15.53.00")), "01.01.2003 15.53.00");
+    doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("31.12.2003 15.00.00")), "31.12.2003 15.00.00");
   }
 
-  private void doTest(String expected, String date) throws ParseException {
-    assertEquals(expected, DateFormatUtil.formatDate(myCurrentDate, DATE_FORMAT.parse(date), Locale.US));
+  private void doTestDate(String expected, String date) throws ParseException {
+    assertEquals(expected, DateFormatUtil.formatPrettyDate(DATE_FORMAT.parse(date)));
+  }
+
+  private void doTestDateTime(String expected, String date) throws ParseException {
+    assertEquals(expected, DateFormatUtil.formatPrettyDateTime(DATE_FORMAT.parse(date)));
   }
 }

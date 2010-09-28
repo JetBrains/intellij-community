@@ -16,9 +16,11 @@
 package git4idea.update;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
@@ -26,10 +28,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.MergeChangeCollector;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * This class encapsulates update operation from update environment. This allows to customize this operation when needed.
@@ -120,7 +119,7 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
   @Override
   protected String makeStashMessage() {
     return "Uncommitted changes before update operation at " +
-           DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).format(new Date());
+           DateFormatUtil.formatDateTime(Clock.getTime());
   }
 
   /**
