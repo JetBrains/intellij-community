@@ -68,7 +68,6 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
-  private boolean myOneLineMode;
   private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
@@ -91,13 +90,12 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
-    this(document,project, fileType, isViewer, true);
+    this(document, project, fileType, isViewer, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
     myOneLineMode = oneLineMode;
     myIsViewer = isViewer;
-    myOneLineMode = oneLineMode;
     setDocument(document);
     myProject = project;
     myFileType = fileType;
