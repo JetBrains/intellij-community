@@ -174,7 +174,9 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
     myTree.getActionMap().put("ENTER", getOKAction());
-    return ScrollPaneFactory.createScrollPane(myTree);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    pane.setMinimumSize(new Dimension(300, 80));
+    return pane;
   }
 
   @NotNull
