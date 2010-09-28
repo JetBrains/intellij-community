@@ -38,17 +38,16 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
+import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.*;
 
@@ -516,19 +515,11 @@ public class TestNGUtil
     return false;
   }
 
-  public static boolean inheritsITestListener(PsiClass psiClass) {
-    final boolean[] inherits = new boolean[1];
-    InheritanceUtil.processSupers(psiClass, false, new Processor<PsiClass>() {
-      public boolean process(final PsiClass superClass) {
-        final String qualifiedName = superClass.getQualifiedName();
-        if (qualifiedName != null && qualifiedName.matches("org.testng.(IReporter|ITestListener|IMethodInterceptor|IInvokedMethodListener|internal.annotations.IAnnotationTransformer)")) {
-          inherits[0] = true;
-          return false;
-        }
-        return true;
-      }
-    });
-    return inherits[0];
+  public static boolean inheritsITestListener(@NotNull PsiClass psiClass) {
+    final Project project = psiClass.getProject();
+    final PsiClass aListenerClass = JavaPsiFacade.getInstance(project)
+      .findClass(ITestNGListener.class.getName(), GlobalSearchScope.allScope(project));
+    return aListenerClass != null && psiClass.isInheritor(aListenerClass, true);
   }
 
   public static boolean isTestngXML(final VirtualFile virtualFile) {
