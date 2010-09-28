@@ -137,6 +137,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   public boolean process(@NotNull Processor<? super T> processor) {
     try {
+      normalize();
       l.readLock().lock();
       checkMax(true);
       return process(getRoot(), processor, modCount);
@@ -146,7 +147,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  protected boolean process(Node<T> root, Processor<? super T> processor, int modCountBefore) {
+  private boolean process(Node<T> root, Processor<? super T> processor, int modCountBefore) {
     if (root == null) return true;
 
     if (!process(root.getLeft(), processor, modCountBefore)) return false;
@@ -158,6 +159,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   public boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor) {
     try {
+      normalize();
       l.readLock().lock();
       checkMax(true);
       return processOverlappingWith(getRoot(), start, end, processor, modCount, 0);
@@ -194,6 +196,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   public boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor) {
     try {
+      normalize();
       l.readLock().lock();
       checkMax(true);
       return processOverlapping(getRoot(), offset, processor, modCount, 0);
@@ -203,7 +206,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  protected boolean processOverlapping(MyNode root, int offset, Processor<? super T> processor, int modCountBefore, int deltaUpToRootExclusive) {
+  private boolean processOverlapping(MyNode root, int offset, Processor<? super T> processor, int modCountBefore, int deltaUpToRootExclusive) {
     if (root == null) {
       return true;
     }
@@ -380,10 +383,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   private void incDelta(MyNode root, int delta) {
     if (root == null) return;
     if (root.key.isValid()) {
-      int newDelta = root.delta += delta;
-      if (newDelta != 0) {
-        normalized = false;
-      }
+      root.delta += delta;
     }
     else {
       incDelta(root.getLeft(), delta);
@@ -572,7 +572,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   @NotNull
-  public Iterator<T> iteratorFrom(@NotNull Interval interval) {
+  Iterator<T> iteratorFrom(@NotNull Interval interval) {
     MyNode firstOverlap = findMinOverlappingWith(getRoot(), interval, modCount, 0);
     if (firstOverlap == null) {
       return ContainerUtil.emptyIterator();
@@ -582,6 +582,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   private Iterator<T> createIteratorFrom(final MyNode firstNode) {
     checkMax(true);
+    normalize();
 
     final int modCountBefore = modCount;
     return new Iterator<T>() {
@@ -622,10 +623,19 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     };
   }
 
-  private boolean normalized = true;
+  protected volatile boolean normalized = true;
+
   public void normalize() {
-    normalize(getRoot());
-    normalized = true;
+    if (normalized) return;
+    try {
+      l.writeLock().lock();
+      if (normalized) return;
+      normalize(getRoot());
+      normalized = true;
+    }
+    finally {
+      l.writeLock().unlock();
+    }
   }
 
   private void normalize(MyNode root) {
@@ -634,4 +644,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     normalize(root.getLeft());
     normalize(root.getRight());
   }
+
+  private void printSorted() { printSorted(getRoot());}
+  private void printSorted(MyNode root) {
+    if (root == null) return;
+    printSorted(root.getLeft());
+    System.out.println(root.key);
+    printSorted(root.getRight());
+  }
+
 }
