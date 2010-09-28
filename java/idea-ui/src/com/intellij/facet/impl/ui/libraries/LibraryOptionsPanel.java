@@ -17,17 +17,20 @@ package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.LibrariesAlphaComparator;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,20 +47,19 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class LibraryOptionsPanel {
-
-  private JLabel myMessage;
+  private JLabel myMessageLabel;
   private JPanel myPanel;
   private JButton myConfigureButton;
-  private JPanel myExistingLibrariesPanel;
-  private JLabel myExistingLibrariesLabel;
+  private JComboBox myExistingLibraryComboBox;
+  private JRadioButton myUseExistingLibraryRadioButton;
   private ButtonGroup myButtonGroup;
-  private ElementsChooser<Library> myLibrariesChooser;
 
   private LibraryCompositionSettings mySettings;
   private LibrariesContainer myLibrariesContainer;
-
+  private List<Library> myLibraries;
 
   private enum Choice {
+    USE_EXISTING,
     DOWNLOAD,
     PICK_FILES,
     DO_NOT_CREATE
@@ -65,19 +68,9 @@ public class LibraryOptionsPanel {
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
   public LibraryOptionsPanel(LibraryCompositionSettings settings, LibrariesContainer librariesContainer) {
-
     mySettings = settings;
     myLibrariesContainer = librariesContainer;
-
-    List<Library> suitableLibraries = calculateSuitableLibraries();
-    if (!suitableLibraries.isEmpty()) {
-      mySettings.setUsedLibraries(suitableLibraries);
-    }
-
-    myLibrariesChooser = new ChooseLibrariesDialog.LibraryElementChooser(suitableLibraries);
-    myLibrariesChooser.getComponents()[0].setPreferredSize(new Dimension(10, 10)); // this makes scrollbars to work
-    myExistingLibrariesPanel.add(myLibrariesChooser);
-    myExistingLibrariesLabel.setLabelFor(myLibrariesChooser.getComponent());
+    myLibraries = calculateSuitableLibraries();
 
     myButtonEnumModel = RadioButtonEnumModel.bindEnum(Choice.class, myButtonGroup);
     myButtonEnumModel.addActionListener(new ActionListener() {
@@ -87,11 +80,30 @@ public class LibraryOptionsPanel {
       }
     });
 
+    final boolean librariesFound = !myLibraries.isEmpty();
+    myUseExistingLibraryRadioButton.setVisible(librariesFound);
+    myExistingLibraryComboBox.setVisible(librariesFound);
+    if (librariesFound) {
+      final SortedComboBoxModel<Library> model = new SortedComboBoxModel<Library>(LibrariesAlphaComparator.INSTANCE);
+      model.addAll(myLibraries);
+      myExistingLibraryComboBox.setModel(model);
+      myExistingLibraryComboBox.setSelectedIndex(0);
+      myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value instanceof Library) {
+            ProjectStructureDialogCellAppearanceUtils.forLibrary((Library)value, null).customize(this);
+          }
+        }
+      });
+    }
+    myButtonEnumModel.setSelected(librariesFound ? Choice.USE_EXISTING : Choice.DOWNLOAD);
+
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         switch (myButtonEnumModel.getSelected()) {
           case DOWNLOAD:
-            showDialog(new DownloadingOptionsDialog(myConfigureButton, mySettings));
+            new DownloadingOptionsDialog(myConfigureButton, mySettings).show();
             break;
           case PICK_FILES:
             if (mySettings.getLibraryEditor() == null) {
@@ -99,9 +111,9 @@ public class LibraryOptionsPanel {
               mySettings.addFilesToLibrary(files, OrderRootType.CLASSES);
             }
             EditLibraryDialog dialog = new EditLibraryDialog(myConfigureButton, mySettings);
-            showDialog(dialog);
+            dialog.show();
             break;
-          case DO_NOT_CREATE:
+          default:
             break;
         }
         updateState();
@@ -109,18 +121,6 @@ public class LibraryOptionsPanel {
     });
 
     updateState();
-  }
-
-  private void showDialog(final DialogWrapper dialog) {
-    dialog.setInitialLocationCallback(new Computable<Point>() {
-      @Override
-      public Point compute() {
-        Point point = myConfigureButton.getLocationOnScreen();
-        point.translate(- 50, - dialog.getSize().height - 20);
-        return point;
-      }
-    });
-    dialog.show();
   }
 
   private List<Library> calculateSuitableLibraries() {
@@ -131,7 +131,7 @@ public class LibraryOptionsPanel {
     for (Library library : libraries) {
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info =
         requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES), false);
-      if (info == null || info.getLibraryInfos().length < libraryInfos.length) {
+      if (info == null) {
         suitableLibraries.add(library);
       }
     }
@@ -157,17 +157,23 @@ public class LibraryOptionsPanel {
   }
 
   private void updateState() {
-    if (myMessage.isEnabled()) {
-      myMessage.setForeground(Color.black);
-    }
-    myConfigureButton.setEnabled(true);
+    myMessageLabel.setForeground(Color.black);
+    myMessageLabel.setVisible(true);
+    myConfigureButton.setVisible(true);
 
     String message = "";
 
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
-        String path = mySettings.getDirectoryForDownloadedLibrariesPath()
-          .substring(mySettings.getBaseDirectoryForDownloadedFiles().length());
+        final String downloadPath = mySettings.getDirectoryForDownloadedLibrariesPath();
+        final String basePath = mySettings.getBaseDirectoryForDownloadedFiles();
+        String path;
+        if (FileUtil.startsWith(downloadPath, basePath)) {
+          path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
+        }
+        else {
+          path = PathUtil.getFileName(downloadPath);
+        }
         message = MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
                                        "{2} library <b>{3}</b> will be created",
                                        mySettings.getLibraryInfos().length,
@@ -178,7 +184,7 @@ public class LibraryOptionsPanel {
       case PICK_FILES:
         NewLibraryEditor libraryEditor = mySettings.getLibraryEditor();
         if (libraryEditor == null) {
-          myMessage.setForeground(Color.red);
+          myMessageLabel.setForeground(Color.red);
           message = "Press Configure button to add classes to the library";
         }
         else {
@@ -189,13 +195,12 @@ public class LibraryOptionsPanel {
                                          libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         break;
-      case DO_NOT_CREATE:
-        message = "No new library will be created";
-        myConfigureButton.setEnabled(false);
-        break;
+      default:
+        myMessageLabel.setVisible(false);
+        myConfigureButton.setVisible(false);
     }
 
-    myMessage.setText("<html>" + message + "</html>");
+    myMessageLabel.setText("<html>" + message + "</html>");
   }
 
   public LibraryCompositionSettings getSettings() {
@@ -204,7 +209,7 @@ public class LibraryOptionsPanel {
 
 
   public void apply() {
-    mySettings.setUsedLibraries(myLibrariesChooser.getMarkedElements());
+    mySettings.setSelectedExistingLibrary((Library)myExistingLibraryComboBox.getSelectedItem());
     mySettings.setDownloadLibraries(myButtonEnumModel.getSelected() == Choice.DOWNLOAD);
   }
 
