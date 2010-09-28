@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashSet;
@@ -77,7 +78,7 @@ public class TypesDistinctProver {
     if (type2 instanceof PsiWildcardType || type2 instanceof PsiCapturedWildcardType) return provablyDistinct(type2, type1);
 
 
-    if (TypeConversionUtil.erasure(type1).equals(TypeConversionUtil.erasure(type2))) {
+    if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
       final PsiSubstitutor substitutor1 = PsiUtil.resolveGenericsClassInType(type1).getSubstitutor();
       final PsiSubstitutor substitutor2 = PsiUtil.resolveGenericsClassInType(type2).getSubstitutor();
       for (PsiTypeParameter parameter : substitutor1.getSubstitutionMap().keySet()) {
