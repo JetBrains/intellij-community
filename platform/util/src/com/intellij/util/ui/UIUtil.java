@@ -1020,15 +1020,18 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return getCssFontDeclaration(font, null, null);
+    return getCssFontDeclaration(font, null, null, null);
   }
 
   @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
-    URL resource = SystemInfo.class.getResource("/general/mdot.png");
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
-    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} ul {list-style-image: " + resource.toExternalForm() +"}";
+    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    if (resource != null) {
+      body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
+    }
     String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }

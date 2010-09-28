@@ -303,7 +303,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   static JEditorPane initPane(@NonNls String text, final HintHint hintHint, JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     text = "<html><head>" +
-           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground()) +
+           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
            "</head><body>" +
            getHtmlBody(text) +
            "</body></html>";
