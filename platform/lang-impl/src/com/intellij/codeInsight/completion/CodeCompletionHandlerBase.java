@@ -272,7 +272,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private AutoCompletionDecision shouldAutoComplete(final CompletionContext context,
                                         final CompletionProgressIndicator indicator,
                                         final LookupElement[] items) {
-    if (!mayAutocompleteOnInvocation()) {
+    if (!myInvokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
     final CompletionParameters parameters = indicator.getParameters();
@@ -461,11 +461,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
 
-  protected boolean mayAutocompleteOnInvocation() {
-    return myInvokedExplicitly;
-  }
-
-  protected boolean isAutocompleteCommonPrefixOnInvocation() {
+  private boolean isAutocompleteCommonPrefixOnInvocation() {
     return myInvokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
@@ -606,7 +602,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return copy;
   }
 
-  public static boolean isAutocompleteOnInvocation(final CompletionType type) {
+  private static boolean isAutocompleteOnInvocation(final CompletionType type) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     switch (type) {
       case CLASS_NAME:
