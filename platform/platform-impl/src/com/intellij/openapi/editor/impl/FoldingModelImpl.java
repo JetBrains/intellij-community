@@ -309,17 +309,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void notifyBatchFoldingProcessingDone() {
-    try {
-      doNotifyBatchFoldingProcessingDone();
-    } finally {
-      for (FoldingListener listener : myListeners) {
-        listener.onFoldProcessingEnd();
-      }
-    }
+    doNotifyBatchFoldingProcessingDone();
   }
 
   private void doNotifyBatchFoldingProcessingDone() {
     myFoldTree.rebuild();
+
+    for (FoldingListener listener : myListeners) {
+      listener.onFoldProcessingEnd();
+    }
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
