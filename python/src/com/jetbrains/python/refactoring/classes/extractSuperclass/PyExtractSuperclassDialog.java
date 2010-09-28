@@ -13,6 +13,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -61,7 +64,23 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
   protected void doOKAction() {
     final String name = getSuperBaseName();
     if (!myNamesValidator.isIdentifier(name, myClass.getProject())) {
-      setErrorText("Invalid class name \"" + name + "\"<br>Should be an identifier name");
+      setErrorText(PyBundle.message("refactoring.extract.super.name.0.must.be.ident", name));
+      return;
+    }
+    boolean found_root = false;
+    try {
+      String target_dir = new File(myTargetDirField.getText()).getCanonicalPath();
+      for (VirtualFile file : ProjectRootManager.getInstance(myClass.getProject()).getContentRoots()) {
+        if (target_dir.startsWith(file.getPath())) {
+          found_root = true;
+          break;
+        }
+      }
+    }
+    catch (IOException ignore) {
+    }
+    if (! found_root) {
+      setErrorText(PyBundle.message("refactoring.extract.super.target.path.outside.roots"));
       return;
     }
     super.doOKAction();
