@@ -16,8 +16,6 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.frameworks.ExistedJarDiscover;
-import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
