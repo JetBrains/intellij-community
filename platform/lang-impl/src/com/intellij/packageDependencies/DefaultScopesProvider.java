@@ -22,6 +22,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,5 +80,15 @@ public class DefaultScopesProvider implements CustomScopesProvider {
       scopes.addAll(provider.getCustomScopes());
     }
     return scopes;
+  }
+
+  @Nullable
+  public NamedScope findCustomScope(String name) {
+    for (NamedScope scope : getAllCustomScopes()) {
+      if (name.equals(scope.getName())) {
+        return scope;
+      }
+    }
+    return null;
   }
 }

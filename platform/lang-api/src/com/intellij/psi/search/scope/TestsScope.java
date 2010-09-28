@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-@Colored(color = "ff0000")
+@Colored(color = "e7fadb")
 public class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public TestsScope(@NotNull Project project) {
