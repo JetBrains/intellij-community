@@ -1028,8 +1028,7 @@ public class UIUtil {
     URL resource = SystemInfo.class.getResource("/general/mdot.png");
 
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
-    //String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} li {list-style-image: " + resource.toExternalForm() +"}";
-    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} \nul {list-style-image: " + "file:///Users/kirillk/idea/community/out/production/icons/general/mdot.png;" +"}";
+    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "} ul {list-style-image: " + resource.toExternalForm() +"}";
     String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }
