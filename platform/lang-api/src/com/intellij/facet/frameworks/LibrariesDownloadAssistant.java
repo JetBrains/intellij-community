@@ -1,21 +1,33 @@
 package com.intellij.facet.frameworks;
 
+import com.intellij.facet.frameworks.actions.GetAllVersionsAction;
+import com.intellij.facet.frameworks.actions.GetVersionInfoAction;
 import com.intellij.facet.frameworks.beans.DownloadJar;
 import com.intellij.facet.frameworks.beans.Version;
 import com.intellij.facet.frameworks.beans.Versions;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.apache.commons.codec.binary.Hex;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 public class LibrariesDownloadAssistant {
@@ -40,19 +52,32 @@ public class LibrariesDownloadAssistant {
     return versions.toArray(new Version[versions.size()]);
   }
 
-  // todo: will be connect to server
   @Nullable
-  public static Version[] getVersions(@NotNull String groupId) {
-    final Versions allVersions =
-      XmlSerializer.deserialize(getRoot(groupId), Versions.class);
+  public static Version[] getVersions(@NotNull String id) {
+    final URL url = GetAllVersionsAction.create(id).getUrl();
+
+    if (url == null) return null;
+
+    final Versions allVersions = XmlSerializer.deserialize(url, Versions.class);
 
     return allVersions == null ? null : allVersions.getVersions();
   }
 
-  private static Element getRoot(@NotNull final String groupId) {
-    return null;
-  }
+  @Nullable
+  public static Version getVersion(@NotNull String id, @NotNull String versionId) {
+    final URL url = GetVersionInfoAction.create(id, versionId).getUrl();
+    if (url == null) return null;
 
+    final Versions allVersions = XmlSerializer.deserialize(url, Versions.class);
+
+    if(allVersions == null) return null;
+
+    final Version[] versions = allVersions.getVersions();
+
+    assert versions.length == 1;
+
+    return versions[0];
+  }
 
   @Nullable
   public static Version findVersion(@NotNull final String versionId, @NotNull final URL... urls) {
@@ -76,21 +101,26 @@ public class LibrariesDownloadAssistant {
   @NotNull
   public static LibraryInfo[] getLibraryInfos(@NotNull final URL url, @NotNull final String versionId) {
     final Version version = findVersion(getVersions(url), versionId);
-    return  version != null ? getLibraryInfos(version) :LibraryInfo.EMPTY_ARRAY;
+    return version != null ? getLibraryInfos(version) : LibraryInfo.EMPTY_ARRAY;
   }
-  
+
   @NotNull
   public static LibraryInfo[] getLibraryInfos(@Nullable Version version) {
     if (version == null) return LibraryInfo.EMPTY_ARRAY;
 
-    final List<LibraryInfo> infos = ContainerUtil.mapNotNull(version.getJars(), new Function<DownloadJar, LibraryInfo>() {
+    final List<LibraryInfo> infos = convert(version.getJars());
+
+    return infos.toArray(new LibraryInfo[infos.size()]);
+  }
+
+  @NotNull
+  public static List<LibraryInfo> convert(@NotNull DownloadJar[] jars) {
+    return ContainerUtil.mapNotNull(jars, new Function<DownloadJar, LibraryInfo>() {
       @Override
       public LibraryInfo fun(DownloadJar downloadJar) {
         final String downloadUrl = downloadJar.getDownloadUrl();
-        return new LibraryInfo(downloadJar.getName(), downloadUrl, downloadUrl, downloadJar.getRequiredClasses());
+        return new LibraryInfo(downloadJar.getName(), downloadUrl, downloadUrl, downloadJar.getMD5(), downloadJar.getRequiredClasses());
       }
     });
-
-    return infos.toArray(new LibraryInfo[infos.size()]);
   }
 }

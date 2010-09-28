@@ -87,14 +87,13 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
-    final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
     LibraryCompositionSettings libraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, 
                                                                                            myDescription.getDefaultLibraryName(), baseDirPath,
                                                                                            myDescription.getDefaultLibraryName(), null);
-    return new ValidationResult(text, new LibrariesQuickFix(libraryCompositionSettings));
+    return new ValidationResult(missingJars, new LibrariesQuickFix(libraryCompositionSettings));
   }
 
   private void onChange() {
