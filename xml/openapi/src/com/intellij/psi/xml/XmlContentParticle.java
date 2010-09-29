@@ -15,9 +15,32 @@
  */
 package com.intellij.psi.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Dmitry Avdeev
  */
-public interface XmlElementContentGroup extends XmlContentParticle, XmlElement {
+public interface XmlContentParticle {
 
+  enum Type {
+    SEQUENCE,
+    CHOICE,
+    ELEMENT
+  }
+
+  Type getType();
+
+  enum Quantifier {
+    ONE_OR_MORE,  // +
+    ZERO_OR_MORE, // *
+    OPTIONAL,     // ?
+    REQUIRED      // default
+  }
+
+  Quantifier getQuantifier();
+
+  XmlContentParticle[] getSubParticles();
+
+  @Nullable
+  String getElementName();
 }

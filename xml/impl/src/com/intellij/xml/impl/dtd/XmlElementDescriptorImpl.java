@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
@@ -225,6 +226,11 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     XmlUtil.processXmlElements(xmlElement, new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), false, false, XmlUtil.getContainingFile(xmlElement));
 
     return result.toArray(new XmlAttlistDecl[result.size()]);
+  }
+
+  @Override
+  public XmlElementsGroup getTopGroup() {
+    return super.getTopGroup();    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   public int getContentType() {

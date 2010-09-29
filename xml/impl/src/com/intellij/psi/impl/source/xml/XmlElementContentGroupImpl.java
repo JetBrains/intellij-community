@@ -16,8 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
@@ -25,21 +24,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlElementContentGroup, XmlElementType {
+public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlElementContentGroup,
+                                                                           XmlElementType {
 
-  private static final TokenSet FILTER = TokenSet.create(XML_ELEMENT_CONTENT_GROUP);
-  private static final PsiElementArrayConstructor<XmlElementContentGroup> ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<XmlElementContentGroup>() {
-    @Override
-    public XmlElementContentGroup[] newPsiElementArray(int length) {
-      return new XmlElementContentGroup[length];
-    }
-  };
-
-  private NotNullLazyValue<XmlElementContentGroup[]> mySubGroups = new NotNullLazyValue<XmlElementContentGroup[]>() {
+  private NotNullLazyValue<XmlContentParticle[]> myParticles = new NotNullLazyValue<XmlContentParticle[]>() {
     @NotNull
     @Override
-    protected XmlElementContentGroup[] compute() {
-      return getChildrenAsPsiElements(FILTER, ARRAY_CONSTRUCTOR);
+    protected XmlContentParticle[] compute() {
+      return new XmlContentParticle[0];  //To change body of implemented methods use File | Settings | File Templates.
     }
   };
 
@@ -48,7 +40,22 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
   }
 
   @Override
-  public XmlElementContentGroup[] getSubGroups() {
-    return mySubGroups.getValue();
+  public Type getType() {
+    return findElementByTokenType(XML_BAR) == null ? Type.SEQUENCE : Type.CHOICE;
+  }
+
+  @Override
+  public Quantifier getQuantifier() {
+    return XmlContentParticleImpl.getQuantifierImpl(this);
+  }
+
+  @Override
+  public XmlContentParticle[] getSubParticles() {
+    return myParticles.getValue();
+  }
+
+  @Override
+  public String getElementName() {
+    return null;
   }
 }

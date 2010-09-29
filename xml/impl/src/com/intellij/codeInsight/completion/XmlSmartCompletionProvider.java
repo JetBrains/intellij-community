@@ -106,7 +106,9 @@ public class XmlSmartCompletionProvider {
           @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
             context.commitDocument();
-            XmlElementDescriptor[] descriptors = parentTag.getDescriptor().getElementsDescriptors(parentTag);
+            XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+            assert parentTagDescriptor != null;
+            XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
             for (XmlElementDescriptor descriptor : descriptors) {
               if (descriptor.getName().equals(elementDecl.getName())) {
                 Project project = context.getProject();
@@ -195,9 +197,8 @@ public class XmlSmartCompletionProvider {
       return null;
     }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
-    XSGrammar grammar = (XSGrammar)grammars[0];
 
-    return grammar.toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
       @Override
       public XSGrammar fun(Grammar grammar) {
         return (XSGrammar)grammar;
