@@ -45,8 +45,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     if (myEditor != null) {
       if (editor != myEditor || editor.getCaretModel().getOffset() != myLastOffset + 1) {
         myEditor = null;
+        return Result.CONTINUE;
       }
-      return Result.CONTINUE;
     }
 
     myEditor = editor;
