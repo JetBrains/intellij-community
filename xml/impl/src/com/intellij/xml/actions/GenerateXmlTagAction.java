@@ -91,11 +91,6 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         @Override
         public void run() {
           final XmlElementDescriptor selected = (XmlElementDescriptor)list.getSelectedValue();
-          final XmlElementsGroup topGroup = selected.getTopGroup();
-          if (topGroup == null) {
-            throw new CommonRefactoringUtil.RefactoringErrorHintException(
-              "XML Schema does not provide enough information to generate tags");
-          }
           new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
             @Override
             protected void run() {
@@ -137,6 +132,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return newTag;
     XmlElementsGroup topGroup = selected.getTopGroup();
+    if (topGroup == null) return newTag;
     List<XmlElementDescriptor> tags = new ArrayList<XmlElementDescriptor>();
     computeRequiredSubTags(topGroup, tags);
     for (XmlElementDescriptor descriptor : tags) {
@@ -181,7 +177,8 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         bodyText = contentType == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
       }
     }
-    return contextTag.createChildTag(descriptor.getName(), getNamespace(descriptor), bodyText, false);
+    String namespace = getNamespace(descriptor);
+    return contextTag.createChildTag(descriptor.getName(), namespace, bodyText, false);
   }
 
   private static String getNamespace(XmlElementDescriptor descriptor) {
