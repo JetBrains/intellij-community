@@ -280,11 +280,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       @Override
       public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> i) {
         LocalInspectionTool tool = i.first;
-        final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
-
-        ProgressIndicator original = ProgressWrapper.unwrap(progressManager.getProgressIndicator()); // TODO: cdr
-        LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
