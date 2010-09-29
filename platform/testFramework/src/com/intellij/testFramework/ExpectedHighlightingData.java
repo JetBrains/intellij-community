@@ -130,6 +130,7 @@ public class ExpectedHighlightingData {
       int endOffset = rangeMarker.getEndOffset();
       final LineMarkerInfo value = entry.getValue();
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(value.getElement(), new TextRange(startOffset,endOffset), null, value.updatePass, new Function<PsiElement,String>() {
+        @Override
         public String fun(PsiElement psiElement) {
           return value.getLineMarkerTooltip();
         }
@@ -421,6 +422,7 @@ public class ExpectedHighlightingData {
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage) {
     final ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(infos);
     Collections.sort(list, new Comparator<HighlightInfo>() {  // by start offset descending then by end offset ascending
+      @Override
       public int compare(HighlightInfo o1, HighlightInfo o2) {
         final int start = o2.startOffset - o1.startOffset;
         return start != 0 ? start : o1.endOffset - o2.endOffset;

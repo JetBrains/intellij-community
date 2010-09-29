@@ -34,6 +34,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -48,6 +49,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
     myModule = moduleFixtureBuilder.getFixture().getModule();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;

@@ -246,6 +246,7 @@ public class TestCaseLoader {
 
     if (!ourRanklist.isEmpty()) {
       Collections.sort(result, new Comparator<Class>() {
+        @Override
         public int compare(final Class o1, final Class o2) {
           return getRank(o1) - getRank(o2);
         }

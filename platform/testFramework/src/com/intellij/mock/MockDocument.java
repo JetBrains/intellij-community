@@ -49,6 +49,7 @@ public class MockDocument implements DocumentEx {
     myText.append(text);
   }
 
+  @Override
   public String getText() {
     return myText.toString();
   }
@@ -59,12 +60,14 @@ public class MockDocument implements DocumentEx {
     return range.substring(myText.toString());
   }
 
+  @Override
   public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     myText = new StringBuffer();
     myText.append(chars);
     myModStamp = newModificationStamp;
   }
 
+  @Override
   public int getListenersCount() {
     return 0;
   }
@@ -73,208 +76,261 @@ public class MockDocument implements DocumentEx {
     return getText();
   }
 
+  @Override
   @NotNull
   public char[] getChars() {
     return getText().toCharArray();
   }
 
+  @Override
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();
   }
 
+  @Override
   public int getTextLength() {
     return myText.length();
   }
 
+  @Override
   public int getLineCount() {
     return 1;
   }
 
+  @Override
   public int getLineNumber(int offset) {
     return 0;
   }
 
+  @Override
   public int getLineStartOffset(int line) {
     return 0;
   }
 
+  @Override
   public int getLineEndOffset(int line) {
     return myText.length();
   }
 
+  @Override
   public void insertString(int offset, @NotNull CharSequence s) {
     myText.insert(offset, s);
   }
 
+  @Override
   public void deleteString(int startOffset, int endOffset) {
     myText.delete(startOffset, endOffset);
   }
 
+  @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     myText.replace(startOffset, endOffset, s.toString());
     myModStamp = LocalTimeCounter.currentTime();
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public long getModificationStamp() {
     return myModStamp;
   }
 
+  @Override
   public void fireReadOnlyModificationAttempt() {
   }
 
+  @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
   }
 
+  @Override
   public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
   }
 
+  @Override
   public void removeDocumentListener(@NotNull DocumentListener listener) {
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
     return null;
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     return null;
   }
 
+  @Override
   @NotNull
   public MarkupModel getMarkupModel() {
     return null;
   }
 
+  @Override
   @NotNull
   public MarkupModel getMarkupModel(Project project) {
     return new EmptyMarkupModel(this);
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getUserData(@NotNull Key<T> key) {
     return (T)myUserData.get(key);
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> void putUserData(@NotNull Key<T> key, T value) {
     myUserData.put(key, value);
   }
 
+  @Override
   public boolean stripTrailingSpaces(boolean inChangedLinesOnly) {
     return true;
   }
 
+  @Override
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
   }
 
+  @Override
   public int getLineSeparatorLength(int line) {
     return 0;
   }
 
+  @Override
   @NotNull
   public LineIterator createLineIterator() {
     return null;
   }
 
+  @Override
   public void setModificationStamp(long modificationStamp) {
     myModStamp = modificationStamp;
   }
 
+  @Override
   public void setReadOnly(boolean isReadOnly) {
   }
 
+  @Override
   public RangeMarker getRangeGuard(int start, int end) {
     return null;
   }
 
+  @Override
   public void startGuardedBlockChecking() {
   }
 
+  @Override
   public void stopGuardedBlockChecking() {
   }
 
+  @Override
   @NotNull
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     return null;
   }
 
+  @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
   }
 
+  @Override
   public RangeMarker getOffsetGuard(int offset) {
     return null;
   }
 
+  @Override
   public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
   }
 
+  @Override
   public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
   }
 
+  @Override
   public void suppressGuardedExceptions() {
   }
 
+  @Override
   public void unSuppressGuardedExceptions() {
 
   }
 
+  @Override
   public boolean isInEventsHandling() {
     return false;
   }
 
+  @Override
   public void clearLineModificationFlags() {
   }
 
+  @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return false;
   }
 
+  @Override
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
   }
 
+  @Override
   public boolean isInBulkUpdate() {
     return false;
   }
 
+  @Override
   public void setInBulkUpdate(boolean value) {
   }
 
+  @Override
   public void setCyclicBufferSize(int bufferSize) {
   }
 
+  @Override
   public void setText(@NotNull final CharSequence text) {
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Override
   @NotNull
   public List<RangeMarker> getGuardedBlocks() {
     return Collections.emptyList();
   }
 
+  @Override
   public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
     return false;
   }
 
+  @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return false;
   }
 
+  @Override
   public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
     return false;
   }

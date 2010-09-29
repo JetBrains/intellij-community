@@ -161,6 +161,7 @@ expected:
     }
 
     ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+      @Override
       public void run() {
         tool.runInspection(scope, inspectionManager);
       }

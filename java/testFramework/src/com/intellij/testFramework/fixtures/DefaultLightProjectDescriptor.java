@@ -28,14 +28,17 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 * @author peter
 */
 public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
+  @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
 
+  @Override
   public Sdk getSdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
+  @Override
   public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
   }
 }

@@ -61,6 +61,7 @@ import java.util.Map;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
   }
 
+  @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor) {
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
@@ -68,66 +69,83 @@ import java.util.Map;
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});
   }
 
+  @Override
   public boolean isInsideChange() {
     return false;
   }
 
+  @Override
   public void createSplitter(int orientation, EditorWindow window) {
 
   }
 
+  @Override
   public void changeSplitterOrientation() {
 
   }
 
+  @Override
   public void flipTabs() {
 
   }
 
+  @Override
   public boolean tabsMode() {
     return false;
   }
 
+  @Override
   public boolean isInSplitter() {
     return false;
   }
 
+  @Override
   public boolean hasOpenedFile() {
     return false;
   }
 
+  @Override
   public VirtualFile getCurrentFile() {
     return null;
   }
 
+  @Override
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     return null;
   }
 
+  @Override
   public boolean isChanged(@NotNull EditorComposite editor) {
     return false;
   }
 
+  @Override
   public EditorWindow getNextWindow(@NotNull EditorWindow window) {
     return null;
   }
 
+  @Override
   public EditorWindow getPrevWindow(@NotNull EditorWindow window) {
     return null;
   }
 
+  @Override
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
   }
 
+  @Override
   public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
   }
 
+  @Override
   public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
   }
 
+  @Override
   public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
   }
 
+  @Override
   public void closeAllFiles() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     for (Editor editor : myVirtualFile2Editor.values()) {
@@ -144,33 +162,40 @@ import java.util.Map;
 
   private FileEditorProvider getProvider(FileEditor editor) {
     return new FileEditorProvider() {
+      @Override
       public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
         return false;
       }
 
+      @Override
       @NotNull
       public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
         return null;
       }
 
+      @Override
       public void disposeEditor(@NotNull FileEditor editor) {
         //Disposer.dispose(editor);
       }
 
+      @Override
       @NotNull
       public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         return null;
       }
 
+      @Override
       public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
 
       }
 
+      @Override
       @NotNull
       public String getEditorTypeId() {
         return "";
       }
 
+      @Override
       @NotNull
       public FileEditorPolicy getPolicy() {
         return null;
@@ -178,42 +203,52 @@ import java.util.Map;
     };
   }
 
+  @Override
   public EditorWindow getCurrentWindow() {
     return null;
   }
 
+  @Override
   public void setCurrentWindow(EditorWindow window) {
   }
 
+  @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
     return LIGHT_VIRTUAL_FILE;
   }
 
+  @Override
   public void updateFilePresentation(VirtualFile file) {
   }
 
+  @Override
   public void unsplitWindow() {
 
   }
 
+  @Override
   public void unsplitAllWindow() {
 
   }
 
+  @Override
   @NotNull
   public EditorWindow[] getWindows() {
     return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override
   public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
     final Editor editor = getEditor(file);
     return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
   }
 
+  @Override
   public boolean isFileOpen(@NotNull VirtualFile file) {
     return getEditor(file) != null;
   }
 
+  @Override
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
     FileEditor e = getSelectedEditor(file);
@@ -227,23 +262,29 @@ import java.util.Map;
     return getEditors(file);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void disposeComponent() {
     closeAllFiles();
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void closeFile(@NotNull VirtualFile file) {
     Editor editor = myVirtualFile2Editor.get(file);
     if (editor != null){
@@ -253,28 +294,34 @@ import java.util.Map;
     if (file == myActiveFile) myActiveFile = null;
   }
 
+  @Override
   public void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     closeFile(file);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
     return myActiveFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{myActiveFile};
   }
 
+  @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
     return new FileEditor[0];
   }
 
+  @Override
   public Editor getSelectedTextEditor() {
     return myActiveFile != null ? getEditor(myActiveFile) : null;
   }
 
+  @Override
   public JComponent getComponent() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
     return myVirtualFile2Editor.keySet().toArray(new VirtualFile[myVirtualFile2Editor.size()]);
@@ -284,15 +331,18 @@ import java.util.Map;
     return myVirtualFile2Editor.get(file);
   }
 
+  @Override
   @NotNull
   public FileEditor[] getAllEditors(){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
   }
 
 
+  @Override
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
   }
 
@@ -301,6 +351,7 @@ import java.util.Map;
     myActiveFile = file;
   }
 
+  @Override
   public Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
     final VirtualFile file = descriptor.getFile();
     Editor editor = myVirtualFile2Editor.get(file);
@@ -328,29 +379,36 @@ import java.util.Map;
     return editor;
   }
 
+  @Override
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
+  @Override
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
   }
 
+  @Override
   public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
+  @Override
   @NotNull
   public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
     return null;
@@ -361,6 +419,7 @@ import java.util.Map;
     return 0;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "TestEditorManager";

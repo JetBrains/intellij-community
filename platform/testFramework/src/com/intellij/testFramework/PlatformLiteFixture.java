@@ -36,6 +36,7 @@ import java.lang.reflect.Modifier;
 public abstract class PlatformLiteFixture extends UsefulTestCase {
   protected MockProject myProject;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     Extensions.cleanRootArea(getTestRootDisposable());
@@ -51,6 +52,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     clearFields(this);

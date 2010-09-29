@@ -174,6 +174,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourProjectDescriptor = descriptor;
     final File projectFile = File.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {
         if (ourProject != null) {
@@ -211,10 +212,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
 
         FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
+          @Override
           public boolean isInSet(final VirtualFile file) {
             return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem();
           }
 
+          @Override
           public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
             if (file.isDirectory()) {
               for (VirtualFile child : file.getChildren()) {
@@ -245,22 +248,28 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         final MessageBusConnection connection = ourProject.getMessageBus().connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+          @Override
           public void beforeRootsChange(ModuleRootEvent event) {
             if (!event.isCausedByFileTypesChange()) {
               //TODO: uncomment fail("Root modification in LightIdeaTestCase is not allowed.");
             }
           }
 
+          @Override
           public void rootsChanged(ModuleRootEvent event) {}
         });
 
         connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+          @Override
           public void moduleAdded(Project project, Module module) {
             fail("Adding modules is not permitted in LightIdeaTestCase.");
           }
 
+          @Override
           public void beforeModuleRemoved(Project project, Module module) {}
+          @Override
           public void moduleRemoved(Project project, Module module) {}
+          @Override
           public void modulesRenamed(Project project, List<Module> modules) {}
         });
 
@@ -272,6 +281,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   protected static Module createMainModule(final ModuleType moduleType) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
       public Module compute() {
         return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType);
       }
@@ -285,6 +295,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourSourceRoot;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     initApplication(this);
@@ -314,6 +325,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
+      @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
         if (availableInspectionTools != null){
@@ -332,15 +344,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         return result;
       }
 
+      @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && availableInspectionTools.containsKey(key.toString());
       }
 
+      @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         InspectionTool localInspectionTool = availableInspectionTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
+      @Override
       public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         if (availableInspectionTools.containsKey(shortName)) {
           return availableInspectionTools.get(shortName);
@@ -381,6 +396,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new LocalInspectionTool[0];
   }
 
+  @Override
   protected void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
@@ -405,6 +421,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertNotNull("Application components damaged", ProjectManager.getInstance());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (ourSourceRoot != null) {
           try {
@@ -440,6 +457,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
       }
@@ -478,10 +496,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
+  @Override
   public final void runBare() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         try {
           ourTestThread = Thread.currentThread();
@@ -533,6 +553,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.PROJECT.is(dataId)) {
       return ourProject;
@@ -577,6 +598,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */
+  @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
     assertTrue("Test name should start with 'test'", name.startsWith("test"));
@@ -623,9 +645,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   private static void registerShutdownHook() {
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      @Override
       public void run() {
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
             public void run() {
               closeAndDeleteProject();
             }
@@ -650,14 +674,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       mySdk = sdk;
     }
 
+    @Override
     public ModuleType getModuleType() {
       return myModuleType;
     }
 
+    @Override
     public Sdk getSdk() {
       return mySdk;
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
 

@@ -24,11 +24,13 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();
   }
 
+  @Override
   protected void configureByFile(String filePath) throws Exception {
     super.configureByFile(filePath);
 

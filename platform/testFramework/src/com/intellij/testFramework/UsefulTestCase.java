@@ -76,6 +76,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     Disposer.dispose(myTestRootDisposable);
     cleanupSwingDataStructures();
@@ -155,10 +156,12 @@ public abstract class UsefulTestCase extends TestCase {
     return myTestRootDisposable;
   }
 
+  @Override
   protected void runTest() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           UsefulTestCase.super.runTest();
@@ -257,6 +260,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static String toString(Collection<?> collection, String separator) {
     List<String> list = ContainerUtil.map2List(collection, new Function<Object,String>() {
+      @Override
       public String fun(final Object o) {
         return String.valueOf(o);
       }
@@ -492,8 +496,10 @@ public abstract class UsefulTestCase extends TestCase {
   public static void doPostponedFormatting(final Project project) {
     try {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
               PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();

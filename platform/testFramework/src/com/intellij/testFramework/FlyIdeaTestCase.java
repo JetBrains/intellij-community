@@ -18,6 +18,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
   private Disposable myRootDisposable;
   private File myTempDir;
 
+  @Override
   protected void setUp() throws Exception {
     final Application old = ApplicationManagerEx.getApplication();
     MockApplication app = new MockApplication() {
@@ -43,6 +44,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
     return myRootDisposable;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     if (myTempDir != null) {

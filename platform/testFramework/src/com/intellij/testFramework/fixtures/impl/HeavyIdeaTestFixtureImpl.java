@@ -81,6 +81,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myModuleFixtureBuilders.add(builder);
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
@@ -91,6 +92,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myThreadTracker = new ThreadTracker();
   }
 
+  @Override
   public void tearDown() throws Exception {
     LightPlatformTestCase.doTearDown(getProject(), myApplication, false);
 
@@ -99,8 +101,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     }
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Disposer.dispose(myProject);
           }
@@ -155,17 +159,20 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myApplication.setDataProvider(new MyDataProvider());
   }
 
+  @Override
   public Project getProject() {
     assert myProject != null : "setUp() should be called first";
     return myProject;
   }
 
+  @Override
   public Module getModule() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     return modules.length == 0 ? null : modules[0];
   }
 
   private class MyDataProvider implements DataProvider {
+    @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
       if (PlatformDataKeys.PROJECT.is(dataId)) {
@@ -207,11 +214,13 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     }
   }
 
+  @Override
   public PsiFile addFileToProject(@NonNls String rootPath, @NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     final VirtualFile dir = VfsUtil.createDirectories(rootPath + "/" + PathUtil.getParentPath(relativePath));
 
     final VirtualFile[] virtualFile = new VirtualFile[1];
     new WriteCommandAction.Simple(getProject()) {
+      @Override
       protected void run() throws Throwable {
         virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
         VfsUtil.saveText(virtualFile[0], fileText);

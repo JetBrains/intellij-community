@@ -38,68 +38,83 @@ import java.util.TreeSet;
  * @author peter
  */
 public class MockProjectStore implements IProjectStore {
+  @Override
   public boolean checkVersion() {
     throw new UnsupportedOperationException("Method checkVersion is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void setProjectFilePath(final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void reinitComponents(Set<String> componentNames, boolean reloadData) {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public boolean isReloadPossible(Set<String> componentNames) {
     throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
     return new TrackingPathMacroSubstitutor[0];
   }
 
+  @Override
   @Nullable
   public VirtualFile getProjectBaseDir() {
     throw new UnsupportedOperationException("Method getProjectBaseDir is not yet implemented in " + getClass().getName());
   }//------ This methods should be got rid of
 
+  @Override
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @Override
   @NotNull
   public String getProjectName() {
     throw new UnsupportedOperationException("Method getProjectName not implemented in " + getClass());
   }
 
+  @Override
   @NotNull
   public StorageScheme getStorageScheme() {
     throw new UnsupportedOperationException("Method getStorageScheme is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
     throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nullable
   public VirtualFile getProjectFile() {
     throw new UnsupportedOperationException("Method getProjectFile is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
     throw new UnsupportedOperationException("Method getWorkspaceFile is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void loadProjectFromTemplate(ProjectImpl project) {
     throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @NotNull
   public String getProjectFileName() {
     throw new UnsupportedOperationException("Method getProjectFileName is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @NotNull
   public String getProjectFilePath() {
     return null;
@@ -116,6 +131,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method initStore is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public String initComponent(Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
@@ -128,6 +144,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method save is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void load() throws IOException {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
   }
@@ -136,6 +153,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
   }
 
+  @Override
   @NotNull
   public SaveSession startSave() throws IOException {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
@@ -145,19 +163,23 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getAllStorageFilesToSave is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nullable
   public String getPresentableUrl() {
     throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
   }
 
+  @Override
   public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
+  @Override
   public StateStorageManager getStateStorageManager() {
     throw new UnsupportedOperationException("Method getStateStorageManager not implemented in " + getClass());
   }
 
+  @Override
   public boolean isSaving() {
     return false;
   }

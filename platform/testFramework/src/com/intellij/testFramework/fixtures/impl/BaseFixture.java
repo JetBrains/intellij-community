@@ -27,6 +27,7 @@ public class BaseFixture extends UsefulTestCase implements IdeaTestFixture {
   private boolean myDisposed;
   private boolean myInitialized;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     Assert.assertFalse("setUp() already has been called", myInitialized);
@@ -34,6 +35,7 @@ public class BaseFixture extends UsefulTestCase implements IdeaTestFixture {
     myInitialized = true;
   }
 
+  @Override
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);

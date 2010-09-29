@@ -42,15 +42,18 @@ import java.util.Collection;
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myModulesToDispose.clear();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     try {
       final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           for (Module module : myModulesToDispose) {
             String moduleName = module.getName();
@@ -79,6 +82,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   protected Module createModule(final String path, final ModuleType moduleType) {
     Module module = ApplicationManager.getApplication().runWriteAction(
       new Computable<Module>() {
+        @Override
         public Module compute() {
           return ModuleManager.getInstance(myProject).newModule(path, moduleType);
         }
@@ -92,6 +96,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   protected Module loadModule(final File moduleFile) {
     Module module = ApplicationManager.getApplication().runWriteAction(
       new Computable<Module>() {
+        @Override
         public Module compute() {
           try {
             return ModuleManager.getInstance(myProject).loadModule(moduleFile.getAbsolutePath());
