@@ -18,6 +18,7 @@ public PackageInfoTest() {
 
   public void testPackageInfoNoRecompile2() throws Exception {doTest();}
 
+  @Override
   protected void doCompile(final CompileStatusNotification notification, int pass) {
     if (pass == 2){
       CompilerManagerImpl.clearPathsToCompile();
@@ -25,6 +26,7 @@ public PackageInfoTest() {
     super.doCompile(notification, pass);
   }
 
+  @Override
   protected String[] getCompiledPathsToCheck() {
     return CompilerManagerImpl.getPathsToCompile();
   }

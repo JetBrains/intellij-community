@@ -18,10 +18,12 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
     super(groupName);
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
+  @Override
   protected void setUp() throws Exception {
     final String compilerHome = CompilerConfigurationImpl.getTestsExternalCompilerHome();
     if (compilerHome == null || compilerHome.length() == 0) {
@@ -41,6 +43,7 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
     javacSettings.ADDITIONAL_OPTIONS_STRING = "-source 1.5";
   }
 
+  @Override
   protected void tearDown() throws Exception {
     final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
     javacSettings.setTestsUseExternalCompiler(myUseExternalCompiler);

@@ -70,6 +70,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     assertLayout(artifact, "<root>\n" +
                            " module:myModule");
     new WriteAction() {
+      @Override
       protected void run(final Result result) throws ModuleWithNameAlreadyExists {
         final ModifiableModuleModel model = moduleManager.getModifiableModel();
         model.renameModule(module, "newName");
@@ -88,6 +89,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
 
   private void moveFile(final VirtualFile file, final VirtualFile newParent) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         try {
           file.move(this, newParent);

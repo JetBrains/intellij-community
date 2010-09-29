@@ -85,6 +85,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
   private VirtualFile createFile(final String path, final String text, final boolean dir) throws IOException {
     return new WriteAction<VirtualFile>() {
+      @Override
       protected void run(final Result<VirtualFile> result) {
         try {
           VirtualFile parent = getBaseDir();
@@ -143,6 +144,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   protected Library addProjectLibrary(final @Nullable Module module, final String name, final DependencyScope scope,
                                       final VirtualFile... jars) {
     return new WriteAction<Library>() {
+      @Override
       protected void run(final Result<Library> result) {
         final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
         final Library.ModifiableModel libraryModel = library.getModifiableModel();
@@ -162,6 +164,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
   protected static Library addModuleLibrary(final Module module, final VirtualFile... jars) {
     return new WriteAction<Library>() {
+      @Override
       protected void run(final Result<Library> result) {
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         final Library library = rootModel.getModuleLibraryTable().createLibrary();
@@ -178,6 +181,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         model.addModuleOrderEntry(dependency);

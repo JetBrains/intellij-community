@@ -21,18 +21,22 @@ public class IOUtilTest extends TestCase {
   }
 
   private static final IO COMPILER_IO_UTIL_SAVE = new IO() {
+    @Override
     public void save(String str, DataOutput out) throws IOException {
       CompilerIOUtil.writeString(str, out);
     }
+    @Override
     public String load(DataInput in) throws IOException {
       return CompilerIOUtil.readString(in);
     }
   };
 
   private static final IO IO_UTIL_SAVE = new IO() {
+    @Override
     public void save(String str, DataOutput out) throws IOException {
       IOUtil.writeString(str, out);
     }
+    @Override
     public String load(DataInput in) throws IOException {
       return IOUtil.readString(in);
     }

@@ -125,10 +125,12 @@ public class ChunkGraphTest extends TestCase{
 
   private static Graph<String> setupGraph(final String[] names, final Map<String, String[]> ins) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return new ArrayList<String>(Arrays.asList(names));
       }
 
+      @Override
       public Iterator<String> getIn(String name) {
         return Arrays.asList(ins.get(name)).iterator();
       }

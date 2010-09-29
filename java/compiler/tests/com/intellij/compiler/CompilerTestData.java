@@ -17,6 +17,7 @@ public class CompilerTestData implements JDOMExternalizable {
   private String[] myDeletedByMake;
   private String[] myToRecompile;
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
 
     // read paths to be deleted
@@ -52,6 +53,7 @@ public class CompilerTestData implements JDOMExternalizable {
     myToRecompile = ArrayUtil.toStringArray(data);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException("Save not supported");
   }

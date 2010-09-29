@@ -101,6 +101,7 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
 
   private void removeSelected(boolean confirmationExpected) {
     runAction(new Runnable() {
+      @Override
       public void run() {
         myArtifactEditor.getLayoutTreeComponent().removeSelectedElements();
       }

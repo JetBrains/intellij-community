@@ -191,6 +191,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final VirtualFile dir = excluded.getParent();
 
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         myModule = createModule("myModule");
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
@@ -213,6 +214,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final VirtualFile dir = file.getParent().getParent();
 
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         myModule = createModule("myModule");
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();

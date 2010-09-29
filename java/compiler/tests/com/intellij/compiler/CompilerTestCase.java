@@ -59,10 +59,12 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
   }
 
+  @Override
   protected void setUp() throws Exception {
     mySemaphore = new Semaphore();
     final Exception[] ex = {null};
     SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         try {
           myUsedMakeToCompile = false;
@@ -89,12 +91,14 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     final String name = getTestName(true);
 
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         //long start = System.currentTimeMillis();
         try {
           doSetup(name);
           mySemaphore.down();
           doCompile(new CompileStatusNotification() {
+            @Override
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
                 assertFalse("Code did not compile!", aborted);
@@ -130,11 +134,13 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     final AtomicBoolean upToDateStatus = new AtomicBoolean(false);
     
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         //long start = System.currentTimeMillis();
         try {
           final Exception[] ex = {null};
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 copyTestProjectFiles(new NewFilesFilter());
@@ -153,6 +159,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
           
           doCompile(new CompileStatusNotification() {
+            @Override
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
                 String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
@@ -279,6 +286,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
     final Exception[] ex = new Exception[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
 
         try {
@@ -457,24 +465,29 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   private static class JavaFilesFilter implements VirtualFileFilter {
+    @Override
     public boolean accept(VirtualFile file) {
       return file.isDirectory() || file.getName().endsWith(".java");
     }
   }
 
   private static class NewFilesFilter implements VirtualFileFilter {
+    @Override
     public boolean accept(VirtualFile file) {
       return file.isDirectory() || file.getName().endsWith(".new");
     }
   }
 
+  @Override
   protected void runBareRunnable(Runnable runnable) throws Throwable {
     runnable.run();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     final Exception[] exceptions = {null};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         try {
           myDeletedPaths.clear();

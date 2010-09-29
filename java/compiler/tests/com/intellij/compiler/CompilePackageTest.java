@@ -21,6 +21,7 @@ public class CompilePackageTest extends CompilerTestCase{
   public void testSynchronizeOutput() throws Exception {doTest();}
 
 
+  @Override
   protected void doCompile(final CompileStatusNotification notification, int pass) {
     final CompilerManager compileManager = CompilerManager.getInstance(myProject);
     if (pass == 1) {
@@ -41,6 +42,7 @@ public class CompilePackageTest extends CompilerTestCase{
     }
   }
 
+  @Override
   protected String[] getCompiledPathsToCheck() {
     return CompilerManagerImpl.getPathsToCompile();
   }

@@ -9,6 +9,7 @@ public class ClassPropertiesTest extends CompilerTestCase {
     super("classProperties");
   }
 
+  @Override
   protected void setUp() throws Exception {
     //if ("removeExtends".equals(getTestName(true))) {
     //  System.out.println("================BEGIN removeExtends====================");
@@ -18,6 +19,7 @@ public class ClassPropertiesTest extends CompilerTestCase {
     super.setUp();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     //if ("removeExtends".equals(getTestName(true))) {
     //  System.out.println("================END removeExtends====================");

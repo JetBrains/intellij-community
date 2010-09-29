@@ -70,11 +70,13 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         semaphore.down();
 
         CompilerManagerImpl.testSetup();
         final CompileStatusNotification callback = new CompileStatusNotification() {
+          @Override
           public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
             try {
               if (aborted) {
@@ -148,6 +150,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
 
   protected void deleteFile(final VirtualFile file) throws IOException {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         try {
           file.delete(this);

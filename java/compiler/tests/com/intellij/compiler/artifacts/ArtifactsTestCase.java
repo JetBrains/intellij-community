@@ -55,6 +55,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   protected static void commitModel(final ModifiableArtifactModel model) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         model.commit();
       }
@@ -86,6 +87,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   protected void renameFile(final VirtualFile file, final String newName) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         try {
           file.rename(this, newName);
@@ -99,6 +101,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
     return new WriteAction<Module>() {
+      @Override
       protected void run(final Result<Module> result) {
         final Module module = createModule(moduleName);
         if (sourceRoot != null) {
@@ -117,15 +120,19 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       super(parent, editor);
     }
 
+    @Override
     public void selectArtifact(@NotNull Artifact artifact) {
     }
 
+    @Override
     public void selectFacet(@NotNull Facet<?> facet) {
     }
 
+    @Override
     public void selectModule(@NotNull Module module) {
     }
 
+    @Override
     public void selectLibrary(@NotNull Library library) {
     }
 
@@ -133,14 +140,17 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     public void queueValidation() {
     }
 
+    @Override
     public List<Artifact> chooseArtifacts(List<? extends Artifact> artifacts, String title) {
       return new ArrayList<Artifact>(artifacts);
     }
 
+    @Override
     public List<Module> chooseModules(List<Module> modules, String title) {
       return modules;
     }
 
+    @Override
     public List<Library> chooseLibraries(String title) {
       return Collections.emptyList();
     }
@@ -151,6 +161,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     private Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
     private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
 
+    @Override
     @NotNull
     public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
       if (myModifiableModel == null) {
@@ -159,10 +170,12 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return myModifiableModel;
     }
 
+    @Override
     public ModifiableModuleModel getModifiableModuleModel() {
       return null;
     }
 
+    @Override
     @NotNull
     public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
       ModifiableRootModel model = myModifiableRootModels.get(module);
@@ -173,15 +186,18 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return model;
     }
 
+    @Override
     public ArtifactEditorSettings getDefaultSettings() {
       return new ArtifactEditorSettings();
     }
 
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     @NotNull
     public ArtifactModel getArtifactModel() {
       if (myModifiableModel != null) {
@@ -196,20 +212,24 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       }
     }
 
+    @Override
     @NotNull
     public ModulesProvider getModulesProvider() {
       return new DefaultModulesProvider(myProject);
     }
 
+    @Override
     @NotNull
     public FacetsProvider getFacetsProvider() {
       return DefaultFacetsProvider.INSTANCE;
     }
 
+    @Override
     public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
       return ArtifactManager.getInstance(myProject).getResolvingContext().findLibrary(level, libraryName);
     }
 
+    @Override
     public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
       final VirtualFile manifestFile = ManifestFileUtil.findManifestFile(element, this, PlainArtifactType.getInstance());
       if (manifestFile == null) {
@@ -224,20 +244,24 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return configuration;
     }
 
+    @Override
     public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
       return artifact.getRootElement();
     }
 
+    @Override
     public void editLayout(@NotNull Artifact artifact, Runnable action) {
       final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
       modifiableArtifact.setRootElement(artifact.getRootElement());
       action.run();
     }
 
+    @Override
     public ArtifactEditor getOrCreateEditor(Artifact artifact) {
       throw new UnsupportedOperationException("'getOrCreateEditor' not implemented in " + getClass().getName());
     }
 
+    @Override
     @NotNull
     public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
       if (myModifiableModel != null) {
@@ -246,9 +270,11 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return artifact;
     }
 
+    @Override
     public void queueValidation(Artifact artifact) {
     }
 
+    @Override
     @NotNull
     public ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException("'getOrCreateArtifactElement' not implemented in " + getClass().getName());

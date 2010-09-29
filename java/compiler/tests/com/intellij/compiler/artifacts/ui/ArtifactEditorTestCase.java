@@ -70,6 +70,7 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
   protected static void runAction(final Runnable action, boolean confirmationExpected) {
     final Ref<Boolean> dialogShown = Ref.create(false);
     final TestDialog oldDialog = Messages.setTestDialog(new TestDialog() {
+      @Override
       public int show(String message) {
         dialogShown.set(true);
         return 0;

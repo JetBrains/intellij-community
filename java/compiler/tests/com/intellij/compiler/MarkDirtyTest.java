@@ -18,6 +18,7 @@ public class MarkDirtyTest extends CompilerTestCase{
 
   public void testRecompileDependent() throws Exception {doTest();}
 
+  @Override
   protected void doCompile(final CompileStatusNotification notification, int pass) {
     final CompilerManager compileManager = CompilerManager.getInstance(myProject);
     if (pass == 1) {
@@ -28,6 +29,7 @@ public class MarkDirtyTest extends CompilerTestCase{
       final VirtualFile clientSource = mySourceDir.findChild("Client.java");
       assertTrue(serverSource != null && clientSource != null);
       compileManager.compile(new VirtualFile[] {serverSource}, /*serverSource, null, null,*/ new CompileStatusNotification() {
+        @Override
         public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
           notification.finished(aborted, errors, warnings, compileContext);
           assertTrue("The files should be compiled without errors!", errors == 0 && !aborted);

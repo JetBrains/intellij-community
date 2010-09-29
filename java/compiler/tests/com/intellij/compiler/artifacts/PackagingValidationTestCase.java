@@ -38,11 +38,13 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
     }
 
+    @Override
     public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes) {
       myProblems.add(message);
       myQuickFixes.put(message, quickFixes);
     }
 
+    @Override
     public void registerWarning(@NotNull String message,
                                 @Nullable List<PackagingElement<?>> pathToPlace,
                                 @NotNull ArtifactProblemQuickFix... quickFixes) {

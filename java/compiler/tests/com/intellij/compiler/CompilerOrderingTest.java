@@ -78,18 +78,22 @@ public class CompilerOrderingTest extends IdeaTestCase {
       myDescription = description;
     }
 
+    @Override
     public boolean isCompilableFile(final VirtualFile file, final CompileContext context) {
       return false;
     }
 
+    @Override
     public void compile(final CompileContext context, Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
     }
 
+    @Override
     @NotNull
     public String getDescription() {
       return myDescription;
     }
 
+    @Override
     public boolean validateConfiguration(final CompileScope scope) {
       return false;
     }

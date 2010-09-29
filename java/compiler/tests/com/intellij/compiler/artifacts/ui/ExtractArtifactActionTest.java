@@ -67,10 +67,12 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
       @Override
       protected IExtractArtifactDialog showDialog(LayoutTreeComponent treeComponent, final String initialName) {
         return new IExtractArtifactDialog() {
+          @Override
           public String getArtifactName() {
             return initialName;
           }
 
+          @Override
           public ArtifactType getArtifactType() {
             return PlainArtifactType.getInstance();
           }

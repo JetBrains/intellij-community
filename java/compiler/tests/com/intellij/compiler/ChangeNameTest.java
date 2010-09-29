@@ -21,6 +21,7 @@ public class ChangeNameTest extends CompilerTestCase{
 
   public void testChangeClassName() throws Exception {doTest();}
 
+  @Override
   protected void doCompile(final CompileStatusNotification notification, int pass) {
     final CompilerManager compileManager = CompilerManager.getInstance(myProject);
     if (pass == 1) {
@@ -33,6 +34,7 @@ public class ChangeNameTest extends CompilerTestCase{
       final boolean deleted = FileUtil.delete(new File(path));
       assertTrue("Cannot delete "+path , deleted);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           mySourceDir.refresh(false, true);
         }

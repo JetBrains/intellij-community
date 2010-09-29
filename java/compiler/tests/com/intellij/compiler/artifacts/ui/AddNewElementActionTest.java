@@ -50,6 +50,7 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
 
   private void addNewElement(final ModuleOutputElementType elementType, final boolean confirmationExpected) {
     runAction(new Runnable() {
+      @Override
       public void run() {
         myArtifactEditor.addNewPackagingElement(elementType);
       }

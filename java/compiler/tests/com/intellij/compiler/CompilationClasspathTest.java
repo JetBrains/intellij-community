@@ -65,6 +65,7 @@ public class CompilationClasspathTest extends CompilerTestCase{
   
   private void doSetup(final boolean setupTestOutput, final boolean differentOutputRoots, final boolean removeProductionOutputRoot) {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         //long start = System.currentTimeMillis();
         try {
@@ -82,6 +83,7 @@ public class CompilationClasspathTest extends CompilerTestCase{
 
   private void setupTestsOutput(final boolean different, final boolean removeProductionOutput){
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();

@@ -84,6 +84,7 @@ public class ArtifactsTestUtil {
 
   public static void setOutput(final Project project, final String artifactName, final String outputPath) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         final ModifiableArtifactModel model = ArtifactManager.getInstance(project).createModifiableModel();
         model.getOrCreateModifiableArtifact(findArtifact(project, artifactName)).setOutputPath(outputPath);
