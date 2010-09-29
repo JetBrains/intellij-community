@@ -183,6 +183,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertSame(pyClass, children[0]);
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
+      @Override
       protected void run(final Result result) throws Throwable {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());

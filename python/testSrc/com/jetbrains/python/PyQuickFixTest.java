@@ -161,6 +161,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     );
   }
 
+  @Override
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";

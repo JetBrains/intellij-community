@@ -19,6 +19,7 @@ import java.io.IOException;
  */
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
+  @Override
   public String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/codeInsight/controlflow/";
   }

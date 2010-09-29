@@ -17,6 +17,7 @@ public class FileDataContext implements DataContext {
     myFile = file;
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls String dataId) {
     if (LangDataKeys.LANGUAGE.is(dataId)) {

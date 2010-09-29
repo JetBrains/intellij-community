@@ -13,6 +13,7 @@ import java.util.Map;
  */
 public class PyStatementPartsTest extends LightMarkedTestCase {
 
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/psi/parts/";
   }

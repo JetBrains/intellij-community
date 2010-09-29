@@ -27,6 +27,7 @@ public class PythonDemorganLawIntentionTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("after" + getTestName(false) + ".py");
 
   }
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/intentions/demorgan";
   }

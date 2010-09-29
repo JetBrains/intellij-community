@@ -28,6 +28,7 @@ import java.util.Set;
  * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath()+ "/paramInfo/";
   }
@@ -365,94 +366,118 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       myOffset = offset;
     }
 
+    @Override
     public void setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background) {
       assert texts.length == flags.length;
       myTexts = texts;
       myFlags = flags;
     }
 
+    @Override
     public void setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled,
                                              boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
       // nothing, we don't use it
     }
 
+    @Override
     public boolean isUIComponentEnabled() {
       return true;
     }
 
+    @Override
     public boolean isUIComponentEnabled(int index) {
       return true;
     }
 
+    @Override
     public void setUIComponentEnabled(boolean enabled) { }
 
+    @Override
     public void setUIComponentEnabled(int index, boolean b) { }
 
+    @Override
     public int getCurrentParameterIndex() {
       return myIndex;
     }
 
+    @Override
     public void removeHint() { }
 
+    @Override
     public void setParameterOwner(PsiElement o) {
       assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
       myParamOwner = (PyArgumentList)o;
     }
 
+    @Override
     public PsiElement getParameterOwner() {
       return myParamOwner;
     }
 
+    @Override
     public void setHighlightedParameter(Object parameter) {
       // nothing, we don't use it
     }
 
+    @Override
     public void setCurrentParameter(int index) {
       myIndex = index;
     }
 
+    @Override
     public Color getDefaultParameterColor() {
       return java.awt.Color.BLACK;
     }
 
+    @Override
     public Object[] getItemsToShow() {
       return myItems;
     }
 
+    @Override
     public void setItemsToShow(Object[] items) {
       myItems = items;
     }
 
+    @Override
     public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) { }
 
+    @Override
     public int getParameterListStart() {
       return 0; // we don't use it
     }
 
+    @Override
     public Object[] getObjectsToView() {
       return null; // we don't use it
     }
 
+    @Override
     public PsiElement getHighlightedElement() {
       return null;  // we don't use it
     }
 
+    @Override
     public void setHighlightedElement(PsiElement elements) {
       // nothing, we don't use it
     }
 
+    @Override
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     public PsiFile getFile() {
       return myFile;
     }
 
+    @Override
     public int getOffset() {
       return myOffset;
     }
 
+    @Override
     @NotNull
     public Editor getEditor() {
       return myEditor;

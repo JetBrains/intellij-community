@@ -39,6 +39,7 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
     final String finalFileText = fileText;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myFixture.configureByText(new File(filePath).getName(), finalFileText);
       }

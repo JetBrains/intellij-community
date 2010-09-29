@@ -87,14 +87,17 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
       myPythonVersion = pythonVersion;
     }
 
+    @Override
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
     }
 
+    @Override
     public Sdk getSdk() {
       return PythonMockSdk.findOrCreate(myPythonVersion);
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   }

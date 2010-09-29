@@ -76,6 +76,7 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     myFixture.configureByFile("/editing/" + fileName + ".before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(pos);
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
       }
@@ -87,6 +88,7 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         CommentByLineCommentAction action = new CommentByLineCommentAction();
         action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
@@ -144,6 +146,7 @@ public class PyEditingTest extends PyLightFixtureTestCase {
 
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+      @Override
       public PsiFile compute() {
         final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
         myFixture.getEditor().getCaretModel().moveToOffset(offset);

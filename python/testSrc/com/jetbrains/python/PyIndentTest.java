@@ -13,11 +13,13 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     final String name = getTestName(false);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myFixture.configureByText(name + ".py", before);
       }
     });
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
       }

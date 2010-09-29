@@ -27,6 +27,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     }
   }
 
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/intentions/";
   }
