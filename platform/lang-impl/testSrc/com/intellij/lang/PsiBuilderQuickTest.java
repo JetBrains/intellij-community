@@ -20,13 +20,13 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -40,7 +40,8 @@ import static org.junit.Assert.fail;
 
 
 public class PsiBuilderQuickTest {
-  private static final IElementType ROOT = new IElementType("ROOT", Language.ANY);
+  private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
+
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
   private static final IElementType DIGIT = new IElementType("DIGIT", Language.ANY);
   private static final IElementType OTHER = new IElementType("OTHER", Language.ANY);
@@ -333,6 +334,115 @@ public class PsiBuilderQuickTest {
            "    PsiElement(COMMENT)('#')\n" +
            "  PsiWhiteSpace(' ')\n" +
            "  PsiElement(OTHER)('}')\n");
+  }
+
+  private static abstract class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
+    protected MyLazyElementType(@NonNls String debugName) {
+      super(debugName, Language.ANY);
+    }
+  }
+
+  @Test
+  public void testLightChameleon() throws Exception {
+    final IElementType CHAMELEON_2 = new MyLazyElementType("CHAMELEON_2") {
+      public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getLightTree();
+      }
+
+      public ASTNode parseContents(ASTNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getTreeBuilt().getFirstChildNode();
+      }
+
+      public void parse(PsiBuilder builder) {
+        final PsiBuilder.Marker root = builder.mark();
+        PsiBuilder.Marker error = null;
+        while (!builder.eof()) {
+          final String token = builder.getTokenText();
+          if ("?".equals(token)) error = builder.mark();
+          builder.advanceLexer();
+          if (error != null) {
+            error.error("test error 2");
+            error = null;
+          }
+        }
+        root.done(this);
+      }
+    };
+
+    final IElementType CHAMELEON_1 = new MyLazyElementType("CHAMELEON_1") {
+      public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getLightTree();
+      }
+
+      public ASTNode parseContents(ASTNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getTreeBuilt().getFirstChildNode();
+      }
+
+      public void parse(PsiBuilder builder) {
+        final PsiBuilder.Marker root = builder.mark();
+        PsiBuilder.Marker nested = null;
+        while (!builder.eof()) {
+          final String token = builder.getTokenText();
+          if ("[".equals(token) && nested == null) {
+            nested = builder.mark();
+          }
+          builder.advanceLexer();
+          if ("]".equals(token) && nested != null) {
+            nested.collapse(CHAMELEON_2);
+            nested.precede().done(OTHER);
+            nested = null;
+            builder.error("test error 1");
+          }
+        }
+        if (nested != null) nested.drop();
+        root.done(this);
+      }
+    };
+
+    doTest("ab{12[.?]}cd{x}",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               PsiBuilderUtil.advance(builder, 2);
+               PsiBuilder.Marker chameleon = builder.mark();
+               PsiBuilderUtil.advance(builder, 8);
+               chameleon.collapse(CHAMELEON_1);
+               PsiBuilderUtil.advance(builder, 2);
+               chameleon = builder.mark();
+               PsiBuilderUtil.advance(builder, 3);
+               chameleon.collapse(CHAMELEON_1);
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(LETTER)('b')\n" +
+           "  Element(CHAMELEON_1)\n" +
+           "    PsiElement(OTHER)('{')\n" +
+           "    PsiElement(DIGIT)('1')\n" +
+           "    PsiElement(DIGIT)('2')\n" +
+           "    Element(OTHER)\n" +
+           "      Element(CHAMELEON_2)\n" +
+           "        PsiElement(OTHER)('[')\n" +
+           "        PsiElement(OTHER)('.')\n" +
+           "        PsiErrorElement:test error 2\n" +
+           "          PsiElement(OTHER)('?')\n" +
+           "        PsiElement(OTHER)(']')\n" +
+           "    PsiErrorElement:test error 1\n" +
+           "      <empty list>\n" +
+           "    PsiElement(OTHER)('}')\n" +
+           "  PsiElement(LETTER)('c')\n" +
+           "  PsiElement(LETTER)('d')\n" +
+           "  Element(CHAMELEON_1)\n" +
+           "    PsiElement(OTHER)('{')\n" +
+           "    PsiElement(LETTER)('x')\n" +
+           "    PsiElement(OTHER)('}')\n");
   }
 
   private interface Parser {
