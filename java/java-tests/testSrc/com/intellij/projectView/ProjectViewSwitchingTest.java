@@ -12,10 +12,12 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 
 public class ProjectViewSwitchingTest extends TestSourceBasedTestCase {
+  @Override
   protected String getTestPath() {
     return "projectView";
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     ((ProjectViewImpl)ProjectView.getInstance(getProject())).setupImpl(null);
@@ -27,6 +29,7 @@ public class ProjectViewSwitchingTest extends TestSourceBasedTestCase {
     super.runStartupActivities();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     FavoritesManager.getInstance(getProject()).projectClosed();
 

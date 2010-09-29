@@ -19,6 +19,7 @@ public class GTTokensTest extends FileSetTestCase {
     super(PathManagerEx.getTestDataPath() + "/psi/gt-tokens");
   }
 
+  @Override
   public String transform(String testName, String[] data) throws Exception {
     final Lexer lexer = new FilterLexer(new JavaLexer(LanguageLevel.HIGHEST),
                                         new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));

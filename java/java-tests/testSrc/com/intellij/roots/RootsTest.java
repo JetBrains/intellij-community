@@ -19,6 +19,7 @@ public class RootsTest extends PsiTestCase {
     final String rootPath = PathManagerEx.getTestDataPath() + "/moduleRootManager/roots/" + "test1";
     final VirtualFile[] rootFileBox = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootFileBox[0] =
         LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'));
@@ -36,6 +37,7 @@ public class RootsTest extends PsiTestCase {
 
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
         rootModel.addContentEntry(rootFile);
@@ -48,6 +50,7 @@ public class RootsTest extends PsiTestCase {
     assertTrue(rootManager.getFileIndex().isInContent(childOfContent));
     assertTrue(rootManager.getFileIndex().isInContent(childOfClasses));
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
         rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(true);

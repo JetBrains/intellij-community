@@ -7,6 +7,7 @@ public class MoveCatchUpTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/moveCatchUp";
   }

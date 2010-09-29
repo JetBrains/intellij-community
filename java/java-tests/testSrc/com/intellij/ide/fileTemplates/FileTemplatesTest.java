@@ -28,6 +28,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     final String txt = ".txt";
 
     File[] children = testsDir.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(".out"+txt);
       }

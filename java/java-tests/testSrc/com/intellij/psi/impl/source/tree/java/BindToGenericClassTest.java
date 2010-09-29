@@ -13,10 +13,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 public class BindToGenericClassTest extends GenericsTestCase {
   private boolean myOldFQNamesSetting;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final ModifiableRootModel rootModel = setupGenericSampleClasses();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }
@@ -27,6 +29,7 @@ public class BindToGenericClassTest extends GenericsTestCase {
     currentSettings.USE_FQ_CLASS_NAMES = true;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
     currentSettings.USE_FQ_CLASS_NAMES = myOldFQNamesSetting;

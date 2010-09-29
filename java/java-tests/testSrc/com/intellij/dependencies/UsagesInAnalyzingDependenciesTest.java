@@ -29,11 +29,13 @@ import java.util.Set;
  * Date: Jan 18, 2005
  */
 public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/search/" + getTestName(true);

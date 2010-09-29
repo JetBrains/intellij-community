@@ -20,6 +20,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/className/";
   protected boolean myOldSetting;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     setType(CompletionType.CLASS_NAME);
@@ -32,10 +33,12 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
+  @Override
   protected void tearDown() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myOldSetting;
     super.tearDown();
@@ -133,6 +136,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/implements3-result.java");
   }
 
+  @Override
   protected boolean clearModelBeforeConfiguring() {
     return "testAnnotationFiltering".equals(getName());
   }
@@ -212,6 +216,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/" + getTestName(false) + "-result.java");
   }
 
+  @Override
   protected void configureByFile(String filePath) throws Exception {
     final String path = getTestDataPath() + new File(filePath).getParent() + "/source";
     if (new File(path).exists()) {

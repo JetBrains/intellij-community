@@ -28,11 +28,13 @@ import java.util.List;
 public class OrderEntryTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/quickFix/orderEntry/";
 
+  @Override
   protected void setUpProject() throws Exception {
     final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
 
     VirtualFile tempProjectRootDir =
     ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>(){
+      @Override
       public VirtualFile compute() {
         try {
           return PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
@@ -51,6 +53,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     myModule = ModuleManager.getInstance(getProject()).getModules()[0];
   }
 
+  @Override
   protected void tearDown() throws Exception {
     removeLibs();
     ((ProjectComponent)ModuleManager.getInstance(myProject)).projectClosed();
@@ -130,6 +133,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   private void removeLibs() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           for (Module module : ModuleManager.getInstance(getProject()).getModules()) {

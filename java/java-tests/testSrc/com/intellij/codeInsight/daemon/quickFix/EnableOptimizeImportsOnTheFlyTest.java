@@ -7,12 +7,14 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 
 
 public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
     boolean old = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
@@ -33,6 +35,7 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixTestCase {
     }
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/enableOptimizeImportsOnTheFly";
   }

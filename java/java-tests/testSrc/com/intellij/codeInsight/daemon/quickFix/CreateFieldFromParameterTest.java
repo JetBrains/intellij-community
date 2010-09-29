@@ -10,12 +10,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
  * @author ven
  */
 public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.FIELD_NAME_PREFIX = "my";
   }
 
+  @Override
   protected void tearDown() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.FIELD_NAME_PREFIX = "";
@@ -24,6 +26,7 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromParameter";
   }

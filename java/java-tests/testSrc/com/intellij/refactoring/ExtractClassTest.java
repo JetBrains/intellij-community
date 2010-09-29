@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.TreeSet;
 
 public class ExtractClassTest extends MultiFileTestCase{
+  @Override
   protected String getTestRoot() {
     return "/refactoring/extractClass/";
   }
@@ -42,6 +43,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   private void doTestMethod(final String methodName, final String conflicts) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -101,6 +103,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   private void doTestFieldAndMethod(final String methodName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -123,6 +126,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   private void doTestField(final String conflicts, final boolean generateGettersSetters) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -180,6 +184,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   public void testPublicFieldDelegation() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -198,6 +203,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   private void doTestInnerClass() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 
@@ -247,6 +253,7 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   public void testPublicVisibility() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
 

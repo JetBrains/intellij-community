@@ -33,6 +33,7 @@ public class ReplaceImplementsWithStaticImportTest extends LightQuickFixTestCase
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/replaceImplementsWithStaticImport";
   }

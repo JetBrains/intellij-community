@@ -55,11 +55,13 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   private static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<Action, TestFormatAction>(Action.class);
   static {
     ACTIONS.put(Action.REFORMAT, new TestFormatAction() {
+      @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         CodeStyleManager.getInstance(getProject()).reformatText(psiFile, startOffset, endOffset);
       }
     });
     ACTIONS.put(Action.INDENT, new TestFormatAction() {
+      @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, startOffset);
       }
@@ -121,8 +123,10 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             document.replaceString(0, document.getTextLength(), text);
             manager.commitDocument(document);
@@ -179,8 +183,10 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     // Strip trailing spaces
     final Document doc = EditorFactory.getInstance().createDocument(actual);
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             ((DocumentEx)doc).stripTrailingSpaces(false);
           }

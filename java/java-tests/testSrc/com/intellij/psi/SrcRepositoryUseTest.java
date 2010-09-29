@@ -36,12 +36,14 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     myRunCommandForTest = true;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
 
+        @Override
         public void run() {
           try {
             LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -696,6 +698,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
+          @Override
           public void run() {
             VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
             final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
@@ -727,6 +730,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
+          @Override
           public void run() {
             VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
             final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();

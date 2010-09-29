@@ -50,12 +50,14 @@ import com.intellij.testFramework.TestSourceBasedTestCase;
 import javax.swing.*;
 
 public class JavaTreeStructureTest extends TestSourceBasedTestCase {
+  @Override
   protected String getTestPath() {
     return "structureView";
   }
 
   public void testJavaClassStructure() throws Exception {
     dotest(new CheckAction() {
+      @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                                                  "-Class1.java\n" +
@@ -106,6 +108,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
   public void testShowClassMembers() throws Exception {
     dotest(new CheckAction() {
+      @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         final JTree tree = structureViewComponent.getTree();
         tree.collapseRow(2);
@@ -147,6 +150,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
   public void testVisibilitySorter() throws Exception {
     dotest(new CheckAction() {
+      @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
 
@@ -169,6 +173,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
   public void testMembersOrder() throws Exception {
     dotest(new CheckAction() {
+      @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
 

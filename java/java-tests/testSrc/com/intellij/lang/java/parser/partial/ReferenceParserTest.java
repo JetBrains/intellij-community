@@ -38,7 +38,8 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType5() { doTypeParserTest("Object[]...", false); }
   public void testType6() {
     withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { public void run() { doTypeParserTest("@English String @NonEmpty []", false); } });
+              new Runnable() { @Override
+                               public void run() { doTypeParserTest("@English String @NonEmpty []", false); } });
   }
   public void testType7() { doTypeParserTest("Diamond<>", true); }
 
@@ -53,6 +54,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
 
   private void doRefParserTest(final String text, final boolean incomplete) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false);
       }
@@ -61,6 +63,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
 
   private void doTypeParserTest(final String text, final boolean diamonds) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         if (diamonds)
           ReferenceParser.parseType(builder, false, false, true);
@@ -72,6 +75,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
 
   private void doTypeParamsParserTest(final String text) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseTypeParameters(builder);
       }

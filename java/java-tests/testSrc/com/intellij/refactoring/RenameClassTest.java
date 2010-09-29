@@ -59,6 +59,7 @@ public class RenameClassTest extends MultiFileTestCase {
 
   private void doRenameClass(final String className, final String newName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class XX not found", aClass);
@@ -92,6 +93,7 @@ public class RenameClassTest extends MultiFileTestCase {
 
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         RenameClassTest.this.performAction(qClassName, newName);
       }
@@ -107,6 +109,7 @@ public class RenameClassTest extends MultiFileTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/renameClass/";
   }

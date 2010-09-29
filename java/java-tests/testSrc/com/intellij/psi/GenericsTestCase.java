@@ -17,6 +17,7 @@ import java.io.File;
  * @author dsl
  */
 public abstract class GenericsTestCase extends PsiTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -27,6 +28,7 @@ public abstract class GenericsTestCase extends PsiTestCase {
     final String commonPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/src";
     final VirtualFile[] commonRoot = new VirtualFile[] { null };
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         commonRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(commonPath);
       }

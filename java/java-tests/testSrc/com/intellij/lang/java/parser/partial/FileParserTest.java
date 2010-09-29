@@ -60,6 +60,7 @@ public class FileParserTest extends JavaParsingTestCase {
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         FileParser.parse(builder);
       }

@@ -27,6 +27,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     myRunCommandForTest = true;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -34,6 +35,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             VirtualFile vDir = getRootFile();
@@ -49,6 +51,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     );
   }
 
+  @Override
   protected void tearDown() throws Exception {
     RESOLVE_SCOPE = null;
     super.tearDown();
@@ -69,6 +72,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classes);
@@ -106,6 +110,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             vFile.refresh(false, false);
@@ -498,6 +503,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
   private void disableJdk() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
         rootModel.setSdk(null);
@@ -510,6 +516,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
   public void testGenericReturnType() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
         rootModel.setSdk(null);

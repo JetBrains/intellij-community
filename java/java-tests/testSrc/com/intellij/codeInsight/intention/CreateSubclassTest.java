@@ -17,6 +17,7 @@ public class CreateSubclassTest extends MultiFileTestCase {
 
   private void doTest() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiDirectory root = myPsiManager.findDirectory(rootDir);
         PsiClass superClass = myJavaFacade.findClass("Superclass", ProjectScope.getAllScope(myProject));
@@ -25,6 +26,7 @@ public class CreateSubclassTest extends MultiFileTestCase {
     });
   }
 
+  @Override
   protected String getTestRoot() {
     return "/codeInsight/createSubclass/";
   }

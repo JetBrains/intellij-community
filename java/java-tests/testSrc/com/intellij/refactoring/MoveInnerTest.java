@@ -21,6 +21,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
   
+  @Override
   protected String getTestRoot() {
     return "/refactoring/moveInner/";
   }
@@ -111,6 +112,7 @@ public class MoveInnerTest extends MultiFileTestCase {
       mySearchInNonJava = searchInNonJava;
     }
 
+    @Override
     public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
       final JavaPsiFacade manager = getJavaFacade();
       final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(myModule));

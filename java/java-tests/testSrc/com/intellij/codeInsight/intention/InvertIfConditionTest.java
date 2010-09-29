@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class InvertIfConditionTest extends LightIntentionActionTestCase {
 
+  @Override
   protected String getBasePath() {
     return BASE_PATH;
   }
@@ -21,10 +22,12 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
   private static final String BASE_PATH = "/codeInsight/invertIfCondition/";
   private boolean myElseOnNewLine;
 
+  @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;
   }
 
+  @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     super.beforeActionStarted(testName, contents);
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
@@ -32,6 +35,7 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
     settings.ELSE_ON_NEW_LINE = !contents.contains("else on the same line");
   }
 
+  @Override
   protected void afterActionCompleted(final String testName, final String contents) {
     super.afterActionCompleted(testName, contents);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
