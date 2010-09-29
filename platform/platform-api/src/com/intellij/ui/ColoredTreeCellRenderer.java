@@ -91,7 +91,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel() && selected && hasFocus) {
+    if (UIUtil.isUnderGTKLookAndFeel()){
+      super.setOpaque(false);  // avoid nasty background
+      super.setIconOpaque(false);
+    }
+    else if (UIUtil.isUnderNimbusLookAndFeel() && selected && hasFocus) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
