@@ -15,15 +15,22 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
@@ -89,8 +96,30 @@ public class XmlSmartCompletionProvider {
       List vector = model.whatCanGoHere(state);
       for (Object o : vector) {
         if (o instanceof XSElementDecl) {
-          XSElementDecl elementDecl = (XSElementDecl)o;
-          result.addElement(LookupElementBuilder.create(elementDecl.getName()).setTypeText(elementDecl.getNamespace()));
+          final XSElementDecl elementDecl = (XSElementDecl)o;
+          result.addElement(LookupElementBuilder.create(elementDecl.getName()).setTypeText(elementDecl.getNamespace()).setInsertHandler(new InsertHandler<LookupElement>() {
+            @Override
+            public void handleInsert(InsertionContext context, LookupElement item) {
+              context.commitDocument();
+              XmlElementDescriptor[] descriptors = parentTag.getDescriptor().getElementsDescriptors(parentTag);
+              for (XmlElementDescriptor descriptor : descriptors) {
+                if (descriptor.getName().equals(elementDecl.getName())) {
+                  Project project = context.getProject();
+                  Editor editor = context.getEditor();
+                  // Need to insert " " to prevent creating tags like <tagThis is my text
+                  final int offset = editor.getCaretModel().getOffset();
+                  editor.getDocument().insertString(offset, " ");
+                  PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                  PsiElement current = context.getFile().findElementAt(context.getStartOffset());
+
+                  XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
+                  GenerateXmlTagAction.generateTag(
+                    newTag);
+                  return;
+                }
+              }
+            }
+          }));
         }
       }
     }
