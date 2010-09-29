@@ -14,6 +14,7 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
   protected MatchOptions options;
   protected Matcher testMatcher;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 

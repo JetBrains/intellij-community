@@ -18,6 +18,7 @@ abstract class StructuralReplaceTestCase extends IdeaTestCase {
   protected ReplaceOptions options;
   protected String actualResult;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
