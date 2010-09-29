@@ -976,14 +976,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  private PsiFile configureByFilesInner(@NonNls String... filePaths) throws IOException {
+  private void configureByFilesInner(@NonNls String... filePaths) {
     assertInitialized();
     myFile = null;
     myEditor = null;
-    for (int i = filePaths.length - 1; i > 0; i--) {
+    for (int i = filePaths.length - 1; i >= 0; i--) {
       configureByFileInner(filePaths[i]);
     }
-    return configureByFileInner(filePaths[0]);
   }
 
   public PsiFile configureByFile(final String file) {
@@ -1209,7 +1208,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file, @NotNull Editor editor, @NotNull int[] toIgnore, boolean allowDirt) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstance(project);
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, new DaemonProgressIndicator(), toIgnore, allowDirt, true);
   }
