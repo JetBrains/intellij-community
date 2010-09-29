@@ -4,10 +4,12 @@ import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 
 public class YAMLLexerTest extends LexerTestCase {
+  @Override
   protected Lexer createLexer() {
     return new YAMLFlexLexer();
   }
 
+  @Override
   protected String getDirPath() {
     return "plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data";
   }
