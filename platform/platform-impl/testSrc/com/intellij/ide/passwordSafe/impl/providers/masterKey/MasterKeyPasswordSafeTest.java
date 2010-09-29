@@ -53,6 +53,7 @@ public class MasterKeyPasswordSafeTest {
    */
   private static MasterKeyPasswordSafe testProvider(final PasswordDatabase db) {
     return new MasterKeyPasswordSafe(db) {
+      @Override
       protected boolean isTestMode() {
         return true;
       }

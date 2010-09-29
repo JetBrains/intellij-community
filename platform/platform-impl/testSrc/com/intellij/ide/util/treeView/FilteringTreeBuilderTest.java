@@ -165,10 +165,12 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   private void update(final String text, final Object selection) throws Exception {
     final ActionCallback result = new ActionCallback();
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         myFilter.update(text, selection).notify(result);
       }
     }, new Condition<Object>() {
+      @Override
       public boolean value(Object o) {
         return result.isProcessed();
       }
@@ -197,6 +199,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
       setPlainText(myName);
     }
 
+    @Override
     protected SimpleNode[] buildChildren() {
       return myKids.isEmpty() ? NO_CHILDREN : myKids.values().toArray(new Node[myKids.size()]);
     }
@@ -215,6 +218,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   private Object findNode(final String name) {
     final Ref<Object> node = new Ref<Object>();
     ((SimpleTree)myTree).accept(myBuilder, new SimpleNodeVisitor() {
+      @Override
       public boolean accept(final SimpleNode simpleNode) {
         if (name.equals(simpleNode.toString())) {
           node.set(myBuilder.getOriginalNode(simpleNode));
@@ -233,6 +237,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
 
     String myPattern = "";
 
+    @Override
     public boolean shouldBeShowing(final Object value) {
       return value.toString().startsWith(myPattern);
     }

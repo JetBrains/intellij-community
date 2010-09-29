@@ -55,6 +55,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     super.setUp();
 
     myComparator = new NodeDescriptor.NodeComparator.Delegate<NodeDescriptor>(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+      @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         return AlphaComparator.INSTANCE.compare(o1, o2);
       }
@@ -64,18 +65,22 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     myTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode(null));
     myTreeModel.addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesChanged(TreeModelEvent e) {
         assertEdt();
       }
 
+      @Override
       public void treeNodesInserted(TreeModelEvent e) {
         assertEdt();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent e) {
         assertEdt();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         assertEdt();
       }
@@ -89,16 +94,19 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     initBuilder(new MyBuilder());
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         assertEdt();
       }
     });
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         assertEdt();
       }
 
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         assertEdt();
       }
@@ -162,6 +170,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     final boolean[] toHide = new boolean[] {false};
 
     myElementUpdateHook = new ElementUpdateHook() {
+      @Override
       public void onElementAction(String action, Object element) {
         if (toHide[0]) {
           if ("jetbrains".equals(element.toString())) {
@@ -234,6 +243,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   void buildStructure(final Node root, final boolean activate) throws Exception {
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         myCom = root.addChild("com");
         myIntellij = myCom.addChild("intellij");
@@ -252,6 +262,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   protected void activate() throws Exception {
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUi().activate(true);
       }
@@ -263,12 +274,14 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     Assert.assertFalse(getMyBuilder().myWasCleanedUp);
 
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUi().deactivate();
       }
     });
 
     final WaitFor waitFor = new WaitFor() {
+      @Override
       protected boolean condition() {
         return getMyBuilder().myWasCleanedUp || myCancelRequest != null;
       }
@@ -300,15 +313,18 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     final boolean[] done = new boolean[] {false};
 
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         if (select) {
           getBuilder().select(element, new Runnable() {
+            @Override
             public void run() {
               done[0] = true;
             }
           }, addToSelection);
         } else {
           getBuilder().expand(element, new Runnable() {
+            @Override
             public void run() {
               done[0] = true;
             }
@@ -316,6 +332,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         }
       }
     }, new Condition() {
+      @Override
       public boolean value(Object o) {
         return done[0];
       }
@@ -454,6 +471,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
     private Revalidator myRevalidator;
 
+    @Override
     public Object getRootElement() {
       return myRoot.myElement;
     }
@@ -478,6 +496,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return myElement2Node.get(element);
     }
 
+    @Override
     public Object getParentElement(final Object element) {
       NodeElement nodeElement = (NodeElement)element;
       return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
@@ -497,14 +516,17 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       myLeaves.remove(element);
     }
 
+    @Override
     @NotNull
       public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
       return new NodeDescriptor(null, parentDescriptor) {
+        @Override
         public boolean update() {
           onElementAction("update", (NodeElement)element);
           return true;
         }
 
+        @Override
         public Object getElement() {
           return element;
         }

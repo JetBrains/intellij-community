@@ -31,6 +31,7 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
   HistoryDialogModel m;
   VirtualFile f;
 
+  @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class XDebuggerSettingsTest extends PlatformLiteFixture {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();
@@ -69,14 +70,17 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
       return getInstance(MyDebuggerSettings.class);
     }
 
+    @Override
     public MyDebuggerSettings getState() {
       return this;
     }
 
+    @Override
     public void loadState(final MyDebuggerSettings state) {
       myOption = state.myOption;
     }
 
+    @Override
     @NotNull
     public Configurable createConfigurable() {
       throw new UnsupportedOperationException("'createConfigurable' not implemented in " + getClass().getName());

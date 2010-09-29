@@ -29,6 +29,7 @@ import org.jdom.Element;
 public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   protected XBreakpointManagerImpl myBreakpointManager;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     MockProject project = disposeOnTearDown(new MockProject());

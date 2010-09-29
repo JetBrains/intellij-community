@@ -626,6 +626,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     return test;
   }
 
+  @Override
   protected SMTestProxy createTestProxy() {
     return createTestProxy(FAKE_TEST_NAME);
   }

@@ -25,12 +25,14 @@ public class PagedFileStorageTest extends TestCase {
   private PagedFileStorage s;
   private PagedFileStorage.StorageLock lock;
 
+  @Override
   public void setUp() throws Exception {
     f = File.createTempFile("storage", ".tmp");
     lock = new PagedFileStorage.StorageLock();
     s = new PagedFileStorage(f, lock);
   }
 
+  @Override
   public void tearDown() {
     f.delete();
   }

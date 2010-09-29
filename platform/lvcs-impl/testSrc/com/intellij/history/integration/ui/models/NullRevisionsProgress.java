@@ -17,12 +17,15 @@
 package com.intellij.history.integration.ui.models;
 
 public class NullRevisionsProgress implements RevisionProcessingProgress {
+  @Override
   public void processingLeftRevision() {
   }
 
+  @Override
   public void processingRightRevision() {
   }
 
+  @Override
   public void processed(int percentage) {
   }
 }

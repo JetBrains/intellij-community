@@ -79,14 +79,17 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testListener() throws Exception {
     final StringBuilder out = new StringBuilder();
     XBreakpointAdapter<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointAdapter<XLineBreakpoint<MyBreakpointProperties>>() {
+      @Override
       public void breakpointAdded(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("added[").append(breakpoint.getProperties().myOption).append("];");
       }
 
+      @Override
       public void breakpointRemoved(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("removed[").append(breakpoint.getProperties().myOption).append("];");
       }
 
+      @Override
       public void breakpointChanged(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("changed[").append(breakpoint.getProperties().myOption).append("];");
       }

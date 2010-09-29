@@ -85,9 +85,11 @@ public class ExternalizablePropertyTest extends TestCase {
   }
 
   public static class MockJDOMExternalizable implements JDOMExternalizable {
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
     }
   }

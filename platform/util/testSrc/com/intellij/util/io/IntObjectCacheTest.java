@@ -25,6 +25,7 @@ public class IntObjectCacheTest extends TestCase {
     final int SIZE = 4;
     final IntObjectCache<String> cache = new IntObjectCache<String>(SIZE);
     cache.addDeletedPairsListener(new IntObjectCache.DeletedPairsListener() {
+      @Override
       public void objectRemoved(int key, Object value) {
         if (cache.count() >= cache.size() ) {
           final int newSize = cache.size() * 2;
