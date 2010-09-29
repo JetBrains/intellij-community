@@ -296,6 +296,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected void completionFinished(final int offset1, final int offset2, final CompletionContext context, final CompletionProgressIndicator indicator,
                                     final LookupElement[] items) {
     if (items.length == 0) {
+      LookupManager.getInstance(context.project).hideActiveLookup();
       handleEmptyLookup(context.project, context.editor, indicator.getParameters(), indicator);
       return;
     }

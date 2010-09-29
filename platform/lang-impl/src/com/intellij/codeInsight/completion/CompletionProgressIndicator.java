@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
@@ -393,9 +392,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (!isBackgrounded()) return;
 
         if (myCount == 0) {
-          HintManager.getInstance().hideAllHints();
           LookupManager.getInstance(myContextOriginal.project).hideActiveLookup();
-          unregisterItself();
+          assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
 
           if (myLookup.isFocused() ) {
             myHandler.handleEmptyLookup(myContextOriginal.project, myEditor, myParameters, CompletionProgressIndicator.this);
