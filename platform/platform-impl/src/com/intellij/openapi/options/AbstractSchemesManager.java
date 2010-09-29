@@ -69,7 +69,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   private String generateUniqueName(final T scheme) {
-    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), "", "", collectExistingNames(mySchemes));
+    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), collectExistingNames(mySchemes));
   }
 
   private Collection<String> collectExistingNames(final Collection<T> schemes) {

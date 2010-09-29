@@ -378,7 +378,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private static String createUniqueFileName(final Collection<String> strings, final String schemeName) {
-    return UniqueNameGenerator.generateUniqueName(schemeName, "", "", strings);
+    return UniqueNameGenerator.generateUniqueName(schemeName, strings);
   }
 
   private void loadScheme(final E scheme, boolean forceAdd, final String name) {
@@ -594,7 +594,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
                 final E scheme = myProcessor.readScheme(original.original);
                 if (!alreadyShared(subpath, currentSchemeList)) {
                   String schemeName = original.name;
-                  String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
+                  String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, names);
                   renameScheme(scheme, uniqueName);
                   schemeName = uniqueName;
                   scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
