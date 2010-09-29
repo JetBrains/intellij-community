@@ -29,7 +29,7 @@ import java.util.List;
  * Manages the relationship between filenames and {@link FileType} instances.
  */
 
-public abstract class FileTypeManager{
+public abstract class FileTypeManager {
   private static class FileTypeManagerHolder {
     private static final FileTypeManager ourInstance = createFileTypeManager();
   }
@@ -74,8 +74,7 @@ public abstract class FileTypeManager{
    * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
+  public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
    * Returns the file type for the specified file.
@@ -84,18 +83,17 @@ public abstract class FileTypeManager{
    * @return The file type instance.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByFile(@NotNull VirtualFile file);
+  public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
 
   /**
    * Returns the file type for the specified extension.
    * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
+   *
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByExtension(@NonNls @NotNull String extension);
+  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
 
   /**
    * Returns the list of all registered file types.
@@ -135,9 +133,8 @@ public abstract class FileTypeManager{
    * Adds a listener for receiving notifications about changes in the list of
    * registered file types.
    *
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
-   *
    * @param listener The listener instance.
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    */
 
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
@@ -145,10 +142,9 @@ public abstract class FileTypeManager{
   /**
    * Removes a listener for receiving notifications about changes in the list of
    * registered file types.
-
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    *
    * @param listener The listener instance.
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    */
 
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
@@ -219,7 +215,7 @@ public abstract class FileTypeManager{
       return new ExtensionFileNameMatcher(pattern.substring(2).toLowerCase());
     }
 
-    if (pattern.contains("*") ||  pattern.contains("?")) {
+    if (pattern.contains("*") || pattern.contains("?")) {
       return new WildcardFileNameMatcher(pattern);
     }
 
