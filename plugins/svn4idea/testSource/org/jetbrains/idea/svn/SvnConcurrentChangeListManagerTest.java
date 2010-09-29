@@ -37,6 +37,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final String newName = "renamed";
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.editName(list.getName(), newName);
         checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
@@ -63,6 +64,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final String finalText = "final text";
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         final String intermediate = "intermediate text";
         changeListManager.editComment(list.getName(), intermediate);
@@ -96,6 +98,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -120,6 +123,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.setDefaultChangeList(target);
         assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
@@ -144,6 +148,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.removeChangeList(list.getName());
         assert changeListManager.findChangeList(list.getName()) == null;
@@ -172,6 +177,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -198,6 +204,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -225,6 +232,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final String targetName = "target";
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         final LocalChangeList target = changeListManager.addChangeList(targetName, null);
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
@@ -273,6 +281,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final String finalName = "final list name";
 
     myScheme.doTest(new Runnable() {
+      @Override
       public void run() {
         final LocalChangeList target = changeListManager.addChangeList(targetName, null);
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file), changeListManager.getChange(fileB)});

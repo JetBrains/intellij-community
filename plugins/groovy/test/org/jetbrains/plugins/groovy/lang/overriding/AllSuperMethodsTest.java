@@ -22,6 +22,7 @@ public class AllSuperMethodsTest extends OverridingTester {
   public void testMethodWithoutParameters() throws Throwable { doTest(); }
   public void testMethodWithParameters() throws Throwable { doTest(); }
 
+  @Override
   PsiMethod[] findMethod(PsiMethod method) {
     return method.findSuperMethods();
   }

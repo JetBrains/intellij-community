@@ -1016,26 +1016,32 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
       myFiles = files;
     }
 
+    @Override
     public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
       return new MyFileChooserDialog(myFiles);
     }
 
+    @Override
     public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
       return new MyFileChooserDialog(myFiles);
     }
 
+    @Override
     public FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
       throw new UnsupportedOperationException();
     }
@@ -1048,6 +1054,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
       myFiles = files;
     }
 
+    @Override
     @NotNull
     public VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
       return myFiles;

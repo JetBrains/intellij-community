@@ -43,6 +43,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     final AtomicBoolean isFinished = new AtomicBoolean(false);
 
     Thread t1 = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           for (int i = 0; i < 3; i++) {
@@ -60,6 +61,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     });
 
     Thread t2 = new Thread(new Runnable() {
+      @Override
       public void run() {
         Random random = new Random();
         while (!isFinished.get()) {
@@ -132,6 +134,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
 
   private Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
     Thread t2 = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           for (int i = 0; i < 1000; i++) {
@@ -148,6 +151,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     return t2;
   }
 
+  @Override
   public void indexIsBroken(MavenIndex index) {
   }
 }

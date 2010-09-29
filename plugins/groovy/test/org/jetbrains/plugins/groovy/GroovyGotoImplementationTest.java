@@ -39,6 +39,7 @@ public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase
     dirFixture.setUp();
 
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final VirtualFile outside = dirFixture.getFile("").createChildDirectory(this, "outside");
         PsiTestUtil.addContentRoot(myModule, outside);

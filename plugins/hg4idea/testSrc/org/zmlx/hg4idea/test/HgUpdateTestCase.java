@@ -155,6 +155,7 @@ public class HgUpdateTestCase extends HgFromClonedTestCase {
     assertTrue(localChanges.contains(new HgChange(getHgFile(filepath), status)));
   }
 
+  @Override
   protected HgFile getHgFile(String... filepath) {
     File fileToInclude = projectRepo;
     for (int i = 0; i < filepath.length; i++) {

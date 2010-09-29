@@ -32,6 +32,7 @@ public class StaticInheritanceTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/com/siyeh/igtest/inheritance/staticInheritance/";
   }

@@ -128,6 +128,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant").replace('\\', '/') + "/tests/data/psi/rename/";
   }

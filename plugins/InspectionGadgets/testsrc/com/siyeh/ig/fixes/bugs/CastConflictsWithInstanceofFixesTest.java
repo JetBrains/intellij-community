@@ -35,6 +35,7 @@ public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
     doTest("replaceInstanceOf", "Replace instanceof");
   }
 
+  @Override
   protected String getRelativePath() {
     return "bugs/castconflicts";
   }

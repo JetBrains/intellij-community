@@ -73,6 +73,7 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
     final VirtualFile file =
       ApplicationManager.getApplication().runWriteAction(
         new Computable<VirtualFile>() {
+          @Override
           @Nullable
           public VirtualFile compute() {
             final VirtualFile baseDir = getProject().getBaseDir();
@@ -88,6 +89,7 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
       Assert.assertTrue("File not found", false);
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run(){
         model.commit();
       }

@@ -65,6 +65,7 @@ public class AntMultiFileCompletionTest extends TestCase {
     myFixture.testCompletion(fileNames, initialTest + "_after." + ext);
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
@@ -74,6 +75,7 @@ public class AntMultiFileCompletionTest extends TestCase {
     myFixture.setUp();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;

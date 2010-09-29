@@ -66,6 +66,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     CompilerManagerImpl.testSetup();
 
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
       }
@@ -95,6 +96,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected void setupTestSources() {
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
@@ -134,6 +136,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected void deleteClassFile(final String className) throws IOException {
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
         //noinspection ConstantConditions
@@ -148,6 +151,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected static void setFileText(final PsiFile file, final String barText) throws IOException {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           VfsUtil.saveText(ObjectUtils.assertNotNull(file.getVirtualFile()), barText);
@@ -163,6 +167,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected void setFileName(final PsiFile bar, final String name) {
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         bar.setName(name);
       }
@@ -197,8 +202,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     semaphore.down();
 
     runner.execute(extension, environment, new ProgramRunner.Callback() {
+      @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         Disposer.register(myFixture.getProject(), new Disposable() {
+          @Override
           public void dispose() {
             descriptor.dispose();
           }
@@ -206,6 +213,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         final ProcessHandler handler = descriptor.getProcessHandler();
         assert handler != null;
         handler.addProcessListener(new ProcessAdapter() {
+          @Override
           public void onTextAvailable(ProcessEvent event, Key outputType) {
             if (ProcessOutputTypes.SYSTEM != outputType) {
               sb.append(event.getText());
@@ -232,6 +240,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       mySemaphore = semaphore;
     }
 
+    @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
       try {
         assertFalse("Code did not compile!", aborted);

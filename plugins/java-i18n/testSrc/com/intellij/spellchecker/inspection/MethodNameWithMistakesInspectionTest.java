@@ -23,6 +23,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  */
 public class MethodNameWithMistakesInspectionTest extends JavaSpellcheckerInspectionTestCase {
 
+   @Override
    protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/methodNameWithMistakes";
   }

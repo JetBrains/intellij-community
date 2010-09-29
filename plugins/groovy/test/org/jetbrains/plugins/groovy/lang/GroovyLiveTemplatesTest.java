@@ -31,6 +31,7 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
 
   public static void expandTemplate(final Editor editor) {
     new WriteCommandAction(editor.getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor);
         ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);

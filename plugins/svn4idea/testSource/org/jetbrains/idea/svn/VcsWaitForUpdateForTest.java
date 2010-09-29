@@ -16,6 +16,7 @@ public class VcsWaitForUpdateForTest extends SvnTestCase {
 
     final Ref<Boolean> done = new Ref<Boolean>();
     final Thread thread = new Thread(new Runnable() {
+      @Override
       public void run() {
         new EnsureUpToDateFromNonAWTThread(myProject).execute();
         done.set(Boolean.TRUE);

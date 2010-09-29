@@ -46,6 +46,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       myRevisions = revisions;
     }
 
+    @Override
     public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
                                                   final boolean includingYoungest, final boolean includeOldest) throws SVNException {
       long young = fromIncluding.getNumber();
@@ -91,6 +92,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       super(iterator, origin);
     }
 
+    @Override
     public void doCacheUpdate(final List<List<Fragment>> fragments) {
       assert false;
     }

@@ -32,6 +32,7 @@ public class GridInsertLocationTest extends TestCase {
   private RadContainer myContainer;
   private RadComponent myDropComponent;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myManager = new RadGridLayoutManager();
