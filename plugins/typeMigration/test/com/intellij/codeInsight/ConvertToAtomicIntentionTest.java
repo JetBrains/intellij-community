@@ -16,6 +16,7 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixTestCase {
     return true;
   }
 
+  @Override
   protected String getBasePath() {
     return "/intentions/atomic";
   }

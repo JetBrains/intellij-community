@@ -17,6 +17,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }

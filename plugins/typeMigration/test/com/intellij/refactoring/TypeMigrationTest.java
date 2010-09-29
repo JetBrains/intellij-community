@@ -14,6 +14,7 @@ import com.intellij.psi.PsiType;
 
 public class TypeMigrationTest extends TypeMigrationTestBase {
 
+  @Override
   public String getTestRoot() {
     return "/refactoring/typeMigration/";
   }

@@ -16,6 +16,7 @@ public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
     return true;
   }
 
+  @Override
   protected String getBasePath() {
     return "/intentions/threadLocal";
   }

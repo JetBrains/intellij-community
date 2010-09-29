@@ -38,6 +38,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
 
   protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType rootType, final PsiType migrationType) throws Exception {
     final RulesProvider provider = new RulesProvider() {
+      @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
         rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
@@ -45,6 +46,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
         return rules;
       }
 
+      @Override
       public PsiElement victims(PsiClass aClass) {
         return aClass.findFieldByName(fieldName, false);
       }
@@ -59,6 +61,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
 
   protected void doTestMethodType(@NonNls final String methodName, @NonNls String className, final PsiType rootType, final PsiType migrationType) throws Exception {
     final RulesProvider provider = new RulesProvider() {
+      @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
         rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
@@ -66,6 +69,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
         return rules;
       }
 
+      @Override
       public PsiElement victims(PsiClass aClass) {
         return aClass.findMethodsByName(methodName, false)[0];
       }
@@ -80,6 +84,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
 
   protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType rootType, final PsiType migrationType) throws Exception {
     final RulesProvider provider = new RulesProvider() {
+      @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
         rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
@@ -87,6 +92,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
         return rules;
       }
 
+      @Override
       public PsiElement victims(PsiClass aClass) {
         return aClass.findMethodsByName(methodName, false)[0].getParameterList().getParameters()[0];
       }
@@ -101,6 +107,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
 
   public void start(final RulesProvider provider, final String className) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TypeMigrationTestBase.this.performAction(className, rootDir.getName(), provider);
       }
@@ -145,6 +152,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
