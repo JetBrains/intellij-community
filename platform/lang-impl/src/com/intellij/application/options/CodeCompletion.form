@@ -3,12 +3,12 @@
   <grid id="8765f" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="58" y="51" width="595" height="464"/>
+      <xy x="58" y="51" width="645" height="464"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="7f988" layout-manager="GridLayoutManager" row-count="12" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="1">
+      <grid id="7f988" layout-manager="GridLayoutManager" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="1">
         <margin top="7" left="7" bottom="7" right="7"/>
         <constraints>
           <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -84,56 +84,17 @@
               <text resource-bundle="messages/ApplicationBundle" key="label.autocomplete.when.only.one.choice"/>
             </properties>
           </component>
-          <component id="bb7d" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="label.complete.autopopup"/>
-            </properties>
-          </component>
           <component id="59c92" class="javax.swing.JCheckBox" binding="myCbAutocompletion">
             <constraints>
-              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.after.dot.ms"/>
-            </properties>
-          </component>
-          <component id="a1d92" class="javax.swing.JCheckBox" binding="myCbXmlAutocompletion">
-            <constraints>
-              <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.after.gt.in.xml.ms"/>
-            </properties>
-          </component>
-          <component id="f8393" class="javax.swing.JCheckBox" binding="myCbJavadocAutocompletion">
-            <constraints>
-              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="10" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.after.at.in.java.doc.ms"/>
+              <text value="Autopopup code completion in (ms):"/>
             </properties>
           </component>
           <component id="28a18" class="javax.swing.JTextField" binding="myAutocompletionDelayField">
             <constraints>
-              <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                <minimum-size width="50" height="-1"/>
-                <maximum-size width="50" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <columns value="4"/>
-              <text value="1000"/>
-            </properties>
-          </component>
-          <component id="5110a" class="javax.swing.JTextField" binding="myXmlAutocompletionDelayField">
-            <constraints>
-              <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+              <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="50" height="-1"/>
                 <maximum-size width="50" height="-1"/>
               </grid>
@@ -143,24 +104,9 @@
               <text value="0"/>
             </properties>
           </component>
-          <component id="f05b7" class="javax.swing.JTextField" binding="myFldJavadocAutocompletionDelayField">
-            <constraints>
-              <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false">
-                <minimum-size width="50" height="-1"/>
-                <maximum-size width="50" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <columns value="4"/>
-              <margin top="0" left="0" bottom="0" right="0"/>
-              <opaque value="true"/>
-              <requestFocusEnabled value="true"/>
-              <text value="1000"/>
-            </properties>
-          </component>
           <component id="749a1" class="javax.swing.JCheckBox" binding="myCbAutopopupJavaDoc">
             <constraints>
-              <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <margin top="2" left="2" bottom="12" right="2"/>
@@ -169,7 +115,7 @@
           </component>
           <component id="a1f3b" class="javax.swing.JTextField" binding="myAutopopupJavaDocField">
             <constraints>
-              <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false">
+              <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="50" height="-1"/>
                 <maximum-size width="50" height="-1"/>
               </grid>
