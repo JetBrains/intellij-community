@@ -15,29 +15,41 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingContextsPanel {
+public class ScriptingLibrariesPanel {
   private JPanel myTopPanel;
-  private JButton myAddContextButton;
-  private JButton myRemoveContextButton;
-  private JButton myEditContextButton;
-  private JPanel myScriptingContextsPanel;
-  private JPanel myPatternsPanel;
-  private JButton myAddPatternButton;
-  private JButton myRemovePatternButton;
-  private JButton myEditPatternButton;
-  private JBTable myPatternTable;
-  private JBList myContextsList;
+  private JButton myAddLibrarytButton;
+  private JButton myRemoveLibraryButton;
+  private JButton myEditLibrarytButton;
+  private JPanel myScriptingLibrariesPanel;
+  private JBTable myLibraryTable;
+
+  public ScriptingLibrariesPanel(Project project) {
+    myLibraryTable.setModel(new ScriptingLibraryTableModel(project));
+    myAddLibrarytButton.addActionListener(new ActionListener(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        addLibrary();
+      }
+    });
+  }
 
   public JPanel getPanel() {
     return myTopPanel;
+  }
+
+  private void addLibrary() {
+
   }
 
 }
