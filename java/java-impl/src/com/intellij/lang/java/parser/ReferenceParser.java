@@ -179,8 +179,7 @@ public class ReferenceParser {
     }
 
     if (parameterList) {
-      typeInfo.isParameterized = (builder.getTokenType() == JavaTokenType.LT);
-      parseReferenceParameterList(builder, true, diamonds);
+      typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
     else {
       if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
@@ -229,8 +228,7 @@ public class ReferenceParser {
       }
 
       if (parameterList) {
-        typeInfo.isParameterized = (builder.getTokenType() == JavaTokenType.LT);
-        parseReferenceParameterList(builder, true, diamonds);
+        typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
       }
       else if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
         emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -241,14 +239,14 @@ public class ReferenceParser {
     return refElement;
   }
 
-  @NotNull
-  public static PsiBuilder.Marker parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard, final boolean diamonds) {
+  public static boolean parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard, final boolean diamonds) {
     final PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
-      return list;
+      return false;
     }
 
+    boolean isOk = true;
     while (true) {
       final PsiBuilder.Marker type = parseType(builder, true, wildcard, diamonds);
       if (type == null) {
@@ -259,12 +257,13 @@ public class ReferenceParser {
         break;
       }
       else if (!expectOrError(builder, JavaTokenType.COMMA, JavaErrorMessages.message("expected.gt.or.comma"))) {
+        isOk = false;
         break;
       }
     }
 
     list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
-    return list;
+    return isOk;
   }
 
   @NotNull

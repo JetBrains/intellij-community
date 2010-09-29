@@ -28,6 +28,9 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testAssignment0() { doParserTest("a = 0"); }
   public void testAssignment1() { doParserTest("a ="); }
 
+  public void testBinary0() { doParserTest("a + b"); }
+  public void testBinary1() { doParserTest("a < b"); }
+
   public void testCond0() { doParserTest("cond ? true : false"); }
   public void testCond1() { doParserTest("cond ?"); }
   public void testCond2() { doParserTest("cond ? true"); }
@@ -50,6 +53,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testParenth0() { doParserTest("(c)"); }
   public void testParenth1() { doParserTest("(this).f--"); }
   public void testParenth2() { doParserTest("("); }
+  public void testParenth3() { doParserTest("(a < b)"); }
 
   public void testNewInExprList() { doParserTest("call(new)"); }
 

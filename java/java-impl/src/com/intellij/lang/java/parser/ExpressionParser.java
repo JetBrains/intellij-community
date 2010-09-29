@@ -271,7 +271,7 @@ public class ExpressionParser {
 
       final PsiBuilder.Marker expr = parseUnary(builder);
       if (expr == null) {
-        if (!typeInfo.isParameterized) {
+        if (!typeInfo.isParameterized) {  // cannot parse correct parenthesized expression after correct parameterized type
           typeCast.rollbackTo();
           return parsePostfix(builder);
         }
