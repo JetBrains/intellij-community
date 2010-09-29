@@ -20,6 +20,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
+import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +35,11 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class DefaultScopesProvider implements CustomScopesProvider {
+  private final NamedScope myProjectTestScope;
+  private final NamedScope myNonProjectScope;
   private final NamedScope myProblemsScope;
   private final Project myProject;
+  private final List<NamedScope> myScopes;
 
   public static DefaultScopesProvider getInstance(Project project) {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, DefaultScopesProvider.class);
@@ -42,6 +47,8 @@ public class DefaultScopesProvider implements CustomScopesProvider {
 
   public DefaultScopesProvider(Project project) {
     myProject = project;
+    myProjectTestScope = new TestsScope(project);
+    myNonProjectScope = new NonProjectFilesScope(project);
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text, myProject) {
       public boolean contains(PsiFile file, NamedScopesHolder holder) {
@@ -49,11 +56,12 @@ public class DefaultScopesProvider implements CustomScopesProvider {
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
       }
     });
+    myScopes = Arrays.asList(getProblemsScope(), getAllScope(), myProjectTestScope, myNonProjectScope);
   }
 
   @NotNull
   public List<NamedScope> getCustomScopes() {
-    return Arrays.asList(getProblemsScope(), getAllScope());
+    return myScopes;
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})

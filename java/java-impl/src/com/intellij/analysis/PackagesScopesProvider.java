@@ -36,9 +36,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class PackagesScopesProvider implements CustomScopesProvider {
-  private final NamedScope myProjectTestScope;
   private final NamedScope myProjectProductionScope;
-  private final NamedScope myNonProjectScope;
   private final List<NamedScope> myScopes;
 
   public static PackagesScopesProvider getInstance(Project project) {
@@ -46,19 +44,13 @@ public class PackagesScopesProvider implements CustomScopesProvider {
   }
 
   public PackagesScopesProvider(Project project) {
-    myProjectTestScope = new TestsScope(project);
     myProjectProductionScope = new ProjectProductionScope(project);
-    myNonProjectScope = new NonProjectFilesScope(project);
-    myScopes = Arrays.asList(myProjectProductionScope, myNonProjectScope, myProjectTestScope);
+    myScopes = Arrays.asList(myProjectProductionScope);
   }
 
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return myScopes;
-  }
-
-  public NamedScope getProjectTestScope() {
-    return myProjectTestScope;
   }
 
   public NamedScope getProjectProductionScope() {
