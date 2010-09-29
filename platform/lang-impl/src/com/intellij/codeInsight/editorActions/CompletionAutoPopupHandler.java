@@ -18,9 +18,10 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -29,11 +30,35 @@ import com.intellij.psi.PsiFile;
  * @author peter
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
+  private Editor myEditor;
+  private int myLastOffset;
+
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    if (CompletionService.getCompletionService().getCurrentCompletion() != null) return Result.CONTINUE;
-    if (!Character.isLetter(charTyped)) return Result.CONTINUE;
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
+
+    if (!Character.isLetter(charTyped)) {
+      myEditor = null;
+      return Result.CONTINUE;
+    }
+
+    if (myEditor != null) {
+      if (editor != myEditor || editor.getCaretModel().getOffset() != myLastOffset + 1) {
+        myEditor = null;
+      }
+      return Result.CONTINUE;
+    }
+
+    myEditor = editor;
+    myLastOffset = editor.getCaretModel().getOffset();
+
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
+      @Override
+      public void mouseClicked(EditorMouseEvent e) {
+        editor.removeEditorMouseListener(this);
+        myEditor = null;
+      }
+    });
 
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
       @Override
