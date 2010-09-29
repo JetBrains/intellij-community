@@ -16,6 +16,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -143,7 +146,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
-    if (outputpath == null || (suite.isTrackTestFolders() && testOutputpath == null)) {
+    if ((outputpath == null && isModuleOutputNeeded(module, false)) || (suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, true))) {
       final Project project = module.getProject();
 
       if (Messages.showOkCancelDialog(
@@ -162,6 +165,19 @@ public class JavaCoverageEngine extends CoverageEngine {
         });
       }
       return true;
+    }
+    return false;
+  }
+
+  private static boolean isModuleOutputNeeded(Module module, boolean checkTestRoots) {
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+        if (checkTestRoots) {
+          if (sourceFolder.isTestSource()) return true;
+        } else {
+          if (!sourceFolder.isTestSource()) return true;
+        }
+      }
     }
     return false;
   }
