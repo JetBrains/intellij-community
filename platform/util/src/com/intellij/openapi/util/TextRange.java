@@ -90,7 +90,12 @@ public class TextRange {
 
   @NotNull
   public static TextRange from(int offset, int length) {
-    return new TextRange(offset, offset + length);
+    return create(offset, offset + length);
+  }
+
+  @NotNull
+  public static TextRange create(int startOffset, int endOffset) {
+    return new TextRange(startOffset, endOffset);
   }
 
   @NotNull
