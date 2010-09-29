@@ -156,16 +156,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myFocused = focused;
   }
 
-  public AsyncProcessIcon getProcessIcon() {
-    return myProcessIcon;
-  }
-
   public boolean isCalculating() {
     return myCalculating;
   }
 
   public void setCalculating(final boolean calculating) {
     myCalculating = calculating;
+    myProcessIcon.setVisible(calculating);
+    if (calculating) {
+      myProcessIcon.resume();
+    } else {
+      myProcessIcon.suspend();
+    }
   }
 
   public int getPreferredItemsCount() {
@@ -661,7 +663,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int offset = myEditor.getSelectionModel().hasSelection()
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
-    return Math.max(offset - myMinPrefixLength, 0);
+    return Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
   }
 
   private void selectMostPreferableItem() {
@@ -915,7 +917,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert myHidden;
     assert !myDisposed;
     myDisposed = true;
-    myProcessIcon.dispose();
+    Disposer.dispose(myProcessIcon);
     if (myEditorCaretListener != null) {
       myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
       myEditor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);

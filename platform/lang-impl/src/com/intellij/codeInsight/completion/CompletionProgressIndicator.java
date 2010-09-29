@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
@@ -36,10 +37,10 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldCaret;
   private int myOldStart;
   private int myOldEnd;
-  private boolean myPreventingAutoPopup;
+  private boolean myBackgrounded = true;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
                                      final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
@@ -102,8 +103,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
-        cancel();
-        finishCompletion();
+        lookupClosed();
 
         LookupElement item = event.getItem();
         if (item == null) return;
@@ -116,8 +116,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
 
       public void lookupCanceled(final LookupEvent event) {
-        cancel();
-        finishCompletion();
+        lookupClosed();
       }
     });
     myLookup.setCalculating(true);
@@ -127,9 +126,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    scheduleAdvertising();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleAdvertising();
+    }
 
     trackModifiers();
+  }
+
+  void notifyBackgrounded() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myBackgrounded = true;
+  }
+
+  boolean isBackgrounded() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myBackgrounded;
   }
 
   private void scheduleAdvertising() {
@@ -165,10 +176,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                if (isOutdated() || myEditor.getComponent().getRootPane() == null) {
+                if (isOutdated()) {
                   return;
                 }
                 if (!myLookup.isFocused() && !myInitialized) {
+                  return;
+                }
+                if (!isBackgrounded()) {
                   return;
                 }
                 updateLookup();
@@ -182,7 +196,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean isOutdated() {
-    return myEditor.isDisposed() || myDisposed;
+    return myDisposed ||
+           myEditor.isDisposed() ||
+           !ApplicationManager.getApplication().isUnitTestMode() && myEditor.getComponent().getRootPane() == null;
   }
 
   private void trackModifiers() {
@@ -278,11 +294,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myInitialized) {
       myInitialized = true;
-      if (myLookup.isCalculating()) {
-        final AsyncProcessIcon processIcon = myLookup.getProcessIcon();
-        processIcon.setVisible(true);
-        processIcon.resume();
-      }
       myLookup.show();
     }
     myLookup.refreshUi();
@@ -333,12 +344,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LookupManager.getInstance(myEditor.getProject()).hideActiveLookup();
   }
 
-  private void finishCompletion() {
+  private void lookupClosed() {
+    cancel();
+
     assert !myDisposed;
     myDisposed = true;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myQueue.dispose();
+    Disposer.dispose(myQueue);
     cleanup();
   }
 
@@ -346,7 +359,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public static void cleanupForNextTest() {
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.finishCompletion();
+      currentCompletion.lookupClosed();
     }
   }
 
@@ -354,26 +367,43 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     assert ApplicationManager.getApplication().isDispatchThread();
     myHint = null;
     myOldDocumentText = null;
+    unregisterItself();
+  }
+
+  private void unregisterItself() {
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
   public void stop() {
-    myQueue.cancelAllUpdates();
     super.stop();
+
+    myQueue.cancelAllUpdates();
+    myFreezeSemaphore.up();
 
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
-        if (myCount == 0 && !myLookup.isFocused()) {
-          myPreventingAutoPopup = true;
-          liveAfterDeath(null);
-          return;
-        }
+        if (isOutdated()) return;
+        if (isCanceled()) return;
 
-        if (!isCanceled()) {
-          myLookup.getProcessIcon().suspend();
-          myLookup.getProcessIcon().setVisible(false);
+        //what if a new completion was invoked by the user before this 'later'?
+        if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
+
+        myLookup.setCalculating(false);
+
+        if (!isBackgrounded()) return;
+
+        if (myCount == 0) {
+          HintManager.getInstance().hideAllHints();
+          LookupManager.getInstance(myContextOriginal.project).hideActiveLookup();
+          unregisterItself();
+
+          if (myLookup.isFocused() ) {
+            myHandler.handleEmptyLookup(myContextOriginal.project, myEditor, myParameters, CompletionProgressIndicator.this);
+          }
+        } else {
           updateLookup();
         }
+
       }
     });
 
@@ -381,7 +411,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void invokeLaterIfNotDispatch(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread() || application.isUnitTestMode()) {
+    if (application.isUnitTestMode()) {
       runnable.run();
     } else {
       application.invokeLater(runnable, myQueue.getModalityState());
@@ -443,6 +473,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
-    return completionType == myParameters.getCompletionType() && editor == myEditor && !myPreventingAutoPopup;
+    return completionType == myParameters.getCompletionType() && editor == myEditor;
   }
 }
