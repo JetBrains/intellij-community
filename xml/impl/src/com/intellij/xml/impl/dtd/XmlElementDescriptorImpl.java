@@ -139,7 +139,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
         }
         return true;
       }
-    }, false, false, XmlUtil.getContainingFile(getDeclaration()));
+    }, true, false, XmlUtil.getContainingFile(getDeclaration()));
 
     return result.toArray(new XmlElementDescriptor[result.size()]);
   }
