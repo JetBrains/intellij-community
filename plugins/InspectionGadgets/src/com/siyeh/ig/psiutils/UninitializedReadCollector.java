@@ -454,7 +454,6 @@ public class UninitializedReadCollector {
             return expressionAssignsVariable(operand, variable, stamp,
                     checkedMethods);
         } else{
-            assert false : "unknown expression: " + expression;
             return false;
         }
     }
