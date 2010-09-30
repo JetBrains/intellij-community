@@ -165,14 +165,25 @@ public class LineMarkerInfo<T extends PsiElement> {
       return myInfo.myIconAlignment;
     }
 
-    public boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+    private boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
       return
         myInfo.getElement() != null &&
         renderer.myInfo.getElement() != null &&
         myInfo.getElement() == renderer.myInfo.getElement() &&
         Comparing.equal(myInfo.myTooltipProvider, renderer.myInfo.myTooltipProvider) &&
         Comparing.equal(myInfo.myIcon, renderer.myInfo.myIcon);
-    } 
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof LineMarkerGutterIconRenderer && looksTheSameAs((LineMarkerGutterIconRenderer)obj);
+    }
+
+    @Override
+    public int hashCode() {
+      T element = myInfo.getElement();
+      return element == null ? 0 : element.hashCode();
+    }
   }
 
   @Override

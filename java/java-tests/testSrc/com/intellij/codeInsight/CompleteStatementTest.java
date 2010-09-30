@@ -208,6 +208,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
     doFileTest(path + getTestName(false) + "." + ext, path + getTestName(false) + "_after." + ext, true);
   }
 
+  @Override
   protected String getActionId() {
     return IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT;
   }

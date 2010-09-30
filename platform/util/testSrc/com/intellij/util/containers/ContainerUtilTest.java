@@ -52,6 +52,7 @@ public class ContainerUtilTest extends junit.framework.TestCase {
 
   public void testIterateWithCondition() throws Exception {
     Condition<Integer> cond = new Condition<Integer>() {
+      @Override
       public boolean value(Integer integer) {
         return integer > 2;
       }

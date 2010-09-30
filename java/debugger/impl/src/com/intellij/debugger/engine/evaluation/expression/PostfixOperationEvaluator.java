@@ -26,8 +26,8 @@ public class PostfixOperationEvaluator implements Evaluator{
   private Modifier myModifier;
 
   public PostfixOperationEvaluator(Evaluator operandEvaluator, Evaluator incrementImpl) {
-    myOperandEvaluator = operandEvaluator;
-    myIncrementImpl = incrementImpl;
+    myOperandEvaluator = new DisableGC(operandEvaluator);
+    myIncrementImpl = new DisableGC(incrementImpl);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

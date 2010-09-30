@@ -19,8 +19,6 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -40,7 +38,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -146,7 +143,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       if (file.isDirectory()) {
         final Boolean expandRecursively = myJarDirectories.get(file.getUrl());
         if (expandRecursively != null) {
-          addChildren(file, expanded, expandRecursively.booleanValue());
+          collectJarFiles(file, expanded, expandRecursively.booleanValue());
           continue;
         }
       }
@@ -155,26 +152,15 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return VfsUtil.toVirtualFileArray(expanded);
   }
 
-  private static void addChildren(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
+  public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
     for (VirtualFile child : dir.getChildren()) {
-      final FileType fileType = child.getFileType();
-      if (FileTypes.ARCHIVE.equals(fileType)) {
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, child.getPath()));
-          builder.append(JarFileSystem.JAR_SEPARATOR);
-          final VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(builder.toString());
-          if (jarRoot != null) {
-            container.add(jarRoot);
-          }
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+      final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+      if (jarRoot != null) {
+        container.add(jarRoot);
       }
       else {
         if (recursively && child.isDirectory()) {
-          addChildren(child, container, recursively);
+          collectJarFiles(child, container, recursively);
         }
       }
     }

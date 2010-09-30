@@ -493,6 +493,10 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return ids;
   }
 
+  public boolean isActionBound(@NotNull final String actionId) {
+    return getKeymapManager().getBoundActions().contains(actionId);
+  }
+
   public Shortcut[] getShortcuts(String actionId) {
     KeymapManagerEx keymapManager = getKeymapManager();
     if (keymapManager.getBoundActions().contains(actionId)) {

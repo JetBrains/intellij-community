@@ -39,6 +39,7 @@ public class MigrationTest extends MultiFileTestCase {
 
   private MultiFileTestCase.PerformAction createAction(final MigrationMap migrationMap) {
     return new MultiFileTestCase.PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         new MigrationProcessor(myProject, migrationMap).run();
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -46,6 +47,7 @@ public class MigrationTest extends MultiFileTestCase {
     };
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/migration/";
   }

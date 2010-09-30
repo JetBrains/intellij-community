@@ -61,6 +61,7 @@ public class ReflectionUtilTest extends TestCase {
   }
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     Reset.STATIC_STRING = "value";

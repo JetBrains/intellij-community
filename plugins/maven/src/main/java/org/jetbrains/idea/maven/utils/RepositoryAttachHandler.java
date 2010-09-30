@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -42,6 +43,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
@@ -73,7 +75,9 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     return MavenIcons.MAVEN_ICON;
   }
 
-  public ActionCallback performAttach(final Project project, final NullableComputable<Library.ModifiableModel> modelProvider) {
+  public ActionCallback performAttach(final Project project,
+                                      final LibraryEditor libraryEditor,
+                                      final @Nullable NullableComputable<Library.ModifiableModel> modelProvider) {
 
     MavenService.getInstance(project);
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false);
@@ -88,18 +92,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
       if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
       if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
-      resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), false, new Processor<List<MavenArtifact>>() {
+      resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), true, new Processor<List<MavenArtifact>>() {
         public boolean process(final List<MavenArtifact> artifacts) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              final Library.ModifiableModel modifiableModel = modelProvider.compute();
-              if (modifiableModel == null) {
-                callback.setRejected();
-              }
-              else {
-                replaceLibraryData(project, modifiableModel, artifacts, copyTo);
-                callback.setDone();
-              }
+              replaceLibraryData(project, libraryEditor, artifacts, copyTo);
+              callback.setDone();
             }
           });
           final boolean nothingRetrieved = artifacts.isEmpty();
@@ -139,14 +137,14 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   private static void replaceLibraryData(Project project,
-                                         Library.ModifiableModel library,
+                                         LibraryEditor libraryEditor,
                                          Collection<MavenArtifact> artifacts,
                                          String copyTo) {
     final String repoUrl = getLocalRepositoryUrl(project);
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      for (String url : library.getUrls(type)) {
+      for (String url : libraryEditor.getUrls(type)) {
         if (url.startsWith(repoUrl)) {
-          library.removeRoot(url, type);
+          libraryEditor.removeRoot(url, type);
         }
       }
     }
@@ -164,13 +162,13 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath()));
         manager.refreshAndFindFileByUrl(url);
         if (MavenExtraArtifactType.DOCS.getDefaultClassifier().equals(each.getClassifier())) {
-          library.addRoot(url, JavadocOrderRootType.getInstance());
+          libraryEditor.addRoot(url, JavadocOrderRootType.getInstance());
         }
         else if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(each.getClassifier())) {
-          library.addRoot(url, OrderRootType.SOURCES);
+          libraryEditor.addRoot(url, OrderRootType.SOURCES);
         }
         else {
-          library.addRoot(url, OrderRootType.CLASSES);
+          libraryEditor.addRoot(url, OrderRootType.CLASSES);
         }
       }
       catch (MalformedURLException e) {

@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-
-import java.util.Arrays;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -48,7 +47,7 @@ public class GrTupleDeclarationImpl extends GroovyPsiElementImpl implements GrTu
   }
 
   public int getVariableNumber(@NotNull GrVariable variable) {
-    return Arrays.asList(getChildren()).indexOf(variable);
+    return ArrayUtil.find(getVariables(), variable);
   }
 
   public String toString() {

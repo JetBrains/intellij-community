@@ -35,7 +35,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   protected static final int DEFAULT_HEADER_SIZE = 8;
 
   private static final int VERSION = 5;
-  private static final int CONNECTED_MAGIC = 0x12ad34e4;
+  private static final int DIRTY_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f + VERSION;
 
   private static final int ADDRESS_OFFSET = 0;
@@ -53,7 +53,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     myStorage = new RandomAccessDataFile(storageFilePath, pool);
     if (myStorage.length() == 0) {
       myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
-      myIsDirty = true;
+      markDirty();
     }
     else {
       if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
@@ -76,13 +76,6 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   protected abstract int getRecordSize();
 
   protected abstract byte[] getZeros();
-
-  public void markDirty() {
-    if (!myIsDirty) {
-      myIsDirty = true;
-      myStorage.putInt(HEADER_MAGIC_OFFSET, CONNECTED_MAGIC);
-    }
-  }
 
   public int createNewRecord() throws IOException {
     markDirty();
@@ -164,12 +157,10 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
   public void deleteRecord(final int record) throws IOException {
     ensureFreeRecordsScanned();
+    cleanRecord(record);
     setSize(record, -1);
-    clearDeletedRecord(record);
     myFreeRecordsList.add(record);
   }
-
-  protected abstract void clearDeletedRecord(int record);
 
   public int getVersion() {
     return myStorage.getInt(HEADER_VERSION_OFFSET);
@@ -202,7 +193,14 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   }
 
   public boolean isDirty() {
-    return myIsDirty;
+    return myIsDirty || myStorage.isDirty();
+  }
+
+  public void markDirty() {
+    if (!myIsDirty) {
+      myIsDirty = true;
+      myStorage.putInt(HEADER_MAGIC_OFFSET, DIRTY_MAGIC);
+    }
   }
 
   private void markClean() {

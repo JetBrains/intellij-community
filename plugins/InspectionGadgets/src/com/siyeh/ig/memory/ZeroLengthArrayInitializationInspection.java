@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.siyeh.ig.memory;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,31 +28,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ZeroLengthArrayAllocation";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "array.allocation.zero.length.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "array.allocation.zero.length.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ZeroLengthArrayInitializationVisitor();
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IntroduceConstantFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
@@ -59,12 +66,13 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
     private static class ZeroLengthArrayInitializationVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
                 return;
             }
-            if (isDeclaredConstant(expression)) {
+            if (ExpressionUtils.isDeclaredConstant(expression)) {
                 return;
             }
             registerError(expression);
@@ -80,20 +88,10 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
             if (expression.getParent() instanceof PsiNewExpression) {
                 return;
             }
-            if (isDeclaredConstant(expression)) {
+            if (ExpressionUtils.isDeclaredConstant(expression)) {
                 return;
             }
             registerError(expression);
-        }
-
-        private static boolean isDeclaredConstant(PsiExpression expression) {
-            final PsiField field =
-                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
-            if (field == null) {
-                return false;
-            }
-            return field.hasModifierProperty(PsiModifier.STATIC) &&
-                    field.hasModifierProperty(PsiModifier.FINAL);
         }
     }
 }

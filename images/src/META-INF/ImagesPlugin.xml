@@ -63,10 +63,8 @@
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
               icon="/org/intellij/images/icons/ZoomOut.png"
-              text="Zoom Out">
-        <keyboard-shortcut first-keystroke="control SUBTRACT" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control MINUS" keymap="$default"/>
-      </action>
+              text="Zoom Out"
+              use-shortcut-of="CollapseAll"/>
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
               icon="/org/intellij/images/icons/ActualSize.png"
@@ -108,9 +106,7 @@
       <separator/>
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
-              icon="/actions/cancel.png">
-        <keyboard-shortcut first-keystroke="control F4" keymap="$default"/>
-      </action>
+              icon="/actions/cancel.png" use-shortcut-of="CloseContent"/>
     </group>
     <group id="Images.ThumbnailsPopupMenu">
       <reference id="CutCopyPasteGroup"/>

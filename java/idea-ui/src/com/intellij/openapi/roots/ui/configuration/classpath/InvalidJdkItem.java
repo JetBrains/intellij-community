@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.openapi.roots.OrderEntry;
+
 /**
  * @author nik
  */
-public class InvalidJdkItem extends ClasspathTableItem {
+public class InvalidJdkItem extends ClasspathTableItem<OrderEntry> {
   public InvalidJdkItem() {
     super(null, false);
   }

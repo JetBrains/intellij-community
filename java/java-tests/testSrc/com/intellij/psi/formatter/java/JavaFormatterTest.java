@@ -1146,8 +1146,10 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     final PsiElement[] result = new PsiElement[1];
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment);

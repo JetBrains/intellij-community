@@ -41,7 +41,6 @@
     </group>
 
     <group id="JavaGenerateGroup2">
-      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="last"/>
@@ -143,7 +142,6 @@
     </group>
 
     <group id="RefactoringMenu1">
-      <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <action id="MoveToTheLeft" class="com.intellij.refactoring.changeSignature.MoveParameterLeftAction"/>
       <action id="MoveToTheRight" class="com.intellij.refactoring.changeSignature.MoveParameterRightAction"/>
       <action id="ChangeTypeSignature"
@@ -152,7 +150,7 @@
               description="Change type of the return type of the method, field, parameter, variable or class type arguments and correct all references"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
     </group>
 
     <group id="RefactoringMenu2">
@@ -185,10 +183,6 @@
 
     <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
-    </action>
-
-    <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ReplaceMethodWithMethodObject"/>
     </action>
 
     <group id="BuildMenu" popup="true">
@@ -376,8 +370,7 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
 
-    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction">
-      <keyboard-shortcut first-keystroke="control shift F9" keymap="$default"/>
+    <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
@@ -436,8 +429,8 @@
     </group>
 
     <group id="MethodHierarchyPopupMenu">
-      <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction"/>
-      <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction"/>
+      <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction" use-shortcut-of="ImplementMethods"/>
+      <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction" use-shortcut-of="OverrideMethods"/>
       <separator/>
       <action id="MethodHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"/>
       <reference ref="EditSource"/>

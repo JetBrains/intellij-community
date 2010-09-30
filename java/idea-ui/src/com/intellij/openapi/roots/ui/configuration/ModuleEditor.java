@@ -409,7 +409,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  private class LibraryTableInvocationHandler implements InvocationHandler {
+  private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList("removeLibrary" /*,"createLibrary"*/));
 
@@ -450,6 +450,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
+    @Override
+    public Object getDelegate() {
+      return myDelegateTable;
+    }
   }
 
   private class LibraryInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
@@ -478,7 +482,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  private class LibraryModifiableModelInvocationHandler implements InvocationHandler {
+  private class LibraryModifiableModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final Library.ModifiableModel myDelegateModel;
 
     LibraryModifiableModelInvocationHandler(Library.ModifiableModel delegateModel) {
@@ -499,9 +503,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
       }
     }
+
+    @Override
+    public Object getDelegate() {
+      return myDelegateModel;
+    }
   }
 
-  private class LibraryTableModelInvocationHandler implements InvocationHandler {
+  private class LibraryTableModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable.ModifiableModel myDelegateModel;
 
     LibraryTableModelInvocationHandler(LibraryTable.ModifiableModel delegateModel) {
@@ -536,6 +545,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           updateOrderEntriesInEditors();
         }
       }
+    }
+
+    @Override
+    public Object getDelegate() {
+      return myDelegateModel;
     }
   }
 

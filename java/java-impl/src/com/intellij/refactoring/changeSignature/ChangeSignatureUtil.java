@@ -72,19 +72,21 @@ public class ChangeSignatureUtil {
           }
         }
       } else {
-        PsiElement anchor = null;
-        if (index == 0) {
-          anchor = list.getFirstChild();
-        } else {
-          anchor = elements.get(index - 1);
-        }
-        final PsiElement psi = Factory
-          .createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(list.getNode()), list.getManager())
-          .getPsi();
-        if (anchor != null) {
-          list.addAfter(psi, anchor);
-        } else {
-          list.add(psi);
+        if (newElements.size() > 1) {
+          PsiElement anchor;
+          if (index == 0) {
+            anchor = list.getFirstChild();
+          } else {
+            anchor = elements.get(index - 1);
+          }
+          final PsiElement psi = Factory
+            .createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(list.getNode()), list.getManager())
+            .getPsi();
+          if (anchor != null) {
+            list.addAfter(psi, anchor);
+          } else {
+            list.add(psi);
+          }
         }
       }
       index++;

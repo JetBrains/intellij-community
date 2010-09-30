@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -40,23 +41,27 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private RegistryValue myIsEnabled;
 
   private Component myCurrentComponent;
+  private Component myQueuedComponent;
+
   private BalloonImpl myCurrentTipUi;
   private MouseEvent myCurrentEvent;
   private boolean myCurrentTipIsCentered;
+
+  private Runnable myHideRunnable;
 
   private JBPopupFactory myPopupFactory;
   private JLabel myTipLabel;
 
   private boolean myShowDelay = true;
 
-  private Alarm myShowAlarm = new Alarm();
-  private Alarm myHideAlarm = new Alarm();
+  private Alarm myAlarm = new Alarm();
 
   private int myX;
   private int myY;
   private RegistryValue myMode;
 
   private IdeTooltip myCurrentTooltip;
+  private Runnable myShowRequest;
 
   @NotNull
   @Override
@@ -119,7 +124,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           }
         }
       } else if (myCurrentComponent == null) {
-        maybeShowFor(c, me);
+        //maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
@@ -139,57 +144,63 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     queueShow(comp, me, Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP)));
   }
 
-  private void queueShow(final JComponent c, MouseEvent me, final boolean toCenter) {
-    myShowAlarm.cancelAllRequests();
+  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter) {
+    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), myTipLabel) {
+      @Override
+      protected boolean beforeShow() {
+        myCurrentEvent = me;
+
+        String text = c.getToolTipText(myCurrentEvent);
+        if (text == null || text.trim().length() == 0) return false;
+        myTipLabel.setText(text);
+        return true;
+      }
+    }.setToCenter(toCenter);
+
+    show(tooltip, false);
+  }
+
+  public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
+    myAlarm.cancelAllRequests();
+
     hideCurrent(null);
 
-    myCurrentComponent = c;
-    myCurrentEvent = me;
-    myX = me.getX();
-    myY = me.getY();
-    myShowAlarm.addRequest(new Runnable() {
+    myQueuedComponent = tooltip.getComponent();
+
+    myShowRequest = new Runnable() {
       @Override
       public void run() {
-        show(c, toCenter);
+        if (myShowRequest == null) return;
+
+        if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
+          hideCurrent(null);
+          return;
+        }
+
+        if (tooltip.beforeShow()) {
+          show(tooltip, null);
+        }
+        else {
+          hideCurrent(null);
+        }
       }
-    }, myShowDelay ? 1500 : 900);
-  }
+    };
 
-  private void show(JComponent c, boolean toCenter) {
-    if (myCurrentComponent != c || !c.isShowing()) return;
-
-    String text = c.getToolTipText(myCurrentEvent);
-
-    if (text == null || text.trim().length() == 0) return;
-
-    myTipLabel.setText(text);
-
-    show(new IdeTooltip(c, new Point(myX, myY), myTipLabel).setToCenter(toCenter), null);
-  }
-
-  public IdeTooltip showTipNow(IdeTooltip tooltip) {
-    myShowAlarm.cancelAllRequests();
-    myHideAlarm.cancelAllRequests();
-
-    show(tooltip, new Runnable() {
-      @Override
-      public void run() {
-        myShowAlarm.cancelAllRequests();
-        myHideAlarm.cancelAllRequests();
-
-        hideCurrent(null);
-      }
-    });
+    if (now) {
+      myShowRequest.run();
+    } else {
+      myAlarm.addRequest(myShowRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
+    }
 
     return tooltip;
   }
 
-  private void show(IdeTooltip tooltip, Runnable beforeShow) {
+  private void show(final IdeTooltip tooltip, Runnable beforeShow) {
     boolean toCenterX;
     boolean toCenterY;
 
     boolean toCenter = tooltip.isToCenter();
-    if (!toCenter) {
+    if (!toCenter && tooltip.isToCenterIfSmall()) {
       Dimension size = tooltip.getComponent().getSize();
       toCenterX = size.width < 64;
       toCenterY = size.height < 64;
@@ -237,8 +248,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myY = effectivePoint.y;
     myCurrentTipIsCentered = toCenter;
     myCurrentTooltip = tooltip;
+    myShowRequest = null;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
+          hideCurrent(null);
+        }
+      }
+    }, tooltip.getDismissDelay());
   }
 
 
@@ -254,16 +274,20 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIManager.getColor("ToolTip.background");
   }
 
+  public String getUlImg(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? "/general/mdot-white.png" : "/general/mdot.png";
+  }
+
   public Color getBorderColor(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? getTextBackground(awtTooltip).darker() : Color.darkGray;
   }
 
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
-    return !useGraphite(awtTooltip);
+    return !awtTooltip;
   }
 
   public boolean isOpaqueAllowed(boolean awtTooltip) {
-    return !useGraphite(awtTooltip);
+    return !awtTooltip;
   }
 
   public Font getTextFont(boolean awtTooltip) {
@@ -274,7 +298,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     boolean useSystem;
 
     if ("default".equalsIgnoreCase(myMode.asString())) {
-      useSystem = false;
+      useSystem = !SystemInfo.isMac;
     } else if ("system".equalsIgnoreCase(myMode.asString())) {
       useSystem = true;
     } else if ("graphite".equalsIgnoreCase(myMode.asString())) {
@@ -286,29 +310,60 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
-    if (me != null && myCurrentTooltip != null && myCurrentTipUi != null) {
-      if (!myCurrentTooltip.canAutohideOn(me, myCurrentTipUi.isInsideBalloon(me))) return false;
+    myShowRequest = null;
+    if (myCurrentTooltip == null) return true;
+
+    if (me != null && myCurrentTipUi != null) {
+      if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
+        if (myHideRunnable != null) {
+          myHideRunnable = null;
+        }
+        return false;
+      }
     }
 
+    myHideRunnable = new Runnable() {
+      @Override
+      public void run() {
+        if (myHideRunnable != null) {
+          hideCurrentNow();
+          myHideRunnable = null;
+        }
+      }
+    };
+
+    if (me != null) {
+      myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
+    } else {
+      myHideRunnable.run();
+      myHideRunnable = null;
+    }
+
+    return true;
+  }
+
+  private void hideCurrentNow() {
     if (myCurrentTipUi != null) {
       myCurrentTipUi.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;
-      myHideAlarm.addRequest(new Runnable() {
+      myAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
           myShowDelay = true;
         }
-      }, 1000);
+      }, Registry.intValue("ide.tooltip.reshowDelay"));
     }
+
+    myShowRequest = null;
+    myCurrentTooltip = null;
     myCurrentTipUi = null;
     myCurrentComponent = null;
+    myQueuedComponent = null;
     myCurrentEvent = null;
     myCurrentTipIsCentered = false;
     myX = -1;
     myY = -1;
-
-    return true;
   }
 
   private void processEnabled() {
@@ -332,9 +387,13 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public void hide(IdeTooltip tooltip) {
-    if (myCurrentTooltip == tooltip) {
+    if (myCurrentTooltip == tooltip || tooltip == null) {
       hideCurrent(null);
     }
+  }
+
+  public void cancelAutoHide() {
+    myHideRunnable = null;
   }
 
 }

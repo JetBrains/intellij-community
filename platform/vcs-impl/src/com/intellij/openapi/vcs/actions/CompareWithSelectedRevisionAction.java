@@ -36,6 +36,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   private static final ColumnInfo<TreeNodeAdapter,String> DATE_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")){
     public String valueOf(final TreeNodeAdapter object) {
-      return VcsRevisionListCellRenderer.DATE_FORMAT.format(object.getRevision().getRevisionDate());
+      return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
     }
   };
 
@@ -83,7 +84,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
     public String valueOf(final VcsFileRevision vcsFileRevision) {
       final Date date = vcsFileRevision.getRevisionDate();
-      return date == null ? "" : VcsRevisionListCellRenderer.DATE_FORMAT.format(date);
+      return date == null ? "" : DateFormatUtil.formatPrettyDateTime(date);
     }
   };
 

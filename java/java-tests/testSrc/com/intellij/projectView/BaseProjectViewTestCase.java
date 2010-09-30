@@ -56,16 +56,19 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected Queryable.PrintInfo myPrintInfo;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     myStructure = new TestProjectTreeStructure(myProject) {
+      @Override
       public boolean isShowMembers() {
         return myShowMembers;
       }
     };
   }
 
+  @Override
   protected void tearDown() throws Exception {
     for (final AbstractProjectViewPSIPane myPane : myPanes) {
       Disposer.dispose(myPane);
@@ -177,6 +180,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   public static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {
     ProjectViewTestUtil.checkContainsMethod(rootElement, structure, new Function<AbstractTreeNode, VirtualFile[]>() {
+      @Override
       public VirtualFile[] fun(AbstractTreeNode kid) {
         if (kid instanceof PackageElementNode) {
           return ((PackageElementNode)kid).getVirtualFiles();
@@ -186,6 +190,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     });
   }
 
+  @Override
   protected String getTestPath() {
     return "projectView";
   }
@@ -203,6 +208,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
       super(BaseProjectViewTestCase.this.myProject);
     }
 
+    @Override
     public SelectInTarget createSelectInTarget() {
       return null;
     }
@@ -212,14 +218,17 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
       return "comp name";
     }
 
+    @Override
     protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
       return new AbstractTreeUpdater(treeBuilder);
     }
 
+    @Override
     @NotNull
     protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
       return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
                                     (ProjectAbstractTreeStructureBase)myTreeStructure) {
+        @Override
         protected AbstractTreeUpdater createUpdater() {
           return createTreeUpdater(this);
         }
@@ -231,37 +240,45 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
       };
     }
 
+    @Override
     protected ProjectAbstractTreeStructureBase createStructure() {
       return (ProjectAbstractTreeStructureBase)myStructure;
     }
 
+    @Override
     protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
       return new ProjectViewTree(treeModel) {
+        @Override
         public DefaultMutableTreeNode getSelectedNode() {
           return null;
         }
       };
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     @NotNull
     public String getId() {
       return "";
     }
 
+    @Override
     public String getTitle() {
       return null;
     }
 
+    @Override
     public int getWeight() {
       return 0;
     }
 
     public void projectOpened() {
       final Runnable runnable = new DumbAwareRunnable() {
+        @Override
         public void run() {
           final ProjectView projectView = ProjectView.getInstance(myProject);
           projectView.addProjectPane(MyAbstractProjectViewPSIPane.this);

@@ -26,8 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 
 /**
  * @author ilyas
@@ -81,15 +82,6 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
   }
 
   public PsiType getType() {
-    GrExpression invoked = getFunExpression();
-    if (invoked instanceof GrReferenceExpression) {
-      PsiType type = invoked.getType();
-      if (type != null) {
-        return TypesUtil.boxPrimitiveType(type, getManager(), getResolveScope());
-      }
-    }
-
-    return null;
+    return GroovyPsiManager.getInstance(getProject()).getType(this, GrMethodCallExpressionImpl.METHOD_CALL_TYPES_CALCULATOR);
   }
-
 }

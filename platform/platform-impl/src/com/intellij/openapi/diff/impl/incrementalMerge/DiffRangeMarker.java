@@ -31,11 +31,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
   private RangeInvalidListener myListener;
 
   DiffRangeMarker(DocumentEx document, TextRange range, RangeInvalidListener listener) {
-    this(document, range.getStartOffset(), range.getEndOffset(), listener);
-  }
-
-  private DiffRangeMarker(DocumentEx document, int start, int end, RangeInvalidListener listener) {
-    super(document, start, end);
+    super(document, range.getStartOffset(), range.getEndOffset());
     registerInDocument();
     myListener = listener;
     if (myListener != null) InvalidRangeDispatcher.addClient(document);

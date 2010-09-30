@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,18 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   @Nullable
   public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getFileType() != FileTypes.ARCHIVE) return null;
-    return findFileByPath(virtualFile.getPath() + JAR_SEPARATOR);
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    final String path;
+    try {
+      builder.append(virtualFile.getPath());
+      builder.append(JAR_SEPARATOR);
+      path = builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    return findFileByPath(path);
 
   }
 }

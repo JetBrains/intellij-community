@@ -176,18 +176,24 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     for (PsiElement element = myFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
          element = element.getNextSibling()) {
       if (element instanceof OuterLanguageElement) {
-        List<PsiElement> injectedElements = PsiTreeUtil.getInjectedElements((OuterLanguageElement)element);
-        for (PsiElement el : injectedElements) {
-          if (!isWhiteSpaceOrComment(el, range)) {
-            return false;
-          }
+        if (!isInjectedWhiteSpace(range, (OuterLanguageElement)element)) {
+          return false;
         }
-
       }
       else {
         if (!isWhiteSpaceOrComment(element)) {
           return false;
         }
+      }
+    }
+    return true;
+  }
+
+  private boolean isInjectedWhiteSpace(TextRange range, OuterLanguageElement element) {
+    List<PsiElement> injectedElements = PsiTreeUtil.getInjectedElements(element);
+    for (PsiElement el : injectedElements) {
+      if (!isWhiteSpaceOrComment(el, range)) {
+        return false;
       }
     }
     return true;
@@ -199,7 +205,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       return false;
     }
     intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
-                                  intersection.getEndOffset()-element.getTextRange().getStartOffset());
+                                  intersection.getEndOffset() - element.getTextRange().getStartOffset());
     return isWhiteSpaceOrComment(element) ||
            intersection.substring(element.getText()).trim().length() == 0;
   }
@@ -269,6 +275,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       if (commentedRange == null) {
         PsiElement comment = findCommentAtCaret();
         if (comment != null) {
+
           String commentText = comment.getText();
           if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
             commentedRange = comment.getTextRange();
@@ -278,6 +285,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
     return commentedRange;
   }
+
 
   @Nullable
   private TextRange getSelectedComments(CharSequence text, String prefix, String suffix) {

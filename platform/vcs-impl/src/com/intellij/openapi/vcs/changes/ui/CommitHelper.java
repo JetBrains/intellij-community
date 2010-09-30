@@ -460,7 +460,7 @@ public class CommitHelper {
           } else {
             message = VcsBundle.message("message.text.commit.finished.with.warnings");
           }
-          //new ChangesViewBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
+          //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
           Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
 
           if (errorsSize > 0) {

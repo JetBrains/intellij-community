@@ -44,7 +44,6 @@ public abstract class ExpandableItemsHandlerFactory {
   @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
     if (!Registry.is("ide.windowSystem.showListItemsPopup") || ApplicationManager.getApplication() == null) return null;
-
     return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
   }
 

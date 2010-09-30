@@ -46,6 +46,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -577,6 +578,11 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderGTKLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("GTK");
+  }
+
   public static boolean isFullRowSelectionLAF() {
     return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
@@ -726,14 +732,22 @@ public class UIUtil {
                                         final int startX,
                                         final int endX,
                                         final int height) {
-    g.setColor(new Color(100, 100, 100, 50));
-    g.fillRoundRect(startX - 2, 2, endX - startX + 4, height - 4, 4, 4);
+    final boolean drawRound = endX - startX > 4;
 
     g.setPaint(new GradientPaint(startX, 2, new Color(255, 234, 162), startX, height - 5, new Color(255, 208, 66)));
-    g.fillRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 6, 6);
+    g.fillRect(startX, 3, endX - startX, height - 5);
 
-    g.setColor(new Color(170, 170, 170, 200));
-    g.drawRoundRect(startX - 2, 2, endX - startX + 3, height - 5, 4, 4);
+    if (drawRound) {
+      g.drawLine(startX - 1, 4, startX - 1, height - 4);
+      g.drawLine(endX, 4, endX, height - 4);
+
+      g.setColor(new Color(100, 100, 100, 50));
+      g.drawLine(startX - 1, 4, startX - 1, height - 4);
+      g.drawLine(endX, 4, endX, height - 4);
+
+      g.drawLine(startX, 3, endX - 1, 3);
+      g.drawLine(startX, height - 3, endX - 1, height - 3);
+    }
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1006,13 +1020,18 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return getCssFontDeclaration(font, null, null);
+    return getCssFontDeclaration(font, null, null, null);
   }
 
   @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    if (resource != null) {
+      body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
+    }
     String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }
@@ -1392,8 +1411,6 @@ public class UIUtil {
           }
 
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
-          if (tree.isPathSelected(pressedPath)) return;
-
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
 
@@ -1401,10 +1418,7 @@ public class UIUtil {
               return;
             }
 
-            if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
-              return;
-            }
-
+            if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) return;
             if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
               selectPathForEvent(pressedPath, e);
             }
@@ -1423,6 +1437,9 @@ public class UIUtil {
 
       tree.setShowsRootHandles(true);
       tree.addMouseListener(mySelectionListener);
+
+      //final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+      //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "clearSelection");
     }
 
     @Override

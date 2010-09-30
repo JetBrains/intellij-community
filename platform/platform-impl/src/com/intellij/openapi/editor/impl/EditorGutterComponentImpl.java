@@ -42,8 +42,10 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -61,10 +63,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -978,11 +978,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
    */
   private boolean isFoldingPossible(int startOffset, int endOffset) {
     Document document = myEditor.getDocument();
-    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffset)) {
+    if (startOffset >= document.getTextLength()) {
+      return false;
+    }
+
+    int endOffsetToUse = Math.min(endOffset, document.getTextLength());
+    if (endOffsetToUse <= startOffset) {
+      return false;
+    }
+
+    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffsetToUse)) {
       return true;
     }
     return myEditor.getSettings().isAllowSingleLogicalLineFolding()
-      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty();
+      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffsetToUse).isEmpty();
   }
 
   private Rectangle rectangleByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {
@@ -997,7 +1006,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public void mouseMoved(final MouseEvent e) {
     String toolTip = null;
-    GutterIconRenderer renderer = getGutterRenderer(e);
+    final GutterIconRenderer renderer = getGutterRenderer(e);
     TooltipController controller = TooltipController.getInstance();
     if (renderer != null) {
       toolTip = renderer.getTooltipText();
@@ -1017,7 +1026,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           final int line = getLineNumAtPoint(e.getPoint());
           toolTip = provider.getToolTip(line, myEditor);
           if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);
+            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
             myLastGutterToolTip = toolTip;
           }
           if (myProviderToListener.containsKey(provider)) {
@@ -1030,12 +1039,43 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
+    Balloon.Position ballPosition = Balloon.Position.atRight;
     if (toolTip != null && toolTip.length() != 0) {
-      controller.showTooltipByMouseMove(myEditor, e, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
-                                        new HintHint(e));
+      LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(0, (int)e.getY()));
+      int line = pos.line;
+
+      final Ref<Point> t = new Ref<Point>(e.getPoint());
+      ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(pos.line);
+      if (row != null) {
+        final TreeMap<Integer, GutterIconRenderer> xPos = new TreeMap<Integer, GutterIconRenderer>();
+        final int[] currentPos = new int[] {0};
+        processIconsRow(pos.line, row, new LineGutterIconRendererProcessor() {
+          @Override
+          public void process(int x, int y, GutterIconRenderer r) {
+            xPos.put(x, r);
+            if (renderer == r) {
+              currentPos[0] = x;
+              Icon icon = r.getIcon();
+              t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+            }
+          }
+        });
+
+        ArrayList xx = new ArrayList();
+        xx.addAll(xPos.keySet());
+        int posIndex = xx.indexOf(currentPos[0]);
+        if (xPos.size() > 1 && posIndex == 0) {
+          ballPosition = Balloon.Position.below;
+        }
+      }
+
+      RelativePoint showPoint = new RelativePoint(this, t.get());
+
+      controller.showTooltipByMouseMove(myEditor, showPoint, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
+                                        new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition));
     }
     else {
-      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);
+      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
   }
 
@@ -1237,7 +1277,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void mouseExited(MouseEvent e) {
-    TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP);
+    TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
   }
 
   @Nullable

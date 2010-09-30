@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -32,7 +33,10 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     ofDefaultType,
   }
 
-  public MyResult weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+  public MyResult weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+    if (location == null) {
+      return null;
+    }
     if (location.getCompletionType() != CompletionType.BASIC) return MyResult.normal;
     if (item.getObject() instanceof PsiClass) return MyResult.normal;
 

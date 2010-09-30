@@ -12,6 +12,7 @@ public class CreateClassFromNewTest extends LightQuickFixTestCase {
     doAllTests(); 
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createClassFromNew";
   }

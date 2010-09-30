@@ -16,8 +16,8 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.StreamUtil;
+import com.intellij.history.core.Content;
+import com.intellij.history.core.StreamUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import java.util.List;
 
 public class ChangeSet {
   private final long myId;
-  private String myName;
+  @Nullable private String myName;
   private final long myTimestamp;
   private final List<Change> myChanges;
 
@@ -63,10 +63,11 @@ public class ChangeSet {
     }
   }
 
-  public void setName(String name) {
+  public void setName(@Nullable String name) {
     myName = name;
   }
 
+  @Nullable
   public String getName() {
     return myName;
   }
@@ -100,6 +101,10 @@ public class ChangeSet {
 
   public List<Change> getChanges() {
     return myChanges;
+  }
+
+  public boolean isEmpty() {
+    return myChanges.isEmpty();
   }
 
   public boolean affectsPath(String paths) {

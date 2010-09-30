@@ -29,14 +29,13 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,9 +44,6 @@ import java.util.List;
  * author: lesya
  */
 public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
-
-  public static final DateFormat DATE_FORMAT =
-      SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
 
   private final ListTableModel<EditorInfo> myModel = new ListTableModel<EditorInfo>(COLUMNS);
   private final TableView<EditorInfo> myTable = new TableView<EditorInfo>(myModel);
@@ -82,7 +78,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
 
   private final static ColumnInfo<EditorInfo, String> DATE = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.date.column.name")){
     public String valueOf(EditorInfo object) {
-      return DATE_FORMAT.format(object.getEditDate());
+      return DateFormatUtil.formatPrettyDateTime(object.getEditDate());
     }
 
     public Comparator<EditorInfo> getComparator() {

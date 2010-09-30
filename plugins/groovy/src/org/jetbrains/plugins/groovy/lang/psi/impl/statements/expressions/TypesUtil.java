@@ -474,4 +474,23 @@ public class TypesUtil {
   public static String getPsiTypeName(IElementType elemType) {
     return ourPrimitiveTypesToClassNames.get(elemType);
   }
+
+  @NotNull
+  public static PsiType getLeastUpperBound(PsiClass[] classes, PsiManager manager) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+
+    if (classes.length == 0) return factory.createTypeByFQClassName(JAVA_LANG_OBJECT);
+
+    PsiType type = factory.createType(classes[0]);
+
+    for (int i = 1; i < classes.length; i++) {
+      PsiType t = getLeastUpperBound(type, factory.createType(classes[i]), manager);
+      if (t != null) {
+        type = t;
+      }
+    }
+
+    return type;
+  }
+
 }

@@ -36,6 +36,7 @@ import java.io.File;
  */
 public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
 
+  @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveScript/";
   }
@@ -54,6 +55,10 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
 
   public void testScriptWithClasses() {
     doTest("scriptWithClasses", new String[]{"a/Foo.groovy"}, "b");
+  }
+
+  public void testFileWithTwoClasses() {
+    doTest("fileWithTwoClasses", new String[]{"a/Foo.groovy"}, "b");
   }
 
   private void performAction(String[] fileNames, String newDirName, String dir) {

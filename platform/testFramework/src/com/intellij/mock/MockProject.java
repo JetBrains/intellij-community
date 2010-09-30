@@ -32,10 +32,12 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null);
   }
 
+  @Override
   public boolean isDefault() {
     return false;
   }
 
+  @Override
   public void checkUnknownMacros(final boolean showDialog) {
   }
 
@@ -44,79 +46,96 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return ServiceManager.getService(this, PomModel.class);
   }
 
+  @Override
   public Condition getDisposed() {
     return new Condition() {
+      @Override
       public boolean value(final Object o) {
         return isDisposed();
       }
     };
   }
 
+  @Override
   @NotNull
   public IProjectStore getStateStore() {
     return new MockProjectStore();
   }
 
+  @Override
   public void init() {
   }
 
+  @Override
   public boolean isOptimiseTestLoadSpeed() {
     return false;
   }
 
+  @Override
   public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
     throw new UnsupportedOperationException("Method setOptimiseTestLoadSpeed not implemented in " + getClass());
   }
 
+  @Override
   public boolean isOpen() {
     return false;
   }
 
+  @Override
   public boolean isInitialized() {
     return false;
   }
 
+  @Override
   public VirtualFile getProjectFile() {
     return null;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getPresentableUrl() {
     return null;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getLocationHash() {
     return "mock";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @Override
   @NotNull
   public String getProjectFilePath() {
     return "";
   }
 
+  @Override
   public VirtualFile getWorkspaceFile() {
     return null;
   }
 
+  @Override
   @Nullable
   public VirtualFile getBaseDir() {
     return null;
   }
 
+  @Override
   public void save() {
   }
 

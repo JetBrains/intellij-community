@@ -53,12 +53,14 @@ public abstract class PsiTestCase extends ModuleTestCase {
   protected PsiTestData myTestDataAfter;
   private String myDataRoot;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
     myJavaFacade = (JavaPsiFacadeImpl) JavaPsiFacade.getInstance(myProject);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myJavaFacade = null;
     myPsiManager = null;

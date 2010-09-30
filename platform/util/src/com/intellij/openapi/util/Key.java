@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
+ * Provides type-safe access to data.
+ *
  * @author max
  * @author Konstantin Bulenkov
  */
@@ -56,6 +60,11 @@ public class Key<T> {
     return holder == null ? null : holder.getUserData(this);
   }
 
+  @Nullable
+  public T get(@Nullable Map<Key, Object> holder) {
+    return holder == null ? null : (T)holder.get(this);
+  }
+
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     final T t = get(holder);
     return t == null ? defaultValue : t;
@@ -76,6 +85,12 @@ public class Key<T> {
   public void set(@Nullable UserDataHolder holder, T value) {
     if (holder != null) {
       holder.putUserData(this, value);
+    }
+  }
+
+  public void set(@Nullable Map<Key, Object> holder, T value) {
+    if (holder != null) {
+      holder.put(this, value);
     }
   }
 }

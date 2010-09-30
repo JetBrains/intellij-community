@@ -33,6 +33,8 @@ public abstract class PsiBuilderFactory {
 
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree);
 
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon);
+
   /**
    * @deprecated consider using {@link #createBuilder(com.intellij.openapi.project.Project, ASTNode)} instead.
    */

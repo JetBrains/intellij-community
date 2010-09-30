@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class VcsRoot {
   public final AbstractVcs vcs;
   public final VirtualFile path;
+  private int hashcode;
 
   public VcsRoot(final AbstractVcs vcs, final VirtualFile path) {
     this.vcs = vcs;
@@ -45,8 +46,10 @@ public class VcsRoot {
 
   @Override
   public int hashCode() {
-    int result = vcs != null ? vcs.getName().hashCode() : 0;
-    result = 31 * result + (path != null ? path.hashCode() : 0);
-    return result;
+    if (hashcode == 0) {
+      hashcode = vcs != null ? vcs.getName().hashCode() : 0;
+      hashcode = 31 * hashcode + (path != null ? path.hashCode() : 0);
+    }
+    return hashcode;
   }
 }

@@ -48,10 +48,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -382,6 +382,10 @@ public class PsiUtil {
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
+    return isStaticsOK(owner, place, owner);
+  }
+
+  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, PsiElement resolveContext) {
     if (owner instanceof PsiMember) {
       if (place instanceof GrReferenceExpression) {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
@@ -457,9 +461,14 @@ public class PsiUtil {
           if (((PsiMember)owner).getContainingClass() == null) return true;
           if (owner instanceof GrVariable && !(owner instanceof GrField)) return true;
           if (owner.hasModifierProperty(GrModifier.STATIC)) return true;
-          final GrMember placeOwner = PsiTreeUtil.getParentOfType(place, GrMember.class);
-          if (placeOwner == null) return true;
-          return !placeOwner.hasModifierProperty(GrModifier.STATIC);
+
+          PsiElement stopAt = resolveContext != null ? PsiTreeUtil.findCommonParent(place, resolveContext) : null;
+          while (place != null && place != stopAt && !(place instanceof GrMember)) {
+            if (place instanceof PsiFile) break;
+            place = place.getParent();
+          }
+          if (place == null || place instanceof PsiFile || place == stopAt) return true;
+          return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
         }
       }
     }
@@ -880,7 +889,14 @@ public class PsiUtil {
         PsiSubstitutor substitutor = classResult.getSubstitutor();
         final ResolveState state =
           ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
-        final boolean toBreak = element.processDeclarations(processor, state, null, place);
+        final PsiMethod[] methods = clazz.getMethods();
+        boolean toBreak = true;
+        for (PsiMethod method : methods) {
+          if (method.isConstructor() && !processor.execute(method, state)) {
+            toBreak = false;
+            break;
+          }
+        }
 
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
         ContainerUtil.addAll(constructorResults, processor.getCandidates());
@@ -967,11 +983,33 @@ public class PsiUtil {
     }
   }
 
-  public static GrReturnStatement[] collectReturns(GrClosableBlock closure) {
-    return new GrReturnStatement[0];  // TODO Mr. Medvedev
+  @Nullable
+  public static PsiElement getNamedArgumentValue(GrNamedArgument otherNamedArgument, String argumentName) {
+    PsiElement parent = otherNamedArgument.getParent();
+
+    GrNamedArgument[] arguments;
+    if (parent instanceof GrArgumentList) {
+      arguments = ((GrArgumentList)parent).getNamedArguments();
+    }
+    else {
+      arguments = ((GrListOrMap)parent).getNamedArguments();
+    }
+
+    return getNamedArgumentValue(arguments, argumentName);
   }
 
-  public static GrStatement getLastStatement(GrClosableBlock closure) {
-    return null; // TODO Mr. Medvedev
+  @Nullable
+  public static PsiElement getNamedArgumentValue(GrNamedArgument[] arguments, String argumentName) {
+    for (GrNamedArgument namedArgument : arguments) {
+      GrArgumentLabel label = namedArgument.getLabel();
+      if (label != null) {
+        if (argumentName.equals(label.getName())) {
+          return namedArgument.getExpression();
+        }
+      }
+    }
+
+    return null;
   }
+
 }

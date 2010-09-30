@@ -16,8 +16,8 @@
 
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -31,6 +31,10 @@ public class RemoveUnnecessaryParenthesisTest extends LightCodeInsightFixtureTes
   }
 
   public void testRemoveUnnecessaryParenthesis() throws Throwable {
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions("Remove Unnecessary Parentheses")));
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
@@ -40,5 +44,9 @@ public class RemoveUnnecessaryParenthesisTest extends LightCodeInsightFixtureTes
   public void testNothingInsideClosure() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     assertEmpty(myFixture.filterAvailableIntentions("Remove Unnecessary Parentheses"));
+  }
+
+  public void testNamedArgs() {
+    doTest();
   }
 }

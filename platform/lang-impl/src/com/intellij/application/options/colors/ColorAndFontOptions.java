@@ -316,7 +316,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     result.addAll(new ArrayList<SearchableConfigurable>(mySubPanelFactories.values()));
-
     return result.toArray(new Configurable[result.size()]);
   }
 
@@ -633,8 +632,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           super.disposeUIResources();
           Disposer.dispose(myDisposable);
           if (myRootSchemesPanel != null) {
-              myRootSchemesPanel.disposeUIResources();
-            }
+            myRootSchemesPanel.disposeUIResources();
+          }
         }
         finally {
           myDisposeCompleted = true;

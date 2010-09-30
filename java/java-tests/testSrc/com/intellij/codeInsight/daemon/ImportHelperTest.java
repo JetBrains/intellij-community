@@ -30,6 +30,7 @@ import java.util.List;
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class ImportHelperTest extends DaemonAnalyzerTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
@@ -52,8 +53,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testImportsInsertedAlphabetically() throws Exception {
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               @NonNls String text = "class I {}";
@@ -82,8 +85,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testStaticImportsGrouping() throws Exception {
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               @NonNls String text = "import static java.lang.Math.max;\n" +
@@ -134,6 +139,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }, "", "");
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17();
   }
@@ -205,7 +211,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
       myEditor.getCaretModel().moveToOffset(offset - 1);
       result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_IMPORTED, result);
+      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
       UIUtil.dispatchAllInvocationEvents();
 
       assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
@@ -234,7 +240,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
       ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_IMPORTED, result);
+      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
       UIUtil.dispatchAllInvocationEvents();
 
       assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
@@ -265,7 +271,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
         (PsiJavaCodeReferenceElement)getFile().findReferenceAt(getEditor().getCaretModel().getOffset() - 2);
       ImportClassFix fix = new ImportClassFix(element);
       ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_IMPORTED, result);
+      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
 
       assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
     }

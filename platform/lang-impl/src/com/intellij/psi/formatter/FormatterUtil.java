@@ -135,9 +135,23 @@ public class FormatterUtil {
         else {
           treeParent.removeChild(treePrev);
         }
+
+        // There is a possible case that more than one PSI element is matched by the target text range.
+        // That is the case, for example, for Python's multi-line expression. It may looks like below:
+        //     import contextlib,\
+        //       math, decimal
+        // Here single range contains two blocks: '\' & '\n  '. So, we may want to replace that range to another text, hence,
+        // we replace last element located there with it ('\n  ') and want to remove any remaining elements ('\').
+        ASTNode removeCandidate = findPreviousWhiteSpace(whiteSpaceElement, whiteSpaceToken);
+        while (textRange != null && removeCandidate != null && removeCandidate.getStartOffset() >= textRange.getStartOffset()) {
+          treePrev = findPreviousWhiteSpace(removeCandidate, whiteSpaceToken);
+          removeCandidate.getTreeParent().removeChild(removeCandidate);
+          removeCandidate = treePrev;
+        }
         //treeParent.subtreeChanged();
       }
     }
+
   }
 
   private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
@@ -279,5 +293,14 @@ public class FormatterUtil {
     }
     if (prevNode == null) return false;
     return tokens.contains(prevNode.getElementType());
+  }
+
+  public static boolean isFollowedBy(ASTNode node, IElementType eType) {
+    ASTNode nextNode = node.getTreeNext();
+    while (nextNode != null && nextNode.getPsi() instanceof PsiWhiteSpace) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return nextNode.getElementType() == eType;
   }
 }

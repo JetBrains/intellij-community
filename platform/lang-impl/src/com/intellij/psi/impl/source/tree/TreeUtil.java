@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 public class TreeUtil {
@@ -53,10 +55,10 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
+    for (ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()) {
       if (element.getElementType() == type) return element;
     }
     return null;
@@ -64,7 +66,7 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode skipElements(ASTNode element, TokenSet types) {
-    while(true){
+    while (true) {
       if (element == null) return null;
       if (!types.contains(element.getElementType())) break;
       element = element.getTreeNext();
@@ -86,7 +88,7 @@ public class TreeUtil {
     if (prev == null) return null;
     ASTNode firstChildNode = parent.getFirstChildNode();
     ASTNode lastRelevant = null;
-    while(firstChildNode != prev){
+    while (firstChildNode != prev) {
       if (!types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
       firstChildNode = firstChildNode.getTreeNext();
     }
@@ -95,7 +97,7 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode findParent(ASTNode element, IElementType type) {
-    for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
+    for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
       if (parent.getElementType() == type) return parent;
     }
     return null;
@@ -103,11 +105,11 @@ public class TreeUtil {
 
   @Nullable
   public static LeafElement findFirstLeaf(ASTNode element) {
-    if (element instanceof LeafElement){
+    if (element instanceof LeafElement) {
       return (LeafElement)element;
     }
-    else{
-      for(ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
+    else {
+      for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         LeafElement leaf = findFirstLeaf(child);
         if (leaf != null) return leaf;
       }
@@ -126,7 +128,7 @@ public class TreeUtil {
       return element;
     }
     else {
-      for(TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
+      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         TreeElement leaf = findFirstLeafOrChameleon(child);
         if (leaf != null) return leaf;
       }
@@ -136,10 +138,10 @@ public class TreeUtil {
 
   @Nullable
   public static LeafElement findLastLeaf(ASTNode element) {
-    if (element instanceof LeafElement){
+    if (element instanceof LeafElement) {
       return (LeafElement)element;
     }
-    for(ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()){
+    for (ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()) {
       LeafElement leaf = findLastLeaf(child);
       if (leaf != null) return leaf;
     }
@@ -157,25 +159,48 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode findCommonParent(ASTNode one, ASTNode two){
+  public static ASTNode findCommonParent(ASTNode one, ASTNode two) {
     // optimization
-    if(one == two) return one;
+    if (one == two) return one;
     final Set<ASTNode> parents = new HashSet<ASTNode>(20);
     while (one != null) {
       parents.add(one);
       one = one.getTreeParent();
     }
-    while(two != null){
-      if(parents.contains(two)) return two;
+    while (two != null) {
+      if (parents.contains(two)) return two;
       two = two.getTreeParent();
     }
     return null;
   }
 
+  public static Pair<ASTNode, ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
+    if (one == two) return (Pair)Pair.create(null, null);
+
+    LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
+    LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
+    while (one != null) {
+      oneParents.add(one);
+      one = one.getTreeParent();
+    }
+    while (two != null) {
+      twoParents.add(two);
+      two = two.getTreeParent();
+    }
+
+    do {
+      one = oneParents.pollLast();
+      two = twoParents.pollLast();
+    }
+    while (one == two && one != null);
+
+    return new Pair(one, two);
+  }
+
   public static void clearCaches(TreeElement tree) {
     tree.clearCaches();
     TreeElement child = tree.getFirstChildNode();
-    while(child != null){
+    while (child != null) {
       clearCaches(child);
       child = child.getTreeNext();
     }
@@ -187,7 +212,7 @@ public class TreeUtil {
   }
 
   public static FileElement getFileElement(TreeElement parent) {
-    while(parent != null && !(parent instanceof FileElement)) {
+    while (parent != null && !(parent instanceof FileElement)) {
       parent = parent.getTreeParent();
     }
     return (FileElement)parent;
@@ -212,7 +237,10 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType,boolean expandChameleons) {
+  public static TreeElement nextLeaf(@NotNull TreeElement start,
+                                     CommonParentState commonParent,
+                                     IElementType searchedType,
+                                     boolean expandChameleons) {
     TreeElement element = start;
     while (element != null) {
       if (commonParent != null) {
@@ -245,7 +273,10 @@ public class TreeUtil {
   }
 
   @Nullable
-  private static TreeElement findFirstLeafOrType(@NotNull TreeElement element, final IElementType searchedType, final CommonParentState commonParent,final boolean expandChameleons) {
+  private static TreeElement findFirstLeafOrType(@NotNull TreeElement element,
+                                                 final IElementType searchedType,
+                                                 final CommonParentState commonParent,
+                                                 final boolean expandChameleons) {
     final TreeElement[] result = {null};
     element.acceptTree(new RecursiveTreeElementWalkingVisitor(expandChameleons) {
       @Override

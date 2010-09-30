@@ -24,20 +24,25 @@ public class NullMavenConsole extends MavenConsole {
     super(MavenExecutionOptions.LoggingLevel.DISABLED, false);
   }
 
+  @Override
   public boolean canPause() {
     return false;
   }
 
+  @Override
   public boolean isOutputPaused() {
     return false;
   }
 
+  @Override
   public void setOutputPaused(boolean outputPaused) {
   }
 
+  @Override
   public void attachToProcess(ProcessHandler processHandler) {
   }
 
+  @Override
   protected void doPrint(String text, MavenConsole.OutputType type) {
   }
 }

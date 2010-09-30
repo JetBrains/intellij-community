@@ -162,6 +162,28 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
   }
 
+  public boolean performCurrentQuestionAction() {
+    if (myQuestionAction != null && myQuestionHint != null) {
+      if (myQuestionHint.isVisible()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("performing an action:" + myQuestionAction);
+        }
+        if (myQuestionAction.execute()) {
+          if (myQuestionHint != null) {
+            myQuestionHint.hide();
+          }
+        }
+        return true;
+      }
+
+      myQuestionAction = null;
+      myQuestionHint = null;
+    }
+
+    return false;
+  }
+
+
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo info : myHintsStack) {
@@ -375,6 +397,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     for (HintInfo info : hints) {
         info.hint.hide();
     }
+    cleanup();
+  }
+
+  public void cleanup() {
     myHintsStack.clear();
     updateLastEditor(null);
   }

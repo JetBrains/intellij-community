@@ -54,6 +54,7 @@ import com.intellij.util.IncorrectOperationException;
 import javax.swing.*;
 
 public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
+  @Override
   protected String getTestPath() {
     return "structureView";
   }
@@ -87,6 +88,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                    "  myField2:boolean\n");
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
 
           final int offset = document.getLineStartOffset(5);
@@ -163,9 +165,11 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                                                      "  myField4:boolean\n");
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
 
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 innerClassField.delete();

@@ -17,12 +17,11 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -95,35 +94,30 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
 
   protected abstract int performAction(Editor editor, TextRange textRange);
 
-  private class Handler extends EditorActionHandler {
+  private class Handler extends EditorWriteActionHandler {
     @Override
-    public void execute(final Editor editor, DataContext dataContext) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final SelectionModel selectionModel = editor.getSelectionModel();
-          int changedLines = 0;
-          if (selectionModel.hasSelection()) {
-            changedLines = performAction(editor, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
-          }
-          else if (selectionModel.hasBlockSelection()) {
-            final int[] starts = selectionModel.getBlockSelectionStarts();
-            final int[] ends = selectionModel.getBlockSelectionEnds();
-            for (int i = 0; i < starts.length; i++) {
-              changedLines += performAction(editor, new TextRange(starts [i], ends [i]));
-            }
-          }
-          else {
-            changedLines += performAction(editor, new TextRange(0, editor.getDocument().getTextLength()));
-          }
-          if (changedLines == 0) {
-            HintManager.getInstance().showInformationHint(editor, "All lines already have requested indentation");
-          }
-          else {
-            HintManager.getInstance().showInformationHint(editor, "Changed indentation in " + changedLines + (changedLines == 1 ? " line" : " lines"));
-          }
+    public void executeWriteAction(final Editor editor, DataContext dataContext) {
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      int changedLines = 0;
+      if (selectionModel.hasSelection()) {
+        changedLines = performAction(editor, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
+      }
+      else if (selectionModel.hasBlockSelection()) {
+        final int[] starts = selectionModel.getBlockSelectionStarts();
+        final int[] ends = selectionModel.getBlockSelectionEnds();
+        for (int i = 0; i < starts.length; i++) {
+          changedLines += performAction(editor, new TextRange(starts [i], ends [i]));
         }
-      });
+      }
+      else {
+        changedLines += performAction(editor, new TextRange(0, editor.getDocument().getTextLength()));
+      }
+      if (changedLines == 0) {
+        HintManager.getInstance().showInformationHint(editor, "All lines already have requested indentation");
+      }
+      else {
+        HintManager.getInstance().showInformationHint(editor, "Changed indentation in " + changedLines + (changedLines == 1 ? " line" : " lines"));
+      }
     }
   }
 }

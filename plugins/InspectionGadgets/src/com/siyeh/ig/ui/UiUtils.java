@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.ui;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.util.Icons;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,7 +29,7 @@ public class UiUtils {
 
     private UiUtils() {}
 
-    public static ActionToolbar createAddRemoveToolbar(IGTable table1) {
+    public static ActionToolbar createAddRemoveToolbar(ListTable table1) {
         final AnAction addAction = new AddAction(table1);
         final AnAction removeAction = new RemoveAction(table1);
         final ActionGroup group =
@@ -39,9 +41,9 @@ public class UiUtils {
 
     private static class AddAction extends AnAction {
 
-        private final IGTable table;
+        private final ListTable table;
 
-        public AddAction(IGTable table) {
+        public AddAction(ListTable table) {
             super(InspectionGadgetsBundle.message("button.add"), "",
                     Icons.ADD_ICON);
             this.table = table;
@@ -74,9 +76,9 @@ public class UiUtils {
 
     private static class RemoveAction extends AnAction {
 
-        private final IGTable table;
+        private final ListTable table;
 
-        public RemoveAction(IGTable table) {
+        public RemoveAction(ListTable table) {
             super(InspectionGadgetsBundle.message("button.remove"), "",
                     Icons.DELETE_ICON);
             this.table = table;

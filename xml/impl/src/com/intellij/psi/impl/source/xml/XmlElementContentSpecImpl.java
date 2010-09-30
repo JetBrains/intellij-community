@@ -20,10 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +35,19 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec, XmlElementType {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementContentSpecImpl");
 
+  private static final TokenSet GROUPS_FILTER = TokenSet.create(XML_ELEMENT_CONTENT_GROUP);
+  private static final PsiElementArrayConstructor<XmlElementContentGroup> GROUPS_CONSTRUCTOR = new PsiElementArrayConstructor<XmlElementContentGroup>() {
+    @Override
+    public XmlElementContentGroup[] newPsiElementArray(int length) {
+      return new XmlElementContentGroup[length];
+    }
+  };
+
   public XmlElementContentSpecImpl() {
-    super(XmlElementType.XML_ELEMENT_CONTENT_SPEC);
+    super(XML_ELEMENT_CONTENT_SPEC);
   }
 
   public int getChildRole(ASTNode child) {
@@ -64,13 +76,19 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   }
 
   public boolean isMixed() {
-    return findElementByTokenType(XML_PCDATA) != null;
+    XmlElementContentGroup topGroup = getTopGroup();
+    return topGroup != null && ((XmlElementImpl)topGroup).findElementByTokenType(XML_PCDATA) != null;
   }
 
   public boolean hasChildren() {
     return !(isEmpty() || isAny() || isMixed());
   }
-  
+
+  @Override
+  public XmlElementContentGroup getTopGroup() {
+    return (XmlElementContentGroup)findElementByTokenType(XML_ELEMENT_CONTENT_GROUP);
+  }
+
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementContentSpec.class);

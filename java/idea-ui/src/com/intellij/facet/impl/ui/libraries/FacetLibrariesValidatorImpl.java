@@ -20,7 +20,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.facet.ui.libraries.*;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -31,6 +33,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -87,14 +90,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
-    final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    LibraryCompositionSettings libraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, 
-                                                                                           myDescription.getDefaultLibraryName(), baseDirPath,
-                                                                                           myDescription.getDefaultLibraryName(), null);
-    return new ValidationResult(text, new LibrariesQuickFix(libraryCompositionSettings));
+    return new ValidationResult(missingJars, new LibrariesQuickFix(missingLibraries, myDescription.getDefaultLibraryName(), baseDirPath));
   }
 
   private void onChange() {
@@ -124,41 +123,34 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private final LibraryCompositionSettings myLibrarySettings;
+    private LibraryInfo[] myMissingLibraries;
+    private String myDefaultLibraryName;
+    private String myBaseDirPath;
 
-    public LibrariesQuickFix(final LibraryCompositionSettings libraryCompositionSettings) {
+    public LibrariesQuickFix(LibraryInfo[] missingLibraries, String defaultLibraryName, String baseDirPath) {
       super(IdeBundle.message("missing.libraries.fix.button"));
-      myLibrarySettings = libraryCompositionSettings;
+      myMissingLibraries = missingLibraries;
+      myDefaultLibraryName = defaultLibraryName;
+      myBaseDirPath = baseDirPath;
     }
 
     public void run(final JComponent place) {
-      LibraryDownloadingMirrorsMap mirrorsMap = new LibraryDownloadingMirrorsMap();
-      for (LibraryInfo libraryInfo : myLibrarySettings.getLibraryInfos()) {
-        LibraryDownloadInfo downloadingInfo = libraryInfo.getDownloadingInfo();
-        if (downloadingInfo != null) {
-          RemoteRepositoryInfo repositoryInfo = downloadingInfo.getRemoteRepository();
-          if (repositoryInfo != null) {
-            mirrorsMap.registerRepository(repositoryInfo);
-          }
-        }
-      }
-      LibraryCompositionOptionsPanel panel = new LibraryCompositionOptionsPanel(myContext.getLibrariesContainer(), myLibrarySettings, mirrorsMap);
-      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, mirrorsMap);
+      final LibraryCompositionSettings settings = new LibraryCompositionSettings(myMissingLibraries, myDefaultLibraryName, myBaseDirPath);
+      LibraryOptionsPanel panel = new LibraryOptionsPanel(settings, myContext.getLibrariesContainer(), false);
+      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel);
       dialog.show();
+      Disposer.dispose(settings);
       onChange();
     }
   }
 
   private class LibraryCompositionDialog extends DialogWrapper {
-    private final LibraryCompositionOptionsPanel myPanel;
-    private final LibraryDownloadingMirrorsMap myMirrorsMap;
+    private final LibraryOptionsPanel myPanel;
 
-    private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,
-                                     final LibraryDownloadingMirrorsMap mirrorsMap) {
+    private LibraryCompositionDialog(final JComponent parent, final LibraryOptionsPanel panel) {
       super(parent, true);
       setTitle(IdeBundle.message("specify.libraries.dialog.title"));
       myPanel = panel;
-      myMirrorsMap = mirrorsMap;
       init();
     }
 
@@ -168,9 +160,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     protected void doOKAction() {
       myPanel.apply();
-      final LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
+      final LibraryCompositionSettings settings = myPanel.getSettings();
       final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel(), false)) {
+      if (settings.downloadFiles(myPanel.getMainPanel(), false)) {
         ModifiableRootModel rootModel = myContext.getModifiableRootModel();
         if (rootModel == null) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();

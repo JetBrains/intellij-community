@@ -16,7 +16,7 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.storage.Content;
+import com.intellij.history.core.Content;
 
 import java.io.DataInput;
 import java.io.DataOutput;

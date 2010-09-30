@@ -21,10 +21,10 @@ import com.intellij.conversion.ComponentManagerSettings;
 import com.intellij.conversion.ModuleSettings;
 import com.intellij.facet.FacetManagerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.roots.impl.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -69,7 +69,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
     final Element facetManager = getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     final ArrayList<Element> elements = new ArrayList<Element>();
-    for (Element child : JDomConvertingUtil.getChildren(facetManager, FacetManagerImpl.FACET_ELEMENT)) {
+    for (Element child : JDOMUtil.getChildren(facetManager, FacetManagerImpl.FACET_ELEMENT)) {
       if (facetTypeId.equals(child.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE))) {
         elements.add(child);
       }
@@ -94,7 +94,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   public Collection<File> getSourceRoots(boolean includeTests) {
     final List<File> result = new ArrayList<File>();
     for (Element contentRoot : getContentRootElements()) {
-      for (Element sourceFolder : JDomConvertingUtil.getChildren(contentRoot, SourceFolderImpl.ELEMENT_NAME)) {
+      for (Element sourceFolder : JDOMUtil.getChildren(contentRoot, SourceFolderImpl.ELEMENT_NAME)) {
         boolean isTestFolder = Boolean.parseBoolean(sourceFolder.getAttributeValue(SourceFolderImpl.TEST_SOURCE_ATTR));
         if (includeTests || !isTestFolder) {
           result.add(getFile(sourceFolder.getAttributeValue(SourceFolderImpl.URL_ATTRIBUTE)));
@@ -105,7 +105,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   private List<Element> getContentRootElements() {
-    return JDomConvertingUtil.getChildren(getComponentElement(MODULE_ROOT_MANAGER_COMPONENT), ContentEntryImpl.ELEMENT_NAME);
+    return JDOMUtil.getChildren(getComponentElement(MODULE_ROOT_MANAGER_COMPONENT), ContentEntryImpl.ELEMENT_NAME);
   }
 
   @NotNull
@@ -176,7 +176,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   private List<Element> getOrderEntries() {
     final Element component = getComponentElement(MODULE_ROOT_MANAGER_COMPONENT);
-    return JDomConvertingUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
+    return JDOMUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
   }
 
   @NotNull
@@ -205,7 +205,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   private void addExcludedFolder(File directory, Element contentRoot) throws IOException {
-    for (Element excludedFolder : JDomConvertingUtil.getChildren(contentRoot, ExcludeFolderImpl.ELEMENT_NAME)) {
+    for (Element excludedFolder : JDOMUtil.getChildren(contentRoot, ExcludeFolderImpl.ELEMENT_NAME)) {
       final File excludedDir = getFile(excludedFolder.getAttributeValue(ExcludeFolderImpl.URL_ATTRIBUTE));
       if (FileUtil.isAncestor(excludedDir, directory, false)) {
         return;

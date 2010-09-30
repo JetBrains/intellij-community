@@ -28,6 +28,7 @@ public class InspectionProfileTest extends TestCase {
   private static final String PROFILE = "ToConvert";
   private final IdeaTestFixture myFixture = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
+  @Override
   protected void setUp() throws Exception {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     super.setUp();
@@ -35,6 +36,7 @@ public class InspectionProfileTest extends TestCase {
     InspectionToolRegistrar.getInstance().ensureInitialized();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     super.tearDown();

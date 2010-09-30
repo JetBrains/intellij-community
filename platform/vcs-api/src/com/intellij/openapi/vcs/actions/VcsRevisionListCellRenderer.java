@@ -18,14 +18,11 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.text.DateFormatUtil;
 
 import javax.swing.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 public class VcsRevisionListCellRenderer extends ColoredListCellRenderer {
-  public static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
-
   protected void customizeCellRenderer(JList list,
                                        Object value,
                                        int index,
@@ -45,7 +42,7 @@ public class VcsRevisionListCellRenderer extends ColoredListCellRenderer {
       result.append(")");
     }
     result.append(" ");
-    result.append(DATE_FORMAT.format(revision.getRevisionDate()));
+    result.append(DateFormatUtil.formatPrettyDateTime(revision.getRevisionDate()));
     result.append(" ");
     result.append(revision.getAuthor());
     return  result.toString();

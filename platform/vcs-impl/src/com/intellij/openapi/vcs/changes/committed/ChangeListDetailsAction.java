@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.text.DateFormat;
 
 /**
  * @author yole
@@ -61,7 +61,6 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
   public static void showDetailsPopup(final Project project, final CommittedChangeList changeList) {
     StringBuilder detailsBuilder = new StringBuilder("<html><head>");
     detailsBuilder.append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
-    DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
     final AbstractVcs vcs = changeList.getVcs();
     CachingCommittedChangesProvider provider = null;
     if (vcs != null) {
@@ -72,7 +71,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     }
     @NonNls String committer = "<b>" + changeList.getCommitterName() + "</b>";
     detailsBuilder.append(VcsBundle.message("changelist.details.committed.format", committer,
-                                            dateFormat.format(changeList.getCommitDate())));
+                                            DateFormatUtil.formatPrettyDateTime(changeList.getCommitDate())));
     detailsBuilder.append("<br>");
 
     if (provider != null) {

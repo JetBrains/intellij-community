@@ -601,4 +601,24 @@ class Zoo {
     def resolved = ref.resolve()
     assertInstanceOf resolved, GrVariable
   }
+
+  public void testCommandExpressionStatement1() {
+    PsiElement method = resolve("A.groovy")
+    assertInstanceOf method, GrMethod
+    assertEquals "foo2", method.name
+  }
+
+  public void testCommandExpressionStatement2() {
+    PsiElement method = resolve("A.groovy")
+    assertInstanceOf method, GrMethod
+    assertEquals "foo3", method.name
+  }
+
+  public void testUpperCaseFieldAndGetter() {
+    assertTrue resolve("A.groovy") instanceof GrMethod
+  }
+
+  public void testUpperCaseFieldWithoutGetter() {
+    assertTrue resolve("A.groovy") instanceof GrAccessorMethod
+  }
 }

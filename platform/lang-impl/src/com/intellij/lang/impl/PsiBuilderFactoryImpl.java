@@ -33,14 +33,21 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
   }
 
   @Override
-  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode tree, @Nullable Lexer lexer,
+  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final LighterLazyParseableNode chameleon) {
+    final Language language = chameleon.getTokenType().getLanguage();
+    return new PsiBuilderImpl(project, language, createLexer(project, language), chameleon, chameleon.getText());
+  }
+
+  @Override
+  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode chameleon, @Nullable final Lexer lexer,
                                   @NotNull final Language lang, @NotNull final CharSequence seq) {
-    if (lexer == null) {
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
-      lexer = parserDefinition.createLexer(project);
-    }
-    return new PsiBuilderImpl(project, lang, lexer, tree, seq);
+    return new PsiBuilderImpl(project, lang, (lexer != null ? lexer : createLexer(project, lang)), chameleon, seq);
+  }
+
+  private static Lexer createLexer(final Project project, final Language lang) {
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
+    return parserDefinition.createLexer(project);
   }
 
   @TestOnly

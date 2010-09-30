@@ -15,6 +15,9 @@
  */
 package com.intellij.platform;
 
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
@@ -34,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -46,6 +51,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private JComboBox myProjectTypeComboBox;
   private JPanel myProjectTypePanel;
   private String myBaseDir;
+  private boolean myModifyingLocation = false;
+  private boolean myModifyingProjectName = false;
 
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
 
@@ -61,23 +68,53 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-        new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Location for Project Directory", "", myLocationField, project,
-                                                                             descriptor,
-                                                                             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Location for Project Directory", "", myLocationField,
+                                                                           project,
+                                                                           descriptor,
+                                                                           TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
 
-          protected void onFileChoosen(VirtualFile chosenFile) {
-            super.onFileChoosen(chosenFile);
-            myBaseDir = chosenFile.getPath();
-            myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
-          }
-        };
+        protected void onFileChoosen(VirtualFile chosenFile) {
+          super.onFileChoosen(chosenFile);
+          myBaseDir = chosenFile.getPath();
+          myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
+        }
+      };
     myLocationField.addActionListener(listener);
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myModifyingLocation = true;
+        String path = myLocationField.getText().trim();
+        if (path.endsWith(File.separator)) {
+          path = path.substring(0, path.length() - File.separator.length());
+        }
+        int ind = path.lastIndexOf(File.separator);
+        if (ind != -1) {
+          String projectName = path.substring(ind + 1, path.length());
+          if (!myProjectNameTextField.getText().trim().isEmpty()) {
+            myBaseDir = path.substring(0, ind);
+          }
+          if (!projectName.equals(myProjectNameTextField.getText())) {
+            if (!myModifyingProjectName) {
+              myProjectNameTextField.setText(projectName);
+            }
+          }
+        }
+        myModifyingLocation = false;
+      }
+    });
 
     myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        myLocationField.setText(new File(myBaseDir, myProjectNameTextField.getText()).getPath());
+        if (!myModifyingLocation) {
+          myModifyingProjectName = true;
+          File f = new File(myBaseDir);
+          myLocationField.setText(new File(f, myProjectNameTextField.getText()).getPath());
+          myModifyingProjectName = false;
+        }
       }
     });
+
     myProjectNameTextField.selectAll();
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
@@ -102,12 +139,65 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
             append("Empty project", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
-            DirectoryProjectGenerator generator = (DirectoryProjectGenerator) value;
+            DirectoryProjectGenerator generator = (DirectoryProjectGenerator)value;
             append(generator.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
         }
       });
     }
+
+    registerValidators(new FacetValidatorsManager() {
+      public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
+      }
+
+      public void validate() {
+        doValidate();
+      }
+    });
+  }
+
+  private void doValidate() {
+    String projectName = myProjectNameTextField.getText();
+    if (projectName.trim().isEmpty()) {
+      setOKActionEnabled(false);
+      setErrorText("Project name can't be empty");
+      return;
+    }
+    DirectoryProjectGenerator generator = getProjectGenerator();
+    if (generator != null) {
+      String baseDirPath = myLocationField.getTextField().getText();
+      ValidationResult validationResult = generator.validate(baseDirPath);
+      if (!validationResult.isOk()) {
+        setOKActionEnabled(false);
+        setErrorText(validationResult.getErrorMessage());
+        return;
+      }
+    }
+    setOKActionEnabled(true);
+    setErrorText(null);
+  }
+
+  private void registerValidators(final FacetValidatorsManager validatorsManager) {
+    validateOnTextChange(validatorsManager, myLocationField.getTextField());
+    validateOnSelectionChange(validatorsManager, myProjectTypeComboBox);
+  }
+
+  private static void validateOnSelectionChange(final FacetValidatorsManager validatorsManager, final JComboBox projectNameTextField) {
+    projectNameTextField.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validatorsManager.validate();
+      }
+    });
+  }
+
+  private static void validateOnTextChange(final FacetValidatorsManager validatorsManager, final JTextField textField) {
+    textField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validatorsManager.validate();
+      }
+    });
   }
 
   public static String getBaseDir() {

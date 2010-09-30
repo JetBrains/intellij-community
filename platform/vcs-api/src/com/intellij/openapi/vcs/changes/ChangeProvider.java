@@ -36,7 +36,7 @@ public interface ChangeProvider extends VcsProviderMarker {
    *
    * <p>The implementations of this method should not report changes outside 
    * of the dirty scope, but if these changes are reported, they will be
-   * ingored by the caller.</p>
+   * ignored by the caller.</p>
    *
    * @param dirtyScope a changes on the virtual file system
    * @param builder a builder of VCS changes

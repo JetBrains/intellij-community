@@ -98,6 +98,7 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
 
     final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(actionId);
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final Editor editor = myFixture.getEditor();
         handler.execute(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));

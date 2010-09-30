@@ -254,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   EditorImpl(@NotNull Document document, boolean viewer, Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
-    myScheme = new MyColorSchemeDelegate();
+    myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this);
@@ -408,6 +408,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
+    return new MyColorSchemeDelegate(customGlobalScheme);
+  }
+
   private void repaintGuide(IndentGuideDescriptor guide) {
     if (guide != null) {
       repaintLines(guide.startLine, guide.endLine);
@@ -483,6 +487,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDescent = -1;
     myPlainFontMetrics = null;
 
+    mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
     mySettings.reinitSettings();
@@ -878,6 +883,42 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         fontType = state.getMergedAttributes().getFontType();
       }
 
+      SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
+      if (softWrap != null) {
+        if (activeSoftWrapProcessed) {
+          prevX = x;
+          charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+          x += charWidth;
+          if (x >= px) {
+            onSoftWrapDrawing = true;
+            break outer;
+          }
+        }
+        else {
+          CharSequence softWrapText = softWrap.getText();
+          for (int i = 1/*Assuming line feed is located at the first position*/; i < softWrapText.length(); i++) {
+            c = softWrapText.charAt(i);
+            prevX = x;
+            charWidth = charToVisibleWidth(c, fontType, x);
+            x += charWidth;
+            if (x >= px) {
+              break outer;
+            }
+            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+          }
+
+          // Process 'after soft wrap' sign.
+          prevX = x;
+          charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          x += charWidth;
+          if (x >= px) {
+            onSoftWrapDrawing = true;
+            break outer;
+          }
+          column++;
+          activeSoftWrapProcessed = true;
+        }
+      }
       FoldRegion region = state.getCurrentFold();
       if (region != null) {
         char[] placeholder = region.getPlaceholderText().toCharArray();
@@ -892,59 +933,59 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         offset = region.getEndOffset();
       }
       else {
-        SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
-        if (softWrap != null) {
-          // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
-          // from its first line.
-          int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
-
-          // Process 'before soft wrap' drawing.
-          if (softWrapLinesToSkip <= 0) {
-            prevX = x;
-            charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-            x += charWidth;
-            if (x >= px) {
-              onSoftWrapDrawing = true;
-              break outer;
-            }
-            column++;
-          }
-
-          CharSequence softWrapText = softWrap.getText();
-          for (int i = 0; i < softWrapText.length(); i++) {
-            c = softWrapText.charAt(i);
-            if (softWrapLinesToSkip > 0) {
-              if (c == '\n') {
-                softWrapLinesToSkip--;
-              }
-              continue;
-            }
-            prevX = x;
-
-            charWidth = charToVisibleWidth(c, fontType, x);
-            if (charWidth == 0) {
-              charWidth = spaceSize;
-              break outer;
-            }
-
-            x += charWidth;
-            if (x >= px) {
-              break outer;
-            }
-            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
-          }
-          activeSoftWrapProcessed = true;
-
-          // Process 'after soft wrap' sign.
-          prevX = x;
-          charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
-          x += charWidth;
-          if (x >= px) {
-            onSoftWrapDrawing = true;
-            break outer;
-          }
-          column++;
-        }
+        //SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
+        //if (softWrap != null) {
+        //  // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
+        //  // from its first line.
+        //  int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
+        //
+        //  // Process 'before soft wrap' drawing.
+        //  if (softWrapLinesToSkip <= 0) {
+        //    prevX = x;
+        //    charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+        //    x += charWidth;
+        //    if (x >= px) {
+        //      onSoftWrapDrawing = true;
+        //      break outer;
+        //    }
+        //    column++;
+        //  }
+        //
+        //  CharSequence softWrapText = softWrap.getText();
+        //  for (int i = 0; i < softWrapText.length(); i++) {
+        //    c = softWrapText.charAt(i);
+        //    if (softWrapLinesToSkip > 0) {
+        //      if (c == '\n') {
+        //        softWrapLinesToSkip--;
+        //      }
+        //      continue;
+        //    }
+        //    prevX = x;
+        //
+        //    charWidth = charToVisibleWidth(c, fontType, x);
+        //    if (charWidth == 0) {
+        //      charWidth = spaceSize;
+        //      break outer;
+        //    }
+        //
+        //    x += charWidth;
+        //    if (x >= px) {
+        //      break outer;
+        //    }
+        //    column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        //  }
+        //  activeSoftWrapProcessed = true;
+        //
+        //  // Process 'after soft wrap' sign.
+        //  prevX = x;
+        //  charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+        //  x += charWidth;
+        //  if (x >= px) {
+        //    onSoftWrapDrawing = true;
+        //    break outer;
+        //  }
+        //  column++;
+        //}
 
         prevX = x;
         c = text.charAt(offset);
@@ -1049,24 +1090,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int logicalToVisualLine(int line) {
     assertReadAccess();
-    if (!myFoldingModel.isFoldingEnabled()) return line;
-
-
-    int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
-
-    FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
-    if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
-      if (offset < getDocument().getTextLength()) {
-        offset = outermostCollapsed.getStartOffset();
-        return offsetToVisualLine(offset);
-      }
-      else {
-        offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
-      }
-    }
-
-    line -= myFoldingModel.getFoldedLinesCountBefore(offset);
-    return line;
+    return logicalToVisualPosition(new LogicalPosition(line, 0)).line;
+    //if (!myFoldingModel.isFoldingEnabled()) return line;
+    //
+    //
+    //int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
+    //
+    //FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
+    //if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
+    //  if (offset < getDocument().getTextLength()) {
+    //    offset = outermostCollapsed.getStartOffset();
+    //    return offsetToVisualLine(offset);
+    //  }
+    //  else {
+    //    offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
+    //  }
+    //}
+    //
+    //line -= myFoldingModel.getFoldedLinesCountBefore(offset);
+    //return line;
   }
 
   @NotNull
@@ -1272,10 +1314,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
-    int yEndLine = logicalPositionToXY(new LogicalPosition(endLine + 1, 0)).y + WAVE_HEIGHT;
+    int endVisLine;
+    if (myDocument.getTextLength() <= 0) {
+      endVisLine = 0;
+    }
+    else {
+      endVisLine = offsetToVisualPosition(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine))).line;
+    }
+    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + WAVE_HEIGHT;
 
-    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
-    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
+    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
   }
 
   private void beforeChangedUpdate(DocumentEvent e) {
@@ -1491,6 +1540,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setBackgroundColor(Color color) {
+    myScrollPane.setBackground(color);
+
     if (getBackgroundIgnoreForced().equals(color)) {
       myForcedBackground = null;
       return;
@@ -1634,7 +1685,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @SuppressWarnings({"StatementWithEmptyBody"})
   private void paintBackgrounds(Graphics g, Rectangle clip) {
-    boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     Color defaultBackground = getBackgroundColor();
     g.setColor(defaultBackground);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
@@ -1757,21 +1807,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
     }
 
+    //TODO den check
     // Perform additional activity if soft wrap is added or removed during repainting.
-    if (mySoftWrapsChanged) {
-      mySoftWrapsChanged = false;
-      validateSize();
-
-      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-      repaintToScreenBottom(xyToLogicalPosition(position).line);
-
-      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-      // in accordance with the newly introduced soft wrap(s).
-      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-
-      // Ask caret model to update visual caret position.
-      getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
-    }
+    //if (mySoftWrapsChanged) {
+    //  mySoftWrapsChanged = false;
+    //  validateSize();
+    //
+    //  // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+    //  repaintToScreenBottom(xyToLogicalPosition(position).line);
+    //
+    //  // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+    //  // in accordance with the newly introduced soft wrap(s).
+    //  myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+    //
+    //  // Ask caret model to update visual caret position.
+    //  getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
+    //}
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -2742,12 +2793,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getDocument().getLineCount() - myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
   }
 
+  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     return logicalToVisualPosition(logicalPos, true);
   }
 
-  private VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
+  @Override
+  @NotNull
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
       return new VisualPosition(logicalPos.line, logicalPos.column);
@@ -2974,8 +3028,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (lineNumber >= totalLines) {
-      moveCaretToScreenPos(x, visibleLineNumberToYPosition(getVisibleLineCount() - 1));
+    if (lineNumber >= totalLines && totalLines > 0) {
+      int visibleLineCount = getVisibleLineCount();
+      moveCaretToScreenPos(x, visibleLineCount > 0 ? visibleLineNumberToYPosition( visibleLineCount - 1) : 0);
       return;
     }
 
@@ -3048,6 +3103,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           region.setExpanded(true);
         }
       });
+
+      // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
+      // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
+      getGutterComponentEx().invalidate();
     }
 
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection) {
@@ -3542,6 +3601,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 lineNumber += myDy;
               }
 
+              columnNumber = Math.max(0, columnNumber);
               VisualPosition pos = new VisualPosition(lineNumber, columnNumber);
               getCaretModel().moveToVisualPosition(pos);
               getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -4246,7 +4306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseExited(e);
       }
 
-      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP);
+      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
     private void runMousePressedCommand(final MouseEvent e) {
       myMousePressedEvent = e;
@@ -4481,7 +4541,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
         }
         else {
-          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP);
+          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
         }
       }
 
@@ -4508,12 +4568,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate implements EditorColorsScheme {
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
-    private MyColorSchemeDelegate() {
+    private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
+      myCustomGlobalScheme = globalScheme;
       updateGlobalScheme();
     }
 
@@ -4642,7 +4704,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void updateGlobalScheme() {
-      myGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      myGlobalScheme = myCustomGlobalScheme != null ? myCustomGlobalScheme
+                                                    :  EditorColorsManager.getInstance().getGlobalScheme();
     }
   }
 

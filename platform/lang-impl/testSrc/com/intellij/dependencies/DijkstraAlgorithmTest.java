@@ -37,10 +37,12 @@ public class DijkstraAlgorithmTest extends TestCase{
     graph.put("c", new String[]{"b"});
     graph.put("d", ArrayUtil.EMPTY_STRING_ARRAY);
     myGraph = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -61,10 +63,12 @@ public class DijkstraAlgorithmTest extends TestCase{
     graph.put("c", new String[]{"a"});
     graph.put("d", new String[]{"a", "c"});
     myGraph = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -85,10 +89,12 @@ public class DijkstraAlgorithmTest extends TestCase{
     graph.put("c", new String[]{"d"});
     graph.put("d", new String[]{"a", "b"});
     myGraph = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -111,10 +117,12 @@ public class DijkstraAlgorithmTest extends TestCase{
     graph.put("e", new String[]{"d", "f", "a"});
     graph.put("f", new String[]{"d"});
     myGraph = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){

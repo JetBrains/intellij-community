@@ -64,7 +64,7 @@ public class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
+    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
       LookupElement item = lookup.getCurrentItem();
       if (item != null){
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);

@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
-  private Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
+  private Map<Language, CommonCodeStyleSettings> myCommonSettingsMap = null;
   private final CodeStyleSettings myParentSettings;
 
   private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
@@ -86,7 +86,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   public CommonCodeStyleSettingsManager clone(CodeStyleSettings parentSettings) {
     CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
-    if (myCommonSettingsMap != null) {
+    if (myCommonSettingsMap != null && myCommonSettingsMap.size() > 0) {
       settingsManager.initCommonSettingsMap();
       for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
         settingsManager.registerCommonSettings(entry.getKey(), entry.getValue().clone());

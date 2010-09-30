@@ -103,7 +103,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
         }
       }
       else {
-        // cannot runreadaction here because of possible deadlock when writeaction in the queue
+        // cannot run readaction here because of possible deadlock when writeaction in the queue
         boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
         try {
           runnable.run();

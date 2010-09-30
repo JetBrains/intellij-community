@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -112,6 +113,24 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
     }
 
     PsiUtil.shortenReferences(newTypeElement);
+  }
+
+  @Override
+  public boolean isTuple() {
+    return findChildByClass(GrTupleDeclaration.class) != null;
+  }
+
+  @Override
+  public GrTypeElement getTypeElementGroovyForVariable(GrVariable var) {
+    if (!isTuple()) {
+      return getTypeElementGroovy();
+    }
+
+    final PsiElement psiElement = PsiUtil.skipWhitespaces(var.getPrevSibling(), false);
+    if (psiElement instanceof GrTypeElement) {
+      return (GrTypeElement)psiElement;
+    }
+    return null;
   }
 
   @Nullable

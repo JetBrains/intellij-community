@@ -76,16 +76,15 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
                                         @NotNull final Project project,
                                         @NotNull final EditorCustomization.Feature... features)
   {
-    return new LanguageTextField(language, project, "") {
+    return new LanguageTextField(language, project, "", false) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
-        ex.setOneLineMode(false);
         ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         ex.setHorizontalScrollbarVisible(true);
         EditorSettings settings = ex.getSettings();
-        settings.setAdditionalColumnsCount(0);
-        settings.setVirtualSpace(true);
+        settings.setAdditionalColumnsCount(3);
+        settings.setVirtualSpace(false);
         EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
         for (EditorCustomization.Feature feature : features) {
           for (EditorCustomization customization : customizations) {
@@ -96,6 +95,11 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
           }
         }
         return ex;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
       }
 
       @Override

@@ -229,12 +229,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                 final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
     boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
-        final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
-        ProgressIndicator localIndicator = progressManager.getProgressIndicator();
-
-        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
-        LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -285,12 +280,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       @Override
       public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> i) {
         LocalInspectionTool tool = i.first;
-        final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
-        ProgressIndicator localIndicator = progressManager.getProgressIndicator();
-
-        ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
-        LOG.assertTrue(original == indicator, original);
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 

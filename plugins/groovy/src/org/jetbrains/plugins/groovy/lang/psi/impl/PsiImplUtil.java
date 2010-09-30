@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -137,6 +138,7 @@ public class PsiImplUtil {
       GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
       while (closure != null) {
         PsiElement parent = closure.getParent();
+        if (parent instanceof GrArgumentList) parent = parent.getParent();
         if (parent instanceof GrMethodCall) {
           GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
           if (funExpr instanceof GrReferenceExpression) {
@@ -326,6 +328,7 @@ public class PsiImplUtil {
         method.hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Nullable
   public static PsiMethod resolveMethod(GrMethodCall expression) {
     final GrExpression methodExpr = expression.getInvokedExpression();
     if (methodExpr instanceof GrReferenceExpression) {

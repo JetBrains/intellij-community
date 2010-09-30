@@ -617,9 +617,7 @@ public class HighlightClassUtil {
 
   public static HighlightInfo checkThingNotAllowedInInterface(PsiElement element, PsiClass aClass) {
     if (aClass == null || !aClass.isInterface()) return null;
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                             element,
-                                             JavaErrorMessages.message("not.allowed.in.interface"));
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, JavaErrorMessages.message("not.allowed.in.interface"));
   }
 
 

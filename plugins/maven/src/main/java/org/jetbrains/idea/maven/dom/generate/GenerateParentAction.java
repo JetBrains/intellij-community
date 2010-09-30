@@ -20,6 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
@@ -31,7 +32,7 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
     super(new MavenGenerateProvider<MavenDomParent>(MavenDomBundle.message("generate.parent"), MavenDomParent.class) {
-      protected MavenDomParent doGenerate(final MavenDomProjectModel mavenModel, Editor editor) {
+      protected MavenDomParent doGenerate(@NotNull final MavenDomProjectModel mavenModel, Editor editor) {
         SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
         d.show();
         if (!d.isOK()) return null;

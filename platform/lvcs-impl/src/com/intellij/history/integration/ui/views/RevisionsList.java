@@ -17,7 +17,6 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
@@ -28,6 +27,7 @@ import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -61,7 +61,7 @@ public class RevisionsList {
 
     table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
 
-    table.setEmptyText(VcsBundle.message("history.empty"));
+    table.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     addSelectionListener(l);
   }
@@ -198,7 +198,6 @@ public class RevisionsList {
     private final JLabel myLabelLabel = new JLabel();
 
     private final ExpandableItemsHandler<TableCell> myToolTipHandler;
-    private boolean isToolTipShown;
 
     public MyCellRenderer(JBTable table) {
       myToolTipHandler = table.getExpandableItemsHandler();
@@ -242,7 +241,6 @@ public class RevisionsList {
       layoutPanel.add(headersPanel, BorderLayout.NORTH);
       layoutPanel.add(myItemPanel, BorderLayout.CENTER);
 
-      myWrapperPanel.add(layoutPanel);
       myWrapperPanel.setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {
@@ -254,13 +252,10 @@ public class RevisionsList {
           Dimension size = parent.getSize();
           Insets i = parent.getInsets();
           Dimension pref = layoutPanel.getPreferredSize();
-          if (isToolTipShown) {
-            layoutPanel.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), pref.height);
-          } else {
-            layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
-          }
+          layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
         }
       });
+      myWrapperPanel.add(layoutPanel);
 
       myItemPanel.setBorder(myBorder);
       myItemPanel.setLayout(new BorderLayout());
@@ -309,7 +304,7 @@ public class RevisionsList {
 
       myBorder.set(row == table.getModel().getRowCount() - 1);
 
-      myDateLabel.setText(ensureString(FormatUtil.formatRelativeTimestamp(r.revision.getTimestamp())));
+      myDateLabel.setText(ensureString(DateFormatUtil.formatPrettyDateTime(r.revision.getTimestamp())));
       myFilesCountLabel.setText(ensureString(labelsAndColor.filesCount));
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));
@@ -336,10 +331,12 @@ public class RevisionsList {
 
       myItemPanel.setBackground(bg);
 
-      isToolTipShown = myToolTipHandler.getExpandedItems().contains(new TableCell(row, column));
-
       myWrapperPanel.doLayout();
-      table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);
+      int height = myWrapperPanel.getPreferredSize().height;
+      //table.setRowHeight causes extra repaint of the table, so we try to avoid it.
+      if (table.getRowHeight(row) != height && height > 0) {
+        table.setRowHeight(row, height);
+      }
 
       return myWrapperPanel;
     }

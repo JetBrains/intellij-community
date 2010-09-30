@@ -17,7 +17,6 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.diff.DiffContent;
@@ -25,6 +24,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.text.DateFormatUtil;
 
 public abstract class FileDifferenceModel {
   protected final Project myProject;
@@ -58,7 +58,7 @@ public abstract class FileDifferenceModel {
   }
 
   private String formatTitle(Entry e, boolean isAvailable) {
-    String result = FormatUtil.formatRelativeTimestamp(e.getTimestamp()) + " - " + e.getName();
+    String result = DateFormatUtil.formatPrettyDateTime(e.getTimestamp()) + " - " + e.getName();
     if (!isAvailable) {
       result += " - " + LocalHistoryBundle.message("content.not.available");
     }

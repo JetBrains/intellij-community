@@ -25,27 +25,33 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
   private int myCurrentId;
   private List<ChangeSet> mySets = new ArrayList<ChangeSet>();
 
+  @Override
   public void close() {
   }
 
+  @Override
   public long nextId() {
     return myCurrentId++;
   }
 
+  @Override
   public ChangeSetHolder readPrevious(int id) {
     if (mySets.isEmpty()) return null;
     if (id == -1) return new ChangeSetHolder(mySets.size() - 1, mySets.get(mySets.size() - 1));
     return id == 0 ? null : new ChangeSetHolder(id -1, mySets.get(id - 1));
   }
 
+  @Override
   public void writeNextSet(ChangeSet changeSet) {
     mySets.add(changeSet);
   }
 
+  @Override
   public void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void flush() {
   }
 }

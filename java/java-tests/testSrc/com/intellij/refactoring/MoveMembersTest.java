@@ -106,6 +106,7 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "B", 0);
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }
@@ -117,6 +118,7 @@ public class MoveMembersTest extends MultiFileTestCase {
   private void doTest(final String sourceClassName, final String targetClassName, final boolean lowercaseFirstLetter, final int... memberIndices)
     throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices);
       }

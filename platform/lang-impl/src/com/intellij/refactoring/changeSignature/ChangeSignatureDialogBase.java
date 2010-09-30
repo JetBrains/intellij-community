@@ -93,8 +93,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract String validateAndCommitData();
 
-  protected abstract boolean isResolvableType(P info, MethodDescriptor<P> method);
-
   public ChangeSignatureDialogBase(Project project, final D method, boolean allowDelegation, PsiElement defaultValueContext) {
     super(project, true);
     myMethod = method;
@@ -203,6 +201,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       typePrompt.setLabelFor(myReturnTypeField);
       panel.add(myReturnTypeField);
 
+      if (!myMethod.canChangeReturnType()) {
+        myReturnTypeField.setEnabled(false);
+      }
+
       final DocumentListener documentListener = new DocumentListener() {
         public void beforeDocumentChange(DocumentEvent event) {
         }
@@ -230,11 +232,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     JPanel subPanel = new JPanel(new BorderLayout());
-    subPanel.add(createParametersPanel(), BorderLayout.CENTER);
+    if (myMethod.canChangeParameters()) {
+      subPanel.add(createParametersPanel(), BorderLayout.CENTER);
+    }
 
     if (myMethod.canChangeVisibility()) {
       JPanel visibilityPanel = createVisibilityPanel(subPanel);
-      subPanel.add(visibilityPanel, BorderLayout.EAST);
+      subPanel.add(visibilityPanel, myMethod.canChangeParameters() ? BorderLayout.EAST : BorderLayout.CENTER);
     }
 
     panel.add(subPanel, BorderLayout.CENTER);
@@ -381,7 +385,9 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected abstract String calculateSignature();
 
   protected void doAction() {
-    TableUtil.stopEditing(myParametersTable);
+    if (myParametersTable != null) {
+      TableUtil.stopEditing(myParametersTable);
+    }
     String message = validateAndCommitData();
     if (message != null) {
       if (message != EXIT_SILENTLY) {

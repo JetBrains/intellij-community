@@ -74,7 +74,7 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
 
   List<Module> chooseModules(List<Module> modules, final String title);
 
-  List<Library> chooseLibraries(List<Library> libraries, String title);
+  List<Library> chooseLibraries(String title);
 
   Artifact getArtifact();
 }

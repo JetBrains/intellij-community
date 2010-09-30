@@ -35,7 +35,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   private T myCurrentScheme;
   private String myCurrentSchemeName;
 
-  public void addNewScheme(final T scheme, final boolean replaceExisting) {
+  public void addNewScheme(@NotNull final T scheme, final boolean replaceExisting) {
     int toReplace = -1;
     boolean newSchemeIsShared = isShared(scheme);
 
@@ -69,7 +69,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   private String generateUniqueName(final T scheme) {
-    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), "", "", collectExistingNames(mySchemes));
+    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), collectExistingNames(mySchemes));
   }
 
   private Collection<String> collectExistingNames(final Collection<T> schemes) {

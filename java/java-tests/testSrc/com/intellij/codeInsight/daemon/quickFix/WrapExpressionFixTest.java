@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 
 public class WrapExpressionFixTest extends LightQuickFixTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
@@ -28,6 +29,7 @@ public class WrapExpressionFixTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapExpression";
   }

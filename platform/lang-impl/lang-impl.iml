@@ -6,10 +6,10 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
+    <orderEntry type="module" module-name="boot" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" exported="" />
-    <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

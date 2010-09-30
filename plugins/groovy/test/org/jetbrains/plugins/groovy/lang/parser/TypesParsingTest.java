@@ -32,5 +32,6 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testType9() throws Throwable { doTest(); }
 
   public void testInnerEnum() throws Throwable { doTest(); }
+  public void testNewlineBeforeClassBrace() throws Throwable { doTest(); }
 
 }

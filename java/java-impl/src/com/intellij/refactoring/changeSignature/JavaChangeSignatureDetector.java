@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method)) {
       if (PsiTreeUtil.hasErrorElements(method.getParameterList())) return changeInfo;
+      final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+      if (returnTypeElement != null && PsiTreeUtil.hasErrorElements(returnTypeElement)) return changeInfo;
       final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
       final PsiType returnType = method.getReturnType();
       final CanonicalTypes.Type newReturnType;
@@ -87,7 +90,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                 oldParameterTypes = info.getOldParameterTypes();
                 if (!method.isConstructor()) {
                   try {
-                    isReturnTypeChanged = info.isReturnTypeChanged || !info.getNewReturnType().equals(newReturnType);
+                    isReturnTypeChanged = info.isReturnTypeChanged ||
+                                          (info.getNewReturnType() != null
+                                             ? !Comparing.strEqual(info.getNewReturnType().getTypeText(), newReturnType.getTypeText())
+                                             : newReturnType != null);
                   }
                   catch (IncorrectOperationException e) {
                     isReturnTypeChanged = true;
@@ -155,6 +161,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   private static class MyJavaChangeInfo extends JavaChangeInfoImpl  {
     private PsiMethod mySuperMethod;
+    private String[] myModifiers;
     private MyJavaChangeInfo(String newVisibility,
                              PsiMethod method,
                              CanonicalTypes.Type newType,
@@ -164,6 +171,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       super(newVisibility, method, method.getName(), newType, newParms, newExceptions, false,
             new HashSet<PsiMethod>(),
             new HashSet<PsiMethod>(), oldName);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      myModifiers = new String[parameters.length];
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter parameter = parameters[i];
+        final PsiModifierList modifierList = parameter.getModifierList();
+        if (modifierList != null) {
+          final String text = modifierList.getText();
+          myModifiers[i] = text;
+        }
+      }
     }
 
     @Override
@@ -180,6 +197,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
     public void setSuperMethod(PsiMethod superMethod) {
       mySuperMethod = superMethod;
+    }
+
+    public String[] getModifiers() {
+      return myModifiers;
     }
   }
 
@@ -254,7 +275,25 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         oldParameterNames = info.getOldParameterNames();
         oldParameterTypes = info.getOldParameterTypes();
       }
-    });
+    }) {
+      @Override
+      protected void performRefactoring(UsageInfo[] usages) {
+        super.performRefactoring(usages);
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        for (int i = 0; i < info.getModifiers().length; i++) {
+          final String modifier = info.getModifiers()[i];
+          final PsiModifierList modifierList = parameters[i].getModifierList();
+          if (modifierList != null && !Comparing.strEqual(modifier, modifierList.getText())) {
+            final PsiModifierList newModifierList =
+              elementFactory.createParameterFromText(modifier + " type name", method).getModifierList();
+            if (newModifierList != null) {
+              modifierList.replace(newModifierList);
+            }
+          }
+        }
+      }
+    };
   }
 
   @Override

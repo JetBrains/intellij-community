@@ -61,6 +61,7 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
       final Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
       assert sdk != null;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           final SdkModificator sdkMod = sdk.getSdkModificator();
           for (VirtualFile file : sdkMod.getRoots(OrderRootType.CLASSES)) {

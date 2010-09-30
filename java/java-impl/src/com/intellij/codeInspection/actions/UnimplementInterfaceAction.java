@@ -25,6 +25,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class UnimplementInterfaceAction implements IntentionAction {
   private String myName = "Interface";
 
@@ -86,8 +90,13 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     psiReference.getElement().delete();
 
+    final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    for (PsiClass aClass : psiClass.getSupers()) {
+      Collections.addAll(superMethods, aClass.getAllMethods());
+    }
     final PsiMethod[] psiMethods = targetClass.getAllMethods();
     for (PsiMethod psiMethod : psiMethods) {
+      if (superMethods.contains(psiMethod)) continue;
       final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
       for (PsiMethod implementingMethod : implementingMethods) {
         implementingMethod.delete();

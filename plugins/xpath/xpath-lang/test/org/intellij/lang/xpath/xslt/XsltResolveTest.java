@@ -116,6 +116,7 @@ public class XsltResolveTest extends TestBase {
         myFixture.configureByFile(getTestFileName() + ".xsl");
     }
 
+    @Override
     protected String getSubPath() {
         return "xslt/resolve";
     }

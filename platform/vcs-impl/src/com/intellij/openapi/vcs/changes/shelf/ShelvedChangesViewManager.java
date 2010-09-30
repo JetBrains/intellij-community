@@ -51,6 +51,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
@@ -384,7 +384,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         final String numFilesText = " (" + count + ((count == 1) ? " file) " : " files) ");
         append(numFilesText, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
         
-        final String date = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT).format(changeListData.DATE);
+        final String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
         append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(StdFileTypes.PATCH.getIcon());
       }

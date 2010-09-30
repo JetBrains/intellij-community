@@ -20,6 +20,7 @@ public abstract class StringConvertion {
   public abstract String convert(Object obj);
 
   public static StringConvertion DEFAULT = new StringConvertion() {
+    @Override
     public String convert(Object obj) {
       if (obj == null)
         return "null";
@@ -28,6 +29,7 @@ public abstract class StringConvertion {
   };
 
   public static StringConvertion TO_STRING = new StringConvertion() {
+    @Override
     public String convert(Object obj) {
       return obj.toString();
     }

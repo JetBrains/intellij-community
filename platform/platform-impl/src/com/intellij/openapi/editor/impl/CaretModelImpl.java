@@ -75,7 +75,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       @Override
       public void updateFinished(Document doc) {
-        if (doc != myEditor.getDocument()) return;
+        if (doc != myEditor.getDocument() || myIsInUpdate) return;
         if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }
@@ -266,14 +266,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         selectionModel.setBlockSelection(blockSelectionStart, getLogicalPosition());
       }
       else {
-        int endOffsetToUse = getOffset();
         if (selectToDocumentStart) {
-          endOffsetToUse = 0;
+          selectionModel.setSelection(selectionStart, 0);
         }
         else if (pos.line >= myEditor.getVisibleLineCount()) {
-          endOffsetToUse = myEditor.getDocument().getTextLength();
+          if (selectionStart < myEditor.getDocument().getTextLength()) {
+            selectionModel.setSelection(selectionStart, myEditor.getDocument().getTextLength());
+          }
         }
-        selectionModel.setSelection(selectionStart, endOffsetToUse);
+        else {
+          selectionModel.setSelection(selectionStart, getOffset());
+        }
       }
     }
     else {

@@ -67,7 +67,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @NonNls public static final String HTML_EXTENSION = ".html";
   @NonNls public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }

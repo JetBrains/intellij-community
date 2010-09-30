@@ -105,8 +105,10 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                                       parametersToRemove);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               processor.run();

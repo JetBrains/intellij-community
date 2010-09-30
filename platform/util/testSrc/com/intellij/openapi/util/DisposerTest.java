@@ -36,6 +36,7 @@ public class DisposerTest extends TestCase {
 
   @NonNls private final List<String> myDisposeActions = new ArrayList<String>();
 
+  @Override
   protected void setUp() throws Exception {
     //if(!Disposer.getTree().isEmpty()) {
     //  Disposer.assertIsEmpty();
@@ -222,6 +223,7 @@ public class DisposerTest extends TestCase {
       myName = aName;
     }
 
+    @Override
     public void dispose() {
       myDisposed = true;
       myDisposedObjects.add(this);
@@ -242,6 +244,7 @@ public class DisposerTest extends TestCase {
       super(aName);
     }
 
+    @Override
     public void beforeTreeDispose() {
       myDisposeActions.add("beforeDispose: " + myName);
     }
@@ -252,6 +255,7 @@ public class DisposerTest extends TestCase {
       super(aName);
     }
 
+    @Override
     public void dispose() {
       Disposer.dispose(this);
       super.dispose();

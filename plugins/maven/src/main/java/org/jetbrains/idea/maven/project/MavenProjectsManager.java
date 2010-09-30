@@ -455,33 +455,36 @@ public class MavenProjectsManager extends SimpleProjectComponent
     }
   }
 
-  public void addManagedFiles(List<VirtualFile> files) {
+  public void addManagedFiles(@NotNull List<VirtualFile> files) {
     addManagedFilesWithProfiles(files, Collections.<String>emptyList());
   }
 
-  public void removeManagedFiles(List<VirtualFile> files) {
+  public void removeManagedFiles(@NotNull List<VirtualFile> files) {
     myWatcher.removeManagedFiles(files);
   }
 
-  public boolean isManagedFile(VirtualFile f) {
+  public boolean isManagedFile(@NotNull VirtualFile f) {
     if (!isInitialized()) return false;
     return myProjectsTree.isManagedFile(f);
   }
 
+  @NotNull
   public Collection<String> getExplicitProfiles() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getExplicitProfiles();
   }
 
-  public void setExplicitProfiles(Collection<String> profiles) {
+  public void setExplicitProfiles(@NotNull Collection<String> profiles) {
     myWatcher.setExplicitProfiles(profiles);
   }
 
+  @NotNull
   public Collection<String> getAvailableProfiles() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getAvailableProfiles();
   }
 
+  @NotNull
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProfilesWithStates();
@@ -492,37 +495,44 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return myProjectsTree.hasProjects();
   }
 
+  @NotNull
   public List<MavenProject> getProjects() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProjects();
   }
 
+  @NotNull
   public List<MavenProject> getNonIgnoredProjects() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getNonIgnoredProjects();
   }
 
+  @NotNull
   public List<VirtualFile> getProjectsFiles() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProjectsFiles();
   }
 
-  public MavenProject findProject(VirtualFile f) {
+  @Nullable
+  public MavenProject findProject(@NotNull VirtualFile f) {
     if (!isInitialized()) return null;
     return myProjectsTree.findProject(f);
   }
 
-  public MavenProject findProject(MavenId id) {
+  @Nullable
+  public MavenProject findProject(@NotNull MavenId id) {
     if (!isInitialized()) return null;
     return myProjectsTree.findProject(id);
   }
 
-  public MavenProject findProject(MavenArtifact artifact) {
+  @Nullable
+  public MavenProject findProject(@NotNull MavenArtifact artifact) {
     if (!isInitialized()) return null;
     return myProjectsTree.findProject(artifact);
   }
 
-  public MavenProject findProject(Module module) {
+  @Nullable
+  public MavenProject findProject(@NotNull Module module) {
     VirtualFile f = findPomFile(module, new MavenModelsProvider() {
       public Module[] getModules() {
         throw new UnsupportedOperationException();
@@ -536,7 +546,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   @Nullable
-  public Module findModule(MavenProject project) {
+  public Module findModule(@NotNull MavenProject project) {
     if (!isInitialized()) return null;
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }
@@ -547,13 +557,15 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return myProjectsTree.findInheritors(parent);
   }
 
-  public MavenProject findContainingProject(VirtualFile file) {
+  @Nullable
+  public MavenProject findContainingProject(@NotNull VirtualFile file) {
     if (!isInitialized()) return null;
     Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
     return module == null ? null : findProject(module);
   }
 
-  private static VirtualFile findPomFile(Module module, MavenModelsProvider modelsProvider) {
+  @Nullable
+  private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
       final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
       if (virtualFile != null) {
@@ -563,47 +575,51 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return null;
   }
 
-  public MavenProject findAggregator(MavenProject module) {
+  @Nullable
+  public MavenProject findAggregator(@NotNull MavenProject module) {
     if (!isInitialized()) return null;
     return myProjectsTree.findAggregator(module);
   }
 
-  public List<MavenProject> getModules(MavenProject aggregator) {
+  @NotNull
+  public List<MavenProject> getModules(@NotNull MavenProject aggregator) {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getModules(aggregator);
   }
 
+  @NotNull
   public List<String> getIgnoredFilesPaths() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getIgnoredFilesPaths();
   }
 
-  public void setIgnoredFilesPaths(List<String> paths) {
+  public void setIgnoredFilesPaths(@NotNull List<String> paths) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredFilesPaths(paths);
   }
 
-  public boolean getIgnoredState(MavenProject project) {
+  public boolean getIgnoredState(@NotNull MavenProject project) {
     if (!isInitialized()) return false;
     return myProjectsTree.getIgnoredState(project);
   }
 
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
+  public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredState(projects, ignored);
   }
 
+  @NotNull
   public List<String> getIgnoredFilesPatterns() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getIgnoredFilesPatterns();
   }
 
-  public void setIgnoredFilesPatterns(List<String> patterns) {
+  public void setIgnoredFilesPatterns(@NotNull List<String> patterns) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredFilesPatterns(patterns);
   }
 
-  public boolean isIgnored(MavenProject project) {
+  public boolean isIgnored(@NotNull MavenProject project) {
     if (!isInitialized()) return false;
     return myProjectsTree.isIgnored(project);
   }
@@ -627,7 +643,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     doScheduleUpdateProjects(null, false, forceImport);
   }
 
-  public void forceUpdateProjects(Collection<MavenProject> projects) {
+  public void forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
     doScheduleUpdateProjects(projects, true, true);
   }
 
@@ -945,8 +961,9 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
-    if (postTasks.get() != null /*may be null if importing is cancelled*/)
+    if (postTasks.get() != null /*may be null if importing is cancelled*/) {
       schedulePostImportTasks(postTasks.get());
+    }
 
     // do not block user too often
     myImportingQueue.restartTimer();
@@ -972,16 +989,13 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return result;
   }
 
-  public MavenDomDependency addOverridenDependency(final MavenProject mavenProject, final MavenId id) {
-     return addDependency(mavenProject, id, true);
-  }
-
-
-  public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id) {
+  public MavenDomDependency addDependency(@NotNull MavenProject mavenProject, @NotNull MavenId id) {
     return addDependency(mavenProject, id, false);
   }
 
-  public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id, final boolean overridden) {
+  public MavenDomDependency addDependency(@NotNull final MavenProject mavenProject,
+                                          @NotNull final MavenId id,
+                                          final boolean overridden) {
     final MavenArtifact[] artifact = new MavenArtifact[1];
 
     try {
@@ -1019,7 +1033,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
   }
 
-   public void addManagerListener(Listener listener) {
+  public void addManagerListener(Listener listener) {
     myManagerListeners.add(listener);
   }
 

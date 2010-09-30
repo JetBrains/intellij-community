@@ -17,6 +17,9 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.LanguageWhiteSpaceFormattingStrategy;
+import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -27,16 +30,33 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
+  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
+    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
+  );
+
+  private final CompositeWhiteSpaceFormattingStrategy myWhiteSpaceStrategy = new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
+  //private final CharBuffer myBuffer = CharBuffer.allocate(1);
   private final Document myDocument;
   private final PsiFile myFile;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
 
   public FormattingDocumentModelImpl(final Document document, PsiFile file) {
     myDocument = document;
     myFile = file;
+    if (file != null) {
+      Language language = file.getLanguage();
+      WhiteSpaceFormattingStrategy strategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
+      if (strategy != null) {
+        myWhiteSpaceStrategy.addStrategy(strategy);
+      }
+    }
   }
 
   public static FormattingDocumentModelImpl createOn(PsiFile file) {
@@ -57,6 +77,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   }
 
+  @Nullable
   public static Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -68,23 +89,28 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     return document;
   }
 
+  @Override
   public int getLineNumber(int offset) {
     LOG.assertTrue (offset <= myDocument.getTextLength());
     return myDocument.getLineNumber(offset);
   }
 
+  @Override
   public int getLineStartOffset(int line) {
     return myDocument.getLineStartOffset(line);
   }
 
+  @Override
   public CharSequence getText(final TextRange textRange) {
     return myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Override
   public int getTextLength() {
     return myDocument.getTextLength();
   }
 
+  @Override
   public Document getDocument() {
     return myDocument;
   }
@@ -92,6 +118,23 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
   public PsiFile getFile() {
     return myFile;
   }
+
+  @Override
+  public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
+    return myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+  }
+
+  @NotNull
+  @Override
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset) {
+    return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset);
+  }
+
+  //@Override
+  //public boolean isWhiteSpaceSymbol(char symbol) {
+  //  myBuffer.put(0, symbol);
+  //  return myWhiteSpaceStrategy.check(myBuffer, 0, 1) > 0;
+  //}
 
   public static boolean canUseDocumentModel(@NotNull Document document,@NotNull PsiFile file) {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());

@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +55,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myFontSizeCombo.setEditable(true);
 //    myComponent.myLafComboBox=new JComboBox(LafManager.getInstance().getInstalledLookAndFeels());
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
-    myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer());
+    myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer(myComponent.myLafComboBox.getRenderer()));
 
+    myComponent.myTooltipMode.setModel(new DefaultComboBoxModel(new Object[]{"default", "graphite", "system"}));
+    myComponent.myTooltipMode.setRenderer(new MyTooltipModeRenderer(myComponent.myTooltipMode.getRenderer()));
+    myComponent.myTooltipMode.setSelectedItem(Registry.stringValue("ide.tooltip.mode"));
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -64,7 +68,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         myComponent.myAlphaModeRatioSlider.setEnabled(state);
       }
     });
-
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
     Dictionary<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
@@ -149,6 +152,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       lafManager.setCurrentLookAndFeel((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
     }
 
+    if (myComponent.myTooltipMode.getSelectedItem() != null && !myComponent.myTooltipMode.getSelectedItem().equals(Registry.stringValue("ide.tooltip.mode"))) {
+      update = true;
+      Registry.get("ide.tooltip.mode").setValue(myComponent.myTooltipMode.getSelectedItem().toString());
+    }
+
     if (shouldUpdateUI) {
       lafManager.updateUI();
     }
@@ -174,7 +182,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.fireUISettingsChanged();
     }
     myComponent.updateCombo();
-
   }
 
   public void reset() {
@@ -194,6 +201,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
+    myComponent.myTooltipMode.setSelectedItem(Registry.stringValue("ide.tooltip.mode"));
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
     if (alphaModeEnabled) {
@@ -210,7 +218,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
     myComponent.updateCombo();
-
   }
 
   public boolean isModified() {
@@ -249,6 +256,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       isModified |= ratio != settings.ALPHA_MODE_RATIO;
     }
 
+    isModified |= myComponent.myTooltipMode.getSelectedItem() != null && !myComponent.myTooltipMode.getSelectedItem().equals(Registry.stringValue("ide.tooltip.mode"));
+
     return isModified;
   }
 
@@ -275,10 +284,30 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return "preferences.lookFeel";
   }
 
-  private static final class MyLafComboBoxRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      UIManager.LookAndFeelInfo laf = (UIManager.LookAndFeelInfo)value;
-      return super.getListCellRendererComponent(list, laf == null ? null : laf.getName(), index, isSelected, cellHasFocus);
+  private static final class MyLafComboBoxRenderer extends ListCellRendererWrapper {
+    public MyLafComboBoxRenderer(final ListCellRenderer listCellRenderer) {
+      super(listCellRenderer);
+    }
+
+    @Nullable
+    @Override
+    public String getDisplayedName(final Object value) {
+      return value instanceof UIManager.LookAndFeelInfo ? ((UIManager.LookAndFeelInfo)value).getName() : null;
+    }
+  }
+
+  private static final class MyTooltipModeRenderer extends ListCellRendererWrapper {
+    public MyTooltipModeRenderer(final ListCellRenderer listCellRenderer) {
+      super(listCellRenderer);
+    }
+
+    @Override
+    public String getDisplayedName(final Object value) {
+      String s = (String)value;
+      if (s != null && s.length() > 1) {
+        s = s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+      }
+      return s;
     }
   }
 
@@ -307,6 +336,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
+    private JComboBox myTooltipMode;
 
 
     public MyComponent() {

@@ -16,10 +16,10 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 public class IdeTooltip {
 
@@ -31,6 +31,8 @@ public class IdeTooltip {
   private JComponent myTipComponent;
 
   private boolean myToCenter = false;
+  private boolean myToCenterIfSmall = true;
+  private boolean myHighlighter;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent) {
     myComponent = component;
@@ -69,7 +71,16 @@ public class IdeTooltip {
     return myToCenter;
   }
 
-  protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
+  public boolean isToCenterIfSmall() {
+    return myToCenterIfSmall;
+  }
+
+  public IdeTooltip setToCenterIfSmall(boolean mayCenter) {
+    myToCenterIfSmall = mayCenter;
+    return this;
+  }
+
+  protected boolean canAutohideOn(TooltipEvent event) {
     return true;
   }
 
@@ -77,8 +88,33 @@ public class IdeTooltip {
 
   }
 
+  protected boolean beforeShow() {
+    return true;
+  }
+
   public void hide() {
     IdeTooltipManager.getInstance().hide(this);
+  }
+
+  public boolean canBeDismissedOnTimeout() {
+    return true;
+  }
+
+  public int getShowDelay() {
+    return myHighlighter ? Registry.intValue("ide.tooltip.initialDelay.highlighter") : Registry.intValue("ide.tooltip.initialDelay");
+  }
+
+  public int getInitialReshowDelay() {
+    return Registry.intValue("ide.tooltip.initialReshowDelay");
+  }
+
+  public int getDismissDelay() {
+    return Registry.intValue("ide.tooltip.dismissDelay");
+  }
+
+  public IdeTooltip setHighlighterType(boolean isHighlighter) {
+    myHighlighter = isHighlighter;
+    return this;
   }
 }
 

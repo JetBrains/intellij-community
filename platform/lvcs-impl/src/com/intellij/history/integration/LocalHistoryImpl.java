@@ -19,6 +19,7 @@ package com.intellij.history.integration;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.*;
 import com.intellij.history.core.*;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -60,7 +61,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    
+
     myShutdownTask = new Runnable() {
       public void run() {
         disposeComponent();
@@ -86,6 +87,26 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     VirtualFileManager fm = VirtualFileManagerEx.getInstance();
     fm.addVirtualFileListener(myEventDispatcher);
     fm.addVirtualFileManagerListener(myEventDispatcher);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        validateStorage();
+      }
+    });
+  }
+
+  private void validateStorage() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LocalHistoryLog.LOG.info("Checking local history storage...");
+      try {
+        myVcs.getChangeListInTests().getChangesInTests();
+        LocalHistoryLog.LOG.info("Local history storage seems to be ok");
+      }
+      catch (Exception e) {
+        LocalHistoryLog.LOG.error(e);
+      }
+    }
   }
 
   public File getStorageDir() {
@@ -100,7 +121,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     if (ApplicationManagerEx.getApplication().isHeadlessEnvironment()) return;
     myAutoSaveFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
       public void run() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning()) myChangeList.save();
+        if (!HeavyProcessLatch.INSTANCE.isRunning()) myChangeList.flush();
       }
     }, 15000, 15000, TimeUnit.MILLISECONDS);
   }
@@ -118,7 +139,9 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
     myChangeList.purgeObsolete(period);
+    validateStorage();
     myChangeList.close();
+    LocalHistoryLog.LOG.info("Local history storage successfully closed.");
 
     ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }
@@ -140,7 +163,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  public Label putUserLabel(Project p, String name) {
+  public Label putUserLabel(Project p, @NotNull String name) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putUserLabel(name, getProjectId(p)));
@@ -151,7 +174,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  public Label putSystemLabel(Project p, String name, int color) {
+  public Label putSystemLabel(Project p, @NotNull String name, int color) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));

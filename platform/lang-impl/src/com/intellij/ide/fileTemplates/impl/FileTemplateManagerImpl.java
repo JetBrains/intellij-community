@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -230,10 +230,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public Properties getDefaultProperties() {
     @NonNls Properties props = new Properties();
 
-    Date date = new Date();
-    props.setProperty("DATE", DateFormat.getDateInstance().format(date));
-    props.setProperty("TIME", DateFormat.getTimeInstance().format(date));
     Calendar calendar = Calendar.getInstance();
+    props.setProperty("DATE", DateFormatUtil.formatDate(calendar.getTime()));
+    props.setProperty("TIME", DateFormatUtil.formatTime(calendar.getTime()));
     props.setProperty("YEAR", Integer.toString(calendar.get(Calendar.YEAR)));
     props.setProperty("MONTH", getCalendarValue(calendar, Calendar.MONTH));
     props.setProperty("DAY", getCalendarValue(calendar, Calendar.DAY_OF_MONTH));

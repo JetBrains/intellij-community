@@ -55,6 +55,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(getTestName(lowercaseFirstLetter) + ".xml", false, false);
   }
   
+  @Override
   protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
     super.configureByFile(filePath);
     AntSupport.markFileAsAntFile(myFile.getVirtualFile(), myFile.getProject(), true);
@@ -110,6 +111,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     try {
       myIgnoreInfos = true;
       IdeaTestUtil.assertTiming("Should be quite performant !", 3500, new Runnable() {
+        @Override
         public void run() {
           doDoTest(true, false);
         }
@@ -121,6 +123,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
 
+  @Override
   protected List<HighlightInfo> doHighlighting() {
     final List<HighlightInfo> infos = super.doHighlighting();
     if (!myIgnoreInfos) {
@@ -129,6 +132,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     return Collections.emptyList();
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new AntDuplicateTargetsInspection(), new AntResolveInspection()};
   }

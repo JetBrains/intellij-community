@@ -21,10 +21,12 @@ public class WrapReturnValueTest extends MultiFileTestCase{
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/wrapReturnValue/";
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
@@ -40,6 +42,7 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   private void doTest(final boolean existing, String exceptionMessage, final boolean createInnerClass) throws Exception {
     try {
       doTest(new PerformAction() {
+        @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
           PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 

@@ -41,6 +41,7 @@ public abstract class InjectedLanguageFixtureTestCase extends LightCodeInsightFi
     myFixture.checkResult(text.replaceAll("\\|", "<caret>"));
 
     assertSameElements(ContainerUtil.map(elements, new Function<LookupElement, String>() {
+      @Override
       public String fun(final LookupElement lookupItem) {
         return lookupItem.getLookupString();
       }
@@ -57,6 +58,7 @@ public abstract class InjectedLanguageFixtureTestCase extends LightCodeInsightFi
     final LookupElement[] elements = myFixture.completeBasic();
     if (elements != null && elements.length == 1) {
       new WriteCommandAction(getProject()) {
+        @Override
         protected void run(Result result) throws Throwable {
           ((LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup()).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         }

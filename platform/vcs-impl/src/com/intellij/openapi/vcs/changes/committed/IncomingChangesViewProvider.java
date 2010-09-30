@@ -54,7 +54,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   public JComponent initContent() {
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
-    myBrowser.setEmptyText(VcsBundle.message("incoming.changes.not.loaded.message"));
+    myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.not.loaded.message"));
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null, Collections.<AnAction>emptyList());
     myBrowser.setToolBar(toolbar.getComponent());
@@ -94,7 +94,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
         if (Boolean.TRUE.equals(notEmpty)) {
           final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
           if (list != null) {
-            myBrowser.setEmptyText(VcsBundle.message("incoming.changes.empty.message"));
+            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
             myBrowser.setItems(list, false, CommittedChangesBrowserUseCase.INCOMING);
           }
           else {

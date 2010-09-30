@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,10 +37,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
@@ -68,17 +64,15 @@ import java.awt.dnd.DragSource;
  * Time: 3:22:55 PM
  */
 public abstract class BreakpointWithHighlighter extends Breakpoint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
-
   private RangeHighlighter myHighlighter;
 
   private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private Icon myIcon = getSetIcon(false);
-  private @Nullable String myClassName;
-  private @Nullable String myPackageName;
-  private @Nullable String myInvalidMessage;
+  @Nullable private String myClassName;
+  @Nullable private String myPackageName;
+  @Nullable private String myInvalidMessage;
 
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess,
                                                         final ReferenceType classType);
@@ -101,7 +95,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return myClassName;
   }
 
-  public @Nullable String getShortClassName() {
+  @Nullable
+  public String getShortClassName() {
     final SourcePosition pos = getSourcePosition();
     if (pos != null) {
       if (pos.getFile() instanceof JspFile) {
@@ -420,54 +415,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private void setupGutterRenderer() {
-    getHighlighter().setGutterIconRenderer(new GutterIconRenderer() {
-      @NotNull
-      public Icon getIcon() {
-        return BreakpointWithHighlighter.this.getIcon();
-      }
-
-      public String getTooltipText() {
-        return getDescription();
-      }
-
-      public AnAction getClickAction() {
-        return new AnAction() {
-          public void actionPerformed(AnActionEvent e) {
-            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
-          }
-        };
-      }
-
-      public AnAction getMiddleButtonClickAction() {
-        return new AnAction() {
-          public void actionPerformed(AnActionEvent e) {
-            ENABLED = !ENABLED;
-            DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
-            updateUI();
-          }
-        };
-      }
-
-      public ActionGroup getPopupMenuActions() {
-        return createMenuActions();
-      }
-
-      public GutterDraggableObject getDraggableObject() {
-        return new GutterDraggableObject() {
-          public void removeSelf() {
-          }
-
-          public boolean copy(int line) {
-            return moveTo(SourcePosition.createFromLine(getSourcePosition().getFile(), line));
-          }
-
-          public Cursor getCursor(int line) {
-            final SourcePosition newPosition = SourcePosition.createFromLine(getSourcePosition().getFile(), line);
-            return canMoveTo(newPosition)? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
-          }
-        };
-      }
-    });
+    getHighlighter().setGutterIconRenderer(new MyGutterIconRenderer());
   }
 
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();
@@ -536,7 +484,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   public int getLineIndex() {
     final SourcePosition sourcePosition = getSourcePosition();
-    return (sourcePosition != null) ? sourcePosition.getLine() : -1;
+    return sourcePosition != null ? sourcePosition.getLine() : -1;
   }
 
   protected static RangeHighlighter createHighlighter(Project project,
@@ -673,4 +621,65 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       group.add(viewBreakpointsAction);
       return group;
     }
+
+  private class MyGutterIconRenderer extends GutterIconRenderer {
+    @NotNull
+    public Icon getIcon() {
+      return BreakpointWithHighlighter.this.getIcon();
+    }
+
+    public String getTooltipText() {
+      return getDescription();
+    }
+
+    public AnAction getClickAction() {
+      return new AnAction() {
+        public void actionPerformed(AnActionEvent e) {
+          DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
+        }
+      };
+    }
+
+    public AnAction getMiddleButtonClickAction() {
+      return new AnAction() {
+        public void actionPerformed(AnActionEvent e) {
+          ENABLED = !ENABLED;
+          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
+          updateUI();
+        }
+      };
+    }
+
+    public ActionGroup getPopupMenuActions() {
+      return createMenuActions();
+    }
+
+    public GutterDraggableObject getDraggableObject() {
+      return new GutterDraggableObject() {
+        public void removeSelf() {
+        }
+
+        public boolean copy(int line) {
+          return moveTo(SourcePosition.createFromLine(getSourcePosition().getFile(), line));
+        }
+
+        public Cursor getCursor(int line) {
+          final SourcePosition newPosition = SourcePosition.createFromLine(getSourcePosition().getFile(), line);
+          return canMoveTo(newPosition)? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
+        }
+      };
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MyGutterIconRenderer &&
+             Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
+             Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());
+    }
+
+    @Override
+    public int hashCode() {
+      return getIcon().hashCode();
+    }
+  }
 }

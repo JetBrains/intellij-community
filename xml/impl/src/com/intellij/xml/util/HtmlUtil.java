@@ -65,7 +65,7 @@ import java.util.StringTokenizer;
 public class HtmlUtil {
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET_PREFIX = "charset=";
-  public static final String HTML5_DATA_ATTR_PREFIX = "data-";
+  @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = {
@@ -101,6 +101,12 @@ public class HtmlUtil {
 
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
+  @NonNls private static final String[] HTML5_TAGS = {
+    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header", "hgroup",
+    "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr"
+  };
+  private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
+
   static {
     ContainerUtil.addAll(EMPTY_TAGS_MAP, EMPTY_TAGS);
     ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
@@ -108,6 +114,7 @@ public class HtmlUtil {
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
     ContainerUtil.addAll(INLINE_ELEMENTS_CONTAINER_MAP, INLINE_ELEMENTS_CONTAINER);
     ContainerUtil.addAll(POSSIBLY_INLINE_TAGS_MAP, POSSIBLY_INLINE_TAGS);
+    ContainerUtil.addAll(HTML5_TAGS_SET, HTML5_TAGS);
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
@@ -333,6 +340,24 @@ public class HtmlUtil {
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
     return isHtml5Document(doc);
+  }
+
+  public static boolean hasNonHtml5Doctype(XmlElement context) {
+    XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+    if (doc == null) {
+      return false;
+    }
+    XmlProlog prolog = doc.getProlog();
+    XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
+    return doctype != null && !isHtml5Doctype(doctype);
+  }
+
+  public static boolean isHtml5Tag(String tagName) {
+    return HTML5_TAGS_SET.contains(tagName);
+  }
+
+  public static boolean isCustomHtml5Attribute(String attributeName) {
+    return attributeName.startsWith(HTML5_DATA_ATTR_PREFIX);
   }
 
   private static class TerminateException extends RuntimeException {

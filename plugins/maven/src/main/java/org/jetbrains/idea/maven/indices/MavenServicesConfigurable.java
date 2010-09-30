@@ -28,6 +28,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Processor;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -35,7 +36,6 @@ import org.jetbrains.idea.maven.services.MavenServicesManager;
 import org.jetbrains.idea.maven.utils.RepositoryAttachHandler;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -47,8 +47,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenServicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
@@ -291,7 +292,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
           }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
-          return SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(new Date(timestamp));
+          return DateFormatUtil.formatDate(timestamp);
         case 3:
           return myManager.getUpdatingState(i);
       }

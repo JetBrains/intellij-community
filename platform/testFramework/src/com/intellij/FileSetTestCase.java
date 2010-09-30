@@ -65,6 +65,7 @@ public abstract class FileSetTestCase extends TestSuite {
     addAllTests();
   }
 
+  @Override
   public String getName() {
     return getClass().getName();
   }
@@ -90,20 +91,24 @@ public abstract class FileSetTestCase extends TestSuite {
       myTestFile = testFile;
     }
 
+    @Override
     protected void setUp() throws Exception {
       super.setUp();
       FileSetTestCase.this.setUp();
     }
 
+    @Override
     protected void tearDown() throws Exception {
       FileSetTestCase.this.tearDown();
       super.tearDown();
     }
 
+    @Override
     public int countTestCases() {
       return 1;
     }
 
+    @Override
     protected void runTest() throws Throwable {
       String content = new String(FileUtil.loadFileText(myTestFile));
       assertNotNull(content);
@@ -146,10 +151,12 @@ public abstract class FileSetTestCase extends TestSuite {
       return myTestFile.getAbsolutePath() + " ";
     }
 
+    @Override
     protected void resetAllFields() {
       // Do nothing otherwise myTestFile will be nulled out before getName() is called.
     }
 
+    @Override
     public String getName() {
       return myTestFile.getAbsolutePath();
     }

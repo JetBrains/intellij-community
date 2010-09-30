@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,17 +62,14 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
   public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
-    final Set<String>[] namedParameters = stub.getNamedParameters();
-
-    GrStubUtils.serializeCollectionsArray(dataStream, namedParameters);
+    GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
   }
 
   public GrMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     final String[] annNames = GrStubUtils.readStringArray(dataStream);
-    final List<Set<String>> namedParametersSets = GrStubUtils.deserializeCollectionsArray(dataStream);
-
-    return new GrMethodStubImpl(parentStub, ref, annNames, namedParametersSets.toArray(new HashSet[0]));
+    String[] namedParameters = GrStubUtils.readStringArray(dataStream);
+    return new GrMethodStubImpl(parentStub, ref, annNames, namedParameters);
   }
 
   public void indexStub(GrMethodStub stub, IndexSink sink) {

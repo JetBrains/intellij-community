@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.ui.HintHint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,19 +36,15 @@ public class DaemonTooltipUtil {
   }
 
   public static void cancelTooltips() {
-    TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP);
+    TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP, null, true);
   }
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
     if (info.toolTip == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    int startOffset = info.getActualStartOffset();
-    int endOffset = info.getActualEndOffset();
 
-    Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
-    Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(endOffset));
-
-    Point bestPoint = new Point(top.x, bottom.y + editor.getLineHeight());
+    Point bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+    bestPoint.y += editor.getLineHeight() / 2;
 
     if (!visibleArea.contains(bestPoint)) {
       bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
@@ -58,6 +55,6 @@ public class DaemonTooltipUtil {
       bestPoint,
       editor.getComponent().getRootPane().getLayeredPane()
     );
-    TooltipController.getInstance().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP);
+    TooltipController.getInstance().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true));
   }
 }

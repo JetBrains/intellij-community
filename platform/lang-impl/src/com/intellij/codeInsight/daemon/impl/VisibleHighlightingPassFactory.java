@@ -24,6 +24,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public abstract class VisibleHighlightingPassFactory extends AbstractProjectComp
   }
 
   @NotNull
-  public static TextRange calculateVisibleRange(@NotNull Editor editor) {
+  public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
     Rectangle rect = editor.getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
 
@@ -45,7 +46,7 @@ public abstract class VisibleHighlightingPassFactory extends AbstractProjectComp
 
     int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
-    return new TextRange(visibleStart, visibleEnd);
+    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
   }
 
   @Nullable

@@ -57,10 +57,12 @@ public class DFSTBuilderTest extends TestCase {
   private GraphGenerator<TestNode> graphByNodes(final TestNode[] allNodes,
                                                                 final Map<TestNode, TestNode[]> map) {
     final GraphGenerator<TestNode> graph = new GraphGenerator<TestNode>(new GraphGenerator.SemiGraph<TestNode>() {
+      @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(allNodes);
       }
 
+      @Override
       public Iterator<TestNode> getIn(TestNode n) {
         return GraphTestUtil.iteratorOfArray(map.get(n));
       }

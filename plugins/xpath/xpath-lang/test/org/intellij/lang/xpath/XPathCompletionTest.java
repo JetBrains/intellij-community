@@ -50,6 +50,7 @@ public class XPathCompletionTest extends TestBase {
         myFixture.testCompletionVariants(getTestFileName() + ".xpath", expectedVariants);
     }
 
+    @Override
     protected String getSubPath() {
         return "xpath/completion";
     }

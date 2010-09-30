@@ -20,9 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -36,6 +33,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
@@ -55,16 +53,12 @@ import java.util.List;
 /**
  * @author nik
  */
-@State(
-    name = "ArtifactsStructureConfigurable.UI",
-    storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
-)
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   private final ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
-    super(project);
+    super(project, new ArtifactStructureConfigurableState());
     MasterDetailsStateService.getInstance(project).register("ArtifactsStructureConfigurable.UI", this);
   }
 
@@ -163,6 +157,18 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @Override
+  public MasterDetailsState getState() {
+    ((ArtifactStructureConfigurableState)myState).setDefaultArtifactSettings(myDefaultSettings.getState());
+    return super.getState();
+  }
+
+  @Override
+  public void loadState(MasterDetailsState object) {
+    super.loadState(object);
+    myDefaultSettings.loadState(((ArtifactStructureConfigurableState)myState).getDefaultArtifactSettings());
+  }
+
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("display.name.artifacts");
@@ -190,11 +196,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
     addNode(node, myRoot);
     return node;
-  }
-
-  @Override
-  protected PersistentStateComponent<?> getAdditionalSettings() {
-    return myDefaultSettings;
   }
 
   @Override

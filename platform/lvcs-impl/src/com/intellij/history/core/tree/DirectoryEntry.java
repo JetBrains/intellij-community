@@ -16,8 +16,8 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
 
 import java.io.DataInput;
@@ -25,8 +25,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.String.format;
 
 public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
@@ -36,7 +34,7 @@ public class DirectoryEntry extends Entry {
     myChildren = new ArrayList<Entry>(3);
   }
 
-  public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general contructor*/) throws IOException {
+  public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
     int count = in.readInt();
     myChildren = new ArrayList<Entry>(count);

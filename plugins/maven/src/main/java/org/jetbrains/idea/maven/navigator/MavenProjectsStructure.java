@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.*;
@@ -628,7 +629,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private String myTooltipCache;
 
-    public ProjectNode(MavenProject mavenProject) {
+    public ProjectNode(@NotNull MavenProject mavenProject) {
       super(null);
       myMavenProject = mavenProject;
 

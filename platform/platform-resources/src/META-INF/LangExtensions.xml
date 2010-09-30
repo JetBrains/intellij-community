@@ -110,6 +110,9 @@
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
+
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>
 
@@ -427,6 +430,7 @@
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"/>
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler" id="EnterBetweenBracesHandler"/>
+  <enterHandlerDelegate implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenamerEnterHandler"/>
 
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
   <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
@@ -462,10 +466,10 @@
   <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
 
   <!-- LookupManagerActions -->
-  <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.UpHandler"/>
-  <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.DownHandler"/>
-  <editorActionHandler action="EditorPageUp" implementationClass="com.intellij.codeInsight.lookup.impl.PageUpHandler"/>
-  <editorActionHandler action="EditorPageDown" implementationClass="com.intellij.codeInsight.lookup.impl.PageDownHandler"/>
+  <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpHandler"/>
+  <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownHandler"/>
+  <editorActionHandler action="EditorPageUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageUpHandler"/>
+  <editorActionHandler action="EditorPageDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageDownHandler"/>
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.lookup.impl.HomeHandler"/>
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
@@ -483,6 +487,8 @@
 
   <!-- HighlightManagerActions -->
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="before hide-hints"/>
+
+  <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 

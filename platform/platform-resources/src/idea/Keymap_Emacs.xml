@@ -128,11 +128,6 @@
       <keyboard-shortcut first-keystroke="alt R"/>
       <keyboard-shortcut first-keystroke="control R"/>
     </action>
-    <action id="EditorCut">
-      <keyboard-shortcut first-keystroke="shift DELETE"/>
-      <keyboard-shortcut first-keystroke="alt X"/>
-      <keyboard-shortcut first-keystroke="control W"/>
-    </action>
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
@@ -187,10 +182,6 @@
       <keyboard-shortcut first-keystroke="LEFT"/>
       <keyboard-shortcut first-keystroke="control B"/>
     </action>
-    <action id="EditorDelete">
-      <keyboard-shortcut first-keystroke="DELETE"/>
-      <keyboard-shortcut first-keystroke="control D"/>
-    </action>
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control C"/>
     </action>
@@ -204,12 +195,6 @@
       <keyboard-shortcut first-keystroke="control LEFT"/>
       <keyboard-shortcut first-keystroke="alt B"/>
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="control B"/>
-    </action>
-    <action id="EditorCopy">
-      <keyboard-shortcut first-keystroke="control INSERT"/>
-      <keyboard-shortcut first-keystroke="alt C"/>
-      <keyboard-shortcut first-keystroke="alt W"/>
-      <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="W"/>
     </action>
     <action id="EditorCodeBlockStart">
       <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
@@ -255,11 +240,6 @@
       <keyboard-shortcut first-keystroke="shift alt PERIOD"/>
     </action>
     <action id="GotoImplementation"/>
-    <action id="EditorPaste">
-      <keyboard-shortcut first-keystroke="alt P"/>
-      <keyboard-shortcut first-keystroke="shift INSERT"/>
-      <keyboard-shortcut first-keystroke="control Y"/>
-    </action>
     <action id="EditorPageDown">
       <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
       <keyboard-shortcut first-keystroke="control V"/>

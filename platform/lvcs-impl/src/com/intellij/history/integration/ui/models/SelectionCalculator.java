@@ -18,8 +18,8 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
+import com.intellij.history.core.Content;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import org.jetbrains.annotations.Nullable;

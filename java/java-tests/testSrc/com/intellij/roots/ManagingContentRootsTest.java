@@ -19,6 +19,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           LocalFileSystem fs = LocalFileSystem.getInstance();

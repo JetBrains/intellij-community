@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -42,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -138,7 +141,25 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   }
 
   public void setType(@Nullable PsiType type) {
-    throw new RuntimeException("NIY");
+    GrTypeElement newTypeElement;
+    try {
+      newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return;
+    }
+
+    final GrTypeElement typeElement = getTypeElementGroovy();
+    if (typeElement == null) {
+      final GrModifierList modifierList = getModifierList();
+      newTypeElement = (GrTypeElement)addAfter(newTypeElement, modifierList);
+    }
+    else {
+      newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
+    }
+
+    PsiUtil.shortenReferences(newTypeElement);
   }
 
   @Nullable

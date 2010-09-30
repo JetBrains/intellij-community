@@ -788,6 +788,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
                 "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER", "ElementType.TYPE");
   }
 
+  @Override
   protected void checkResultByFile(@NonNls final String filePath) throws Exception {
     if (myItems != null) {
       //System.out.println("items = " + Arrays.asList(myItems));
@@ -998,6 +999,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     configureByTestName();
 
     getLookup().setCurrentItem(ContainerUtil.find(myItems, new Condition<LookupElement>() {
+      @Override
       public boolean value(final LookupElement lookupItem) {
         return "Fubar.Bar".equals(lookupItem.getLookupString());
       }
@@ -1068,6 +1070,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     setType(CompletionType.SMART);

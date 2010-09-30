@@ -38,11 +38,13 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
   private VirtualFile myTestProjectRoot;
   private FormSourceCodeGenerator myGenerator;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
@@ -100,6 +102,7 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         try {
           myGenerator.generate(form);

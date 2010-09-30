@@ -26,9 +26,15 @@ import com.intellij.psi.PsiElement;
 
 abstract public class GroovyStructureViewElement implements StructureViewTreeElement {
   final protected PsiElement myElement;
+  final protected boolean myIsInherited;
+
+  public GroovyStructureViewElement(PsiElement element, boolean isInherited) {
+    myElement = element;
+    myIsInherited = isInherited;
+  }
 
   public GroovyStructureViewElement(PsiElement element) {
-    myElement = element;
+    this(element, false);
   }
 
   public Object getValue() {
@@ -62,5 +68,9 @@ abstract public class GroovyStructureViewElement implements StructureViewTreeEle
 
   public boolean canNavigateToSource() {
     return ((Navigatable) myElement).canNavigateToSource();
+  }
+
+  public boolean isInherited() {
+    return myIsInherited;
   }
 }

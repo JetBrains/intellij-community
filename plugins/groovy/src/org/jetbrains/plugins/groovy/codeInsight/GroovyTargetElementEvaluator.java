@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -38,8 +39,6 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   public PsiElement getElementByReference(PsiReference ref, int flags) {
     PsiElement sourceElement = ref.getElement();
-    if (sourceElement == null) return null;
-
 
     if (sourceElement instanceof GrCodeReferenceElement) {
       GrNewExpression newExpr;
@@ -66,10 +65,14 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
       return constructor;
     }
 
-    if (sourceElement instanceof GrReferenceExpression) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
-      return correctSearchTargets(((GrReferenceExpression)sourceElement).resolve());
+    if (sourceElement instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)sourceElement).resolve();
+       if (resolved instanceof GrGdkMethod) {
+        return correctSearchTargets(resolved);
+      }
+      return resolved;
     }
-    
+
     return null;
   }
 

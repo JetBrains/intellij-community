@@ -20,13 +20,13 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -40,12 +40,14 @@ import static org.junit.Assert.fail;
 
 
 public class PsiBuilderQuickTest {
-  private static final IElementType ROOT = new IElementType("ROOT", Language.ANY);
+  private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
+
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
   private static final IElementType DIGIT = new IElementType("DIGIT", Language.ANY);
   private static final IElementType OTHER = new IElementType("OTHER", Language.ANY);
   private static final IElementType COLLAPSED = new IElementType("COLLAPSED", Language.ANY);
   private static final IElementType LEFT_BOUND = new IElementType("LEFT_BOUND", Language.ANY) {
+    @Override
     public boolean isLeftBound() { return true; }
   };
   private static final IElementType COMMENT = new IElementType("COMMENT", Language.ANY);
@@ -57,6 +59,7 @@ public class PsiBuilderQuickTest {
   public void testPlain() {
     doTest("a<<b",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                while (builder.getTokenType() != null) {
                  builder.advanceLexer();
@@ -75,6 +78,7 @@ public class PsiBuilderQuickTest {
   public void testCollapse() {
     doTest("a<<>>b",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                PsiBuilderUtil.advance(builder, 1);
                final PsiBuilder.Marker marker1 = builder.mark();
@@ -98,6 +102,7 @@ public class PsiBuilderQuickTest {
   public void testDoneAndError() {
     doTest("a2b",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                IElementType tokenType;
                while ((tokenType = builder.getTokenType()) != null) {
@@ -120,6 +125,7 @@ public class PsiBuilderQuickTest {
   public void testPrecedeAndDoneBefore() throws Exception {
     doTest("ab",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                final PsiBuilder.Marker marker1 = builder.mark();
                builder.advanceLexer();
@@ -145,6 +151,7 @@ public class PsiBuilderQuickTest {
   public void testErrorBefore() throws Exception {
     doTest("a1",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                final PsiBuilder.Marker letter = builder.mark();
                builder.advanceLexer();
@@ -168,6 +175,7 @@ public class PsiBuilderQuickTest {
   public void testValidityChecksOnDone() throws Exception {
     doFailTest("a",
                new Parser() {
+                 @Override
                  public void parse(PsiBuilder builder) {
                    final PsiBuilder.Marker first = builder.mark();
                    builder.advanceLexer();
@@ -182,6 +190,7 @@ public class PsiBuilderQuickTest {
   public void testValidityChecksOnDoneBefore1() throws Exception {
     doFailTest("a",
                new Parser() {
+                 @Override
                  public void parse(PsiBuilder builder) {
                    final PsiBuilder.Marker first = builder.mark();
                    builder.advanceLexer();
@@ -197,6 +206,7 @@ public class PsiBuilderQuickTest {
   public void testValidityChecksOnDoneBefore2() throws Exception {
     doFailTest("a",
                new Parser() {
+                 @Override
                  public void parse(PsiBuilder builder) {
                    final PsiBuilder.Marker first = builder.mark();
                    builder.advanceLexer();
@@ -211,6 +221,7 @@ public class PsiBuilderQuickTest {
   public void testWhitespaceTrimming() throws Exception {
     doTest(" a b ",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                PsiBuilder.Marker marker = builder.mark();
                builder.advanceLexer();
@@ -235,6 +246,7 @@ public class PsiBuilderQuickTest {
   public void testWhitespaceBalancingByErrors() throws Exception {
     doTest("a b c",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                PsiBuilder.Marker marker = builder.mark();
                builder.advanceLexer();
@@ -268,6 +280,7 @@ public class PsiBuilderQuickTest {
   public void testWhitespaceBalancingByEmptyComposites() throws Exception {
     doTest("a b c",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                PsiBuilder.Marker marker = builder.mark();
                builder.advanceLexer();
@@ -297,6 +310,7 @@ public class PsiBuilderQuickTest {
   @Test
   public void testCustomEdgeProcessors() throws Exception {
     final WhitespacesAndCommentsProcessor leftEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+      @Override
       public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = tokens.size() - 1;
         while (tokens.get(pos) != COMMENT && pos > 0) pos--;
@@ -304,6 +318,7 @@ public class PsiBuilderQuickTest {
       }
     };
     final WhitespacesAndCommentsProcessor rightEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+      @Override
       public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = 0;
         while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
@@ -313,6 +328,7 @@ public class PsiBuilderQuickTest {
 
     doTest("{ # i # }",
            new Parser() {
+             @Override
              public void parse(PsiBuilder builder) {
                while (builder.getTokenType() != LETTER) builder.advanceLexer();
                final PsiBuilder.Marker marker = builder.mark();
@@ -333,6 +349,120 @@ public class PsiBuilderQuickTest {
            "    PsiElement(COMMENT)('#')\n" +
            "  PsiWhiteSpace(' ')\n" +
            "  PsiElement(OTHER)('}')\n");
+  }
+
+  private static abstract class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
+    protected MyLazyElementType(@NonNls String debugName) {
+      super(debugName, Language.ANY);
+    }
+  }
+
+  @Test
+  public void testLightChameleon() throws Exception {
+    final IElementType CHAMELEON_2 = new MyLazyElementType("CHAMELEON_2") {
+      @Override
+      public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getLightTree();
+      }
+
+      @Override
+      public ASTNode parseContents(ASTNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getTreeBuilt().getFirstChildNode();
+      }
+
+      public void parse(PsiBuilder builder) {
+        final PsiBuilder.Marker root = builder.mark();
+        PsiBuilder.Marker error = null;
+        while (!builder.eof()) {
+          final String token = builder.getTokenText();
+          if ("?".equals(token)) error = builder.mark();
+          builder.advanceLexer();
+          if (error != null) {
+            error.error("test error 2");
+            error = null;
+          }
+        }
+        root.done(this);
+      }
+    };
+
+    final IElementType CHAMELEON_1 = new MyLazyElementType("CHAMELEON_1") {
+      @Override
+      public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getLightTree();
+      }
+
+      @Override
+      public ASTNode parseContents(ASTNode chameleon) {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), WHITESPACE_SET, COMMENT_SET, chameleon.getText());
+        parse(builder);
+        return builder.getTreeBuilt().getFirstChildNode();
+      }
+
+      public void parse(PsiBuilder builder) {
+        final PsiBuilder.Marker root = builder.mark();
+        PsiBuilder.Marker nested = null;
+        while (!builder.eof()) {
+          final String token = builder.getTokenText();
+          if ("[".equals(token) && nested == null) {
+            nested = builder.mark();
+          }
+          builder.advanceLexer();
+          if ("]".equals(token) && nested != null) {
+            nested.collapse(CHAMELEON_2);
+            nested.precede().done(OTHER);
+            nested = null;
+            builder.error("test error 1");
+          }
+        }
+        if (nested != null) nested.drop();
+        root.done(this);
+      }
+    };
+
+    doTest("ab{12[.?]}cd{x}",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               PsiBuilderUtil.advance(builder, 2);
+               PsiBuilder.Marker chameleon = builder.mark();
+               PsiBuilderUtil.advance(builder, 8);
+               chameleon.collapse(CHAMELEON_1);
+               PsiBuilderUtil.advance(builder, 2);
+               chameleon = builder.mark();
+               PsiBuilderUtil.advance(builder, 3);
+               chameleon.collapse(CHAMELEON_1);
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(LETTER)('b')\n" +
+           "  Element(CHAMELEON_1)\n" +
+           "    PsiElement(OTHER)('{')\n" +
+           "    PsiElement(DIGIT)('1')\n" +
+           "    PsiElement(DIGIT)('2')\n" +
+           "    Element(OTHER)\n" +
+           "      Element(CHAMELEON_2)\n" +
+           "        PsiElement(OTHER)('[')\n" +
+           "        PsiElement(OTHER)('.')\n" +
+           "        PsiErrorElement:test error 2\n" +
+           "          PsiElement(OTHER)('?')\n" +
+           "        PsiElement(OTHER)(']')\n" +
+           "    PsiErrorElement:test error 1\n" +
+           "      <empty list>\n" +
+           "    PsiElement(OTHER)('}')\n" +
+           "  PsiElement(LETTER)('c')\n" +
+           "  PsiElement(LETTER)('d')\n" +
+           "  Element(CHAMELEON_1)\n" +
+           "    PsiElement(OTHER)('{')\n" +
+           "    PsiElement(LETTER)('x')\n" +
+           "    PsiElement(OTHER)('}')\n");
   }
 
   private interface Parser {
@@ -365,23 +495,29 @@ public class PsiBuilderQuickTest {
     DiffTree.diff(
       new ASTStructure(root), builder2.getLightTree(),
       new ShallowNodeComparator<ASTNode, LighterASTNode>() {
+        @Override
         public ThreeState deepEqual(ASTNode oldNode, LighterASTNode newNode) {
           return ThreeState.UNSURE;
   }
+        @Override
         public boolean typesEqual(ASTNode oldNode, LighterASTNode newNode) {
           return true;
         }
+        @Override
         public boolean hashCodesEqual(ASTNode oldNode, LighterASTNode newNode) {
           return true;
         }
       },
       new DiffTreeChangeBuilder<ASTNode, LighterASTNode>() {
+        @Override
         public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
           fail("replaced(" + oldChild + "," + newChild.getTokenType() + ")");
         }
+        @Override
         public void nodeDeleted(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
           fail("deleted(" + oldParent + "," + oldNode + ")");
         }
+        @Override
         public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
           fail("inserted(" + oldParent + "," + newNode.getTokenType() + ")");
         }
@@ -414,16 +550,19 @@ public class PsiBuilderQuickTest {
     private int myIndex = 0;
     private int myBufferEnd = 1;
 
+    @Override
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer.subSequence(startOffset, endOffset);
       myIndex = 0;
       myBufferEnd = myBuffer.length();
     }
 
+    @Override
     public int getState() {
       return 0;
     }
 
+    @Override
     public IElementType getTokenType() {
       if (myIndex >= myBufferEnd) return null;
       else if (Character.isLetter(myBuffer.charAt(myIndex))) return LETTER;
@@ -433,28 +572,34 @@ public class PsiBuilderQuickTest {
       else return OTHER;
     }
 
+    @Override
     public int getTokenStart() {
       return myIndex;
     }
 
+    @Override
     public int getTokenEnd() {
       return myIndex + 1;
     }
 
+    @Override
     public void advance() {
       if (myIndex < myBufferEnd) myIndex++;
     }
 
+    @Override
     public CharSequence getBufferSequence() {
       return myBuffer;
     }
 
+    @Override
     public int getBufferEnd() {
       return myBufferEnd;
     }
   }
 
   private static class NullStream extends OutputStream {
+    @Override
     public void write(final int b) throws IOException { }
   }
 }

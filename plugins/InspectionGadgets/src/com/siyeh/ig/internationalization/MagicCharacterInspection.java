@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,42 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MagicCharacterInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.character.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "magic.character.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IntroduceConstantFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CharacterLiteralsShouldBeExplicitlyDeclaredVisitor();
     }
@@ -69,24 +75,13 @@ public class MagicCharacterInspection extends BaseInspection {
             if (text.equals(" ")) {
                 return;
             }
-            if (isDeclaredConstant(expression)) {
+            if (ExpressionUtils.isDeclaredConstant(expression)) {
                 return;
             }
             if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
             registerError(expression);
-        }
-
-        private static boolean isDeclaredConstant(
-                PsiLiteralExpression expression) {
-            final PsiField field =
-                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
-            if (field == null) {
-                return false;
-            }
-            return field.hasModifierProperty(PsiModifier.STATIC) &&
-                    field.hasModifierProperty(PsiModifier.FINAL);
         }
     }
 }

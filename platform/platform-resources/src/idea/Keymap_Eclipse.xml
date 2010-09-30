@@ -51,7 +51,6 @@
     <action id="DelegateMethods">
       <keyboard-shortcut first-keystroke="shift alt E" />
     </action>
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction" />
     <action id="EditSource">
       <keyboard-shortcut first-keystroke="F12" />
       <keyboard-shortcut first-keystroke="shift control E" />
@@ -171,22 +170,16 @@
     </action>
     <action id="GuiDesigner.EditComponent" />
     <action id="GuiDesigner.EditGroup" />
-    <action id="GuiDesigner.ExpandSelection" />
     <action id="GuiDesigner.GoToListener">
       <keyboard-shortcut first-keystroke="control T" />
       <keyboard-shortcut first-keystroke="control alt B" />
     </action>
-    <action id="GuiDesigner.QuickJavadoc">
-      <keyboard-shortcut first-keystroke="shift alt Q" />
-    </action>
-    <action id="GuiDesigner.ShrinkSelection" />
     <action id="HighlightUsagesInFile">
       <keyboard-shortcut first-keystroke="shift alt O" />
       <keyboard-shortcut first-keystroke="shift control F7" />
     </action>
     <action id="IDEtalk.Rename" />
     <action id="Images.ShowThumbnails" />
-    <action id="Images.Thumbnails.Hide" />
     <action id="Images.Thumbnails.ToggleRecursive" />
     <action id="ImplementMethods">
       <keyboard-shortcut first-keystroke="shift alt P" />
@@ -211,8 +204,6 @@
     <action id="MethodDown">
       <keyboard-shortcut first-keystroke="shift control DOWN" />
     </action>
-    <action id="MethodHierarchy.ImplementMethodAction" />
-    <action id="MethodHierarchy.OverrideMethodAction" />
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="shift control UP" />
     </action>
@@ -225,7 +216,6 @@
     <action id="MoveStatementUp">
       <keyboard-shortcut first-keystroke="alt UP" />
     </action>
-    <action id="NewElement" />
     <action id="NextDiff">
       <keyboard-shortcut first-keystroke="control F7" />
     </action>
@@ -337,6 +327,5 @@
     <action id="ViewNavigationBar">
       <keyboard-shortcut first-keystroke="alt HOME" />
     </action>
-    <action id="Console.TableResult.DeleteRows"><keyboard-shortcut first-keystroke="control D"/></action>
   </keymap>
 </component>

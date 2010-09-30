@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -113,7 +114,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 
-  private static void insertIncompleteTag(char completionChar, final Editor editor, final Project project, XmlElementDescriptor descriptor, XmlTag tag) {
+  private void insertIncompleteTag(char completionChar, final Editor editor, final Project project, XmlElementDescriptor descriptor, XmlTag tag) {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
 
@@ -172,6 +173,58 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
+    weInsertedSomeCodeThatCouldBeInvalidated =
+      addTail(completionChar, descriptor, tag, template, weInsertedSomeCodeThatCouldBeInvalidated, attributes, indirectRequiredAttrs);
+
+    final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
+    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
+      private RangeMarker myAttrValueMarker;
+
+      @Override
+      public void waitingForInput(Template template) {
+        int offset = editor.getCaretModel().getOffset();
+        myAttrValueMarker = editor.getDocument().createRangeMarker(offset + 1, offset + 4);
+      }
+
+      public void templateFinished(final Template template, boolean brokenOff) {
+        final int offset = editor.getCaretModel().getOffset();
+
+        if (weInsertedSomeCodeThatCouldBeInvalidated1 && offset >= 3) {
+          char c = editor.getDocument().getCharsSequence().charAt(offset - 3);
+          if (c == '/' || (c == ' ' && brokenOff)) {
+            new WriteCommandAction.Simple(project) {
+              protected void run() throws Throwable {
+                editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+              }
+            }.execute();
+          }
+        }
+      }
+
+      public void templateCancelled(final Template template) {
+        if (myAttrValueMarker == null) {
+          return;
+        }
+        if (weInsertedSomeCodeThatCouldBeInvalidated1) {
+          final int startOffset = myAttrValueMarker.getStartOffset();
+          final int endOffset = myAttrValueMarker.getEndOffset();
+          new WriteCommandAction.Simple(project) {
+            protected void run() throws Throwable {
+              editor.getDocument().replaceString(startOffset, endOffset, ">");
+            }
+          }.execute();
+        }
+      }
+    });
+  }
+
+  protected boolean addTail(char completionChar,
+                                   XmlElementDescriptor descriptor,
+                                   XmlTag tag,
+                                   Template template,
+                                   boolean weInsertedSomeCodeThatCouldBeInvalidated,
+                                   XmlAttributeDescriptor[] attributes,
+                                   StringBuilder indirectRequiredAttrs) {
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
       template.addTextSegment(">");
       boolean toInsertCDataEnd = false;
@@ -217,28 +270,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     } else if ((completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) && WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
       template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
     }
-
-    final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
-    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
-      public void templateFinished(final Template template, boolean brokenOff) {
-        final int offset = editor.getCaretModel().getOffset();
-
-        if (weInsertedSomeCodeThatCouldBeInvalidated1 &&
-            offset >= 3 &&
-            editor.getDocument().getCharsSequence().charAt(offset - 3) == '/') {
-          new WriteCommandAction.Simple(project) {
-            protected void run() throws Throwable {
-              editor.getDocument().replaceString(offset - 2, offset + 1, ">");
-            }
-          }.execute();
-        }
-      }
-
-      public void templateCancelled(final Template template) {
-        //final int offset = editor.getCaretModel().getOffset();
-        //if (weInsertedSomeCodeThatCouldBeInvalidated1) {}
-      }
-    });
+    return weInsertedSomeCodeThatCouldBeInvalidated;
   }
 
   private static boolean isTagFromHtml(final XmlTag tag) {

@@ -46,19 +46,19 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache) {
+    this(urls, parent, canLockJars, canUseCache, false);
+  }
+
+  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
     super(parent);
 
-    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars, canUseCache);
+    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars, canUseCache, acceptUnescapedUrls);
     myURLs = new ArrayList<URL>(urls);
   }
 
   public void addURL(URL url) {
     myClassPath.addURL(url);
     myURLs.add(url);
-  }
-
-  public void setAcceptUnescapedUrls(boolean acceptUnescapedUrls) {
-    myClassPath.setAcceptUnescapedUrls(acceptUnescapedUrls);
   }
 
   public List<URL> getUrls() {

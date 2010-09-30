@@ -62,6 +62,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -686,8 +686,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        SimpleDateFormat format = new SimpleDateFormat();
-        String date = format.format(new Date());
+        String date = DateFormatUtil.formatDateTime(new Date());
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();

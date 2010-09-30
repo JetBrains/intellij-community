@@ -100,6 +100,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
+  private boolean myFocused = true;
   private String myAdditionalPrefix = "";
   private final AsyncProcessIcon myProcessIcon;
   private volatile boolean myCalculating;
@@ -147,8 +148,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     updateListHeight(model);
   }
 
-  public AsyncProcessIcon getProcessIcon() {
-    return myProcessIcon;
+  public boolean isFocused() {
+    return myFocused;
+  }
+
+  public void setFocused(boolean focused) {
+    myFocused = focused;
   }
 
   public boolean isCalculating() {
@@ -157,6 +162,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void setCalculating(final boolean calculating) {
     myCalculating = calculating;
+    myProcessIcon.setVisible(calculating);
+    if (calculating) {
+      myProcessIcon.resume();
+    } else {
+      myProcessIcon.suspend();
+    }
   }
 
   public int getPreferredItemsCount() {
@@ -583,6 +594,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
+        setFocused(true);
+
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
         if (i >= 0) {
@@ -650,7 +663,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int offset = myEditor.getSelectionModel().hasSelection()
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
-    return Math.max(offset - myMinPrefixLength, 0);
+    return Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
   }
 
   private void selectMostPreferableItem() {
@@ -752,6 +765,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
+    if (explicitlyInvoked) {
+      setFocused(true);
+    }
+
     if (explicitlyInvoked && myCalculating) return false;
     if (!explicitlyInvoked && myDirty) return false;
 
@@ -801,7 +818,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
       myInitialPrefix = presentPrefix;
-    } else {
+    }
+    else {
       myInitialPrefix = null;
     }
 
@@ -904,7 +922,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert myHidden;
     assert !myDisposed;
     myDisposed = true;
-    myProcessIcon.dispose();
+    Disposer.dispose(myProcessIcon);
     if (myEditorCaretListener != null) {
       myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
       myEditor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);

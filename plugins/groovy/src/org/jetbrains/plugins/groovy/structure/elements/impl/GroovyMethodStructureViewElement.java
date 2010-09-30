@@ -27,22 +27,16 @@ import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyMeth
  * Date: 30.10.2007
  */
 public class GroovyMethodStructureViewElement extends GroovyStructureViewElement {
-  private final boolean isInherit;
 
   public GroovyMethodStructureViewElement(PsiMethod element, boolean isInherit) {
-    super(element);
-    this.isInherit = isInherit;
+    super(element, isInherit);
   }
 
   public ItemPresentation getPresentation() {
-    return new GroovyMethodItemPresentation(((PsiMethod) myElement), isInherit);
+    return new GroovyMethodItemPresentation(((PsiMethod) myElement), isInherited());
   }
 
   public TreeElement[] getChildren() {
     return StructureViewTreeElement.EMPTY_ARRAY;
-  }
-
-  public boolean isInherit() {
-    return isInherit;
   }
 }

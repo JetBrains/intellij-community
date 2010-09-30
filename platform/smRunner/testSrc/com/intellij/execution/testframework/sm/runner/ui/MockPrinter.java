@@ -36,6 +36,7 @@ public class MockPrinter implements Printer {
     myShouldReset = shouldReset;
   }
 
+  @Override
   public void print(String s, ConsoleViewContentType contentType) {
     myHasPrinted = true;
     if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
@@ -82,12 +83,15 @@ public class MockPrinter implements Printer {
     return myHasPrinted;
   }
 
+  @Override
   public void onNewAvailable(@NotNull Printable printable) {
     printable.printOn(this);
   }
 
+  @Override
   public void printHyperlink(String text, HyperlinkInfo info) {
   }
 
+  @Override
   public void mark() {}
 }

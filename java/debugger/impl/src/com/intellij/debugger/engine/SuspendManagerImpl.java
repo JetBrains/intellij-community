@@ -19,6 +19,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
@@ -120,7 +121,10 @@ public class SuspendManagerImpl implements SuspendManager {
         if (thread != null) { // check that thread is suspended at the moment
           try {
             if (!thread.isSuspended()) {
-              LOG.error("Context thread must be suspended");
+              final int status = thread.status();
+              if ((status != ThreadReference.THREAD_STATUS_ZOMBIE) && (status != ThreadReference.THREAD_STATUS_NOT_STARTED) && (status != ThreadReference.THREAD_STATUS_UNKNOWN)) {
+                LOG.error("Context thread must be suspended");
+              }
             }
           }
           catch (ObjectCollectedException ignored) {}

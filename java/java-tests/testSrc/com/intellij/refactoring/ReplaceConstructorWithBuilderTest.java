@@ -79,6 +79,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
                       final String conflicts,
                       final String packageName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Class Test not found", aClass);
@@ -114,6 +115,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
   }
 
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/replaceConstructorWithBuilder/";
   }

@@ -16,25 +16,20 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class UpdateInfo implements JDOMExternalizable {
   private final Project myProject;
   private UpdatedFiles myUpdatedFiles;
   private String myDate;
   private ActionInfo myActionInfo;
-  private static final DateFormat DATE_FORMAT =
-    SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT, Locale.getDefault());
   @NonNls private static final String DATE_ATTR = "date";
   @NonNls private static final String FILE_INFO_ELEMENTS = "UpdatedFiles";
   @NonNls private static final String ACTION_INFO_ATTRIBUTE_NAME = "ActionInfo";
@@ -43,7 +38,7 @@ public class UpdateInfo implements JDOMExternalizable {
     myProject = project;
     myActionInfo = actionInfo;
     myUpdatedFiles = updatedFiles;
-    myDate = DATE_FORMAT.format(new Date());
+    myDate = DateFormatUtil.formatPrettyDateTime(Clock.getTime());
   }
 
   public UpdateInfo(Project project) {

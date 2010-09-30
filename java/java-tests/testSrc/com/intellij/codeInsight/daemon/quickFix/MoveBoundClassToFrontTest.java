@@ -5,6 +5,7 @@ public class MoveBoundClassToFrontTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/moveBoundClassToFront";
   }

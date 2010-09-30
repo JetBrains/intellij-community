@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,8 +26,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.CheckBox;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -51,6 +52,8 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     private final List<String> methodNamePatterns = new ArrayList();
     private final List<String> classNames = new ArrayList();
     private Map<String, Pattern> patternCache = null;
+
+    public boolean assertKeywordIsAssertion = false;
 
     public TestMethodWithoutAssertionInspection() {
         parseString(assertionMethods, classNames, methodNamePatterns);
@@ -79,7 +82,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     @Override
     public JComponent createOptionsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final IGTable table = new IGTable(new ListWrappingTableModel(
+        final ListTable table = new ListTable(new ListWrappingTableModel(
                 Arrays.asList(classNames, methodNamePatterns),
                 InspectionGadgetsBundle.message("class.name"),
                 InspectionGadgetsBundle.message("method.name.pattern")));
@@ -88,6 +91,10 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
 
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveToolbar(table);
+
+        final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
+                        "assert.keyword.is.considered.an.assertion"), this,
+                "assertKeywordIsAssertion");
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
@@ -101,6 +108,10 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
         constraints.weighty = 1.0;
         constraints.fill = GridBagConstraints.BOTH;
         panel.add(scrollPane, constraints);
+
+        constraints.gridy = 2;
+        constraints.weighty = 0.0;
+        panel.add(checkBox, constraints);
         return panel;
     }
 
@@ -203,6 +214,18 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
                 containsAssertion = true;
                 break;
             }
+        }
+
+        @Override
+        public void visitAssertStatement(PsiAssertStatement statement) {
+            if (containsAssertion) {
+                return;
+            }
+            super.visitAssertStatement(statement);
+            if (!assertKeywordIsAssertion) {
+                return;
+            }
+            containsAssertion = true;
         }
 
         public boolean containsAssertion() {

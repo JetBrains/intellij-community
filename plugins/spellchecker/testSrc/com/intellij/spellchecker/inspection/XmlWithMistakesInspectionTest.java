@@ -22,6 +22,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  * User: Ekaterina Shliakhovetskaja
  */
 public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
+  @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/xmlWithMistakes";
   }

@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
@@ -65,6 +66,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   private boolean myWasTreeInitialized;
 
   protected boolean myAutoScrollEnabled = true;
+
+  protected BaseStructureConfigurable(Project project, MasterDetailsState state) {
+    super(state);
+    myProject = project;
+  }
 
   protected BaseStructureConfigurable(final Project project) {
     myProject = project;

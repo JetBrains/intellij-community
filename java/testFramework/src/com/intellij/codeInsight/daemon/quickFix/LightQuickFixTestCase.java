@@ -60,8 +60,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   private static void doTestFor(final String testName, final QuickFixTestCase quickFixTestCase) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
             final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
@@ -186,6 +188,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, @NonNls String name) {
         return name.startsWith(BEFORE_PREFIX);
       }
@@ -204,62 +207,77 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   protected void doAllTests() throws Exception {
     doAllTests(new QuickFixTestCase() {
+      @Override
       public String getBasePath() {
         return LightQuickFixTestCase.this.getBasePath();
       }
 
+      @Override
       public String getTestDataPath() {
         return LightQuickFixTestCase.this.getTestDataPath();
       }
 
+      @Override
       public Pair<String, Boolean> parseActionHintImpl(PsiFile file, String contents) {
         return LightQuickFixTestCase.this.parseActionHintImpl(file, contents);
       }
 
+      @Override
       public void beforeActionStarted(String testName, String contents) {
         LightQuickFixTestCase.this.beforeActionStarted(testName, contents);
       }
 
+      @Override
       public void afterActionCompleted(String testName, String contents) {
         LightQuickFixTestCase.this.afterActionCompleted(testName, contents);
       }
 
+      @Override
       public void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception {
         LightQuickFixTestCase.this.doAction(text, actionShouldBeAvailable, testFullPath, testName);
       }
 
+      @Override
       public void checkResultByFile(String s, String expectedFilePath, boolean b) throws Exception {
         LightQuickFixTestCase.this.checkResultByFile(s, expectedFilePath, b);
       }
 
+      @Override
       public IntentionAction findActionWithText(String text) {
         return LightQuickFixTestCase.this.findActionWithText(text);
       }
 
+      @Override
       public boolean shouldBeAvailableAfterExecution() {
         return LightQuickFixTestCase.this.shouldBeAvailableAfterExecution();
       }
 
+      @Override
       public void invoke(IntentionAction action) {
         LightQuickFixTestCase.this.invoke(action);
       }
 
+      @Override
       public List<HighlightInfo> doHighlighting() {
         return LightQuickFixTestCase.this.doHighlighting();
       }
 
+      @Override
       public List<IntentionAction> getAvailableActions() {
         return LightQuickFixTestCase.this.getAvailableActions();
       }
 
+      @Override
       public void configureFromFileText(String name, String contents) throws IOException {
         LightCodeInsightTestCase.configureFromFileText(name, contents);
       }
 
+      @Override
       public PsiFile getFile() {
         return LightCodeInsightTestCase.getFile();
       }
 
+      @Override
       public void bringRealEditorBack() {
         LightCodeInsightTestCase.bringRealEditorBack();
       }

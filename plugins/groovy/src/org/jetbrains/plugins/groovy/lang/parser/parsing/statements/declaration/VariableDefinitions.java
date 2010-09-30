@@ -215,7 +215,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         return mIDENT;
       } 
     } else if (builder.getTokenType() == mLPAREN && isTuple) {
-      if (TupleParse.parseTuple(builder, hasModifiers, TUPLE_DECLARATION, VARIABLE)) {
+      if (TupleParse.parseTuple(builder, TUPLE_DECLARATION, VARIABLE)) {
         return TUPLE_DECLARATION;
       }
     }

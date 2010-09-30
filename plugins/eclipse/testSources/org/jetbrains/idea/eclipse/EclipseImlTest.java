@@ -84,6 +84,7 @@ public class EclipseImlTest extends IdeaTestCase {
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityAppDir);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
       public Module compute() {
         return ModuleManager.getInstance(project)
           .newModule(new File(path) + File.separator + EclipseProjectFinder

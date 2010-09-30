@@ -41,11 +41,13 @@ import com.intellij.util.IncorrectOperationException;
 public class FormEnumUsageTest extends PsiTestCase {
   private VirtualFile myTestProjectRoot;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/binding/" + getTestName(true);
@@ -68,6 +70,7 @@ public class FormEnumUsageTest extends PsiTestCase {
   public void testEnumUsage() throws IncorrectOperationException {
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         try {
           createFile(myModule, myTestProjectRoot, "PropEnum.java", "public enum PropEnum { valueA, valueB }");

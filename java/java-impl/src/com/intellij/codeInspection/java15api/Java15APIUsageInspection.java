@@ -38,7 +38,6 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -220,25 +219,11 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new MyVisitor(holder);
+    return new MyVisitor(holder, isOnTheFly);
   }
 
   private static boolean isInProject(final PsiElement elt) {
     return elt.getManager().isInProject(elt);
-  }
-
-  @Override @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL);
-    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
-    for(FileCheckingInspection obj: fileCheckingInspections) {
-      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
-      if (descriptors != null) {
-        return descriptors;
-      }
-    }
-
-    return null;
   }
 
   public static String getPresentable(LanguageLevel languageLevel) {
@@ -247,9 +232,12 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
+    private final boolean myOnTheFly;
+    private final ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL);
 
-    public MyVisitor(final ProblemsHolder holder) {
+    public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
+      myOnTheFly = onTheFly;
     }
 
     @Override public void visitDocComment(PsiDocComment comment) {
@@ -322,6 +310,18 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
         myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", getPresentable(api)));
+      }
+    }
+
+    @Override
+    public void visitFile(PsiFile file) {
+      for (FileCheckingInspection inspection : point.getExtensions()) {
+        ProblemDescriptor[] descriptors = inspection.checkFile(file, InspectionManager.getInstance(file.getProject()), myOnTheFly);
+        if (descriptors != null) {
+          for (ProblemDescriptor descriptor : descriptors) {
+            myHolder.registerProblem(descriptor);
+          }
+        }
       }
     }
   }

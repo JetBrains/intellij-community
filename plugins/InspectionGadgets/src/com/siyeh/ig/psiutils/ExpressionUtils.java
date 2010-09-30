@@ -58,6 +58,16 @@ public class ExpressionUtils {
         return ClassUtils.isImmutable(type);
     }
 
+    public static boolean isDeclaredConstant(PsiExpression expression) {
+        final PsiField field =
+                PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field == null) {
+            return false;
+        }
+        return field.hasModifierProperty(PsiModifier.STATIC) &&
+                field.hasModifierProperty(PsiModifier.FINAL);
+    }
+
     public static boolean isEvaluatedAtCompileTime(
             @Nullable PsiExpression expression) {
         if (expression instanceof PsiLiteralExpression) {
@@ -104,9 +114,9 @@ public class ExpressionUtils {
         if (expression instanceof PsiParenthesizedExpression) {
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)expression;
-            final PsiExpression unparenthesizedExpression =
+            final PsiExpression deparenthesizedExpression =
                     parenthesizedExpression.getExpression();
-            return isEvaluatedAtCompileTime(unparenthesizedExpression);
+            return isEvaluatedAtCompileTime(deparenthesizedExpression);
         }
         if (expression instanceof PsiConditionalExpression) {
             final PsiConditionalExpression conditionalExpression =
@@ -298,10 +308,10 @@ public class ExpressionUtils {
                 !JavaTokenType.MINUS.equals(tokenType);
     }
 
-    public static boolean isComparison(@Nullable PsiExpression expression,
-                                       @NotNull PsiLocalVariable variable) {
-        expression =
-                ParenthesesUtils.stripParentheses(expression);
+    public static boolean isVariableLessThanComparison(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
+        expression = ParenthesesUtils.stripParentheses(expression);
         if (!(expression instanceof PsiBinaryExpression)) {
             return false;
         }
@@ -309,11 +319,38 @@ public class ExpressionUtils {
                 (PsiBinaryExpression)expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
-        if (tokenType.equals(JavaTokenType.LT)) {
+        if (tokenType.equals(JavaTokenType.LT) ||
+                tokenType.equals(JavaTokenType.LE)) {
             PsiExpression lhs = binaryExpression.getLOperand();
             lhs = ParenthesesUtils.stripParentheses(lhs);
             return VariableAccessUtils.evaluatesToVariable(lhs, variable);
-        } else if (tokenType.equals(JavaTokenType.GT)) {
+        } else if (tokenType.equals(JavaTokenType.GT) ||
+                tokenType.equals(JavaTokenType.GE)) {
+            PsiExpression rhs = binaryExpression.getROperand();
+            rhs = ParenthesesUtils.stripParentheses(rhs);
+            return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+        }
+        return false;
+    }
+
+    public static boolean isVariableGreaterThanComparison(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
+        expression = ParenthesesUtils.stripParentheses(expression);
+        if (!(expression instanceof PsiBinaryExpression)) {
+            return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)expression;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        if (tokenType.equals(JavaTokenType.GT) ||
+                tokenType.equals(JavaTokenType.GE)) {
+            PsiExpression lhs = binaryExpression.getLOperand();
+            lhs = ParenthesesUtils.stripParentheses(lhs);
+            return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+        } else if (tokenType.equals(JavaTokenType.LT) ||
+                tokenType.equals(JavaTokenType.LE)) {
             PsiExpression rhs = binaryExpression.getROperand();
             rhs = ParenthesesUtils.stripParentheses(rhs);
             return VariableAccessUtils.evaluatesToVariable(rhs, variable);

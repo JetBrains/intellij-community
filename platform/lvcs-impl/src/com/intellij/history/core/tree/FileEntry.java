@@ -16,9 +16,9 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.Content;
+import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.StoredContent;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -37,7 +37,7 @@ public class FileEntry extends Entry {
     myContent = content;
   }
 
-  public FileEntry(DataInput in, boolean dummy /* to distinguish from general contructor*/) throws IOException {
+  public FileEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
     myTimestamp = in.readLong();
     isReadOnly = in.readBoolean();

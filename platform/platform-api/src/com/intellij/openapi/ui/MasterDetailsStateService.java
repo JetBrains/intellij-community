@@ -25,13 +25,16 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name="masterDetails",
@@ -41,49 +44,81 @@ import java.util.Map;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.State>{
+public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
+  private final SkipDefaultValuesSerializationFilters mySerializationFilter = new SkipDefaultValuesSerializationFilters();
   private final Map<String, MasterDetailsComponent> myComponents = new HashMap<String, MasterDetailsComponent>();
-  private final State myStates = new State();
+  private final States myStates = new States();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, MasterDetailsStateService.class);
   }
 
-  public void register(@NonNls String key, MasterDetailsComponent masterDetailsComponent) {
+  public void register(@NotNull @NonNls String key, MasterDetailsComponent masterDetailsComponent) {
     myComponents.put(key, masterDetailsComponent);
-    final MasterDetailsComponent.UIState loadedState = myStates.getStates().get(key);
-    if (loadedState != null) {
-      masterDetailsComponent.loadState(loadedState);
-    }
-  }
-
-  public State getState() {
-    for (Map.Entry<String, MasterDetailsComponent> entry : myComponents.entrySet()) {
-      myStates.getStates().put(entry.getKey(), entry.getValue().getState());
-    }
-    return myStates;
-  }
-
-  public void loadState(State state) {
-    myStates.setStates(state.getStates());
-    for (Map.Entry<String, MasterDetailsComponent.UIState> entry : myStates.getStates().entrySet()) {
-      final MasterDetailsComponent component = myComponents.get(entry.getKey());
-      if (component != null) {
-        component.loadState(entry.getValue());
+    for (ComponentState state : myStates.getStates()) {
+      if (key.equals(state.myKey)) {
+        final Element element = state.mySettings;
+        if (element != null) {
+          loadComponentState(masterDetailsComponent, element);
+        }
       }
     }
   }
 
-  public static class State {
-    private Map<String, MasterDetailsComponent.UIState> myStates = new HashMap<String, MasterDetailsComponent.UIState>();
+  private static void loadComponentState(MasterDetailsComponent masterDetailsComponent, Element element) {
+    final MasterDetailsState loadedState = XmlSerializer.deserialize(element, masterDetailsComponent.getState().getClass());
+    masterDetailsComponent.loadState(loadedState);
+  }
+
+  public States getState() {
+    myStates.getStates().clear();
+    for (Map.Entry<String, MasterDetailsComponent> entry : myComponents.entrySet()) {
+      final Element element = XmlSerializer.serialize(entry.getValue().getState(), mySerializationFilter);
+      if (element != null) {
+        final ComponentState state = new ComponentState();
+        state.myKey = entry.getKey();
+        state.mySettings = element;
+        myStates.getStates().add(state);
+      }
+    }
+    Collections.sort(myStates.getStates(), new Comparator<ComponentState>() {
+      @Override
+      public int compare(ComponentState o1, ComponentState o2) {
+        return o1.myKey.compareTo(o2.myKey);
+      }
+    });
+    return myStates;
+  }
+
+  public void loadState(States states) {
+    myStates.setStates(states.getStates());
+    for (ComponentState state : myStates.getStates()) {
+      final MasterDetailsComponent component = myComponents.get(state.myKey);
+      if (component != null) {
+        loadComponentState(component, state.mySettings);
+      }
+    }
+  }
+
+  @Tag("state")
+  public static class ComponentState {
+    @Attribute("key")
+    public String myKey;
+
+    @Tag("settings")
+    public Element mySettings;
+  }
+
+  public static class States {
+    private List<ComponentState> myStates = new ArrayList<ComponentState>();
 
     @Tag("states")
-    @MapAnnotation(surroundWithTag = false, entryTagName = "state", surroundKeyWithTag = false, surroundValueWithTag = false)
-    public Map<String, MasterDetailsComponent.UIState> getStates() {
+    @AbstractCollection(surroundWithTag = false)
+    public List<ComponentState> getStates() {
       return myStates;
     }
 
-    public void setStates(final Map<String, MasterDetailsComponent.UIState> states) {
+    public void setStates(List<ComponentState> states) {
       myStates = states;
     }
   }

@@ -472,6 +472,7 @@ public abstract class DialogWrapper {
    * north of the dialog's content pane. The implementation can return <code>null</code>
    * value. In this case there will be no input panel.
    */
+  @Nullable
   protected JComponent createNorthPanel() {
     return null;
   }

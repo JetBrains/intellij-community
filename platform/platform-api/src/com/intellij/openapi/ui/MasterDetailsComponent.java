@@ -17,9 +17,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -38,14 +36,10 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +58,7 @@ import java.util.List;
  * User: anna
  * Date: 29-May-2006
  */
-public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState>, DetailsComponent.Facade,
-                                                        MasterDetails {
+public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   protected NamedConfigurable myCurrentConfigurable;
@@ -93,16 +86,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myHistory = history;
   }
 
-  public static class UIState {
-    @Tag("splitter-proportions")
-    public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
-    @Tag("last-edited")
-    public String lastEditedConfigurable;
-    @Tag("settings")
-    public Element mySettingsElement;
-  }
-
-  protected UIState myState = new UIState();
+  protected final MasterDetailsState myState;
 
   protected Runnable TREE_UPDATER;
 
@@ -111,7 +95,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       public void run() {
         MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
         if (node != null) {
-          myState.lastEditedConfigurable = getNodePathString(node); //survive after rename;
+          myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
           myDetails.setText(node.getConfigurable().getBannerSlogan());
           ((DefaultTreeModel)myTree.getModel()).reload(node);
           fireItemsChangedExternally();
@@ -137,8 +121,12 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   private boolean myToReinitWholePanel = true;
 
   protected MasterDetailsComponent() {
-    installAutoScroll();
+    this(new MasterDetailsState());
+  }
 
+  protected MasterDetailsComponent(MasterDetailsState state) {
+    myState = state;
+    installAutoScroll();
     reinintWholePanelIfNeeded();
   }
 
@@ -338,7 +326,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myHasDeletedItems = false;
     ((DefaultTreeModel)myTree.getModel()).reload();
     //myTree.requestFocus();
-    myState.proportions.restoreSplitterProportions(myWholePanel);
+    myState.getProportions().restoreSplitterProportions(myWholePanel);
 
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
     boolean selected = false;
@@ -346,7 +334,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final MyNode node = (MyNode)enumeration.nextElement();
       if (node instanceof MyRootNode) continue;
       final String path = getNodePathString(node);
-      if (!selected && Comparing.strEqual(path, myState.lastEditedConfigurable)) {
+      if (!selected && Comparing.strEqual(path, myState.getLastEditedConfigurable())) {
         TreeUtil.selectInTree(node, false, myTree);
         selected = true;
       }
@@ -377,39 +365,16 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     return path.toString();
   }
 
-  @Nullable
-  protected PersistentStateComponent<?> getAdditionalSettings() {
-    return null;
-  }
-
-  public UIState getState() {
-    myState.mySettingsElement = null;
-    PersistentStateComponent<?> additionalSettings = getAdditionalSettings();
-    if (additionalSettings != null) {
-      final Object state = additionalSettings.getState();
-      if (state != null) {
-        myState.mySettingsElement = XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters());
-      }
-    }
+  public MasterDetailsState getState() {
     return myState;
   }
 
-  public void loadState(final UIState object) {
-    myState.lastEditedConfigurable = object.lastEditedConfigurable;
-    myState.proportions = object.proportions;
-    final PersistentStateComponent<?> additionalSettings = getAdditionalSettings();
-    if (additionalSettings != null) {
-      final Element settingsElement = object.mySettingsElement;
-      if (settingsElement != null) {
-        final Class<?> stateType = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], additionalSettings.getClass()));
-        //noinspection unchecked
-        ((PersistentStateComponent)additionalSettings).loadState(XmlSerializer.deserialize(settingsElement, stateType));
-      }
-    }
+  public void loadState(final MasterDetailsState object) {
+    XmlSerializerUtil.copyBean(object, myState);
   }
 
   public void disposeUIResources() {
-    myState.proportions.saveSplitterProportions(myWholePanel);
+    myState.getProportions().saveSplitterProportions(myWholePanel);
     myAutoScrollHandler.cancelAllRequests();
     myDetails.disposeUIResources();
     myInitializedConfigurables.clear();
@@ -622,7 +587,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
   protected void setSelectedNode(@Nullable MyNode node) {
     if (node != null) {
-      myState.lastEditedConfigurable = getNodePathString(node);
+      myState.setLastEditedConfigurable(getNodePathString(node));
     }
     updateSelection(node != null ? node.getConfigurable() : null);
   }
@@ -706,13 +671,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final Object editableObject = namedConfigurable.getEditableObject();
       parentNode = (MyNode)node.getParent();
       idx = parentNode.getIndex(node);
-      parentNode.remove(node);
+      ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
       myHasDeletedItems |= wasObjectStored(editableObject);
       fireItemsChangeListener(editableObject);
       onItemDeleted(editableObject);
       namedConfigurable.disposeUIResources();
     }
-    ((DefaultTreeModel)myTree.getModel()).reload();
+
     if (parentNode != null && idx != -1) {
       TreeUtil
         .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
@@ -839,7 +804,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     void itemsExternallyChanged();
   }
 
-  public static interface ActionGroupWithPreselection {
+  public interface ActionGroupWithPreselection {
     ActionGroup getActionGroup();
 
     int getDefaultIndex();

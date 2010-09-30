@@ -15,15 +15,16 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.util.NotNullFunction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -37,7 +38,10 @@ public class OpenedInEditorWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
+    if (location == null) {
+      return null;
+    }
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
     return virtualFile != null && ArrayUtil.find(OPENED_EDITORS.getValue(location), virtualFile) != -1;
   }

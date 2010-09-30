@@ -68,7 +68,7 @@ public class SearchUtil {
   }
 
   private static void processConfigurables(final Configurable[] configurables,
-                                          final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
+                                           final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
@@ -334,10 +334,12 @@ public class SearchUtil {
 
   private static String quoteStrictOccurences(final String textToMarkup, final String filter) {
     String cur = "";
+    final String s = textToMarkup.toLowerCase();
     for (String part : filter.split(" ")) {
-      if (textToMarkup.toLowerCase().indexOf(part) != -1) {
+      if (s.indexOf(part) != -1) {
         cur += "\"" + part + "\" ";
-      } else {
+      }
+      else {
         cur += part + " ";
       }
     }
@@ -353,7 +355,8 @@ public class SearchUtil {
       final String toMark = textToMarkup.substring(idx, idx + option.length());
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
         result += prefix + toMark;
-      } else {
+      }
+      else {
         result += prefix + "<font color='#ffffff' bgColor='#1d5da7'>" + toMark + "</font>";
       }
       beg = idx + option.length();
@@ -367,7 +370,7 @@ public class SearchUtil {
                                      final int style,
                                      final Color foreground,
                                      final Color background,
-                                     final ColoredTreeCellRenderer textRenderer) {
+                                     final SimpleColoredComponent textRenderer) {
     if (text == null) return;
     if (filter == null || filter.length() == 0) {
       textRenderer.append(text, new SimpleTextAttributes(style, foreground));
@@ -412,14 +415,19 @@ public class SearchUtil {
         idx = text.indexOf(word) + word.length();
         textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(background,
                                                                                                foreground, null,
-                                                                                               style | SimpleTextAttributes.STYLE_SEARCH_MATCH));
+                                                                                               style |
+                                                                                               SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
       final String after = text.substring(idx, text.length());
       if (after.length() > 0) textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
     }
   }
 
-  private static void appendSelectedWords(final String text, final List<String> selectedWords, final int pos, int end, final String filter) {
+  private static void appendSelectedWords(final String text,
+                                          final List<String> selectedWords,
+                                          final int pos,
+                                          int end,
+                                          final String filter) {
     if (pos < end) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       final String[] words = text.substring(pos, end).split("[\\W&&[^_-]]");
@@ -499,8 +507,9 @@ public class SearchUtil {
             if (cancelPopups(activePopup) && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
               return;
             }
-            if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED){
-              searchField.process(new KeyEvent(searchField, KeyEvent.KEY_TYPED, e.getWhen(), e.getModifiers(), KeyEvent.VK_UNDEFINED, e.getKeyChar()));
+            if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+              searchField.process(
+                new KeyEvent(searchField, KeyEvent.KEY_TYPED, e.getWhen(), e.getModifiers(), KeyEvent.VK_UNDEFINED, e.getKeyChar()));
             }
           }
         }

@@ -39,6 +39,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -53,6 +54,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     myModule = myFixture.getModule();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
@@ -85,12 +87,18 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
+  @Override
   protected void runTest() throws Throwable {
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
-        LightPlatformCodeInsightFixtureTestCase.super.runTest();
+        doRunTests();
       }
     }.execute();
+  }
+
+  protected void doRunTests() throws Throwable {
+    LightPlatformCodeInsightFixtureTestCase.super.runTest();
   }
 
   protected Project getProject() {

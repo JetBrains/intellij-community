@@ -20,16 +20,20 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public abstract class BasicTreeModel implements TreeModel {
+  @Override
   public boolean isLeaf(Object node) {
       return getChildCount(node) == 0;
   }
 
+  @Override
   public void valueForPathChanged(TreePath path, Object newValue) {
   }
 
+  @Override
   public void addTreeModelListener(TreeModelListener l) {
   }
 
+  @Override
   public void removeTreeModelListener(TreeModelListener l) {
   }
 

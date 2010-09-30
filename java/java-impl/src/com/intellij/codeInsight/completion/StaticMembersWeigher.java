@@ -20,12 +20,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class StaticMembersWeigher extends CompletionWeigher {
-  public Comparable weigh(@NotNull LookupElement element, CompletionLocation loc) {
+  public Comparable weigh(@NotNull LookupElement element, @Nullable CompletionLocation loc) {
+    if (loc == null) {
+      return null;
+    }
     if (loc.getCompletionType() != CompletionType.BASIC) return 0;
 
     final PsiElement position = loc.getCompletionParameters().getPosition();

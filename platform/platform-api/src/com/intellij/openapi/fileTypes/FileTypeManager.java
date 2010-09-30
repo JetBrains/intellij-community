@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,22 +31,18 @@ import java.util.List;
  */
 
 public abstract class FileTypeManager{
-  private static class FileTypeManagerHolder {
-    private static final FileTypeManager ourInstance = createFileTypeManager();
-  }
-
+  private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
   /**
    * Returns the singleton instance of the FileTypeManager component.
    *
-   * @return the instace of FileTypeManager
+   * @return the instance of FileTypeManager
    */
   public static FileTypeManager getInstance() {
-    return FileTypeManagerHolder.ourInstance;
-  }
-
-  private static FileTypeManager createFileTypeManager() {
-    Application app = ApplicationManager.getApplication();
-    return app == null ? new MockFileTypeManager() : app.getComponent(FileTypeManager.class);
+    if (ourInstance == null) {
+      Application app = ApplicationManager.getApplication();
+      ourInstance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
+    }
+    return ourInstance;
   }
 
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
@@ -74,8 +71,7 @@ public abstract class FileTypeManager{
    * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
+  public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
    * Returns the file type for the specified file.
@@ -84,18 +80,17 @@ public abstract class FileTypeManager{
    * @return The file type instance.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByFile(@NotNull VirtualFile file);
+  public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
 
   /**
    * Returns the file type for the specified extension.
    * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
+   *
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
    */
   @NotNull
-  public abstract
-  FileType getFileTypeByExtension(@NonNls @NotNull String extension);
+  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
 
   /**
    * Returns the list of all registered file types.
@@ -135,9 +130,8 @@ public abstract class FileTypeManager{
    * Adds a listener for receiving notifications about changes in the list of
    * registered file types.
    *
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
-   *
    * @param listener The listener instance.
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    */
 
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
@@ -145,10 +139,9 @@ public abstract class FileTypeManager{
   /**
    * Removes a listener for receiving notifications about changes in the list of
    * registered file types.
-
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    *
    * @param listener The listener instance.
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    */
 
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
@@ -219,7 +212,7 @@ public abstract class FileTypeManager{
       return new ExtensionFileNameMatcher(pattern.substring(2).toLowerCase());
     }
 
-    if (pattern.contains("*") ||  pattern.contains("?")) {
+    if (pattern.contains("*") || pattern.contains("?")) {
       return new WildcardFileNameMatcher(pattern);
     }
 

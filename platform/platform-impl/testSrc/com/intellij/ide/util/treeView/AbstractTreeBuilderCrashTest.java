@@ -21,6 +21,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
   public void testElementMovedButNodeIsStillInStructure() throws Exception {
     assertNodeMove(new Runnable() {
+      @Override
       public void run() {
         getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
         getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
@@ -30,6 +31,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
   public void testElementMovedButNodeIsStillInStructure2() throws Exception {
     assertNodeMove(new Runnable() {
+      @Override
       public void run() {
         getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
         getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
@@ -131,26 +133,32 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
   private void initTree(final Node root) throws Exception {
     myStructure = new BaseStructure() {
+      @Override
       public Object getRootElement() {
         return root;
       }
 
+      @Override
       public Object[] doGetChildElements(final Object element) {
         return ((Node)element).getChildren();
       }
 
+      @Override
       public Object getParentElement(final Object element) {
         return ((Node)element).getParent();
       }
 
+      @Override
       @NotNull
       public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
         return (NodeDescriptor)element;
       }
 
+      @Override
       public void commit() {
       }
 
+      @Override
       public boolean hasSomethingToCommit() {
         return false;
       }
@@ -208,10 +216,12 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
       return new Node[0];
     }
 
+    @Override
     public boolean update() {
       return false;
     }
 
+    @Override
     public Object getElement() {
       return this;
     }

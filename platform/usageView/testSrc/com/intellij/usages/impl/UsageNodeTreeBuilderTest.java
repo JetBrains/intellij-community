@@ -31,6 +31,7 @@ import javax.swing.*;
  * @author max
  */
 public class UsageNodeTreeBuilderTest extends TestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -103,6 +104,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
   }
 
   private static class LogGroupingRule implements UsageGroupingRule {
+    @Override
     public UsageGroup groupUsage(Usage usage) {
       return new LogUsageGroup(usage.toString().length());
     }
@@ -115,17 +117,22 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       myPower = power;
     }
 
+    @Override
     public void update() {
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) { return null; }
+    @Override
     @NotNull
     public String getText(UsageView view) { return String.valueOf(myPower); }
 
+    @Override
     public FileStatus getFileStatus() {
       return null;
     }
 
+    @Override
     public boolean isValid() {
       return false;
     }
@@ -134,6 +141,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       return getText(null);
     }
 
+    @Override
     public int compareTo(UsageGroup o) {
       if (!(o instanceof LogUsageGroup)) return 1;
       return myPower - ((LogUsageGroup)o).myPower;
@@ -145,10 +153,13 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     }
     public int hashCode() { return myPower; }
 
+    @Override
     public void navigate(boolean requestFocus) { }
 
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
@@ -156,59 +167,78 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
   private static class OddEvenGroupingRule implements UsageGroupingRule {
     private static final UsageGroup EVEN = new UsageGroup() {
+      @Override
       public Icon getIcon(boolean isOpen) { return null; }
+      @Override
       @NotNull
       public String getText(UsageView view) { return "Even"; }
 
+      @Override
       public void update() {
       }
 
+      @Override
       public FileStatus getFileStatus() {
         return null;
       }
 
+      @Override
       public boolean isValid() {
         return false;
       }
 
+      @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
+      @Override
       public boolean canNavigate() { return false; }
 
+      @Override
       public boolean canNavigateToSource() {
         return false;
       }
 
+      @Override
       public int compareTo(UsageGroup o) { return o == ODD ? -1 : 0; }
       public String toString() { return getText(null); }
     };
 
     private static final UsageGroup ODD = new UsageGroup() {
+      @Override
       public Icon getIcon(boolean isOpen) { return null; }
+      @Override
       @NotNull
       public String getText(UsageView view) { return "Odd"; }
 
+      @Override
       public void update() {
       }
 
+      @Override
       public FileStatus getFileStatus() {
         return null;
       }
 
+      @Override
       public boolean isValid() {
         return false;
       }
 
+      @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
+      @Override
       public boolean canNavigate() { return false; }
 
+      @Override
       public boolean canNavigateToSource() {
         return false;
       }
 
+      @Override
       public int compareTo(UsageGroup o) { return o == EVEN ? 1 : 0; }
       public String toString() { return getText(null); }
     };
 
+    @Override
     public UsageGroup groupUsage(Usage usage) {
       MockUsage mockUsage = ((MockUsage)usage);
 
@@ -235,41 +265,50 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       return myId;
     }
 
+    @Override
     @NotNull
     public UsagePresentation getPresentation() {
       return new UsagePresentation() {
+        @Override
         @NotNull
         public TextChunk[] getText() {
           return new TextChunk[0];
         }
 
+        @Override
         @NotNull
         public String getPlainText() {
           return "";
         }
 
+        @Override
         public Icon getIcon() {
           return null;
         }
 
+        @Override
         public String getTooltipText() {
           return null;
         }
       };
     }
 
+    @Override
     public boolean isValid() // ?
     {
       return false;
     }
 
+    @Override
     public FileEditorLocation getLocation() {
       return null;
     }
 
+    @Override
     public void selectInEditor() {
     }
 
+    @Override
     public void highlightInEditor() {
     }
 
@@ -281,17 +320,21 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       return getId() - ((MockUsage)o).getId();
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
     }
 
+    @Override
     public boolean canNavigate() {
       return false;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
+    @Override
     public boolean isReadOnly() {
       return false;
     }

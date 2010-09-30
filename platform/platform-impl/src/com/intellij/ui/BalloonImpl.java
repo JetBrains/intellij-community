@@ -128,6 +128,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   public boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
+    if (me.getComponent() == myCloseRec) return true;
     if (SwingUtilities.isDescendingFrom(me.getComponent(), myComp) || me.getComponent() == myComp) return true;
 
 

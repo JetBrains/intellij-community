@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternalizable{
   private EditorColorsScheme myColorsScheme;
   private final EditorColorsManager myEditorColorsManager;
-  @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
+  @Deprecated
+  @NonNls public static final String DEFAULT_SCHEME_NAME = EditorColorsManager.DEFAULT_SCHEME_NAME; // it is API, let's do not break it and do not inline constant
 
   public UsageTreeColorsScheme(EditorColorsManager editorColorsManager) {
     myEditorColorsManager = editorColorsManager;
@@ -56,7 +57,7 @@ public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternal
 
   public void readExternal(Element element) throws InvalidDataException {
     if (myColorsScheme == null){
-      myColorsScheme = (EditorColorsScheme) myEditorColorsManager.getScheme(DEFAULT_SCHEME_NAME).clone();
+      myColorsScheme = (EditorColorsScheme) myEditorColorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME).clone();
     }
     myColorsScheme.readExternal(element);
   }

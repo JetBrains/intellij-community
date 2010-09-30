@@ -43,7 +43,9 @@ public class ConfirmExitDialog extends OptionsDialog {
   protected Action[] createActions() {
     setOKButtonText(CommonBundle.getYesButtonText());
     setCancelButtonText(CommonBundle.getNoButtonText());
-    return new Action[] {getOKAction(), getCancelAction()};
+    final Action cancelAction = getCancelAction();
+    cancelAction.putValue(FOCUSED_ACTION, Boolean.TRUE);
+    return new Action[] {getOKAction(), cancelAction};
   }
 
   protected boolean isToBeShown() {

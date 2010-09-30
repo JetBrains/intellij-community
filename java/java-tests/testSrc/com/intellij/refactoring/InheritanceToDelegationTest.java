@@ -23,10 +23,12 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/inheritanceToDelegation/";
   }
@@ -128,6 +130,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final String baseClassName, final int[] methodIndices, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class " + className + " not found", aClass);
@@ -158,6 +161,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final String baseClassName, final String[] methodNames, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class " + className + " not found", aClass);

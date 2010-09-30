@@ -92,6 +92,7 @@ public class ModulePointerTest extends PlatformTestCase {
     final Module module = model.newModule(myProject.getBaseDir().getPath() + "/" + name + ".iml", EmptyModuleType.getInstance());
     commitModel(model);
     disposeOnTearDown(new Disposable() {
+      @Override
       public void dispose() {
         if (!module.isDisposed()) {
           getModuleManager().disposeModule(module);
@@ -103,6 +104,7 @@ public class ModulePointerTest extends PlatformTestCase {
 
   private static void commitModel(final ModifiableModuleModel model) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         model.commit();
       }

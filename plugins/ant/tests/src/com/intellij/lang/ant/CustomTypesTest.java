@@ -39,6 +39,7 @@ public class CustomTypesTest extends ParsingTestCase {
     super("", "ant");
   }
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/customTypes";
   }
@@ -55,12 +56,14 @@ public class CustomTypesTest extends ParsingTestCase {
     final Ref<Boolean> found = new Ref<Boolean>(false); 
     antProject.accept(new AntDomRecursiveVisitor() {
 
+      @Override
       public void visitAntDomElement(AntDomElement element) {
         if (!found.get()) {
           super.visitAntDomElement(element);
         }
       }
 
+      @Override
       public void visitAntDomCustomElement(AntDomCustomElement element) {
         final Class clazz = element.getDefinitionClass();
         if (clazz != null && AntCustomTask.class.getName().equals(clazz.getName())) {
@@ -74,6 +77,7 @@ public class CustomTypesTest extends ParsingTestCase {
     assertTrue(found.get());
   }
 
+  @Override
   protected String loadFile(String name) throws IOException {
     String fullName = getTestDataPath() + File.separatorChar + name;
     String text = new String(FileUtil.loadFileText(new File(fullName))).trim();

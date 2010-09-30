@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author dsl
  */
-public class KeywordParser extends BaseTokenParser {
+public class KeywordParser extends TokenParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
   private final HashSet[] myKeywordSets = new HashSet[CustomHighlighterTokenType.KEYWORD_TYPE_COUNT];
   private final int mySmartUpdateShift;

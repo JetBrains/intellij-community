@@ -96,6 +96,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     MavenRunConfigurationType.runConfiguration(myProject, params, getMavenGeneralSettings(),
                                                new MavenRunnerSettings(),
                                                new ProgramRunner.Callback() {
+        @Override
         public void processStarted(final RunContentDescriptor descriptor) {
           descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
             @Override

@@ -16,8 +16,8 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import java.text.DateFormat;
-import java.util.Date;
+import com.intellij.openapi.util.Clock;
+import com.intellij.util.text.DateFormatUtil;
 
 /**
  * @author yole
@@ -28,6 +28,6 @@ public class CurrentTimeMacro extends SimpleMacro {
   }
 
   protected String evaluate() {
-    return DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date());
+    return DateFormatUtil.formatTime(Clock.getTime());
   }
 }

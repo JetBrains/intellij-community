@@ -131,7 +131,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      processor.setupDefaultValues(myChangeInfo, refUsages, myProject);
+      if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
     MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
     for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {

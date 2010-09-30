@@ -22,9 +22,11 @@ import java.io.File;
 public class BindToElementTest extends CodeInsightTestCase {
   public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     VirtualFile root = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
           new File(new File(TEST_ROOT), "prj")
@@ -36,6 +38,7 @@ public class BindToElementTest extends CodeInsightTestCase {
     final ContentEntry contentEntry = rootModel.addContentEntry(root);
     contentEntry.addSourceFolder(root, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }
@@ -44,6 +47,7 @@ public class BindToElementTest extends CodeInsightTestCase {
 
   public void testSingleClassImport() throws Exception {
     doTest(new Runnable() {
+      @Override
       public void run() {
         PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
         final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
@@ -61,6 +65,7 @@ public class BindToElementTest extends CodeInsightTestCase {
 
   public void testReplacingType() throws Exception {
     doTest(new Runnable() {
+      @Override
       public void run() {
         final PsiElement elementAt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
         final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(elementAt, PsiTypeElement.class);

@@ -25,14 +25,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractClassHandler implements RefactoringActionHandler {
+public class ExtractClassHandler implements ElementsHandler {
 
   protected static String getHelpID() {
     return HelpID.ExtractClass;
+  }
+
+  @Override
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiClass.class, false) != null;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

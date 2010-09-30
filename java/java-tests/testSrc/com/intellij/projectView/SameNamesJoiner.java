@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 class SameNamesJoiner implements TreeStructureProvider {
+  @Override
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent instanceof JoinedNode) return children;
 
@@ -50,6 +51,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     return result;
   }
 
+  @Override
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
     return null;
   }
@@ -107,6 +109,7 @@ class SameNamesJoiner implements TreeStructureProvider {
   private class JoinedNode extends ProjectViewNode<Joined>{
     Collection<AbstractTreeNode> myChildren;
 
+    @Override
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
       return myChildren;
@@ -117,14 +120,17 @@ class SameNamesJoiner implements TreeStructureProvider {
       myChildren = children;
     }
 
+    @Override
     public String getTestPresentation() {
       return getValue().toString() + " joined";
     }
 
+    @Override
     public boolean contains(@NotNull VirtualFile file) {
       return false;
     }
 
+    @Override
     public void update(PresentationData presentation) {
     }
   }

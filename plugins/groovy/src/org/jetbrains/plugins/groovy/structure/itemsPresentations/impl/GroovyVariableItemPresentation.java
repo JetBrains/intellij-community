@@ -15,19 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.structure.itemsPresentations.impl;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 31.10.2007
  */
 public class GroovyVariableItemPresentation extends GroovyItemPresentation {
-  private final GrVariable myVariable;
+  private final PsiVariable myVariable;
 
-  public GroovyVariableItemPresentation(GrVariable variable) {
+  public GroovyVariableItemPresentation(PsiVariable variable) {
     super(variable);
 
     myVariable = variable;
@@ -37,10 +37,8 @@ public class GroovyVariableItemPresentation extends GroovyItemPresentation {
     StringBuffer presentableText = new StringBuffer();
 
     presentableText.append(myVariable.getName());
-    GrTypeElement varTypeElement = myVariable.getTypeElementGroovy();
-
-    if (varTypeElement != null) {
-      PsiType varType = varTypeElement.getType();
+    if (!(myVariable instanceof GrVariable) || ((GrVariable)myVariable).getTypeElementGroovy() != null) {
+      PsiType varType = myVariable.getType();
       presentableText.append(":");
       presentableText.append(varType.getPresentableText());
     }

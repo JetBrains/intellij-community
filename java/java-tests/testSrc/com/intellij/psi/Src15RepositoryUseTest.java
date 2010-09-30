@@ -31,12 +31,14 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     myRunCommandForTest = true;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
 
+        @Override
         public void run() {
           try {
             LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -52,10 +54,12 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     );
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("mock 1.5");
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     super.tearDown();
@@ -305,6 +309,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
 
   public void testAnnotationIndex() throws Exception {
     getJavaFacade().setAssertOnFileLoadingFilter(new VirtualFileFilter() {
+      @Override
       public boolean accept(final VirtualFile file) {
         return !"package-info.java".equals(file.getName());
       }

@@ -17,12 +17,9 @@
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.storage.StreamUtil;
 
 import java.io.DataOutput;
 import java.io.IOException;
-
-import static java.lang.String.format;
 
 public class RootEntry extends DirectoryEntry {
   public RootEntry() {

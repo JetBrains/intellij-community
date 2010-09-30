@@ -115,6 +115,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
 
         GroovyNestedSwitchInspection.class,
         GroovyConditionalInspection.class,
+        GrFieldAlreadyDefinedInspection.class,
         GroovyNestedConditionalInspection.class,
         GroovyNegatedConditionalInspection.class,
         GroovyNegatedIfInspection.class,

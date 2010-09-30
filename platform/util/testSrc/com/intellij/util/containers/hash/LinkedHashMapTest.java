@@ -114,6 +114,7 @@ public class LinkedHashMapTest {
   @Test
   public void lru() {
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+      @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 500;
       }
@@ -135,6 +136,7 @@ public class LinkedHashMapTest {
   @Test
   public void lru2() {
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+      @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }
@@ -154,6 +156,7 @@ public class LinkedHashMapTest {
   @Test
   public void lru3() {
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+      @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }

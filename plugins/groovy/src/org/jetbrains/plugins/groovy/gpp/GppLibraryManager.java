@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,44 +25,44 @@ import java.util.regex.Pattern;
 public class GppLibraryManager extends AbstractGroovyLibraryManager {
   private static final Pattern GROOVYPP_JAR = Pattern.compile("groovypp-([\\d\\.]+)\\.jar");
   private static final Pattern GROOVYPP_ALL_JAR = Pattern.compile("groovypp-all-([\\d\\.]+)\\.jar");
-  
+
   @Override
-  protected void fillLibrary(String path, Library.ModifiableModel model) {
+  protected void fillLibrary(String path, LibraryEditor libraryEditor) {
     File lib = new File(path + "/lib");
     if (lib.exists()) {
-      model.addJarDirectory(VfsUtil.getUrlForLibraryRoot(lib), false);
+      libraryEditor.addJarDirectory(VfsUtil.getUrlForLibraryRoot(lib), false);
     }
 
     File srcRoot = new File(path + "/src");
-    addSources(model, srcRoot.exists() ? srcRoot : new File(path));
+    addSources(libraryEditor, srcRoot.exists() ? srcRoot : new File(path));
   }
 
-  private static void addSources(Library.ModifiableModel model, File srcRoot) {
+  private static void addSources(LibraryEditor libraryEditor, File srcRoot) {
     File compilerSrc = new File(srcRoot, "Compiler/src");
     if (compilerSrc.exists()) {
-      model.addRoot(VfsUtil.getUrlForLibraryRoot(compilerSrc), OrderRootType.SOURCES);
+      libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(compilerSrc), OrderRootType.SOURCES);
     }
 
     File stdLibSrc = new File(srcRoot, "StdLib/src");
     if (stdLibSrc.exists()) {
-      model.addRoot(VfsUtil.getUrlForLibraryRoot(stdLibSrc), OrderRootType.SOURCES);
+      libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(stdLibSrc), OrderRootType.SOURCES);
     }
 
     File mainSrc = new File(srcRoot, "main");
     if (mainSrc.exists()) {
-      model.addRoot(VfsUtil.getUrlForLibraryRoot(mainSrc), OrderRootType.SOURCES);
+      libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(mainSrc), OrderRootType.SOURCES);
     }
   }
 
   @Override
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return getGppVersion(container.getLibraryFiles(library, OrderRootType.CLASSES)) != null;
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return getGppVersion(libraryFiles) != null;
   }
 
   @Nls
   @Override
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    return getGppVersion(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    return getGppVersion(libraryFiles);
   }
 
   @Nullable
@@ -98,12 +99,6 @@ public class GppLibraryManager extends AbstractGroovyLibraryManager {
       return version;
     }
     throw new AssertionError(path);
-  }
-
-  @NotNull
-  @Override
-  public String getAddActionText() {
-    return "Create new Groovy++ SDK...";
   }
 
 

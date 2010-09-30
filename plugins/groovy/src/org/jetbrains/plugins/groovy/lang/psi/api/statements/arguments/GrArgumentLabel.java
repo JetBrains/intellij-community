@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -35,6 +37,8 @@ public interface GrArgumentLabel extends GroovyPsiElement, PsiReference {
 
   @Nullable
   String getName();
+
+  PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   @Nullable
   PsiType getExpectedArgumentType();

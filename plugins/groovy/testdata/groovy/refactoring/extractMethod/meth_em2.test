@@ -11,7 +11,7 @@ protected static def getGeneratedFileNames(String name, int boo) {
   <caret>testMethod(names, boo, name)
 }
 
-private static ArrayList testMethod(ArrayList<String> names, int boo, String name) {
+private static def testMethod(ArrayList<String> names, int boo, String name) {
   foo = null
   println(names.toString() + boo + name)
   println(names + foo)

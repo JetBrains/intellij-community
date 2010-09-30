@@ -58,6 +58,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
     try {
       editor = EditorFactory.getInstance().createEditor(FileDocumentManager.getInstance().getDocument(virtualFile));
       dialog = ViewStructureAction.createStructureViewBasedDialog(structureViewModel, editor, myProject, psiClass, new Disposable() {
+        @Override
         public void dispose() {
           structureViewModel.dispose();
         }

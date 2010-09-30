@@ -276,9 +276,13 @@
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
 
+  <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.libraries.LibraryPresentationProvider"/>
+
   <extensionPoint name="lang.implementationTextSelectioner"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.lineWrapStrategy"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.whiteSpaceFormattingStrategy"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="gotoDeclarationHandler"
@@ -341,6 +345,7 @@
 
   <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.overrideMethod" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="codeInsight.delegateMethods" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
@@ -435,7 +440,7 @@
 
   <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
-  <extensionPoint name="langScriptingContextsProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextsProvider"/>
+  <extensionPoint name="langScriptingContextProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextProvider"/>
 
   <extensionPoint name="semContributor"
                   beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>

@@ -21,13 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,31 +37,29 @@ import javax.swing.*;
  * Date: 02-Jun-2006
  */
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
-  private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
-
-  private LibraryTableEditor myLibraryEditor;
+  private LibraryRootsComponent myLibraryEditor;
   private final Library myLibrary;
-  private final LibraryTableModifiableModelProvider myModel;
+  private final StructureLibraryTableModifiableModelProvider myModel;
+  private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
   private boolean myUpdatingName;
 
-  protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
+  protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
                                 final Library library,
-                                final Project project,
+                                final StructureConfigurableContext context,
                                 final Runnable updateTree) {
     super(true, updateTree);
-    myModel = libraryTable;
-    myProject = project;
+    myModel = modelProvider;
+    myContext = context;
+    myProject = context.getProject();
     myLibrary = library;
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
     myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
   }
 
   public JComponent createOptionsPanel() {
-    myLibraryEditor = LibraryTableEditor.editLibrary(myModel, myLibrary, myProject);
+    myLibraryEditor = LibraryRootsComponent.createComponent(myProject, myModel.getModifiableModel().getLibraryEditor(myLibrary));
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
-    myLibraryEditor.addLibraryEditorListener(context);
     myLibraryEditor.addListener(new Runnable() {
       public void run() {
         context.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
@@ -90,7 +87,6 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   public void disposeUIResources() {
     if (myLibraryEditor != null) {
-      myLibraryEditor.cancelChanges();
       Disposer.dispose(myLibraryEditor);
       myLibraryEditor = null;
     }
@@ -103,7 +99,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   private LibraryEditor getLibraryEditor() {
-    return ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
+    return myModel.getModifiableModel().getLibraryEditor(myLibrary);
   }
 
   @Override
@@ -131,11 +127,15 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public String getDisplayName() {
-    return getLibraryEditor().getName();
+    if (myModel.getModifiableModel().hasLibraryEditor(myLibrary)) {
+      return getLibraryEditor().getName();
+    }
+
+    return myLibrary.getName();
   }
 
   public Icon getIcon() {
-    return ICON;
+    return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
   }
 
   @Nullable

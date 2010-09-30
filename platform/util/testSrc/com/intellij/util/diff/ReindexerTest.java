@@ -26,6 +26,7 @@ import java.util.Arrays;
 public class ReindexerTest extends TestCase {
   private Reindexer myReindexer = new Reindexer();
 
+  @Override
   protected void tearDown() throws Exception {
     myReindexer = null;
     super.tearDown();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class MagicNumberInspection extends BaseInspection {
             if (isSpecialCaseLiteral(expression)) {
                 return;
             }
-            if (isDeclaredConstant(expression)) {
+            if (ExpressionUtils.isDeclaredConstant(expression)) {
                 return;
             }
             if(m_ignoreInHashCode) {
@@ -103,24 +103,6 @@ public class MagicNumberInspection extends BaseInspection {
             } else {
                 registerError(expression);
             }
-        }
-
-        private  boolean isDeclaredConstant(PsiLiteralExpression expression) {
-            final PsiField field =
-                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
-            if (field == null) {
-                return false;
-            }
-            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-                    !field.hasModifierProperty(PsiModifier.FINAL)) {
-                return false;
-            }
-            final PsiExpression initializer = field.getInitializer();
-            if (initializer == null) {
-                return false;
-            }
-            final PsiType type = initializer.getType();
-            return ClassUtils.isImmutable(type);
         }
 
         private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {

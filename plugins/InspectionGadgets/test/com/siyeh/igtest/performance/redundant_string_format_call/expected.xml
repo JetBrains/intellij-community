@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
 
+  <problem>
+    <file>RedundantStringFormatCall.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant call to 'String.format()'</problem_class>
+    <description>Redundant call to &lt;code&gt;format&lt;/code&gt; #loc</description>
+  </problem>
+
 </problems>

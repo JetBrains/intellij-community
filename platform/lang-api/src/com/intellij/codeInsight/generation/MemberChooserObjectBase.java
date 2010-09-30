@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
-    component.append(getText(), getTextAttributes(tree));
+    SpeedSearchUtil.appendFragmentsForSpeedSearch(tree, getText(), getTextAttributes(tree), false, component);
     component.setIcon(myIcon);
   }
 

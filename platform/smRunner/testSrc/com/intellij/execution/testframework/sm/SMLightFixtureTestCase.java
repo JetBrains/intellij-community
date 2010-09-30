@@ -44,14 +44,17 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
   }
 
   protected static final LightProjectDescriptor ourDescriptor = new LightProjectDescriptor() {
+    @Override
     public ModuleType getModuleType() {
       return ModuleType.EMPTY;
     }
 
+    @Override
     public Sdk getSdk() {
       return null;
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       //Do nothing
     }

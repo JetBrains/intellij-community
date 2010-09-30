@@ -184,11 +184,26 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("Unknown", p.getMavenId().getVersion());
   }
 
-  public void testSpacesInTest() throws Exception {
+  public void testSpaces() throws Exception {
     createProjectPom("<name>foo bar</name>");
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("foo bar", p.getName());
+  }
+
+  public void testNewLines() throws Exception {
+    createProjectPom("<groupId>\n" +
+                     "  group\n" +
+                     "</groupId>\n" +
+                     "<artifactId>\n" +
+                     "  artifact\n" +
+                     "</artifactId>\n" +
+                     "<version>\n" +
+                     "  1\n" +
+                     "</version>\n");
+
+    MavenModel p = readProject(myProjectPom);
+    assertEquals(new MavenId("group", "artifact", "1"), p.getMavenId());
   }
 
   public void testTextInContainerTag() throws Exception {
@@ -754,6 +769,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "<name>${prop}</name>");
 
     MavenModel p = readProject(module, new MavenProjectReaderProjectLocator() {
+      @Override
       public VirtualFile findProjectFile(MavenId coordinates) {
         return new MavenId("test", "parent", "1").equals(coordinates) ? parent : null;
       }
@@ -978,6 +994,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenModel p = readProject(module);
     assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
+      @Override
       public Object fun(MavenProfile profile) {
         return profile.getId();
       }
@@ -1534,6 +1551,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {
+    @Override
     public VirtualFile findProjectFile(MavenId coordinates) {
       return null;
     }

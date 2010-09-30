@@ -17,12 +17,8 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
-import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
@@ -72,7 +68,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final LibrariesContainer myLibrariesContainer;
   private final Computable<String> myBaseDirForLibrariesGetter;
   private final List<FrameworkSupportProvider> myProviders;
-  private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private final FrameworkSupportModelImpl myModel;
   private final JPanel myOptionsPanel;
   private final FrameworksTree myFrameworksTree;
@@ -86,7 +81,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myProviders = providers;
     myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject(), builder);
     createNodes();
-    myMirrorsMap = createMirrorsMap();
 
     final Splitter splitter = new Splitter(false, 0.30f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree(myGroups) {
@@ -131,7 +125,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
       myLastSelectedNode = selectedNode;
       if (selectedNode != null) {
-        selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+        selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer);
       }
     }
   }
@@ -142,7 +136,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void applyLibraryOptionsForSelected() {
     if (myLastSelectedNode != null) {
-      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer);
       if (optionsPanel != null) {
         optionsPanel.apply();
       }
@@ -197,7 +191,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper) {
-    final LibraryOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer, myMirrorsMap);
+    final LibraryOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer);
     if (libraryOptionsPanel != null) {
       JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
       separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
@@ -208,29 +202,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void showCard(String cardName) {
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, cardName);
-  }
-
-  private LibraryDownloadingMirrorsMap createMirrorsMap() {
-    List<RemoteRepositoryInfo> repositoryInfos = getRemoteRepositories();
-    return new LibraryDownloadingMirrorsMap(repositoryInfos.toArray(new RemoteRepositoryInfo[repositoryInfos.size()]));
-  }
-
-  private List<RemoteRepositoryInfo> getRemoteRepositories() {
-    List<RemoteRepositoryInfo> repositoryInfos = new ArrayList<RemoteRepositoryInfo>();
-    List<FrameworkSupportNode> frameworkNodes = getFrameworkNodes(false);
-    for (FrameworkSupportNode node : frameworkNodes) {
-      LibraryInfo[] libraries = node.getLibraries();
-      for (LibraryInfo library : libraries) {
-        LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
-        if (downloadInfo != null) {
-          RemoteRepositoryInfo repository = downloadInfo.getRemoteRepository();
-          if (repository != null) {
-            repositoryInfos.add(repository);
-          }
-        }
-      }
-    }
-    return repositoryInfos;
   }
 
   private List<LibraryCompositionSettings> getLibrariesCompositionSettingsList() {
@@ -249,7 +220,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     applyLibraryOptionsForSelected();
     List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
     for (LibraryCompositionSettings compositionSettings : list) {
-      if (!compositionSettings.downloadFiles(myMirrorsMap, myLibrariesContainer, myMainPanel, true)) return false;
+      if (!compositionSettings.downloadFiles(myMainPanel, true)) return false;
     }
     return true;
   }

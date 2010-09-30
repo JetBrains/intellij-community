@@ -42,6 +42,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
 
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           classFromText.setName("Q");

@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 17-Jan-2008
- */
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
@@ -25,79 +20,83 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
+import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author anna
+ * @author Konstantin Bulenkov
+ */
 public class DefaultScopesProvider implements CustomScopesProvider {
-  private NamedScope myProblemsScope;
+  private final NamedScope myProjectTestScope;
+  private final NamedScope myNonProjectScope;
+  private final NamedScope myProblemsScope;
   private final Project myProject;
+  private final List<NamedScope> myScopes;
 
   public static DefaultScopesProvider getInstance(Project project) {
-    for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, project)) {
-      if (provider instanceof DefaultScopesProvider) return (DefaultScopesProvider)provider;
-    }
-    return null;
+    return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, DefaultScopesProvider.class);
   }
 
   public DefaultScopesProvider(Project project) {
     myProject = project;
+    myProjectTestScope = new TestsScope(project);
+    myNonProjectScope = new NonProjectFilesScope(project);
+    final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text, myProject) {
+      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+        return file.getProject() == myProject
+               && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
+      }
+    });
+    myScopes = Arrays.asList(getProblemsScope(), getAllScope(), myProjectTestScope, myNonProjectScope);
   }
 
   @NotNull
   public List<NamedScope> getCustomScopes() {
-    final List<NamedScope> list = new ArrayList<NamedScope>();
-    list.add(getProblemsScope());
-    list.add(getAllScope());
-    return list;
+    return myScopes;
   }
 
-  private static class NamedScopeHolder {
-    private static final NamedScope myAllScope = new NamedScope("All", new PackageSet() {
-      public boolean contains(final PsiFile file, final NamedScopesHolder holder) {
+  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+  private static class AllScopeHolder {
+    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, null, 0) {
+      public boolean contains(final PsiFile file, final NamedScopesHolder scopesHolder) {
         return true;
-      }
-
-      public PackageSet createCopy() {
-        return this;
-      }
-
-      public String getText() {
-        return FilePatternPackageSet.SCOPE_FILE + ":*//*";
-      }
-
-      public int getNodePriority() {
-        return 0;
       }
     });
   }
 
   public static NamedScope getAllScope() {
-    return NamedScopeHolder.myAllScope;
+    return AllScopeHolder.ALL;
   }
 
-   public NamedScope getProblemsScope() {
-    if (myProblemsScope == null) {
-      myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return FilePatternPackageSet.SCOPE_FILE + ":*//*";
-        }
-
-        public int getNodePriority() {
-          return 1;
-        }
-      });
-    }
+  public NamedScope getProblemsScope() {
     return myProblemsScope;
+  }
+
+  public List<NamedScope> getAllCustomScopes() {
+    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, myProject)) {
+      scopes.addAll(provider.getCustomScopes());
+    }
+    return scopes;
+  }
+
+  @Nullable
+  public NamedScope findCustomScope(String name) {
+    for (NamedScope scope : getAllCustomScopes()) {
+      if (name.equals(scope.getName())) {
+        return scope;
+      }
+    }
+    return null;
   }
 }

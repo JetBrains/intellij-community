@@ -71,6 +71,7 @@ public class PlatformTestUtil {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         extensionPoint.unregisterExtension(t);
       }
@@ -166,10 +167,13 @@ public class PlatformTestUtil {
     final boolean[] invoked = new boolean[]{false};
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     alarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             alarm.addRequest(new Runnable() {
+              @Override
               public void run() {
                 invoked[0] = true;
               }

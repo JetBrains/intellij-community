@@ -18,31 +18,37 @@ import java.util.List;
  * @author cdr
  */
 public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
+  @Override
   @NonNls
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/emptyIntention";
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new LocalInspectionTool() {
+      @Override
       @Nls
       @NotNull
       public String getGroupDisplayName() {
         return "MyGroup";
       }
 
+      @Override
       @Nls
       @NotNull
       public String getDisplayName() {
         return "My";
       }
 
+      @Override
       @NonNls
       @NotNull
       public String getShortName() {
         return getDisplayName();
       }
 
+      @Override
       @NotNull
       public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {

@@ -17,7 +17,10 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile;
 
 /**
  * @author Maxim.Medvedev
@@ -284,5 +287,85 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
       println abcField
       defField<caret>
     """
+  }
+
+  public void testCompletionNamedArgument1() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: 1, arg<caret>: 2,   arg333: 3) }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    myFixture.type('!')
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: 1, arg222: !2,   arg333: 3) }
+}
+""", getFileText(file)
+  }
+
+  public void testCompletionNamedArgument2() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg111: 1, arg<caret>: 2,   arg333: 3 }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    myFixture.type('!')
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg111: 1, arg222: !2,   arg333: 3 }
+}
+""", getFileText(file)
+  }
+
+  public void testCompletionNamedArgument3() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg1<caret> }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    myFixture.type('!')
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m arg111: ! }
+}
+""", getFileText(file)
+  }
+
+  public void testCompletionNamedArgument4() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m (arg1<caret> zzz) }
+}
+""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    myFixture.type('!')
+    assertEquals """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m (arg111: !, zzz) }
+}
+""", getFileText(file)
+  }
+
+  def getFileText(PsiFile file) {
+    return PsiDocumentManager.getInstance(project).getDocument(file).text
   }
 }

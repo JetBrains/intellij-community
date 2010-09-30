@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
@@ -69,9 +71,10 @@ public class CompleteReferenceExpression {
     }
 
     if (type instanceof PsiClassType) {
-      PsiClass clazz = ((PsiClassType)type).resolve();
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      PsiClass clazz = resolveResult.getElement();
       if (clazz != null) {
-        Set<String> accessedPropertyNames = processPropertyVariants(consumer, refExpr, clazz);
+        Set<String> accessedPropertyNames = processPropertyVariants(consumer, refExpr, clazz, resolveResult.getSubstitutor());
         for (Object variant : propertyVariants) {
           if (variant instanceof PsiField && accessedPropertyNames.contains(((PsiField)variant).getName())) {
             continue;
@@ -115,7 +118,10 @@ public class CompleteReferenceExpression {
       }
     }
 
-  private static Set<String> processPropertyVariants(Consumer<Object> consumer, GrReferenceExpression refExpr, PsiClass clazz) {
+  private static Set<String> processPropertyVariants(Consumer<Object> consumer,
+                                                     GrReferenceExpression refExpr,
+                                                     PsiClass clazz,
+                                                     PsiSubstitutor substitutor) {
     Set<String> accessedPropertyNames = new THashSet<String>();
     final PsiClass eventListener =
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
@@ -125,7 +131,7 @@ public class CompleteReferenceExpression {
           String prop = getPropertyName(method);
           accessedPropertyNames.add(prop);
           assert prop != null;
-          consumer.consume(LookupElementBuilder.create(prop).setIcon(GroovyIcons.PROPERTY));
+          consumer.consume(createPropertyLookupElement(prop, getPropertyTypeByAccessor(method), substitutor));
         }
         else if (eventListener != null) {
           consumeListenerProperties(consumer, method, eventListener);
@@ -133,6 +139,17 @@ public class CompleteReferenceExpression {
       }
     }
     return accessedPropertyNames;
+  }
+
+  @Nullable
+  private static PsiType getPropertyTypeByAccessor(PsiMethod accessor) {
+    if (GroovyPropertyUtils.isSimplePropertySetter(accessor)) {
+      return accessor.getParameterList().getParameters()[0].getType();
+    }
+    else if (GroovyPropertyUtils.isSimplePropertyGetter(accessor)) {
+      return PsiUtil.getSmartReturnType(accessor);
+    }
+    return null;
   }
 
   private static void consumeListenerProperties(Consumer<Object> consumer, PsiMethod method, PsiClass eventListenerClass) {
@@ -146,7 +163,7 @@ public class CompleteReferenceExpression {
           final PsiMethod[] listenerMethods = listenerClass.getMethods();
           if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
             for (PsiMethod listenerMethod : listenerMethods) {
-              consumer.consume(LookupElementBuilder.create(listenerMethod.getName()).setIcon(GroovyIcons.PROPERTY));
+              consumer.consume(createPropertyLookupElement(listenerMethod.getName(), null, PsiSubstitutor.EMPTY));
             }
           }
         }
@@ -242,22 +259,35 @@ public class CompleteReferenceExpression {
       if (element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
         PsiMethod method = (PsiMethod)element;
         String propName = null;
+        PsiType propType = null;
         if (isSimplePropertyGetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
           propName = getPropertyNameByGetter(method);
+          propType = PsiUtil.getSmartReturnType(method);
         }
         else if (isSimplePropertySetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
           propName = getPropertyName(method);
+          propType = method.getParameterList().getParameters()[0].getType();
         }
         if (propName != null) {
-          if (!PsiUtil.isValidReferenceName(propName)) {
-            propName = "'" + propName + "'";
-          }
-          result.add(LookupElementBuilder.create(propName).setIcon(GroovyIcons.PROPERTY));
+          LookupElementBuilder builder = createPropertyLookupElement(propName, propType, resolveResult.getSubstitutor());
+          result.add(builder);
         }
       }
     }
 
     return result.toArray(new LookupElement[result.size()]);
+  }
+
+  private static LookupElementBuilder createPropertyLookupElement(String propName, PsiType propType, PsiSubstitutor substitutor) {
+    if (!PsiUtil.isValidReferenceName(propName)) {
+      propName = "'" + propName + "'";
+    }
+    LookupElementBuilder builder = LookupElementBuilder.create(propName).setIcon(GroovyIcons.PROPERTY);
+    final PsiType substituted = substitutor.substitute(propType);
+    if (substituted != null) {
+      builder = builder.setTypeText(substituted.getPresentableText());
+    }
+    return builder;
   }
 
   private static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {

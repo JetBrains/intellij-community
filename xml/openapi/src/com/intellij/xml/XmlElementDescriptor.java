@@ -58,9 +58,6 @@ public interface XmlElementDescriptor extends PsiMetaData {
 
   XmlNSDescriptor getNSDescriptor();
 
-  /**
-   * @return minimal occurrence constraint value (e.g. 0 or 1), on null if not applied
-   */
   @Nullable
   XmlElementsGroup getTopGroup();
 

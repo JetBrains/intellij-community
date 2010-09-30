@@ -16,18 +16,25 @@
 
 package com.intellij.ide.commander;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
@@ -75,7 +82,13 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
     if(attributes == null) attributes = new SimpleTextAttributes(Font.PLAIN, color);
     final String text = value.toString();
-    append(text != null? text : "", attributes);
+
+    if (myCommanderPanel.isEnableSearchHighlighting()) {
+      SpeedSearchUtil.appendFragmentsForSpeedSearch(myCommanderPanel.getList(), text, attributes, selected, this);
+    }
+    else {
+      append(text != null ? text : "", attributes);
+    }
 
     if (locationString != null && locationString.length() > 0) {
       append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

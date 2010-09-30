@@ -36,18 +36,22 @@ public class MockRuntimeConfiguration extends RuntimeConfiguration {
     super("", project, new MockConfigurationFactory());
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     //Do nothing
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     //Do nothing
   }
 
+  @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return null;
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     return null;
   }
@@ -65,23 +69,28 @@ public class MockRuntimeConfiguration extends RuntimeConfiguration {
   }
 
   private static class MyConfigurationType implements ConfigurationType {
+    @Override
     public String getDisplayName() {
       return "mock";
     }
 
+    @Override
     public String getConfigurationTypeDescription() {
       return "mock type";
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     @NotNull
       public String getId() {
       return "MockRuntimeConfiguration";
     }
 
+    @Override
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[0];
     }

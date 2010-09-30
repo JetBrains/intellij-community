@@ -317,7 +317,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         }
       }
 
-      FindUtil.searchBack(myProject, myEditor);
+      FindUtil.searchBack(myProject, myEditor, null);
       addCurrentTextToRecents();
     }
   }
@@ -331,7 +331,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         }
       }
 
-      FindUtil.searchAgain(myProject, myEditor);
+      FindUtil.searchAgain(myProject, myEditor, null);
       addCurrentTextToRecents();
     }
   }

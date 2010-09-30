@@ -16,10 +16,10 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.Content;
 import com.intellij.history.core.Paths;
+import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.util.SmartList;
 
 import java.io.DataInput;
@@ -37,7 +37,6 @@ public abstract class Entry {
 
   public Entry(String name) {
     myName = name;
-    //assert name == null || !name.contains("/");
   }
 
   public Entry(DataInput in) throws IOException {

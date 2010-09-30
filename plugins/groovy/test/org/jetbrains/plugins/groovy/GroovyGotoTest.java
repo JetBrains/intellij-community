@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -34,11 +35,11 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "goto/";
   }
 
-  private void doTest(Condition<PsiElement> verifier) throws Throwable {
+  private void doTest(Condition<PsiElement> verifier) {
     doTest(verifier, getTestName(false) + ".groovy");
   }
 
-  private void doTest(Condition<PsiElement> verifier, String... files) throws Throwable {
+  private void doTest(Condition<PsiElement> verifier, String... files) {
     for (String file : files) {
       myFixture.configureByFile(file);
     }
@@ -49,6 +50,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpression() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0;
       }
@@ -57,6 +59,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithNamedArgs() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof PsiClass;
       }
@@ -65,6 +68,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithMapParameter() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1;
       }
@@ -73,6 +77,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithAnonymousClass() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
       }
@@ -81,6 +86,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testGroovyDocParameter1() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
       }
@@ -89,9 +95,19 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testGroovyDocParameter2() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
       }
     });
+  }
+
+  public void testConstructorWithSuperClassSameName() {
+    doTest(new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement element) {
+        return element instanceof PsiMethod && "p2.MyClass".equals(((PsiMethod)element).getContainingClass().getQualifiedName());
+      }
+    }, "p/MyClass.groovy", "p2/MyClass.groovy");
   }
 }

@@ -28,6 +28,7 @@
     <group id="GenerateGroup">
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
+      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -157,7 +158,7 @@
 
     <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingActionGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
+      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction" use-shortcut-of="CollapseAll"/>
       <separator/>
       <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
       <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
@@ -274,6 +275,7 @@
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
+      <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
@@ -281,6 +283,7 @@
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+      <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
       <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
       <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
       <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
@@ -587,9 +590,10 @@
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
-      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>
+      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" use-shortcut-of="$Delete"/>
       <separator/>
-      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"
+              use-shortcut-of="RecentFiles"/>
     </group>
 
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>

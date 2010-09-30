@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -101,7 +98,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    if (getDeclaredType() == null && getInitializer() == null) {
+    if (getDeclaredType() == null && getInitializerGroovy() == null) {
       final PsiType type = GrVariableEnhancer.getEnhancedType(this);
       if (type != null) {
         return type;
@@ -136,7 +133,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (clazz == null) return false;
     if (clazz.isInterface()) return false;
     final GrModifierList modifierList = getModifierList();
-    if (!GroovyPropertyUtils.isPropertyName(getName())) return false;
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
 
@@ -197,6 +193,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
+    if (clazz == null) return false;
     PsiMethod[] methods = clazz instanceof GrTypeDefinition
                           ? ((GrTypeDefinition)clazz).findCodeMethodsBySignature(proto, true)
                           : clazz.findMethodsBySignature(proto, true);
@@ -281,7 +278,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @NotNull
-  public Set<String>[] getNamedParametersArray() {
+  public String[] getNamedParametersArray() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
       return stub.getNamedParameters();
@@ -289,25 +286,18 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     final GrExpression initializerGroovy = getInitializerGroovy();
 
     if (!(initializerGroovy instanceof GrClosableBlock)) {
-      return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
     final PsiParameter[] parameters = closure.getAllParameters();
+    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    Set<String>[] res = new Set[parameters.length];
+    PsiParameter parameter = parameters[0];
 
-    Map<String, Set<String>> map = new HashMap<String, Set<String>>();
-
-    for (int i = 0; i < parameters.length; i++) {
-      final Set<String> set = new HashSet<String>();
-      res[i] = set;
-      map.put(parameters[i].getName(), set);
-    }
-
-    closure.accept(new GrNamedArgumentSearchVisitor(map));
-
-    return res;
+    GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(parameter.getName());
+    closure.accept(visitor);
+    return visitor.getResult();
   }
 
   public GrDocComment getDocComment() {

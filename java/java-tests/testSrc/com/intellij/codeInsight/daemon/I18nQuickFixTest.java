@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 public class I18nQuickFixTest extends LightQuickFix15TestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new I18nInspection()};
   }
@@ -19,14 +20,17 @@ public class I18nQuickFixTest extends LightQuickFix15TestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/i18n";
   }
 
+  @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     myMustBeAvailableAfterInvoke = Comparing.strEqual(testName, "SystemCall.java");
   }
 
+  @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return myMustBeAvailableAfterInvoke;
   }

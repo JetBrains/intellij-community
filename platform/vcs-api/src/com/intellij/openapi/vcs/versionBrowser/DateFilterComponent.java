@@ -16,17 +16,16 @@
 
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.michaelbaranov.microba.calendar.DatePicker;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.text.DateFormatUtil;
+import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.beans.PropertyVetoException;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
 
 /**
  * @author yole
@@ -41,8 +40,8 @@ public class DateFilterComponent {
 
   public DateFilterComponent() {
     myDatePanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.changes.filter.date.filter")));
-    myDateAfter.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
-    myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
+    myDateAfter.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
+    myDateBefore.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateAllEnabled(e);

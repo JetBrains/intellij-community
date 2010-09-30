@@ -269,7 +269,6 @@ public class GroovyPropertyUtils {
    * @return getter names
    */
   public static String[] suggestGettersName(@NotNull String name) {
-    if (!isPropertyName(name)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return new String[]{getGetterNameBoolean(name), getGetterNameNonBoolean(name)};
   }
 
@@ -280,7 +279,6 @@ public class GroovyPropertyUtils {
   }
 
   public static String[] suggestSettersName(@NotNull String name) {
-    if (!isPropertyName(name)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return new String[]{getSetterName(name)};
   }
 

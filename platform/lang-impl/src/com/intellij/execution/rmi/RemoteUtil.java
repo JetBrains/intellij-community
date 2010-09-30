@@ -67,6 +67,7 @@ import java.util.Map;
               Throwable cause = e;
               for (; cause.getCause() != null; cause = cause.getCause());
               if (cause instanceof RuntimeException) throw cause;
+              if (cause instanceof Error) throw cause;
               if (ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) throw cause;
               throw new RuntimeException(cause);
             }

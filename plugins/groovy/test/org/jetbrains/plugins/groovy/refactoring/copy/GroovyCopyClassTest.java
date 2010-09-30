@@ -30,6 +30,7 @@ import java.util.Collections;
  */
 public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
+  @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/copy/";
   }
@@ -43,6 +44,7 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     final PsiClass srcClass = myFixture.getJavaFacade().findClass("foo." + testName, GlobalSearchScope.allScope(getProject()));
     assertTrue(CopyClassesHandler.canCopyClass(srcClass));
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         CopyClassesHandler.doCopyClasses(Collections.singletonMap(srcClass.getNavigationElement().getContainingFile(), new PsiClass[]{srcClass}), testName + "_after", srcClass.getManager().findDirectory(myFixture.getTempDirFixture().getFile("bar")),
                                          getProject());

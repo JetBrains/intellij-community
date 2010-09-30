@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
@@ -981,12 +982,12 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public void resolve(MavenProject mavenProject,
-                      MavenGeneralSettings generalSettings,
-                      MavenEmbeddersManager embeddersManager,
-                      MavenConsole console,
-                      MavenProgressIndicator process,
-                      Object message) throws MavenProcessCanceledException {
+  public void resolve(@NotNull MavenProject mavenProject,
+                      @NotNull MavenGeneralSettings generalSettings,
+                      @NotNull MavenEmbeddersManager embeddersManager,
+                      @NotNull MavenConsole console,
+                      @NotNull MavenProgressIndicator process,
+                      @Nullable Object message) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
 
@@ -1006,11 +1007,11 @@ public class MavenProjectsTree {
     }
   }
 
-  public void resolvePlugins(MavenProject mavenProject,
-                             NativeMavenProjectHolder nativeMavenProject,
-                             MavenEmbeddersManager embeddersManager,
-                             MavenConsole console,
-                             MavenProgressIndicator process) throws MavenProcessCanceledException {
+  public void resolvePlugins(@NotNull MavenProject mavenProject,
+                             @NotNull NativeMavenProjectHolder nativeMavenProject,
+                             @NotNull MavenEmbeddersManager embeddersManager,
+                             @NotNull MavenConsole console,
+                             @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
@@ -1029,12 +1030,12 @@ public class MavenProjectsTree {
     }
   }
 
-  public void resolveFolders(final MavenProject mavenProject,
-                             final MavenImportingSettings importingSettings,
-                             final MavenEmbeddersManager embeddersManager,
-                             final MavenConsole console,
-                             final MavenProgressIndicator process,
-                             final Object message) throws MavenProcessCanceledException {
+  public void resolveFolders(@NotNull final MavenProject mavenProject,
+                             @NotNull final MavenImportingSettings importingSettings,
+                             @NotNull final MavenEmbeddersManager embeddersManager,
+                             @NotNull final MavenConsole console,
+                             @NotNull final MavenProgressIndicator process,
+                             @Nullable final Object message) throws MavenProcessCanceledException {
     executeWithEmbedder(mavenProject,
                         embeddersManager,
                         MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
@@ -1060,13 +1061,13 @@ public class MavenProjectsTree {
   /**
    * @return list of unresolved artifacts
    */
-  public MavenArtifactDownloader.DownloadResult downloadArtifacts(Collection<MavenProject> projects,
+  public MavenArtifactDownloader.DownloadResult downloadArtifacts(@NotNull Collection<MavenProject> projects,
                                                                   @Nullable Collection<MavenArtifact> artifacts,
                                                                   boolean downloadSources,
                                                                   boolean downloadDocs,
-                                                                  MavenEmbeddersManager embeddersManager,
-                                                                  MavenConsole console,
-                                                                  MavenProgressIndicator process)
+                                                                  @NotNull MavenEmbeddersManager embeddersManager,
+                                                                  @NotNull MavenConsole console,
+                                                                  @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
@@ -1085,16 +1086,16 @@ public class MavenProjectsTree {
     }
   }
 
-  public static MavenArtifact downloadArtifact(MavenProject mavenProject,
-                                        MavenId id,
-                                        MavenEmbeddersManager embeddersManager,
-                                        MavenConsole console,
-                                        MavenProgressIndicator process) throws MavenProcessCanceledException {
+  public static MavenArtifact downloadArtifact(@NotNull MavenProject mavenProject,
+                                               @NotNull MavenId id,
+                                               @NotNull MavenEmbeddersManager embeddersManager,
+                                               @NotNull MavenConsole console,
+                                               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifact result = embedder.resolve(new MavenArtifactInfo(id, MavenConstants.TYPE_JAR, null), 
+      MavenArtifact result = embedder.resolve(new MavenArtifactInfo(id, MavenConstants.TYPE_JAR, null),
                                               mavenProject.getRemoteRepositories());
       result.setScope(MavenConstants.SCOPE_COMPILE);
       return result;
@@ -1104,12 +1105,12 @@ public class MavenProjectsTree {
     }
   }
 
-  public void executeWithEmbedder(MavenProject mavenProject,
-                                  MavenEmbeddersManager embeddersManager,
-                                  Key embedderKind,
-                                  MavenConsole console,
-                                  MavenProgressIndicator process,
-                                  EmbedderTask task) throws MavenProcessCanceledException {
+  public void executeWithEmbedder(@NotNull MavenProject mavenProject,
+                                  @NotNull MavenEmbeddersManager embeddersManager,
+                                  @NotNull Key embedderKind,
+                                  @NotNull MavenConsole console,
+                                  @NotNull MavenProgressIndicator process,
+                                  @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
     embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());

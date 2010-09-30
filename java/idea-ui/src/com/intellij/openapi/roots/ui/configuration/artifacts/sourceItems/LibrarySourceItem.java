@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
@@ -114,6 +115,11 @@ public class LibrarySourceItem extends PackagingSourceItem {
         presentationData.addText(LibraryElementPresentation.getLibraryTableComment(myLibrary), commentAttributes);
       }
       else {
+        if (((LibraryEx)myLibrary).isDisposed()) {
+          //todo[nik] disposed library should not be shown in the tree
+          presentationData.addText("Invalid Library", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return;
+        }
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
         if (files.length > 0) {
           final VirtualFile file = files[0];

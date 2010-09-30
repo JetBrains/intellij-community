@@ -202,30 +202,37 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
     assertEquals("pom", p.getDependencies().get(0).getExtension());
   }
   public static class MyArtifactHandler implements ArtifactHandler {
+    @Override
     public String getExtension() {
       return "pom";
     }
 
+    @Override
     public String getDirectory() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public String getClassifier() {
       return null;
     }
 
+    @Override
     public String getPackaging() {
       return "foo";
     }
 
+    @Override
     public boolean isIncludesDependencies() {
       return false;
     }
 
+    @Override
     public String getLanguage() {
       return "java";
     }
 
+    @Override
     public boolean isAddedToClasspath() {
       return true;
     }

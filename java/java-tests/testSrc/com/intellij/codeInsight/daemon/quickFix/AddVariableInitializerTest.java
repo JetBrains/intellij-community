@@ -6,6 +6,7 @@ public class AddVariableInitializerTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addVariableInitializer";
   }

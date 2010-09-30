@@ -43,22 +43,28 @@ public class MockTestResultsViewer implements TestResultsViewer {
     return null;
   }
 
+  @Override
   public SMTestProxy getTestsRootNode() {
     return myRootSuite;
   }
 
+  @Override
   public void selectAndNotify(@Nullable final AbstractTestProxy proxy) {}
 
+  @Override
   public void addEventsListener(final EventsListener listener) {}
 
   public JBTabs getTabs() { return null; }
 
 
+  @Override
   public void dispose() {
     myProperties.dispose();
   }
 
+  @Override
   public void setShowStatisticForProxyHandler(final PropagateSelectionHandler handler) {}
 
+  @Override
   public void showStatisticsForSelectedProxy() {}
 }

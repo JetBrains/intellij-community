@@ -34,6 +34,7 @@ public class TreeExpandCollapseTest extends TestCase {
   private final DefaultMutableTreeNode myChildB = new DefaultMutableTreeNode();
   private TreePath myChildBPath;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTreeModel.insertNodeInto(myChildA, myRoot, 0);
@@ -176,8 +177,10 @@ public class TreeExpandCollapseTest extends TestCase {
   }
 
   static class InfiniteTreeModel extends BasicTreeModel {
+    @Override
     public Object getRoot() {return new Integer(1); }
 
+    @Override
     public Object getChild(Object parent, int index) {
       return new Integer(intValueOf(parent) + index + 1);
     }
@@ -188,8 +191,10 @@ public class TreeExpandCollapseTest extends TestCase {
       return intValue;
     }
 
+    @Override
     public int getChildCount(Object parent) {return Math.min(3, intValueOf(parent)); }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {return intValueOf(child) - intValueOf(parent) - 1; }
   }
 }

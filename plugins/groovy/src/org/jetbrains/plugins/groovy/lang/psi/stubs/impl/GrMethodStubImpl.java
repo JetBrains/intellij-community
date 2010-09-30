@@ -31,9 +31,9 @@ import java.util.Set;
 public class GrMethodStubImpl extends StubBase<GrMethod> implements GrMethodStub {
   private final StringRef myName;
   private final String[] myAnnotations;
-  private final Set<String>[] myNamedParameters;
+  private final String[] myNamedParameters;
 
-  public GrMethodStubImpl(StubElement parent, StringRef name, final String[] annotations, final @NotNull Set<String>[] namedParameters) {
+  public GrMethodStubImpl(StubElement parent, StringRef name, final String[] annotations, final @NotNull String[] namedParameters) {
     super(parent, GroovyElementTypes.METHOD_DEFINITION);
     myName = name;
     myAnnotations = annotations;
@@ -49,7 +49,7 @@ public class GrMethodStubImpl extends StubBase<GrMethod> implements GrMethodStub
   }
 
   @NotNull
-  public Set<String>[] getNamedParameters() {
+  public String[] getNamedParameters() {
     return myNamedParameters;
   }
 }

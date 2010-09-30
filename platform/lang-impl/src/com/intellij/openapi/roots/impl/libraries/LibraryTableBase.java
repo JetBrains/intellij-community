@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -268,8 +269,23 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-      for (Library library : myLibraries) {
-        if (library.getName() != null && !((LibraryEx)library).isDisposed()) {
+      final List<Library> libraries = ContainerUtil.findAll(myLibraries, new Condition<Library>() {
+        @Override
+        public boolean value(Library library) {
+          return !((LibraryEx)library).isDisposed();
+        }
+      });
+
+      // todo: do not sort if project is directory-based
+      ContainerUtil.sort(libraries, new Comparator<Library>() {
+        @Override
+        public int compare(Library o1, Library o2) {
+          return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
+        }
+      });
+
+      for (final Library library : libraries) {
+        if (library.getName() != null) {
           library.writeExternal(element);
         }
       }

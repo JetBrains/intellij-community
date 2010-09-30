@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -104,6 +103,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     for (Option each : myOptions) {
       each.setEnabled(true);
     }
+    for (Option each : myCustomOptions) {
+      each.setEnabled(false);
+    }
   }
 
   @Override
@@ -116,6 +118,9 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           each.setEnabled(true);
         }
       }
+    }
+    for (Option each : myCustomOptions) {
+      each.setEnabled(false);
     }
   }
 
@@ -138,7 +143,6 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
     else {
       for (Option each : myCustomOptions) {
-        each.setEnabled(false);
         if (each.clazz == settingsClass && each.field.getName().equals(fieldName)) {
           each.setEnabled(true);
         }
@@ -321,7 +325,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     //
   }
 
-  private static abstract class Option {
+  private abstract class Option {
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
     @NotNull final String title;
@@ -358,11 +362,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     public abstract void setValue(Object value, CodeStyleSettings settings);
 
     protected Object getSettings(CodeStyleSettings settings) {
-      return clazz == null ? settings : settings.getCustomSettings(clazz);
+      if (clazz != null) return settings.getCustomSettings(clazz);
+      return settings.getCommonSettings(getSelectedLanguage());
     }
   }
 
-  private static class BooleanOption extends Option {
+  private class BooleanOption extends Option {
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
@@ -389,7 +394,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
-  private static class SelectionOption extends Option {
+  private class SelectionOption extends Option {
     @NotNull final String[] options;
     @NotNull final int[] values;
 
@@ -618,6 +623,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myCheckBox.addActionListener(synchronizer);
 
       myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+      myComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
     }
 

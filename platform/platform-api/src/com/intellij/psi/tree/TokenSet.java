@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.tree;
 
+import java.util.Arrays;
+
 /**
  * A set of element types.
  */
@@ -121,5 +123,10 @@ public class TokenSet {
     if (t == null) return false;
     final short i = t.getIndex();
     return 0 <= i && i < mySet.length && mySet[i];
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.asList(getTypes()).toString();
   }
 }

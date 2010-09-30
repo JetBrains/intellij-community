@@ -1,0 +1,35 @@
+def (String s, int b) = ["a", 2]
+-----
+Groovy script
+  Multiple variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Tuple
+      PsiElement(()('(')
+      Type element
+        Reference element
+          PsiElement(identifier)('String')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('s')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Built in type
+        PsiElement(int)('int')
+      PsiWhiteSpace(' ')
+      Variable
+        PsiElement(identifier)('b')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      Literal
+        PsiElement(Gstring)('"a"')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('2')
+      PsiElement(])(']')

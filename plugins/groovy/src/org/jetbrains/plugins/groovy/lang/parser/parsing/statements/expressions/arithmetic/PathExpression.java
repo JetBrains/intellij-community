@@ -88,7 +88,7 @@ public class PathExpression implements GroovyElementTypes {
         res = PrimaryExpression.newExprParse(builder, parser, marker);
       }
       else if (kTHIS.equals(builder.getTokenType()) || kSUPER.equals(builder.getTokenType())) {
-        res = parseThisSuperExpression(builder, marker, qualifierType);
+        res = parseThisSuperExpression(builder, qualifierType);
       }
       else {
         res = namePartParse(builder, parser);
@@ -148,7 +148,7 @@ public class PathExpression implements GroovyElementTypes {
     return PATH_EXPRESSION;
   }
 
-  private static GroovyElementType parseThisSuperExpression(PsiBuilder builder, PsiBuilder.Marker marker, GroovyElementType qualifierType) {
+  private static GroovyElementType parseThisSuperExpression(PsiBuilder builder, GroovyElementType qualifierType) {
     if (qualifierType != REFERENCE_EXPRESSION) {
       return WRONGWAY;
     }
@@ -171,7 +171,7 @@ public class PathExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
+  public static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
     ParserUtils.getToken(builder, mAT);
     if (ParserUtils.getToken(builder, mIDENT) ||
         ParserUtils.getToken(builder, mSTRING_LITERAL) ||

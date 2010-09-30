@@ -54,6 +54,7 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -409,4 +410,50 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
            + (isDefault() ? "(Default) " : "'" + getLocation()+"'")
       ;
   }
+
+  public static void dropUnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
+    final UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) {
+      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), NotificationDisplayType.STICKY_BALLOON, project);
+    }
+  }
+
+  public static class UnableToSaveProjectNotification extends Notification {
+    private Project myProject;
+
+    private UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
+      super("Project Settings", "Could not save project!", buildMessage(readOnlyFiles), NotificationType.ERROR, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+          final Project _project = unableToSaveProjectNotification.getProject();
+          notification.expire();
+
+          if (_project != null && !_project.isDisposed()) {
+            _project.save();
+          }
+        }
+      });
+
+      myProject = project;
+    }
+
+    private static String buildMessage(final VirtualFile[] readOnlyFiles) {
+      final StringBuffer sb = new StringBuffer(
+        "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them.");
+      return sb.append(" <a href=\"\">Try to save project again</a>.</p>").toString();
+    }
+
+    public Project getProject() {
+      return myProject;
+    }
+
+    @Override
+    public void expire() {
+      myProject = null;
+      super.expire();
+    }
+  }
+
 }

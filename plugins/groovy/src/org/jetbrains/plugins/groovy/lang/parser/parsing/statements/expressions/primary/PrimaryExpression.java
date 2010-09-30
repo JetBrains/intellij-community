@@ -182,7 +182,7 @@ public class PrimaryExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static void methodCallArgsParse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean methodCallArgsParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       ParserUtils.getToken(builder, mNLS);
@@ -192,5 +192,6 @@ public class PrimaryExpression implements GroovyElementTypes {
     }
 
     marker.done(ARGUMENTS);
+    return true;
   }
 }

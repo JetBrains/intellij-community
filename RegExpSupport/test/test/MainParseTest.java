@@ -49,6 +49,7 @@ public class MainParseTest extends BaseParseTestcase {
 
     private final Map<String, Test> myMap = new LinkedHashMap<String, Test>();
 
+    @Override
     protected void setUp() throws Exception {
         final Document document = new SAXBuilder().build(new File(getTestDataRoot(), "/RETest.xml"));
         final List<Element> list = XPath.selectNodes(document.getRootElement(), "//test");
@@ -95,6 +96,7 @@ public class MainParseTest extends BaseParseTestcase {
         System.setErr(new PrintStream(myOut));
     }
 
+    @Override
     protected String getTestDataPath() {
         return super.getTestDataPath()+"/gen/";
     }

@@ -33,6 +33,10 @@ public class HintHint {
   private boolean myAwtTooltip = false;
   private Balloon.Position myPreferredPosition = Balloon.Position.below;
 
+  private boolean myContentActive = true;
+
+  private boolean myQuickHint = false;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -104,6 +108,28 @@ public class HintHint {
     return getTooltipManager().getTextFont(myAwtTooltip);
   }
 
+  public String getUlImg() {
+    return getTooltipManager().getUlImg(myAwtTooltip);
+  }
+
+  public boolean isContentActive() {
+    return myContentActive;
+  }
+
+  public HintHint setContentActive(boolean active) {
+    myContentActive = active;
+    return this;
+  }
+
+  public HintHint setHighlighterType(boolean highlighter) {
+    myQuickHint = highlighter;
+    return this;
+  }
+
+  public boolean isHightlighterType() {
+    return myQuickHint;
+  }
+
   private IdeTooltipManager getTooltipManager() {
     return IdeTooltipManager.getInstance();
   }
@@ -132,4 +158,5 @@ public class HintHint {
       jc.setBorder(isOwnBorderAllowed() ? BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)) : null);
     }
   }
+
 }

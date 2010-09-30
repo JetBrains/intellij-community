@@ -127,7 +127,7 @@ public class EnterHandler extends BaseEnterHandler {
     caretOffset = caretOffsetRef.get().intValue();
     boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
     final boolean insertSpace =
-      !isFirstColumn && !(caretOffset >= document.getTextLength() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
+      !isFirstColumn && !(caretOffset >= text.length() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
     editor.getCaretModel().moveToOffset(caretOffset);
     myOriginalHandler.execute(editor, dataContext);
 

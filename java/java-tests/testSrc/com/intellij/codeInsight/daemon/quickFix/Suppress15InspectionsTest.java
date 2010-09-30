@@ -20,6 +20,7 @@ public class Suppress15InspectionsTest extends LightQuickFixTestCase {
     return JavaSdkImpl.getMockJdk17();
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new RedundantThrowsDeclaration(),
@@ -34,6 +35,7 @@ public class Suppress15InspectionsTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/suppress15Inspections";
   }

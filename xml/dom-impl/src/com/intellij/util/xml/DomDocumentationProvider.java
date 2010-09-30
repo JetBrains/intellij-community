@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class DomDocumentationProvider implements DocumentationProvider {
 
-  public String getQuickNavigateInfo(final PsiElement element) {
+  public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
     return null;
   }
 

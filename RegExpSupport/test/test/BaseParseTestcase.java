@@ -38,6 +38,7 @@ public abstract class BaseParseTestcase extends TestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
@@ -50,6 +51,7 @@ public abstract class BaseParseTestcase extends TestCase {
     final Project project = myFixture.getProject();
 
     new WriteCommandAction(project) {
+      @Override
       protected void run(Result result) throws Throwable {
         FileTypeManager.getInstance().registerFileType(RegExpFileType.INSTANCE, new String[]{"regexp"});
       }
@@ -57,6 +59,7 @@ public abstract class BaseParseTestcase extends TestCase {
 
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;

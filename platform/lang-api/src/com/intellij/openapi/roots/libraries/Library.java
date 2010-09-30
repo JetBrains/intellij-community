@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
  *  @author dsl
  */
 public interface Library extends JDOMExternalizable, Disposable {
+  Library[] EMPTY_ARRAY = new Library[0];
+
   String getName();
 
   @NotNull String[] getUrls(@NotNull OrderRootType rootType);

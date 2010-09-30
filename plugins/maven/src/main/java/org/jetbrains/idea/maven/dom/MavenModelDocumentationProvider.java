@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 

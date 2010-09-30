@@ -104,6 +104,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ExpressionParser.parse(builder);
       }

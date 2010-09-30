@@ -34,11 +34,13 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     super(projectFixture, tempDirFixture);
   }
 
+  @Override
   public JavaPsiFacade getJavaFacade() {
     assertInitialized();
     return JavaPsiFacade.getInstance(getProject());
   }
 
+  @Override
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
     assertInitialized();
     final PsiClass psiClass = addClass(getTempDirPath(), classText);
@@ -56,6 +58,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return ((PsiJavaFile)psiFile).getClasses()[0];
   }
 
+  @Override
   @NotNull
   public PsiClass findClass(@NotNull @NonNls final String name) {
     final PsiClass aClass = getJavaFacade().findClass(name, ProjectScope.getProjectScope(getProject()));
@@ -63,6 +66,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return aClass;
   }
 
+  @Override
   @NotNull
   public PsiPackage findPackage(@NotNull @NonNls final String name) {
     final PsiPackage aPackage = getJavaFacade().findPackage(name);

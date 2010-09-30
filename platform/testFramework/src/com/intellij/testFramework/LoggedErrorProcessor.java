@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 @NonNls public abstract class LoggedErrorProcessor {
 
   private final static LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
+    @Override
     public void processError(String message, Throwable t, String[] details, Logger logger) {
       logger.info(message, t);
       System.err.println("ERROR: " + message);

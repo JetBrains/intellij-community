@@ -30,8 +30,6 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
@@ -46,11 +44,13 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraries.CreateCustomLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
@@ -82,14 +82,6 @@ import java.util.List;
  * User: anna
  * Date: 02-Jun-2006
  */
-@State(
-  name = "ModuleStructureConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
 
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
@@ -104,6 +96,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
+    MasterDetailsStateService.getInstance(project).register("ModuleStructureConfigurable.UI", this);
     myModuleManager = manager;
   }
 
@@ -650,9 +643,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         final AnAction[] facets = addFacetGroup.getChildren(e);
         if (facets.length > 0) {
           result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
+          ContainerUtil.addAll(result, facets);
         }
 
-        ContainerUtil.addAll(result, facets);
+        final List<AnAction> libraryActions = CreateCustomLibraryAction.getActions(myContext, ModuleStructureConfigurable.this);
+        if (!libraryActions.isEmpty()) {
+          result.add(new Separator("Library"));
+          result.addAll(libraryActions);
+        }
 
         return result.toArray(new AnAction[result.size()]);
       }

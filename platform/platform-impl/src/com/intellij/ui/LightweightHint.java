@@ -15,8 +15,10 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -103,7 +105,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
                    final int x,
                    final int y,
                    final JComponent focusBackComponent,
-                   @NotNull final HintHint hintInfo) {
+                   @NotNull final HintHint hintHint) {
     myParentComponent = parentComponent;
 
     myFocusBackComponent = focusBackComponent;
@@ -122,21 +124,31 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       final Dimension preferredSize = myComponent.getPreferredSize();
 
 
-      if (hintInfo.isAwtTooltip()) {
-        IdeTooltip tooltip = new IdeTooltip(hintInfo.getOriginalComponent(), hintInfo.getOriginalPoint(), myComponent) {
+      if (hintHint.isAwtTooltip()) {
+        IdeTooltip tooltip = new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent) {
           @Override
-          protected boolean canAutohideOn(MouseEvent me, boolean isInsideBalloon) {
-            return me.getComponent() != hintInfo.getOriginalComponent() && !isInsideBalloon;
+          protected boolean canAutohideOn(TooltipEvent event) {
+            if (event.getInputEvent() instanceof MouseEvent) {
+              return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
+            } else {
+              return true;
+            }
           }
 
           @Override
           protected void onHidden() {
             fireHintHidden();
+            TooltipController.getInstance().resetCurrent();
           }
-        };
-        tooltip.setPreferredPosition(hintInfo.getPreferredPosition());
+
+          @Override
+          public boolean canBeDismissedOnTimeout() {
+            return false;
+          }
+        }.setToCenterIfSmall(false).setPreferredPosition(hintHint.getPreferredPosition()).setHighlighterType(hintHint.isHightlighterType());
+
         myComponent.validate();
-        myCurrentIdeTooltip = IdeTooltipManager.getInstance().showTipNow(tooltip);
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
       } else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
@@ -153,7 +165,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)
-        .setShowShadow(false)
+        .setShowShadow(!myForceLightweightPopup && myForceShowAsPopup)
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
@@ -235,6 +247,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (myEscListener != null) {
       myComponent.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
     }
+
+    TooltipController.getInstance().hide(this);
+
     fireHintHidden();
   }
 
@@ -292,6 +307,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public boolean canControlAutoHide() {
-    return myCurrentIdeTooltip != null;
+    return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing() ;
   }
 }

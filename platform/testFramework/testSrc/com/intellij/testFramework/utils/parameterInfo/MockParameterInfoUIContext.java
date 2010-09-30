@@ -34,6 +34,7 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
     myFunction = function;
   }
 
+  @Override
   public void setupUIComponentPresentation(final String _text, final int highlightStartOffset, final int highlightEndOffset,
                                            final boolean isDisabled, final boolean strikeout, final boolean isDisabledBeforeHighlight,
                                            final Color background) {
@@ -41,14 +42,17 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
     highlightStart = highlightStartOffset;
   }
 
+  @Override
   public boolean isUIComponentEnabled() {
     return enabled;
   }
 
+  @Override
   public void setUIComponentEnabled(final boolean _enabled) {
     enabled = _enabled;
   }
 
+  @Override
   public int getCurrentParameterIndex() {
     return parameterIndex;
   }
@@ -57,10 +61,12 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
     this.parameterIndex = parameterIndex;
   }
 
+  @Override
   public PsiElement getParameterOwner() {
     return myFunction;
   }
 
+  @Override
   public Color getDefaultParameterColor() {
     return null;
   }

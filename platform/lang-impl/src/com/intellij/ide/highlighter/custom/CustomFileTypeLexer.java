@@ -73,15 +73,15 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     tokenParsers.add(identifierParser);
 
     if (table.isHasBraces()) {
-      tokenParsers.addAll(BraceTokenParser.BRACES);
+      tokenParsers.addAll(BraceTokenParser.getBraces());
     }
 
     if (table.isHasParens()) {
-      tokenParsers.addAll(BraceTokenParser.PARENS);
+      tokenParsers.addAll(BraceTokenParser.getParens());
     }
 
     if (table.isHasBrackets()) {
-      tokenParsers.addAll(BraceTokenParser.BRACKETS);
+      tokenParsers.addAll(BraceTokenParser.getBrackets());
     }
 
     return tokenParsers;

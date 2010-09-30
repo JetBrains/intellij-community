@@ -17,7 +17,7 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.storage.StreamUtil;
+import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 

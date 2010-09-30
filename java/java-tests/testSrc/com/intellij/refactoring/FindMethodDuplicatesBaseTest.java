@@ -20,6 +20,7 @@ public abstract class FindMethodDuplicatesBaseTest extends LightCodeInsightTestC
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }

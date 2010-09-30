@@ -16,8 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -32,13 +31,13 @@ import java.io.File;
  * @author peter
  */
 public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
-  public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return LibrariesUtil.getGroovyLibraryHome(container.getLibraryFiles(library, OrderRootType.CLASSES)) != null;
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null;
   }
 
   @Nls
-  public String getLibraryVersion(@NotNull Library library, LibrariesContainer librariesContainer) {
-    final String home = LibrariesUtil.getGroovyLibraryHome(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
     if (home == null) return AbstractConfigUtils.UNDEFINED_VERSION;
 
     return GroovyConfigUtils.getInstance().getSDKVersion(home);
@@ -49,22 +48,16 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
     return GroovyIcons.GROOVY_ICON_16x16;
   }
 
-  @NotNull
-  @Override
-  public String getAddActionText() {
-    return "Create new Groovy SDK...";
-  }
-
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
     return GroovyConfigUtils.getInstance().isSDKHome(file);
   }
 
   @Override
-  protected void fillLibrary(String path, Library.ModifiableModel model) {
+  protected void fillLibrary(String path, LibraryEditor libraryEditor) {
     File srcRoot = new File(path + "/src/main");
       if (srcRoot.exists()) {
-        model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+        libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
       }
 
       File[] jars;
@@ -77,7 +70,7 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
       if (jars != null) {
         for (File file : jars) {
           if (file.getName().endsWith(".jar")) {
-            model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+            libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
           }
         }
       }

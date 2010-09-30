@@ -475,14 +475,20 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       if (commenter instanceof CommenterWithLineSuffix) {
         CommenterWithLineSuffix commenterWithLineSuffix = (CommenterWithLineSuffix)commenter;
         String suffix = commenterWithLineSuffix.getLineCommentSuffix();
+
+
         int theEnd = endOffset > 0 ? endOffset : myDocument.getLineEndOffset(line);
-        while (theEnd > startOffset && Character.isWhitespace(chars.charAt(theEnd-1))) {
+        while (theEnd > startOffset && Character.isWhitespace(chars.charAt(theEnd - 1))) {
           theEnd--;
         }
 
-        if (CharArrayUtil.regionMatches(chars, theEnd - suffix.length(), suffix)) {
-          myDocument.deleteString(theEnd - suffix.length(), theEnd);
+
+        String lineText = myDocument.getText(new TextRange(startOffset, theEnd));
+        if (lineText.indexOf(suffix) != -1) {
+          int start = startOffset + lineText.indexOf(suffix);
+          myDocument.deleteString(start, start + suffix.length());
         }
+
       }
 
       boolean skipNewLine = false;
@@ -545,9 +551,18 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (prefix != null) {
       if (commenter instanceof CommenterWithLineSuffix) {
         int endOffset = myDocument.getLineEndOffset(line);
-        myDocument.insertString(endOffset, ((CommenterWithLineSuffix)commenter).getLineCommentSuffix());
+        endOffset = CharArrayUtil.shiftBackward(myDocument.getCharsSequence(), endOffset, " \t");
+        int shiftedStartOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
+        String lineSuffix = ((CommenterWithLineSuffix)commenter).getLineCommentSuffix();
+        if (!CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - lineSuffix.length(), lineSuffix) &&
+            !CharArrayUtil.regionMatches(myDocument.getCharsSequence(), shiftedStartOffset, prefix)) {
+          myDocument.insertString(endOffset, lineSuffix);
+          myDocument.insertString(offset, prefix);
+        }
       }
-      myDocument.insertString(offset, prefix);
+      else {
+        myDocument.insertString(offset, prefix);
+      }
     }
     else {
       prefix = commenter.getBlockCommentPrefix();

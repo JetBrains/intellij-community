@@ -20,10 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public class ValidateXmlAction extends AnAction {
   public ValidateXmlAction() {
   }
 
-  private Function<PsiFile, Void> getHandler(final @NotNull PsiFile file) {
+  private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
     handler.setErrorReporter(
       handler.new StdErrorReporter(
@@ -65,7 +65,9 @@ public class ValidateXmlAction extends AnAction {
             public void run() {
               try {
                 psiFile.putUserData(runningValidationKey, "");
-                getHandler(psiFile).fun(psiFile);
+                PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+
+                getHandler(psiFile).doValidate((XmlFile)psiFile);
               }
               finally {
                 psiFile.putUserData(runningValidationKey, null);

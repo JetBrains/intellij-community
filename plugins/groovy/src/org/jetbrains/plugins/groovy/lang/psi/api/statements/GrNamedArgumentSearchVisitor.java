@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -25,42 +27,52 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 02.06.2009
  */
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
-  public static final Set<String>[] EMPTY_SET_ARRAY = new Set[0];
-
   private static final Set<String> METHOD_NAMES = new HashSet<String>(Arrays.asList("containsKey", "remove", "get"));
 
-  private final Map<String, Set<String>> myMap;
+  private Set<String> myResult;
 
-  public GrNamedArgumentSearchVisitor(final Map<String, Set<String>> map) {
-    myMap = map;
+  private final String myFirstArgumentName;
+
+  public GrNamedArgumentSearchVisitor(String firstArgumentName) {
+    myFirstArgumentName = firstArgumentName;
   }
 
-  private static void extractArguments(GrArgumentList argumentList, Set<String> set) {
+  public String[] getResult() {
+    return myResult == null ? ArrayUtil.EMPTY_STRING_ARRAY : myResult.toArray(new String[myResult.size()]);
+  }
+
+  private void extractArguments(GrArgumentList argumentList) {
     GrExpression[] expr = argumentList.getExpressionArguments();
 
     if (expr.length == 1 && expr[0] instanceof GrLiteral) {
       Object value = ((GrLiteral)expr[0]).getValue();
       if (value instanceof String) {
-        set.add((String)value);
+        String s = (String)value;
+        if (StringUtil.isJavaIdentifier(s)) {
+          add((String)value);
+        }
       }
     }
   }
 
+  private void add(String refName) {
+    if (myResult == null) {
+      myResult = new HashSet<String>();
+    }
+
+    myResult.add(refName);
+  }
+
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-    Set<String> set = myMap.get(referenceExpression.getName());
-
-    if (set != null && !referenceExpression.isQualified()) {
+    if (myFirstArgumentName.equals(referenceExpression.getName()) && !referenceExpression.isQualified()) {
       PsiElement parent = referenceExpression.getParent();
 
       if (parent instanceof GrReferenceExpression) {
@@ -70,16 +82,16 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
         if (parentParent instanceof GrMethodCallExpression) {
           if (METHOD_NAMES.contains(parentRef.getName())) {
-            extractArguments(((GrMethodCallExpression)parentParent).getArgumentList(), set);
+            extractArguments(((GrMethodCallExpression)parentParent).getArgumentList());
           }
         }
         else {
-          set.add(parentRef.getName());
+          add(parentRef.getName());
         }
       }
       else if (parent instanceof GrIndexProperty) {
         GrIndexProperty indexProperty = (GrIndexProperty)parent;
-        extractArguments(indexProperty.getArgumentList(), set);
+        extractArguments(indexProperty.getArgumentList());
       }
     }
 

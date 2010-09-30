@@ -47,7 +47,7 @@ public class MethodEvaluator implements Evaluator {
   private final Evaluator myObjectEvaluator;
 
   public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, List argumentEvaluators) {
-    myObjectEvaluator = objectEvaluator;
+    myObjectEvaluator = new DisableGC(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;

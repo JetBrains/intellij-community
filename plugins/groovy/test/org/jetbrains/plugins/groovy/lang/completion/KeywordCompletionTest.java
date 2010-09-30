@@ -91,6 +91,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
     return TestUtils.getTestDataPath() + "groovy/oldCompletion/keyword";
   }
 
+  @Override
   protected boolean addReferenceVariants() {
     return false;
   }

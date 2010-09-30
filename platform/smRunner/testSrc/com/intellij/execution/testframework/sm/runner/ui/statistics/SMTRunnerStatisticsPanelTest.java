@@ -173,6 +173,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
     myStatisticsPanel.addPropagateSelectionListener(new PropagateSelectionHandler() {
+      @Override
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                     final boolean requestFocus) {
         onSelectedHappend.set();

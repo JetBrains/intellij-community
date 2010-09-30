@@ -31,6 +31,7 @@ import java.io.IOException;
 public class StorageTest extends TestCase {
   private Storage myStorage;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myStorage = new Storage(getFileName());
@@ -40,6 +41,7 @@ public class StorageTest extends TestCase {
     return FileUtil.getTempDirectory() + File.separatorChar + getName();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     Disposer.dispose(myStorage);
     Storage.deleteFiles(getFileName());

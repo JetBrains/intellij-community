@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -32,18 +34,20 @@ import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
 public class FileColorConfigurationEditDialog extends DialogWrapper {
   private FileColorConfiguration myConfiguration;
   private JComboBox myScopeComboBox;
   private final FileColorManagerImpl myManager;
   private HashMap<String,AbstractButton> myColorToButtonMap;
+  private static final String CUSTOM_COLOR_NAME = "Custom";
+  private final Map<String, NamedScope> myScopeNames = new HashMap<String, NamedScope>();
 
   public FileColorConfigurationEditDialog(@NotNull final FileColorManagerImpl manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
@@ -55,6 +59,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     myConfiguration = configuration;
 
     init();
+    updateCustomButton();
     updateOKButton();
   }
 
@@ -63,18 +68,18 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     final JPanel result = new JPanel();
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 
-    final List<String> scopeNames = new ArrayList<String>();
     final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(myManager.getProject());
     for (final NamedScopesHolder scopeHolder : scopeHolders) {
       final NamedScope[] scopes = scopeHolder.getScopes();
       for (final NamedScope scope : scopes) {
-        scopeNames.add(scope.getName());
+        myScopeNames.put(scope.getName(), scope);
       }
     }
 
-    myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(scopeNames));
+    myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(myScopeNames.keySet()));
     myScopeComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        updateCustomButton();
         updateOKButton();
       }
     });
@@ -112,6 +117,19 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     return result;
   }
 
+  private void updateCustomButton() {
+    final Object item = myScopeComboBox.getSelectedItem();
+    if (item instanceof String) {
+      @SuppressWarnings({"SuspiciousMethodCalls"})
+      final Color color = ColorUtil.getColor(myScopeNames.get(item).getClass());
+      final CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_NAME);
+      if (color != null) {
+        button.setColor(color);
+        button.setSelected(true);
+      }
+    }
+  }
+
   @Override
   protected void doOKAction() {
     close(OK_EXIT_CODE);
@@ -146,18 +164,17 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     final Collection<String> names = myManager.getColorNames();
     for (final String name : names) {
       final ColorButton colorButton = new ColorButton(name, myManager.getColor(name));
-      colorButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          updateOKButton();
-        }
-      });
-      colorButton.setBackground(Color.WHITE);
-      colorButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
       group.add(colorButton);
       inner.add(colorButton);
       myColorToButtonMap.put(name, colorButton);
       inner.add(Box.createHorizontalStrut(5));
     }
+    final CustomColorButton customButton = new CustomColorButton();
+    group.add(customButton);
+    inner.add(customButton);
+    myColorToButtonMap.put(customButton.getText(), customButton);
+    inner.add(Box.createHorizontalStrut(5));
+
 
     if (configuration != null) {
       final AbstractButton button = myColorToButtonMap.get(configuration.getColorName());
@@ -169,14 +186,14 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     return result;
   }
 
+  @Nullable
   private String getColorName() {
     for (String name : myColorToButtonMap.keySet()) {
       final AbstractButton button = myColorToButtonMap.get(name);
       if (button.isSelected()) {
-        return name;
+        return button instanceof CustomColorButton ? ColorUtil.toHex(((CustomColorButton)button).getColor()) : name;
       }
     }
-
     return null;
   }
 
@@ -200,18 +217,31 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   }
 
   private class ColorButton extends StickyButton {
-    private final Color myColor;
+    protected Color myColor;
 
-    private ColorButton(final String text, final Color color) {
+    protected ColorButton(final String text, final Color color) {
       super(text);
-
       setUI(new ColorButtonUI());
-
       myColor = color;
+      addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          doPerformAction(e);
+        }
+      });
+      setBackground(Color.WHITE);
+      setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    }
+
+    protected void doPerformAction(ActionEvent e) {
+      updateOKButton();
     }
 
     Color getColor() {
       return myColor;
+    }
+
+    public void setColor(Color color) {
+      myColor = color;
     }
 
     @Override
@@ -228,6 +258,33 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     @Override
     protected ButtonUI createUI() {
       return new ColorButtonUI();
+    }
+  }
+
+  private class CustomColorButton extends ColorButton {
+    private CustomColorButton() {
+      super(CUSTOM_COLOR_NAME, Color.WHITE);
+      myColor = null;
+    }
+
+    @Override
+    protected void doPerformAction(ActionEvent e) {
+      final Color color = ColorChooser.chooseColor(FileColorConfigurationEditDialog.this.getRootPane(), "Choose Color", myColor);
+      if (color != null) {
+          myColor = color;
+      }
+      setSelected(myColor != null);
+      getOKAction().setEnabled(myColor != null);
+    }
+
+    @Override
+    public Color getForeground() {
+      return getModel().isSelected() ? Color.BLACK : Color.GRAY;
+    }
+
+    @Override
+    Color getColor() {
+      return myColor == null ? Color.WHITE : myColor;
     }
   }
 

@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 
-import java.util.Set;
-
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
@@ -43,6 +42,12 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
         GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
+  ArrayFactory<GrMethod> ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
+    @Override
+    public GrMethod[] create(int count) {
+      return new GrMethod[count];
+    }
+  };
 
   @Nullable
   GrOpenBlock getBlock();
@@ -79,5 +84,5 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   GrModifierList getModifierList();
 
   @NotNull
-  Set<String>[] getNamedParametersArray();
+  String[] getNamedParametersArray();
 }
