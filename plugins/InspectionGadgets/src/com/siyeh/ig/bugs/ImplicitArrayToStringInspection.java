@@ -157,13 +157,13 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                     return false;
                 }
                 final PsiExpression lhs = binaryExpression.getLOperand();
-                if (lhs != expression) {
+                if (!lhs.equals(expression)) {
                     final PsiType lhsType = lhs.getType();
                     return !(lhsType == null ||
                             !lhsType.equalsToText("java.lang.String"));
                 }
                 final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs != null && rhs != expression) {
+                if (rhs != null && !rhs.equals(expression)) {
                     final PsiType rhsType = rhs.getType();
                     return !(rhsType == null ||
                             !rhsType.equalsToText("java.lang.String"));
@@ -192,12 +192,18 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                         if (expressions.length < 1) {
                             return false;
                         }
-                        final PsiType firstExpressionType =
-                                expressions[0].getType();
-                        if (firstExpressionType == null) {
+                        final PsiMethod method =
+                                methodCallExpression.resolveMethod();
+                        if (method == null) {
                             return false;
                         }
-                        if (firstExpressionType.equalsToText(
+                        final PsiParameterList parameterList =
+                                method.getParameterList();
+                        final PsiParameter[] parameters =
+                                parameterList.getParameters();
+                        final PsiParameter parameter = parameters[0];
+                        final PsiType firstParameterType = parameter.getType();
+                        if (firstParameterType.equalsToText(
                                 "java.util.Locale")) {
                             if (expressions.length < 4) {
                                 return false;
@@ -231,7 +237,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 }
                 final PsiArrayType arrayType = (PsiArrayType)type;
                 final PsiType componentType = arrayType.getComponentType();
-                return componentType != PsiType.CHAR;
+                return !componentType.equals(PsiType.CHAR);
             }
             return false;
         }
