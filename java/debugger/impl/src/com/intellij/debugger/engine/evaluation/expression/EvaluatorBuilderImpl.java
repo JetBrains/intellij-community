@@ -194,7 +194,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       for (int i = 0; i < statements.length; i++) {
         PsiStatement psiStatement = statements[i];
         psiStatement.accept(this);
-        evaluators[i] = myResult;
+        evaluators[i] = new DisableGC(myResult);
         myResult = null;
       }
       myResult = new BlockStatementEvaluator(evaluators);
@@ -852,7 +852,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           // cannot build evaluator
           throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", psiExpression.getText()));
         }
-        argumentEvaluators.add(myResult);
+        argumentEvaluators.add(new DisableGC(myResult));
       }
       PsiReferenceExpression methodExpr = expression.getMethodExpression();
 
@@ -1134,7 +1134,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           PsiExpression argExpression = argExpressions[idx];
           argExpression.accept(this);
           if (myResult != null) {
-            argumentEvaluators[idx] = myResult;
+            argumentEvaluators[idx] = new DisableGC(myResult);
           }
           else {
             throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", argExpression.getText()));
@@ -1158,7 +1158,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         PsiExpression initializer = initializers[idx];
         initializer.accept(this);
         if (myResult != null) {
-          evaluators[idx] = handleUnaryNumericPromotion(initializer.getType(), myResult);
+          evaluators[idx] = new DisableGC(handleUnaryNumericPromotion(initializer.getType(), myResult));
         }
         else {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", initializer.getText()));

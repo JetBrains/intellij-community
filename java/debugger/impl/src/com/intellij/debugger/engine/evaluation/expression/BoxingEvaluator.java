@@ -33,7 +33,7 @@ public class BoxingEvaluator implements Evaluator{
   private final Evaluator myOperand;
 
   public BoxingEvaluator(Evaluator operand) {
-    myOperand = operand;
+    myOperand = new DisableGC(operand);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
