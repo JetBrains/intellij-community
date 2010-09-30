@@ -210,7 +210,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       int sortingKey = provider.getSortingKey();
 
       // There is a possible case that, say, fold region is soft wrapped. We don't want to perform unnecessary then.
-      if (context.offset < sortingKey) {
+      if (context.offset <= sortingKey) {
         result = strategy.advance(context, sortingKey);
         if (result != null) {
           return result;
