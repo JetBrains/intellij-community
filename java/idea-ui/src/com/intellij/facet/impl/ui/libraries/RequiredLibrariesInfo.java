@@ -49,9 +49,13 @@ public class RequiredLibrariesInfo {
     myLibraryInfos.add(lib);
   }
 
-  public
   @Nullable
-  RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles, boolean all) {
+  public RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
+    return checkLibraries(Arrays.asList(libraryFiles));
+  }
+
+  @Nullable
+  public RequiredClassesNotFoundInfo checkLibraries(List<VirtualFile> libraryFiles) {
     List<LibraryInfo> infos = new ArrayList<LibraryInfo>();
     List<String> classes = new ArrayList<String>();
 

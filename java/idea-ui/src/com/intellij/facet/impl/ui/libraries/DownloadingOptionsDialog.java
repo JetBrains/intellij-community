@@ -15,7 +15,7 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -27,6 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -49,10 +51,11 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     setTitle("Downloading Options");
     mySettings = settings;
 
-    myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(settings.getLibraryInfos(), new Function<LibraryInfo, Object>() {
+    final List<LibraryDownloadInfo> downloads = settings.getLibraryDescription().getDownloads();
+    myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<LibraryDownloadInfo, JCheckBox>() {
       @Override
-      public Object fun(LibraryInfo libraryInfo) {
-        return new JCheckBox(libraryInfo.getName(), libraryInfo.isSelected());
+      public JCheckBox fun(LibraryDownloadInfo libraryInfo) {
+        return new JCheckBox(libraryInfo.getFileNamePrefix(), mySettings.getSelectedDownloads().contains(libraryInfo));
       }
     })));
     myFilesToDownloadLabel.setLabelFor(myFilesList);
@@ -87,11 +90,15 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     mySettings.setDownloadedLibraryName(myNameAndLevelPanel.getLibraryName());
     mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     mySettings.setDirectoryForDownloadedLibrariesPath(myDirectoryField.getText());
-    LibraryInfo[] libraryInfos = mySettings.getLibraryInfos();
-    for (int i = 0, libraryInfosLength = libraryInfos.length; i < libraryInfosLength; i++) {
-      LibraryInfo info = libraryInfos[i];
-      info.setSelected(myFilesList.isItemSelected(i));
+
+    List<LibraryDownloadInfo> selected = new ArrayList<LibraryDownloadInfo>();
+    List<LibraryDownloadInfo> downloads = mySettings.getLibraryDescription().getDownloads();
+    for (int i = 0; i < downloads.size(); i++) {
+      if (myFilesList.isItemSelected(i)) {
+        selected.add(downloads.get(i));
+      }
     }
+    mySettings.setSelectedDownloads(selected);
     mySettings.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
     mySettings.setDownloadJavadocs(myDownloadJavadocsCheckBox.isSelected());
     super.doOKAction();

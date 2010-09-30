@@ -31,7 +31,6 @@ public class LibraryInfo {
   private @NonNls final String myName;
   @Nullable private String myMd5;
   private @NonNls final String[] myRequiredClasses;
-  private boolean mySelected = true;
 
   public LibraryInfo(final @NonNls String name,
                      final @Nullable @NonNls String downloadingUrl,
@@ -95,14 +94,6 @@ public class LibraryInfo {
   @Override
   public String toString() {
     return getName();
-  }
-
-  public boolean isSelected() {
-    return mySelected;
-  }
-
-  public void setSelected(boolean selected) {
-    mySelected = selected;
   }
 
   @Nullable

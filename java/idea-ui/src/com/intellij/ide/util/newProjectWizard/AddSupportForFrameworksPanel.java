@@ -220,7 +220,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     applyLibraryOptionsForSelected();
     List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
     for (LibraryCompositionSettings compositionSettings : list) {
-      if (!compositionSettings.downloadFiles(myMainPanel, true)) return false;
+      if (!compositionSettings.downloadFiles(myMainPanel)) return false;
     }
     return true;
   }

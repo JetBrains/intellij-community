@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraries;
+package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.*;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
@@ -82,6 +82,16 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     return icons;
   }
 
+  @Override
+  public boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull final LibraryKind<?> kind) {
+    return !LibraryDetectionManager.getInstance().processProperties(files, new LibraryDetectionManager.LibraryPropertiesProcessor() {
+      @Override
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> processedKind, @NotNull P properties) {
+        return !kind.equals(processedKind);
+      }
+    });
+  }
+
   public static List<LibraryKind<?>> getLibraryKinds(@NotNull Library library, StructureConfigurableContext context) {
     final List<LibraryKind<?>> result = new SmartList<LibraryKind<?>>();
     final VirtualFile[] files = getLibraryFiles(library, context);
@@ -95,27 +105,16 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     return result;
   }
 
-  private static VirtualFile[] getLibraryFiles(Library library, StructureConfigurableContext context) {
-    if (context != null) {
-      final LibraryTable table = library.getTable();
-      if (table != null) {
-        final LibraryTable.ModifiableModel modifiableModel = context.getModifiableLibraryTable(table);
-        if (modifiableModel instanceof LibrariesModifiableModel) {
-          final LibrariesModifiableModel librariesModel = (LibrariesModifiableModel)modifiableModel;
-          if (librariesModel.hasLibraryEditor(library)) {
-            return librariesModel.getLibraryEditor(library).getFiles(OrderRootType.CLASSES);
-          }
-        }
-      }
-    }
-    return library.getFiles(OrderRootType.CLASSES);
-  }
-
   @NotNull
   @Override
   public List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
     return getDescriptions(files);
+  }
+
+  @NotNull
+  private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    return context != null ? context.getLibraryFiles(library, OrderRootType.CLASSES) : library.getFiles(OrderRootType.CLASSES);
   }
 
   @NotNull

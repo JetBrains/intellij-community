@@ -16,7 +16,7 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -41,7 +41,7 @@ import java.util.Map;
 */
 public class LibraryCompositionSettings implements Disposable {
   @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
-  private final LibraryInfo[] myLibraryInfos;
+  private final CustomLibraryDescription myLibraryDescription;
   private final String myBaseDirectoryForDownloadedFiles;
   private String myDirectoryForDownloadedLibrariesPath;
   private boolean myDownloadLibraries = true;
@@ -49,18 +49,17 @@ public class LibraryCompositionSettings implements Disposable {
   private String myDownloadedLibraryName;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
+  private List<LibraryDownloadInfo> mySelectedDownloads;
   private NewLibraryEditor myNewLibraryEditor;
   private Library mySelectedLibrary;
-  private final String myDefaultLibraryName;
   private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new HashMap<Library, ExistingLibraryEditor>();
 
-  public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
-                                    final @NotNull String defaultLibraryName,
+  public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
                                     final @NotNull String baseDirectoryForDownloadedFiles) {
-    myDefaultLibraryName = defaultLibraryName;
-    myLibraryInfos = libraryInfos;
+    myLibraryDescription = libraryDescription;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
-    myDownloadedLibraryName = defaultLibraryName;
+    myDownloadedLibraryName = libraryDescription.getDefaultLibraryName();
+    mySelectedDownloads = myLibraryDescription.getDownloads();
   }
 
   public ExistingLibraryEditor getOrCreateEditor(@NotNull Library library) {
@@ -74,12 +73,8 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   @NotNull
-  public LibraryInfo[] getLibraryInfos() {
-    return myLibraryInfos;
-  }
-
-  public String getDefaultLibraryName() {
-    return myDefaultLibraryName;
+  public CustomLibraryDescription getLibraryDescription() {
+    return myLibraryDescription;
   }
 
   @NotNull
@@ -89,10 +84,6 @@ public class LibraryCompositionSettings implements Disposable {
 
   public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
     myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
-  }
-
-  public boolean isDownloadLibraries() {
-    return myDownloadLibraries;
   }
 
   public void setDownloadLibraries(final boolean downloadLibraries) {
@@ -118,26 +109,28 @@ public class LibraryCompositionSettings implements Disposable {
     return myDirectoryForDownloadedLibrariesPath;
   }
 
-  public boolean downloadFiles(final @NotNull JComponent parent, boolean all) {
-    if (myDownloadLibraries) {
-      RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
+  public List<LibraryDownloadInfo> getSelectedDownloads() {
+    return mySelectedDownloads;
+  }
 
-      VirtualFile[] jars = myNewLibraryEditor != null ? myNewLibraryEditor.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
-      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
-      if (info != null) {
-        LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
-        if (downloadingInfos.length > 0) {
-          LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, parent,
-                                                               getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
-          VirtualFile[] files = downloader.download();
-          if (files.length != downloadingInfos.length) {
-            return false;
-          }
-          myNewLibraryEditor = new NewLibraryEditor();
-          myNewLibraryEditor.setName(myDownloadedLibraryName);
-          for (VirtualFile file : files) {
-            myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
-          }
+  public void setSelectedDownloads(List<LibraryDownloadInfo> selectedDownloads) {
+    mySelectedDownloads = selectedDownloads;
+  }
+
+  public boolean downloadFiles(final @NotNull JComponent parent) {
+    if (myDownloadLibraries) {
+      if (!myLibraryDescription.getDownloads().isEmpty()) {
+        LibraryDownloadInfo[] toDownload = mySelectedDownloads.toArray(new LibraryDownloadInfo[mySelectedDownloads.size()]);
+        LibraryDownloader downloader = new LibraryDownloader(toDownload, null, parent,
+                                                             getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
+        VirtualFile[] files = downloader.download();
+        if (files.length != toDownload.length) {
+          return false;
+        }
+        myNewLibraryEditor = new NewLibraryEditor();
+        myNewLibraryEditor.setName(myDownloadedLibraryName);
+        for (VirtualFile file : files) {
+          myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
         }
       }
     }

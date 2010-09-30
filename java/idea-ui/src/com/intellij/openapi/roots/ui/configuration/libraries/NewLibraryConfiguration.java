@@ -15,23 +15,22 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
- * @author nik
- */
-public abstract class CustomLibraryCreator {
-  public static final ExtensionPointName<CustomLibraryCreator> EP_NAME = ExtensionPointName.create("com.intellij.library.creator");
+* @author nik
+*/
+public abstract class NewLibraryConfiguration {
+  private String myDefaultLibraryName;
 
-  public abstract String getDisplayName();
+  protected NewLibraryConfiguration(String defaultLibraryName) {
+    myDefaultLibraryName = defaultLibraryName;
+  }
 
-  @Nullable
-  public abstract Icon getIcon();
+  public String getDefaultLibraryName() {
+    return myDefaultLibraryName;
+  }
 
-  @NotNull
-  public abstract CustomLibraryDescription getDescription();
+  public abstract void addRoots(@NotNull LibraryEditor editor);
 }

@@ -52,4 +52,6 @@ public abstract class LibraryPresentationManager {
   public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots);
 
   public abstract List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
+
+  public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull LibraryKind<?> kind);
 }

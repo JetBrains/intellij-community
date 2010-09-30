@@ -15,19 +15,17 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +48,7 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,6 +63,8 @@ public class LibraryOptionsPanel {
   private JRadioButton myDoNotCreateRadioButton;
   private JPanel myConfigurationPanel;
   private JButton myCreateButton;
+  private JRadioButton myDownloadRadioButton;
+  private JRadioButton myUseLibraryRadioButton;
   private ButtonGroup myButtonGroup;
 
   private final LibraryCompositionSettings mySettings;
@@ -123,93 +124,80 @@ public class LibraryOptionsPanel {
         updateState();
       }
     });
-    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          append("[No library selected]");
-        }
-        else if (value instanceof ExistingLibraryEditor) {
-          ProjectStructureDialogCellAppearanceUtils.forLibrary(((ExistingLibraryEditor)value).getLibrary(), null).customize(this);
-        }
-        else if (value instanceof NewLibraryEditor) {
-          setIcon(Icons.LIBRARY_ICON);
-          final String name = ((NewLibraryEditor)value).getName();
-          append(name != null ? name : "<unnamed>");
-        }
-      }
-    });
-    myButtonEnumModel.setSelected(libraries.isEmpty() ? Choice.DOWNLOAD : Choice.USE_LIBRARY);
+    myExistingLibraryComboBox.setRenderer(new LibraryListCellRenderer());
+
+    boolean canDownload = !mySettings.getLibraryDescription().getDownloads().isEmpty();
+    myDownloadRadioButton.setVisible(canDownload);
+    myButtonEnumModel.setSelected(libraries.isEmpty() && canDownload ? Choice.DOWNLOAD : Choice.USE_LIBRARY);
+
+    if (!canDownload && !showDoNotCreateOption) {
+      myUseLibraryRadioButton.setVisible(false);
+    }
 
     myCreateButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final VirtualFile[] roots = showFileChooser();
-        if (roots.length > 0) {
-          final NewLibraryEditor libraryEditor = new NewLibraryEditor();
-          libraryEditor.setName(librariesContainer.suggestUniqueLibraryName(mySettings.getDefaultLibraryName()));
-          for (VirtualFile root : roots) {
-            libraryEditor.addRoot(root, OrderRootType.CLASSES);
-          }
-          if (myLibraryComboBoxModel.get(0) == null) {
-            myLibraryComboBoxModel.remove(0);
-          }
-          myLibraryComboBoxModel.add(libraryEditor);
-          myLibraryComboBoxModel.setSelectedItem(libraryEditor);
-          myButtonEnumModel.setSelected(Choice.USE_LIBRARY);
-        }
+        doCreate();
       }
     });
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        switch (myButtonEnumModel.getSelected()) {
-          case DOWNLOAD:
-            new DownloadingOptionsDialog(myPanel, mySettings).show();
-            break;
-          case USE_LIBRARY:
-            final Object item = myExistingLibraryComboBox.getSelectedItem();
-            if (item instanceof LibraryEditor) {
-              EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
-              dialog.show();
-              if (item instanceof ExistingLibraryEditor) {
-                new WriteAction() {
-                  protected void run(final Result result) {
-                    ((ExistingLibraryEditor)item).commit();
-                  }
-                }.execute();
-              }
-            }
-            break;
-          default:
-            break;
-        }
-        updateState();
+        doConfigure();
       }
     });
-
     updateState();
   }
 
+  private void doConfigure() {
+    switch (myButtonEnumModel.getSelected()) {
+      case DOWNLOAD:
+        new DownloadingOptionsDialog(myPanel, mySettings).show();
+        break;
+      case USE_LIBRARY:
+        final Object item = myExistingLibraryComboBox.getSelectedItem();
+        if (item instanceof LibraryEditor) {
+          EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
+          dialog.show();
+          if (item instanceof ExistingLibraryEditor) {
+            new WriteAction() {
+              protected void run(final Result result) {
+                ((ExistingLibraryEditor)item).commit();
+              }
+            }.execute();
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    updateState();
+  }
+
+  private void doCreate() {
+    final NewLibraryConfiguration libraryConfiguration = mySettings.getLibraryDescription().createNewLibrary(myPanel, getBaseDirectory());
+    if (libraryConfiguration != null) {
+      final NewLibraryEditor libraryEditor = new NewLibraryEditor();
+      libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
+      libraryConfiguration.addRoots(libraryEditor);
+      if (myLibraryComboBoxModel.get(0) == null) {
+        myLibraryComboBoxModel.remove(0);
+      }
+      myLibraryComboBoxModel.add(libraryEditor);
+      myLibraryComboBoxModel.setSelectedItem(libraryEditor);
+      myButtonEnumModel.setSelected(Choice.USE_LIBRARY);
+    }
+  }
+
   private List<Library> calculateSuitableLibraries() {
-    LibraryInfo[] libraryInfos = mySettings.getLibraryInfos();
-    RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(libraryInfos);
+    final Condition<List<VirtualFile>> condition = mySettings.getLibraryDescription().getSuitableLibraryCondition();
     List<Library> suitableLibraries = new ArrayList<Library>();
-    Library[] libraries = myLibrariesContainer.getAllLibraries();
-    for (Library library : libraries) {
-      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info =
-        requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES), false);
-      if (info == null) {
+    for (Library library : myLibrariesContainer.getAllLibraries()) {
+      final VirtualFile[] files = myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES);
+      if (condition.value(Arrays.asList(files))) {
         suitableLibraries.add(library);
       }
     }
     return suitableLibraries;
-  }
-
-  private VirtualFile[] showFileChooser() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
-    descriptor.setTitle(IdeBundle.message("file.chooser.select.paths.title"));
-    descriptor.setDescription(IdeBundle.message("file.chooser.multiselect.description"));
-    return FileChooser.chooseFiles(myPanel, descriptor, getBaseDirectory());
   }
 
   @Nullable
@@ -273,7 +261,7 @@ public class LibraryOptionsPanel {
     }
     return MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
                                    "{2} library <b>{3}</b> will be created",
-                                   mySettings.getLibraryInfos().length,
+                                   mySettings.getLibraryDescription().getDownloads().size(),
                                    path,
                                    mySettings.getLibraryLevel(),
                                    mySettings.getDownloadedLibraryName());
@@ -296,5 +284,22 @@ public class LibraryOptionsPanel {
 
   public JComponent getMainPanel() {
     return myPanel;
+  }
+
+  private static class LibraryListCellRenderer extends ColoredListCellRenderer {
+    @Override
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      if (value == null) {
+        append("[No library selected]");
+      }
+      else if (value instanceof ExistingLibraryEditor) {
+        ProjectStructureDialogCellAppearanceUtils.forLibrary(((ExistingLibraryEditor)value).getLibrary(), null).customize(this);
+      }
+      else if (value instanceof NewLibraryEditor) {
+        setIcon(Icons.LIBRARY_ICON);
+        final String name = ((NewLibraryEditor)value).getName();
+        append(name != null ? name : "<unnamed>");
+      }
+    }
   }
 }

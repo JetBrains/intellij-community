@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,14 +26,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -58,7 +62,8 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final CustomLibraryCreator.NewLibraryConfiguration libraryConfiguration = myCreator.createNewLibrary(myModuleStructureConfigurable.getTree());
+    final NewLibraryConfiguration libraryConfiguration = myCreator.getDescription().createNewLibrary(myModuleStructureConfigurable.getTree(),
+                                                                                                     null);
     if (libraryConfiguration == null) {
       return;
     }
@@ -79,16 +84,25 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
     }
   }
 
-  public static List<AnAction> getActions(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable) {
+  public static List<AnAction> getActions(@NotNull final StructureConfigurableContext context, @NotNull ModuleStructureConfigurable moduleStructureConfigurable) {
     final Module module = moduleStructureConfigurable.getSelectedModule();
     if (module == null) return Collections.emptyList();
 
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (CustomLibraryCreator creator : CustomLibraryCreator.EP_NAME.getExtensions()) {
-      final HashSet<LibraryKind<?>> kinds = new HashSet<LibraryKind<?>>(creator.getSuitableKinds());
-      List<Library> suitableLibraries = LibraryPresentationManager.getInstance().getLibraries(kinds, context.getProject(), context);
+      List<Library> libraries = new ArrayList<Library>();
+      Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());
+      Collections.addAll(libraries, context.getGlobalLibrariesProvider().getModifiableModel().getLibraries());
+
+      final Condition<List<VirtualFile>> condition = creator.getDescription().getSuitableLibraryCondition();
+      Predicate<Library> suitablePredicate = new Predicate<Library>() {
+        @Override
+        public boolean apply(Library input) {
+          return condition.value(Arrays.asList(context.getLibraryFiles(input, OrderRootType.CLASSES)));
+        }
+      };
       final Predicate<Library> notAddedLibrariesCondition = LibraryEditingUtil.getNotAddedLibrariesCondition(context.getModulesConfigurator().getRootModel(module));
-      final Collection<Library> librariesToAdd = Collections2.filter(suitableLibraries, notAddedLibrariesCondition);
+      final Collection<Library> librariesToAdd = Collections2.filter(libraries, Predicates.and(suitablePredicate, notAddedLibrariesCondition));
       if (librariesToAdd.isEmpty()) {
         actions.add(new CreateCustomLibraryAction(creator.getDisplayName(), creator, context, moduleStructureConfigurable, module));
       }

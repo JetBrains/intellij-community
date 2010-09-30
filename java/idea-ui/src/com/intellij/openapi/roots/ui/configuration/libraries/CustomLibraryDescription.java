@@ -15,23 +15,31 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class CustomLibraryCreator {
-  public static final ExtensionPointName<CustomLibraryCreator> EP_NAME = ExtensionPointName.create("com.intellij.library.creator");
-
-  public abstract String getDisplayName();
-
-  @Nullable
-  public abstract Icon getIcon();
+public abstract class CustomLibraryDescription {
+  @NotNull
+  public abstract String getDefaultLibraryName();
 
   @NotNull
-  public abstract CustomLibraryDescription getDescription();
+  public List<LibraryDownloadInfo> getDownloads() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public abstract Condition<List<VirtualFile>> getSuitableLibraryCondition();
+
+  @Nullable
+  public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory);
 }

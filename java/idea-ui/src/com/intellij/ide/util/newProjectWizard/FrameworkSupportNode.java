@@ -18,15 +18,15 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
@@ -34,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
 * @author nik
@@ -50,6 +47,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private final Computable<String> myBaseDirForLibrariesGetter;
   private LibraryOptionsPanel myLibraryCompositionOptionsPanel;
+  private Map<FrameworkVersion, CustomLibraryDescription> myLibraryDescriptions = new HashMap<FrameworkVersion, CustomLibraryDescription>();
 
   public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
                              Computable<String> baseDirForLibrariesGetter, Disposable parentDisposable) {
@@ -71,6 +69,19 @@ public class FrameworkSupportNode extends CheckedTreeNode {
 
   public List<FrameworkSupportNode> getChildren() {
     return myChildren;
+  }
+
+  @Nullable
+  public CustomLibraryDescription getOrCreateLibraryDescription() {
+    FrameworkVersion version = myConfigurable.getSelectedVersion();
+    if (version == null) return null;
+
+    CustomLibraryDescription description = myLibraryDescriptions.get(version);
+    if (description == null) {
+      description = new CustomLibraryDescriptionImpl(version.getLibraries(), StringUtil.notNullize(version.getLibraryName()));
+      myLibraryDescriptions.put(version, description);
+    }
+    return description;
   }
 
   @Nullable
@@ -107,9 +118,8 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   }
 
   private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
-    final LibraryInfo[] libraries = getLibraries();
     return !settings.getBaseDirectoryForDownloadedFiles().equals(myBaseDirForLibrariesGetter.compute())
-           || !Comparing.equal(settings.getLibraryInfos(), libraries);
+           || !Comparing.equal(settings.getLibraryDescription(), getOrCreateLibraryDescription());
   }
 
   public LibraryInfo[] getLibraries() {
@@ -120,9 +130,9 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   @Nullable
   public LibraryCompositionSettings getLibraryCompositionSettings() {
     if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
-      final LibraryInfo[] libraries = getLibraries();
-      if (libraries.length != 0) {
-        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute());
+      final CustomLibraryDescription description = getOrCreateLibraryDescription();
+      if (description != null) {
+        myLibraryCompositionSettings = new LibraryCompositionSettings(description, myBaseDirForLibrariesGetter.compute());
         Disposer.register(myConfigurable, myLibraryCompositionSettings);
       }
       else {
