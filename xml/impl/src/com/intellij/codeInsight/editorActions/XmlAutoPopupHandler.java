@@ -54,7 +54,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void autoPopupXmlLookup(final Project project, final Editor editor){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_XML_LOOKUP) {
+    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -69,7 +69,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
           }, null, null);
         }
       };
-      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.XML_LOOKUP_DELAY);
+      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.AUTO_LOOKUP_DELAY);
     }
   }
 

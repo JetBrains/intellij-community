@@ -83,7 +83,7 @@ public class AutoPopupController implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_MEMBER_LOOKUP) {
+    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
       if (file == null) return;
       final Runnable request = new Runnable(){
@@ -99,7 +99,7 @@ public class AutoPopupController implements Disposable {
       // invoke later prevents cancelling request by keyPressed from the same action
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              myAlarm.addRequest(request, settings.MEMBER_LOOKUP_DELAY);
+              myAlarm.addRequest(request, settings.AUTO_LOOKUP_DELAY);
             }
           });
     }

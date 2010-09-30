@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +49,7 @@ public class DefaultKeymap {
   }
 
   public DefaultKeymap() {
-    for(BundledKeymapProvider provider: Extensions.getExtensions(BundledKeymapProvider.EP_NAME)) {
+    for(BundledKeymapProvider provider: getProviders()) {
       final List<String> fileNames = provider.getKeymapFileNames();
       for (String fileName : fileNames) {
         try {
@@ -60,6 +61,10 @@ public class DefaultKeymap {
         }
       }
     }
+  }
+
+  protected BundledKeymapProvider[] getProviders() {
+    return Extensions.getExtensions(BundledKeymapProvider.EP_NAME);
   }
 
   private void loadKeymapsFromElement(final Element element) throws InvalidDataException {
@@ -76,5 +81,14 @@ public class DefaultKeymap {
 
   public Keymap[] getKeymaps() {
     return myKeymaps.toArray(new Keymap[myKeymaps.size()]);
+  }
+
+  public String getDefaultKeymapName() {
+    return SystemInfo.isMac ? KeymapManager.MAC_OS_X_KEYMAP : KeymapManager.DEFAULT_IDEA_KEYMAP;
+  }
+
+  public String getKeymapPresentableName(KeymapImpl keymap) {
+    String name = keymap.getName();
+    return KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name) ? "Default" : name;
   }
 }

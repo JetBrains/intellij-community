@@ -210,7 +210,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       int sortingKey = provider.getSortingKey();
 
       // There is a possible case that, say, fold region is soft wrapped. We don't want to perform unnecessary then.
-      if (context.offset < sortingKey) {
+      if (context.offset <= sortingKey) {
         result = strategy.advance(context, sortingKey);
         if (result != null) {
           return result;
@@ -418,6 +418,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
       entry.locked = true;
     }
+    myCache.get(myBeforeChangeState.startCacheEntryIndex).collapse();
 
     //System.out.println("Dropped all cache records starting from index " + (myBeforeChangeState.startCacheEntryIndex + 1));
   }
@@ -527,16 +528,16 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    </pre>
    */
   private void applyStateChange() {
+    if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
+      return;
+    }
+
     int visualLinesDiff = myAfterChangeState.visualLines - myBeforeChangeState.visualLines;
     int logicalLinesDiff = myAfterChangeState.logicalLines - myBeforeChangeState.logicalLines;
     int softWrappedLinesDiff = myAfterChangeState.softWrapLines - myBeforeChangeState.softWrapLines;
     int foldedLinesDiff = myAfterChangeState.foldedLines - myBeforeChangeState.foldedLines;
     int offsetsDiff = (myAfterChangeState.endOffset - myAfterChangeState.startOffset)
                       - (myBeforeChangeState.endOffset - myBeforeChangeState.startOffset);
-
-    if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
-      return;
-    }
 
     for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
       cacheEntry.visualLine += visualLinesDiff;

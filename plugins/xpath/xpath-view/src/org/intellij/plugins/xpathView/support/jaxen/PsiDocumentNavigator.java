@@ -17,6 +17,7 @@ package org.intellij.plugins.xpathView.support.jaxen;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,6 +28,7 @@ import org.jaxen.FunctionCallException;
 import org.jaxen.UnsupportedAxisException;
 import org.jaxen.XPath;
 import org.jaxen.saxpath.SAXPathException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -147,6 +149,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return text;
     }
 
+    @NotNull
     public String getProcessingInstructionData(Object obj) {
         LOG.debug("enter: getProcessingInstructionData");
         LOG.assertTrue(obj instanceof XmlProcessingInstruction);
@@ -327,6 +330,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return b;
     }
 
+    @NotNull
     public String getCommentStringValue(Object comment) {
         LOG.assertTrue(comment instanceof XmlComment);
 
@@ -344,6 +348,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return "";
     }
 
+    @NotNull
     public String getElementStringValue(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
 
@@ -356,9 +361,10 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return collector.getText();
     }
 
+    @NotNull
     public String getAttributeStringValue(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
-        return ((XmlAttribute)attr).getValue();
+        return StringUtil.notNullize(((XmlAttribute)attr).getValue());
     }
 
     public String getNamespaceStringValue(Object ns) {
@@ -379,6 +385,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return null;
     }
 
+    @NotNull
     public String getTextStringValue(Object txt) {
         LOG.debug("enter: getTextStringValue");
 

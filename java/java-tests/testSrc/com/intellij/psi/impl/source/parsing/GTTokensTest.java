@@ -16,7 +16,7 @@ import junit.framework.Test;
  */
 public class GTTokensTest extends FileSetTestCase {
   public GTTokensTest() {
-    super(PathManagerEx.getTestDataPath(PathManagerEx.TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE) + "/psi/gt-tokens");
+    super(PathManagerEx.getTestDataPath(GTTokensTest.class) + "/psi/gt-tokens");
   }
 
   @Override

@@ -165,7 +165,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)
-        .setShowShadow(false)
+        .setShowShadow(!myForceLightweightPopup && myForceShowAsPopup)
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)

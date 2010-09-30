@@ -95,5 +95,9 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
     public boolean equals(Object obj) {
       return obj instanceof MyGutterIconRenderer;
     }
+    @Override
+    public int hashCode() {
+      return getIcon().hashCode();
+    }
   }
 }

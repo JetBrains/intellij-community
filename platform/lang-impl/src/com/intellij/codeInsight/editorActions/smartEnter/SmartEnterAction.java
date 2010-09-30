@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -56,12 +57,16 @@ public class SmartEnterAction extends EditorAction {
     }
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+
       final Document doc = editor.getDocument();
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, dataContext);
         return;
       }
+
+      LookupManager.getInstance(project).hideActiveLookup();
+
       final int caretOffset = editor.getCaretModel().getOffset();
       if (isInPreceedingBlanks(editor)) {
         final int caretLine = doc.getLineNumber(caretOffset);

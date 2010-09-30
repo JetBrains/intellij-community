@@ -15,11 +15,17 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.awt.*;
+import java.io.IOException;
 
 /**
  * @author Denis Zhdanov
@@ -56,8 +62,89 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
     assertNotNull(getSoftWrapModel().getSoftWrap(offset));
   }
 
+  public void testFoldRegionCollapsing() throws Exception {
+    String text =
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"test\");\n" +
+      "    }\n" +
+      "}";
+
+    init(300, text);
+    final FoldingModel foldingModel = myEditor.getFoldingModel();
+    assertEmpty(foldingModel.getAllFoldRegions());
+
+    final int startOffset = text.indexOf('{');
+    final int endOffset = text.indexOf('}') + 1;
+
+    VisualPosition foldStartPosition = myEditor.offsetToVisualPosition(startOffset);
+
+    foldingModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        foldingModel.addFoldRegion(startOffset, endOffset, "...");
+      }
+    });
+
+    final FoldRegion foldRegion = foldingModel.getAllFoldRegions()[0];
+    assertNotNull(foldRegion);
+    assertTrue(foldRegion.isExpanded());
+    foldingModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        foldRegion.setExpanded(false);
+      }
+    });
+
+    // Expecting that all offsets that belong to collapsed fold region point to the region's start.
+    assertEquals(foldStartPosition, myEditor.offsetToVisualPosition(startOffset + 5));
+  }
+
+  public void testTypingEnterAtDocumentEnd() throws IOException {
+    String text =
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"test\");\n" +
+      "    }\n" +
+      "}<caret>";
+
+    init(300, text);
+    type('\n');
+    VisualPosition position = myEditor.getCaretModel().getVisualPosition();
+    assertEquals(new VisualPosition(5, 0), position);
+  }
+
+  public void testDeleteDocumentTail() throws IOException {
+    String text =
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"test\");\n" +
+      "    }\n" +
+      "}\n" +
+      "abcde";
+
+    init(300, text);
+    int offset = text.indexOf("abcde");
+    myEditor.getSelectionModel().setSelection(offset, text.length());
+    delete();
+    assertEquals(new VisualPosition(5, 0), myEditor.getCaretModel().getVisualPosition());
+  }
+
   private void init(final int visibleWidth) throws Exception {
-    configureByFile(PATH + getTestName(false) + ".txt");
+    configureByFile(PATH + getFileName());
+    initCommon(visibleWidth);
+  }
+
+  private void init(int visibleWidth, String fileText) throws IOException {
+    configureFromFileText(getFileName(), fileText);
+    initCommon(visibleWidth);
+  }
+
+  private String getFileName() {
+    return getTestName(false) + ".txt";
+  }
+
+  private static void initCommon(final int visibleWidth) {
     myEditor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
     model.refreshSettings();

@@ -21,7 +21,7 @@ import com.intellij.psi.CustomHighlighterTokenType;
 /**
  * @author dsl
  */
-public final class NumberParser extends BaseTokenParser {
+public final class NumberParser extends TokenParser {
   private final String mySuffices;
   private final boolean myIgnoreCase;
 

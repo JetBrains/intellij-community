@@ -18,6 +18,8 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -35,12 +37,10 @@ import java.util.Collection;
 
 public class ShowLookupActionsHandler extends LookupActionHandler {
   public ShowLookupActionsHandler(EditorActionHandler originalHandler){
-    super(originalHandler);
+    super(originalHandler, true);
   }
 
   protected void executeInLookup(final LookupImpl lookup) {
-    if (!lookup.isFocused()) return;
-
     final LookupElement element = lookup.getCurrentItem();
     if (element == null) {
       return;

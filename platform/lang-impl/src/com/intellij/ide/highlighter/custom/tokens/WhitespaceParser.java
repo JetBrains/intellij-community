@@ -22,7 +22,7 @@ import com.intellij.psi.CustomHighlighterTokenType;
 /**
  * @author dsl
  */
-public class WhitespaceParser extends BaseTokenParser {
+public class WhitespaceParser extends TokenParser {
 
   public boolean hasToken(int position) {
     if (!Character.isWhitespace(myBuffer.charAt(position))) return false;

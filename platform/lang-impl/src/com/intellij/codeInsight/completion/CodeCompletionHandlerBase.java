@@ -29,7 +29,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -49,7 +48,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,11 +68,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
-  private final boolean myInvokedExplicitly;
+  final boolean invokedExplicitly;
   final boolean focusLookup;
 
   public CodeCompletionHandlerBase(final CompletionType completionType) {
@@ -83,7 +82,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean focusLookup) {
     myCompletionType = completionType;
-    myInvokedExplicitly = invokedExplicitly;
+    this.invokedExplicitly = invokedExplicitly;
     this.focusLookup = focusLookup;
   }
 
@@ -118,7 +117,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.getParameters().getCompletionType().equals(myCompletionType) && editor == indicator.getEditor()) {
+      if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
           return;
         }
@@ -177,11 +176,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                             final int offset2,
                             final CompletionContext context,
                             final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && context.editor.getComponent().getRootPane() == null) {
-      return;
-    }
-
-
     final Pair<CompletionContext, PsiElement> insertedInfo = new WriteCommandAction<Pair<CompletionContext, PsiElement>>(context.project) {
       protected void run(Result<Pair<CompletionContext, PsiElement>> result) throws Throwable {
         result.setResult(insertDummyIdentifier(context, patcher));
@@ -199,50 +193,22 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     final CompletionParameters parameters = new CompletionParameters(insertedElement, originalFile, myCompletionType, newContext.getStartOffset(), invocationCount);
-    final Project project = originalFile.getProject();
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, context, freezeSemaphore);
 
-    final Ref<LookupElement[]> data = Ref.create(null);
-    final ModalityState modalityState = ModalityState.current();
+    final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     final Runnable computeRunnable = new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-
-              final LookupElement[] items = CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
+              data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
                 public void consume(final LookupElement lookupElement) {
                   indicator.addItem(lookupElement);
                 }
-              });
-              indicator.getLookup().setCalculating(false);
-
-              data.set(items);
-              freezeSemaphore.up();
-              if (items.length == 0) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (project.isDisposed() || !project.isOpen()) return;
-
-                    if (indicator != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
-                    final Lookup lookup = LookupManager.getActiveLookup(editor);
-                    assert lookup == indicator.getLookup() : lookup;
-
-                    indicator.closeAndFinish();
-                    if (editor.isDisposed()) return;
-
-                    CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-                    assert completion == null : "1 this=" + indicator + "\ncurrent=" + completion;
-                    HintManager.getInstance().hideAllHints();
-                    completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-                    assert completion == null : "2 this=" + indicator + "\ncurrent=" + completion;
-                    handleEmptyLookup(context, parameters, indicator);
-                  }
-                }, modalityState);
-              }
+              }));
             }
             catch (ProcessCanceledException ignored) {
             }
@@ -253,26 +219,31 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       computeRunnable.run();
-
-      if (data.get().length == 0) {
-        indicator.closeAndFinish();
-      }
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
+    }
 
-      if (!freezeSemaphore.waitFor(2000) || data.isNull()) {
-        indicator.showLookup();
+    if (!invokedExplicitly) {
+      indicator.notifyBackgrounded();
+      return;
+    }
+
+    if (freezeSemaphore.waitFor(2000)) {
+      final LookupElement[] allItems = data.get();
+      if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
+        completionFinished(offset1, offset2, context, indicator, allItems);
         return;
       }
     }
 
-    completionFinished(offset1, offset2, context, indicator, data.get());
+    indicator.notifyBackgrounded();
+    indicator.showLookup();
   }
 
   private AutoCompletionDecision shouldAutoComplete(final CompletionContext context,
                                         final CompletionProgressIndicator indicator,
                                         final LookupElement[] items) {
-    if (!mayAutocompleteOnInvocation()) {
+    if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
     final CompletionParameters parameters = indicator.getParameters();
@@ -324,7 +295,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected void completionFinished(final int offset1, final int offset2, final CompletionContext context, final CompletionProgressIndicator indicator,
                                     final LookupElement[] items) {
-    if (items.length == 0) return;
+    if (items.length == 0) {
+      LookupManager.getInstance(context.project).hideActiveLookup();
+      handleEmptyLookup(context.project, context.editor, indicator.getParameters(), indicator);
+      return;
+    }
 
     final AutoCompletionDecision decision = shouldAutoComplete(context, indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
@@ -461,24 +436,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
 
-  protected boolean mayAutocompleteOnInvocation() {
-    return myInvokedExplicitly;
+  private boolean isAutocompleteCommonPrefixOnInvocation() {
+    return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
-  protected boolean isAutocompleteCommonPrefixOnInvocation() {
-    return myInvokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
-  }
-
-  protected void handleEmptyLookup(CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
+  protected void handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (!myInvokedExplicitly) {
+    if (!invokedExplicitly) {
       return;
-    }
-
-    Project project = context.project;
-    Editor editor = context.editor;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && context.editor.getComponent().getRootPane() == null) {
-      LOG.error("null root pane");
     }
 
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
@@ -489,7 +454,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             indicator.liveAfterDeath(hint);
           }
         };
-        final MessageBusConnection connection = context.project.getMessageBus().connect();
+        final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(EditorHintListener.TOPIC, listener);
         HintManager.getInstance().showErrorHint(editor, text);
         connection.disconnect();
@@ -606,7 +571,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return copy;
   }
 
-  public static boolean isAutocompleteOnInvocation(final CompletionType type) {
+  private static boolean isAutocompleteOnInvocation(final CompletionType type) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     switch (type) {
       case CLASS_NAME:

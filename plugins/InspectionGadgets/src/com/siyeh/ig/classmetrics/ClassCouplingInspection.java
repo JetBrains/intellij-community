@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package com.siyeh.ig.classmetrics;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ClassCouplingInspection
@@ -34,16 +33,19 @@ public class ClassCouplingInspection
     /** @noinspection PublicField*/
     public boolean m_includeLibraryClasses = false;
 
+    @Override
     @NotNull
     public String getID(){
         return "OverlyCoupledClass";
     }
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.coupled.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final Integer totalDependencies = (Integer)infos[0];
@@ -51,15 +53,18 @@ public class ClassCouplingInspection
                 "overly.coupled.class.problem.descriptor", totalDependencies);
     }
 
+    @Override
     protected int getDefaultLimit() {
         return DEFAULT_COUPLING_LIMIT;
     }
 
+    @Override
     protected String getConfigurationLabel() {
         return InspectionGadgetsBundle.message(
                 "overly.coupled.class.class.coupling.limit.option");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
@@ -80,28 +85,14 @@ public class ClassCouplingInspection
         constraints.fill = GridBagConstraints.NONE;
         panel.add(valueField, constraints);
 
-        final JCheckBox arrayCheckBox = new JCheckBox(
+        final CheckBox arrayCheckBox = new CheckBox(
                 InspectionGadgetsBundle.message(
-                        "include.java.system.classes.option"),
-                m_includeJavaClasses);
-        final ButtonModel arrayModel = arrayCheckBox.getModel();
-        arrayModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_includeJavaClasses = arrayModel.isSelected();
-            }
-        });
-        final JCheckBox objectCheckBox = new JCheckBox(
+                        "include.java.system.classes.option"), this,
+                "m_includeJavaClasses");
+        final CheckBox objectCheckBox = new CheckBox(
                 InspectionGadgetsBundle.message(
-                        "include.library.classes.option"),
-                m_includeLibraryClasses);
-        final ButtonModel model = objectCheckBox.getModel();
-        model.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_includeLibraryClasses = model.isSelected();
-            }
-        });
+                        "include.library.classes.option"), this,
+                "m_includeLibraryClasses");
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;
@@ -115,6 +106,7 @@ public class ClassCouplingInspection
         return panel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ClassCouplingVisitor();
     }

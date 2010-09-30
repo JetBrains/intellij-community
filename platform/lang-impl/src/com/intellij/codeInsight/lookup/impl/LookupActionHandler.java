@@ -20,15 +20,18 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.ui.ListScrollingUtil;
 
 /**
  * @author yole
  */
 public abstract class LookupActionHandler extends EditorActionHandler {
   protected final EditorActionHandler myOriginalHandler;
+  private final boolean myRequireFocusedLookup;
 
-  public LookupActionHandler(EditorActionHandler originalHandler) {
+  public LookupActionHandler(EditorActionHandler originalHandler, boolean requireFocusedLookup) {
     myOriginalHandler = originalHandler;
+    myRequireFocusedLookup = requireFocusedLookup;
   }
 
   @Override
@@ -38,7 +41,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null){
+    if (lookup == null || myRequireFocusedLookup && !lookup.isFocused()) {
+      LookupManager.getInstance(editor.getProject()).hideActiveLookup();
       myOriginalHandler.execute(editor, dataContext);
       return;
     }
@@ -52,5 +56,52 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
+  }
+
+  public static class DownHandler extends LookupActionHandler {
+
+    public DownHandler(EditorActionHandler originalHandler){
+      super(originalHandler, false);
+    }
+
+    protected void executeInLookup(final LookupImpl lookup) {
+      if (!lookup.isFocused()) {
+        lookup.setFocused(true);
+        lookup.getList().setSelectedIndex(0);
+        lookup.refreshUi();
+      } else {
+        ListScrollingUtil.moveDown(lookup.getList(), 0);
+      }
+    }
+  }
+
+  public static class PageDownHandler extends LookupActionHandler {
+    public PageDownHandler(final EditorActionHandler originalHandler) {
+      super(originalHandler, true);
+    }
+
+    protected void executeInLookup(final LookupImpl lookup) {
+      ListScrollingUtil.movePageDown(lookup.getList());
+    }
+  }
+
+  public static class PageUpHandler extends LookupActionHandler {
+    public PageUpHandler(EditorActionHandler originalHandler){
+      super(originalHandler, true);
+    }
+
+    protected void executeInLookup(final LookupImpl lookup) {
+      ListScrollingUtil.movePageUp(lookup.getList());
+    }
+  }
+
+  public static class UpHandler extends LookupActionHandler {
+    public UpHandler(EditorActionHandler originalHandler){
+      super(originalHandler, true);
+    }
+
+    protected void executeInLookup(final LookupImpl lookup) {
+      ListScrollingUtil.moveUp(lookup.getList(), 0);
+    }
   }
 }

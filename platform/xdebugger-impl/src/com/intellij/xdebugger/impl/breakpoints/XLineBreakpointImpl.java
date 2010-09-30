@@ -405,6 +405,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       return obj.getClass() == getClass()
         && getXLineBreakpoint() == ((BreakpointGutterIconRenderer)obj).getXLineBreakpoint();
     }
+
+    @Override
+    public int hashCode() {
+      return getXLineBreakpoint().hashCode();
+    }
   }
 
   private class MyRemoveBreakpointAction extends AnAction {

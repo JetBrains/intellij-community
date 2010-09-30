@@ -39,9 +39,7 @@ public abstract class CompletionProvider<V extends CompletionParameters> {
     if (myStartInReadAction) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          if (parameters.getPosition().isValid()) {
-            addCompletions(parameters, context, result);
-          }
+          addCompletions(parameters, context, result);
         }
       });
     } else {

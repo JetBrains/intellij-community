@@ -26,17 +26,32 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 public class BraceTokenParser extends PrefixedTokenParser {
-  public static final List<BraceTokenParser> BRACES = Arrays.asList(new BraceTokenParser("{", CustomHighlighterTokenType.L_BRACE),
-                                                                    new BraceTokenParser("}", CustomHighlighterTokenType.R_BRACE));
-  public static final List<BraceTokenParser> PARENS = Arrays.asList(new BraceTokenParser("(", CustomHighlighterTokenType.L_PARENTH),
-                                                                    new BraceTokenParser(")", CustomHighlighterTokenType.R_PARENTH));
-  public static final List<BraceTokenParser> BRACKETS = Arrays.asList(new BraceTokenParser("[", CustomHighlighterTokenType.L_BRACKET),
-                                                                      new BraceTokenParser("]", CustomHighlighterTokenType.R_BRACKET));
-  public static final List<BraceTokenParser> ANGLE_BRACKETS = Arrays.asList(new BraceTokenParser("<", CustomHighlighterTokenType.L_ANGLE),
-                                                                      new BraceTokenParser(">", CustomHighlighterTokenType.R_ANGLE));
 
   public BraceTokenParser(String prefix, IElementType tokenType) {
     super(prefix, tokenType);
+  }
+
+  //these getters here can't be replaced with constant fields because each token parser remembers the buffer
+  // which in DocumentImpl.getCharSequence() maintains a reference to the document and thus many
+  // things will be leaked
+  public static List<BraceTokenParser> getBraces() {
+    return Arrays.asList(new BraceTokenParser("{", CustomHighlighterTokenType.L_BRACE),
+                         new BraceTokenParser("}", CustomHighlighterTokenType.R_BRACE));
+  }
+
+  public static List<BraceTokenParser> getParens() {
+    return Arrays.asList(new BraceTokenParser("(", CustomHighlighterTokenType.L_PARENTH),
+                         new BraceTokenParser(")", CustomHighlighterTokenType.R_PARENTH));
+  }
+
+  public static List<BraceTokenParser> getBrackets() {
+    return Arrays.asList(new BraceTokenParser("[", CustomHighlighterTokenType.L_BRACKET),
+                         new BraceTokenParser("]", CustomHighlighterTokenType.R_BRACKET));
+  }
+
+  public static List<BraceTokenParser> getAngleBrackets() {
+    return Arrays.asList(new BraceTokenParser("<", CustomHighlighterTokenType.L_ANGLE),
+                         new BraceTokenParser(">", CustomHighlighterTokenType.R_ANGLE));
   }
 
   protected int getTokenEnd(int position) {

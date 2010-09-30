@@ -19,10 +19,12 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -30,6 +32,8 @@ import java.util.List;
 
 class EmptyFileManager implements FileManager {
   private final PsiManagerImpl myManager;
+
+  private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
   EmptyFileManager(final PsiManagerImpl manager) {
     myManager = manager;
@@ -71,11 +75,11 @@ class EmptyFileManager implements FileManager {
   }
 
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
-    return null;
+    return myVFileToViewProviderMap.get(file);
   }
 
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
-    return null;
+    return myVFileToViewProviderMap.get(file);
   }
 
   @NotNull
@@ -84,7 +88,14 @@ class EmptyFileManager implements FileManager {
   }
 
   public void setViewProvider(@NotNull final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
-
+    if (!(virtualFile instanceof VirtualFileWindow)) {
+      if (singleRootFileViewProvider == null) {
+        myVFileToViewProviderMap.remove(virtualFile);
+      }
+      else {
+        myVFileToViewProviderMap.put(virtualFile, singleRootFileViewProvider);
+      }
+    }
   }
 
   public List<PsiFile> getAllCachedFiles() {

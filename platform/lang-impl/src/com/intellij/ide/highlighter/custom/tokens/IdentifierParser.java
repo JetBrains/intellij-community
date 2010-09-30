@@ -22,7 +22,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * @author dsl
  */
-public class IdentifierParser extends BaseTokenParser {
+public class IdentifierParser extends TokenParser {
   public IdentifierParser() {
   }
 
