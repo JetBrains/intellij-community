@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -75,6 +76,26 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  public static class UpHandler extends LookupActionHandler {
+    public UpHandler(EditorActionHandler originalHandler){
+      super(originalHandler, false);
+    }
+
+    @Override
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return super.isEnabled(editor, dataContext) && UISettings.getInstance().CYCLE_SCROLLING;
+    }
+
+    protected void executeInLookup(final LookupImpl lookup) {
+      if (!lookup.isFocused()) {
+        lookup.setFocused(true);
+        lookup.getList().setSelectedIndex(0);
+        lookup.refreshUi();
+      }
+      ListScrollingUtil.moveUp(lookup.getList(), 0);
+    }
+  }
+
   public static class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
       super(originalHandler, true);
@@ -95,13 +116,4 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
-  public static class UpHandler extends LookupActionHandler {
-    public UpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, true);
-    }
-
-    protected void executeInLookup(final LookupImpl lookup) {
-      ListScrollingUtil.moveUp(lookup.getList(), 0);
-    }
-  }
 }

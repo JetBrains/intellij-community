@@ -39,6 +39,6 @@ public class ChooseItemAction extends EditorAction {
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    presentation.setEnabled(lookup != null && lookup.isFocused());
+    presentation.setEnabled(lookup != null && (lookup.isFocused() || lookup.isCompletion() && !lookup.getItems().isEmpty()));
   }
 }
