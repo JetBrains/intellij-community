@@ -344,7 +344,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void lookupClosed() {
-    cancel();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        cancel();
+      }
+    });
 
     assert !myDisposed;
     myDisposed = true;

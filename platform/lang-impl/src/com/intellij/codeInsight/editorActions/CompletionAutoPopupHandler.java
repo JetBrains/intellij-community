@@ -18,13 +18,22 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.messages.MessageBusConnection;
 
 /**
  * @author peter
@@ -38,13 +47,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
 
     if (!Character.isLetter(charTyped)) {
-      myEditor = null;
+      finishAutopopupCompletion();
       return Result.CONTINUE;
     }
 
     if (myEditor != null) {
       if (editor != myEditor || editor.getCaretModel().getOffset() != myLastOffset + 1) {
-        myEditor = null;
+        finishAutopopupCompletion();
         return Result.CONTINUE;
       }
     }
@@ -52,11 +61,30 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     myEditor = editor;
     myLastOffset = editor.getCaretModel().getOffset();
 
+    final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        finishAutopopupCompletion();
+        connection.disconnect();
+      }
+    });
+
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
       public void mouseClicked(EditorMouseEvent e) {
         editor.removeEditorMouseListener(this);
-        myEditor = null;
+        finishAutopopupCompletion();
+      }
+    });
+
+    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        if (StringUtil.containsLineBreak(e.getNewFragment())) {
+          finishAutopopupCompletion();
+          editor.getDocument().removeDocumentListener(this);
+        }
       }
     });
 
@@ -70,5 +98,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       }
     }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
     return Result.STOP;
+  }
+
+  private void finishAutopopupCompletion() {
+    myEditor = null;
+    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    if (currentCompletion != null) {
+      currentCompletion.closeAndFinish();
+    }
   }
 }
