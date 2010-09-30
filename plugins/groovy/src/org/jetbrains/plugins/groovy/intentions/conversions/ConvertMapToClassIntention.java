@@ -78,6 +78,9 @@ public class ConvertMapToClassIntention extends Intention {
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 
+    boolean replaceReturnType = checkForReturnFromMethod(map);
+    boolean variableDeclaration = checkForVariableDeclaration(map);
+
     final String qualifiedClassName = dialog.getClassName();
     final String selectedPackageName = StringUtil.getPackageName(qualifiedClassName);
     final String shortName = StringUtil.getShortName(qualifiedClassName);
@@ -86,10 +89,14 @@ public class ConvertMapToClassIntention extends Intention {
     final PsiClass generatedClass = CreateClassActionBase.createClassByType(
       dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map);
     final PsiClass replaced = (PsiClass)generatedClass.replace(typeDefinition);
-    replaceMapWithClass(project, map, replaced);
+    replaceMapWithClass(project, map, replaced, replaceReturnType, variableDeclaration);
   }
 
-  public static void replaceMapWithClass(Project project, final GrListOrMap map, PsiClass generatedClass) {
+  public static void replaceMapWithClass(Project project,
+                                         final GrListOrMap map,
+                                         PsiClass generatedClass,
+                                         boolean replaceReturnType,
+                                         boolean variableDeclaration) {
     PsiUtil.shortenReferences((GroovyPsiElement)generatedClass);
 
     final String text = map.getText();
@@ -100,38 +107,46 @@ public class ConvertMapToClassIntention extends Intention {
     final GrExpression newExpression = GroovyPsiElementFactory.getInstance(project)
       .createExpressionFromText("new " + generatedClass.getQualifiedName() + "(" + text.substring(begin, end) + ")");
     final GrExpression replacedNewExpression = ((GrExpression)map.replace(newExpression));
-    checkForVariableDeclaration(replacedNewExpression);
-    checkForReturnFromMethod(replacedNewExpression);
+
+    if (replaceReturnType) {
+      final PsiType type = replacedNewExpression.getType();
+      final GrMethod method = PsiTreeUtil.getParentOfType(replacedNewExpression, GrMethod.class, true, GrClosableBlock.class);
+      LOG.assertTrue(method != null);
+      method.setReturnType(type);
+    }
+
+    if (variableDeclaration) {
+      final PsiElement parent = PsiUtil.skipParentheses(replacedNewExpression.getParent(), true);
+      ((GrVariable)parent).setType(replacedNewExpression.getType());
+    }
+
+
     PsiUtil.shortenReferences(replacedNewExpression);
 
     CreateClassActionBase.putCursor(project, generatedClass.getContainingFile(), generatedClass);
   }
 
-  private static void checkForReturnFromMethod(GrExpression replacedNewExpression) {
+  public static boolean checkForReturnFromMethod(GrExpression replacedNewExpression) {
     final PsiElement parent = PsiUtil.skipParentheses(replacedNewExpression.getParent(), true);
     final GrMethod method = PsiTreeUtil.getParentOfType(replacedNewExpression, GrMethod.class, true, GrClosableBlock.class);
-    if (method == null) return;
+    if (method == null) return false;
 
     if (!(parent instanceof GrReturnStatement)) { //check for return expression
       final List<GrStatement> returns = ControlFlowUtils.collectReturns(method.getBlock());
       final PsiElement expr = PsiUtil.skipParentheses(replacedNewExpression, true);
-      if (!(returns.contains(expr))) return;
+      if (!(returns.contains(expr))) return false;
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(replacedNewExpression.getProject(),
-                                                                                          GroovyIntentionsBundle.message(
-                                                                                            "do.you.want.to.change.method.return.type",
-                                                                                            method.getName()),
-                                                                                          GroovyIntentionsBundle
-                                                                                            .message("convert.map.to.class.intention.name"),
-                                                                                          Messages.getQuestionIcon()) != 0) {
-      return;
-    }
-
-    final PsiType type = replacedNewExpression.getType();
-    method.setReturnType(type);
+    return !(!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(replacedNewExpression.getProject(),
+                                                                                               GroovyIntentionsBundle.message(
+                                                                                                 "do.you.want.to.change.method.return.type",
+                                                                                                 method.getName()),
+                                                                                               GroovyIntentionsBundle
+                                                                                                 .message(
+                                                                                                   "convert.map.to.class.intention.name"),
+                                                                                               Messages.getQuestionIcon()) != 0);
   }
 
-  private static void checkForVariableDeclaration(GrExpression replacedNewExpression) {
+  public static boolean checkForVariableDeclaration(GrExpression replacedNewExpression) {
     final PsiElement parent = PsiUtil.skipParentheses(replacedNewExpression.getParent(), true);
     if (parent instanceof GrVariable &&
         !(parent instanceof GrField) &&
@@ -146,9 +161,10 @@ public class ConvertMapToClassIntention extends Intention {
                                                                                               "convert.map.to.class.intention.name"),
                                                                                             Messages.getQuestionIcon()) ==
                                                                    0) {
-        ((GrVariable)parent).setType(replacedNewExpression.getType());
+        return true;
       }
     }
+    return false;
   }
 
   public static GrTypeDefinition createClass(Project project, GrNamedArgument[] namedArguments, String packageName, String className) {
