@@ -13,45 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;import com.intellij.lang.PsiBuilder;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
+
+import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
  */
 public class TupleParse {
-  public static boolean parseTuple(PsiBuilder builder, boolean hasModifiers, IElementType tupleType, IElementType componentType) {
-    if (builder.getTokenType() != GroovyTokenTypes.mLPAREN) return false;
+  public static boolean parseTuple(PsiBuilder builder, IElementType tupleType, IElementType componentType) {
+    if (builder.getTokenType() != mLPAREN) return false;
 
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     do {
       //skip unnecessary commas
-      while (builder.getTokenType() == GroovyTokenTypes.mCOMMA) {
+      while (builder.getTokenType() == mCOMMA) {
         builder.advanceLexer();
         builder.error(GroovyBundle.message("identifier.expected"));
       }
 
       //parse modifiers for definitions
-      if (hasModifiers) {
-        if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
-          builder.advanceLexer();
-        }
+      PsiBuilder.Marker typeMarker = builder.mark();
+      TypeSpec.parse(builder);
+      if (!ParserUtils.lookAhead(builder, mIDENT)) {
+        typeMarker.rollbackTo();
+      }
+      else {
+        typeMarker.drop();
       }
       PsiBuilder.Marker varMarker = builder.mark();
-      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mIDENT)) {
+      if (!ParserUtils.getToken(builder, mIDENT)) {
         builder.error(GroovyBundle.message("identifier.expected"));
         varMarker.drop();
       } else {
         varMarker.done(componentType);
       }
-    } while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA));
+    } while (ParserUtils.getToken(builder, mCOMMA));
 
-    if (builder.getTokenType() == GroovyTokenTypes.mRPAREN) {
+    if (builder.getTokenType() == mRPAREN) {
       builder.advanceLexer();
       marker.done(tupleType);
       return true;

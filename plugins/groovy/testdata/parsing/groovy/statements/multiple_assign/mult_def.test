@@ -11,7 +11,8 @@ Groovy script
         PsiElement(identifier)('c')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      PsiElement(int)('int')
+      Built in type
+        PsiElement(int)('int')
       PsiWhiteSpace(' ')
       Variable
         PsiElement(identifier)('d')

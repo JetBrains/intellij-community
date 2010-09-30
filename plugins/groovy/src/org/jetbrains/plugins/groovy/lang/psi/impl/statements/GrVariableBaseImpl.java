@@ -121,12 +121,11 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTupleDeclaration || !(parent instanceof GrVariableDeclaration)) {
-      return null;
+    if (parent instanceof GrTupleDeclaration) parent = parent.getParent();
+    if (parent instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)parent).getTypeElementGroovyForVariable(this);
     }
-    else {
-      return ((GrVariableDeclaration)parent).getTypeElementGroovy();
-    }
+    return null;
   }
 
   @Nullable
