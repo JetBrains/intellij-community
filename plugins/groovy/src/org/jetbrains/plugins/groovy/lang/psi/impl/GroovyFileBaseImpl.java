@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -44,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
+
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
   }
@@ -63,7 +66,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   public GrTypeDefinition[] getTypeDefinitions() {
-    return findChildrenByClass(GrTypeDefinition.class);
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
+    }
+
+    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
   public GrTopLevelDefintion[] getTopLevelDefinitions() {
@@ -71,7 +79,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   public GrMethod[] getTopLevelMethods() {
-    return findChildrenByClass(GrMethod.class);
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
+    }
+
+    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
   }
 
   public GrVariableDeclaration[] getTopLevelVariableDeclarations() {

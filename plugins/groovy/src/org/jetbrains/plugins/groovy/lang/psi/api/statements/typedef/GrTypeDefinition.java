@@ -20,6 +20,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,12 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
+  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = new ArrayFactory<GrTypeDefinition>() {
+    @Override
+    public GrTypeDefinition[] create(int count) {
+      return new GrTypeDefinition[count];
+    }
+  };
 
   GrTypeDefinitionBody getBody();
 

@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -266,11 +267,60 @@ public class CompositeElement extends TreeElement {
     return result;
   }
 
+  @NotNull
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, ArrayFactory<T> constructor) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    int count = countChildren(filter);
+    T[] result = constructor.create(count);
+    if (count == 0) {
+      return result;
+    }
+    int idx = 0;
+    for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
+      if (filter == null || filter.contains(child.getElementType())) {
+        T element = (T)child.getPsi();
+        LOG.assertTrue(element != null, child);
+        result[idx++] = element;
+      }
+    }
+    return result;
+  }
+  @NotNull
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, ArrayFactory<T> constructor) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    int count = countChildren(type);
+    T[] result = constructor.create(count);
+    if (count == 0) {
+      return result;
+    }
+    int idx = 0;
+    for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
+      if (type == child.getElementType()) {
+        T element = (T)child.getPsi();
+        LOG.assertTrue(element != null, child);
+        result[idx++] = element;
+      }
+    }
+    return result;
+  }
+
   public int countChildren(TokenSet filter) {
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  public int countChildren(IElementType type) {
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (type == child.getElementType()) {
         count++;
       }
     }
