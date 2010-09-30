@@ -24,6 +24,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +85,11 @@ class ToolsPanel extends JPanel {
                                             final int row,
                                             final boolean hasFocus) {
             Object object = ((CheckedTreeNode)value).getUserObject();
+            if (UIUtil.isUnderGTKLookAndFeel()){
+              final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+              setBackground(background);
+            }
+
             if (object instanceof ToolsGroup) {
               final String groupName = ((ToolsGroup)object).getName();
               if (groupName != null) {
