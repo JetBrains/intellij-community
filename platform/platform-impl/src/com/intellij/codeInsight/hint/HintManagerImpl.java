@@ -397,6 +397,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     for (HintInfo info : hints) {
         info.hint.hide();
     }
+    cleanup();
+  }
+
+  public void cleanup() {
     myHintsStack.clear();
     updateLastEditor(null);
   }

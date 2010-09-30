@@ -20,12 +20,12 @@
  */
 package org.testng;
 
+import com.beust.jcommander.JCommander;
 import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Map;
 import java.util.Vector;
 
 public class RemoteTestNGStarter {
@@ -83,11 +83,10 @@ public class RemoteTestNGStarter {
       reader.close();
     }
 
-
-    final Map commandLineArgs= TestNGCommandLineArgs.parseCommandLine((String[])resultArgs.toArray(new String[resultArgs.size()]));
-
+    CommandLineArgs cla = new CommandLineArgs();
+    new JCommander(cla, (String[])resultArgs.toArray(new String[resultArgs.size()]));
     final RemoteTestNG testNG= new RemoteTestNG();
-    testNG.configure(commandLineArgs);
+    testNG.configure(cla);
     testNG.initializeSuitesAndJarFile();
     testNG.run();
   }

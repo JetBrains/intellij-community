@@ -74,7 +74,8 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     final GrTypeDefinition foo = ConvertMapToClassIntention.createClass(getProject(), map.getNamedArguments(), "", "Foo");
     myFixture.addFileToProject(getTestName(true) + "/Foo.groovy", foo.getContainingFile().getText());
     final PsiClass psiClass = myFixture.findClass("Foo");
-    ConvertMapToClassIntention.replaceMapWithClass(getProject(), map, psiClass);
+    ConvertMapToClassIntention.replaceMapWithClass(getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),
+                                                   ConvertMapToClassIntention.checkForVariableDeclaration(map));
     myFixture.checkResultByFile(getTestName(true) + "/Foo.groovy", getTestName(true) + "/Expected.groovy", true);
     myFixture.checkResultByFile(getTestName(true) + "/Test_after.groovy", true);
   }
