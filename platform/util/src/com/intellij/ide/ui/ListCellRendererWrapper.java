@@ -23,12 +23,14 @@ import java.awt.*;
 /**
 * @author oleg
 * @date 9/30/10
+ * Please use this wrapper in case you need simple cell renderer with text and icon.
+ * This avoids ugly UI under GTK look and feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer is used instead of DefaultComboBoxRenderer
 */
 public class ListCellRendererWrapper implements ListCellRenderer {
-  private final ListCellRenderer myWrapped;
+  private final ListCellRenderer myOriginalRenderer;
 
   public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) {
-    this.myWrapped = listCellRenderer;
+    this.myOriginalRenderer = listCellRenderer;
   }
 
   public Component getListCellRendererComponent(final JList list,
@@ -45,7 +47,7 @@ public class ListCellRendererWrapper implements ListCellRenderer {
                                                 final int index,
                                                 final boolean isSelected,
                                                 final boolean cellHasFocus) {
-    final Component component = myWrapped.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
+    final Component component = myOriginalRenderer.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
     if (icon != null && component instanceof JLabel){
       ((JLabel)component).setIcon(icon);
     }
