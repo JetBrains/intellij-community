@@ -96,4 +96,9 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   public final void setToolTipText(final String toolTipText) {
     myToolTipText = toolTipText;
   }
+
+  @Nullable
+  public Icon getIcon(final Object value) {
+    return null;
+  }
 }
