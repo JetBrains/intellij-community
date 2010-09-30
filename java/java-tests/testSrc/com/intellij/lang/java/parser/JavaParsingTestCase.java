@@ -17,13 +17,14 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -111,17 +112,8 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   private static PsiBuilder createBuilder(final ASTNode chameleon) {
-    final PsiElement psi = chameleon.getPsi();
-    assert psi != null : chameleon;
-    final Project project = psi.getProject();
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon);
-
+    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     builder.setDebugMode(true);
-
-    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-    JavaParserUtil.setLanguageLevel(builder, level);
-
     return builder;
   }
 
