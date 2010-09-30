@@ -228,5 +228,10 @@ public class Bookmark {
              Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
              Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());
     }
+
+    @Override
+     public int hashCode() {
+      return getIcon().hashCode();
+    }
   }
 }
