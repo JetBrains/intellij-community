@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.Nullable;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.File;

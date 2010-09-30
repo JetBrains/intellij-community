@@ -179,12 +179,22 @@ public class AbstractVcsTestCase {
     return result.get();
   }
 
+  /**
+   * Creates directory inside a write action and returns the resulting reference to it.
+   * If the directory already exists, does nothing.
+   * @param parent Parent directory.
+   * @param name   Name of the directory.
+   * @return reference to the created or already existing directory.
+   */
   protected VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
       protected void run() throws Throwable {
         try {
-          VirtualFile dir = parent.createChildDirectory(this, name);
+          VirtualFile dir = parent.findChild(name);
+          if (dir == null) {
+            dir = parent.createChildDirectory(this, name);
+          }
           result.set(dir);
         }
         catch (IOException e) {
@@ -309,6 +319,10 @@ public class AbstractVcsTestCase {
         }
       }
     }.execute();
+  }
+
+  protected void editFileInCommand(final VirtualFile file, final String newContent) {
+    editFileInCommand(myProject, file, newContent);
   }
 
   public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {

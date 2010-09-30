@@ -16,6 +16,9 @@
 package git4idea.tests;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Representation of a Git repository for tests purposes.
@@ -87,56 +91,83 @@ public class GitTestRepository {
   }
 
   /**
-   * Natively executes the given mercurial command.
+   * Natively executes the given mercurial command inside write or read action.
+   * @param writeAction           If true, the command will be executed in a write action, otherwise - inside a read action.
    * @param commandWithParameters Mercurial command with parameters. E.g. ["status", "-a"]
    */
-  public ProcessOutput execute(String... commandWithParameters) throws IOException {
-    return myTest.executeCommand(new File(myDirFixture.getTempDirPath()), commandWithParameters);
+  public ProcessOutput execute(boolean writeAction, final String... commandWithParameters) throws IOException {
+    final AtomicReference<ProcessOutput> result = new AtomicReference<ProcessOutput>();
+    final Runnable action = new Runnable() {
+      @Override public void run() {
+        try {
+          result.set(myTest.executeCommand(new File(myDirFixture.getTempDirPath()), commandWithParameters));
+        } catch (IOException e) {
+          result.set(null);
+        }
+      }
+    };
+    if (ApplicationManager.getApplication() == null) { // application may be not initialized yet. OK to just run the action then.
+      action.run();
+      return result.get();
+    }
+    if (writeAction) {
+      ApplicationManager.getApplication().runWriteAction(action);
+    } else {
+      ApplicationManager.getApplication().runReadAction(action);
+    }
+    return result.get();
   }
 
   public void add() throws IOException {
-    execute("add", ".");
+    execute(true, "add", ".");
   }
 
   public void commit(@Nullable String commitMessage) throws IOException {
     if (commitMessage == null) {
       commitMessage = "Sample commit message";
     }
-    execute("commit", "-m", commitMessage);
+    execute(true, "commit", "-m", commitMessage);
+  }
+
+  /**
+   * Commit with a sample commit message. Use this when commit message doesn't matter to your test.
+   */
+  public void commit() throws IOException {
+    commit(null);
   }
 
   public void config(String... parameters) throws IOException {
     String[] pars = new String[parameters.length+1];
     pars[0] = "config";
     System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    execute(pars);
+    execute(true, pars);
   }
 
   public ProcessOutput log(String... parameters) throws IOException {
     String[] pars = new String[parameters.length+1];
     pars[0] = "log";
     System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    return execute(pars);
+    return execute(false, pars);
   }
 
   public void merge() throws IOException {
-    execute("merge");
+    execute(true, "merge");
   }
 
   public void mv(VirtualFile file, String newPath) throws IOException {
-    execute("mv", file.getPath(), newPath);
+    execute(true, "mv", file.getPath(), newPath);
   }
 
   public void pull() throws IOException {
-    execute("pull");
+    execute(true, "pull");
   }
 
   public void push() throws IOException {
-    execute("push");
+    execute(true, "push");
   }
 
   public void update() throws IOException {
-    execute("update");
+    execute(true, "update");
   }
 
   /**
