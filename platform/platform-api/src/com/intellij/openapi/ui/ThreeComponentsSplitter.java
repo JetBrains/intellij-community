@@ -588,6 +588,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
+
+      if (!isShowing()) return;
+
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
         setCursor(
