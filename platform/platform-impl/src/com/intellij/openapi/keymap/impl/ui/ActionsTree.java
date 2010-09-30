@@ -304,12 +304,16 @@ public class ActionsTree {
 
 
   private static boolean isActionChanged(String actionId, Keymap oldKeymap, Keymap newKeymap) {
+    if (!newKeymap.canModify()) return false;
+
     Shortcut[] oldShortcuts = oldKeymap.getShortcuts(actionId);
     Shortcut[] newShortcuts = newKeymap.getShortcuts(actionId);
     return !Comparing.equal(oldShortcuts, newShortcuts);
   }
 
   private static boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
+    if (!newKeymap.canModify()) return false;
+
     ArrayList children = group.getChildren();
     for (Object child : children) {
       if (child instanceof Group) {

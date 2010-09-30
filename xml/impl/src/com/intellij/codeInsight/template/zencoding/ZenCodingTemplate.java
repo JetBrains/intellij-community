@@ -465,6 +465,9 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     ZenCodingGenerator generator = findApplicableGenerator(node, context);
     List<ZenCodingFilter> filters = getFilters(node, context);
 
+    if (surroundedText != null) {
+      surroundedText = surroundedText.trim();
+    }
     List<GenerationNode> genNodes = node.expand(-1, surroundedText);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;

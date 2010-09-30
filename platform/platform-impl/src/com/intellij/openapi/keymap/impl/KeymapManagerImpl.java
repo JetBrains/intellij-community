@@ -23,11 +23,9 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.BaseSchemeProcessor;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
@@ -87,7 +85,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     Keymap[] keymaps = defaultKeymap.getKeymaps();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
-      String systemDefaultKeymap = SystemInfo.isMac ? MAC_OS_X_KEYMAP : DEFAULT_IDEA_KEYMAP;
+      String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
       if (systemDefaultKeymap.equals(keymap.getName())) {
         setActiveKeymap(keymap);
       }
