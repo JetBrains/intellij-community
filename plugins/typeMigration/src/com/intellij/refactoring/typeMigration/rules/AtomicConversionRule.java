@@ -225,7 +225,7 @@ public class AtomicConversionRule extends TypeConversionRule {
   }
 
   public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression expression) {
-    String typeText = to.getPresentableText();
+    String typeText = to.getCanonicalText();
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass atomicClass = resolveResult.getElement();
     LOG.assertTrue(atomicClass != null);

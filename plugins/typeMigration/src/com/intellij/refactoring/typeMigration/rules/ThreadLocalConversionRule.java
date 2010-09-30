@@ -209,7 +209,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
               return toBoxed(arg, from, context);
             }
           }
-          return "new " + initial.getPresentableText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
+          return "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
         }
       }
     }

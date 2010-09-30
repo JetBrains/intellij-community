@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
@@ -69,8 +70,8 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     try {
       final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
       try {
-        expression.replace(
-          JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
+          JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
