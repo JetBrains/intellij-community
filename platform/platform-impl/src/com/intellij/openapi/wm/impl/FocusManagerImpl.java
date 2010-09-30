@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,8 +84,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private final WindowManager myWindowManager;
 
-  private final Map<IdeFrame, Component> myLastFocused = new WeakHashMap<IdeFrame, Component>();
-  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
+  private final Map<IdeFrame, WeakReference<Component>> myLastFocusedAtDeactivation = new HashMap<IdeFrame, WeakReference<Component>>();
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
@@ -107,14 +108,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
           Component parent = UIUtil.findUltimateParent(c);
           if (parent instanceof IdeFrame) {
-            myLastFocused.put((IdeFrame)parent, c);
+            myLastFocused.put((IdeFrame)parent, new WeakReference<Component>(c));
           }
         } else if (e instanceof WindowEvent) {
           if (e.getID() == WindowEvent.WINDOW_CLOSED) {
             Window wnd = ((WindowEvent)e).getWindow();
             if (wnd instanceof IdeFrame) {
-              myLastFocused.remove(wnd);
-              myLastFocusedAtDeactivation.remove(wnd);
+              myLastFocused.remove((IdeFrame)wnd);
+              myLastFocusedAtDeactivation.remove((IdeFrame)wnd);
             }
           }
         }
@@ -558,7 +559,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       Component parent = UIUtil.findUltimateParent(owner);
 
       if (parent == ideFrame) {
-        myLastFocusedAtDeactivation.put(ideFrame, owner);
+        myLastFocusedAtDeactivation.put(ideFrame, new WeakReference<Component>(owner));
       }
     }
 
@@ -584,9 +585,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     private void focusLastFocusedComponent(IdeFrame ideFrame) {
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       if (mgr.getFocusOwner() == null) {
-        Component c = myLastFocusedAtDeactivation.get(ideFrame);
+        Component c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         if (c == null || !c.isShowing()) {
-          c = myLastFocused.get(ideFrame);
+          c = getComponent(myLastFocused, ideFrame);
         }
 
         if (c != null && c.isShowing()) {
@@ -596,6 +597,13 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
       myLastFocusedAtDeactivation.remove(ideFrame);
     }
+  }
+
+  @Nullable
+  private static Component getComponent(Map<IdeFrame, WeakReference<Component>> map, IdeFrame frame) {
+    WeakReference<Component> ref = map.get(frame);
+    if (ref == null) return null;
+    return ref.get();
   }
 
   @Override
