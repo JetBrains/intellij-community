@@ -21,6 +21,10 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupAdapter;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -95,6 +99,20 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (editor.isDisposed() || FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
+        final Lookup lookup = LookupManager.getActiveLookup(editor);
+        if (lookup != null) {
+          lookup.addLookupListener(new LookupAdapter() {
+            @Override
+            public void itemSelected(LookupEvent event) {
+              myEditor = null;
+            }
+
+            @Override
+            public void lookupCanceled(LookupEvent event) {
+              myEditor = null;
+            }
+          });
+        }
       }
     }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
     return Result.STOP;
