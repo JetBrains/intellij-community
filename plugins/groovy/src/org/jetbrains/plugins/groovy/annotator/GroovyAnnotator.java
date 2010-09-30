@@ -400,11 +400,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (duplicate instanceof GrVariable) {
-      if (duplicate instanceof GrField && !(variable instanceof GrField)) {
-        myHolder
-          .createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
-      }
-      else {
+      if (variable instanceof GrField || !(duplicate instanceof GrField)) {
         final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }
@@ -1620,7 +1616,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return builder.toString();
   }
 
-  private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
+  public static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;
 
