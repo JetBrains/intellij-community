@@ -100,6 +100,36 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
     assertEquals(foldStartPosition, myEditor.offsetToVisualPosition(startOffset + 5));
   }
 
+  public void testTypingEnterAtDocumentEnd() throws IOException {
+    String text =
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"test\");\n" +
+      "    }\n" +
+      "}<caret>";
+
+    init(300, text);
+    type('\n');
+    VisualPosition position = myEditor.getCaretModel().getVisualPosition();
+    assertEquals(new VisualPosition(5, 0), position);
+  }
+
+  public void testDeleteDocumentTail() throws IOException {
+    String text =
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        System.out.println(\"test\");\n" +
+      "    }\n" +
+      "}\n" +
+      "abcde";
+
+    init(300, text);
+    int offset = text.indexOf("abcde");
+    myEditor.getSelectionModel().setSelection(offset, text.length());
+    delete();
+    assertEquals(new VisualPosition(5, 0), myEditor.getCaretModel().getVisualPosition());
+  }
+
   private void init(final int visibleWidth) throws Exception {
     configureByFile(PATH + getFileName());
     initCommon(visibleWidth);
