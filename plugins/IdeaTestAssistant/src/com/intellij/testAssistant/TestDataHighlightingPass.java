@@ -37,13 +37,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   private static final Object VALUE = new Object();
 
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/junit.png");
-  private static final GutterIconRenderer ICON_RENDERER = new GutterIconRenderer() {
-    @NotNull
-    @Override
-    public Icon getIcon() {
-      return ICON;
-    }
-  };
+  private static final GutterIconRenderer ICON_RENDERER = new MyGutterIconRenderer();
 
   private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(Color.BLUE, null, null, null, Font.BOLD);
   private static final String CARET = "<caret>";
@@ -87,6 +81,19 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
     }
     for (RangeHighlighter highlighter : toRemove) {
       model.removeHighlighter(highlighter);
+    }
+  }
+
+  private static class MyGutterIconRenderer extends GutterIconRenderer {
+    @NotNull
+    @Override
+    public Icon getIcon() {
+      return ICON;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MyGutterIconRenderer;
     }
   }
 }
