@@ -22,8 +22,8 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.TupleParse;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 
 /**
@@ -50,7 +50,7 @@ public class AssignmentExpression implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     Marker marker = builder.mark();
     final boolean isTuple = ParserUtils.lookAhead(builder, mLPAREN, mIDENT, mCOMMA);
-    if (isTuple ? TupleParse.parseTuple(builder, false, TUPLE_EXPRESSION, REFERENCE_EXPRESSION) : ConditionalExpression.parse(builder, parser)) {
+    if (isTuple ? TupleParse.parseTuple(builder, TUPLE_EXPRESSION, REFERENCE_EXPRESSION) : ConditionalExpression.parse(builder, parser)) {
       if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
         ParserUtils.getToken(builder, mNLS);
         if (!parse(builder, parser)) {
