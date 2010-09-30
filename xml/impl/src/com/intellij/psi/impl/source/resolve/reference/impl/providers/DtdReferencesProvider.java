@@ -270,7 +270,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {
@@ -286,7 +286,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
         @Override
         public void visitElement(PsiElement child) {
           if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
-            psiRefs.add(new ElementReference((XmlElement)child, (XmlElement)child));
+            psiRefs.add(new ElementReference((XmlElement)element, (XmlElement)child));
           }
           super.visitElement(child);
         }
