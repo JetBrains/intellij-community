@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -209,6 +210,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.addItem(lookupElement);
                 }
               }));
+            }
+            catch (PsiInvalidElementAccessException e) {
+              throw new RuntimeException("PIEAE: canceled=" + indicator.isCanceled(), e);
             }
             catch (ProcessCanceledException ignored) {
             }
