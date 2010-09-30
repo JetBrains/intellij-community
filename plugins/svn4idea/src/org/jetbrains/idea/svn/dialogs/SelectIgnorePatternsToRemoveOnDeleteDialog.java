@@ -184,6 +184,11 @@ public class SelectIgnorePatternsToRemoveOnDeleteDialog extends DialogWrapper {
 
   private class MyRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      // Fix GTK backround
+      if (UIUtil.isUnderGTKLookAndFeel()){
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        setBackground(background);
+      }
       final ColoredTreeCellRenderer textRenderer = getTextRenderer();
       if (value instanceof MyConsumer) {
         ((MyConsumer) value).consume(textRenderer);

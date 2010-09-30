@@ -31,7 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 class NewArrayInstanceEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.NewArrayInstanceEvaluator");
@@ -86,7 +86,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     return arrayReference;
   }
 
-  private void setInitialValues(ArrayReference arrayReference, Object[] values, EvaluationContextImpl context) throws EvaluateException {
+  private static void setInitialValues(ArrayReference arrayReference, Object[] values, EvaluationContextImpl context) throws EvaluateException {
     ArrayType type = (ArrayType)arrayReference.referenceType();
     DebugProcessImpl debugProcess = context.getDebugProcess();
     try {
@@ -105,11 +105,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
       }
       else {
         if (values.length > 0) {
-          List list = new ArrayList(values.length);
-          for (int idx = 0; idx < values.length; idx++) {
-            list.add(values[idx]);
-          }
-          arrayReference.setValues(list);
+          arrayReference.setValues(new ArrayList(Arrays.asList(values)));
         }
       }
     }

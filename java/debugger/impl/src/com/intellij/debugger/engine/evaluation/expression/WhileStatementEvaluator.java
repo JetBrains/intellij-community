@@ -30,8 +30,8 @@ public class WhileStatementEvaluator implements Evaluator {
   private final String myLabelName;
 
   public WhileStatementEvaluator(Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
-    myConditionEvaluator = conditionEvaluator;
-    myBodyEvaluator = bodyEvaluator;
+    myConditionEvaluator = new DisableGC(conditionEvaluator);
+    myBodyEvaluator = new DisableGC(bodyEvaluator);
     myLabelName = labelName;
   }
 

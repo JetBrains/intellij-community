@@ -178,6 +178,12 @@ public class LineMarkerInfo<T extends PsiElement> {
     public boolean equals(Object obj) {
       return obj instanceof LineMarkerGutterIconRenderer && looksTheSameAs((LineMarkerGutterIconRenderer)obj);
     }
+
+    @Override
+    public int hashCode() {
+      T element = myInfo.getElement();
+      return element == null ? 0 : element.hashCode();
+    }
   }
 
   @Override

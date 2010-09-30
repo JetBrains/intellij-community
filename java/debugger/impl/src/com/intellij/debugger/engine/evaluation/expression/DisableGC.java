@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,28 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.sun.jdi.ObjectReference;
 
-public class PostfixOperationEvaluator implements Evaluator{
-  private final Evaluator myOperandEvaluator;
+/**
+ * @author Eugene Zhuravlev
+ *         Date: 9/30/10
+ */
+public class DisableGC implements Evaluator{
+  private final Evaluator myDelegate;
 
-  private final Evaluator myIncrementImpl;
-
-  private Modifier myModifier;
-
-  public PostfixOperationEvaluator(Evaluator operandEvaluator, Evaluator incrementImpl) {
-    myOperandEvaluator = new DisableGC(operandEvaluator);
-    myIncrementImpl = new DisableGC(incrementImpl);
+  public DisableGC(Evaluator delegate) {
+    myDelegate = delegate;
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    final Object value = myOperandEvaluator.evaluate(context);
-    myModifier = myOperandEvaluator.getModifier();
-    Object operationResult = myIncrementImpl.evaluate(context);
-    AssignmentEvaluator.assign(myModifier, operationResult, context);
-    return value;
+    final Object result = myDelegate.evaluate(context);
+    if (result instanceof ObjectReference) {
+      context.getSuspendContext().keep((ObjectReference)result);
+    }
+    return result;
   }
 
   public Modifier getModifier() {
-    return myModifier;
+    return myDelegate.getModifier();
   }
 }

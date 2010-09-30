@@ -1062,26 +1062,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public Value invokeInstanceMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method,
                                      final List args, final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
+    return new InvokeCommand<Value>(args) {
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
-        //try {
-        //  if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        //    // ensure target object wil not be collected
-        //    objRef.disableCollection();
-        //  }
-          return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
-        //}
-        //finally {
-        //  if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        //    objRef.enableCollection();
-        //  }
-        //}
+        return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
+    }.start((EvaluationContextImpl)evaluationContext, method);
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
