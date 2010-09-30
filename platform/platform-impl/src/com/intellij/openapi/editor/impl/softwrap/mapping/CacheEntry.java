@@ -180,6 +180,21 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myFoldingData = newFoldingData;
   }
 
+  /**
+   * Asks current entry to update its state in a way to set start line data to the end line data.
+   */
+  public void collapse() {
+    endOffset = startOffset;
+    endLogicalLine = startLogicalLine;
+    endLogicalColumn = startLogicalColumn;
+    endVisualColumn = 0;
+    endSoftWrapLinesBefore = startSoftWrapLinesBefore;
+    endSoftWrapLinesCurrent = startSoftWrapLinesCurrent;
+    endSoftWrapColumnDiff = startSoftWrapColumnDiff;
+    endFoldedLines = startFoldedLines;
+    endFoldingColumnDiff = startFoldingColumnDiff;
+  }
+
   @Override
   public int compareTo(CacheEntry e) {
     return visualLine - e.visualLine;

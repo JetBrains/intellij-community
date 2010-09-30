@@ -50,9 +50,19 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
         setEagerMatch(new LogicalPosition(0, 0, 0, 0, 0, 0, 0));
       }
       else {
+        // We expect two possible cases here:
+        //   1. Document ends by line feed;
+        //   2. Document ends by the symbol that is not line feed;
+        // We also expect the cache to contain corresponding entry for the visual line that lays after document text if it ends
+        // by line feed. So, we increment column if the document doesn't end by line feed and use default one (zero) if it
+        // ends by line feed.
         CacheEntry lastEntry = cache.get(cache.size() - 1);
+        int columnToUse = lastEntry.endLogicalColumn;
+        if (lastEntry.endOffset < targetOffset) {
+          columnToUse++;
+        }
         LogicalPosition eager = new LogicalPosition(
-          lastEntry.endLogicalLine, lastEntry.endLogicalColumn + 1, lastEntry.endSoftWrapLinesBefore,
+          lastEntry.endLogicalLine, columnToUse, lastEntry.endSoftWrapLinesBefore,
           lastEntry.endSoftWrapLinesCurrent, lastEntry.endSoftWrapColumnDiff, lastEntry.endFoldedLines,
           lastEntry.endFoldingColumnDiff
         );
