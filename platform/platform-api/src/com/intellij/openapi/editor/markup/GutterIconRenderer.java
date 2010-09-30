@@ -127,4 +127,7 @@ public abstract class GutterIconRenderer {
       return myWeight;
     }
   }
+
+  @Override
+  public abstract boolean equals(Object obj);
 }

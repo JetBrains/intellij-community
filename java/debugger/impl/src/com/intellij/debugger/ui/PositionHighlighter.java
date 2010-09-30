@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -205,8 +206,7 @@ public class PositionHighlighter {
     if(highlighter != null) {
       final List<Pair<Breakpoint, Event>> eventsOutOfLine = new ArrayList<Pair<Breakpoint, Event>>();
 
-      for (Iterator<Pair<Breakpoint, Event>> iterator = events.iterator(); iterator.hasNext();) {
-        final Pair<Breakpoint, Event> eventDescriptor = iterator.next();
+      for (final Pair<Breakpoint, Event> eventDescriptor : events) {
         final Breakpoint breakpoint = eventDescriptor.getFirst();
         // filter breakpoints that do not match the event
         if (breakpoint instanceof MethodBreakpoint) {
@@ -224,10 +224,10 @@ public class PositionHighlighter {
           }
         }
 
-        if(breakpoint instanceof BreakpointWithHighlighter) {
+        if (breakpoint instanceof BreakpointWithHighlighter) {
           breakpoint.reload();
           final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
-          if(sourcePosition == null || sourcePosition.getLine() != lineIndex) {
+          if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {
             eventsOutOfLine.add(eventDescriptor);
           }
         }
@@ -236,53 +236,8 @@ public class PositionHighlighter {
         }
       }
 
-      if(eventsOutOfLine.size() > 0) {
-        highlighter.setGutterIconRenderer(new GutterIconRenderer() {
-          @NotNull
-          public Icon getIcon() {
-            return eventsOutOfLine.get(0).getFirst().getIcon();
-          }
-
-          public String getTooltipText() {
-            DebugProcessImpl debugProcess = myContext.getDebugProcess();
-            if(debugProcess != null) {
-              final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-              try {
-                //noinspection HardCodedStringLiteral
-                buf.append("<html><body>");
-                for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
-                  Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-                  buf.append(((DebugProcessEvents)debugProcess).getEventText(eventDescriptor));
-                  if(iterator.hasNext()) {
-                    //noinspection HardCodedStringLiteral
-                    buf.append("<br>");
-                  }
-                }
-                //noinspection HardCodedStringLiteral
-                buf.append("</body></html>");
-                return buf.toString();
-              }
-              finally {
-                StringBuilderSpinAllocator.dispose(buf);
-              }
-            }
-            else {
-              return null;
-            }
-          }
-
-          public ActionGroup getPopupMenuActions() {
-            DefaultActionGroup group = new DefaultActionGroup();
-            for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
-              Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-              Breakpoint breakpoint = eventDescriptor.getFirst();
-              ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
-              group.add(viewBreakpointsAction);
-            }
-
-            return group;
-          }
-        });
+      if(!eventsOutOfLine.isEmpty()) {
+        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(eventsOutOfLine));
       }
     }
   }
@@ -411,4 +366,60 @@ public class PositionHighlighter {
     }
   }
 
+  private class MyGutterIconRenderer extends GutterIconRenderer {
+    private final List<Pair<Breakpoint, Event>> myEventsOutOfLine;
+
+    public MyGutterIconRenderer(List<Pair<Breakpoint, Event>> eventsOutOfLine) {
+      myEventsOutOfLine = eventsOutOfLine;
+    }
+
+    @NotNull
+    public Icon getIcon() {
+      return myEventsOutOfLine.get(0).getFirst().getIcon();
+    }
+
+    public String getTooltipText() {
+      DebugProcessImpl debugProcess = myContext.getDebugProcess();
+      if (debugProcess == null) {
+        return null;
+      }
+      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        //noinspection HardCodedStringLiteral
+        buf.append("<html><body>");
+        for (Iterator<Pair<Breakpoint, Event>> iterator = myEventsOutOfLine.iterator(); iterator.hasNext();) {
+          Pair<Breakpoint, Event> eventDescriptor = iterator.next();
+          buf.append(((DebugProcessEvents)debugProcess).getEventText(eventDescriptor));
+          if(iterator.hasNext()) {
+            //noinspection HardCodedStringLiteral
+            buf.append("<br>");
+          }
+        }
+        //noinspection HardCodedStringLiteral
+        buf.append("</body></html>");
+        return buf.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
+      }
+    }
+
+    public ActionGroup getPopupMenuActions() {
+      DefaultActionGroup group = new DefaultActionGroup();
+      for (Pair<Breakpoint, Event> eventDescriptor : myEventsOutOfLine) {
+        Breakpoint breakpoint = eventDescriptor.getFirst();
+        ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
+        group.add(viewBreakpointsAction);
+      }
+
+      return group;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MyGutterIconRenderer &&
+             Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
+             Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());
+    }
+  }
 }
