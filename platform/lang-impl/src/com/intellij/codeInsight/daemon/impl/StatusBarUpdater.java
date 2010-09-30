@@ -72,7 +72,7 @@ public class StatusBarUpdater implements Disposable {
   public void dispose() {
   }
 
-  public void updateStatus() {
+  private void updateStatus() {
     Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor == null || !editor.getContentComponent().hasFocus()){
       return;

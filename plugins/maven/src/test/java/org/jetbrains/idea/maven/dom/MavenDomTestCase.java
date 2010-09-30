@@ -329,6 +329,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected List<PsiElement> search(VirtualFile file) throws IOException {
     final MapDataContext context = createDataContext(file);
     UsageTarget[] targets = UsageTargetUtil.findUsageTargets(new DataProvider() {
+      @Override
       public Object getData(@NonNls String dataId) {
         return context.getData(dataId);
       }
@@ -336,6 +337,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     PsiElement target = ((PsiElement2UsageTargetAdapter)targets[0]).getElement();
     List<PsiReference> result = new ArrayList<PsiReference>(ReferencesSearch.search(target).findAll());
     return ContainerUtil.map(result, new Function<PsiReference, PsiElement>() {
+      @Override
       public PsiElement fun(PsiReference psiReference) {
         return psiReference.getElement();
       }

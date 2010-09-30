@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.converters;
+package com.intellij.lang;
 
-import com.intellij.util.xml.ConvertContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.CharTable;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class MavenPackagingTypeConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES
-    = Arrays.asList("jar", "pom", "war", "ejb", "ejb-client", "ear");
-
-  public MavenPackagingTypeConverter() {
-    super(false);
-  }
-
-  protected List<String> getValues(ConvertContext context) {
-    return VALUES;
-  }
+public interface LighterLazyParseableNode extends LighterASTNode {
+  Project getProject();
+  CharTable getCharTable();
+  CharSequence getText();
 }

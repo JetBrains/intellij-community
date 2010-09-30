@@ -238,10 +238,14 @@ public class CodeFormatterFacade {
   }
 
   private void doWrapLongLinesIfNecessary(@NotNull Editor editor, @NotNull Document document, int startOffset, int endOffset) {
+    // Normalization.
+    int startOffsetToUse = Math.max(0, startOffset);
+    int endOffsetToUse = Math.min(document.getTextLength(), endOffset);
+
     LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
     CharSequence text = document.getCharsSequence();
-    int startLine = document.getLineNumber(startOffset);
-    int endLine = document.getLineNumber(Math.min(document.getTextLength(), endOffset) - 1);
+    int startLine = document.getLineNumber(startOffsetToUse);
+    int endLine = document.getLineNumber(Math.max(0, endOffsetToUse - 1));
     int maxLine = Math.min(document.getLineCount(), endLine + 1);
     int tabSize = EditorUtil.getTabSize(editor);
     if (tabSize <= 0) {
@@ -257,7 +261,7 @@ public class CodeFormatterFacade {
       boolean canOptimize = true;
       boolean hasNonSpaceSymbols = false;
       loop:
-      for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+      for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
         char c = text.charAt(i);
         switch (c) {
           case '\t': {
@@ -274,21 +278,21 @@ public class CodeFormatterFacade {
 
       int preferredWrapPosition = Integer.MAX_VALUE;
       if (!hasTabs) {
-        if (Math.min(endLineOffset, endOffset) >= mySettings.RIGHT_MARGIN) {
+        if (Math.min(endLineOffset, endOffsetToUse) >= mySettings.RIGHT_MARGIN) {
           preferredWrapPosition = startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
         }
       }
       else if (canOptimize) {
         int width = 0;
         int symbolWidth;
-        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
           char c = text.charAt(i);
           switch (c) {
             case '\t': symbolWidth = tabSize - (width % tabSize); break;
             default: symbolWidth = 1;
           }
           if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
-              && (Math.min(endLineOffset, endOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+              && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
           {
             preferredWrapPosition = i - 1;
             break;
@@ -301,7 +305,7 @@ public class CodeFormatterFacade {
         int x = 0;
         int newX;
         int symbolWidth;
-        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffset); i++) {
+        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
           char c = text.charAt(i);
           switch (c) {
             case '\t':
@@ -315,7 +319,7 @@ public class CodeFormatterFacade {
             default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
           }
           if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
-              && (Math.min(endLineOffset, endOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+              && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
           {
             preferredWrapPosition = i - 1;
             break;
@@ -327,13 +331,13 @@ public class CodeFormatterFacade {
       if (preferredWrapPosition >= endLineOffset) {
         continue;
       }
-      if (preferredWrapPosition >= endOffset) {
+      if (preferredWrapPosition >= endOffsetToUse) {
         return;
       }
 
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
-        text, Math.max(startLineOffset, startOffset), Math.min(endLineOffset, endOffset), preferredWrapPosition, false
+        text, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse), preferredWrapPosition, false
       );
       editor.getCaretModel().moveToOffset(wrapOffset);
       DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
@@ -366,7 +370,7 @@ public class CodeFormatterFacade {
       // There is a possible case that particular line is so long, that its part that exceeds right margin and is wrapped
       // still exceeds right margin. Hence, we recursively call 'wrap long lines' sub-routine in order to handle that.
 
-      doWrapLongLinesIfNecessary(editor, document, document.getLineStartOffset(line + 1), endOffset);
+      doWrapLongLinesIfNecessary(editor, document, document.getLineStartOffset(line + 1), endOffsetToUse);
       return;
     }
   }

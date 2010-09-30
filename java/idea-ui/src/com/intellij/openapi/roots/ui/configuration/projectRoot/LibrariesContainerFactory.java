@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -22,16 +23,18 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author nik
@@ -96,16 +99,18 @@ public class LibrariesContainerFactory {
   }
 
   private static String getUniqueLibraryName(final String baseName, final LibraryTable.ModifiableModel model) {
-    String name = baseName;
-    int count = 2;
-    while (model.getLibraryByName(name) != null) {
-      name = baseName + " (" + count++ + ")";
-    }
-    return name;
+    return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return model.getLibraryByName(s) == null;
+      }
+    });
   }
 
 
   private abstract static class LibrariesContainerBase implements LibrariesContainer {
+    private UniqueNameGenerator myNameGenerator;
+
     @NotNull
     public Library[] getAllLibraries() {
       Library[] libraries = getLibraries(LibraryLevel.GLOBAL);
@@ -118,6 +123,20 @@ public class LibrariesContainerFactory {
         libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries, Library.class);
       }
       return libraries;
+    }
+
+    @NotNull
+    @Override
+    public String suggestUniqueLibraryName(@NotNull String baseName) {
+      if (myNameGenerator == null) {
+        myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), new Function<Object, String>() {
+          @Override
+          public String fun(Object o) {
+            return ((Library)o).getName();
+          }
+        });
+      }
+      return myNameGenerator.generateUniqueName(baseName, "", "", " (", ")");
     }
   }
 
@@ -204,6 +223,11 @@ public class LibrariesContainerFactory {
       }
       return createLibraryInTable(name, classRoots, sourceRoots, table);
     }
+
+    @Override
+    public ExistingLibraryEditor getLibraryEditor(@NotNull Library library) {
+      return null;
+    }
   }
 
   private static class StructureConfigurableLibrariesContainer extends LibrariesContainerBase {
@@ -232,6 +256,18 @@ public class LibrariesContainerFactory {
         libraryEditor.addRoot(source, OrderRootType.SOURCES);
       }
       return library;
+    }
+
+    @Override
+    public ExistingLibraryEditor getLibraryEditor(@NotNull Library library) {
+      final LibraryTable table = library.getTable();
+      if (table == null) return null;
+
+      final LibraryTable.ModifiableModel model = myContext.getModifiableLibraryTable(table);
+      if (model instanceof LibrariesModifiableModel) {
+        return ((LibrariesModifiableModel)model).getLibraryEditor(library);
+      }
+      return null;
     }
 
     @Nullable

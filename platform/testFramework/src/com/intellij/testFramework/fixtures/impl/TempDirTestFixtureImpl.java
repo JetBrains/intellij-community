@@ -39,6 +39,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
 
+  @Override
   public VirtualFile copyFile(VirtualFile file, String targetPath) {
     try {
       createTempDirectory();
@@ -51,13 +52,16 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
   }
 
+  @Override
   public VirtualFile copyAll(String dataDir, String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @Override
   public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
     createTempDirectory();
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         try {
           VirtualFile tempDir =
@@ -82,15 +86,18 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     });
   }
 
+  @Override
   public String getTempDirPath() {
     return createTempDirectory().getAbsolutePath();
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile(final String path) {
 
     final Ref<VirtualFile> result = new Ref<VirtualFile>(null);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final String fullPath = myTempDir.getCanonicalPath().replace(File.separatorChar, '/') + "/" + path;
@@ -105,10 +112,12 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return result.get();
   }
 
+  @Override
   @NotNull
   public VirtualFile createFile(final String name) {
     final File file = createTempDirectory();
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         final File file1 = new File(file, name);
         FileUtil.createIfDoesntExist(file1);
@@ -117,11 +126,13 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     });
   }
 
+  @Override
   @NotNull
   public VirtualFile findOrCreateDir(String name) throws IOException {
     return VfsUtil.createDirectories(new File(createTempDirectory(), name).getPath());
   }
 
+  @Override
   @NotNull
   public VirtualFile createFile(final String name, final String text) throws IOException {
     final VirtualFile file = createFile(name);
@@ -129,11 +140,13 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return file;
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     createTempDirectory();
   }
 
+  @Override
   public void tearDown() throws Exception {
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);

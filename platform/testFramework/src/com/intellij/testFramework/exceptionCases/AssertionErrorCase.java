@@ -19,6 +19,7 @@ package com.intellij.testFramework.exceptionCases;
  * @author Roman Chernyatchik
  */
 public abstract class AssertionErrorCase extends AbstractExceptionCase<AssertionError> {
+  @Override
   public Class<AssertionError> getExpectedExceptionClass() {
     return AssertionError.class;
   }

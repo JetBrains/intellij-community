@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
@@ -121,12 +122,11 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTupleDeclaration || !(parent instanceof GrVariableDeclaration)) {
-      return null;
+    if (parent instanceof GrTupleDeclaration) parent = parent.getParent();
+    if (parent instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)parent).getTypeElementGroovyForVariable(this);
     }
-    else {
-      return ((GrVariableDeclaration)parent).getTypeElementGroovy();
-    }
+    return null;
   }
 
   @Nullable
@@ -185,7 +185,27 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   public void setType(@Nullable PsiType type) {
     final GrVariableDeclaration variableDeclaration = getDeclaration();
-    if (variableDeclaration != null) variableDeclaration.setType(type);
+    if (variableDeclaration == null) return;
+    final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovyForVariable(this);
+
+    type = TypesUtil.unboxPrimitiveTypeWrapper(type);
+    GrTypeElement newTypeElement;
+    try {
+      newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return;
+    }
+
+    if (typeElement == null) {
+      newTypeElement = (GrTypeElement)getParent().addBefore(newTypeElement, this);
+    }
+    else {
+      newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
+    }
+
+    PsiUtil.shortenReferences(newTypeElement);
   }
 
   @NotNull

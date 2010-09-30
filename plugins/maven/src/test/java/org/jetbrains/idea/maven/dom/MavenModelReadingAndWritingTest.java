@@ -47,6 +47,7 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
 
   public void testWriting() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         MavenDomProjectModel model = getDomModel();
 
@@ -71,6 +72,7 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
 
   public void testAddingADependency() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         MavenDomProjectModel model = getDomModel();
 

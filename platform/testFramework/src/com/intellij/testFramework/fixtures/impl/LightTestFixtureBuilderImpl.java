@@ -31,10 +31,12 @@ class LightTestFixtureBuilderImpl<F extends IdeaProjectTestFixture> implements T
     myFixture = fixture;
   }
 
+  @Override
   public F getFixture() {
     return myFixture;
   }
 
+  @Override
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
     throw new UnsupportedOperationException("addModule is not allowed in : " + getClass());
   }

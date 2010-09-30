@@ -30,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
 
 public class XmlASTFactory extends ASTFactory {
   public CompositeElement createComposite(final IElementType type) {
@@ -92,6 +93,9 @@ public class XmlASTFactory extends ASTFactory {
     }
     else if (type == XML_ELEMENT_CONTENT_SPEC) {
       return new XmlElementContentSpecImpl();
+    }
+    else if (type == XML_ELEMENT_CONTENT_GROUP) {
+      return new XmlElementContentGroupImpl();
     }
     else if (type == XML_ENTITY_REF) {
       return new XmlEntityRefImpl();

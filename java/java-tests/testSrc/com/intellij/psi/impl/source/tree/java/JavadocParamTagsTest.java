@@ -124,8 +124,10 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
 
   public void testAddTag3() throws Exception {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override
           public void run() {
             final PsiElementFactory factory = getFactory();
             final PsiJavaFile psiFile;

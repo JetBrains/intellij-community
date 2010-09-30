@@ -27,6 +27,7 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   private XDependentBreakpointManager myDependentBreakpointManager;
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myDependentBreakpointManager = myBreakpointManager.getDependentBreakpointManager();

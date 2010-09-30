@@ -37,9 +37,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
+public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
   public static Test suite() {
-    return new TestSuite(JavaClasspathConfigurationTest.class, "testConfiguringModuleDependencies");
+    return new TestSuite(MavenClasspathConfigurationTest.class, "testConfiguringModuleDependencies");
   }
 
 

@@ -26,7 +26,7 @@ import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenModelVersionConverter;
-import org.jetbrains.idea.maven.dom.converters.MavenPackagingTypeConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenPackagingConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 
 /**
@@ -113,7 +113,7 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    * @return the value of the packaging child.
    */
   @NotNull
-  @Convert(MavenPackagingTypeConverter.class)
+  @Convert(MavenPackagingConverter.class)
   GenericDomValue<String> getPackaging();
 
   /**

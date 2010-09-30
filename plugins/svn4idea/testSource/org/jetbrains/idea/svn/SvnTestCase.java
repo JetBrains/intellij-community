@@ -78,13 +78,17 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
     myRefreshCopiesStub = new AtomicSectionsAware() {
+      @Override
       public void enter() {
       }
+      @Override
       public void exit() {
       }
+      @Override
       public boolean shouldExitAsap() {
         return false;
       }
+      @Override
       public void checkShouldExit() throws ProcessCanceledException {
       }
     };

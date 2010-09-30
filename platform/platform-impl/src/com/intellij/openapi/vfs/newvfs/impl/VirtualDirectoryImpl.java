@@ -238,6 +238,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public NewVirtualFile findChildById(int id) {
+    final NewVirtualFile loaded = findChildByIdIfCached(id);
+    if (loaded != null) {
+      return loaded;
+    }
+    
+    String name = ourPersistence.getName(id);
+    return findChild(name, false, false);
+  }
+
+  public NewVirtualFile findChildByIdIfCached(int id) {
     final VirtualFile[] a = asArray();
     if (a != null) {
       for (VirtualFile file : a) {
@@ -258,8 +268,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
     }
-    String name = ourPersistence.getName(id);
-    return findChild(name, false, false);
+    return null;
   }
 
   @Nullable

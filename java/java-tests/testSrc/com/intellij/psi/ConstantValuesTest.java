@@ -18,11 +18,13 @@ import java.io.IOException;
 public class ConstantValuesTest extends PsiTestCase{
   private PsiClass myClass;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String rootPath = JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
@@ -48,12 +50,14 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(StdFileTypes.JAVA, myClass.getContainingFile().getVirtualFile().getFileType());
   }
 
+  @Override
   protected void invokeTestRunnable(Runnable runnable) throws Exception {
     super.invokeTestRunnable(runnable);
     final PsiJavaFile file = (PsiJavaFile)myClass.getContainingFile();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try {
             file.getVirtualFile().setBinaryContent(file.getVirtualFile().contentsToByteArray());

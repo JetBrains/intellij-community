@@ -32,6 +32,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
   protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   private boolean myTreeAccessAllowed;
 
+  @Override
   public boolean accept(VirtualFile file) {
     if (file instanceof VirtualFileWindow) return false;
 

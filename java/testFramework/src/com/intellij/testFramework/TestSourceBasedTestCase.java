@@ -33,6 +33,7 @@ import java.io.File;
 @NonNls public abstract class TestSourceBasedTestCase extends IdeaTestCase {
   private File myTempDirectory;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test");
@@ -46,6 +47,7 @@ import java.io.File;
     FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                                                             @Override
                                                              public void run() {
                                                                setupContentRoot();
                                                              }
@@ -78,6 +80,7 @@ import java.io.File;
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @Override
   protected String getTestDirectoryName() {
     return getTestName(true);
   }

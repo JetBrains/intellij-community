@@ -15,29 +15,58 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.EnumComboBoxModel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 class LibraryNameAndLevelPanel {
-
   private JTextField myLibraryNameField;
   private JComboBox myLevelComboBox;
   private JPanel myPanel;
+  private JLabel myLevelLabel;
 
-  void reset(LibraryCompositionSettings settings) {    
-    myLibraryNameField.setText(settings.getLibraryName());
-    myLevelComboBox.setModel(new EnumComboBoxModel<LibrariesContainer.LibraryLevel>(LibrariesContainer.LibraryLevel.class));
-    myLevelComboBox.setSelectedItem(settings.getLibraryLevel());
+  LibraryNameAndLevelPanel(String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
+    if (level != null) {
+      final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<LibrariesContainer.LibraryLevel, String>();
+      levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
+      levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
+      levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));
+      myLevelComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          if (value instanceof LibrariesContainer.LibraryLevel) {
+            final LibrariesContainer.LibraryLevel level = (LibrariesContainer.LibraryLevel)value;
+            setText(levels.get(level));
+          }
+          return component;
+        }
+      });
+      myLevelComboBox.setModel(new EnumComboBoxModel<LibrariesContainer.LibraryLevel>(LibrariesContainer.LibraryLevel.class));
+      myLevelComboBox.setSelectedItem(level);
+    }
+    else {
+      myLevelLabel.setVisible(false);
+      myLevelComboBox.setVisible(false);
+    }
+    myLibraryNameField.setText(libraryName);
   }
 
-  void apply(LibraryCompositionSettings settings) {
-    settings.setLibraryName(myLibraryNameField.getText());
-    settings.setLibraryLevel((LibrariesContainer.LibraryLevel)myLevelComboBox.getSelectedItem());
+  public String getLibraryName() {
+    return myLibraryNameField.getText();
+  }
+
+  public LibrariesContainer.LibraryLevel getLibraryLevel() {
+    return (LibrariesContainer.LibraryLevel)myLevelComboBox.getSelectedItem();
   }
 
   public JPanel getPanel() {

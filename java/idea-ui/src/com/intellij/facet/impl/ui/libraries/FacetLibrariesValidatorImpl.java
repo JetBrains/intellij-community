@@ -20,7 +20,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.facet.ui.libraries.*;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -31,6 +33,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -90,9 +93,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    LibraryCompositionSettings libraryCompositionSettings = new LibraryCompositionSettings(missingLibraries,
-                                                                                           myDescription.getDefaultLibraryName(), baseDirPath);
-    return new ValidationResult(missingJars, new LibrariesQuickFix(libraryCompositionSettings));
+    return new ValidationResult(missingJars, new LibrariesQuickFix(missingLibraries, myDescription.getDefaultLibraryName(), baseDirPath));
   }
 
   private void onChange() {
@@ -122,17 +123,23 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private final LibraryCompositionSettings myLibrarySettings;
+    private LibraryInfo[] myMissingLibraries;
+    private String myDefaultLibraryName;
+    private String myBaseDirPath;
 
-    public LibrariesQuickFix(final LibraryCompositionSettings libraryCompositionSettings) {
+    public LibrariesQuickFix(LibraryInfo[] missingLibraries, String defaultLibraryName, String baseDirPath) {
       super(IdeBundle.message("missing.libraries.fix.button"));
-      myLibrarySettings = libraryCompositionSettings;
+      myMissingLibraries = missingLibraries;
+      myDefaultLibraryName = defaultLibraryName;
+      myBaseDirPath = baseDirPath;
     }
 
     public void run(final JComponent place) {
-      LibraryOptionsPanel panel = new LibraryOptionsPanel(myLibrarySettings, myContext.getLibrariesContainer(), false);
+      final LibraryCompositionSettings settings = new LibraryCompositionSettings(myMissingLibraries, myDefaultLibraryName, myBaseDirPath);
+      LibraryOptionsPanel panel = new LibraryOptionsPanel(settings, myContext.getLibrariesContainer(), false);
       LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel);
       dialog.show();
+      Disposer.dispose(settings);
       onChange();
     }
   }

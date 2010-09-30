@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -134,7 +135,7 @@ public class DebugUtil {
                                          @NotNull final String source,
                                          final boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
-    lightTreeToBuffer(tree, source, buffer, tree.getRoot(), 0, skipWhitespaces);
+    lightTreeToBuffer(tree, source, buffer, tree.getRoot(), 0, skipWhitespaces, 0);
     return buffer.toString();
   }
 
@@ -143,7 +144,8 @@ public class DebugUtil {
                                        @NotNull final StringBuilder buffer,
                                        @NotNull final LighterASTNode root,
                                        final int indent,
-                                       final boolean skipWhiteSpaces) {
+                                       final boolean skipWhiteSpaces,
+                                       final int chameleonShift) {
     final IElementType tokenType = root.getTokenType();
     if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
 
@@ -163,7 +165,7 @@ public class DebugUtil {
     }
 
     if (!composite) {
-      final String text = source.substring(root.getStartOffset(), root.getEndOffset());
+      final String text = source.substring(chameleonShift + root.getStartOffset(), chameleonShift + root.getEndOffset());
       buffer.append("('").append(fixWhiteSpaces(text)).append("')");
     }
     buffer.append("\n");
@@ -174,8 +176,9 @@ public class DebugUtil {
         buffer.append("<empty list>\n");
       }
       else {
+        final int shift = root instanceof LighterLazyParseableNode ? root.getStartOffset() : 0;
         for (int i = 0; i < numKids; i++) {
-          lightTreeToBuffer(tree, source, buffer, kids.get()[i], indent + 2, skipWhiteSpaces);
+          lightTreeToBuffer(tree, source, buffer, kids.get()[i], indent + 2, skipWhiteSpaces, chameleonShift + shift);
         }
       }
     }

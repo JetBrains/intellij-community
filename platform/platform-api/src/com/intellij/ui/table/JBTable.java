@@ -228,7 +228,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
     final Component result = super.prepareRenderer(renderer, row, column);
-    if (!myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column))) return result;
+    final boolean selected = myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column));
+    // Fix GTK backround
+    if (UIUtil.isUnderGTKLookAndFeel()){
+      final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+      setBackground(background);
+    }
+
+    if (!selected) return result;
 
     return new JComponent() {
       {

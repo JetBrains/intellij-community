@@ -82,6 +82,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private boolean toInitializeDaemon;
   private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManagerImpl.getInstance()).cleanupForNextTest();
@@ -92,12 +93,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl(LightPlatformTestCase.PROFILE) {
+      @Override
       @NotNull
       public ModifiableModel getModifiableModel() {
         mySource = this;
         return this;
       }
 
+      @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
         final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
@@ -113,15 +116,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         return result;
       }
 
+      @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && myAvailableTools.containsKey(key.toString());
       }
 
+      @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
+      @Override
       public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         return myAvailableLocalTools.get(shortName);
       }
@@ -130,6 +136,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(LightPlatformTestCase.PROFILE);
     Disposer.register(getProject(), new Disposable() {
+      @Override
       public void dispose() {
         inspectionProfileManager.deleteProfile(LightPlatformTestCase.PROFILE);
       }
@@ -150,6 +157,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     myRunCommandForTest = wrapInCommand();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
     if (toInitializeDaemon) {

@@ -16,6 +16,7 @@ public class PsiEventsTest extends PsiTestCase {
   public void testEditingInDocComment() throws  Exception {
     final Ref<Boolean> gotIt = new Ref<Boolean>(false);
     getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
       public void childReplaced(PsiTreeChangeEvent event) {
         gotIt.set(true);
       }
@@ -27,8 +28,10 @@ public class PsiEventsTest extends PsiTestCase {
     assertNotNull(doc);
     CommandProcessor.getInstance().executeCommand(myProject,
       new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               doc.insertString(3, " ");
               docManager.commitDocument(doc);

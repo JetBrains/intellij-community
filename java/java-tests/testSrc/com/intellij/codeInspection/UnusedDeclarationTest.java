@@ -18,6 +18,7 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTool = new UnusedDeclarationInspection();

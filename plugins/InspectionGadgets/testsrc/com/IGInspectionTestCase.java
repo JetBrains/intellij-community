@@ -11,10 +11,12 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class IGInspectionTestCase extends InspectionTestCase {
 
+  @Override
   protected String getTestDataPath() {
       return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }
 
+  @Override
   public void doTest(@NonNls final String folderName, final LocalInspectionTool tool) throws Exception {
     super.doTest(folderName, new LocalInspectionToolWrapper(tool), "java 1.5");
   }

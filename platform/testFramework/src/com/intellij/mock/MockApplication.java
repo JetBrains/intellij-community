@@ -48,139 +48,176 @@ public class MockApplication extends MockComponentManager implements Application
     super(null);
   }
 
+  @Override
   public String getName() {
     return "mock";
   }
 
+  @Override
   public boolean holdsReadLock() {
     return false;
   }
 
+  @Override
   public void load(String path) throws IOException, InvalidDataException {
   }
 
+  @Override
   public boolean isInternal() {
     return false;
   }
 
+  @Override
   public boolean isDispatchThread() {
     return true;
   }
 
+  @Override
   public boolean isActive() {
     return true;
   }
 
+  @Override
   public void exit(boolean force) {
   }
 
+  @Override
   public void assertReadAccessAllowed() {
   }
 
+  @Override
   public void assertWriteAccessAllowed() {
   }
 
+  @Override
   public boolean isReadAccessAllowed() {
     return true;
   }
 
+  @Override
   public boolean isWriteAccessAllowed() {
     return true;
   }
 
+  @Override
   public boolean isUnitTestMode() {
     return true;
   }
 
+  @Override
   public boolean isHeadlessEnvironment() {
     return true;
   }
 
+  @Override
   public boolean isCommandLine() {
     return true;
   }
 
+  @Override
   public IdeaPluginDescriptor getPlugin(PluginId id) {
     return null;
   }
 
+  @Override
   public IdeaPluginDescriptor[] getPlugins() {
     return new IdeaPluginDescriptor[0];
   }
 
 
+  @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
     new Thread(action).start();
     return null; // ?
   }
 
+  @Override
   public boolean isDisposeInProgress() {
     return false;
   }
 
+  @Override
   public boolean isRestartCapable() {
     return false;
   }
 
+  @Override
   public void restart() {
   }
 
+  @Override
   public void runReadAction(@NotNull Runnable action) {
     action.run();
   }
 
+  @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
     return computation.compute();
   }
 
+  @Override
   public void runWriteAction(@NotNull Runnable action) {
     action.run();
   }
 
+  @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
     return computation.compute();
   }
 
+  @Override
   public <T> T getCurrentWriteAction(@NotNull Class<T> actionClass) {
     return null;
   }
 
+  @Override
   public void assertIsDispatchThread() {
   }
 
+  @Override
   public void addApplicationListener(@NotNull ApplicationListener listener) {
   }
 
+  @Override
   public void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent) {
   }
 
+  @Override
   public void removeApplicationListener(@NotNull ApplicationListener listener) {
   }
 
+  @Override
   public void saveAll() {
   }
 
+  @Override
   public void saveSettings() {
   }
 
+  @Override
   public void exit() {
   }
 
+  @Override
   public void assertReadAccessToDocumentsAllowed() {
   }
 
+  @Override
   public void doNotSave() {
   }
 
+  @Override
   public boolean isDoNotSave() {
     return false; 
   }
 
+  @Override
   public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
                                                      final JComponent parentComponent) {
     return false;
   }
 
+  @Override
   public boolean runProcessWithProgressSynchronously(Runnable process,
                                                      String progressTitle,
                                                      boolean canBeCanceled,
@@ -190,6 +227,7 @@ public class MockApplication extends MockComponentManager implements Application
     return false;
   }
 
+  @Override
   public boolean runProcessWithProgressSynchronously(Runnable process,
                                                      String progressTitle,
                                                      boolean canBeCanceled,
@@ -197,55 +235,69 @@ public class MockApplication extends MockComponentManager implements Application
     return false;
   }
 
+  @Override
   public boolean isInModalProgressThread() {
     return false;
   }
 
 
+  @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
   }
 
+  @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
   }
 
+  @Override
   public void invokeLater(@NotNull Runnable runnable) {
   }
 
+  @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
   }
 
+  @Override
   @NotNull
   public ModalityInvokator getInvokator() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
   }
 
+  @Override
   public long getStartTime() {
     return 0;
   }
 
+  @Override
   public long getIdleTime() {
     return 0;
   }
 
+  @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
+  @Override
   public ModalityState getCurrentModalityState() {
     return null;
   }
 
+  @Override
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
     return null;
   }
 
+  @Override
   public ModalityState getDefaultModalityState() {
     return null;
   }
 
+  @Override
   public ModalityState getNoneModalityState() {
     if (MODALITY_STATE_NONE == null) {
       MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
@@ -253,21 +305,26 @@ public class MockApplication extends MockComponentManager implements Application
     return MODALITY_STATE_NONE;
   }
 
+  @Override
   public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull final Collection<Callable<T>> tasks, final ExecutorService executorService)
     throws Throwable {
     return null;
   }
 
+  @Override
   public void assertIsDispatchThread(@Nullable final JComponent component) {
   }
 
+  @Override
   public void assertTimeConsuming() {
   }
 
+  @Override
   public void runEdtSafeAction(@NotNull Runnable runnable) {
     runnable.run();
   }
 
+  @Override
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     return false;
   }

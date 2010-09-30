@@ -45,6 +45,7 @@ public class GenerateAntTest extends IdeaTestCase {
 
   public void testP1() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         final VirtualFile parent = myModule.getModuleFile().getParent();

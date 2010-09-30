@@ -80,6 +80,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     }
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
       public Module compute() {
         return ModuleManager.getInstance(project)
           .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);

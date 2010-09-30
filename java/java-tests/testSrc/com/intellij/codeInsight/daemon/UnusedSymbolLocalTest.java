@@ -12,6 +12,7 @@ import java.util.Collection;
 public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedDecls";
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};
   }

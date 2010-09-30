@@ -93,6 +93,9 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Nullable
   public abstract NewVirtualFile findChildById(int id);
 
+  @Nullable
+  public abstract NewVirtualFile findChildByIdIfCached(int id);
+
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }

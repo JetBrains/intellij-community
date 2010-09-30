@@ -105,6 +105,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
       @Override
       public Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference) {
         return new Settings() {
+          @Override
           public boolean isOnlyOneReferenceToInline() {
             return false;
           }

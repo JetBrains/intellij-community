@@ -21,6 +21,7 @@ public class SuppressWarningsTest extends LightDaemonAnalyzerTestCase {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};
   }

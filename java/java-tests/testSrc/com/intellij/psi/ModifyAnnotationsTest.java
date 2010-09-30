@@ -15,12 +15,14 @@ import com.intellij.util.IncorrectOperationException;
  * @author ven
  */
 public class ModifyAnnotationsTest extends PsiTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
 
+        @Override
         public void run() {
           try {
             String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
@@ -35,6 +37,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     );
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("mock 1.5");
   }
@@ -51,8 +54,10 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     //here the tree is going to be loaded
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               annotations[0].replace(newAnnotation);

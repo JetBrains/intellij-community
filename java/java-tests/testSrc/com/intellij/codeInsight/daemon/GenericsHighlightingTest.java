@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NonNls;
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedSymbolLocalInspection(), new UnusedImportLocalInspection()};
   }
@@ -28,6 +29,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + filePath, checkWarnings, false);
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevel level = getTestName(false).contains("Level6") ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;

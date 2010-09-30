@@ -109,10 +109,12 @@ public class FileListeningTest extends IntegrationTestCase {
 
     final int[] log = new int[2];
     VirtualFileListener l = new VirtualFileAdapter() {
+      @Override
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
         log[0] = getRevisionsFor(f).size();
       }
 
+      @Override
       public void propertyChanged(VirtualFilePropertyEvent e) {
         log[1] = getRevisionsFor(f).size();
       }
@@ -287,6 +289,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
   private static void sortEntries(final List<Entry> entries) {
     Collections.sort(entries, new Comparator<Entry>() {
+      @Override
       public int compare(Entry o1, Entry o2) {
         return o1.getName().compareTo(o2.getName());
       }

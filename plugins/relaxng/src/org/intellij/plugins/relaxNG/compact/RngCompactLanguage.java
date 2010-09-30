@@ -111,7 +111,7 @@ public class RngCompactLanguage extends Language {
 
   public static class MyDocumentationProvider implements DocumentationProvider {
     @Nullable
-    public String getQuickNavigateInfo(PsiElement element) {
+    public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
       return null;
     }
 

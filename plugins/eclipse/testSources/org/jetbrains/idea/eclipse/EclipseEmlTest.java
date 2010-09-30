@@ -66,6 +66,7 @@ public class EclipseEmlTest extends IdeaTestCase {
   protected static void doTest(String relativePath, final Project project) throws Exception {
     final String path = project.getBaseDir().getPath() + relativePath;
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
       public Module compute() {
         return ModuleManager.getInstance(project)
           .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);

@@ -85,7 +85,7 @@ public class RegExpDocumentationProvider extends QuickDocumentationProvider {
   }
 
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof RegExpGroup) {
       return "Capturing Group: " + ((RegExpElement)element).getUnescapedText();
     } else {

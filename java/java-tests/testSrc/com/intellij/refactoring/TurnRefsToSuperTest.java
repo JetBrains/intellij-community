@@ -138,12 +138,14 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
       }
     }, true);
   }
 
+  @Override
   public String getTestRoot() {
     return "/refactoring/turnRefsToSuper/";
   }

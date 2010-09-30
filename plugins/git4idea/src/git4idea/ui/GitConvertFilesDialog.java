@@ -39,11 +39,13 @@ import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.List;
 
 /**
  * This dialog allows converting the specified files before committing them.
@@ -350,6 +352,11 @@ public class GitConvertFilesDialog extends DialogWrapper {
      */
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      // Fix GTK backround
+      if (UIUtil.isUnderGTKLookAndFeel()){
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        setBackground(background);
+      }
       ColoredTreeCellRenderer r = getTextRenderer();
       if (!(value instanceof CheckedTreeNode)) {
         // unknown node type

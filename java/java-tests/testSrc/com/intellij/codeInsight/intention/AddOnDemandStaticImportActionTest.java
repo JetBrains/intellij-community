@@ -8,10 +8,12 @@ public class AddOnDemandStaticImportActionTest extends LightIntentionActionTestC
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addOnDemandStaticImport";
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17();
   }

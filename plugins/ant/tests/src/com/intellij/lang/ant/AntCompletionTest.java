@@ -31,10 +31,12 @@ import java.util.List;
 
 public class AntCompletionTest extends LightCodeInsightTestCase {
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
   }
 
+  @Override
   protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
     super.configureByFile(filePath);
     AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
@@ -209,6 +211,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     return list.toArray(new LookupElement[list.size()]);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();

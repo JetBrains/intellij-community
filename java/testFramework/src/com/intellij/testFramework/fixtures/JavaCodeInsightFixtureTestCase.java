@@ -39,6 +39,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     IdeaTestCase.initPlatformPrefix();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -76,6 +77,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
 
   protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;

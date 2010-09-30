@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Component;
+import java.awt.*;
 
 public class MethodCountInspection extends BaseInspection {
 
@@ -72,17 +69,10 @@ public class MethodCountInspection extends BaseInspection {
         constraints.insets.right = 0;
         panel.add(valueField, constraints);
 
-        final JCheckBox gettersSettersCheckBox = new JCheckBox(
+        final CheckBox gettersSettersCheckBox = new CheckBox(
                 InspectionGadgetsBundle.message(
                         "method.count.ignore.getters.setters.option"),
-                ignoreGettersAndSetters);
-        final ButtonModel arrayModel = gettersSettersCheckBox.getModel();
-        arrayModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                ignoreGettersAndSetters = arrayModel.isSelected();
-            }
-        });
+                this, "ignoreGettersAndSetters");
 
         constraints.gridx = 0;
         constraints.gridy = 1;

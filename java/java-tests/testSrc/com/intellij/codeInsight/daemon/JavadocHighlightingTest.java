@@ -18,6 +18,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new JavaDocLocalInspection(),
@@ -106,6 +107,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }

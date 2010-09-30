@@ -192,7 +192,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private EntryPoint acquire(final Info port) throws Exception {
     final EntryPoint result = RemoteUtil.executeWithClassLoader(new ThrowableComputable<EntryPoint, Exception>() {
       public EntryPoint compute() throws Exception {
-        final Registry registry = LocateRegistry.getRegistry(port.port);
+        final Registry registry = LocateRegistry.getRegistry("localhost", port.port);
         final Remote remote = registry.lookup(port.name);
         if (Remote.class.isAssignableFrom(myValueClass)) {
           return RemoteUtil.substituteClassLoader(narrowImpl(remote, myValueClass), myValueClass.getClassLoader());

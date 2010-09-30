@@ -147,6 +147,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     }
 
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         FileParser.parse(builder);
       }

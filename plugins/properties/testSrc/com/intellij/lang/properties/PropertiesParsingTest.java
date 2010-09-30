@@ -29,6 +29,7 @@ public class PropertiesParsingTest extends ParsingTestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile";
   }

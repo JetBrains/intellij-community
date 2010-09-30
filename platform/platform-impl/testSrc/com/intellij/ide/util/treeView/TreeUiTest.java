@@ -112,8 +112,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final ActionCallback done = new ActionCallback();
     final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         getBuilder().batch(new Progressive() {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicatorRef.set(indicator);
             expandNext(toExpand, 0, indicator, done);
@@ -124,6 +126,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
     waitBuilderToCome(new Condition() {
+      @Override
       public boolean value(Object o) {
         return done.isProcessed();
       }
@@ -155,6 +158,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(false);
     myElementUpdateHook = new ElementUpdateHook() {
+      @Override
       public void onElementAction(String action, Object element) {
         NodeElement stopElement = new NodeElement("com");
 
@@ -181,8 +185,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
 
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         getBuilder().batch(new Progressive() {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicatorRef.set(indicator);
             expandNext(toExpand, 0, indicator, done);
@@ -193,6 +199,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
     waitBuilderToCome(new Condition() {
+      @Override
       public boolean value(Object o) {
         return done.isProcessed() || myCancelRequest != null;
       }
@@ -213,8 +220,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final Ref<Boolean> done = new Ref<Boolean>();
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().expandAll(new Runnable() {
+          @Override
           public void run() {
             done.set(true);
           }
@@ -603,6 +612,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
 
     assertCallbackOnce(new TreeAction() {
+      @Override
       public void run(Runnable onDone) {
         getMyBuilder().select(new Object[] {new NodeElement("intellij"), new NodeElement("fabrique")}, onDone);
       }
@@ -623,6 +633,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
 
     assertCallbackOnce(new TreeAction() {
+      @Override
       public void run(Runnable onDone) {
         getMyBuilder().expand(new Object[] {new NodeElement("intellij"), new NodeElement("fabrique")}, onDone);
       }
@@ -646,6 +657,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     mySmartExpand = false;
 
     assertNoInfiniteAutoExpand(new Runnable() {
+      @Override
       public void run() {
         myAutoExpand.add(new NodeElement("level2"));
         myAutoExpand.add(new NodeElement("level3"));
@@ -669,6 +681,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     mySmartExpand = false;
 
     assertNoInfiniteAutoExpand(new Runnable() {
+      @Override
       public void run() {
         mySmartExpand = true;
       }
@@ -737,8 +750,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final int[] notifyCount = new int[1];
     final boolean[] done = new boolean[1];
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         action.run(new Runnable() {
+          @Override
           public void run() {
             notifyCount[0]++;
             done[0] = true;
@@ -953,6 +968,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUpdater().performUpdate();
       }
@@ -1072,6 +1088,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     getBuilder().expand(elements[index], new Runnable() {
+      @Override
       public void run() {
         expandNext(elements, index + 1, indicator, callback);
       }
@@ -1133,6 +1150,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  runner\n");
 
     runAndInterrupt(new MyRunnable() {
+      @Override
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
@@ -1153,6 +1171,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildSiblings(msg, 0, 1, null, null);
 
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUi().activate(true);
       }
@@ -1171,6 +1190,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
 
     buildSiblings(msg, 2, 1000, new Runnable() {
+      @Override
       public void run() {
         getBuilder().queueUpdate();
       }
@@ -1181,6 +1201,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   private void buildSiblings(final Node node, final int start, final int end, final Runnable eachRunnable, final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
     SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         for (int i = start; i <= end; i++) {
           Node eachFile = node.addChild("File " + i);
@@ -1211,6 +1232,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final boolean[] wasInterrupted = new boolean[] {false};
     myElementUpdateHook = new ElementUpdateHook() {
+      @Override
       public void onElementAction(String action, Object element) {
         if (thread.get() == null) {
           thread.set(Thread.currentThread());
@@ -1541,6 +1563,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testResorting() throws Exception {
     final boolean invert[] = new boolean[] {false};
     NodeDescriptor.NodeComparator<NodeDescriptor> c = new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+      @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         return invert[0] ? AlphaComparator.INSTANCE.compare(o2, o1) : AlphaComparator.INSTANCE.compare(o1, o2);
       }
@@ -1599,6 +1622,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public void testElementMove1() throws Exception {
     assertMove(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("com"));
         getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
@@ -1608,6 +1632,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public void testElementMove2() throws Exception {
     assertMove(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
         getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("com"));
@@ -1633,6 +1658,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     fabrique.setForcedParent(myRoot.getElement());
 
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         myRoot.addChild(com).addChild(actionSystem);
         myRoot.addChild(fabrique).addChild(ide);
@@ -1666,6 +1692,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertSame(myRoot.getElement(), myStructure.getParentElement(fabrique));
 
     myStructure.setRevalidator(new Revalidator() {
+      @Override
       public AsyncResult<Object> revalidate(NodeElement element) {
         if (element == actionSystem) {
           return new AsyncResult.Done<Object>(newActionSystem);
@@ -1705,12 +1732,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     removeFromParentButKeepRef(new NodeElement("intellij"));
     myValidator = new Validator() {
+      @Override
       public boolean isValid(Object element) {
         return !element.equals(intellij);
       }
     };
     final Ref<Object> revalidatedElement = new Ref<Object>();
     myStructure.setRevalidator(new Revalidator() {
+      @Override
       public AsyncResult<Object> revalidate(NodeElement element) {
         revalidatedElement.set(element);
         return null;
@@ -1730,6 +1759,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+      @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         boolean isParent1 = myStructure._getChildElements(o1.getElement(), false).length > 0;
         boolean isParent2 = myStructure._getChildElements(o2.getElement(), false).length > 0;
@@ -1930,6 +1960,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public void testReleaseBuilderDuringUpdate() throws Exception {
     assertReleaseDuringBuilding("update", "fabrique", new Runnable() {
+      @Override
       public void run() {
         try {
           select(new NodeElement("ide"), false);
@@ -1946,8 +1977,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final boolean[] done = new boolean[] {false};
     getBuilder().select(new NodeElement("jetbrains"), new Runnable() {
+      @Override
       public void run() {
         getBuilder().expand(new NodeElement("fabrique"), new Runnable() {
+          @Override
           public void run() {
             done[0] = true;
           }
@@ -1956,6 +1989,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
 
     waitBuilderToCome(new Condition() {
+      @Override
       public boolean value(Object o) {
         return done[0];
       }
@@ -1972,6 +2006,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public void testReleaseBuilderDuringGetChildren() throws Exception {
     assertReleaseDuringBuilding("getChildren", "fabrique", new Runnable() {
+      @Override
       public void run() {
         try {
           select(new NodeElement("ide"), false);
@@ -1987,10 +2022,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
 
     myElementUpdateHook = new ElementUpdateHook() {
+      @Override
       public void onElementAction(String action, Object element) {
         if (!element.toString().equals(actionElement.toString())) return;
 
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             myReadyRequest = true;
             Disposer.dispose(getBuilder());
@@ -2030,15 +2067,18 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(true);
     }
 
+    @Override
     public void testSelectionGoesToParentWhenOnlyChildMoved2() throws Exception {
       //todo
     }
 
+    @Override
     public void testQueryStructureWhenExpand() throws Exception {
       //todo
     }
 
 
+    @Override
     public void testElementMove1() throws Exception {
       //todo
     }
@@ -2172,6 +2212,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     AbstractTreeUi ui = getBuilder().getUi();
     if (ui != null) {
       ui.getReady(this).doWhenProcessed(new Runnable() {
+        @Override
         public void run() {
           Log.flush();
         }
@@ -2183,6 +2224,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   abstract class MyRunnable implements Runnable {
+    @Override
     public final void run() {
       try {
         runSafe();

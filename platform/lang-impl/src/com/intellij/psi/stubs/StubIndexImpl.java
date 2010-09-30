@@ -175,7 +175,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
         container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           public void perform(final int id, final TIntArrayList value) {
-            final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+            final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
               StubTree stubTree = null;
 

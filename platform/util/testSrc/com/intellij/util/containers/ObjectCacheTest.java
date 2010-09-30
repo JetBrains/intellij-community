@@ -56,6 +56,7 @@ public class ObjectCacheTest extends TestCase {
   final private static HashMap removedPairs = new HashMap();
 
   private static class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
+    @Override
     public void objectRemoved(Object key, Object value) {
       removedPairs.put(key, value);
     }

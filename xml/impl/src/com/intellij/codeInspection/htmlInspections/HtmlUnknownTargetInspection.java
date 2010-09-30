@@ -65,6 +65,9 @@ public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
             catch (IllegalArgumentException ex) {
               description = messagePattern;
             }
+            if (description != null) {
+              description += " #loc";
+            }
             holder.registerProblem(ref, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

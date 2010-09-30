@@ -78,6 +78,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final ModuleRootManagerImpl moduleRootManager =
       (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
         final ContentEntry contentEntry = rootModel.addContentEntry(contentFile);
@@ -135,6 +136,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         libraryModifyableModel.commit();
         namedLibraryModel.commit();
@@ -146,6 +148,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     assertEquals(libraryIterator.next(), namedLibrary);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }
@@ -181,6 +184,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }

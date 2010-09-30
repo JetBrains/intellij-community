@@ -32,79 +32,98 @@ public class MockEditorFactory extends EditorFactory {
     return new DocumentImpl(text);
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document) {
     return null;
   }
 
+  @Override
   public Editor createViewer(@NotNull Document document) {
     return null;
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document, Project project) {
     return null;
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
     return null;
   }
 
+  @Override
   public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
     return null;
   }
 
+  @Override
   public Editor createViewer(@NotNull Document document, Project project) {
     return null;
   }
 
+  @Override
   public void releaseEditor(@NotNull Editor editor) {
   }
 
+  @Override
   @NotNull
   public Editor[] getEditors(@NotNull Document document, Project project) {
     return Editor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public Editor[] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
+  @Override
   @NotNull
   public Editor[] getAllEditors() {
     return Editor.EMPTY_ARRAY;
   }
 
+  @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
   }
 
+  @Override
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
   }
 
+  @Override
   @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return new MockEditorEventMulticaster();
   }
 
+  @Override
   @NotNull
   public Document createDocument(@NotNull CharSequence text) {
     return new DocumentImpl(text);
   }
 
+  @Override
   @NotNull
   public Document createDocument(@NotNull char[] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
+  @Override
   public void refreshAllEditors() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "mockeditorfactory";
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 }

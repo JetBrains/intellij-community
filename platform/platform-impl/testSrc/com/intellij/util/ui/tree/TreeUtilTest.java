@@ -68,6 +68,7 @@ public class TreeUtilTest extends TestCase {
   public void testMultiLevelRemove() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root) {
+        @Override
         public void removeNodeFromParent(MutableTreeNode mutableTreeNode) {
           super.removeNodeFromParent((MutableTreeNode) mutableTreeNode.getParent());
         }
@@ -138,6 +139,7 @@ public class TreeUtilTest extends TestCase {
     node1.add(node1_1);
     DefaultTreeModel model = new DefaultTreeModel(root);
     TreeUtil.sort(model, new Comparator() {
+      @Override
       public int compare(Object o1, Object o2) {
         return o1.toString().compareTo(o2.toString());
       }
@@ -147,6 +149,7 @@ public class TreeUtilTest extends TestCase {
     assertEquals(node1_1, node1.getChildAt(0));
     assertEquals(node1_2, node1.getChildAt(1));
     TreeUtil.sort(model, new Comparator() {
+      @Override
       public int compare(Object o1, Object o2) {
         TreeNode n1 = (TreeNode) o1;
         TreeNode n2 = (TreeNode) o2;
@@ -166,6 +169,7 @@ public class TreeUtilTest extends TestCase {
     root.add(new DefaultMutableTreeNode("01"));
     final ArrayList order = new ArrayList();
     TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
+      @Override
       public boolean accept(Object node) {
         order.add(node.toString());
         return true;

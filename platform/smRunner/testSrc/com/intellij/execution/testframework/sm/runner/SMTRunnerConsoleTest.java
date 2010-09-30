@@ -88,6 +88,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testPrintTestProxy() {
     mySimpleTest.setPrinter(myMockResetablePrinter);
     mySimpleTest.addLast(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print("std out", ConsoleViewContentType.NORMAL_OUTPUT);
         printer.print("std err", ConsoleViewContentType.ERROR_OUTPUT);
@@ -482,6 +483,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   private void sendToTestProxyStdOut(final SMTestProxy proxy, final String text) {
     proxy.addLast(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
       }

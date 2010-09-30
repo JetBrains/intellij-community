@@ -115,6 +115,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
     final int[] countMoved = new int[] {0};
     final MoveMemberListener listener = new MoveMemberListener() {
+      @Override
       public void memberMoved(PsiClass aClass, PsiMember member) {
         assertEquals(sourceClass, aClass);
         countMoved[0]++;
@@ -130,6 +131,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("50");
   }

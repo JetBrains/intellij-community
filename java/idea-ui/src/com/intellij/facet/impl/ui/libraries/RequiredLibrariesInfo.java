@@ -56,9 +56,10 @@ public class RequiredLibrariesInfo {
     List<String> classes = new ArrayList<String>();
 
     for (LibraryInfo info : myLibraryInfos) {
-      boolean notFound = true;
+      boolean notFound;
       final String md5 = info.getMd5();
       if (!StringUtil.isEmptyOrSpaces(md5)) {
+        notFound = true;
         for (VirtualFile libraryFile : libraryFiles) {
            final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(libraryFile);
           if (md5.equals(md5(jarFile))) {
@@ -67,6 +68,7 @@ public class RequiredLibrariesInfo {
           }
         }
       } else {
+        notFound = false;
         for (String className : info.getRequiredClasses()) {
           if (!LibraryUtil.isClassAvailableInLibrary(libraryFiles, className)) {
             classes.add(className);

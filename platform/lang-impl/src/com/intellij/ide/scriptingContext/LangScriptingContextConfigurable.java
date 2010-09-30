@@ -15,9 +15,10 @@
  */
 package com.intellij.ide.scriptingContext;
 
-import com.intellij.ide.scriptingContext.ui.ScriptingContextsPanel;
+import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -25,12 +26,12 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov <dyadix@gmail.com>
  */
-public class LangScriptingContextsConfigurable implements Configurable {
-  private ScriptingContextsPanel myPanel;
-  private LangScriptingContextsProvider myProvider;
+public class LangScriptingContextConfigurable implements Configurable {
+  private ScriptingLibrariesPanel myPanel;
+  private LangScriptingContextProvider myProvider;
 
-  public LangScriptingContextsConfigurable(LangScriptingContextsProvider provider) {
-    myPanel = new ScriptingContextsPanel();
+  public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
+    myPanel = new ScriptingLibrariesPanel(project);
     myProvider = provider;
   }
 

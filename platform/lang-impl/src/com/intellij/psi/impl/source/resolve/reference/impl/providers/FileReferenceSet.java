@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,7 +238,7 @@ public class FileReferenceSet {
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final PsiFile file = getContainingFile();
-    if (file == null) return Collections.emptyList();
+    if (file == null) return new SmartList<PsiFileSystemItem>();
     
     if (myOptions != null) {
       final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);

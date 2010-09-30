@@ -43,12 +43,14 @@ public class AsmCodeGeneratorTest extends TestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassLoader myClassLoader;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myNestedFormLoader = new MyNestedFormLoader();
     myClassLoader = new MyClassLoader(getClass().getClassLoader());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myClassLoader = null;
     myNestedFormLoader = null;
@@ -78,6 +80,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       classStream.close();
       FileUtil.delete(new File(classPath));
       final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
+        @Override
         public boolean accept(File dir, String name) {
           return name.startsWith(className + "$") && name.endsWith(".class");
         }
@@ -339,10 +342,12 @@ public class AsmCodeGeneratorTest extends TestCase {
       return defineClass(name, data, 0, data.length);
     }
 
+    @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
       return super.loadClass(name);
     }
 
+    @Override
     public InputStream getResourceAsStream(String name) {
       if (name.equals("TestProperties.properties")) {
         return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
@@ -358,6 +363,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       myFormMap.put(formName, fileName);
     }
 
+    @Override
     public LwRootContainer loadForm(String formFileName) throws Exception {
       final String fileName = myFormMap.get(formFileName);
       if (fileName != null) {
@@ -366,6 +372,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       throw new UnsupportedOperationException("No nested form found for name " + formFileName);
     }
 
+    @Override
     public String getClassToBindName(LwRootContainer container) {
       return container.getClassToBind();
     }

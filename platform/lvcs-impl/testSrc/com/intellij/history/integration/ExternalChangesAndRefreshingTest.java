@@ -72,6 +72,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshDuringCommand() {
     // shouldn't throw
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         refreshVFS();
       }
@@ -90,6 +91,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     // shouldn't throw
     addFileListenerDuring(l, new Runnable() {
+      @Override
       public void run() {
         refreshVFS();
       }
@@ -98,6 +100,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
   private void executeSomeCommand() {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
       }
     }, "", null);
@@ -122,6 +125,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     };
 
     addFileListenerDuring(l, new Runnable() {
+      @Override
       public void run() {
         refreshVFS();
       }
@@ -178,6 +182,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       final Semaphore s = new Semaphore(1);
       s.acquire();
       VirtualFileManager.getInstance().refresh(async, new Runnable() {
+        @Override
         public void run() {
           s.release();
         }

@@ -21,6 +21,7 @@ public class DeepestSuperMethodsTest extends OverridingTester {
     return super.getBasePath() + "deepestSuperMethods";
   }
 
+  @Override
   PsiMethod[] findMethod(PsiMethod method) {
     return method.findDeepestSuperMethods();
   }

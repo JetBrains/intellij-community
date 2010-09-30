@@ -23,6 +23,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/movePackageAsDir/";
   }
@@ -46,9 +47,11 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
   private PerformAction createAction(final String packageName, final String targetPackageName) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
         final Comparator<PsiDirectory> directoryComparator = new Comparator<PsiDirectory>() {
+          @Override
           public int compare(PsiDirectory o1, PsiDirectory o2) {
             return o1.getVirtualFile().getPresentableUrl().compareTo(o2.getVirtualFile().getPresentableUrl());
           }
@@ -72,6 +75,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     };
   }
 
+  @Override
   protected void setupProject(VirtualFile rootDir) {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     final ContentEntry contentEntry = rootModel.addContentEntry(rootDir);
@@ -83,6 +87,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }

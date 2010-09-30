@@ -37,6 +37,7 @@ public abstract class TreePrintCondition implements Condition<String> {
       super(elements);
     }
 
+    @Override
     public boolean value(String s) {
       return mySet.contains(s);
     }
@@ -47,6 +48,7 @@ public abstract class TreePrintCondition implements Condition<String> {
       super(elements);
     }
 
+    @Override
     public boolean value(String s) {
       return !mySet.contains(s);
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class GettingContentAtDateTest extends IntegrationTestCase {
   private VirtualFile f;
 
+  @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
     f = myRoot.createChildData(null, "f.txt");
@@ -68,6 +69,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
     setContent(f, "2", TIMESTAMP_INCREMENT * 2);
 
     FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
+      @Override
       public boolean isSuitable(long revisionTimestamp) {
         return revisionTimestamp < 10000;
       }
@@ -86,6 +88,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
 
   private FileRevisionTimestampComparator comparator(final long timestamp) {
     return new FileRevisionTimestampComparator() {
+      @Override
       public boolean isSuitable(long revisionTimestamp) {
         return revisionTimestamp == timestamp;
       }

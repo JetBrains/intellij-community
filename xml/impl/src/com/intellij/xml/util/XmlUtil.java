@@ -1176,7 +1176,7 @@ public class XmlUtil {
       String tagStart;
       try {
         tagStartBuilder.append(qname);
-        if (xmlTag.getPrefixByNamespace(namespace) == null &&
+        if (!StringUtil.isEmpty(namespace) && xmlTag.getPrefixByNamespace(namespace) == null &&
             !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))) {
           tagStartBuilder.append(" xmlns=\"");
           tagStartBuilder.append(namespace);

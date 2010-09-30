@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import org.jetbrains.annotations.NonNls;
 
 public class FixAllQuickfixTest extends LightQuickFixTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {
       new DataFlowInspection()
@@ -17,6 +18,7 @@ public class FixAllQuickfixTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   @NonNls
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/fixAll";

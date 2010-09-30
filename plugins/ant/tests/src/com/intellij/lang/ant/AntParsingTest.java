@@ -26,6 +26,7 @@ public class AntParsingTest extends ParsingTestCase {
     super("", "ant");
   }
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data";
   }

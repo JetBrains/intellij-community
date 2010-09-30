@@ -127,6 +127,7 @@ import java.util.Collection;
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     final ContentEntry[] contentEntries = rootModel.getContentEntries();
     ContentEntry entry = ContainerUtil.find(contentEntries, new Condition<ContentEntry>() {
+      @Override
       public boolean value(final ContentEntry object) {
         return VfsUtil.isAncestor(object.getFile(), vDir, false);
       }
@@ -167,6 +168,7 @@ import java.util.Collection;
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
     assert ModuleRootManager.getInstance(module).getContentRoots().length > 0 : "content roots must not be empty";
     new WriteCommandAction(module.getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         addLibrary(module, model, libName, libPath, jarArr);

@@ -46,6 +46,7 @@ import java.util.Comparator;
  * @author Maxim.Medvedev
  */
 public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
+  @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveClass/";
   }
@@ -136,8 +137,10 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
 
     final Application application = ApplicationManager.getApplication();
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         application.runWriteAction(new Runnable() {
+          @Override
           public void run() {
             new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(
               PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dirs[0])), dirs[0]), true, true, null).run();
@@ -168,12 +171,14 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     final File[] ch1 = d1.listFiles();
     final VirtualFile[] ch2 = d2.getChildren();
     Arrays.sort(ch1, new Comparator<File>() {
+      @Override
       public int compare(File o1, File o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
 
     Arrays.sort(ch2, new Comparator<VirtualFile>() {
+      @Override
       public int compare(VirtualFile o1, VirtualFile o2) {
         return o1.getName().compareTo(o2.getName());
       }

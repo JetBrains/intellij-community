@@ -17,6 +17,7 @@
 package com.intellij.history.integration.ui.models;
 
 public class NullProgress implements Progress {
+  @Override
   public void processed(int percentage) {
   }
 }

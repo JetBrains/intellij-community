@@ -16,12 +16,9 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.ide.scriptingContext.ui.MainScriptingContextsPanel;
-import com.intellij.ide.scriptingContext.ui.ScriptingContextsPanel;
-import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -33,15 +30,19 @@ import java.util.ArrayList;
 public class ScriptingContextsConfigurable implements Configurable, Configurable.Composite {
 
   private MainScriptingContextsPanel myPanel;
+  private String myLangNames;
+  private Project myProject;
 
-  public ScriptingContextsConfigurable() {
+  public ScriptingContextsConfigurable(Project project) {
     myPanel = new MainScriptingContextsPanel();
+    myLangNames = getLangNames();
+    myProject = project;
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return "Scripting Contexts"; //TODO: Change
+    return "Scripting Libraries";
   }
 
   @Override
@@ -81,10 +82,19 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public Configurable[] getConfigurables() {
-    ArrayList<LangScriptingContextsConfigurable> configurables = new ArrayList<LangScriptingContextsConfigurable>();
-    for (LangScriptingContextsProvider provider : LangScriptingContextsProvider.getProviders()) {
-      configurables.add(new LangScriptingContextsConfigurable(provider));
+    ArrayList<LangScriptingContextConfigurable> configurables = new ArrayList<LangScriptingContextConfigurable>();
+    for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
+      configurables.add(new LangScriptingContextConfigurable(myProject, provider));
     }
-    return configurables.toArray(new LangScriptingContextsConfigurable[configurables.size()]);
+    return configurables.toArray(new LangScriptingContextConfigurable[configurables.size()]);
+  }
+
+  private static String getLangNames() {
+    StringBuffer buf = new StringBuffer();
+    for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
+      buf.append(provider.getLanguage().getDisplayName()).append('/');
+    }
+    String result = buf.toString();
+    return result.substring(0, result.length() - 1);
   }
 }

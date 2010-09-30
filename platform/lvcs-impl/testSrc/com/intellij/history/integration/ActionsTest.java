@@ -57,6 +57,7 @@ public class ActionsTest extends IntegrationTestCase {
     setDocumentTextFor(f, "doc1");
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
         setDocumentTextFor(f, "doc2");

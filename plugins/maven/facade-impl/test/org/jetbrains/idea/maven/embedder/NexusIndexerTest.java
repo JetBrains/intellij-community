@@ -196,35 +196,45 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
   }
 
   private static class NullScanningListener implements ArtifactScanningListener {
+    @Override
     public void scanningStarted(IndexingContext indexingContext) {
     }
 
+    @Override
     public void scanningFinished(IndexingContext indexingContext, ScanningResult scanningResult) {
     }
 
+    @Override
     public void artifactError(ArtifactContext artifactContext, Exception e) {
     }
 
+    @Override
     public void artifactDiscovered(ArtifactContext artifactContext) {
     }
   }
 
   private static class NullTransferListener implements TransferListener {
+    @Override
     public void transferInitiated(TransferEvent event) {
     }
 
+    @Override
     public void transferStarted(TransferEvent event) {
     }
 
+    @Override
     public void transferProgress(TransferEvent event, byte[] bytes, int i) {
     }
 
+    @Override
     public void transferCompleted(TransferEvent event) {
     }
 
+    @Override
     public void transferError(TransferEvent event) {
     }
 
+    @Override
     public void debug(String s) {
     }
   }

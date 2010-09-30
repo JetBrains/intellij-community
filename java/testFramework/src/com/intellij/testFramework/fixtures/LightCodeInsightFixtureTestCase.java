@@ -43,14 +43,17 @@ import java.io.File;
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   public static final LightProjectDescriptor JAVA_1_4 = new LightProjectDescriptor() {
+    @Override
     public ModuleType getModuleType() {
       return StdModuleTypes.JAVA;
     }
 
+    @Override
     public Sdk getSdk() {
       return JavaSdkImpl.getMockJdk17();
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   };
@@ -64,6 +67,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     IdeaTestCase.initPlatformPrefix();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -105,6 +109,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
@@ -112,8 +117,10 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     super.tearDown();
   }
 
+  @Override
   protected void runTest() throws Throwable {
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         LightCodeInsightFixtureTestCase.super.runTest();
       }

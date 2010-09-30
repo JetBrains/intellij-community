@@ -41,6 +41,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
 
   public void testMoveJavadocToGetter() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
         assertNotNull("Tested class not found", aClass);
@@ -56,6 +57,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/encapsulateFields/";
   }
@@ -67,6 +69,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
 
   private void doTest(final String fieldName, final String className, final String conflicts) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
 
@@ -85,50 +88,61 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     try {
       final Project project = aClass.getProject();
       EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, new EncapsulateFieldsDescriptor() {
+        @Override
         public PsiField[] getSelectedFields() {
           return new PsiField[]{field};
         }
 
+        @Override
         public String[] getGetterNames() {
           return new String[]{PropertyUtil.suggestGetterName(project, field)};
         }
 
+        @Override
         public String[] getSetterNames() {
           return new String[]{PropertyUtil.suggestSetterName(project, field)};
         }
 
+        @Override
         @Nullable
         public PsiMethod[] getGetterPrototypes() {
           return isToEncapsulateGet() ? new PsiMethod[]{PropertyUtil.generateGetterPrototype(field)} : null;
         }
 
+        @Override
         @Nullable
         public PsiMethod[] getSetterPrototypes() {
           return isToEncapsulateSet() ? new PsiMethod[]{PropertyUtil.generateSetterPrototype(field)} : null;
         }
 
+        @Override
         public boolean isToEncapsulateGet() {
           return generateGetters;
         }
 
+        @Override
         public boolean isToEncapsulateSet() {
           return generateSetters;
         }
 
+        @Override
         public boolean isToUseAccessorsWhenAccessible() {
           return true;
         }
 
+        @Override
         @Modifier
         public String getFieldsVisibility() {
           return null;
         }
 
+        @Override
         @Modifier
         public String getAccessorsVisibility() {
           return PsiModifier.PUBLIC;
         }
 
+        @Override
         public int getJavadocPolicy() {
           return DocCommentPolicy.MOVE;
         }

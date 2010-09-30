@@ -20,6 +20,7 @@ public class InlineSameParameterValueTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
     final LocalQuickFix fix = (LocalQuickFix)new SameParameterValueInspection().getQuickFix(text);
@@ -35,6 +36,7 @@ public class InlineSameParameterValueTest extends LightQuickFixTestCase {
   }
 
 
+  @Override
   @NonNls
   protected String getBasePath() {
     return "/quickFix/SameParameterValue";

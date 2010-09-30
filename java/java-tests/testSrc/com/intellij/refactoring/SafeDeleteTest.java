@@ -21,6 +21,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected boolean clearModelBeforeConfiguring() {
     return true;
   }
@@ -54,6 +55,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testMultipleInterfacesImplementationThroughCommonInterface() throws Exception {
     myDoCompare = false;
     doTest("IFoo");
+  }
+
+  public void testParameterInHierarchy() throws Exception {
+    myDoCompare = false;
+    doTest("C2");
   }
 
   public void testExtendsList() throws Exception {
@@ -107,6 +113,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         SafeDeleteTest.this.performAction(qClassName);
         IdeaTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore, IdeaTestUtil.CVS_FILE_FILTER);
@@ -123,9 +130,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     final PsiElement psiElement = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
-    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, false);
+    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/safeDelete/";
   }

@@ -20,21 +20,19 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class LangScriptingContextsProvider {
+public abstract class LangScriptingContextProvider {
 
-  public static final ExtensionPointName<LangScriptingContextsProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langScriptingContextsProvider");
+  public static final ExtensionPointName<LangScriptingContextProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.langScriptingContextProvider");
 
   @NotNull
   public abstract Language getLanguage();
 
   @NotNull
-  public static LangScriptingContextsProvider[] getProviders() {
+  public static LangScriptingContextProvider[] getProviders() {
     return Extensions.getExtensions(EP_NAME);
   }
 }

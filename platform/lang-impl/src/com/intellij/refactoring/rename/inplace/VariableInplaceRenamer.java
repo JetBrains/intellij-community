@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -71,6 +72,7 @@ import java.util.*;
  * @author ven
  */
 public class VariableInplaceRenamer {
+  public static final Key<VariableInplaceRenamer> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
@@ -220,6 +222,7 @@ public class VariableInplaceRenamer {
             final boolean lookupShown = lookup != null && lookup.getLookupStart() < offset;
             if (lookupShown) {
               lookup.setAdditionalPrefix(myEditor.getDocument().getCharsSequence().subSequence(lookup.getLookupStart(), offset).toString());
+              lookup.setFocused(false);
             }
             myEditor.getCaretModel().moveToOffset(offset);
             if (lookupShown) {
@@ -235,6 +238,7 @@ public class VariableInplaceRenamer {
       }
     }, RefactoringBundle.message("rename.title"), null);
 
+    myEditor.putUserData(INPLACE_RENAMER, this);
     return true;
   }
 
@@ -318,6 +322,7 @@ public class VariableInplaceRenamer {
       }
 
       myHighlighters = null;
+      myEditor.putUserData(INPLACE_RENAMER, null);
     }
   }
 

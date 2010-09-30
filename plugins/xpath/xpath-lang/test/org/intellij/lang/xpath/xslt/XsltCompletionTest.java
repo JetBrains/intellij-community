@@ -65,6 +65,7 @@ public class XsltCompletionTest extends TestBase {
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);
     }
 
+    @Override
     protected String getSubPath() {
         return "xslt/completion";
     }

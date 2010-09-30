@@ -345,11 +345,13 @@ public class ColumnResultsTest extends BaseColumnRenderingTest {
     assertEquals("P:1", myFragmentsContainer.getTextAt(1));
   }
 
+  @Override
   protected ColoredRenderer createRenderer(final SMTestProxy testProxy,
                                            final UITestUtil.FragmentsContainer fragmentsContainer) {
     return new MyRenderer(testProxy, fragmentsContainer);
   }
 
+  @Override
   protected ColumnInfo<SMTestProxy, String> createColumn() {
     return new ColumnResults();
   }

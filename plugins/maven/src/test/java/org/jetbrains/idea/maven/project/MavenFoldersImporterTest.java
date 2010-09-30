@@ -158,9 +158,11 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         count[0]++;
       }
@@ -196,9 +198,11 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         count[0]++;
       }

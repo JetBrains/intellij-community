@@ -26,34 +26,42 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
     myLogger = logger;
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return false;
   }
 
+  @Override
   public void debug(String message) {
     myLogger.debug(message);
   }
 
+  @Override
   public void debug(Throwable t) {
     myLogger.debug(t);
   }
 
+  @Override
   public void debug(@NonNls String message, Throwable t) {
     myLogger.debug(message, t);
   }
 
+  @Override
   public void error(String message, Throwable t, String... details) {
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 
+  @Override
   public void info(String message) {
     myLogger.info(message);
   }
 
+  @Override
   public void info(String message, Throwable t) {
     myLogger.info(message, t);
   }
 
+  @Override
   public void warn(@NonNls String message, Throwable t) {
     if (t == null) {
       myLogger.warn(message);
@@ -63,6 +71,7 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
     }
   }
 
+  @Override
   public void setLevel(Level level) {
     myLogger.setLevel(level);
   }

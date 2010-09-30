@@ -300,6 +300,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.isCaretActive();
   }
 
+  @Override
+  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
+    return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
+  }
+
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     assert isValid();

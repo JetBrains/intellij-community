@@ -138,6 +138,7 @@ public class ClassFileStubBuilderTest extends TestCase {
       myFiles = files;
     }
 
+    @Override
     public boolean contains(String name) {
       return myFiles.contains(name);
     }

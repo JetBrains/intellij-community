@@ -55,9 +55,11 @@ public class ExtensionsImplTest extends TestCase {
     final boolean removed[] = new boolean[1];
     removed[0] = false;
     extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1).addExtensionPointListener(new ExtensionPointListener() {
+      @Override
       public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
       }
 
+      @Override
       public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
@@ -177,6 +179,7 @@ public class ExtensionsImplTest extends TestCase {
 
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         throw new UnsupportedOperationException("run is not implemented in : " + getClass());
       }
@@ -187,6 +190,7 @@ public class ExtensionsImplTest extends TestCase {
     assertSame(runnable, childArea.getPicoContainer().getComponentInstanceOfType(Runnable.class));
 
     final Runnable childRunnable = new Runnable() {
+      @Override
       public void run() {
         throw new UnsupportedOperationException("This method is not yet implemented");
       }
@@ -209,6 +213,7 @@ public class ExtensionsImplTest extends TestCase {
     container1.registerComponentImplementation("component1.1", MyComponent1.class);
     container2.registerComponentImplementation("component2", MyComponent2.class);
     MyInterface1 testInstance = new MyInterface1() {
+          @Override
           public void run() {
           }
         };
@@ -237,6 +242,7 @@ public class ExtensionsImplTest extends TestCase {
     rootContainer.registerComponentImplementation("component2", MyComponent2.class);
     rootContainer.registerComponentImplementation(MyTestComponent.class);
     MyInterface1 testInstance = new MyInterface1() {
+          @Override
           public void run() {
           }
         };
@@ -340,6 +346,7 @@ public class ExtensionsImplTest extends TestCase {
   }
 
   public static class MyClass implements MyInterface4 {
+    @Override
     public void run() {
     }
   }
@@ -376,10 +383,12 @@ public class ExtensionsImplTest extends TestCase {
     public static int regcount = 0;
     public static int remcount = 0;
 
+    @Override
     public void extensionPointRegistered(ExtensionPoint extensionPoint) {
       regcount++;
     }
 
+    @Override
     public void extensionPointRemoved(ExtensionPoint extensionPoint) {
       remcount++;
     }

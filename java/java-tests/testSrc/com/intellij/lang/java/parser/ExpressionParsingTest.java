@@ -77,7 +77,8 @@ public class ExpressionParsingTest extends JavaParsingTestCase {
   public void testNew14() { doTest(true); }
   public void testNew15() {
     withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { public void run() { doTest(true); } });
+              new Runnable() { @Override
+                               public void run() { doTest(true); } });
   }
 
   public void testExprList0() { doTest(true); }

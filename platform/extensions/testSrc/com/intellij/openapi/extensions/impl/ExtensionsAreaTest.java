@@ -37,6 +37,7 @@ public class ExtensionsAreaTest extends TestCase {
   private ExtensionsAreaImpl myExtensionsArea;
   private MutablePicoContainer myPicoContainer;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -76,11 +77,13 @@ public class ExtensionsAreaTest extends TestCase {
     instances = container.getComponentInstancesOfType(TestClass.class);
     assertEquals(1, instances.size());
     container.registerComponent(new AbstractComponentAdapter(new Object(), Object.class) {
+      @Override
       public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
         fail("Should not be invoked");
         throw new Error(); // not reached
       }
 
+      @Override
       public void verify(PicoContainer container) throws PicoIntrospectionException {
       }
     });

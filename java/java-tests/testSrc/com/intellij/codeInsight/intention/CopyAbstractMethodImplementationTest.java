@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
  * @author yole
  */
 public class CopyAbstractMethodImplementationTest extends LightIntentionActionTestCase {
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/copyAbstractMethodImplementation";
   }

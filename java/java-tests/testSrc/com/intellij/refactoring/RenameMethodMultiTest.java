@@ -18,6 +18,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/renameMethod/multi/";
   }
@@ -42,6 +43,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
 
   private void doTest(final String className, final String methodSignature, final String newName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final JavaPsiFacade manager = getJavaFacade();
         final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));

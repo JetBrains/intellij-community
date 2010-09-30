@@ -17,6 +17,8 @@ package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Clock;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -262,4 +264,60 @@ public class DateFormatUtil {
         return CommonBundle.message("date.format.in.n.years", n);
     }
   }
+
+  private static String getMacTimeFormat(final int type, @NotNull final DateType dateType) {
+    final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
+    try {
+      final ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
+
+      int style;
+      switch (type) {
+        case DateFormat.SHORT:
+          style = MacFormatterShortStyle;
+          break;
+        case DateFormat.MEDIUM:
+          style = MacFormatterMediumStyle;
+          break;
+        case DateFormat.LONG:
+        default:
+          style = MacFormatterLongStyle;
+          break;
+      }
+
+      int timeStyle;
+      int dateStyle;
+      switch (dateType) {
+        case DATE:
+          timeStyle = MacFormatterNoStyle;
+          dateStyle = style;
+          break;
+        case TIME:
+          timeStyle = style;
+          dateStyle = MacFormatterNoStyle;
+          break;
+        case DATETIME:
+        default:
+          timeStyle = style;
+          dateStyle = style;
+          break;
+      }
+
+      Foundation.invoke(dateFormatter, Foundation.createSelector("setTimeStyle:"), timeStyle);
+      Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
+      return Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
+    }
+    finally {
+      Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
+    }
+  }
+
+  private enum DateType {
+    TIME, DATE, DATETIME
+  }
+
+  private static final int MacFormatterNoStyle = 0;
+  private static final int MacFormatterShortStyle = 1;
+  private static final int MacFormatterMediumStyle = 2;
+  private static final int MacFormatterLongStyle = 3;
+  private static final int MacFormatterFullStyle = 4;
 }

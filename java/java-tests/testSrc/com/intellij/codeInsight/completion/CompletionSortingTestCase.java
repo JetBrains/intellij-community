@@ -34,6 +34,7 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
   }
 
 
+  @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();

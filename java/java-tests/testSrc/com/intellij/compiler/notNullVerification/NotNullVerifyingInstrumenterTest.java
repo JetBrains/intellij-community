@@ -150,6 +150,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
       return defineClass(name, data, 0, data.length);
     }
 
+    @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
       return super.loadClass(name);
     }

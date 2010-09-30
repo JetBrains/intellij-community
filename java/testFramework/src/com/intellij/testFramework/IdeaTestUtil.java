@@ -38,6 +38,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
 
   public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
+    @Override
     public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
       String displayText1 = o1.getTestPresentation();
       String displayText2 = o2.getTestPresentation();
@@ -137,6 +138,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
@@ -155,10 +157,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
+    @Override
     public boolean accept(VirtualFile file) {
       return !file.isDirectory() || !"CVS".equals(file.getName());
     }
 
+    @Override
     public boolean accept(File dir, String name) {
       return name.indexOf("CVS") == -1;
     }

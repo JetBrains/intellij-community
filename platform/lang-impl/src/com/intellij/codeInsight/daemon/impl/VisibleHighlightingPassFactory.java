@@ -46,7 +46,7 @@ public abstract class VisibleHighlightingPassFactory extends AbstractProjectComp
 
     int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
-    return new ProperTextRange(visibleStart, visibleEnd);
+    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
   }
 
   @Nullable

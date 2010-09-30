@@ -64,6 +64,7 @@ public class TempFiles {
 
   public static void refreshVfs() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         VirtualFileManager.getInstance().refresh(false);
       }

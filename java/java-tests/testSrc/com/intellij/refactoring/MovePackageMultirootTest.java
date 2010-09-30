@@ -23,6 +23,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/movePackageMultiroot/";
   }
@@ -33,6 +34,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
 
   private PerformAction createAction(final String[] packageNames, final String targetPackageName) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final PsiManager manager = PsiManager.getInstance(myProject);
         PsiPackage[] sourcePackages = new PsiPackage[packageNames.length];
@@ -51,6 +53,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     };
   }
 
+  @Override
   protected void setupProject(VirtualFile rootDir) {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     final ContentEntry contentEntry = rootModel.addContentEntry(rootDir);
@@ -63,6 +66,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 
 public class RemoveUnusedVariableTest extends LightQuickFixTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection()};
   }
@@ -14,6 +15,7 @@ public class RemoveUnusedVariableTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeUnusedVariable";
   }

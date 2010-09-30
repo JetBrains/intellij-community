@@ -95,12 +95,14 @@ public class ExtensionsComplexTest extends TestCase {
     "    <dependentThree area=\"area\"/>\n" +
     "  </extensions>";
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     Extensions.registerAreaClass("area", null);
     Extensions.registerAreaClass("child_area", "area");
   }
 
+  @Override
   protected void tearDown() throws Exception {
     disposeAreas("child_area");
     disposeAreas("area");

@@ -8,12 +8,14 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 public class RemoveUnusedParameterTest extends LightQuickFixTestCase {
 
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection()};
   }
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeUnusedParameter";
   }

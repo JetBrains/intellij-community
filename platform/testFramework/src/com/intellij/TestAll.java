@@ -72,6 +72,7 @@ public class TestAll implements Test {
   private int myLastTestTestMethodCount = 0;
   public static final int MAX_FAILURE_TEST_COUNT = 150;
 
+  @Override
   public int countTestCases() {
     List<Class> classes = myTestCaseLoader.getClasses();
 
@@ -89,6 +90,7 @@ public class TestAll implements Test {
   private void beforeFirstTest() {
     if ((ourMode & START_GUARD) != 0) {
       Thread timeAndMemoryGuard = new Thread() {
+        @Override
         public void run() {
           log("Starting Time and Memory Guard");
           while (true) {
@@ -154,6 +156,7 @@ public class TestAll implements Test {
     }
   }
 
+  @Override
   public void run(final TestResult testResult) {
     List<Class> classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
@@ -223,9 +226,11 @@ public class TestAll implements Test {
         final Application app = ApplicationManager.getApplication();
         if (app != null) {
           app.invokeAndWait(new Runnable() {
+            @Override
             public void run() {
               try {
                 app.runWriteAction(new Runnable() {
+                  @Override
                   public void run() {
                     //todo[myakovlev] is it necessary?
                     FileDocumentManager manager = FileDocumentManager.getInstance();
@@ -303,6 +308,7 @@ public class TestAll implements Test {
         return new JUnit4TestAdapter(testCaseClass);
       }
       return new TestSuite(testCaseClass){
+        @Override
         public void addTest(Test test) {
           if (!(test instanceof TestCase))  {
             super.addTest(test);

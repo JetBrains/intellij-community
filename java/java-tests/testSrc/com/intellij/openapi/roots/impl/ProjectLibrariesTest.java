@@ -26,6 +26,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
   public void test() {
     final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
     Library lib = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
+      @Override
       public Library compute() {
         return libraryTable.createLibrary("LIB");
       }
@@ -33,6 +34,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     rootModel.addLibraryEntry(lib);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }
@@ -41,6 +43,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
     final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
     final VirtualFile root = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       }
@@ -48,6 +51,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNotNull(root);
     final Library.ModifiableModel modifyableModel = lib.getModifiableModel();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         modifyableModel.addRoot(root, OrderRootType.CLASSES);
         modifyableModel.commit();
@@ -60,6 +64,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
   public void test1() {
     final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
     Library lib = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
+      @Override
       public Library compute() {
         return libraryTable.createLibrary("LIB");
       }
@@ -67,6 +72,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     rootModel.addLibraryEntry(lib);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }
@@ -78,6 +84,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNotNull(rootModel2.findLibraryOrderEntry(lib));
     final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
     final VirtualFile root = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       }
@@ -85,6 +92,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNotNull(root);
     final Library.ModifiableModel modifyableModel = lib.getModifiableModel();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         modifyableModel.addRoot(root, OrderRootType.CLASSES);
         modifyableModel.commit();
@@ -94,6 +102,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNotNull(aClass);
     assertTrue(Arrays.asList(rootModel2.orderEntries().librariesOnly().classes().getRoots()).contains(root));
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel2.commit();
       }
