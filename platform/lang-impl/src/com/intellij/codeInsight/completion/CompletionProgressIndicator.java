@@ -48,6 +48,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
@@ -418,6 +420,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     } else {
       application.invokeLater(runnable, myQueue.getModalityState());
     }
+  }
+
+  public String cancelTrace;
+  @Override
+  public void cancel() {
+    if (cancelTrace == null) {
+      Throwable t = new Throwable();
+      final StringWriter writer = new StringWriter();
+      t.printStackTrace(new PrintWriter(writer));
+      cancelTrace = writer.toString();
+    }
+    super.cancel();
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {

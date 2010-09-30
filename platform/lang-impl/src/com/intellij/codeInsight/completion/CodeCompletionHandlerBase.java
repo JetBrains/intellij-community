@@ -212,7 +212,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               }));
             }
             catch (PsiInvalidElementAccessException e) {
-              throw new RuntimeException("PIEAE: canceled=" + indicator.isCanceled(), e);
+              throw new RuntimeException("PIEAE: canceled=" + indicator.isCanceled() + "; trace=" + indicator.cancelTrace, e);
             }
             catch (ProcessCanceledException ignored) {
             }
