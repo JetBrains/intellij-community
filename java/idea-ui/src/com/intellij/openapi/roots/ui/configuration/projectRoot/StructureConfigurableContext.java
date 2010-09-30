@@ -23,13 +23,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,15 +112,6 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
-
-  public List<LibraryTableModifiableModelProvider> getCustomLibrariesProviders() {
-    return ContainerUtil.map2List(LibraryTablesRegistrar.getInstance().getCustomLibraryTables(), new NotNullFunction<LibraryTable, LibraryTableModifiableModelProvider>() {
-      @NotNull
-      public LibraryTableModifiableModelProvider fun(final LibraryTable libraryTable) {
-        return createModifiableModelProvider(libraryTable.getTableLevel());
-      }
-    });
-  }
 
   public LibraryTable.ModifiableModel getModifiableLibraryTable(@NotNull LibraryTable table) {
     final String tableLevel = table.getTableLevel();

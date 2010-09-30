@@ -21,16 +21,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -42,30 +46,40 @@ public class LibraryCompositionSettings implements Disposable {
   private String myDirectoryForDownloadedLibrariesPath;
   private boolean myDownloadLibraries = true;
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
-  private String myLibraryName;
+  private String myDownloadedLibraryName;
   private boolean myDownloadSources = true;
   private boolean myDownloadJavadocs = true;
-  private NewLibraryEditor myLibraryEditor;
+  private NewLibraryEditor myNewLibraryEditor;
   private Library mySelectedLibrary;
+  private final String myDefaultLibraryName;
+  private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new HashMap<Library, ExistingLibraryEditor>();
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
                                     final @NotNull String baseDirectoryForDownloadedFiles) {
+    myDefaultLibraryName = defaultLibraryName;
     myLibraryInfos = libraryInfos;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
-    myLibraryName = defaultLibraryName;
+    myDownloadedLibraryName = defaultLibraryName;
   }
 
-  public void addFilesToLibrary(VirtualFile[] files, OrderRootType orderRootType) {
-    final NewLibraryEditor libraryEditor = getOrCreateLibrary();
-    for (VirtualFile file : files) {
-      libraryEditor.addRoot(file, orderRootType);
+  public ExistingLibraryEditor getOrCreateEditor(@NotNull Library library) {
+    ExistingLibraryEditor libraryEditor = myExistingLibraryEditors.get(library);
+    if (libraryEditor == null) {
+      libraryEditor = new ExistingLibraryEditor(library, null);
+      Disposer.register(this, libraryEditor);
+      myExistingLibraryEditors.put(library, libraryEditor);
     }
+    return libraryEditor;
   }
 
   @NotNull
   public LibraryInfo[] getLibraryInfos() {
     return myLibraryInfos;
+  }
+
+  public String getDefaultLibraryName() {
+    return myDefaultLibraryName;
   }
 
   @NotNull
@@ -93,8 +107,8 @@ public class LibraryCompositionSettings implements Disposable {
     myLibraryLevel = libraryLevel;
   }
 
-  public void setLibraryName(final String libraryName) {
-    myLibraryName = libraryName;
+  public void setDownloadedLibraryName(final String downloadedLibraryName) {
+    myDownloadedLibraryName = downloadedLibraryName;
   }
 
   public String getDirectoryForDownloadedLibrariesPath() {
@@ -108,18 +122,22 @@ public class LibraryCompositionSettings implements Disposable {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
-      VirtualFile[] jars = myLibraryEditor != null ? myLibraryEditor.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
+      VirtualFile[] jars = myNewLibraryEditor != null ? myNewLibraryEditor.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
         if (downloadingInfos.length > 0) {
           LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, parent,
-                                                               getDirectoryForDownloadedLibrariesPath(), myLibraryName);
+                                                               getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
           VirtualFile[] files = downloader.download();
           if (files.length != downloadingInfos.length) {
             return false;
           }
-          addFilesToLibrary(files, OrderRootType.CLASSES);
+          myNewLibraryEditor = new NewLibraryEditor();
+          myNewLibraryEditor.setName(myDownloadedLibraryName);
+          for (VirtualFile file : files) {
+            myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
+          }
         }
       }
     }
@@ -129,10 +147,10 @@ public class LibraryCompositionSettings implements Disposable {
 
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
-    if (myLibraryEditor != null) {
-      VirtualFile[] roots = myLibraryEditor.getFiles(OrderRootType.CLASSES);
+    if (myNewLibraryEditor != null) {
+      VirtualFile[] roots = myNewLibraryEditor.getFiles(OrderRootType.CLASSES);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
-                                                     myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
+                                                     myNewLibraryEditor.getName(), myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }
     return null;
   }
@@ -141,14 +159,13 @@ public class LibraryCompositionSettings implements Disposable {
     return myLibraryLevel;
   }
 
-  public String getLibraryName() {
-    return myLibraryName;
+  public String getDownloadedLibraryName() {
+    return myDownloadedLibraryName;
   }
 
   @Nullable
   public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
-
     Library library = createLibrary(rootModel, librariesContainer);
 
     if (library != null) {
@@ -180,17 +197,8 @@ public class LibraryCompositionSettings implements Disposable {
     myDownloadJavadocs = downloadJavadocs;
   }
 
-  @Nullable
-  public NewLibraryEditor getLibraryEditor() {
-    return myLibraryEditor;
-  }
-
-  @NotNull
-  public NewLibraryEditor getOrCreateLibrary() {
-    if (myLibraryEditor == null) {
-      myLibraryEditor = new NewLibraryEditor();
-    }
-    return myLibraryEditor;
+  public void setNewLibraryEditor(NewLibraryEditor libraryEditor) {
+    myNewLibraryEditor = libraryEditor;
   }
 
   @Override

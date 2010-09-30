@@ -63,13 +63,18 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   public static String generateUniqueName(final String defaultName, final String prefix, final String suffix, final Condition<String> validator) {
+    return generateUniqueName(defaultName, prefix, suffix, "", "", validator);
+  }
+
+  public static String generateUniqueName(final String defaultName, final String prefix, final String suffix,
+                                          final String beforeNumber, final String afterNumber, final Condition<String> validator) {
     final String defaultFullName = prefix + defaultName + suffix;
     if (validator.value(defaultFullName)) {
       return defaultFullName;
     }
 
     for (int i = 2; ; i++) {
-      final String fullName = prefix + defaultName + i + suffix;
+      final String fullName = prefix + defaultName + beforeNumber + i + afterNumber + suffix;
       if (validator.value(fullName)) {
         return fullName;
       }
@@ -77,7 +82,11 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   public String generateUniqueName(final String defaultName, final String prefix, final String suffix) {
-    final String result = generateUniqueName(defaultName, prefix, suffix, this);
+    return generateUniqueName(defaultName, prefix, suffix, "", "");
+  }
+
+  public String generateUniqueName(final String defaultName, final String prefix, final String suffix, final String beforeNumber, final String afterNumber) {
+    final String result = generateUniqueName(defaultName, prefix, suffix, beforeNumber, afterNumber, this);
     myExistingNames.add(result);
     return result;
   }

@@ -67,9 +67,8 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myDownloadSourcesCheckBox.setSelected(settings.isDownloadSources());
     myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavadocs());
 
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel();
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getDownloadedLibraryName(), settings.getLibraryLevel());
     myNameWrappingPanel.add(myNameAndLevelPanel.getPanel());
-    myNameAndLevelPanel.reset(settings);
     init();
   }
 
@@ -85,7 +84,8 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myNameAndLevelPanel.apply(mySettings);
+    mySettings.setDownloadedLibraryName(myNameAndLevelPanel.getLibraryName());
+    mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     mySettings.setDirectoryForDownloadedLibrariesPath(myDirectoryField.getText());
     LibraryInfo[] libraryInfos = mySettings.getLibraryInfos();
     for (int i = 0, libraryInfosLength = libraryInfos.length; i < libraryInfosLength; i++) {
