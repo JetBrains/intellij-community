@@ -31,7 +31,7 @@ public abstract class PsiBuilderFactory {
     return ServiceManager.getService(PsiBuilderFactory.class);
   }
 
-  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree);
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode chameleon);
 
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon);
 
@@ -42,7 +42,10 @@ public abstract class PsiBuilderFactory {
     return createBuilder(project, tree, null, lang, seq);
   }
 
-  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @Nullable Lexer lexer,
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode chameleon, @Nullable Lexer lexer,
+                                           @NotNull Language lang, @NotNull CharSequence seq);
+
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon, @Nullable Lexer lexer,
                                            @NotNull Language lang, @NotNull CharSequence seq);
 
   @TestOnly
