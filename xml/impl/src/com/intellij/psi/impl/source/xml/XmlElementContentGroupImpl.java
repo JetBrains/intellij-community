@@ -15,10 +15,17 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +38,14 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
     @NotNull
     @Override
     protected XmlContentParticle[] compute() {
-      return new XmlContentParticle[0];  //To change body of implemented methods use File | Settings | File Templates.
+      return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), new Function<ASTNode, XmlContentParticle>() {
+        @Override
+        public XmlContentParticle fun(ASTNode astNode) {
+          PsiElement element = astNode.getPsi();
+          assert element != null;
+          return element instanceof XmlToken ? new XmlContentParticleImpl((XmlToken)element) : (XmlContentParticle)element;
+        }
+      }, new XmlContentParticle[0]);
     }
   };
 
@@ -55,7 +69,7 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
   }
 
   @Override
-  public String getElementName() {
+  public XmlElementDescriptor getElementDescriptor() {
     return null;
   }
 }

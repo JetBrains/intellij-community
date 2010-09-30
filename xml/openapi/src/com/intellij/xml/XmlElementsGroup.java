@@ -49,5 +49,7 @@ public interface XmlElementsGroup {
   XmlElementsGroup getParentGroup();
 
   List<XmlElementsGroup> getSubGroups();
+
+  @Nullable
   XmlElementDescriptor getLeafDescriptor();
 }

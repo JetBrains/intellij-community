@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,5 +43,5 @@ public interface XmlContentParticle {
   XmlContentParticle[] getSubParticles();
 
   @Nullable
-  String getElementName();
+  XmlElementDescriptor getElementDescriptor();
 }

@@ -17,10 +17,12 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.XmlElementDescriptor;
 
 /**
  * @author Dmitry Avdeev
@@ -66,11 +68,11 @@ public class XmlContentParticleImpl implements XmlContentParticle, XmlTokenType 
 
   @Override
   public XmlContentParticle[] getSubParticles() {
-    return new XmlContentParticle[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new XmlContentParticle[0];
   }
 
   @Override
-  public String getElementName() {
-    return myToken.getText();
+  public XmlElementDescriptor getElementDescriptor() {
+    return DtdReferencesProvider.resolveElementReference(myToken.getText(), myToken);
   }
 }

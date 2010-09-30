@@ -203,7 +203,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     if (group.getMinOccurs() < 1) return;
     switch (group.getGroupType()) {
       case LEAF:
-        tags.add(group.getLeafDescriptor());
+        ContainerUtil.addIfNotNull(tags, group.getLeafDescriptor());
         return;
       case CHOICE:
         tags.add(null); // placeholder for smart completion

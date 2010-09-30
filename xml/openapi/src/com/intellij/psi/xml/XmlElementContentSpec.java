@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.xml;
 
+
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Mike
  */
@@ -25,5 +28,6 @@ public interface XmlElementContentSpec extends XmlElement {
   boolean isMixed();
   boolean hasChildren();
 
+  @Nullable
   XmlElementContentGroup getTopGroup();
 }
