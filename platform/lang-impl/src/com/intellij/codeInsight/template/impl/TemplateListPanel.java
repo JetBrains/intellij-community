@@ -33,6 +33,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,7 +297,7 @@ class TemplateListPanel extends JPanel {
           }.show(getSchemesManager(), myTemplateGroups);
         }
       });
-      
+
     }
 
     gbConstraints.weighty = 1;
@@ -627,6 +628,11 @@ class TemplateListPanel extends JPanel {
                                         final boolean hasFocus) {
 
         value = ((DefaultMutableTreeNode)value).getUserObject();
+        // Fix GTK backround
+        if (UIUtil.isUnderGTKLookAndFeel()){
+          final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          setBackground(background);
+        }
 
         if (value instanceof TemplateImpl) {
           //getTextRenderer().setIcon(TEMPLATE_ICON);
