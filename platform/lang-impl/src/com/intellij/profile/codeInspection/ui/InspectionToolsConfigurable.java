@@ -122,7 +122,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         InspectionProfileImpl profile =
         new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
         try {
-          final Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement();
+          Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement();
+          if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
+            rootElement = (Element)rootElement.getChildren().get(0);
+          }
           final Set<String> levels = new HashSet<String>();
           for (Object o : rootElement.getChildren("inspection_tool")) {
             final Element inspectElement = (Element)o;
@@ -155,7 +158,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           profile.readExternal(rootElement);
           profile.setLocal(true);
           profile.initInspectionTools();
-          if (myProfileManager.getProfile(profile.getName(), false) != null) {
+          if (myPanels.get(profile.getName()) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
           addProfile((InspectionProfileImpl)profile.getModifiableModel());
