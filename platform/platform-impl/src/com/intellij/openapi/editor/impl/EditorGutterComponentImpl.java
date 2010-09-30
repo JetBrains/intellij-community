@@ -978,11 +978,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
    */
   private boolean isFoldingPossible(int startOffset, int endOffset) {
     Document document = myEditor.getDocument();
-    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffset)) {
+    if (startOffset >= document.getTextLength()) {
+      return false;
+    }
+
+    int endOffsetToUse = Math.min(endOffset, document.getTextLength());
+    if (endOffsetToUse <= startOffset) {
+      return false;
+    }
+
+    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffsetToUse)) {
       return true;
     }
     return myEditor.getSettings().isAllowSingleLogicalLineFolding()
-      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty();
+      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffsetToUse).isEmpty();
   }
 
   private Rectangle rectangleByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {

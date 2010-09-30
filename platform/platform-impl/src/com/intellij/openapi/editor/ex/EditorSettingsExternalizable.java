@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -35,12 +36,14 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
   //Q: make it interface?
   public static class OptionSet implements Cloneable {
     public String LINE_SEPARATOR;
-    public boolean USE_SOFT_WRAPS = false;
+    public String USE_SOFT_WRAPS;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = true;
@@ -86,6 +89,9 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     }
   }
 
+  private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
+
+  private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -125,6 +131,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myOptions, element);
+    parseRawSoftWraps();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -133,6 +140,37 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
         return !field.getName().equals("IS_NATIVE2ASCII_FOR_PROPERTIES_FILES") && !field.getName().equals("DEFAULT_PROPERTIES_FILES_CHARSET_NAME");
       }
     });
+  }
+
+  private void parseRawSoftWraps() {
+    if (myOptions.USE_SOFT_WRAPS == null || myOptions.USE_SOFT_WRAPS.isEmpty()) {
+      return;
+    }
+
+    String[] placeNames = myOptions.USE_SOFT_WRAPS.split(COMPOSITE_PROPERTY_SEPARATOR);
+    for (String placeName : placeNames) {
+      try {
+        SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
+        myPlacesToUseSoftWraps.add(place);
+      }
+      catch (IllegalArgumentException e) {
+        // Ignore bad value
+      }
+    }
+
+    // There is a possible case that there were invalid/old format values. We want to replace them by up-to-date data.
+    storeRawSoftWraps();
+  }
+
+  private void storeRawSoftWraps() {
+    StringBuilder buffer = new StringBuilder();
+    for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
+      buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
+    }
+    if (buffer.length() > 0) {
+      buffer.setLength(buffer.length() - 1);
+    }
+    myOptions.USE_SOFT_WRAPS = buffer.toString();
   }
 
   public String getExternalFileName() {
@@ -216,11 +254,30 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public boolean isUseSoftWraps() {
-    return myOptions.USE_SOFT_WRAPS;
+    return isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
+  public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
+    return myPlacesToUseSoftWraps.contains(place);
   }
 
   public void setUseSoftWraps(boolean use) {
-    myOptions.USE_SOFT_WRAPS = use;
+    setUseSoftWraps(use, SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
+  public void setUseSoftWraps(boolean use, @NotNull SoftWrapAppliancePlaces place) {
+    boolean update = use ^ myPlacesToUseSoftWraps.contains(place);
+    if (!update) {
+      return;
+    }
+
+    if (use) {
+      myPlacesToUseSoftWraps.add(place);
+    }
+    else {
+      myPlacesToUseSoftWraps.remove(place);
+    }
+    storeRawSoftWraps();
   }
 
   public boolean isUseCustomSoftWrapIndent() {
