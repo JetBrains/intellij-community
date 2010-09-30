@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -454,7 +455,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
-
+    HintManager.getInstance().hideAllHints();
 
     Runnable runnable = new Runnable() {
       @Override
