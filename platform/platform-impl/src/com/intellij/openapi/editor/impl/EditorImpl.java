@@ -3103,6 +3103,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           region.setExpanded(true);
         }
       });
+
+      // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
+      // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
+      getGutterComponentEx().invalidate();
     }
 
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection) {

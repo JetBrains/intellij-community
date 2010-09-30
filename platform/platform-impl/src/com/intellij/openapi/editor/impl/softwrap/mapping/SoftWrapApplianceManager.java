@@ -249,6 +249,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           start = context.offset;
           softWrapStartOffset = currentFold.getEndOffset();
         }
+        myOffset2fontType.clear();
+        myOffset2widthInPixels.clear();
       }
 
       end = iterationState.getEndOffset();
