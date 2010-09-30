@@ -36,12 +36,29 @@ public class ListCellRendererWrapper implements ListCellRenderer {
                                                 final int index,
                                                 final boolean isSelected,
                                                 final boolean cellHasFocus) {
-    final String displayName = getDisplayedName(value);
-    return myWrapped.getListCellRendererComponent(list, displayName, index, isSelected, cellHasFocus);
+    return getListCellRendererComponent(list, getDisplayedName(value), getIcon(value), index, isSelected, cellHasFocus);
+  }
+
+  public Component getListCellRendererComponent(final JList list,
+                                                final String name,
+                                                final Icon icon,
+                                                final int index,
+                                                final boolean isSelected,
+                                                final boolean cellHasFocus) {
+    final Component component = myWrapped.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
+    if (icon != null && component instanceof JLabel){
+      ((JLabel)component).setIcon(icon);
+    }
+    return component;
   }
 
   @Nullable
-  public String getDisplayedName(Object value) {
+  public String getDisplayedName(final Object value) {
     return String.valueOf(value);
+  }
+
+  @Nullable
+  public Icon getIcon(final Object value) {
+    return null;
   }
 }
