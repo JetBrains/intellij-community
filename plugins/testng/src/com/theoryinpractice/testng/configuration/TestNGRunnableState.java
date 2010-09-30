@@ -53,7 +53,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -65,9 +64,9 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
-import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.strprotocol.MessageHelper;
 
@@ -272,17 +271,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     final TestData data = config.getPersistantData();
 
-    javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.PORT_COMMAND_OPT, String.valueOf(port));
-
-    if (!is15) {
-      javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.ANNOTATIONS_COMMAND_OPT, "javadoc");
-    }
+    javaParameters.getProgramParametersList().add(CommandLineArgs.PORT, String.valueOf(port));
 
     if (data.getOutputDirectory() != null && !"".equals(data.getOutputDirectory())) {
-      javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, data.getOutputDirectory());
+      javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
     }
 
-    javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
+    javaParameters.getProgramParametersList().add(CommandLineArgs.USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
 
     @NonNls final StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
@@ -303,9 +298,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));
       }
     }
-    if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
+    if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
 
-    // Always include the source paths - just makes things easier :)
+   /* // Always include the source paths - just makes things easier :)
     VirtualFile[] sources;
     if ((data.getScope() == TestSearchScope.WHOLE_PROJECT && TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) || module == null) {
       sources = ProjectRootManager.getInstance(project).getContentSourceRoots();
@@ -327,7 +322,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       }
 
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
-    }
+    }*/
     try {
       final ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
       javaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
