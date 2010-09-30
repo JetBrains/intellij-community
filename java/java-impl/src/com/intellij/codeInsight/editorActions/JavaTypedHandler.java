@@ -220,7 +220,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_JAVADOC_LOOKUP) {
+    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       if (file == null) return;
       final Runnable request = new Runnable(){
@@ -236,7 +236,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
           );
         }
       };
-      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.JAVADOC_LOOKUP_DELAY);
+      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.AUTO_LOOKUP_DELAY);
     }
   }
 

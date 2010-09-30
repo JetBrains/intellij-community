@@ -73,16 +73,12 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
-  public boolean AUTO_POPUP_MEMBER_LOOKUP = true;
-  public int MEMBER_LOOKUP_DELAY = 1000;
-  public boolean AUTO_POPUP_XML_LOOKUP = true;
-  public int XML_LOOKUP_DELAY = 0;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
   public boolean AUTO_POPUP_JAVADOC_INFO = false;
   public int JAVADOC_INFO_DELAY = 1000;
-  public boolean AUTO_POPUP_JAVADOC_LOOKUP = true;
-  public int JAVADOC_LOOKUP_DELAY = 1000;
+  public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
+  public int AUTO_LOOKUP_DELAY = 0;
 
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER; // ALL, NONE or FIRST_LETTER
   public static final int ALL = 1;

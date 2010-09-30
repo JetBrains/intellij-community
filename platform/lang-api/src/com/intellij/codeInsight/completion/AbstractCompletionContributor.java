@@ -42,8 +42,7 @@ public abstract class AbstractCompletionContributor<Params extends CompletionPar
                                              final ProcessingContext context) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        PsiElement position = parameters.getPosition();
-        return position.isValid() && pattern.accepts(position, context);
+        return pattern.accepts(parameters.getPosition(), context);
       }
     }).booleanValue();
   }

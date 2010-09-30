@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.Document;
@@ -58,6 +59,10 @@ public class CompletionServiceImpl extends CompletionService{
     return ApplicationManager.getApplication().runReadAction(new Computable<CompletionResultSet>() {
       public CompletionResultSet compute() {
         final PsiElement position = parameters.getPosition();
+        if (!position.isValid()) {
+          throw new ProcessCanceledException();
+        }
+
         final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
 
         final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
