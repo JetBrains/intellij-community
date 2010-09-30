@@ -765,6 +765,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
+    if (explicitlyInvoked) {
+      setFocused(true);
+    }
+
     if (explicitlyInvoked && myCalculating) return false;
     if (!explicitlyInvoked && myDirty) return false;
 
@@ -814,7 +818,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
       myInitialPrefix = presentPrefix;
-    } else {
+    }
+    else {
       myInitialPrefix = null;
     }
 
