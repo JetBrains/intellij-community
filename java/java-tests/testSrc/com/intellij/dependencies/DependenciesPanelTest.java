@@ -87,6 +87,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
     }
   }
 
+  @Override
   protected String getTestPath() {
     return "dependencies";
   }

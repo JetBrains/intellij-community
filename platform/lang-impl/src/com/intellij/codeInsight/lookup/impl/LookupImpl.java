@@ -100,7 +100,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
-  private boolean myFocused;
+  private boolean myFocused = true;
   private String myAdditionalPrefix = "";
   private final AsyncProcessIcon myProcessIcon;
   private volatile boolean myCalculating;

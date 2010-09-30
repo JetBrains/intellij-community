@@ -119,10 +119,12 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testSCR26075() throws Exception {
     doTest(new MockIntroduceVariableHandler("wrong", false, false, false, "java.lang.String") {
+      @Override
       protected void assertValidationResult(boolean validationResult) {
         assertFalse(validationResult);
       }
 
+      @Override
       protected boolean reportConflicts(MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
         assertEquals(2, conflicts.size());
         Collection<? extends String> conflictsMessages = conflicts.values();

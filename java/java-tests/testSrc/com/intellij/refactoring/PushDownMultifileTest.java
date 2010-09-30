@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 //push first method from class a.A to class b.B
 public class PushDownMultifileTest extends MultiFileTestCase {
+  @Override
   protected String getTestRoot() {
     return "/refactoring/pushDown/";
   }
@@ -27,6 +28,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
@@ -38,6 +40,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
   private void doTest(final boolean fail) throws Exception {
     try {
       doTest(new PerformAction() {
+        @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
           final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
           assertTrue("Source class not found", srcClass != null);
@@ -89,6 +92,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
   public void testUsagesInXml() throws Exception {
     try {
       doTest(new PerformAction() {
+        @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
           final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
           assertTrue("Source class not found", srcClass != null);

@@ -34,6 +34,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
     return TestUtils.getTestDataPath() + "groovy/formatter/";
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTempSettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;

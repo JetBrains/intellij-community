@@ -132,7 +132,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

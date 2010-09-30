@@ -39,6 +39,7 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
   protected static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();
@@ -57,14 +58,17 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
       super("testLine", "239");
     }
 
+    @Override
     public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
       return false;
     }
 
+    @Override
     public MyBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
       return null;
     }
 
+    @Override
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
@@ -75,10 +79,12 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
       super("test", "239");
     }
 
+    @Override
     public String getDisplayText(final XBreakpoint<MyBreakpointProperties> breakpoint) {
       return "";
     }
 
+    @Override
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
@@ -95,10 +101,12 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
       myOption = option;
     }
 
+    @Override
     public MyBreakpointProperties getState() {
       return this;
     }
 
+    @Override
     public void loadState(final MyBreakpointProperties state) {
       myOption = state.myOption;
     }

@@ -22,12 +22,14 @@ import java.lang.ref.WeakReference;
 public class WeakReferenceArrayTest extends WeaksTestCase {
   private WeakReferenceArray<Object> myCollection = new WeakReferenceArray<Object>();
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     assertTrue(WeakReferenceArray.PEFORM_CHECK_THREAD);
     WeakReferenceArray.PEFORM_CHECK_THREAD = false;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     WeakReferenceArray.PEFORM_CHECK_THREAD = true;
     super.tearDown();

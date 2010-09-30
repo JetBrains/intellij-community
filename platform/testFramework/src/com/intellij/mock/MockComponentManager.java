@@ -44,6 +44,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public MockComponentManager(@Nullable PicoContainer parent) {
     myPicoContainer = new IdeaPicoContainer(parent) {
+      @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
         final Object o = super.getComponentInstance(componentKey);
@@ -56,6 +57,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     myPicoContainer.registerComponentInstance(this);
   }
 
+  @Override
   public BaseComponent getComponent(String name) {
     return null;
   }
@@ -77,60 +79,73 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     myComponents.put(interfaceClass, instance);
   }
 
+  @Override
   public <T> T getComponent(Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
+  @Override
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
     return getComponent(interfaceClass);
   }
 
+  @Override
   @NotNull
   public Class[] getComponentInterfaces() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
+  @Override
   public boolean hasComponent(@NotNull Class interfaceClass) {
     return false;
   }
 
+  @Override
   @NotNull
   public <T> T[] getComponents(Class<T> baseClass) {
     final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
     return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
 
+  @Override
   @NotNull
   public MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 
+  @Override
   public MessageBus getMessageBus() {
     return myMessageBus;
   }
 
+  @Override
   public boolean isDisposed() {
     return false;
   }
 
+  @Override
   @NotNull
   public ComponentConfig[] getComponentConfigurations() {
     return new ComponentConfig[0];
   }
 
+  @Override
   @Nullable
   public Object getComponent(final ComponentConfig componentConfig) {
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
 
+  @Override
   public ComponentConfig getConfig(Class componentImplementation) {
     throw new UnsupportedOperationException("Method getConfig not implemented in " + getClass());
   }

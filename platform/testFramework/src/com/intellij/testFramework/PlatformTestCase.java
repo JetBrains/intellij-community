@@ -139,6 +139,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return CodeStyleSettingsManager.getSettings(getProject());
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     if (ourTestCase != null) {
@@ -233,6 +234,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected void setUpModule() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           myModule = createMainModule();
@@ -329,6 +331,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
 
@@ -387,6 +390,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     resetClassFields(getClass());
   }
 
+  @Override
   protected final <T extends Disposable> T disposeOnTearDown(T disposable) {
     Disposer.register(myProject, disposable);
     return disposable;
@@ -434,6 +438,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     for (Module module : modules) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           final ModifiableRootModel rootModel = rootManager.getModifiableModel();
           rootModel.setSdk(jdk);
@@ -447,6 +452,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return null;
   }
 
+  @Override
   public void runBare() throws Throwable {
     try {
       runBareImpl();
@@ -454,6 +460,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     finally {
       try {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
           public void run() {
             cleanupApplicationCaches(getProject());
             resetAllFields();
@@ -469,6 +476,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private void runBareImpl() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ourTestThread = Thread.currentThread();
         ourTestTime = getTimeRequired();
@@ -534,9 +542,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return true;
   }
 
+  @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
     Runnable runnable1 = new Runnable() {
+      @Override
       public void run() {
         try {
           if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
@@ -564,6 +574,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
@@ -585,6 +596,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         VirtualFileManager.getInstance().refresh(false);
       }

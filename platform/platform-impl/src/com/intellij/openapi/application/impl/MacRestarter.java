@@ -18,14 +18,12 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
 /**
  * User: spLeaner
@@ -51,13 +49,15 @@ public class MacRestarter {
         final int appIndex = path.indexOf(".app");
         final String appPath = path.substring(0, appIndex + 4);
         final String relaunchPath = path.substring(0, path.lastIndexOf('/')) + "/../../bin/relaunch";
-        final long processId = Foundation.invoke(app, Foundation.createSelector("processIdentifier")).longValue();
+        if (new File(relaunchPath).exists()) {
+          final long processId = Foundation.invoke(app, Foundation.createSelector("processIdentifier")).longValue();
 
-        final ID args = Foundation.invoke(Foundation.getClass("NSArray"), Foundation.createSelector("arrayWithObjects:"),
-                                          new Object[]{Foundation.cfString(appPath), Foundation.cfString(String.valueOf(processId))});
+          final ID args = Foundation.invoke(Foundation.getClass("NSArray"), Foundation.createSelector("arrayWithObjects:"),
+                                            new Object[]{Foundation.cfString(appPath), Foundation.cfString(String.valueOf(processId))});
 
-        Foundation.invoke(Foundation.getClass("NSTask"), Foundation.createSelector("launchedTaskWithLaunchPath:arguments:"),
-                          Foundation.cfString(relaunchPath), args);
+          Foundation.invoke(Foundation.getClass("NSTask"), Foundation.createSelector("launchedTaskWithLaunchPath:arguments:"),
+                            Foundation.cfString(relaunchPath), args);
+        }
       }
     }
     catch (MalformedURLException e) {

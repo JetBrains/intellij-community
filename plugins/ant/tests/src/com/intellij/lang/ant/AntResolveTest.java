@@ -291,6 +291,7 @@ public class AntResolveTest extends ResolveTestCase {
     assertTrue(target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget().canNavigateToSource());
   }
 
+  @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/resolve/";
   }

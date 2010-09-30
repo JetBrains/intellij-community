@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Aug 31, 2010
  */
 public class DndMoveTest extends CodeInsightTestCase {
+  @Override
   protected String getTestRoot() {
     return "/refactoring/dndMove/";
   }

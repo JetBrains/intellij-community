@@ -43,6 +43,7 @@ public class ChangeListManagerUpdateOnFileChangeTest extends GitTestCase {
   private ChangeListManagerImpl myChangeListManager;
   private VirtualFile afile;
 
+  @Override
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();

@@ -40,6 +40,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   public LightTempDirTestFixtureImpl() {
     final VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     mySourceRoot = new WriteAction<VirtualFile>() {
+      @Override
       protected void run(final Result<VirtualFile> result) throws Throwable {
         result.setResult(fsRoot.createChildDirectory(this, "root"));
       }
@@ -52,9 +53,11 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     mySourceRoot = null;
   }
 
+  @Override
   public VirtualFile copyFile(final VirtualFile file, final String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         try {
           VirtualFile targetDir = findOrCreateDir(path);
@@ -74,9 +77,11 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
+  @Override
   @NotNull
   public VirtualFile findOrCreateDir(final String path) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         VirtualFile root = getSourceRoot();
         if (path.length() == 0) return root;
@@ -101,12 +106,15 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
+  @Override
   public VirtualFile copyAll(String dataDir, String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @Override
   public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
         assert from != null: "Cannot find testdata directory " + dataDir;
@@ -144,10 +152,12 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return child;
   }
 
+  @Override
   public String getTempDirPath() {
     return "temp:///root";
   }
 
+  @Override
   public VirtualFile getFile(@NonNls String path) {
     final VirtualFile sourceRoot = getSourceRoot();
     final VirtualFile result = sourceRoot.findFileByRelativePath(path);
@@ -158,11 +168,13 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return result;
   }
 
+  @Override
   @NotNull
   public VirtualFile createFile(String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     final String name = PathUtil.getFileName(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         try {
           VirtualFile targetDir = findOrCreateDir(path);
@@ -175,10 +187,12 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
+  @Override
   @NotNull
   public VirtualFile createFile(String targetPath, final String text) throws IOException {
     final VirtualFile file = createFile(targetPath);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           VfsUtil.saveText(file, text);
@@ -193,6 +207,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   public void deleteAll() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final VirtualFile[] toDelete;
         if (myUsePlatformSourceRoot) {

@@ -33,12 +33,14 @@ public class MovePackageTest extends MultiFileTestCase {
     doTest(new String[]{"a"}, "a.b");
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/movePackage/";
   }
 
   private void doTest(final String[] packageNames, final String newPackageName) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         MovePackageTest.this.performAction(packageNames, newPackageName);
       }

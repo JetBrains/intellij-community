@@ -166,6 +166,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     final PsiClass superClass = psiClass.getExtendsListTypes().length > 0 ? psiClass.getSuperClass() : null;
     final MultiMap<PsiElement, String> conflictsMap =
       PullUpConflictsUtil.checkConflicts(members, psiClass, superClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
+        @Override
         public boolean checkedInterfacesContain(PsiMethod psiMethod) {
           return PullUpHelper.checkedInterfacesContain(Arrays.asList(members), psiMethod);
         }

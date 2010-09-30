@@ -28,53 +28,68 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     super();
   }
 
+  @Override
   public VirtualFileSystem[] getFileSystems() {
     return new VirtualFileSystem[0];
   }
 
+  @Override
   public VirtualFileSystem getFileSystem(String protocol) {
     return null;
   }
 
+  @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     refresh(asynchronous);
   }
 
+  @Override
   public void refresh(boolean asynchronous) {
   }
 
+  @Override
   public void refresh(boolean asynchronous, Runnable postAction) {
   }
 
+  @Override
   public VirtualFile findFileByUrl(@NotNull String url) {
     return null;
   }
 
+  @Override
   public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     return null;
   }
 
+  @Override
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
   }
 
+  @Override
   public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
   }
 
+  @Override
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
   }
 
+  @Override
   public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
   }
 
+  @Override
   public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
   }
 
+  @Override
   public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
   }
 
+  @Override
   public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
   }
 
+  @Override
   public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
   }
 
@@ -90,20 +105,25 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public void unregisterRefreshUpdater(CacheUpdater updater) {
   }
 
+  @Override
   public void registerFileSystem(VirtualFileSystem fileSystem) {
   }
 
+  @Override
   public void unregisterFileSystem(VirtualFileSystem fileSystem) {
   }
 
+  @Override
   public void fireAfterRefreshFinish(final boolean asynchronous) {
 
   }
 
+  @Override
   public void fireBeforeRefreshStart(final boolean asynchronous) {
     
   }
 
+  @Override
   public long getModificationCount() {
     return ModificationTracker.EVER_CHANGED.getModificationCount();
   }

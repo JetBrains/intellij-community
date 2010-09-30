@@ -22,6 +22,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         initContentRoot();
         initModifiableModel();

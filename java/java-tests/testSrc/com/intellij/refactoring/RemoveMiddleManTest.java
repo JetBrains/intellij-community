@@ -26,12 +26,14 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/removemiddleman/";
   }
 
   private void doTest(final String conflict) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
 

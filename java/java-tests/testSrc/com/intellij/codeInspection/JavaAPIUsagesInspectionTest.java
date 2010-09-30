@@ -58,6 +58,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   public void _testCollectSinceApiUsages() {
     final String version = "1.4";
     final ContentIterator contentIterator = new ContentIterator() {
+      @Override
       public boolean processFile(VirtualFile fileOrDir) {
         final PsiFile file = PsiManager.getInstance(getProject()).findFile(fileOrDir);
         if (file instanceof PsiJavaFile) {

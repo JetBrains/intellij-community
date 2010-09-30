@@ -136,6 +136,7 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   private void doBlockParserTest(final String text) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         StatementParser.parseCodeBlockDeep(builder, true);
       }
@@ -144,6 +145,7 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         StatementParser.parseStatements(builder);
       }

@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -64,14 +65,31 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @NonNls private static final String THROWS_TAG = "@throws";
 
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable) {
       GrVariable variable = (GrVariable)element;
       StringBuffer buffer = new StringBuffer();
+      if (element instanceof GrField) {
+        final PsiClass parentClass = ((GrField)element).getContainingClass();
+        if (parentClass != null) {
+          buffer.append(JavaDocUtil.getShortestClassName(parentClass, element));
+          newLine(buffer);
+        }
+        generateModifiers(buffer, element);
+      }
       final PsiType type = variable.getDeclaredType();
       appendTypeString(buffer, type);
       buffer.append(" ");
       buffer.append(variable.getName());
+      newLine(buffer);
+
+      PsiReference ref;
+      while (originalElement != null && ((ref = originalElement.getReference()) == null || ref.resolve() == null)) {
+        originalElement = originalElement.getParent();
+      }
+
+      appendInferredType(originalElement, buffer);
+
       return buffer.toString();
     }
     else if (element instanceof GrReferenceExpression) {
@@ -137,6 +155,32 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     //todo
     return null;
+  }
+
+  private static void appendInferredType(PsiElement originalElement, StringBuffer buffer) {
+    if (originalElement != null) {
+      if (originalElement instanceof GrReferenceExpression) {
+        final PsiType inferredType = ((GrReferenceExpression)originalElement).getType();
+        if (inferredType != null) {
+          buffer.append("[inferred type] ").append(inferredType.getCanonicalText());
+          return;
+        }
+      }
+    }
+    buffer.append("[cannot infer type]");
+  }
+
+  private static void generateModifiers(StringBuffer buffer, PsiElement element) {
+    String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+
+    if (modifiers.length() > 0) {
+      buffer.append(modifiers);
+      buffer.append(" ");
+    }
+  }
+
+  private static void newLine(StringBuffer buffer) {
+    buffer.append(LINE_SEPARATOR);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -104,11 +104,13 @@ public class ColumnTestTest extends BaseColumnRenderingTest {
     assertEquals("Total:", myFragmentsContainer.getTextAt(0));
   }
 
+  @Override
   protected ColoredRenderer createRenderer(final SMTestProxy proxy,
                                            final UITestUtil.FragmentsContainer fragmentsContainer) {
     return new MyRenderer(proxy, fragmentsContainer);
   }
 
+  @Override
   protected ColumnInfo<SMTestProxy, String> createColumn() {
     return new ColumnTest();
   }

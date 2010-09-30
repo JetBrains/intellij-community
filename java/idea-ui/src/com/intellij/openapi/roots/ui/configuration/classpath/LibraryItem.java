@@ -46,6 +46,8 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     if (library == null) return null;
 
     final List<String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
+    if (descriptions.isEmpty()) return null;
+
     return "<html>" + StringUtil.join(descriptions, "<br>") + "</html>";
   }
 }

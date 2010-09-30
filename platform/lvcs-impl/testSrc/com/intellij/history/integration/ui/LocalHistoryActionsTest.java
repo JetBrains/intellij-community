@@ -72,6 +72,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   public void testLocalHistoryActionDisabledWithoutProject() throws IOException {
     LocalHistoryAction a = new LocalHistoryAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
       }
     };
@@ -124,6 +125,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   private AnActionEvent createEventFor(AnAction a, final VirtualFile[] files, final Project p) {
     DataContext dc = new DataContext() {
+      @Override
       @Nullable
       public Object getData(String id) {
         if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;

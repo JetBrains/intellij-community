@@ -107,6 +107,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myTempDirFixture.createFile(root +
                                 "/META-INF/plugin.xml", text);
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root));
       }

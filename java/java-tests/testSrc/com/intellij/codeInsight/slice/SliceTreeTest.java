@@ -44,20 +44,25 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
 
 
     SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, ToolWindowHeadlessManagerImpl.HEADLESS_WINDOW) {
+      @Override
       protected void close() {
       }
 
+      @Override
       public boolean isAutoScroll() {
         return false;
       }
 
+      @Override
       public void setAutoScroll(boolean autoScroll) {
       }
 
+      @Override
       public boolean isPreview() {
         return false;
       }
 
+      @Override
       public void setPreview(boolean preview) {
       }
     };
@@ -127,6 +132,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     assertEquals(2, leaves.size());
     List<PsiElement> list = new ArrayList<PsiElement>(leaves);
     Collections.sort(list, new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement o1, PsiElement o2) {
         return o1.getText().compareTo(o2.getText());
       }
@@ -256,6 +262,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     Collections.sort(actualNodes, SliceTreeBuilder.SLICE_NODE_COMPARATOR);
 
     Object[] actualStrings = ContainerUtil.map2Array(actualNodes, new Function<SliceNode, Object>() {
+      @Override
       public Object fun(SliceNode node) {
         return node.toString();
       }

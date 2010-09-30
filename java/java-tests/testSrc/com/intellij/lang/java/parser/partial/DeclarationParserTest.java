@@ -42,7 +42,8 @@ public class DeclarationParserTest extends JavaParsingTestCase {
                                                            "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }", false, false); }
   public void testTypeAnno() {
     withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { public void run() {
+              new Runnable() { @Override
+                               public void run() {
                   doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
                                                 "  @F int @F[] method() @F throws @F Exception {\n" +
                                                 "    a = this instanceof @F C;\n" +
@@ -102,6 +103,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
   private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
     doParserTest(text, new TestParser() {
+      @Override
       public void parse(final PsiBuilder builder) {
         DeclarationParser.parseClassBodyWithBraces(builder, isAnnotation, isEnum);
       }

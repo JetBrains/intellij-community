@@ -58,6 +58,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
     configureFromFileText(fileName, textBefore);
     invokeAction();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }

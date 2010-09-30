@@ -25,6 +25,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
     MavenGeneralSettings s = new MavenGeneralSettings();
     s.addListener(new MavenGeneralSettings.Listener() {
+      @Override
       public void pathsChanged() {
         log[0] += "changed ";
       }
@@ -42,12 +43,15 @@ public class MavenSettingsTest extends MavenTestCase {
 
     MavenImportingSettings s = new MavenImportingSettings();
     s.addListener(new MavenImportingSettings.Listener() {
+      @Override
       public void autoImportChanged() {
       }
 
+      @Override
       public void createModuleGroupsChanged() {
       }
 
+      @Override
       public void createModuleForAggregatorsChanged() {
         log[0] += "changed ";
       }

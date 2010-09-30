@@ -657,7 +657,15 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
     if (target instanceof PsiMethod) {
-      return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+      final PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
+      if (superMethods.length == 0) {
+        return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+      }
+      final Collection<PsiReference> result = new ArrayList<PsiReference>();
+      for (PsiMethod superMethod : superMethods) {
+        result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
+      }
+      return result;
     }
     return super.findReferencesToHighlight(target, searchScope);
   }

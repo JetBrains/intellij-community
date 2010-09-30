@@ -19,6 +19,7 @@ public class SurroundWithIfFixTest extends LightQuickFixTestCase {
      doAllTests();
    }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithIf";
   }

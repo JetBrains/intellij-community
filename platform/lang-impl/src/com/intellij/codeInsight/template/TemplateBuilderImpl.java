@@ -118,6 +118,12 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     replaceElement(key, expression);
   }
 
+  @Override
+  public void replaceElement(PsiElement element, TextRange rangeWithinElement, Expression expression) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
+    replaceElement(key, expression);
+  }
+
   public void replaceRange(TextRange rangeWithinElement, String replacementText) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(myContainerElement.getStartOffset()));
 

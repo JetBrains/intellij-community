@@ -66,6 +66,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       }
       myExtensions = null;
     }
+    @Override
     public void dispose() {
       unblock();
     }
@@ -84,6 +85,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
     PlatformTestUtil.assertTiming("Performance failed", maxMillis, new Runnable() {
+      @Override
       public void run() {
         infos.clear();
         DaemonCodeAnalyzerImpl.getInstance(getProject()).restart();

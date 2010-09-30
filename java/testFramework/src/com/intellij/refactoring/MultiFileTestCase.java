@@ -63,6 +63,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
   }
 
+  @Override
   @NonNls
   protected abstract String getTestRoot();
 

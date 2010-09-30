@@ -50,6 +50,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpression() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0;
       }
@@ -58,6 +59,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithNamedArgs() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof PsiClass;
       }
@@ -66,6 +68,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithMapParameter() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1;
       }
@@ -74,6 +77,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNewExpressionWithAnonymousClass() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
       }
@@ -82,6 +86,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testGroovyDocParameter1() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
       }
@@ -90,6 +95,7 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
 
   public void testGroovyDocParameter2() throws Throwable {
     doTest(new Condition<PsiElement>() {
+      @Override
       public boolean value(PsiElement element) {
         return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
       }

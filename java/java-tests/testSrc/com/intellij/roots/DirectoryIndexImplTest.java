@@ -54,12 +54,14 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     final File root = createTempDirectory();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           myRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
@@ -262,6 +264,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     final String list1 = list + ";" + "newDir";
     try {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           fileTypeManager.setIgnoredFilesList(list1);
         }
@@ -271,6 +274,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           fileTypeManager.setIgnoredFilesList(list);
         }

@@ -220,5 +220,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     return myHighlighterTree.sweep(start, end, sweepProcessor);
   }
-
+  public void normalize() {
+    myHighlighterTree.normalize();
+  }
 }

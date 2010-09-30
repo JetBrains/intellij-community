@@ -127,9 +127,6 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyTestStart(ObjectReader reader) {
     final TestProxy testProxy = reader.readObject();
-    synchronized (myCurrentTests) {
-      myCurrentTests.add(testProxy);
-    }
     final JUnitRunningModel model = getModel();
     if (model != null && testProxy.getParent() == null && model.getRoot() != testProxy) {
       getDynamicParent(model, testProxy).addChild(testProxy);
@@ -165,12 +162,17 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyTestResult(ObjectReader reader) {
     final TestProxy testProxy = reader.readObject();
-    synchronized (myCurrentTests) {
-      myCurrentTests.remove(testProxy);
-    }
     final int state = reader.readInt();
     final StateChanger stateChanger = STATE_CLASSES.get(new Integer(state));
     stateChanger.changeStateOf(testProxy, reader);
+    synchronized (myCurrentTests) {
+      if (stateChanger instanceof RunningStateSetter) {
+        myCurrentTests.add(testProxy);
+      }
+      else if (stateChanger instanceof TestCompleter) {
+        myCurrentTests.remove(testProxy);
+      }
+    }
   }
 
   public void notifyFinish(ObjectReader reader) {

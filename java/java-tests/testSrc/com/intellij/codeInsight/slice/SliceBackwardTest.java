@@ -57,6 +57,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
   static void checkUsages(final SliceUsage usage, final boolean dataFlowToThis, final TIntObjectHashMap<IntArrayList> flownOffsets) {
     final List<SliceUsage> children = new ArrayList<SliceUsage>();
     boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         usage.processChildren(new CommonProcessors.CollectProcessor<SliceUsage>(children));
       }
@@ -70,6 +71,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     int size = list == null ? 0 : list.size();
     assertEquals(message(startOffset, usage), size, children.size());
     Collections.sort(children, new Comparator<SliceUsage>() {
+      @Override
       public int compare(SliceUsage o1, SliceUsage o2) {
         return o1.compareTo(o2);
       }

@@ -24,12 +24,14 @@ public class WeakListTest extends WeaksTestCase {
   private final WeakReferenceArray<Object> myWeakArray = new WeakReferenceArray<Object>();
   private final WeakList<Object> myWeakList = new WeakList<Object>(myWeakArray);
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     Assert.assertTrue(WeakReferenceArray.PEFORM_CHECK_THREAD);
     WeakReferenceArray.PEFORM_CHECK_THREAD = false;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     WeakReferenceArray.PEFORM_CHECK_THREAD = true;
     super.tearDown();

@@ -24,6 +24,7 @@ public class Convertor34Test extends MultiFileTestCase {
     myDoCompare = false;
   }
 
+  @Override
   protected String getTestRoot() {
     return "/moduleRootManager/convertor34/";
   }
@@ -45,6 +46,7 @@ public class Convertor34Test extends MultiFileTestCase {
 
   private PerformAction createPerformAction(final String projectName) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final VirtualFile projectFile = rootDir.findChild(projectName + ProjectFileType.DOT_DEFAULT_EXTENSION);
         final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
@@ -58,6 +60,7 @@ public class Convertor34Test extends MultiFileTestCase {
         Convertor34.execute(projectDocument.getRootElement(), projectFile.getPath(), null);
 
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             LocalFileSystem.getInstance().refresh(false);
           }
@@ -84,6 +87,7 @@ public class Convertor34Test extends MultiFileTestCase {
 
   private PerformAction createPerformActionForLibraryTable() {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final VirtualFile libFile = rootDir.findChild("library.table.xml");
         final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
@@ -94,6 +98,7 @@ public class Convertor34Test extends MultiFileTestCase {
         macros.substitute(oldTable.getRootElement(), true);
         Convertor34.convertLibraryTable34(oldTable.getRootElement(), libFile.getPath());
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             LocalFileSystem.getInstance().refresh(false);
           }

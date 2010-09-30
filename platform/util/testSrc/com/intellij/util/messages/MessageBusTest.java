@@ -49,10 +49,12 @@ public class MessageBusTest extends TestCase {
       this.id = id;
     }
 
+    @Override
     public void t11() {
       myLog.add(id + ":" + "t11");
     }
 
+    @Override
     public void t12() {
       myLog.add(id + ":" + "t12");
     }
@@ -64,16 +66,19 @@ public class MessageBusTest extends TestCase {
       this.id = id;
     }
 
+    @Override
     public void t21() {
       myLog.add(id + ":" + "t21");
     }
 
+    @Override
     public void t22() {
       myLog.add(id + ":" + "t22");
     }
   }
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myBus = MessageBusFactory.newMessageBus(this);
@@ -128,12 +133,14 @@ public class MessageBusTest extends TestCase {
   public void testEventFiresAnotherEvent() {
     final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Listener() {
+      @Override
       public void t11() {
         myLog.add("c1:t11");
         myBus.syncPublisher(T2).t21();
         myLog.add("c1:t11:done");
       }
 
+      @Override
       public void t12() {
         myLog.add("c1:t12");
       }
@@ -152,6 +159,7 @@ public class MessageBusTest extends TestCase {
   public void testConnectionTerminatedInDispatch() {
     final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Listener() {
+      @Override
       public void t11() {
         c1.disconnect();
         myLog.add("c1:t11");
@@ -159,6 +167,7 @@ public class MessageBusTest extends TestCase {
         myLog.add("c1:t11:done");
       }
 
+      @Override
       public void t12() {
         myLog.add("c1:t12");
       }

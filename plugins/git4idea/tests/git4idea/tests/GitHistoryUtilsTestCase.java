@@ -130,11 +130,13 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
   public void testAppendableHistory() throws Exception {
     final List<GitFileRevision> revisions = new ArrayList<GitFileRevision>(3);
     Consumer<GitFileRevision> consumer = new Consumer<GitFileRevision>() {
+      @Override
       public void consume(GitFileRevision gitFileRevision) {
         revisions.add(gitFileRevision);
       }
     };
     Consumer<VcsException> exceptionConsumer = new Consumer<VcsException>() {
+      @Override
       public void consume(VcsException exception) {
         fail("No exception expected", exception);
       }

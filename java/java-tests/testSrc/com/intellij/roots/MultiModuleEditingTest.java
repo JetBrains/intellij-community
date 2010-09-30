@@ -32,9 +32,11 @@ public class MultiModuleEditingTest extends ModuleTestCase {
 
   private static final String TEST_PATH = PathManagerEx.getTestDataPath() +
                                           "/moduleRootManager/multiModuleEditing".replace('/', File.separatorChar);
+  @Override
   protected void setUpModule() {
   }
 
+  @Override
   protected void setUpJdk() {
   }
 
@@ -55,6 +57,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           modifiableModel.commit();
         }
@@ -73,6 +76,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertEquals("Changes are not applied until commit", 2, moduleManager.getModules().length);
       moduleListener.assertCorrectEvents(new String[][]{{"+a", "+b"}});
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           modifiableModel.commit();
         }
@@ -106,6 +110,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       contentEntryB.addSourceFolder(getVirtualFileInTestData("b/src"), false);
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(moduleModel, new ModifiableRootModel[]{rootModelB, rootModelA});
         }
@@ -142,6 +147,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ProjectRootManager.getInstance(myProject).multiCommit(moduleModel, new ModifiableRootModel[]{rootModelB});
         }
@@ -169,6 +175,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
 
   private VirtualFile getVirtualFileInTestData(final String relativeVfsPath) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         final String path = TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
         final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
@@ -182,18 +189,22 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   private class MyModuleListener implements ModuleListener {
     private final List<String> myLog = new ArrayList<String>();
 
+    @Override
     public void moduleRemoved(Project project, Module module) {
       myLog.add("-" + module.getName());
     }
 
+    @Override
     public void modulesRenamed(Project project, List<Module> modules) {
       // write something
     }
 
+    @Override
     public void moduleAdded(Project project, Module module) {
       myLog.add("+" + module.getName());
     }
 
+    @Override
     public void beforeModuleRemoved(Project project, Module module) {
     }
 

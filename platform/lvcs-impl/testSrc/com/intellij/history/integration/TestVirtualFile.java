@@ -60,6 +60,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     IsDirectory = true;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
@@ -70,19 +71,23 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     return Paths.isCaseSensitive() ? myName.equals(name) : myName.equalsIgnoreCase(name);
   }
 
+  @Override
   public boolean isDirectory() {
     return IsDirectory;
   }
 
+  @Override
   public String getPath() {
     if (myParent == null) return myName;
     return myParent.getPath() + "/" + myName;
   }
 
+  @Override
   public long getTimeStamp() {
     return myTimestamp;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return myChildren.toArray(new VirtualFile[0]);
   }
@@ -92,15 +97,18 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     myChildren.add(f);
   }
 
+  @Override
   public long getLength() {
     return myContent == null ? 0 : myContent.getBytes().length;
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes();
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return new MockLocalFileSystem() {
@@ -111,28 +119,34 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     };
   }
 
+  @Override
   public boolean isWritable() {
     return !isReadOnly;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   @Nullable
   public VirtualFile getParent() {
     return myParent;
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
   }

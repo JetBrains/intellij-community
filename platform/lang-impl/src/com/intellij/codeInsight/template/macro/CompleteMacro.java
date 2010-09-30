@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.openapi.application.ApplicationManager;
 
 public class CompleteMacro extends BaseCompleteMacro {
   public CompleteMacro() {
@@ -25,6 +26,6 @@ public class CompleteMacro extends BaseCompleteMacro {
   }
 
   CodeInsightActionHandler getCompletionHandler() {
-    return new CodeCompletionHandlerBase(CompletionType.BASIC, false, true);
+    return new CodeCompletionHandlerBase(CompletionType.BASIC, ApplicationManager.getApplication().isUnitTestMode(), true);
   }
 }

@@ -37,40 +37,50 @@ public class MockCreateParameterInfoContext implements CreateParameterInfoContex
     myFile = file;
   }
 
+  @Override
   public Object[] getItemsToShow() {
     return myItems;
   }
 
+  @Override
   public void setItemsToShow(Object[] items) {
     myItems = items;
   }
 
+  @Override
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {}
 
+  @Override
   public int getParameterListStart() {
     return myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   public PsiElement getHighlightedElement() {
     return myHighlightedElement;
   }
 
+  @Override
   public void setHighlightedElement(PsiElement elements) {
     myHighlightedElement = elements;
   }
 
+  @Override
   public Project getProject() {
     return myFile.getProject();
   }
 
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   public int getOffset() {
     return myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;

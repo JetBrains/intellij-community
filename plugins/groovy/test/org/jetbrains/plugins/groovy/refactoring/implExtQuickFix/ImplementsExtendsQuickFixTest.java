@@ -44,6 +44,7 @@ public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCa
         newText = "";
       } else {
         new WriteCommandAction(getProject()) {
+          @Override
           protected void run(Result result) throws Throwable {
             ChangeExtendsImplementsQuickFix fix =
               new ChangeExtendsImplementsQuickFix(typeDefinition.getExtendsClause(), typeDefinition.getImplementsClause());

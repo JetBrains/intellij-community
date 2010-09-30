@@ -18,13 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 public class GroovyExpressionPattern<T extends GrExpression, Self extends GroovyExpressionPattern<T,Self>> extends GroovyElementPattern<T,Self> {
   protected GroovyExpressionPattern(final Class<T> aClass) {
@@ -35,20 +32,6 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
     return with(new PatternCondition<T>("ofType") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return pattern.getCondition().accepts(t.getType(), context);
-      }
-    });
-  }
-
-  public GroovyMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
-    return new GroovyMethodCallPattern().and(this).with(new PatternCondition<GrCallExpression>("methodCall") {
-      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
-        final GroovyResolveResult[] results = callExpression.getCallVariants(null);
-        for (GroovyResolveResult result : results) {
-          if (method.getCondition().accepts(result.getElement(), context)) {
-            return true;
-          }
-        }
-        return false;
       }
     });
   }

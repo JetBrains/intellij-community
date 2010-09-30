@@ -31,12 +31,10 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class MavenImporter {
   public static ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
   protected final String myPluginGroupID;
@@ -61,7 +59,14 @@ public abstract class MavenImporter {
     return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
-  public abstract boolean isSupportedDependency(MavenArtifact artifact);
+  public void getSupportedPackagings(Collection<String> result) {
+  }
+
+  public void getSupportedDependencyTypes(Collection<String> result) {
+  }
+
+  public void getSupportedDependencyScopes(Collection<String> result) {
+  }
 
   @Nullable
   public Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {

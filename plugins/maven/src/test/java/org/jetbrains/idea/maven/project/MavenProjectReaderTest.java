@@ -769,6 +769,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "<name>${prop}</name>");
 
     MavenModel p = readProject(module, new MavenProjectReaderProjectLocator() {
+      @Override
       public VirtualFile findProjectFile(MavenId coordinates) {
         return new MavenId("test", "parent", "1").equals(coordinates) ? parent : null;
       }
@@ -993,6 +994,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenModel p = readProject(module);
     assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
+      @Override
       public Object fun(MavenProfile profile) {
         return profile.getId();
       }
@@ -1549,6 +1551,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {
+    @Override
     public VirtualFile findProjectFile(MavenId coordinates) {
       return null;
     }

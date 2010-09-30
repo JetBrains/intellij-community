@@ -116,7 +116,7 @@ class GrChageSignatureUsageSearcher {
         }
       }
     }
-
+    final GrOpenBlock block = method.getBlock();
     for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
       final int oldParameterIndex = parameterInfo.getOldIndex();
       final String newName = parameterInfo.getName();
@@ -132,7 +132,9 @@ class GrChageSignatureUsageSearcher {
                   }
                 }
               };
-            GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBlock(), collidingVariableVisitor);
+            if (block != null) {
+              GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, block, collidingVariableVisitor);
+            }
           }
         }
       }
@@ -145,7 +147,6 @@ class GrChageSignatureUsageSearcher {
               }
             }
           };
-        final GrOpenBlock block = method.getBlock();
         if (block != null) {
           GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, block, variableVisitor);
         }

@@ -27,6 +27,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     IdeaTestFixtureFactoryImpl.getFixtureFactory().registerFixtureBuilder(JavaModuleFixtureBuilder.class, MyJavaModuleFixtureBuilderImpl.class);
   }
 
+  @Override
   public JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
     return new JavaCodeInsightTestFixtureImpl(projectFixture, new TempDirTestFixtureImpl());
   }
@@ -36,6 +37,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     return new JavaCodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
   }
 
+  @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor));
   }
@@ -45,6 +47,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
+    @Override
     protected ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);
     }

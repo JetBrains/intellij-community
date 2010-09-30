@@ -28,6 +28,7 @@ public class AnnotationParsingTest extends JavaParsingTestCase {
 
   public void testTypeAnno() {
     withLevel(LanguageLevel.JDK_1_7, new Runnable() {
+      @Override
       public void run() {
         doTest(true);
         myFile.accept(new PsiRecursiveElementVisitor() {

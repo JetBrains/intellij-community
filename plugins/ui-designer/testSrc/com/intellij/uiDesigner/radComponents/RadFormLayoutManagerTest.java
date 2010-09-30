@@ -33,6 +33,7 @@ public class RadFormLayoutManagerTest extends TestCase {
   private RadContainer myContainer;
   private FormLayout myLayout;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myManager = new RadFormLayoutManager();

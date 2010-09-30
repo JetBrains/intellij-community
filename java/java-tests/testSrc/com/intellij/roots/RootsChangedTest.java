@@ -26,6 +26,7 @@ public class RootsChangedTest extends ModuleTestCase {
   private MessageBusConnection myConnection;
   private MyModuleRootListener myModuleRootListener;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myConnection = myProject.getMessageBus().connect();
@@ -33,6 +34,7 @@ public class RootsChangedTest extends ModuleTestCase {
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myConnection.disconnect();
     super.tearDown();
@@ -212,10 +214,12 @@ public class RootsChangedTest extends ModuleTestCase {
     private int beforeCount = 0;
     private int afterCount = 0;
 
+    @Override
     public void beforeRootsChange(ModuleRootEvent event) {
       beforeCount++;
     }
 
+    @Override
     public void rootsChanged(ModuleRootEvent event) {
       afterCount++;
     }

@@ -628,13 +628,15 @@ public class OldXmlParsing implements XmlElementType {
   }
 
   private boolean parseGroup(final CompositeElement spec, final Lexer lexer) {
-    addToken(spec, lexer);
-    boolean b = parseElementContentSpecInner(lexer, spec, false);
+    CompositeElement group = ASTFactory.composite(XML_ELEMENT_CONTENT_GROUP);
+    spec.rawAddChildren(group);
+    addToken(group, lexer);
+    boolean b = parseElementContentSpecInner(lexer, group, false);
     if (b && lexer.getTokenType() == XML_RIGHT_PAREN) {
-      addToken(spec, lexer);
+      addToken(group, lexer);
       return true;
     } else if (b) {
-      spec.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.rbrace.expected")));
+      group.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.rbrace.expected")));
       return false;
     }
     return b;

@@ -696,12 +696,22 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @Nullable
   public NewVirtualFile findFileById(final int id) {
+    return _findFileById(id, false);
+  }
+
+
+  @Nullable
+  public NewVirtualFile findFileByIdIfCached(final int id) {
+    return _findFileById(id, true);
+  }
+
+  private NewVirtualFile _findFileById(int id, final boolean cachedOnly) {
     final NewVirtualFile cached = myIdToDirCache.get(id);
     if (cached != null) {
       return cached;
     }
 
-    NewVirtualFile result = doFindFile(id);
+    NewVirtualFile result = doFindFile(id, cachedOnly);
 
     if (result != null && result.isDirectory()) {
       NewVirtualFile old = myIdToDirCache.putIfAbsent(id, result);
@@ -711,7 +721,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @Nullable
-  private NewVirtualFile doFindFile(final int id) {
+  private NewVirtualFile doFindFile(final int id, boolean cachedOnly) {
     final int parentId = getParent(id);
     if (parentId == 0) {
       synchronized (LOCK) {
@@ -722,8 +732,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
     else {
-      NewVirtualFile parentFile = findFileById(parentId);
-      return parentFile != null ? parentFile.findChildById(id) : null;
+      NewVirtualFile parentFile = _findFileById(parentId, cachedOnly);
+      if (parentFile == null) {
+        return null;
+      }
+      return cachedOnly ? parentFile.findChildByIdIfCached(id) : parentFile.findChildById(id);
     }
   }
 

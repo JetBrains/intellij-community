@@ -24,4 +24,6 @@ public interface XmlElementContentSpec extends XmlElement {
   boolean isAny();
   boolean isMixed();
   boolean hasChildren();
+
+  XmlElementContentGroup getTopGroup();
 }

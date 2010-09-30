@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
 
 public class InlineSuperClassTest extends MultiFileTestCase {
+  @Override
   protected String getTestRoot() {
     return "/refactoring/inlineSuperClass/";
   }
@@ -22,6 +23,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
@@ -33,6 +35,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   private void doTest(final boolean fail) throws Exception {
     try {
       doTest(new PerformAction() {
+        @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
           PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
 
@@ -174,6 +177,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
 
   private void doTestMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
         if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));

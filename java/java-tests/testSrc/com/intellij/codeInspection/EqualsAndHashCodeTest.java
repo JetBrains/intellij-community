@@ -22,12 +22,14 @@ public class EqualsAndHashCodeTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTool.projectOpened(getProject());
   }
 
 
+  @Override
   protected void tearDown() throws Exception {
     myTool.projectClosed(getProject());
     super.tearDown();

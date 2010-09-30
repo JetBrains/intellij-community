@@ -274,6 +274,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIManager.getColor("ToolTip.background");
   }
 
+  public String getUlImg(boolean awtTooltip) {
+    return useGraphite(awtTooltip) ? "/general/mdot-white.png" : "/general/mdot.png";
+  }
+
   public Color getBorderColor(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? getTextBackground(awtTooltip).darker() : Color.darkGray;
   }
@@ -391,4 +395,5 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public void cancelAutoHide() {
     myHideRunnable = null;
   }
+
 }

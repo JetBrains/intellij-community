@@ -172,6 +172,12 @@ public class MavenDomUtil {
   }
 
   @Nullable
+  public static MavenProject findContainingProject(@NotNull DomElement element) {
+    PsiElement psi = element.getXmlElement();
+    return psi == null ? null : findContainingProject(psi);
+  }
+
+  @Nullable
   public static MavenProject findContainingProject(@NotNull PsiElement element) {
     VirtualFile file = getVirtualFile(element);
     if (file == null) return null;

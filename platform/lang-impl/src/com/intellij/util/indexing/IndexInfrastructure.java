@@ -132,6 +132,17 @@ public class IndexInfrastructure {
   }
 
   @Nullable
+  public static VirtualFile findFileByIdIfCached(final PersistentFS fs, final int id) {
+    if (ourUnitTestMode) {
+      final VirtualFile testFile = findTestFile(id);
+      if (testFile != null) {
+        return testFile;
+      }
+    }
+    return fs.findFileByIdIfCached(id);
+  }
+
+  @Nullable
   private static VirtualFile findTestFile(final int id) {
     return DummyFileSystem.getInstance().findById(id);
   }

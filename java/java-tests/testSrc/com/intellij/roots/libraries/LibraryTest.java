@@ -19,6 +19,7 @@ public class LibraryTest extends IdeaTestCase {
     final Library library = libraryTable.createLibrary("NewLibrary");
     final boolean[] listenerNotifiedOnChange = new boolean[1];
     library.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
+      @Override
       public void rootSetChanged(RootProvider wrapper) {
         listenerNotifiedOnChange[0] = true;
       }
@@ -28,6 +29,7 @@ public class LibraryTest extends IdeaTestCase {
     modifyableModel.addRoot("file://x.jar", OrderRootType.CLASSES);
     modifyableModel.addRoot("file://x-src.jar", OrderRootType.SOURCES);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         modifyableModel.commit();
       }
@@ -39,6 +41,7 @@ public class LibraryTest extends IdeaTestCase {
     final Library.ModifiableModel modifyableModel1 = library.getModifiableModel();
     modifyableModel1.setName("library");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         modifyableModel1.commit();
       }
@@ -51,6 +54,7 @@ public class LibraryTest extends IdeaTestCase {
             new XMLOutputter().outputString(element));
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final LibraryTable.ModifiableModel modifiableModel = libraryTable.getModifiableModel();
         modifiableModel.removeLibrary(library);

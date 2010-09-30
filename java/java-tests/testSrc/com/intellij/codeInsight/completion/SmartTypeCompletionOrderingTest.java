@@ -230,6 +230,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "myFoo", "myBar");
   }
 
+  @Override
   protected String getBasePath() {
     return BASE_PATH;
   }

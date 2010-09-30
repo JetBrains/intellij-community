@@ -108,6 +108,10 @@ public class HintHint {
     return getTooltipManager().getTextFont(myAwtTooltip);
   }
 
+  public String getUlImg() {
+    return getTooltipManager().getUlImg(myAwtTooltip);
+  }
+
   public boolean isContentActive() {
     return myContentActive;
   }
@@ -154,4 +158,5 @@ public class HintHint {
       jc.setBorder(isOwnBorderAllowed() ? BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)) : null);
     }
   }
+
 }

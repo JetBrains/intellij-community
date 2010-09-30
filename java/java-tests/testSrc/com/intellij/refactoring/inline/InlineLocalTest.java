@@ -22,6 +22,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }

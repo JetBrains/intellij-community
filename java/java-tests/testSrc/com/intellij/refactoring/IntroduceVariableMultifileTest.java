@@ -16,11 +16,13 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
  *  @author dsl
  */
 public class IntroduceVariableMultifileTest extends MultiFileTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
+  @Override
   protected String getTestRoot() {
     return "/refactoring/introduceVariable/";
   }
@@ -79,6 +81,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
 
   PerformAction createAction(final String className, final IntroduceVariableBase testMe) {
     return new PerformAction() {
+      @Override
       public void performAction(VirtualFile vroot, VirtualFile rootAfter) {
         final JavaPsiFacade psiManager = getJavaFacade();
         final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));

@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import org.jdom.Element;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
@@ -15,11 +14,6 @@ import java.util.Map;
 public abstract class GroovyImporter extends MavenImporter {
   public GroovyImporter(String pluginGroupID, String pluginArtifactID) {
     super(pluginGroupID, pluginArtifactID);
-  }
-
-  @Override
-  public boolean isSupportedDependency(MavenArtifact artifact) {
-    return false;
   }
 
   @Override

@@ -256,6 +256,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
+      @Override
       @Nullable
       public Object getData(@NonNls final String dataId) {
         return null;

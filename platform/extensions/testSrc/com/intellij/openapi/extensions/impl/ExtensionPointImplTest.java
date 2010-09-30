@@ -54,12 +54,14 @@ public class ExtensionPointImplTest extends TestCase {
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
+      @Override
       public void extensionAdded(ExtensionPoint extensionPoint1) {
         assertSame(extensionPoint, extensionPoint1);
         assertSame(area, extensionPoint1.getArea());
         flags[0] = true;
       }
 
+      @Override
       public void extensionRemoved(ExtensionPoint extensionPoint1) {
         assertSame(extensionPoint, extensionPoint1);
         assertSame(area, extensionPoint1.getArea());
@@ -98,10 +100,12 @@ public class ExtensionPointImplTest extends TestCase {
     final boolean added[] = new boolean[1];
     final boolean removed[] = new boolean[1];
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
+      @Override
       public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
+      @Override
       public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
@@ -123,10 +127,12 @@ public class ExtensionPointImplTest extends TestCase {
     extensionPoint.registerExtension(new Integer(123));
     assertFalse(added[0]);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
+      @Override
       public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
+      @Override
       public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
       }
     });

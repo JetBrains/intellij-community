@@ -38,14 +38,17 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   public static final LightProjectDescriptor GROOVY_DESCRIPTOR = new LightProjectDescriptor() {
+    @Override
     public ModuleType getModuleType() {
       return StdModuleTypes.JAVA;
     }
 
+    @Override
     public Sdk getSdk() {
       return JavaSdkImpl.getMockJdk17("java 1.5");
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
       final VirtualFile groovyJar =
@@ -55,6 +58,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
     }
   };
 
+  @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
     return GROOVY_DESCRIPTOR;
@@ -66,6 +70,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
    *
    * @return relative path to the test data.
    */
+  @Override
   @NonNls
   protected abstract String getBasePath();
 

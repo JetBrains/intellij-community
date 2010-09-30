@@ -7,6 +7,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
  * @author cdr
  */
 public class CreateConstructorParameterFromFieldTest extends LightQuickFixTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection()};
   }
@@ -14,6 +15,7 @@ public class CreateConstructorParameterFromFieldTest extends LightQuickFixTestCa
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createConstructorParameterFromField";
   }

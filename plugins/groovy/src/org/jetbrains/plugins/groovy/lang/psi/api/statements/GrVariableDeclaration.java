@@ -21,4 +21,9 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrVariable[] getVariables();
 
   void setType(@Nullable PsiType type);
+
+  boolean isTuple();
+
+  @Nullable
+  GrTypeElement getTypeElementGroovyForVariable(GrVariable var);
 }

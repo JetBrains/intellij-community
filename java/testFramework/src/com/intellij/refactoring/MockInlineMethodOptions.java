@@ -21,13 +21,16 @@ import com.intellij.refactoring.inline.InlineOptions;
  * @author dyoma
  */
 public class MockInlineMethodOptions implements InlineOptions {
+  @Override
   public boolean isInlineThisOnly() {
     return false;
   }
 
+  @Override
   public void close(int exitCode) {
   }
 
+  @Override
   public boolean isPreviewUsages() {
     return false;
   }

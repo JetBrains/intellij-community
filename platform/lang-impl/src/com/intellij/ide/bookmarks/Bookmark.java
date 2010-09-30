@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,16 +72,7 @@ public class Bookmark {
 
 
       if (myHighlighter != null) {
-        myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
-          @NotNull
-          public Icon getIcon() {
-            return Bookmark.this.getIcon();
-          }
-
-          public String getTooltipText() {
-            return StringUtil.escapeXml(getNotEmptyDescription());
-          }
-        });
+        myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer());
 
         myHighlighter.setErrorStripeMarkColor(Color.black);
         myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
@@ -178,7 +170,7 @@ public class Bookmark {
     }
 
     return IdeBundle
-      .message("bookmark.file.X.line.Y", presentableUrl, (myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1));
+      .message("bookmark.file.X.line.Y", presentableUrl, myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1);
   }
 
   private static class MnemonicIcon implements Icon {
@@ -207,6 +199,34 @@ public class Bookmark {
 
     public int getIconHeight() {
       return 12;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MnemonicIcon that = (MnemonicIcon)o;
+
+      return myMnemonic == that.myMnemonic;
+    }
+  }
+
+  private class MyGutterIconRenderer extends GutterIconRenderer {
+    @NotNull
+    public Icon getIcon() {
+      return Bookmark.this.getIcon();
+    }
+
+    public String getTooltipText() {
+      return StringUtil.escapeXml(getNotEmptyDescription());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MyGutterIconRenderer &&
+             Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
+             Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());
     }
   }
 }

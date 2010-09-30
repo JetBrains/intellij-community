@@ -309,6 +309,7 @@ public class SvnRenameTest extends SvnTestCase {
 
   private void moveToNewPackage(final VirtualFile file, final String packageName) throws Throwable {
     new WriteCommandAction.Simple(myProject) {
+      @Override
       public void run() {
         try {
           final VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, packageName);

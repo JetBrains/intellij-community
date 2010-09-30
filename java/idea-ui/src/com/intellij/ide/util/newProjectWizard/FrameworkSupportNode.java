@@ -122,8 +122,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
       final LibraryInfo[] libraries = getLibraries();
       if (libraries.length != 0) {
-        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute()
-        );
+        myLibraryCompositionSettings = new LibraryCompositionSettings(libraries, myConfigurable.getSelectedVersion().getLibraryName(), myBaseDirForLibrariesGetter.compute());
         Disposer.register(myConfigurable, myLibraryCompositionSettings);
       }
       else {

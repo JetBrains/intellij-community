@@ -86,6 +86,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     restoreSettingsFile();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           setUpInWriteAction();
@@ -162,6 +163,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     try {
       if (runInWriteAction()) {
         new WriteAction() {
+          @Override
           protected void run(Result result) throws Throwable {
             MavenTestCase.super.runTest();
           }

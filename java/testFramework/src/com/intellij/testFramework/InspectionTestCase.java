@@ -111,6 +111,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
   protected void runTool(final String testDir, final String jdkName, final InspectionTool tool, boolean runDeadCodeFirst) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           setupRootModel(testDir, sourceDir, jdkName);
@@ -208,10 +209,12 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
       }
 
+      @Override
       public void readExternal(Element element) {
 
       }
 
+      @Override
       public void writeExternal(Element element) {
 
       }
@@ -236,6 +239,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return sdk;
   }
 
+  @Override
   @NonNls
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath()+"/inspection/";

@@ -8,6 +8,7 @@ public class MethodThrowsTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { enableInspectionTool(new RedundantThrowsDeclaration()); doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/methodThrows";
   }

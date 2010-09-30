@@ -16,6 +16,7 @@ import java.io.File;
  *  @author dsl
  */
 public class TypesTest extends GenericsTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final ModifiableRootModel rootModel = setupGenericSampleClasses();
@@ -23,6 +24,7 @@ public class TypesTest extends GenericsTestCase {
     final String testPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
     final VirtualFile[] testRoot = new VirtualFile[] { null };
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         testRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(testPath);
       }
@@ -32,6 +34,7 @@ public class TypesTest extends GenericsTestCase {
       testContentEntry.addSourceFolder(testRoot[0], false);
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         rootModel.commit();
       }

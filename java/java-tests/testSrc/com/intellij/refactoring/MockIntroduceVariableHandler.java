@@ -35,31 +35,38 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   }
 
 
+  @Override
   protected IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
                                                   boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
                                                   TypeSelectorManagerImpl typeSelectorManager, InputValidator validator) {
     Assert.assertTrue(type.getCanonicalText(), type.equalsToText(myExpectedTypeCanonicalName));
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
+      @Override
       public String getEnteredName() {
         return myName;
       }
 
+      @Override
       public boolean isReplaceAllOccurrences() {
         return myReplaceAll && occurrences.length > 1;
       }
 
+      @Override
       public boolean isDeclareFinal() {
         return myDeclareFinal || isReplaceAllOccurrences() && declareFinalIfAll;
       }
 
+      @Override
       public boolean isReplaceLValues() {
         return myReplaceLValues;
       }
 
+      @Override
       public PsiType getSelectedType() {
         return type;
       }
 
+      @Override
       public boolean isOK() {
         return true;
       }
@@ -73,14 +80,17 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
     Assert.assertTrue(validationResult);
   }
 
+  @Override
   protected void showErrorMessage(Project project, Editor editor, String message) {
     throw new RuntimeException("Error message:" + message);
   }
 
+  @Override
   protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {
 
   }
 
+  @Override
   protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     return false;
   }

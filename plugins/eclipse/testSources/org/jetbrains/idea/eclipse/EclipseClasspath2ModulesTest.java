@@ -42,6 +42,7 @@ public class EclipseClasspath2ModulesTest extends Eclipse2ModulesTest {
     doTest("multi", "main");
   }
 
+  @Override
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
     super.doTest(workspaceRoot, projectRoot);
     EclipseClasspathTest.doTest("/" + workspaceRoot + "/" + projectRoot, getProject());

@@ -15,15 +15,22 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
@@ -67,31 +74,59 @@ public class XmlSmartCompletionProvider {
     final XmlTag parentTag = tag.getParentTag();
     final PsiFile file = tag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return;
-    XSModel xsModel = ApplicationManager.getApplication().runReadAction(new Computable<XSModel>() {
+    XSModel xsModel = ApplicationManager.getApplication().runReadAction(new NullableComputable<XSModel>() {
       @Override
       public XSModel compute() {
         return getXSModel((XmlFile)file);
       }
     });
+    if (xsModel == null) {
+      return;
+    }
     XSElementDeclaration decl = getElementDeclaration(parentTag, xsModel);
-    if (decl != null) {
-      XSComplexTypeDecl definition = (XSComplexTypeDecl)decl.getTypeDefinition();
-      XSCMValidator model = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
-      SubstitutionGroupHandler handler = new SubstitutionGroupHandler(new XSGrammarBucket());
-      int[] state = model.startContentModel();
-      for (XmlTag xmlTag : parentTag.getSubTags()) {
-        if (xmlTag == tag) {
-          break;
-        }
-        model.oneTransition(createQName(xmlTag), state, handler);
+    if (decl == null) {
+      return;
+    }
+    XSComplexTypeDecl definition = (XSComplexTypeDecl)decl.getTypeDefinition();
+    XSCMValidator model = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
+    SubstitutionGroupHandler handler = new SubstitutionGroupHandler(new XSGrammarBucket());
+    int[] state = model.startContentModel();
+    for (XmlTag xmlTag : parentTag.getSubTags()) {
+      if (xmlTag == tag) {
+        break;
       }
+      model.oneTransition(createQName(xmlTag), state, handler);
+    }
 
-      List vector = model.whatCanGoHere(state);
-      for (Object o : vector) {
-        if (o instanceof XSElementDecl) {
-          XSElementDecl elementDecl = (XSElementDecl)o;
-          result.addElement(LookupElementBuilder.create(elementDecl.getName()).setTypeText(elementDecl.getNamespace()));
-        }
+    List vector = model.whatCanGoHere(state);
+    for (Object o : vector) {
+      if (o instanceof XSElementDecl) {
+        final XSElementDecl elementDecl = (XSElementDecl)o;
+        result.addElement(LookupElementBuilder.create(elementDecl.getName()).setTypeText(elementDecl.getNamespace()).setInsertHandler(new InsertHandler<LookupElement>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            context.commitDocument();
+            XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+            assert parentTagDescriptor != null;
+            XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
+            for (XmlElementDescriptor descriptor : descriptors) {
+              if (descriptor.getName().equals(elementDecl.getName())) {
+                Project project = context.getProject();
+                Editor editor = context.getEditor();
+                // Need to insert " " to prevent creating tags like <tagThis is my text
+                final int offset = editor.getCaretModel().getOffset();
+                editor.getDocument().insertString(offset, " ");
+                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                PsiElement current = context.getFile().findElementAt(context.getStartOffset());
+
+                XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
+                GenerateXmlTagAction.generateTag(
+                  newTag);
+                return;
+              }
+            }
+          }
+        }));
       }
     }
   }
@@ -144,6 +179,7 @@ public class XmlSmartCompletionProvider {
   }
 
 
+  @Nullable
   private XSModel getXSModel(XmlFile file) {
 
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(false) {
@@ -157,11 +193,12 @@ public class XmlSmartCompletionProvider {
     handler.setErrorReporter(handler.new TestErrorReporter());
     handler.doValidate(file);
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
-    assert grammarPool != null;
+    if (grammarPool == null) {
+      return null;
+    }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
-    XSGrammar grammar = (XSGrammar)grammars[0];
 
-    return grammar.toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
       @Override
       public XSGrammar fun(Grammar grammar) {
         return (XSGrammar)grammar;

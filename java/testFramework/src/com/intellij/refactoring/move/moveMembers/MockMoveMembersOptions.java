@@ -37,10 +37,12 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
     this(targetClassName, memberSet.toArray(new PsiMember[memberSet.size()]));
   }
 
+  @Override
   public String getMemberVisibility() {
     return myMemberVisibility;
   }
 
+  @Override
   public boolean makeEnumConstant() {
     return true;
   }
@@ -49,10 +51,12 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
     myMemberVisibility = visibility;
   }
 
+  @Override
   public PsiMember[] getSelectedMembers() {
     return mySelectedMembers;
   }
 
+  @Override
   public String getTargetClassName() {
     return myTargetClassName;
   }

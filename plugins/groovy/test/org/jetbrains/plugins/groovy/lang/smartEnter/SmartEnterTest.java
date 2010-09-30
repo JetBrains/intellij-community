@@ -50,6 +50,7 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
 
     final List<SmartEnterProcessor> processors = getSmartProcessors(GroovyFileType.GROOVY_LANGUAGE);
     new WriteCommandAction(getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         final Editor editor = myFixture.getEditor();
         for (SmartEnterProcessor processor : processors) {

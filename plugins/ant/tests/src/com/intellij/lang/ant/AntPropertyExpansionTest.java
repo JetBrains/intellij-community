@@ -77,15 +77,18 @@ public class AntPropertyExpansionTest extends TestCase{
       myMap = map;
     }
 
+    @Override
     @NotNull
     public Iterator<String> getNamesIterator() {
       return myMap.keySet().iterator();
     }
 
+    @Override
     public String getPropertyValue(String propertyName) {
       return myMap.get(propertyName);
     }
 
+    @Override
     public PsiElement getNavigationElement(String propertyName) {
       return null;
     }

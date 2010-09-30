@@ -21,12 +21,14 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   public void testNoParams() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[]{
           new TypeParameterInfo(aClass, "T", "java.lang.String")
@@ -37,6 +39,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testRemoveAllParams() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) {
         return new TypeParameterInfo[0];
       }
@@ -45,6 +48,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testReorderParams() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) {
         return new TypeParameterInfo[] {
           new TypeParameterInfo(1),
@@ -56,6 +60,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testAddParam() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[] {
           new TypeParameterInfo(0),
@@ -67,6 +72,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testAddOneFirst() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[]{
           new TypeParameterInfo(aClass, "T", "java.lang.String")
@@ -77,6 +83,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testAddManyFirst() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[]{
           new TypeParameterInfo(aClass, "U", "SubjectFace"),
@@ -88,6 +95,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testRemoveOneLast() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[0];
       }
@@ -96,6 +104,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
 
   public void testRemoveManyLast() throws Exception {
     doTest(new GenParams() {
+      @Override
       public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
         return new TypeParameterInfo[0];
       }

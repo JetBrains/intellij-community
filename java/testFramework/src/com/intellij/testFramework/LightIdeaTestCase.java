@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NonNls;
     return JavaSdkImpl.getMockJdk17();
   }
 
+  @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
@@ -38,57 +37,50 @@ public class FieldCountInspection extends ClassMetricInspection {
     /** @noinspection PublicField*/
     public boolean m_considerStaticFinalFieldsConstant = false;
 
+    @Override
     @NotNull
     public String getID(){
         return "ClassWithTooManyFields";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.fields.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "too.many.fields.problem.descriptor", infos[0]);
     }
 
+    @Override
     protected int getDefaultLimit() {
         return FIELD_COUNT_LIMIT;
     }
 
+    @Override
     protected String getConfigurationLabel() {
         return InspectionGadgetsBundle.message(
                 "too.many.fields.count.limit.option");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
         final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
-        final JCheckBox includeCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message(
+        final CheckBox includeCheckBox =
+                new CheckBox(InspectionGadgetsBundle.message(
                         "field.count.inspection.include.constant.fields.in.count.checkbox"),
-                        m_countConstantFields);
-        final ButtonModel includeModel = includeCheckBox.getModel();
-        includeModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_countConstantFields = includeModel.isSelected();
-            }
-        });
-
-        final JCheckBox considerCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message(
+                        this, "m_countConstantFields");
+        final CheckBox considerCheckBox =
+                new CheckBox(InspectionGadgetsBundle.message(
                         "field.count.inspection.static.final.fields.count.as.constant.checkbox"),
-                        m_considerStaticFinalFieldsConstant);
-        final ButtonModel considerModel = considerCheckBox.getModel();
-        considerModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_considerStaticFinalFieldsConstant = considerModel.isSelected();
-            }
-        });
+                        this, "m_considerStaticFinalFieldsConstant");
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
@@ -117,6 +109,7 @@ public class FieldCountInspection extends ClassMetricInspection {
         return panel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new FieldCountVisitor();
     }
