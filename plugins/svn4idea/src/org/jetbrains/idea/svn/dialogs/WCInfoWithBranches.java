@@ -33,8 +33,8 @@ public class WCInfoWithBranches extends WCInfo {
                             final List<Branch> branches,
                             final VirtualFile root,
                             final String trunkToot,
-                            final NestedCopyType type, final SVNDepth depth, boolean repoSupportsMergeinfo) {
-    super(path, url, format, repositoryRoot, isWcRoot, type, depth, repoSupportsMergeinfo);
+                            final NestedCopyType type, final SVNDepth depth) {
+    super(path, url, format, repositoryRoot, isWcRoot, type, depth);
     myBranches = branches;
     myRoot = root;
     myTrunkRoot = trunkToot;

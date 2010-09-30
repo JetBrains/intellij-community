@@ -120,12 +120,16 @@ public class SelectLocationDialog extends DialogWrapper {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
+        SVNRepository repos = null;
         try {
-          SVNRepository repos = SvnVcs.getInstance(project).createRepository(urlString);
+          repos = SvnVcs.getInstance(project).createRepository(urlString);
           result.set(repos.getRepositoryRoot(true));
-          repos.closeSession();
         } catch (SVNException e) {
           excRef.set(e);
+        } finally {
+          if (repos != null) {
+            repos.closeSession();
+          }
         }
       }
     }, "Detecting repository root", true, project);

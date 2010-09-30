@@ -15,31 +15,32 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.auth.ProviderType;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
   private final Project myProject;
-  private static ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
-  private final SvnVcs myVcs;
+  private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
   private final SvnAuthenticationManager myManager;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
-    myVcs = vcs;
     myManager = manager;
     myProject = vcs.getProject();
   }
@@ -101,7 +102,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (previousAuth == null) {                                                               
+          if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
           else {
@@ -162,20 +163,19 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     }
 
     if (command != null) {
-      try {
-        GuiUtils.runOrInvokeAndWait(command);
-      }
-      catch (InterruptedException e) {
-        //
-      }
-      catch (InvocationTargetException e) {
-        //
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        command.run();
+      } else {
+        final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+        application.invokeAndWait(command, pi == null ? ModalityState.defaultModalityState() : pi.getModalityState());
       }
       log("3 authentication result: " + result[0]);
     }
 
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
+    myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
     return result[0];
   }
 
@@ -189,7 +189,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   }
 
   public static class MyCallState {
-    private boolean myWasCalled;
+    private final boolean myWasCalled;
     private boolean myWasCancelled;
 
     public MyCallState(boolean wasCalled, boolean wasCancelled) {

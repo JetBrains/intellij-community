@@ -31,14 +31,14 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
-import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
-
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.InjectionsSettingsUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
 
 /**
  * @author Gregory.Shrago

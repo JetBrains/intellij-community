@@ -47,7 +47,6 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
   public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
 
   public boolean CHECK_NEEDED = true;
-  public String CHECK_PERIOD = UpdateSettingsConfigurable.WEEKLY;
   public long LAST_TIME_CHECKED = 0;
 
   public static UpdateSettings getInstance() {

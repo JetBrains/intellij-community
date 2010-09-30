@@ -31,7 +31,6 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;

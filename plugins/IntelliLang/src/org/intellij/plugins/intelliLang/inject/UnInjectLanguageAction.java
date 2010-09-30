@@ -32,11 +32,12 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
 
 /**
  * @author Dmitry Avdeev

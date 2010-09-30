@@ -225,7 +225,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
     try {
       final PsiFile fileFromText = PsiFileFactory.getInstance(getProject())
-        .createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this));
+        .createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this, false));
       if (fileFromText instanceof XmlFile) {
         return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
       }

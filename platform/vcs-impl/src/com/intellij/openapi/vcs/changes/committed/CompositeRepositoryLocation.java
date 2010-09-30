@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 
 /**
  * @author yole
@@ -48,5 +49,13 @@ class CompositeRepositoryLocation implements RepositoryLocation {
 
   public String getKey() {
     return myProviderLocation.getKey();
+  }
+
+  public void onBeforeBatch() throws VcsException {
+    myProviderLocation.onBeforeBatch();
+  }
+
+  public void onAfterBatch() {
+    myProviderLocation.onAfterBatch();
   }
 }

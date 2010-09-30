@@ -30,7 +30,7 @@ import java.awt.*;
  * @author spleaner
  */
 public interface Notifications {
-  Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class);
+  Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 

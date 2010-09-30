@@ -112,12 +112,32 @@ public class CodeFormatterFacade {
       if (file.getTextLength() > 0) {
         try {
           ranges.preprocess(file.getNode());
+          Project project = file.getProject();
+          Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+          RangeMarker[] markers = new RangeMarker[ranges.getRanges().size()];
+          int i = 0;
+          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+            TextRange textRange = range.getTextRange();
+            int start = textRange.getStartOffset();
+            int end = textRange.getEndOffset();
+            if (start >= 0 && end > start && end <= document.getTextLength()) {
+              markers[i] = document.createRangeMarker(textRange);
+              markers[i].setGreedyToLeft(true);
+              markers[i].setGreedyToRight(true);
+              i++;
+            }
+          }
           final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
           component.doPostponedFormatting(file.getViewProvider());
+          i = 0;
+          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+            if (markers[i] != null) {
+              range.setTextRange(new TextRange(markers[i].getStartOffset(), markers[i].getEndOffset()));
+            }
+            i++;
+          }
           Block rootBlock= builder.createModel(file, mySettings).getRootBlock();
-          Project project = file.getProject();
-          final FormattingModel model = new DocumentBasedFormattingModel(rootBlock,
-                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
+          final FormattingModel model = new DocumentBasedFormattingModel(rootBlock, document,
                                                                          project, mySettings, fileType, file);
 
           //printToConsole(rootBlock, model);

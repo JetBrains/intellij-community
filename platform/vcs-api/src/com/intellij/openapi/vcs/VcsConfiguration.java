@@ -51,6 +51,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
+  @NonNls private static final String CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT = "confirmRemoveEmptyChangelist";
   private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
@@ -164,9 +165,13 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    final Element child = element.getChild(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
+    Element child = element.getChild(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
     if (child != null) {
       MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.fromString(child.getAttributeValue(VALUE_ATTR));
+    }
+    child = element.getChild(CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT);
+    if (child != null) {
+      REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.fromString(child.getAttributeValue(VALUE_ATTR));
     }
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
     for (final Object message : messages) {
@@ -186,6 +191,11 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     if (MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
       Element confirmChild = new Element(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
       confirmChild.setAttribute(VALUE_ATTR, MOVE_TO_FAILED_COMMIT_CHANGELIST.toString());
+      element.addContent(confirmChild);
+    }
+    if (REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      Element confirmChild = new Element(CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT);
+      confirmChild.setAttribute(VALUE_ATTR, REMOVE_EMPTY_INACTIVE_CHANGELISTS.toString());
       element.addContent(confirmChild);
     }
     for (String message : myLastCommitMessages) {

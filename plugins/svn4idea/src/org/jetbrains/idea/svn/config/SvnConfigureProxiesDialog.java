@@ -27,6 +27,7 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnServerFileManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import java.awt.*;
@@ -137,10 +138,16 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
         if (pi != null) {
           pi.setText("Connecting to " + url);
         }
+        SVNRepository repository = null;
         try {
-          SvnVcs.getInstance(myProject).createRepository(url).testConnection();
+          repository = SvnVcs.getInstance(myProject).createRepository(url);
+          repository.testConnection();
         } catch (SVNException exc) {
           excRef.set(exc);
+        } finally {
+          if (repository != null) {
+            repository.closeSession();
+          }
         }
       }
     }, "Test connection", true, myProject);

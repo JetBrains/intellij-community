@@ -188,7 +188,7 @@ public class StartupActionScriptManager {
     public void execute() throws IOException {
       if (!mySource.exists()) {
         //noinspection HardCodedStringLiteral
-        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),

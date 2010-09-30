@@ -218,9 +218,19 @@ public class ProjectRootsTraversing {
         state.addAllUrls(orderEntry.getUrls(OrderRootType.CLASSES));
       }
     };
+    public static final Visit<OrderEntry> ADD_CLASSES_WITHOUT_TESTS_AND_PROVIDED = new Visit<OrderEntry>() {
+      public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
+        if (orderEntry instanceof ExportableOrderEntry) {
+          final DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
+          if (scope == DependencyScope.TEST || scope == DependencyScope.PROVIDED) return;
+        }
+        state.addAllUrls(orderEntry.getUrls(OrderRootType.CLASSES));
+      }
+    };
 
     public static final Visit<ModuleOrderEntry> RECURSIVE = new RecursiveModules(true);
     public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS = new RecursiveModules(false);
+    public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS_AND_PROVIDED = new RecursiveModules(false, false);
 
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
       private boolean myExcludeTests;
@@ -253,13 +263,21 @@ public class ProjectRootsTraversing {
 
     public static class RecursiveModules implements Visit<ModuleOrderEntry> {
       private boolean myIncludeTests;
+      private boolean myIncludeProvided;
 
       public RecursiveModules(boolean includeTests) {
         myIncludeTests = includeTests;
+        myIncludeProvided = true;
+      }
+
+      public RecursiveModules(boolean includeTests, boolean includeProvided) {
+        myIncludeTests = includeTests;
+        myIncludeProvided = includeProvided;
       }
 
       public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
         if (!myIncludeTests && moduleOrderEntry.getScope() == DependencyScope.TEST) return;
+        if (!myIncludeProvided && moduleOrderEntry.getScope() == DependencyScope.PROVIDED) return;
         Module module = moduleOrderEntry.getModule();
         if (module == null) return;
         ModuleRootManager moduleRootManager = state.getCurrentModuleManager();

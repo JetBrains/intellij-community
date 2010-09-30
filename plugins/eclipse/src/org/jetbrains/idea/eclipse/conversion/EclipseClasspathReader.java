@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.expandEclipsePath2Url;
 
 public class EclipseClasspathReader {
   private final String myRootPath;

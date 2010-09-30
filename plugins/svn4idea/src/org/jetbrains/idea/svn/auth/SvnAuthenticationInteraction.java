@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.pointers;
+package org.jetbrains.idea.svn.auth;
 
-import com.intellij.util.messages.Topic;
+import org.tmatesoft.svn.core.SVNURL;
 
-public interface VirtualFilePointerListener {
-  Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
+import java.io.File;
 
-  void beforeValidityChanged(VirtualFilePointer[] pointers);
-  void validityChanged(VirtualFilePointer[] pointers);
+public interface SvnAuthenticationInteraction {
+  void warnOnAuthStorageDisabled(final SVNURL url);
+  void warnOnPasswordStorageDisabled(final SVNURL url);
+  void warnOnSSLPassphraseStorageDisabled(final SVNURL url);
+  boolean promptForSSLPlaintextPassphraseSaving(final SVNURL url, String realm, File certificateFile);
+  boolean promptForPlaintextPasswordSaving(final SVNURL url, String realm);
+  boolean promptInAwt();
 }

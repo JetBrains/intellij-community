@@ -74,7 +74,7 @@ public class SplitterTest extends TestCase {
   public void testCapitalizedWithShortWords() {
     String text = "IntelliJ";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{});
+    correctListToCheck(checkAreas, text, new String[]{"Intelli"});
   }
 
   public void testWords() {
@@ -86,7 +86,7 @@ public class SplitterTest extends TestCase {
   public void testCapitalizedWithShortAndLongWords() {
     String text = "IntelliJTestTest";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{});
+    correctListToCheck(checkAreas, text, new String[]{"Intelli", "Test", "Test"});
   }
 
   public void testWordWithApostrophe1() {
@@ -443,15 +443,8 @@ public class SplitterTest extends TestCase {
 
   private static void correctListToCheck(List<CheckArea> toCheck, String text, @NotNull String[] expected) {
     List<String> words = wordsToCheck(toCheck, text);
-    if (expected.length == 0) {
-      Assert.assertNull(words);
-    }
-    else {
-      Assert.assertNotNull(words);
-      Assert.assertEquals(expected.length, words.size());
-      List<String> expectedWords = Arrays.asList(expected);
-      Assert.assertEquals(expectedWords, words);
-    }
+    List<String> expectedWords = Arrays.asList(expected);
+    Assert.assertEquals("Splitting:'" + text + "'", expectedWords.toString(), words!=null ? words.toString() : "[]");
   }
 
 
