@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListScrollingUtil;
 
 /**
@@ -43,7 +44,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || myRequireFocusedLookup && !lookup.isFocused()) {
-      LookupManager.getInstance(editor.getProject()).hideActiveLookup();
+      Project project = editor.getProject();
+      if (project != null) {
+        LookupManager.getInstance(project).hideActiveLookup();
+      }
       myOriginalHandler.execute(editor, dataContext);
       return;
     }
