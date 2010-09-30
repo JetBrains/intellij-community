@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util.text;
 
 import com.intellij.openapi.util.Clock;
-import com.intellij.util.text.DateFormatUtil;
 import junit.framework.TestCase;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
-public class DateFormatUtilTest extends TestCase{
+public class DateFormatUtilTest extends TestCase {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
 
   public void testPrettyDate() throws ParseException {
@@ -60,5 +60,43 @@ public class DateFormatUtilTest extends TestCase{
 
   private void doTestDateTime(String expected, String date) throws ParseException {
     assertEquals(expected, DateFormatUtil.formatPrettyDateTime(DATE_FORMAT.parse(date)));
+  }
+
+  public void testConvertingMacToJavaPattern() throws Throwable {
+    Clock.setTime(new Date(2004 - 1900, 1, 5, 16, 6, 7).getTime() + 8);
+
+    assertConvertedFormat("%y %Y", "04 2004");
+    assertConvertedFormat("%b %B %m", "Feb February 02");
+    assertConvertedFormat("%d %e %j", "05 5 036");
+    assertConvertedFormat("%a %A %w", "Thu Thursday Thu");
+
+    assertConvertedFormat("%H %I", "16 04");
+    assertConvertedFormat("%M %S %F %p", "06 07 008 PM");
+
+    assertConvertedFormat("%z %Z", "+0300 MSK");
+
+    assertConvertedFormat(" foo bar ", " foo bar ");
+    assertConvertedFormat(" 'foo''a'a'' '' ' ", " 'foo''a'a'' '' ' ");
+    assertConvertedFormat(" '%a''%a'%a'' '' ' '%a ", " 'Thu''Thu'Thu'' '' ' 'Thu ");
+    assertConvertedFormat("'a'", "'a'");
+    assertConvertedFormat("'", "'");
+    assertConvertedFormat("''", "''");
+    assertConvertedFormat("a", "a");
+    assertConvertedFormat(" ", " ");
+    assertConvertedFormat("%1", "?%1?");
+    assertConvertedFormat("", "");
+
+    assertConvertedFormat("%", "");
+  }
+
+  private void assertConvertedFormat(String pattern, String expected) throws Throwable {
+    String converted = DateFormatUtil.convertMacPattern(pattern);
+    try {
+      assertEquals(expected, new SimpleDateFormat(converted).format(Clock.getTime()));
+    }
+    catch (Throwable e) {
+      System.out.println("cannot format with [" + converted + "]");
+      throw e;
+    }
   }
 }

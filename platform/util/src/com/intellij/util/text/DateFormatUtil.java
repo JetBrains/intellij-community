@@ -16,21 +16,26 @@
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 public class DateFormatUtil {
+  private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
+
   // do not expose this constants - they are very likely to be changed in future
-  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.SHORT));
-  private static final SyncDateFormat TIME_FORMAT = new SyncDateFormat(DateFormat.getTimeInstance(DateFormat.SHORT));
-  private static final SyncDateFormat DATE_TIME_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                                                                                                           DateFormat.SHORT));
+  private static final SyncDateFormat DATE_FORMAT;
+  private static final SyncDateFormat TIME_FORMAT;
+  private static final SyncDateFormat DATE_TIME_FORMAT;
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -46,6 +51,40 @@ public class DateFormatUtil {
   }
 
   private static final Period[] PERIOD = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
+
+  static {
+    DateFormat date = null;
+    DateFormat time = null;
+    DateFormat dateTime = null;
+
+    if (SystemInfo.isMac) {
+      try {
+        date = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.DATE));
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      try {
+        time = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.TIME));
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      try {
+        dateTime = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.DATETIME));
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+    if (date == null) date = DateFormat.getDateInstance(DateFormat.SHORT);
+    if (time == null) time = DateFormat.getTimeInstance(DateFormat.SHORT);
+    if (dateTime == null) dateTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
+    DATE_FORMAT = new SyncDateFormat(date);
+    TIME_FORMAT = new SyncDateFormat(time);
+    DATE_TIME_FORMAT = new SyncDateFormat(dateTime);
+  }
 
   private DateFormatUtil() {
   }
@@ -265,7 +304,7 @@ public class DateFormatUtil {
     }
   }
 
-  private static String getMacTimeFormat(final int type, @NotNull final DateType dateType) {
+  static String getMacTimeFormat(final int type, @NotNull final DateType dateType) {
     final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       final ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
@@ -279,8 +318,11 @@ public class DateFormatUtil {
           style = MacFormatterMediumStyle;
           break;
         case DateFormat.LONG:
-        default:
           style = MacFormatterLongStyle;
+          break;
+        case DateFormat.FULL:
+        default:
+          style = MacFormatterFullStyle;
           break;
       }
 
@@ -311,7 +353,98 @@ public class DateFormatUtil {
     }
   }
 
-  private enum DateType {
+  @NotNull
+  static String convertMacPattern(@NotNull String macPattern) {
+    StringBuilder b = StringBuilderSpinAllocator.alloc();
+    try {
+      boolean isSpecial = false;
+      boolean isText = false;
+
+      for (int i = 0; i < macPattern.length(); i++) {
+        char c = macPattern.charAt(i);
+        char next = i < macPattern.length() - 1 ? macPattern.charAt(i + 1) : 0;
+        if (isSpecial) {
+          String replacement = null;
+          if (c == '%') replacement = "$";
+
+          // year
+          if (c == 'y') replacement = "yy";
+          if (c == 'Y') replacement = "yyyy";
+
+          // month
+          if (c == 'm') replacement = "MM";
+          if (c == 'b') replacement = "MMM";
+          if (c == 'B') replacement = "MMMMM";
+
+          // day on month
+          if (c == 'e') replacement = "d";
+          if (c == 'd') replacement = "dd";
+
+          // day of year
+          if (c == 'j') replacement = "DDD";
+
+          // day of week
+          if (c == 'w') replacement = "E"; // SimpleDateFormat doesn't support formatting weekday as a number
+          if (c == 'a') replacement = "EEE";
+          if (c == 'A') replacement = "EEEEE";
+
+          // hours
+          if (c == 'H') replacement = "HH"; // 0-24
+          //if (c == 'H') replacement = "k"; // 1-24
+          //if (c == 'I') replacement = "K"; // 0-11
+          if (c == 'I') replacement = "hh"; // 1-12
+
+          //minute
+          if (c == 'M') replacement = "mm";
+          //second
+          if (c == 'S') replacement = "ss";
+          //millisecond
+          if (c == 'F') replacement = "SSS";
+
+          //millisecond
+          if (c == 'p') replacement = "a";
+
+          //millisecond
+          if (c == 'Z') replacement = "zzz";
+          //millisecond
+          if (c == 'z') replacement = "Z";
+
+
+          //todo if (c == 'c') replacement = "MMMMM";, x, X
+
+          if (replacement == null) replacement = "'?%" + c + "?'";
+
+          b.append(replacement);
+          isSpecial = false;
+        }
+        else {
+          isSpecial = c == '%';
+          if (isSpecial) {
+            isText = false;
+          }
+          else {
+            if (isText) {
+              if (c == '\'' || Character.isWhitespace(c)) b.append('\'');
+              isText = !Character.isWhitespace(c);
+            }
+            else {
+              if (c == '\'' || !Character.isWhitespace(c)) b.append('\'');
+              isText = !Character.isWhitespace(c) && c != '\'';
+            }
+            b.append(c);
+
+            if (isText && i == macPattern.length() - 1) b.append('\'');
+          }
+        }
+      }
+      return b.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(b);
+    }
+  }
+
+  enum DateType {
     TIME, DATE, DATETIME
   }
 
