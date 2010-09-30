@@ -32,6 +32,7 @@ import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -257,19 +258,19 @@ public class JavaCoverageEngine extends CoverageEngine {
     final String packageVmName = packageFQName.replace('.', '/');
 
     final List<VirtualFile> children = new ArrayList<VirtualFile>();
-    final VirtualFile vDir = packageVmName.length() > 0 ? outputpath.findFileByRelativePath(packageVmName) : outputpath;
+    final VirtualFile vDir = packageVmName.length() > 0 && outputpath != null ? outputpath.findFileByRelativePath(packageVmName) : outputpath;
     if (vDir != null) {
       Collections.addAll(children, vDir.getChildren());
     }
 
     if (suite.isTrackTestFolders()) {
-      final VirtualFile testDir = packageVmName.length() > 0 ? testOutputpath.findFileByRelativePath(packageVmName) : testOutputpath;
+      final VirtualFile testDir = packageVmName.length() > 0 && testOutputpath != null ? testOutputpath.findFileByRelativePath(packageVmName) : testOutputpath;
       if (testDir != null) {
         Collections.addAll(children, testDir.getChildren());
       }
     }
 
-    final Set<VirtualFile> classFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
+    final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
     for (PsiClass psiClass : ((PsiClassOwner)srcFile).getClasses()) {
       final String className = psiClass.getName();
       for (VirtualFile child : children) {
