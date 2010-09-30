@@ -94,10 +94,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
                                            ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
                                            : ResolverProcessor.RESOLVE_KINDS_CLASS;
-    ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-    resolveImpl(classProcessor);
-    GroovyResolveResult[] classCandidates = classProcessor.getCandidates();
-    if (findClassOrPackageAtFirst() && classCandidates.length > 0) return classCandidates;
+
+    GroovyResolveResult[] classCandidates = null;
+
+    if (findClassOrPackageAtFirst()) {
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+      resolveImpl(classProcessor);
+      classCandidates = classProcessor.getCandidates();
+      if (classCandidates.length > 0) return classCandidates;
+    }
 
     ResolverProcessor processor = new PropertyResolverProcessor(name, this);
     resolveImpl(processor);
@@ -139,6 +144,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
     if (hasFieldCandidates) return fieldCandidates;
+    if (classCandidates == null) {
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+      resolveImpl(classProcessor);
+      classCandidates = classProcessor.getCandidates();
+    }
     if (classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
