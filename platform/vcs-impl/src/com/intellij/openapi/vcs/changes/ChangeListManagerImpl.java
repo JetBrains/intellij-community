@@ -178,7 +178,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     initializeForNewProject();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myWorker.initialized();
       myUpdater.initialized();
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
     }
@@ -186,7 +185,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
         VcsInitObject.CHANGE_LIST_MANAGER, new DumbAwareRunnable() {
         public void run() {
-          myWorker.initialized();
           myUpdater.initialized();
           broadcastStateAfterLoad();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
