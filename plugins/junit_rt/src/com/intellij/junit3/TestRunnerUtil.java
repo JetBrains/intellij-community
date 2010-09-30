@@ -232,6 +232,7 @@ public class TestRunnerUtil {
 
     protected void runTest() throws Throwable {
       try {
+        //noinspection Since15
         throw new RuntimeException(myMessage, myThrowable);
       }
       catch (NoSuchMethodError e) {

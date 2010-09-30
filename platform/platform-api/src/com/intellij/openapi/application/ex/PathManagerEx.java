@@ -233,7 +233,8 @@ public class PathManagerEx {
     Class<?> abstractTestClass = null;
     StackTraceElement[] stackTrace = new Exception().getStackTrace();
     for (StackTraceElement stackTraceElement : stackTrace) {
-      Class<?> clazz = loadClass(stackTraceElement.getClassName());
+      String className = stackTraceElement.getClassName();
+      Class<?> clazz = loadClass(className);
       if (clazz == null || TestCase.class == clazz || !isJUnitClass(clazz)) {
         continue;
       }
