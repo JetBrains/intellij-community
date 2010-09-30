@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,30 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
-public class MavenRepositoryLayoutConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES = Arrays.asList("default", "legacy");
+public abstract class MavenProjectConstantListConverter extends MavenConstantListConverter {
+  protected MavenProjectConstantListConverter() {
+  }
+
+  protected MavenProjectConstantListConverter(boolean strict) {
+    super(strict);
+  }
 
   protected Collection<String> getValues(@NotNull ConvertContext context) {
-    return VALUES;
+    DomElement element = context.getInvocationElement();
+
+    MavenProject project = MavenDomUtil.findContainingProject(element);
+    if (project == null) return Collections.emptyList();
+
+    return getValues(context, project);
   }
+
+  protected abstract Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project);
 }

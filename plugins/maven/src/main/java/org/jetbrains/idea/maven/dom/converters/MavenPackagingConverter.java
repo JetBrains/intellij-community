@@ -16,19 +16,18 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
-public class MavenPackagingTypeConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES
-    = Arrays.asList("jar", "pom", "war", "ejb", "ejb-client", "ear");
-
-  public MavenPackagingTypeConverter() {
+public class MavenPackagingConverter extends MavenProjectConstantListConverter {
+  public MavenPackagingConverter() {
     super(false);
   }
 
-  protected List<String> getValues(ConvertContext context) {
-    return VALUES;
+  @Override
+  protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
+    return project.getSupportedPackagings();
   }
 }

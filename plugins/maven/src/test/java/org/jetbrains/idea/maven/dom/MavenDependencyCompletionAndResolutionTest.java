@@ -627,7 +627,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jar", "pom", "ear", "ejb", "ejb-client", "war");
+    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war");
   }
 
   public void testDoNotHighlightUnknownType() throws Throwable {
@@ -661,7 +661,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system");
   }
 
-  public void testInvalidScopeHighlighting() throws Throwable {
+  public void testDoNotHighlightUnknownScopes() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -671,7 +671,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "    <groupId>junit</groupId>" +
                      "    <artifactId>junit</artifactId>" +
                      "    <version>4.0</version>" +
-                     "    <scope><error>xxx</error></scope>" +
+                     "    <scope>xxx</scope>" +
                      "  </dependency>" +
                      "</dependencies>");
 

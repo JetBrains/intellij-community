@@ -551,18 +551,40 @@ public class MavenProject {
   }
 
   public boolean isSupportedDependency(MavenArtifact artifact) {
-    String t = artifact.getType();
-    if (MavenConstants.TYPE_JAR.equalsIgnoreCase(t)
-        || MavenConstants.TYPE_TEST_JAR.equalsIgnoreCase(t)
-        || "ejb".equalsIgnoreCase(t)
-        || "ejb-client".equalsIgnoreCase(t)) {
-      return true;
-    }
+    return getSupportedDependencyTypes().contains(artifact.getType());
+  }
 
+  public Set<String> getSupportedPackagings() {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_POM,
+                                                            MavenConstants.TYPE_JAR,
+                                                            "ejb", "ejb-client", "war", "ear"));
     for (MavenImporter each : getSuitableImporters()) {
-      if (each.isSupportedDependency(artifact)) return true;
+      each.getSupportedPackagings(result);
     }
-    return false;
+    return result;
+  }
+
+  public Set<String> getSupportedDependencyTypes() {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_POM,
+                                                            MavenConstants.TYPE_JAR,
+                                                            MavenConstants.TYPE_TEST_JAR,
+                                                            "ejb", "ejb-client", "war", "ear"));
+    for (MavenImporter each : getSuitableImporters()) {
+      each.getSupportedDependencyTypes(result);
+    }
+    return result;
+  }
+
+  public Set<String> getSupportedDependencyScopes() {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
+                                                            MavenConstants.SCOPE_PROVIDEED,
+                                                            MavenConstants.SCOPE_RUNTIME,
+                                                            MavenConstants.SCOPE_TEST,
+                                                            MavenConstants.SCOPE_SYSTEM));
+    for (MavenImporter each : getSuitableImporters()) {
+      each.getSupportedDependencyScopes(result);
+    }
+    return result;
   }
 
   public void addDependency(MavenArtifact dependency) {

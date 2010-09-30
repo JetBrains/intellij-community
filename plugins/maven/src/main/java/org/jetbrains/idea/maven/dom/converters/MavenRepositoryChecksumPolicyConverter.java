@@ -16,15 +16,16 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.idea.maven.dom.converters.MavenConstantListConverter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenRepositoryChecksumPolicyConverter extends MavenConstantListConverter {
   private static final List<String> VALUES = Arrays.asList("ignore",  "fail", "warn");
 
-  protected List<String> getValues(ConvertContext context) {
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }
 }

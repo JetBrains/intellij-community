@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,17 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collection;
-import java.util.Set;
 
-public class MavenDependencyScopeConverter extends MavenProjectConstantListConverter {
-  public MavenDependencyScopeConverter() {
+public class MavenDependencyTypeConverter extends MavenProjectConstantListConverter {
+  public MavenDependencyTypeConverter() {
     super(false);
   }
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
-    Set<String> scopes = project.getSupportedDependencyScopes();
-
-    boolean isDependencyManagement = context.getInvocationElement().getParentOfType(MavenDomDependencyManagement.class, false) != null;
-    if (isDependencyManagement) scopes.add(MavenConstants.SCOPE_IMPORT);
-
-    return scopes;
+    return project.getSupportedDependencyTypes();
   }
 }

@@ -16,15 +16,17 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenDistributionStatusConverter extends MavenConstantListConverter {
   private static final List<String> VALUES
     = Arrays.asList("none", "converted", "partner", "deployed", "verified");
 
-  protected List<String> getValues(ConvertContext context) {
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }
 }

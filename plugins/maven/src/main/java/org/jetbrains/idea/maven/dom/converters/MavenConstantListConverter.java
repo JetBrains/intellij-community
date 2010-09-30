@@ -15,15 +15,14 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 public abstract class MavenConstantListConverter extends ResolvingConverter<String> {
   private boolean myStrict;
@@ -51,7 +50,7 @@ public abstract class MavenConstantListConverter extends ResolvingConverter<Stri
     return getValues(context);
   }
 
-  protected abstract List<String> getValues(ConvertContext context);
+  protected abstract Collection<String> getValues(@NotNull ConvertContext context);
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
