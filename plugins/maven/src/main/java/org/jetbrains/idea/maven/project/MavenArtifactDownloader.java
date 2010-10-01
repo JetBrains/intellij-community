@@ -117,7 +117,7 @@ public class MavenArtifactDownloader {
 
         if (MavenConstants.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
-        if (!eachProject.isSupportedDependency(eachDependency)) continue;
+        if (!eachProject.isSupportedDependency(eachDependency, SupportedRequestType.FOR_IMPORT)) continue;
 
         MavenId id = eachDependency.getMavenId();
         DownloadData data = result.get(id);

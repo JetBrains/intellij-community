@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.SupportedRequestType;
 
 import java.util.Collection;
 
@@ -28,6 +29,6 @@ public class MavenDependencyTypeConverter extends MavenProjectConstantListConver
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
-    return project.getSupportedDependencyTypes();
+    return project.getSupportedDependencyTypes(SupportedRequestType.FOR_COMPLETION);
   }
 }
