@@ -146,6 +146,7 @@ public class LookupElementPresentation {
     myTailGrayed = presentation.myTailGrayed;
     myTailForeground = presentation.myTailForeground;
     myItemTextBold = presentation.myItemTextBold;
+    myTypeGrayed = presentation.myTypeGrayed;
   }
 
   public boolean isTypeGrayed() {
