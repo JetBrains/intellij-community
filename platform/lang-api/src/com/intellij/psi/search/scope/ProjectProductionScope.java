@@ -16,7 +16,6 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,18 +23,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ProjectProductionScope extends NamedScope {
-  public ProjectProductionScope(@NotNull Project project) {
-    super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*", project) {
+  public ProjectProductionScope() {
+    super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*") {
       public boolean contains(PsiFile file, NamedScopesHolder holder) {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+        final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
         final VirtualFile virtualFile = file.getVirtualFile();
-        return file.getProject() == getProject()
+        return file.getProject() == holder.getProject()
                && virtualFile != null
                && !index.isInTestSourceContent(virtualFile)
                && !index.isInLibraryClasses(virtualFile)

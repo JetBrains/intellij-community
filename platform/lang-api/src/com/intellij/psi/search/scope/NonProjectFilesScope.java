@@ -35,13 +35,13 @@ public class NonProjectFilesScope extends NamedScope {
   @RegExp(prefix = "[0-9a-f]{6}")
   public static final String DEFAULT_COLOR = "ffffe4";
 
-  public NonProjectFilesScope(Project project) {
-    super(NAME, new AbstractPackageSet("NonProject", project) {
+  public NonProjectFilesScope() {
+    super(NAME, new AbstractPackageSet("NonProject") {
       public boolean contains(PsiFile psiFile, NamedScopesHolder holder) {
         final VirtualFile file = psiFile.getVirtualFile();
         if (file == null) return true;
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-        return !(getProject().isInitialized() && !fileIndex.isIgnored(file) && fileIndex.getContentRootForFile(file) != null);
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
+        return !(holder.getProject().isInitialized() && !fileIndex.isIgnored(file) && fileIndex.getContentRootForFile(file) != null);
       }
     });
   }

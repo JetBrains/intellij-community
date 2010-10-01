@@ -47,10 +47,10 @@ public class DefaultScopesProvider implements CustomScopesProvider {
 
   public DefaultScopesProvider(Project project) {
     myProject = project;
-    myProjectTestScope = new TestsScope(project);
-    myNonProjectScope = new NonProjectFilesScope(project);
+    myProjectTestScope = new TestsScope();
+    myNonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text, myProject) {
+    myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
       public boolean contains(PsiFile file, NamedScopesHolder holder) {
         return file.getProject() == myProject
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
@@ -67,7 +67,7 @@ public class DefaultScopesProvider implements CustomScopesProvider {
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   private static class AllScopeHolder {
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, null, 0) {
+    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
       public boolean contains(final PsiFile file, final NamedScopesHolder scopesHolder) {
         return true;
       }

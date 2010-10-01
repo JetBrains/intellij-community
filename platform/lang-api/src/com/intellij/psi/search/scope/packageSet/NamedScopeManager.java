@@ -34,6 +34,11 @@ import javax.swing.*;
 )
 public class NamedScopeManager extends NamedScopesHolder {
   private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
+
+  public NamedScopeManager(final Project project) {
+    super(project);
+  }
+
   public static NamedScopeManager getInstance(Project project) {
     return ServiceManager.getService(project, NamedScopeManager.class);
   }
