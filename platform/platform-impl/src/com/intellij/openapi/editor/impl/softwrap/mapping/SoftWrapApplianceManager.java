@@ -291,7 +291,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           newX = calculateNewX(context, fontType, contentComponent);
         }
 
-        if (newX + reservedWidth >= myVisibleAreaWidth) {
+        if (newX + reservedWidth >= myVisibleAreaWidth && delayedSoftWrap == null) {
           logicalLineData.update(i, spaceWidth);
           SoftWrap softWrap = registerSoftWrap(
             softWrapStartOffset, Math.max(softWrapStartOffset, i - 1),
