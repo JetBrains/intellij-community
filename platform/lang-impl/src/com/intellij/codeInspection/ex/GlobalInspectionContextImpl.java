@@ -449,11 +449,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       refManager.inspectionReadActionStarted();
       BUILD_GRAPH.setTotalAmount(scope.getFileCount());
       LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-      final List<InspectionProfileEntry> needRepeatSearchRequest = new ArrayList<InspectionProfileEntry>();
-      ((ProgressManagerImpl)ProgressManager.getInstance())
-        .executeProcessUnderProgress(new Runnable() {  //to override current progress in order to hide useless messages/%
+      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {  //to override current progress in order to hide useless messages/%
           public void run() {
-            runTools(needRepeatSearchRequest, scope, manager);
+            runTools(scope, manager);
           }
         }, ProgressWrapper.wrap(myProgressIndicator));
     }
@@ -470,7 +468,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void runTools(final List<InspectionProfileEntry> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
+  private void runTools(final AnalysisScope scope, final InspectionManager manager) {
+    final List<InspectionProfileEntry> needRepeatSearchRequest = new ArrayList<InspectionProfileEntry>();
     final List<Tools> globalTools = new ArrayList<Tools>();
     final List<Tools> localTools = new ArrayList<Tools>();
     initializeTools(globalTools, localTools);
@@ -509,7 +508,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (RUN_GLOBAL_TOOLS_ONLY) return;
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    scope.accept(new PsiRecursiveElementVisitor() {
+    scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
