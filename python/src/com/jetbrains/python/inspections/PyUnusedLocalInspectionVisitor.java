@@ -190,7 +190,6 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   if (tryPart != null && !isAssignedOnEachExceptFlow(inst, tryPart, instructions, name)) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
-                  return ControlFlowUtil.Operation.CONTINUE;
                 }
                 return ControlFlowUtil.Operation.NEXT;
               }
