@@ -107,6 +107,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
           continue;
         }
+        // Ingore self references assignments
+        if (element instanceof PyTargetExpression && element.getChildren().length != 0){
+          continue;
+        }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
         if (access.isWriteAccess()) {
@@ -173,6 +177,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   // Ignore elements out of scope
                   if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
                     return ControlFlowUtil.Operation.CONTINUE;
+                  }
+                  // Ingore self references assignments
+                  if (element instanceof PyTargetExpression && element.getChildren().length != 0){
+                    return ControlFlowUtil.Operation.NEXT;
                   }
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
