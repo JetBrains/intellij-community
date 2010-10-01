@@ -177,17 +177,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void projectOpened() {
     initializeForNewProject();
 
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+      vcsManager.addVcsListener(myVcsListener);
     }
     else {
-      ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
+      ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(
         VcsInitObject.CHANGE_LIST_MANAGER, new DumbAwareRunnable() {
         public void run() {
           myUpdater.initialized();
           broadcastStateAfterLoad();
-          ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+          vcsManager.addVcsListener(myVcsListener);
         }
       });
     }
@@ -278,6 +279,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void updateImmediately(final boolean updateUnversionedFiles, final AtomicSectionsAware atomicSectionsAware) {
     FileHolderComposite composite;
     ChangeListWorker changeListWorker;
+
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (! vcsManager.hasActiveVcss()) return;
 
     final VcsDirtyScopeManagerImpl dirtyScopeManager;
     try {

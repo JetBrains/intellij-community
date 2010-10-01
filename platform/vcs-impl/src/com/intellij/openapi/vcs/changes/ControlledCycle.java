@@ -20,12 +20,14 @@ import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SomeQueue
 public class ControlledCycle implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
 
@@ -33,7 +35,7 @@ public class ControlledCycle implements Runnable {
   private final SlowlyClosingAlarm myControlledAlarm;
   // this interval is also to check for not initialized paths, so it is rather small
   private static final int ourRefreshInterval = 10000;
-  private final int myRefreshInterval;
+  private int myRefreshInterval;
   private final Runnable myRunnable;
 
   private final AtomicBoolean myActive;
@@ -48,6 +50,7 @@ public class ControlledCycle implements Runnable {
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
       public void run() {
+        if (! myActive.get()) return;
         try {
           shouldBeContinued = callback.call(myControlledAlarm);
         } catch (ProcessCanceledException e) {
@@ -66,11 +69,23 @@ public class ControlledCycle implements Runnable {
     myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project, name);
   }
 
-  public void start() {
+  public void startIfNotStarted(final int refreshInterval) {
+    final boolean refreshIntervalChanged = (refreshInterval > 0) && refreshInterval != myRefreshInterval;
+    if (refreshIntervalChanged) {
+      mySimpleAlarm.cancelAllRequests();
+    }
+    if (refreshInterval > 0) {
+      myRefreshInterval = refreshInterval;
+    }
+
     final boolean wasSet = myActive.compareAndSet(false, true);
-    if (wasSet) {
+    if (wasSet || refreshIntervalChanged) {
       mySimpleAlarm.addRequest(this, myRefreshInterval);
     }
+  }
+
+  public void stop() {
+    myActive.set(false);
   }
 
   public void run() {

@@ -30,11 +30,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
@@ -82,15 +82,6 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
 
   public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
-  }
-
-  public static ChangesViewManager getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ChangesViewManager>() {
-      public ChangesViewManager compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return project.getComponent(ChangesViewManager.class);
-      }
-    });
   }
 
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
@@ -223,6 +214,8 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
 
   void refreshView() {
     if (myDisposed || ! myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (! ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
+
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     final Pair<Integer, Integer> unv = changeListManager.getUnversionedFilesSize();
