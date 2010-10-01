@@ -186,6 +186,12 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
     });
   }
 
+  @Override
+  public void projectClosed(Project project) {
+    super.projectClosed(project);
+    compiledConfigurations = null;
+  }
+
   @TestOnly
   public void setConfigurations(final List<Configuration> configurations, final Project project) {
     myConfigurations = configurations;
