@@ -152,7 +152,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < parameters.length; j++) {
             parameterTypes[j] = parameters[j].getType();
           }
-          if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) {
+          if (ResolveUtil.isInUseScope(resolveResult)) {
             parameterTypes = ArrayUtil.remove(parameterTypes, 0);
           }
           argTypes = PsiUtil.getArgumentTypes(place, false);
@@ -294,7 +294,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final int currentParameter = context.getCurrentParameterIndex();
 
       PsiParameter[] parms = method.getParameterList().getParameters();
-      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) {
+      if (ResolveUtil.isInUseScope(resolveResult)) {
         parms = ArrayUtil.remove(parms, 0);
       }
       int numParams = parms.length;

@@ -1394,7 +1394,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression, place)) {
+                                   ResolveUtil.isInUseScope(methodResolveResult), place)) {
       
       //check for implicit use of property getter which returns closure
       if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {

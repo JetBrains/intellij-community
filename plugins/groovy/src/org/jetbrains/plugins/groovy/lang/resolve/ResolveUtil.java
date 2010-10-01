@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -486,5 +487,19 @@ public class ResolveUtil {
       }
     }
     return constructors;
+  }
+
+  public static boolean isInUseScope(GroovyResolveResult resolveResult) {
+    final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+    if (context instanceof GrMethodCall) {
+      final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
+      if (expression instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+        if (resolved instanceof GrGdkMethod && "use".equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
