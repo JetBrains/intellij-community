@@ -22,6 +22,7 @@ import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.formatting.FormatConstants;
+import com.intellij.formatting.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -52,6 +53,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
@@ -323,7 +325,15 @@ public class TypedHandler implements TypedActionHandler {
     ));
 
     int documentLengthBeforeWrapping = document.getTextLength();
-    int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, false);
+    int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, true);
+    WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
+    if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
+        || formattingStrategy.check(document.getCharsSequence(), startOffset, wrapOffset) >= wrapOffset)
+    {
+      // Don't perform hard line wrapping if it doesn't makes sense (no point to wrap at first position and no point to wrap
+      // on first non-white space symbol because wrapped part will have the same indent value).
+      return;
+    }
     caretModel.moveToOffset(wrapOffset);
     DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
     try {
