@@ -12,10 +12,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
@@ -184,12 +186,41 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   }
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
-                  // In case when assignment is inside try part and there are no except statements we should move further
+                  // In case when assignment is inside try part
                   final PyTryPart tryPart = PsiTreeUtil.getParentOfType(element, PyTryPart.class);
-                  if (tryPart != null && ((PyTryExceptStatement)tryPart.getParent()).getExceptParts().length == 0) {
-                    return ControlFlowUtil.Operation.NEXT;
+                  if (tryPart != null) {
+                    boolean assignedOnEachFlow = true;
+                    final PyTryExceptStatement tryStatement = (PyTryExceptStatement)tryPart.getParent();
+                    for (final PyExceptPart exceptPart : tryStatement.getExceptParts()) {
+                      final Ref<Boolean> assignedOnThisFlow = new Ref<Boolean>(false);
+                      ControlFlowUtil.process(instructions, inst.num(), new Processor<Instruction>() {
+                        @Override
+                        public boolean process(final Instruction instruction) {
+                          if (assignedOnThisFlow.get() == Boolean.TRUE){
+                            return false;
+                          }
+                          final PsiElement instElement = instruction.getElement();
+                          if (instElement == null || !PsiTreeUtil.isAncestor(tryStatement, instElement, false)){
+                            return false;
+                          }
+                          if (((ReadWriteInstruction)inst).getAccess().isWriteAccess() &&
+                              name.equals(((ReadWriteInstruction)inst).getName()) &&
+                              PsiTreeUtil.isAncestor(exceptPart, instElement, false)){
+                            assignedOnThisFlow.set(true);
+                            return false;
+                          }
+                          return true;
+                        }
+                      });
+                      assignedOnEachFlow = assignedOnEachFlow && assignedOnThisFlow.get() == Boolean.TRUE;
+                      if (!assignedOnEachFlow){
+                        break;
+                      }
+                    }
+                    if (assignedOnEachFlow) {
+                      return ControlFlowUtil.Operation.CONTINUE;
+                    }
                   }
-                  return ControlFlowUtil.Operation.CONTINUE;
                 }
                 return ControlFlowUtil.Operation.NEXT;
               }
