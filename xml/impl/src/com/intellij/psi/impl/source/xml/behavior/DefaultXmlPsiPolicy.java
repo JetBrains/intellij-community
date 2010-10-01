@@ -17,14 +17,14 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -38,20 +38,21 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     final PsiFile containingFile = text.getContainingFile();
     CharTable charTable = SharedImplUtil.findCharTableByTree(text.getNode());
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
-      final XmlTag rootTag =
-        ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
-          .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
+    final XmlTag rootTag =
+      ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
+        .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getRootTag();
 
-      assert rootTag != null;
-      final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
-      final XmlTagChild child = tagChildren.length > 0 ? tagChildren[0]:null;
-      LOG.assertTrue(child != null, "Child is null for tag: " + rootTag.getText());
+    assert rootTag != null;
+    final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
 
-      final TreeElement element = (TreeElement)child.getNode();
-      ((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext()).rawRemoveUpToLast();
-      dummyParent.rawAddChildren(element);
-      TreeUtil.clearCaches(dummyParent);
-      return element.getFirstChildNode();
+    final XmlTagChild child = tagChildren.length > 0 ? tagChildren[0]:null;
+    LOG.assertTrue(child != null, "Child is null for tag: " + rootTag.getText());
+
+    final TreeElement element = (TreeElement)child.getNode();
+    ((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext()).rawRemoveUpToLast();
+    dummyParent.rawAddChildren(element);
+    TreeUtil.clearCaches(dummyParent);
+    return element.getFirstChildNode();
   }
 
 }

@@ -460,7 +460,7 @@
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
-                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
 

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlContentNFA;
+import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -83,15 +83,15 @@ public class XmlSmartCompletionProvider {
     });
     if (xsModel != null) {
       processXsModel(result, tag, parentTag, xsModel);
-      return;
     }
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        processDtd(result, tag, parentTag);
-      }
-    });
+    else {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          processDtd(result, tag, parentTag);
+        }
+      });
+    }
   }
 
   private static void processDtd(CompletionResultSet result, XmlTag tag, XmlTag parentTag) {
@@ -103,7 +103,7 @@ public class XmlSmartCompletionProvider {
     if (topGroup == null) {
       return;
     }
-    XmlContentNFA nfa = new XmlContentNFA(topGroup);
+    XmlContentDFA nfa = new XmlContentDFA(topGroup);
     for (XmlTag subTag : parentTag.getSubTags()) {
       if (subTag == tag) {
         break;
@@ -160,18 +160,16 @@ public class XmlSmartCompletionProvider {
   }
 
   private static void addElementToResult(final XmlElementDescriptor descriptor, CompletionResultSet result) {
+    LookupElementBuilder builder = createLookupElement(descriptor);
+    result.addElement(builder.setInsertHandler(new SmartInsertHandler()));
+  }
+
+  public static LookupElementBuilder createLookupElement(XmlElementDescriptor descriptor) {
     LookupElementBuilder builder = LookupElementBuilder.create(descriptor.getName());
     if (descriptor instanceof XmlElementDescriptorImpl) {
-      builder.setTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace());
+      builder = builder.setTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace(), true);
     }
-    result.addElement(builder.setInsertHandler(new InsertHandler<LookupElement>() {
-      @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
-        PsiElement current = context.getFile().findElementAt(context.getStartOffset());
-        XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
-        GenerateXmlTagAction.generateTag(newTag);
-      }
-    }));
+    return builder;
   }
 
   @Nullable
@@ -247,5 +245,14 @@ public class XmlSmartCompletionProvider {
         return (XSGrammar)grammar;
       }
     }, new XSGrammar[0]));
+  }
+
+  public static class SmartInsertHandler implements InsertHandler<LookupElement> {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      PsiElement current = context.getFile().findElementAt(context.getStartOffset());
+      XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
+      GenerateXmlTagAction.generateTag(newTag);
+    }
   }
 }

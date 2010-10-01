@@ -857,6 +857,11 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void disposeUI() {
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
+    if (mySelectedProfile != null) {
+      for (ScopeToolState state : mySelectedProfile.getAllTools()) {
+        state.resetConfigPanel();
+      }
+    }
     mySelectedProfile = null;
   }
 

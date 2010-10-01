@@ -22,16 +22,10 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProperties> {
-  private LibraryManager myManager;
   private String myVersion;
 
-  public GroovyLibraryProperties(LibraryManager manager, String version) {
-    myManager = manager;
+  public GroovyLibraryProperties(String version) {
     myVersion = version;
-  }
-
-  public LibraryManager getManager() {
-    return myManager;
   }
 
   @Nullable

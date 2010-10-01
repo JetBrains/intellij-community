@@ -40,9 +40,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -107,7 +105,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   // Read-only action
   protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
-    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+    final LinkedHashSet<XmlElementDescriptor> result = new LinkedHashSet<XmlElementDescriptor>();
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor nsDescriptor = getNSDescriptor();
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);

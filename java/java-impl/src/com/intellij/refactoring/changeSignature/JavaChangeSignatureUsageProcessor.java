@@ -541,8 +541,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         if (methodCallUsageInfo.isToChangeArguments()){
           final PsiElement element = methodCallUsageInfo.getElement();
           if (element == null) continue;
-          final boolean needDefaultValue = needDefaultValue(changeInfo, RefactoringUtil.getEnclosingMethod(element));
-          if (needDefaultValue) {
+          final PsiMethod caller = RefactoringUtil.getEnclosingMethod(element);
+          final boolean needDefaultValue = needDefaultValue(changeInfo, caller);
+          if (needDefaultValue && (caller == null || !MethodSignatureUtil.isSuperMethod(methodCallUsageInfo.getReferencedMethod(), caller))) {
             final ParameterInfo[] parameters = changeInfo.getNewParameters();
             for (ParameterInfo parameter : parameters) {
               final String defaultValue = parameter.getDefaultValue();

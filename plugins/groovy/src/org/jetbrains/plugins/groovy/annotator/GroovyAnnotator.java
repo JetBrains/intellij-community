@@ -125,6 +125,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+   public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    super.visitApplicationStatement(applicationStatement);
+    checkForCommandExpressionSyntax(applicationStatement);
+  }
+
+  @Override
+  public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+    super.visitMethodCallExpression(methodCallExpression);
+    checkForCommandExpressionSyntax(methodCallExpression);
+  }
+
+  private void checkForCommandExpressionSyntax(GrMethodCall methodCall) {
+    final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
+    if (methodCall.isCommandExpression() && !groovyConfig.isVersionAtLeast(methodCall, GroovyConfigUtils.GROOVY1_8)) {
+      myHolder.createErrorAnnotation(methodCall, GroovyBundle.message("is.not.supported.in.version", groovyConfig.getSDKVersion(methodCall)));
+    }
+  }
+
+  @Override
   public void visitElement(GroovyPsiElement element) {
     if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(myHolder, element);
@@ -1375,7 +1394,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression, place)) {
+                                   ResolveUtil.isInUseScope(methodResolveResult), place)) {
       
       //check for implicit use of property getter which returns closure
       if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {

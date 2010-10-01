@@ -37,8 +37,8 @@ public abstract class FrameworkSupportConfigurable implements Disposable {
 
   public abstract void addSupport(@NotNull Module module, @NotNull ModifiableRootModel model, final @Nullable Library library);
 
-  @SuppressWarnings({"ConstantConditions"})
   public FrameworkVersion getSelectedVersion() {
+    //noinspection ConstantConditions
     return null;
   }
 

@@ -24,16 +24,12 @@ import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -84,16 +80,15 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     ModuleRootModel rootModel = myContext.getRootModel();
     List<VirtualFile> roots = collectRoots(rootModel);
-    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots), false);
+    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots));
     if (info == null) {
       return ValidationResult.OK;
     }
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
-    VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
-    final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    return new ValidationResult(missingJars, new LibrariesQuickFix(missingLibraries, myDescription.getDefaultLibraryName(), baseDirPath));
+    CustomLibraryDescription description = new CustomLibraryDescriptionImpl(missingLibraries, myDescription.getDefaultLibraryName());
+    return new ValidationResult(missingJars, new LibrariesQuickFix(description));
   }
 
   private void onChange() {
@@ -123,61 +118,19 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private LibraryInfo[] myMissingLibraries;
-    private String myDefaultLibraryName;
-    private String myBaseDirPath;
+    private CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(LibraryInfo[] missingLibraries, String defaultLibraryName, String baseDirPath) {
+    public LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("missing.libraries.fix.button"));
-      myMissingLibraries = missingLibraries;
-      myDefaultLibraryName = defaultLibraryName;
-      myBaseDirPath = baseDirPath;
+      myDescription = description;
     }
 
     public void run(final JComponent place) {
-      final LibraryCompositionSettings settings = new LibraryCompositionSettings(myMissingLibraries, myDefaultLibraryName, myBaseDirPath);
-      LibraryOptionsPanel panel = new LibraryOptionsPanel(settings, myContext.getLibrariesContainer(), false);
-      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel);
+      AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
+                                                                     myContext.getModule(), myContext.getModifiableRootModel(), null);
       dialog.show();
-      Disposer.dispose(settings);
+      myAddedLibraries.addAll(dialog.getAddedLibraries());
       onChange();
-    }
-  }
-
-  private class LibraryCompositionDialog extends DialogWrapper {
-    private final LibraryOptionsPanel myPanel;
-
-    private LibraryCompositionDialog(final JComponent parent, final LibraryOptionsPanel panel) {
-      super(parent, true);
-      setTitle(IdeBundle.message("specify.libraries.dialog.title"));
-      myPanel = panel;
-      init();
-    }
-
-    protected JComponent createCenterPanel() {
-      return myPanel.getMainPanel();
-    }
-
-    protected void doOKAction() {
-      myPanel.apply();
-      final LibraryCompositionSettings settings = myPanel.getSettings();
-      final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myPanel.getMainPanel(), false)) {
-        ModifiableRootModel rootModel = myContext.getModifiableRootModel();
-        if (rootModel == null) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();
-          new WriteAction() {
-            protected void run(final Result result) {
-              settings.addLibraries(model, myAddedLibraries, librariesContainer);
-              model.commit();
-            }
-          }.execute();
-        }
-        else {
-          settings.addLibraries(rootModel, myAddedLibraries, librariesContainer);
-        }
-        super.doOKAction();
-      }
     }
   }
 }

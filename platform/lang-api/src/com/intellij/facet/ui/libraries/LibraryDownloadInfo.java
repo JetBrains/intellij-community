@@ -86,6 +86,11 @@ public class LibraryDownloadInfo {
   }
 
   @NotNull
+  public String getFileName() {
+    return myFileNamePrefix + myFileNameSuffix;
+  }
+
+  @NotNull
   public String getPresentableUrl() {
     return myPresentableUrl != null ? myPresentableUrl
            : myRemoteRepository != null ? myRemoteRepository.getDefaultMirror() : myRelativeDownloadUrl;

@@ -152,7 +152,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
 
         public boolean canCloseProject(Project project) {
-          if (!busPublisher.canCloseProject(project)) return false;
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             if (!listener.canCloseProject(project)) {

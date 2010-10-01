@@ -55,15 +55,6 @@ public class EscapeHandler extends EditorActionHandler {
         }
         return;
       }
-      else {
-        final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-        final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(project);
-        if (file != null && detector.containsChangeSignatureChange(file)) {
-          detector.clearSignatureChange(file);
-          DaemonCodeAnalyzer.getInstance(project).restart();
-          return;
-        }
-      }
     }
     myOriginalHandler.execute(editor, dataContext);
   }

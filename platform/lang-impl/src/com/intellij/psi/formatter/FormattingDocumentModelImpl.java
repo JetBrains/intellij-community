@@ -17,7 +17,6 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.LanguageWhiteSpaceFormattingStrategy;
 import com.intellij.formatting.WhiteSpaceFormattingStrategy;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,15 +31,9 @@ import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
-  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
-    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
-  );
-
-  private final CompositeWhiteSpaceFormattingStrategy myWhiteSpaceStrategy = new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
+  private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
   //private final CharBuffer myBuffer = CharBuffer.allocate(1);
   private final Document myDocument;
   private final PsiFile myFile;
@@ -52,10 +45,10 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     myFile = file;
     if (file != null) {
       Language language = file.getLanguage();
-      WhiteSpaceFormattingStrategy strategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
-      if (strategy != null) {
-        myWhiteSpaceStrategy.addStrategy(strategy);
-      }
+      myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(language);
+    }
+    else {
+      myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy();
     }
   }
 
@@ -63,7 +56,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     Document document = getDocumentToBeUsedFor(file);
     if (document != null) {
       if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
-        LOG.error("Document is uncommited");
+        LOG.error("Document is uncommitted");
       }
       if (!document.getText().equals(file.getText())) {
         LOG.error(
