@@ -21,9 +21,11 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
@@ -67,7 +69,7 @@ public class ActionsTreeUtil {
   private ActionsTreeUtil() {
   }
 
-  private static Group createPluginsActionsGroup(Condition<AnAction> filtered, Group otherGroup) {
+  private static Group createPluginsActionsGroup(Condition<AnAction> filtered) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
@@ -78,7 +80,10 @@ public class ActionsTreeUtil {
         return o1.getName().compareTo(o2.getName());
       }
     });
+
+    List<PluginId> collected = new ArrayList<PluginId>();
     for (IdeaPluginDescriptor plugin : plugins) {
+      collected.add(plugin.getPluginId());
       Group pluginGroup;
       if (plugin.getName().equals("IDEA CORE")) {
         continue;
@@ -102,10 +107,30 @@ public class ActionsTreeUtil {
           pluginGroup.addActionId(pluginAction);
         }
       }
-      if (pluginGroup.getSize() > 0 && pluginGroup != otherGroup) {
+      if (pluginGroup.getSize() > 0) {
         pluginsGroup.addGroup(pluginGroup);
       }
     }
+
+    for (PluginId pluginId : PluginId.getRegisteredIds().values()) {
+      if (collected.contains(pluginId)) continue;
+      Group pluginGroup = new Group(pluginId.getIdString(), null, null);
+      final String[] pluginActions = managerEx.getPluginActions(pluginId);
+      if (pluginActions == null || pluginActions.length == 0) {
+        continue;
+      }
+      for (String pluginAction : pluginActions) {
+        if (keymapManager.getBoundActions().contains(pluginAction)) continue;
+        final AnAction anAction = managerEx.getActionOrStub(pluginAction);
+        if (filtered == null || filtered.value(anAction)) {
+          pluginGroup.addActionId(pluginAction);
+        }
+      }
+      if (pluginGroup.getSize() > 0) {
+        pluginsGroup.addGroup(pluginGroup);
+      }
+    }
+
     return pluginsGroup;
   }
 
@@ -436,9 +461,8 @@ public class ActionsTreeUtil {
     }
     mainGroup.addGroup(createMacrosGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
-    final Group otherGroup = createOtherGroup(wrappedFilter, mainGroup, keymap);
-    mainGroup.addGroup(otherGroup);
-    mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter, otherGroup));
+    mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
+    mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
     if (!StringUtil.isEmpty(filter) || filtered != null) {
       final ArrayList list = mainGroup.getChildren();
       for (Iterator i = list.iterator(); i.hasNext();) {
