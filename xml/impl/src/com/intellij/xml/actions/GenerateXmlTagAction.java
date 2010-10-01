@@ -178,24 +178,22 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return newTag;
   }
 
-  private static void replaceElements(XmlTag newTag, TemplateBuilder builder) {
-    for (XmlAttribute attribute : newTag.getAttributes()) {
+  private static void replaceElements(XmlTag tag, TemplateBuilder builder) {
+    for (XmlAttribute attribute : tag.getAttributes()) {
       XmlAttributeValue value = attribute.getValueElement();
       builder.replaceElement(value, TextRange.from(1, 0), new MacroCallNode(new CompleteMacro()));
     }
-    for (XmlTag tag : newTag.getSubTags()) {
-      if ("<".equals(tag.getText())) {
-        builder.replaceElement(tag, TextRange.from(1, 0), new MacroCallNode(new CompleteSmartMacro()));
+    if ("<".equals(tag.getText())) {
+      builder.replaceElement(tag, TextRange.from(1, 0), new MacroCallNode(new CompleteSmartMacro()));
+    }
+    else if (tag.getSubTags().length == 0) {
+      int i = tag.getText().indexOf("></");
+      if (i > 0) {
+        builder.replaceElement(tag, TextRange.from(i + 1, 0), new MacroCallNode(new CompleteMacro()));
       }
-      else if (tag.getSubTags().length > 0) {
-        replaceElements(tag, builder);
-      }
-      else {
-        int i = tag.getText().indexOf("></");
-        if (i > 0) {
-          builder.replaceElement(tag, TextRange.from(i + 1, 0), new MacroCallNode(new CompleteMacro()));
-        }
-      }
+    }
+    for (XmlTag subTag : tag.getSubTags()) {
+      replaceElements(subTag, builder);
     }
   }
 
