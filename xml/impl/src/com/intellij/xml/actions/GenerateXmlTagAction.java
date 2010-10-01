@@ -140,7 +140,13 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   private static XmlTag generateRaw(XmlTag newTag) {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return newTag;
-
+    switch (selected.getContentType()) {
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+        newTag.collapseIfEmpty();
+        break;
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
+        newTag.getValue().setText("");
+    }
     XmlElementsGroup topGroup = selected.getTopGroup();
     if (topGroup == null) return newTag;
     List<XmlElementDescriptor> tags = new ArrayList<XmlElementDescriptor>();
