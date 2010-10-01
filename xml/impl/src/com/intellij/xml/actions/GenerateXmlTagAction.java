@@ -194,9 +194,12 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
-    String bodyText = descriptor.getContentType() == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
     String namespace = getNamespace(descriptor);
-    return contextTag.createChildTag(descriptor.getName(), namespace, bodyText, false);
+    XmlTag tag = contextTag.createChildTag(descriptor.getName(), namespace, null, false);
+    PsiElement lastChild = tag.getLastChild();
+    assert lastChild != null;
+    lastChild.delete(); // remove XML_EMPTY_ELEMENT_END
+    return tag;
   }
 
   private static String getNamespace(XmlElementDescriptor descriptor) {
