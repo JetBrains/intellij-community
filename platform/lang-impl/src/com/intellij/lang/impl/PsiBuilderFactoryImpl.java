@@ -28,8 +28,8 @@ import org.jetbrains.annotations.TestOnly;
  */
 public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
   @Override
-  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode tree) {
-    return createBuilder(project, tree, null, tree.getElementType().getLanguage(), tree.getChars());
+  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode chameleon) {
+    return createBuilder(project, chameleon, null, chameleon.getElementType().getLanguage(), chameleon.getChars());
   }
 
   @Override
@@ -39,8 +39,20 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
   }
 
   @Override
-  public PsiBuilder createBuilder(@NotNull final Project project, @NotNull final ASTNode chameleon, @Nullable final Lexer lexer,
-                                  @NotNull final Language lang, @NotNull final CharSequence seq) {
+  public PsiBuilder createBuilder(@NotNull final Project project,
+                                  @NotNull final ASTNode chameleon,
+                                  @Nullable final Lexer lexer,
+                                  @NotNull final Language lang,
+                                  @NotNull final CharSequence seq) {
+    return new PsiBuilderImpl(project, lang, (lexer != null ? lexer : createLexer(project, lang)), chameleon, seq);
+  }
+
+  @Override
+  public PsiBuilder createBuilder(@NotNull final Project project,
+                                  @NotNull final LighterLazyParseableNode chameleon,
+                                  @Nullable final Lexer lexer,
+                                  @NotNull final Language lang,
+                                  @NotNull final CharSequence seq) {
     return new PsiBuilderImpl(project, lang, (lexer != null ? lexer : createLexer(project, lang)), chameleon, seq);
   }
 

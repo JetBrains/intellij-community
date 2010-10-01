@@ -59,11 +59,11 @@ public abstract class XmlSchemaTagsProcessor {
       if (ref != null) {
         XmlTag resolved = resolveReference(ref);
         if (resolved != null) {
-          tagStarted(resolved, tag, resolved.getLocalName());
+          tagStarted(resolved, resolved.getLocalName(), tag, tag);
         }
       }
       else {
-        tagStarted(tag, context, tag.getLocalName());
+        tagStarted(tag, tag.getLocalName(), context, null);
       }
     }
     else if (checkTagName(tagName, "group")) {
@@ -101,7 +101,7 @@ public abstract class XmlSchemaTagsProcessor {
 
   private void processTagWithSubTags(@Nullable XmlTag tag, XmlTag ctx) {
     if (tag == null) return;
-    tagStarted(tag, ctx, tag.getLocalName());
+    tagStarted(tag, tag.getLocalName(), ctx, null);
     XmlTag[] subTags = tag.getSubTags();
     for (XmlTag subTag : subTags) {
       processTag(subTag, tag);
@@ -109,7 +109,7 @@ public abstract class XmlSchemaTagsProcessor {
     tagFinished(tag);
   }
 
-  protected abstract void tagStarted(XmlTag tag, XmlTag context, String tagName);
+  protected abstract void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref);
 
   protected void tagFinished(XmlTag tag) {}
 

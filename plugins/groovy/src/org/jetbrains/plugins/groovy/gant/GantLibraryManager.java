@@ -56,11 +56,6 @@ public class GantLibraryManager extends AbstractGroovyLibraryManager {
     return GantUtils.getGantVersion(path);
   }
 
-  @Override
-  public Icon getDialogIcon() {
-    return GantIcons.GANT_ICON_16x16;
-  }
-
   @Nls
   @NotNull
   @Override

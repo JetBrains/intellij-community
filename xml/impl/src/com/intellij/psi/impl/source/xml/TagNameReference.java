@@ -17,7 +17,10 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +36,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -201,22 +203,26 @@ public class TagNameReference implements PsiReference {
     else {
       namespaces = new ArrayList<String>(Collections.singletonList(tag.getNamespace()));
     }
-    final String[] variants = getTagNameVariants(tag, namespaces, null);
-    return ContainerUtil.map2Array(variants, LookupElement.class, new Function<String, LookupElement>() {
-      public LookupElement fun(String qname) {
-
-        if (!prefix.isEmpty() && qname.startsWith(prefix)) {
-          qname = qname.substring(prefix.length() + 1);    
-        }
-        final MutableLookupElement<String> lookupElement = LookupElementFactory.getInstance().createLookupElement(qname);
-        final int separator = qname.indexOf(':');
-        if (separator > 0) {
-          lookupElement.addLookupStrings(qname.substring(separator + 1));
-        }
-        lookupElement.setInsertHandler(XmlTagInsertHandler.INSTANCE);
-        return lookupElement;
+    List<String> nsInfo = new ArrayList<String>();
+    final String[] variants = getTagNameVariants(tag, namespaces, nsInfo);
+    List<LookupElement> elements = new ArrayList<LookupElement>(variants.length);
+    for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
+      String qname = variants[i];
+      if (!prefix.isEmpty() && qname.startsWith(prefix)) {
+        qname = qname.substring(prefix.length() + 1);
       }
-    });
+      LookupElementBuilder lookupElement = LookupElementBuilder.create(qname);
+      final int separator = qname.indexOf(':');
+      if (separator > 0) {
+        lookupElement = lookupElement.addLookupString(qname.substring(separator + 1));
+      }
+      String ns = nsInfo.get(i);
+      if (StringUtil.isNotEmpty(ns)) {
+        lookupElement = lookupElement.setTypeText(ns, true);
+      }
+      elements.add(lookupElement.setInsertHandler(XmlTagInsertHandler.INSTANCE));
+    }
+    return elements.toArray(new LookupElement[elements.size()]);
   }
 
   public static String[] getTagNameVariants(final XmlTag element,

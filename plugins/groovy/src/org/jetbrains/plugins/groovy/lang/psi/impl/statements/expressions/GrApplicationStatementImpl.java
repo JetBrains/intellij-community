@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -59,6 +60,11 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
 
   public PsiMethod resolveMethod() {
     return PsiImplUtil.resolveMethod(this);
+  }
+
+  @Override
+  public boolean isCommandExpression() {
+    return PsiUtil.isCommandExpression(this);
   }
 
   @Override

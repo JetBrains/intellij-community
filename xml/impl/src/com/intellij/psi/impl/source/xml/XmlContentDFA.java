@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlContentNFA {
+public class XmlContentDFA {
 
   enum Result {
     NONE,
@@ -36,9 +36,9 @@ public class XmlContentNFA {
 
   private final XmlElementsGroup myGroup;
   private int myOccurs;
-  private XmlContentNFA myLastChild;
+  private XmlContentDFA myLastChild;
 
-  public XmlContentNFA(@NotNull XmlElementsGroup group) {
+  public XmlContentDFA(@NotNull XmlElementsGroup group) {
     myGroup = group;
   }
 
@@ -58,7 +58,7 @@ public class XmlContentNFA {
       case ALL:
       case GROUP:
         for (XmlElementsGroup group : myGroup.getSubGroups()) {
-          new XmlContentNFA(group).getPossibleElements(elements);
+          new XmlContentDFA(group).getPossibleElements(elements);
         }
         break;
       case LEAF:
@@ -103,15 +103,15 @@ public class XmlContentNFA {
     if (myLastChild == null) {
       List<XmlElementsGroup> subGroups = myGroup.getSubGroups();
       if (!subGroups.isEmpty()) {
-        myLastChild = new XmlContentNFA(subGroups.get(0));
+        myLastChild = new XmlContentDFA(subGroups.get(0));
       }
     }
   }
 
   @Nullable
-  private XmlContentNFA getNextSubGroup() {
+  private XmlContentDFA getNextSubGroup() {
     List<XmlElementsGroup> subGroups = myGroup.getSubGroups();
     int i = subGroups.indexOf(myLastChild.myGroup) + 1;
-    return i == subGroups.size() ? null : new XmlContentNFA(subGroups.get(i));
+    return i == subGroups.size() ? null : new XmlContentDFA(subGroups.get(i));
   }
 }

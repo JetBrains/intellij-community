@@ -39,34 +39,24 @@ public class XmlElementsGroupProcessor extends XmlSchemaTagsProcessor {
 
   private XmlElementsGroupProcessor(XmlNSDescriptorImpl nsDescriptor) {
     super(nsDescriptor, "attribute");
-    myGroups.push(new XmlElementsGroupImpl(null, null) {
+    myGroups.push(new XmlElementsGroupImpl(null, null, null) {
       @Override
       public Type getGroupType() {
         return Type.GROUP;
-      }
-
-      @Override
-      public int getMinOccurs() {
-        return 1;
-      }
-
-      @Override
-      public int getMaxOccurs() {
-        return 1;
       }
     });
   }
 
   @Override
-  protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
+  protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
     XmlElementsGroup.Type type = XmlElementsGroupImpl.getTagType(tag);
     if (type != null) {
-      XmlElementsGroupImpl group = new XmlElementsGroupImpl(tag, myGroups.peek());
+      XmlElementsGroupImpl group = new XmlElementsGroupImpl(tag, myGroups.peek(), ref);
       addSubGroup(group);
       myGroups.push(group);
     }
     else if ("element".equals(tagName)) {
-      XmlElementsGroup group = new XmlElementsGroupLeaf(tag, myNsDescriptor.createElementDescriptor(tag), myGroups.peek());
+      XmlElementsGroup group = new XmlElementsGroupLeaf(tag, myNsDescriptor.createElementDescriptor(tag), myGroups.peek(), ref);
       if (!myGroups.empty()) {
         addSubGroup(group);
       }

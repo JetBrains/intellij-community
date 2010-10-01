@@ -113,7 +113,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
     new XmlSchemaTagsProcessor(myDocumentDescriptor) {
       @Override
-      protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
         if ("element".equals(tagName) && tag.getAttribute("name") != null) {
           addElementDescriptor(map, myDocumentDescriptor.createElementDescriptor(tag));
         }
@@ -165,7 +165,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
     XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor, "element") {
       @Override
-      protected void tagStarted(XmlTag tag, XmlTag context, String tagName) {
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
         if (ATTRIBUTE_TAG_NAME.equals(tagName)) {
 
           String name = tag.getAttributeValue(NAME_ATTR_NAME);
@@ -387,6 +387,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     final XmlElementDescriptor[] elements = getElements(null);
 
     if (elements.length > 0) return XmlElementDescriptor.CONTENT_TYPE_CHILDREN;
+    if ("simpleType".equals(myTag.getLocalName())) {
+      return XmlElementDescriptor.CONTENT_TYPE_MIXED;
+    }
     for (XmlTag tag : myTag.getSubTags()) {
       if ("simpleContent".equals(tag.getLocalName())) {
         return XmlElementDescriptor.CONTENT_TYPE_MIXED;

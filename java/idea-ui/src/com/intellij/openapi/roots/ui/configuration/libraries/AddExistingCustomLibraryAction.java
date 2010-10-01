@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -29,24 +28,25 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class AddExistingCustomLibraryAction extends DumbAwareAction {
+public class AddExistingCustomLibraryAction extends CustomLibraryActionBase {
   private Library myLibrary;
-  private StructureConfigurableContext myContext;
-  private ModuleStructureConfigurable myModuleStructureConfigurable;
-  private Module myModule;
 
-  public AddExistingCustomLibraryAction(Library library, Icon icon, StructureConfigurableContext context,
-                                        ModuleStructureConfigurable moduleStructureConfigurable, Module module) {
-    super(library.getName(), null, icon);
+  public AddExistingCustomLibraryAction(Library library,
+                                        Icon icon,
+                                        CustomLibraryCreator creator,
+                                        StructureConfigurableContext context,
+                                        ModuleStructureConfigurable moduleStructureConfigurable,
+                                        Module module) {
+    super(library.getName(), null, icon, context, moduleStructureConfigurable, creator, module);
     myLibrary = library;
-    myContext = context;
-    myModuleStructureConfigurable = moduleStructureConfigurable;
-    myModule = module;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final ModifiableRootModel rootModel = myContext.getModulesConfigurator().getOrCreateModuleEditor(myModule).getModifiableRootModelProxy();
+    if (!askAndRemoveDuplicatedLibraryEntry(myCreator.getDescription(), rootModel)) {
+      return;
+    }
     final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(myLibrary);
     myModuleStructureConfigurable.selectOrderEntry(myModule, orderEntry);
   }

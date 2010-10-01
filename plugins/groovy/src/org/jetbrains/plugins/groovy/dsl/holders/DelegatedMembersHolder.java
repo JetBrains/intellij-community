@@ -18,10 +18,9 @@ package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.hash.HashSet;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.Set;
 
@@ -36,11 +35,10 @@ public class DelegatedMembersHolder implements CustomMembersHolder {
     myMembers.add(member);
   }
 
-  public boolean processMembers(PsiScopeProcessor processor) {
-    String name = ResolveUtil.getNameHint(processor);
-
+  @Override
+  public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
     for (PsiMember member : myMembers) {
-      if ((name == null || name.equals(member.getName())) && !processor.execute(member, ResolveState.initial())) {
+      if (!processor.execute(member, ResolveState.initial())) {
         return false;
       }
     }

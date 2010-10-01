@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,20 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     myModulesConfigurator = modulesConfigurator;
     Disposer.register(project, this);
     myDaemonAnalyzer = new ProjectStructureDaemonAnalyzer(this);
+  }
+
+  public VirtualFile[] getLibraryFiles(Library library, final OrderRootType type) {
+    final LibraryTable table = library.getTable();
+    if (table != null) {
+      final LibraryTable.ModifiableModel modifiableModel = getModifiableLibraryTable(table);
+      if (modifiableModel instanceof LibrariesModifiableModel) {
+        final LibrariesModifiableModel librariesModel = (LibrariesModifiableModel)modifiableModel;
+        if (librariesModel.hasLibraryEditor(library)) {
+          return librariesModel.getLibraryEditor(library).getFiles(type);
+        }
+      }
+    }
+    return library.getFiles(type);
   }
 
   public Project getProject() {

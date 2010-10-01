@@ -30,6 +30,10 @@ import java.util.Map;
  * Date: Mar 2, 2005
  */
 public abstract class DependencyValidationManager extends NamedScopesHolder {
+  public DependencyValidationManager(final Project project) {
+    super(project);
+  }
+
   public static DependencyValidationManager getInstance(Project project) {
     return ServiceManager.getService(project, DependencyValidationManager.class);
   }

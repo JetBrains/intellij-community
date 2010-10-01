@@ -22,9 +22,7 @@ package com.intellij.analysis;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProjectProductionScope;
-import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +41,8 @@ public class PackagesScopesProvider implements CustomScopesProvider {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, PackagesScopesProvider.class);
   }
 
-  public PackagesScopesProvider(Project project) {
-    myProjectProductionScope = new ProjectProductionScope(project);
+  public PackagesScopesProvider() {
+    myProjectProductionScope = new ProjectProductionScope();
     myScopes = Arrays.asList(myProjectProductionScope);
   }
 

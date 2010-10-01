@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -46,6 +47,10 @@ public class LibraryUtil {
   }
 
   public static boolean isClassAvailableInLibrary(VirtualFile[] files, final String fqn) {
+    return isClassAvailableInLibrary(Arrays.asList(files), fqn);
+  }
+
+  public static boolean isClassAvailableInLibrary(List<VirtualFile> files, final String fqn) {
     for (VirtualFile file : files) {
       if (findInFile(file, new StringTokenizer(fqn, "."))) return true;
     }

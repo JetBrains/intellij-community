@@ -20,7 +20,6 @@
  */
 package org.testng;
 
-import com.beust.jcommander.JCommander;
 import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
@@ -83,11 +82,6 @@ public class RemoteTestNGStarter {
       reader.close();
     }
 
-    CommandLineArgs cla = new CommandLineArgs();
-    new JCommander(cla, (String[])resultArgs.toArray(new String[resultArgs.size()]));
-    final RemoteTestNG testNG= new RemoteTestNG();
-    testNG.configure(cla);
-    testNG.initializeSuitesAndJarFile();
-    testNG.run();
+    RemoteTestNG.main((String[])resultArgs.toArray(new String[resultArgs.size()]));
   }
 }

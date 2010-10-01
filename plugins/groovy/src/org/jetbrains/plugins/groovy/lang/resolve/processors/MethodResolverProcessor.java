@@ -218,11 +218,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   @NotNull
   public GroovyResolveResult[] getCandidates() {
-    if (myAllVariants) {
-      return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
-    }
-
-    if (super.hasCandidates()) {
+    if (!myAllVariants && super.hasCandidates()) {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {

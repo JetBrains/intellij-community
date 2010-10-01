@@ -34,10 +34,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -52,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -167,7 +166,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static boolean processExecutors(PsiType psiType, GroovyPsiElement place, PsiScopeProcessor processor) {
+  public static boolean processExecutors(PsiType psiType, GroovyPsiElement place, final PsiScopeProcessor processor) {
     if (PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
@@ -180,8 +179,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
+    final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        return ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
+      }
+    };
+
     for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(processor, psiType, place, placeFile, qname)) {
+      if (!script.processExecutor(nameChecker, psiType, place, placeFile, qname)) {
         return false;
       }
     }

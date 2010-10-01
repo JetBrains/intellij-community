@@ -200,11 +200,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, context, freezeSemaphore);
 
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
+    final Semaphore startSemaphore = new Semaphore();
+    startSemaphore.down();
     final Runnable computeRunnable = new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
+              startSemaphore.up();
               data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
                 public void consume(final LookupElement lookupElement) {
                   indicator.addItem(lookupElement);
@@ -226,6 +229,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
     }
+
+    startSemaphore.waitFor();
 
     if (!invokedExplicitly) {
       indicator.notifyBackgrounded();
@@ -317,7 +322,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       indicator.rememberDocumentState();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, items, item.getLookupString(), item);
-      indicator.liveAfterDeath(null);
+
+      // the insert handler may have started a live template with completion
+      if (CompletionService.getCompletionService() == null) {
+        indicator.liveAfterDeath(null);
+      }
     }
   }
 

@@ -10,7 +10,7 @@
     </properties>
     <border type="none"/>
     <children>
-      <component id="a5b73" class="javax.swing.JRadioButton">
+      <component id="a5b73" class="javax.swing.JRadioButton" binding="myDownloadRadioButton">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="207" height="22"/>
@@ -18,7 +18,7 @@
         </constraints>
         <properties>
           <selected value="false"/>
-          <text value="Download from &amp;Maven repository"/>
+          <text value="&amp;Download"/>
         </properties>
       </component>
       <component id="f63e3" class="javax.swing.JRadioButton" binding="myDoNotCreateRadioButton">
@@ -42,7 +42,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="4dbad" class="javax.swing.JRadioButton">
+          <component id="4dbad" class="javax.swing.JRadioButton" binding="myUseLibraryRadioButton">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

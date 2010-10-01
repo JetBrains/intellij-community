@@ -25,15 +25,22 @@ public abstract class XmlElementsGroupBase implements XmlElementsGroup {
 
   protected final XmlTag myTag;
   private final XmlElementsGroup myParent;
+  private final XmlTag myRef;
 
-  public XmlElementsGroupBase(XmlTag tag, XmlElementsGroup parent) {
+  public XmlElementsGroupBase(XmlTag tag, XmlElementsGroup parent, XmlTag ref) {
     myTag = tag;
     myParent = parent;
+    myRef = ref;
   }
 
   @Override
   public int getMinOccurs() {
-    String value = myTag.getAttributeValue("minOccurs");
+    return getMinOccursImpl(myRef) * getMinOccursImpl(myTag);
+  }
+
+  private static int getMinOccursImpl(XmlTag tag) {
+    if (tag == null) return 1;
+    String value = tag.getAttributeValue("minOccurs");
     try {
       return value == null ? 1 : Integer.parseInt(value);
     }
@@ -44,7 +51,12 @@ public abstract class XmlElementsGroupBase implements XmlElementsGroup {
 
   @Override
   public int getMaxOccurs() {
-    String value = myTag.getAttributeValue("maxOccurs");
+    return getMaxOccursImpl(myRef) * getMaxOccursImpl(myTag);
+  }
+
+  private static int getMaxOccursImpl(XmlTag tag) {
+    if (tag == null) return 1;
+    String value = tag.getAttributeValue("maxOccurs");
     if (value == null) return 1;
     if ("unbounded".equals(value)) return Integer.MAX_VALUE;
     try {

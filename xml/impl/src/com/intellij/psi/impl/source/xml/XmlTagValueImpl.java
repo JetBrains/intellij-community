@@ -96,14 +96,19 @@ public class XmlTagValueImpl implements XmlTagValue{
   public void setText(String value) {
     try {
       XmlText text = null;
-      if (StringUtil.isNotEmpty(value)) {
+      if (value != null) {
         final XmlText[] texts = getTextElements();
         if (texts.length == 0) {
           text = (XmlText)myTag.add(XmlElementFactory.getInstance(myTag.getProject()).createDisplayText("x"));
         } else {
           text = texts[0];
         }
-        text.setValue(value);
+        if (StringUtil.isEmpty(value)) {
+          text.delete();
+        }
+        else {
+          text.setValue(value);
+        }
       }
 
       if(myElements.length > 0){

@@ -63,6 +63,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FramesPanel extends UpdatableDebuggerView {
   private final JComboBox myThreadsCombo;
@@ -173,6 +174,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     if (!paused || !isRefresh) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
+        myFramesLastUpdateTime = getNextStamp();
         myFramesList.getModel().clear();
       }
     }
@@ -195,14 +197,6 @@ public class FramesPanel extends UpdatableDebuggerView {
       rebuild(DebuggerSession.EVENT_CONTEXT);
     }
 
-  }
-
-  public long getFramesLastUpdateTime() {
-    return myFramesLastUpdateTime;
-  }
-
-  public void setFramesLastUpdateTime(long framesLastUpdateTime) {
-    myFramesLastUpdateTime = framesLastUpdateTime;
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
@@ -413,6 +407,7 @@ public class FramesPanel extends UpdatableDebuggerView {
               try {
                 myFramesListener.setEnabled(false);
                 synchronized (myFramesList) {
+                  myFramesLastUpdateTime = getNextStamp();
                   final DefaultListModel model = myFramesList.getModel();
                   model.clear();
                   model.addElement(new Object() {
@@ -451,7 +446,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       final int totalFramesCount = frames.size();
       int index = 0;
       final IndexCounter indexCounter = new IndexCounter(totalFramesCount);
-      final long timestamp = System.currentTimeMillis();
+      final long timestamp = getNextStamp();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
         managerThread.schedule(
           new AppendFrameCommand(
@@ -526,7 +521,13 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
   
-  private volatile long myFramesLastUpdateTime = 0L;
+  private final AtomicLong myTimeCounter = new AtomicLong(0L);
+  private long getNextStamp() {
+    return myTimeCounter.incrementAndGet();
+  }
+  
+  private long myFramesLastUpdateTime = 0L;
+  
   private class AppendFrameCommand extends SuspendContextCommandImpl {
     private final StackFrameProxyImpl myFrame;
     private final EvaluationContextImpl myEvaluationContext;
@@ -559,7 +560,7 @@ public class FramesPanel extends UpdatableDebuggerView {
             myFramesListener.setEnabled(false);
             synchronized (myFramesList) {
               final DefaultListModel model = myFramesList.getModel();
-              if (model.isEmpty() || myFramesLastUpdateTime < myTimestamp) {
+              if (myFramesLastUpdateTime < myTimestamp) {
                 myFramesLastUpdateTime = myTimestamp;
                 model.clear();
               }

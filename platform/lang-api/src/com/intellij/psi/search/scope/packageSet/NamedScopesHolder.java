@@ -35,10 +35,17 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
 
-  public abstract String getDisplayName();
-  public abstract Icon getIcon();
+  protected final Project myProject;
 
+  public NamedScopesHolder(final Project project) {
+    myProject = project;
+  }
+
+  public abstract String getDisplayName();
+
+  public abstract Icon getIcon();
   public interface ScopeListener {
+
     void scopesChanged();
   }
   private List<ScopeListener> myScopeListeners;
@@ -171,5 +178,9 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @NotNull
   public List<NamedScope> getPredefinedScopes(){
     return Collections.emptyList();
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

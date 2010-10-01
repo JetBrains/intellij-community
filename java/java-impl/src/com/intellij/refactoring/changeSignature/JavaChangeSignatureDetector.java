@@ -211,7 +211,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       final PsiMethod method = info.getSuperMethod();
 
       //if (ApplicationManager.getApplication().isUnitTestMode()) {
-        temporallyRevertChanges(method, oldText);
+        temporallyRevertChanges(info.getMethod(), oldText);
         createChangeSignatureProcessor(info, method).run();
         return true;
       /*}

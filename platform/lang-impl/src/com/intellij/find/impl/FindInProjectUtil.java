@@ -336,8 +336,9 @@ public class FindInProjectUtil {
         }
       });
       count += found;
-      if (found > 0 && count + alreadyCounted > USAGES_LIMIT && !warningShown[0]) {
-        showTooManyUsagesWaring(psiFile.getProject(), FindBundle.message("find.excessive.usage.count.prompt", count));
+      final int total = count + alreadyCounted;
+      if (found > 0 && total > USAGES_LIMIT && !warningShown[0]) {
+        showTooManyUsagesWaring(psiFile.getProject(), FindBundle.message("find.excessive.usage.count.prompt", total));
         warningShown[0] = true;
       }
 

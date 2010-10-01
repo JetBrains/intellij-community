@@ -34,6 +34,7 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,6 +79,7 @@ public class BrowserUtil {
     return url;
   }
 
+  @Nullable
   public static URL getURL(String url) throws java.net.MalformedURLException {
     if (!isAbsoluteURL(url)) {
       return new URL("file", "", url);
