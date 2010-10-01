@@ -111,6 +111,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
+    setForceShowAsPopup(true);
     myProject = project;
     myEditor = editor;
     myArranger = arranger;
