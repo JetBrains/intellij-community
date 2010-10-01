@@ -53,10 +53,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     lookup.markDirty();
-    executeInLookup(lookup);
+    executeInLookup(lookup, dataContext);
   }
 
-  protected abstract void executeInLookup(LookupImpl lookup);
+  protected abstract void executeInLookup(LookupImpl lookup, DataContext context);
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
@@ -69,7 +69,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
-    protected void executeInLookup(final LookupImpl lookup) {
+    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       if (!lookup.isFocused()) {
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
@@ -85,12 +85,12 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
-    @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return super.isEnabled(editor, dataContext) && UISettings.getInstance().CYCLE_SCROLLING;
-    }
+    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
+      if (!UISettings.getInstance().CYCLE_SCROLLING) {
+        myOriginalHandler.execute(lookup.getEditor(), context);
+        return;
+      }
 
-    protected void executeInLookup(final LookupImpl lookup) {
       if (!lookup.isFocused()) {
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
@@ -105,7 +105,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, true);
     }
 
-    protected void executeInLookup(final LookupImpl lookup) {
+    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       ListScrollingUtil.movePageDown(lookup.getList());
     }
   }
@@ -115,7 +115,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, true);
     }
 
-    protected void executeInLookup(final LookupImpl lookup) {
+    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       ListScrollingUtil.movePageUp(lookup.getList());
     }
   }
