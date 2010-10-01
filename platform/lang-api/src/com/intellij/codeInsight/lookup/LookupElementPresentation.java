@@ -35,6 +35,7 @@ public class LookupElementPresentation {
   private Color myTailForeground;
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
+  private boolean myTypeGrayed;
 
   public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
@@ -145,5 +146,13 @@ public class LookupElementPresentation {
     myTailGrayed = presentation.myTailGrayed;
     myTailForeground = presentation.myTailForeground;
     myItemTextBold = presentation.myItemTextBold;
+  }
+
+  public boolean isTypeGrayed() {
+    return myTypeGrayed;
+  }
+
+  public void setTypeGrayed(boolean typeGrayed) {
+    myTypeGrayed = typeGrayed;
   }
 }
