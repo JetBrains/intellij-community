@@ -20,6 +20,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -126,7 +127,7 @@ public class LibraryOptionsPanel {
     });
     myExistingLibraryComboBox.setRenderer(new LibraryListCellRenderer());
 
-    boolean canDownload = !mySettings.getLibraryDescription().getDownloads().isEmpty();
+    boolean canDownload = mySettings.getLibraryDescription().getDownloadDescription() != null;
     myDownloadRadioButton.setVisible(canDownload);
     myButtonEnumModel.setSelected(libraries.isEmpty() && canDownload ? Choice.DOWNLOAD : Choice.USE_LIBRARY);
 
@@ -241,7 +242,7 @@ public class LibraryOptionsPanel {
         showConfigurePanel = false;
     }
 
-    if (!showConfigurePanel) {
+    if (!showConfigurePanel && mySettings.getLibraryDescription().getDownloadDescription() != null) {
         //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
         message = getDownloadFilesMessage();
     }
@@ -259,9 +260,10 @@ public class LibraryOptionsPanel {
     else {
       path = PathUtil.getFileName(downloadPath);
     }
+    final LibraryDownloadDescription downloadDescription = mySettings.getLibraryDescription().getDownloadDescription();
     return MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
                                    "{2} library <b>{3}</b> will be created",
-                                   mySettings.getLibraryDescription().getDownloads().size(),
+                                   downloadDescription.getDownloads().size(),
                                    path,
                                    mySettings.getLibraryLevel(),
                                    mySettings.getDownloadedLibraryName());

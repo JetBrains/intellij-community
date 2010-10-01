@@ -13,38 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package com.intellij.ide.util.frameworkSupport;
 
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryCreator;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
-
-import javax.swing.*;
 
 /**
  * @author nik
  */
-public class GroovyLibraryCreator extends CustomLibraryCreator {
-  private final GroovyLibraryDescription myDescription;
+public class FrameworkVersionWithLibrary extends FrameworkVersion {
+  private CustomLibraryDescription myLibraryDescription;
 
-  public GroovyLibraryCreator() {
-    myDescription = new GroovyLibraryDescription();
+  public FrameworkVersionWithLibrary(@NotNull String versionName, boolean isDefault, CustomLibraryDescription libraryDescription) {
+    super(versionName, isDefault);
+    myLibraryDescription = libraryDescription;
   }
 
-  @Override
-  public String getDisplayName() {
-    return "Groovy";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
-  }
-
-  @NotNull
-  @Override
-  public CustomLibraryDescription getDescription() {
-    return myDescription;
+  public CustomLibraryDescription getLibraryDescription() {
+    return myLibraryDescription;
   }
 }

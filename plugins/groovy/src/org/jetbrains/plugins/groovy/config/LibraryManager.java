@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -30,18 +27,6 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class LibraryManager {
-
-  @Nullable
-  public static LibraryManager findManagerFor(@NotNull Library library, final LibraryManager[] managers, final LibrariesContainer container) {
-    for (final LibraryManager manager : managers) {
-      final String name = library.getName();
-      if (name != null && manager.managesName(name) && manager.managesLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES))) {
-        return manager;
-      }
-    }
-
-    return findManagerFor(managers, container.getLibraryFiles(library, OrderRootType.CLASSES));
-  }
 
   @Nullable
   public static LibraryManager findManagerFor(LibraryManager[] managers, final VirtualFile[] libraryFiles) {

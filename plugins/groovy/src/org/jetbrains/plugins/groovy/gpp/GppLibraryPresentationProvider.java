@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
 
 /**
  * @author nik
  */
-public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
-  private GroovyLibraryManager myManager = new GroovyLibraryManager();
+public class GppLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+  private static final LibraryKind<GroovyLibraryProperties> GPP_KIND = LibraryKind.create("gpp");
+  private GppLibraryManager myLibraryManager = new GppLibraryManager();
 
-  public GroovyLibraryPresentationProvider() {
-    super(GROOVY_KIND);
+  public GppLibraryPresentationProvider() {
+    super(GPP_KIND);
   }
 
   @Override
   public LibraryManager getLibraryManager() {
-    return myManager;
+    return myLibraryManager;
   }
 
   @Override
   protected boolean acceptManager(LibraryManager manager) {
-    return manager instanceof GroovyLibraryManager;
+    return manager instanceof GppLibraryManager;
   }
 }

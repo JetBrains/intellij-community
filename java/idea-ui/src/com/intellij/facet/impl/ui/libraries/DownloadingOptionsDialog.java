@@ -18,6 +18,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.CheckBoxList;
@@ -45,13 +46,15 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private JPanel myNameWrappingPanel;
   private final LibraryCompositionSettings mySettings;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
+  private LibraryDownloadDescription myDownloadDescription;
 
   protected DownloadingOptionsDialog(Component parent, LibraryCompositionSettings settings) {
     super(parent, true);
     setTitle("Downloading Options");
     mySettings = settings;
 
-    final List<LibraryDownloadInfo> downloads = settings.getLibraryDescription().getDownloads();
+    myDownloadDescription = settings.getLibraryDescription().getDownloadDescription();
+    final List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();
     myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<LibraryDownloadInfo, JCheckBox>() {
       @Override
       public JCheckBox fun(LibraryDownloadInfo libraryInfo) {
@@ -92,7 +95,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     mySettings.setDirectoryForDownloadedLibrariesPath(myDirectoryField.getText());
 
     List<LibraryDownloadInfo> selected = new ArrayList<LibraryDownloadInfo>();
-    List<LibraryDownloadInfo> downloads = mySettings.getLibraryDescription().getDownloads();
+    List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();
     for (int i = 0; i < downloads.size(); i++) {
       if (myFilesList.isItemSelected(i)) {
         selected.add(downloads.get(i));

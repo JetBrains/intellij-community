@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -44,20 +43,11 @@ import java.util.*;
 /**
  * @author nik
  */
-public class CreateCustomLibraryAction extends DumbAwareAction {
-  private final CustomLibraryCreator myCreator;
-  private StructureConfigurableContext myContext;
-  private ModuleStructureConfigurable myModuleStructureConfigurable;
-  private Module myModule;
-
+public class CreateCustomLibraryAction extends CustomLibraryActionBase {
   public CreateCustomLibraryAction(final String name, CustomLibraryCreator creator,
                                    StructureConfigurableContext context,
                                    ModuleStructureConfigurable moduleStructureConfigurable, Module module) {
-    super(name, null, creator.getIcon());
-    myCreator = creator;
-    myContext = context;
-    myModuleStructureConfigurable = moduleStructureConfigurable;
-    myModule = module;
+    super(name, null, creator.getIcon(), context, moduleStructureConfigurable, creator, module);
   }
 
   @Override
@@ -79,6 +69,9 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
     if (dialog.isOK()) {
       final Library library = dialog.createLibrary(myContext.getModifiableLibraryTable(dialog.getSelectedTable()));
       final ModifiableRootModel rootModel = myContext.getModulesConfigurator().getOrCreateModuleEditor(myModule).getModifiableRootModelProxy();
+      if (!askAndRemoveDuplicatedLibraryEntry(myCreator.getDescription(), rootModel)) {
+        return;
+      }
       final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(library);
       myModuleStructureConfigurable.selectOrderEntry(myModule, orderEntry);
     }
@@ -112,7 +105,7 @@ public class CreateCustomLibraryAction extends DumbAwareAction {
         group.add(new CreateCustomLibraryAction("New...", creator, context, moduleStructureConfigurable, module));
         for (Library library : librariesToAdd) {
           Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(library, context);
-          group.add(new AddExistingCustomLibraryAction(library, icon, context, moduleStructureConfigurable, module));
+          group.add(new AddExistingCustomLibraryAction(library, icon, creator, context, moduleStructureConfigurable, module));
         }
         actions.add(group);
       }

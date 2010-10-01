@@ -24,18 +24,12 @@ import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -93,10 +87,8 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
-    VirtualFile baseDir = myContext.getModule().getProject().getBaseDir();
-    final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
     CustomLibraryDescription description = new CustomLibraryDescriptionImpl(missingLibraries, myDescription.getDefaultLibraryName());
-    return new ValidationResult(missingJars, new LibrariesQuickFix(description, baseDirPath));
+    return new ValidationResult(missingJars, new LibrariesQuickFix(description));
   }
 
   private void onChange() {
@@ -126,59 +118,19 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private String myBaseDirPath;
     private CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(CustomLibraryDescription description, String baseDirPath) {
+    public LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("missing.libraries.fix.button"));
       myDescription = description;
-      myBaseDirPath = baseDirPath;
     }
 
     public void run(final JComponent place) {
-      final LibraryCompositionSettings settings = new LibraryCompositionSettings(myDescription, myBaseDirPath);
-      LibraryOptionsPanel panel = new LibraryOptionsPanel(settings, myContext.getLibrariesContainer(), false);
-      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel);
+      AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
+                                                                     myContext.getModule(), myContext.getModifiableRootModel(), null);
       dialog.show();
-      Disposer.dispose(settings);
+      myAddedLibraries.addAll(dialog.getAddedLibraries());
       onChange();
-    }
-  }
-
-  private class LibraryCompositionDialog extends DialogWrapper {
-    private final LibraryOptionsPanel myPanel;
-
-    private LibraryCompositionDialog(final JComponent parent, final LibraryOptionsPanel panel) {
-      super(parent, true);
-      setTitle(IdeBundle.message("specify.libraries.dialog.title"));
-      myPanel = panel;
-      init();
-    }
-
-    protected JComponent createCenterPanel() {
-      return myPanel.getMainPanel();
-    }
-
-    protected void doOKAction() {
-      myPanel.apply();
-      final LibraryCompositionSettings settings = myPanel.getSettings();
-      final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myPanel.getMainPanel())) {
-        ModifiableRootModel rootModel = myContext.getModifiableRootModel();
-        if (rootModel == null) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();
-          new WriteAction() {
-            protected void run(final Result result) {
-              settings.addLibraries(model, myAddedLibraries, librariesContainer);
-              model.commit();
-            }
-          }.execute();
-        }
-        else {
-          settings.addLibraries(rootModel, myAddedLibraries, librariesContainer);
-        }
-        super.doOKAction();
-      }
     }
   }
 }

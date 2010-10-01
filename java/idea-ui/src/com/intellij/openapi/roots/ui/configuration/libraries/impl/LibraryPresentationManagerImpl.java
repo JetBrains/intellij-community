@@ -92,6 +92,16 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     });
   }
 
+  @Override
+  public boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull final Set<? extends LibraryKind<?>> acceptedKinds) {
+    return !LibraryDetectionManager.getInstance().processProperties(files, new LibraryDetectionManager.LibraryPropertiesProcessor() {
+      @Override
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> processedKind, @NotNull P properties) {
+        return !acceptedKinds.contains(processedKind);
+      }
+    });
+  }
+
   public static List<LibraryKind<?>> getLibraryKinds(@NotNull Library library, StructureConfigurableContext context) {
     final List<LibraryKind<?>> result = new SmartList<LibraryKind<?>>();
     final VirtualFile[] files = getLibraryFiles(library, context);

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.util.Condition;
@@ -40,16 +41,17 @@ import java.util.List;
 public class CustomLibraryDescriptionImpl extends CustomLibraryDescription {
   private final LibraryInfo[] myLibraryInfos;
   private String myDefaultLibraryName;
-  private final List<LibraryDownloadInfo> myDownloads;
+  private final LibraryDownloadDescription myDownloadDescription;
   private final Condition<List<VirtualFile>> mySuitableLibraryCondition;
 
   public CustomLibraryDescriptionImpl(@NotNull LibraryInfo[] libraryInfos, @NotNull String defaultLibraryName) {
     myLibraryInfos = libraryInfos;
     myDefaultLibraryName = defaultLibraryName;
-    myDownloads = new ArrayList<LibraryDownloadInfo>();
+    List<LibraryDownloadInfo> downloads = new ArrayList<LibraryDownloadInfo>();
     for (LibraryInfo info : libraryInfos) {
-      ContainerUtil.addIfNotNull(myDownloads, info.getDownloadingInfo());
+      ContainerUtil.addIfNotNull(downloads, info.getDownloadingInfo());
     }
+    myDownloadDescription = !downloads.isEmpty() ? new LibraryDownloadDescription(defaultLibraryName, downloads) : null;
     mySuitableLibraryCondition = new Condition<List<VirtualFile>>() {
       @Override
       public boolean value(List<VirtualFile> virtualFiles) {
@@ -59,16 +61,9 @@ public class CustomLibraryDescriptionImpl extends CustomLibraryDescription {
     };
   }
 
-  @NotNull
   @Override
-  public String getDefaultLibraryName() {
-    return myDefaultLibraryName;
-  }
-
-  @NotNull
-  @Override
-  public List<LibraryDownloadInfo> getDownloads() {
-    return myDownloads;
+  public LibraryDownloadDescription getDownloadDescription() {
+    return myDownloadDescription;
   }
 
   @NotNull

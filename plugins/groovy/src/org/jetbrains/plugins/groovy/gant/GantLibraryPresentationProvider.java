@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
 
 /**
  * @author nik
  */
-public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
-  private GroovyLibraryManager myManager = new GroovyLibraryManager();
+public class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+  private static final LibraryKind<GroovyLibraryProperties> GANT_KIND = LibraryKind.create("gant");
+  private GantLibraryManager myLibraryManager = new GantLibraryManager();
 
-  public GroovyLibraryPresentationProvider() {
-    super(GROOVY_KIND);
+  public GantLibraryPresentationProvider() {
+    super(GANT_KIND);
   }
 
   @Override
   public LibraryManager getLibraryManager() {
-    return myManager;
+    return myLibraryManager;
   }
 
   @Override
   protected boolean acceptManager(LibraryManager manager) {
-    return manager instanceof GroovyLibraryManager;
+    return manager instanceof GantLibraryManager;
   }
 }

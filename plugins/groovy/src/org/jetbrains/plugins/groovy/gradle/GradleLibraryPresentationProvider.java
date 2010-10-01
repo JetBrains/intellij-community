@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
 
 /**
  * @author nik
  */
-public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
-  private GroovyLibraryManager myManager = new GroovyLibraryManager();
+public class GradleLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+  private static final LibraryKind<GroovyLibraryProperties> GRADLE_KIND = LibraryKind.create("gradle");
+  private GradleLibraryManager myLibraryManager = new GradleLibraryManager();
 
-  public GroovyLibraryPresentationProvider() {
-    super(GROOVY_KIND);
+  public GradleLibraryPresentationProvider() {
+    super(GRADLE_KIND);
   }
 
   @Override
   public LibraryManager getLibraryManager() {
-    return myManager;
+    return myLibraryManager;
   }
 
   @Override
   protected boolean acceptManager(LibraryManager manager) {
-    return manager instanceof GroovyLibraryManager;
+    return manager instanceof GradleLibraryManager;
   }
 }

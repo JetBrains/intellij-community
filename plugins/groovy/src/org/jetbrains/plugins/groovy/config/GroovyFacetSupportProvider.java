@@ -22,7 +22,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -47,7 +46,7 @@ public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
 
   @NotNull
   public FrameworkSupportConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
-    return new GroovySupportConfigurable(new GroovyFacetEditor(model.getProject()));
+    return new GroovySupportConfigurable();
   }
 
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {

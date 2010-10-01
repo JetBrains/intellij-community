@@ -76,6 +76,10 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     FrameworkVersion version = myConfigurable.getSelectedVersion();
     if (version == null) return null;
 
+    if (version instanceof FrameworkVersionWithLibrary) {
+      return ((FrameworkVersionWithLibrary)version).getLibraryDescription();
+    }
+
     CustomLibraryDescription description = myLibraryDescriptions.get(version);
     if (description == null) {
       description = new CustomLibraryDescriptionImpl(version.getLibraries(), StringUtil.notNullize(version.getLibraryName()));
@@ -89,7 +93,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
     if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
       if (libraryCompositionSettings != null) {
-        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer, true);
+        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer, myConfigurable.getComponent() != null);
       }
       else {
         myLibraryCompositionOptionsPanel = null;

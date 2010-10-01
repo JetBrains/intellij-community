@@ -173,29 +173,35 @@ public class AddSupportForFrameworksPanel implements Disposable {
       optionsPanel.add(separator);
 
       final FrameworkSupportConfigurable configurable = node.getConfigurable();
-      optionsPanel.add(configurable.getComponent());
+      final JComponent component = configurable.getComponent();
+      if (component != null) {
+        optionsPanel.add(component);
+      }
 
+      final boolean addSeparator = component != null;
       final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
       optionsPanel.add(librariesOptionsPanelWrapper);
       configurable.addListener(new FrameworkSupportConfigurableListener() {
         public void frameworkVersionChanged() {
           librariesOptionsPanelWrapper.removeAll();
-          addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper);
+          addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
           librariesOptionsPanelWrapper.revalidate();
         }
       });
-      addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper);
+      addLibrariesOptionsPanel(node, librariesOptionsPanelWrapper, addSeparator);
       myOptionsPanel.add(id, optionsPanel);
       myInitializedOptionsPanelIds.add(id);
     }
   }
 
-  private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper) {
+  private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper, boolean addSeparator) {
     final LibraryOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer);
     if (libraryOptionsPanel != null) {
-      JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
-      separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
-      librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
+      if (addSeparator) {
+        JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
+        separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+        librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
+      }
       librariesOptionsPanelWrapper.add(BorderLayout.CENTER, libraryOptionsPanel.getMainPanel());
     }
   }

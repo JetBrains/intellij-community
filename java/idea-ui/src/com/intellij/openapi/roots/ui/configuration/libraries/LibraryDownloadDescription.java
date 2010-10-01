@@ -15,26 +15,30 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class CustomLibraryDescription {
-  @Nullable
-  public LibraryDownloadDescription getDownloadDescription() {
-    return null;
+public class LibraryDownloadDescription {
+  private final String myDefaultLibraryName;
+  private final List<LibraryDownloadInfo> myDownloads;
+
+  public LibraryDownloadDescription(@NotNull String defaultLibraryName, @NotNull List<LibraryDownloadInfo> downloads) {
+    myDefaultLibraryName = defaultLibraryName;
+    myDownloads = downloads;
   }
 
   @NotNull
-  public abstract Condition<List<VirtualFile>> getSuitableLibraryCondition();
+  public String getDefaultLibraryName() {
+    return myDefaultLibraryName;
+  }
 
-  @Nullable
-  public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory);
+  @NotNull
+  public List<LibraryDownloadInfo> getDownloads() {
+    return myDownloads;
+  }
 }

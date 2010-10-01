@@ -16,11 +16,12 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -58,8 +59,11 @@ public class LibraryCompositionSettings implements Disposable {
                                     final @NotNull String baseDirectoryForDownloadedFiles) {
     myLibraryDescription = libraryDescription;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
-    myDownloadedLibraryName = libraryDescription.getDefaultLibraryName();
-    mySelectedDownloads = myLibraryDescription.getDownloads();
+    final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
+    if (downloadDescription != null) {
+      myDownloadedLibraryName = downloadDescription.getDefaultLibraryName();
+      mySelectedDownloads = downloadDescription.getDownloads();
+    }
   }
 
   public ExistingLibraryEditor getOrCreateEditor(@NotNull Library library) {
@@ -118,20 +122,19 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   public boolean downloadFiles(final @NotNull JComponent parent) {
-    if (myDownloadLibraries) {
-      if (!myLibraryDescription.getDownloads().isEmpty()) {
-        LibraryDownloadInfo[] toDownload = mySelectedDownloads.toArray(new LibraryDownloadInfo[mySelectedDownloads.size()]);
-        LibraryDownloader downloader = new LibraryDownloader(toDownload, null, parent,
-                                                             getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
-        VirtualFile[] files = downloader.download();
-        if (files.length != toDownload.length) {
-          return false;
-        }
-        myNewLibraryEditor = new NewLibraryEditor();
-        myNewLibraryEditor.setName(myDownloadedLibraryName);
-        for (VirtualFile file : files) {
-          myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
-        }
+    final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
+    if (myDownloadLibraries && downloadDescription != null) {
+      LibraryDownloadInfo[] toDownload = mySelectedDownloads.toArray(new LibraryDownloadInfo[mySelectedDownloads.size()]);
+      LibraryDownloader downloader = new LibraryDownloader(toDownload, null, parent,
+                                                           getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
+      VirtualFile[] files = downloader.download();
+      if (files.length != toDownload.length) {
+        return false;
+      }
+      myNewLibraryEditor = new NewLibraryEditor();
+      myNewLibraryEditor.setName(myDownloadedLibraryName);
+      for (VirtualFile file : files) {
+        myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
       }
     }
     return true;

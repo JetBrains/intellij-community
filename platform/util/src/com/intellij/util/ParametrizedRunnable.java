@@ -13,32 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
-
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.util;
 
 /**
  * @author nik
  */
-public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProperties> {
-  private String myVersion;
-
-  public GroovyLibraryProperties(String version) {
-    myVersion = version;
-  }
-
-  @Nullable
-  public String getVersion() {
-    return myVersion;
-  }
-
-  @Override
-  public GroovyLibraryProperties getState() {
-    return null;
-  }
-
-  @Override
-  public void loadState(GroovyLibraryProperties state) {
-  }
+public interface ParametrizedRunnable<T> {
+  void run(T t);
 }
