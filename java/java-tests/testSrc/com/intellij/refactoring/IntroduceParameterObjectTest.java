@@ -16,6 +16,7 @@ import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
+  @Override
   protected String getTestRoot() {
     return "/refactoring/introduceParameterObject/";
   }
@@ -30,6 +31,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTest(final boolean delegate, final boolean createInner) throws Exception {
     doTest(delegate, createInner, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+      @Override
       public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
         return generateParams(psiMethod);
       }
@@ -40,6 +42,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
                       final boolean createInner,
                       final Function<PsiMethod, ParameterTablePanel.VariableData[]> function) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
@@ -116,6 +119,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   public void testTypeParametersWithChosenSubtype() throws Exception {
     doTest(false, true, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+      @Override
       public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
         final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
         final PsiClass collectionClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
@@ -143,6 +147,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
                                    final String newVisibility) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
         if (aClass == null) {

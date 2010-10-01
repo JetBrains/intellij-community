@@ -18,10 +18,12 @@ import java.util.*;
  * Date: Feb 2, 2005
  */
 public class CyclicDependenciesTest extends PsiTestCase {
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/" + getTestName(true);

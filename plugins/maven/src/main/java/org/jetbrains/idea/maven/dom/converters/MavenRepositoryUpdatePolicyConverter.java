@@ -17,10 +17,11 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.converters.MavenConstantListConverter;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenRepositoryUpdatePolicyConverter extends MavenConstantListConverter {
@@ -33,7 +34,7 @@ public class MavenRepositoryUpdatePolicyConverter extends MavenConstantListConve
     return super.fromString(s, context);
   }
 
-  protected List<String> getValues(ConvertContext context) {
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }
 }

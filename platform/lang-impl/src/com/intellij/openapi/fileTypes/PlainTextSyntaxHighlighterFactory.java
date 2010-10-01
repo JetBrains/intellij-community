@@ -44,13 +44,11 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
       public Lexer getHighlightingLexer() {
         ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
         tokenParsers.add(new WhitespaceParser());
-        tokenParsers.add(new PunctuationParser());
-        tokenParsers.add(new IdentifierParser());
 
-        tokenParsers.addAll(BraceTokenParser.BRACES);
-        tokenParsers.addAll(BraceTokenParser.PARENS);
-        tokenParsers.addAll(BraceTokenParser.BRACKETS);
-        tokenParsers.addAll(BraceTokenParser.ANGLE_BRACKETS);
+        tokenParsers.addAll(BraceTokenParser.getBraces());
+        tokenParsers.addAll(BraceTokenParser.getParens());
+        tokenParsers.addAll(BraceTokenParser.getBrackets());
+        tokenParsers.addAll(BraceTokenParser.getAngleBrackets());
 
         return new AbstractCustomLexer(tokenParsers);
       }
@@ -58,9 +56,6 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
       @NotNull
       @Override
       public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-        if (tokenType == CustomHighlighterTokenType.NUMBER) {
-          return new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES};
-        }
         return EMPTY;
       }
     };

@@ -53,7 +53,7 @@ public class UnBoxingEvaluator implements Evaluator{
   }
 
   public UnBoxingEvaluator(Evaluator operand) {
-    myOperand = operand;
+    myOperand = new DisableGC(operand);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

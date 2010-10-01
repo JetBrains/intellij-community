@@ -56,7 +56,7 @@ import java.awt.dnd.DragSource;
  * @author nik
  */
 public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, XLineBreakpointImpl.LineBreakpointState<P>> implements XLineBreakpoint<P> {
-  private @Nullable RangeHighlighter myHighlighter;
+  @Nullable private RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
   private Icon myIcon;
   private XSourcePosition mySourcePosition;
@@ -64,7 +64,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private boolean myDisposed;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
 
-  public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, final @Nullable P properties) {
+  public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, @Nullable final P properties) {
     super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
     myType = type;
   }
@@ -404,6 +404,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     public boolean equals(Object obj) {
       return obj.getClass() == getClass()
         && getXLineBreakpoint() == ((BreakpointGutterIconRenderer)obj).getXLineBreakpoint();
+    }
+
+    @Override
+    public int hashCode() {
+      return getXLineBreakpoint().hashCode();
     }
   }
 

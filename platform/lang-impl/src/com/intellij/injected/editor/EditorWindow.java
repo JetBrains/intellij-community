@@ -300,6 +300,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.isCaretActive();
   }
 
+  @Override
+  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
+    return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
+  }
+
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     assert isValid();
@@ -470,12 +475,17 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getLastColumnNumber();
   }
 
+  @NotNull
+  @Override
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
+    assert isValid();
+    return new VisualPosition(logicalPos.line, logicalPos.column);
+  }
 
   // assuming there is no folding in injected documents
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
-    assert isValid();
-    return new VisualPosition(pos.line, pos.column);
+    return logicalToVisualPosition(pos, false);
   }
 
   @NotNull

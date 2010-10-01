@@ -37,17 +37,21 @@ public class WordCompletionTest extends CompletionTestCase {
 
   public void testNoWordCompletionForNonSoftReference() throws Throwable {
     final PsiReferenceProviderBase softProvider = new PsiReferenceProviderBase() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new PsiReference[]{new PsiReferenceBase<PsiElement>(element) {
+          @Override
           public PsiElement resolve() {
             return null;
           }
 
+          @Override
           public boolean isSoft() {
             return true;
           }
 
+          @Override
           @NotNull
           public Object[] getVariants() {
             return new Object[]{"MySoftVariant"};
@@ -56,17 +60,21 @@ public class WordCompletionTest extends CompletionTestCase {
       }
     };
     final PsiReferenceProviderBase hardProvider = new PsiReferenceProviderBase() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new PsiReference[]{new PsiReferenceBase<PsiElement>(element) {
+          @Override
           public PsiElement resolve() {
             return null;
           }
 
+          @Override
           public boolean isSoft() {
             return false;
           }
 
+          @Override
           @NotNull
           public Object[] getVariants() {
             return new Object[]{"MyHardVariant"};

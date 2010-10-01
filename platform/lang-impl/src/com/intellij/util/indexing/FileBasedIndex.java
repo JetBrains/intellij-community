@@ -808,7 +808,7 @@ public class FileBasedIndex implements ApplicationComponent {
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
-              VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+              VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
               if (file != null && filter.accept(file)) {
                 shouldContinue = processor.process(file, value);
                 if (!shouldContinue) {
@@ -842,9 +842,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return true;
   }
 
-  public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys,
-                                         Processor<VirtualFile> processor,
-                                         GlobalSearchScope filter) {
+  public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {
     try {
       final Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
@@ -884,7 +882,8 @@ public class FileBasedIndex implements ApplicationComponent {
         TIntIterator ids = join(locals).iterator();
         while (ids.hasNext()) {
           int id = ids.next();
-          VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+          //VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+          VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
           if (file != null && filter.accept(file)) {
             if (!processor.process(file)) return false;
           }

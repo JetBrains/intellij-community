@@ -17,6 +17,7 @@ public class MoveFileTest extends MultiFileTestCase {
     return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";
   }
 
+  @Override
   protected String getTestRoot() {
     return "/move/";
   }
@@ -28,6 +29,7 @@ public class MoveFileTest extends MultiFileTestCase {
   //Both names are relative to root directory
   private void doTest(final String targetDirName, final String fileToMove) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final VirtualFile child = rootDir.findFileByRelativePath(fileToMove);
         assertNotNull("File " + fileToMove + " not found", child);

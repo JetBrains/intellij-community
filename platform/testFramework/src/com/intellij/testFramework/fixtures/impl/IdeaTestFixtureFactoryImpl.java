@@ -45,10 +45,12 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     registerFixtureBuilder(EmptyModuleFixtureBuilder.class, MyEmptyModuleFixtureBuilderImpl.class);
   }
 
+  @Override
   public final <T extends ModuleFixtureBuilder> void registerFixtureBuilder(Class<T> aClass, Class<? extends T> implClass) {
     myFixtureBuilderProviders.put(aClass, implClass);
   }
 
+  @Override
   public void registerFixtureBuilder(Class<? extends ModuleFixtureBuilder> aClass, String implClassName) {
     try {
       final Class implClass = Class.forName(implClassName);
@@ -60,6 +62,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     }
   }
 
+  @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(), myFixtureBuilderProviders);
   }
@@ -69,6 +72,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourEmptyProjectDescriptor));
   }
 
+  @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
     if (projectDescriptor == null) {
       projectDescriptor = ourEmptyProjectDescriptor;
@@ -76,14 +80,17 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(projectDescriptor));
   }
 
+  @Override
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
     return createCodeInsightFixture(projectFixture, new TempDirTestFixtureImpl());
   }
 
+  @Override
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
     return new CodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
   }
 
+  @Override
   public TempDirTestFixture createTempDirTestFixture() {
     return new TempDirTestFixtureImpl();
   }
@@ -93,20 +100,24 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
+    @Override
     protected ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);
     }
   }
 
   private static final LightProjectDescriptor ourEmptyProjectDescriptor = new LightProjectDescriptor() {
+    @Override
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
     }
 
+    @Override
     public Sdk getSdk() {
       return null;
     }
 
+    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   };

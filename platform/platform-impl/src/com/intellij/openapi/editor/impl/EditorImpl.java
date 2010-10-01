@@ -254,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   EditorImpl(@NotNull Document document, boolean viewer, Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
-    myScheme = new MyColorSchemeDelegate();
+    myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this);
@@ -406,6 +406,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
+    return new MyColorSchemeDelegate(customGlobalScheme);
   }
 
   private void repaintGuide(IndentGuideDescriptor guide) {
@@ -1536,6 +1540,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setBackgroundColor(Color color) {
+    myScrollPane.setBackground(color);
+
     if (getBackgroundIgnoreForced().equals(color)) {
       myForcedBackground = null;
       return;
@@ -2787,12 +2793,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getDocument().getLineCount() - myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
   }
 
+  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     return logicalToVisualPosition(logicalPos, true);
   }
 
-  private VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
+  @Override
+  @NotNull
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
       return new VisualPosition(logicalPos.line, logicalPos.column);
@@ -3019,7 +3028,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (lineNumber >= totalLines) {
+    if (lineNumber >= totalLines && totalLines > 0) {
       int visibleLineCount = getVisibleLineCount();
       moveCaretToScreenPos(x, visibleLineCount > 0 ? visibleLineNumberToYPosition( visibleLineCount - 1) : 0);
       return;
@@ -3094,6 +3103,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           region.setExpanded(true);
         }
       });
+
+      // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
+      // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
+      getGutterComponentEx().invalidate();
     }
 
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection) {
@@ -4555,12 +4568,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate implements EditorColorsScheme {
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
-    private MyColorSchemeDelegate() {
+    private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
+      myCustomGlobalScheme = globalScheme;
       updateGlobalScheme();
     }
 
@@ -4689,7 +4704,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void updateGlobalScheme() {
-      myGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      myGlobalScheme = myCustomGlobalScheme != null ? myCustomGlobalScheme
+                                                    :  EditorColorsManager.getInstance().getGlobalScheme();
     }
   }
 

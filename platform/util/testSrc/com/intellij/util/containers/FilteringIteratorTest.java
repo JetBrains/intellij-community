@@ -29,6 +29,7 @@ public class FilteringIteratorTest extends TestCase {
   public static final Condition STRINGS_ONLY = FilteringIterator.instanceOf(String.class);
   public static final Assertion CHECK = new Assertion();
   public static final Condition ANY = new Condition(){
+          @Override
           public boolean value(Object object) {
             return true;
           }
@@ -101,15 +102,18 @@ public class FilteringIteratorTest extends TestCase {
       myIterator = iterator;
     }
 
+    @Override
     public boolean hasNext() {
       myHasNextCalls++;
       return myIterator.hasNext();
     }
 
+    @Override
     public Object next() {
       return myIterator.next();
     }
 
+    @Override
     public void remove() {
       myIterator.remove();
     }
@@ -123,6 +127,7 @@ public class FilteringIteratorTest extends TestCase {
       myCondition = condition;
     }
 
+    @Override
     public boolean value(Object o) {
       myValueCalls++;
       return myCondition.value(o);

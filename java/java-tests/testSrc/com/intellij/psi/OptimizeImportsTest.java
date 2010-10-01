@@ -43,6 +43,7 @@ public class OptimizeImportsTest extends PsiTestCase{
   public void testNewImportListIsEmptyAndCommentPreserved() throws Exception { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() throws Exception { doTest(); }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("mock 1.5");
   }
@@ -55,8 +56,10 @@ public class OptimizeImportsTest extends PsiTestCase{
   private void doTest(final String extension) throws Exception {
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             String fileName = getTestName(false) + extension;
             try {

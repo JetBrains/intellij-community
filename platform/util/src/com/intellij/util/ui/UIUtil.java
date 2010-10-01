@@ -46,6 +46,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -577,6 +578,11 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderGTKLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("GTK");
+  }
+
   public static boolean isFullRowSelectionLAF() {
     return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
@@ -1014,13 +1020,18 @@ public class UIUtil {
 
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
-    return getCssFontDeclaration(font, null, null);
+    return getCssFontDeclaration(font, null, null, null);
   }
 
   @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor) {
+  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    if (resource != null) {
+      body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
+    }
     String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
     return "<style> " + body + " " + link + "</style>";
   }

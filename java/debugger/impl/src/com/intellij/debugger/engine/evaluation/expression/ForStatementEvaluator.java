@@ -38,10 +38,10 @@ public class ForStatementEvaluator implements Evaluator {
                                Evaluator updateEvaluator,
                                Evaluator bodyEvaluator,
                                String labelName) {
-    myInitializationEvaluator = initializationEvaluator;
-    myConditionEvaluator = conditionEvaluator;
-    myUpdateEvaluator = updateEvaluator;
-    myBodyEvaluator = bodyEvaluator;
+    myInitializationEvaluator = new DisableGC(initializationEvaluator);
+    myConditionEvaluator = new DisableGC(conditionEvaluator);
+    myUpdateEvaluator = new DisableGC(updateEvaluator);
+    myBodyEvaluator = new DisableGC(bodyEvaluator);
     myLabelName = labelName;
   }
 

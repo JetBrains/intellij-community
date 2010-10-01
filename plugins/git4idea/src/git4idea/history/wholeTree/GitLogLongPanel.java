@@ -30,6 +30,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
@@ -221,7 +222,7 @@ public class GitLogLongPanel {
     @Override
     public String valueOf(Object o) {
       if (o instanceof GitCommit) {
-        return ((GitCommit) o).getDate().toString();
+        return DateFormatUtil.formatPrettyDate(((GitCommit) o).getDate());
       }
       return o == null ? "" : o.toString();
     }

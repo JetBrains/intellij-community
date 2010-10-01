@@ -25,12 +25,6 @@ public class ClassNameCompleteMacro extends BaseCompleteMacro {
   }
 
   CodeInsightActionHandler getCompletionHandler() {
-
-    return new CodeCompletionHandlerBase(CompletionType.CLASS_NAME) {
-      @Override
-      protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-        // noithing
-      }
-    };
+    return new CodeCompletionHandlerBase(CompletionType.CLASS_NAME, false, true);
   }
 }

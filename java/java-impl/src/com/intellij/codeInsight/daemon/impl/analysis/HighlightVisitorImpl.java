@@ -302,7 +302,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, ((PsiDocMethodOrFieldRef)value).getNameElement(), false));
       }
       else if (element instanceof PsiParameter) {
-        myHolder.add(HighlightNamesUtil.highlightVariable((PsiVariable)element, value.getNavigationElement()));
+        myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)element, value.getNavigationElement()));
       }
     }
   }
@@ -380,7 +380,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitIdentifier(PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable) {
-      myHolder.add(HighlightUtil.checkVariableAlreadyDefined((PsiVariable)parent));
+      PsiVariable variable = (PsiVariable)parent;
+      myHolder.add(HighlightUtil.checkVariableAlreadyDefined(variable));
+
+      if (variable.getInitializer() == null) {
+        final PsiElement child = variable.getLastChild();
+        if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
+      }
+      if (isReassigned(variable)) {
+        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
+      }
+      else {
+        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier));
+      }
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -401,6 +413,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (method.isConstructor()) {
         myHolder.add(HighlightMethodUtil.checkConstructorName(method));
       }
+      myHolder.add(HighlightNamesUtil.highlightMethodName(method, identifier, true));
     }
     super.visitIdentifier(identifier);
   }
@@ -516,10 +529,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, method.getContainingClass()));
     }
-    myHolder.add(HighlightNamesUtil.highlightMethodName(method, method.getNameIdentifier(), true));
   }
 
-  private void highlightMethodOrClassName(PsiJavaCodeReferenceElement element) {
+  private void highlightReferencedMethodOrClassName(PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement) {
       return;
@@ -742,12 +754,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
       }
       else {
-        myHolder.add(HighlightNamesUtil.highlightVariable(variable, ref.getReferenceNameElement()));
+        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, ref.getReferenceNameElement()));
       }
       myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref));
     }
     else {
-      highlightMethodOrClassName(ref);
+      highlightReferencedMethodOrClassName(ref);
     }
   }
 
@@ -882,17 +894,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitVariable(PsiVariable variable) {
     super.visitVariable(variable);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
-
-    if (isReassigned(variable)) {
-      myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
-    }
-    else {
-      if (variable.getInitializer() == null) {
-        final PsiElement child = variable.getLastChild();
-        if (child instanceof PsiErrorElement && child.getPrevSibling() == variable.getNameIdentifier()) return;
-      }
-      myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
-    }
   }
 
   private boolean isReassigned(PsiVariable variable) {

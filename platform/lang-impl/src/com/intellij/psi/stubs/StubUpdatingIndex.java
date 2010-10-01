@@ -145,14 +145,23 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         assert builder != null;
 
         data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
-      } else {
+      }
+      else {
         final LanguageFileType filetype = (LanguageFileType)fileType;
         Language l = filetype.getLanguage();
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         PsiFile psi = inputData.getPsiFile();
 
-        data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+        if (type instanceof IStubFileElementType) {
+          data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+        }
+        else if (filetype instanceof SubstitutedFileType) {
+          SubstitutedFileType substituted = (SubstitutedFileType) filetype;
+          LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
+          final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
+          data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
+        }
       }
 
       inputData.putUserData(stubElementKey, data);
@@ -195,7 +204,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       else if (fileType.isBinary()) {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-        if (builder != null ) {
+        if (builder != null) {
           version += builder.getStubVersion();
         }
       }
@@ -204,7 +213,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   }
 
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final ID<Integer, SerializedStubTree> indexId,
-                                                                                            final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
+                                                                                            final FileBasedIndex owner,
+                                                                                            IndexStorage<Integer, SerializedStubTree> storage) {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
       memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
@@ -220,7 +230,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return new MyIndex(indexId, owner, storage, getIndexer());
   }
 
-  private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+  private static void updateStubIndices(final Collection<StubIndexKey> indexKeys,
+                                        final int inputId,
+                                        final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
+                                        final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
     final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     for (StubIndexKey key : indexKeys) {
       final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
@@ -233,7 +246,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   }
 
-  private static Collection<StubIndexKey> getAffectedIndices(final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+  private static Collection<StubIndexKey> getAffectedIndices(final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
+                                                             final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
     Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
     allIndices.addAll(oldStubTree.keySet());
     allIndices.addAll(newStubTree.keySet());
@@ -243,7 +257,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private final StubIndexImpl myStubIndex;
 
-    public MyIndex(final ID<Integer, SerializedStubTree> indexId, final FileBasedIndex owner, final IndexStorage<Integer, SerializedStubTree> storage,
+    public MyIndex(final ID<Integer, SerializedStubTree> indexId,
+                   final FileBasedIndex owner,
+                   final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexId, indexer, storage);
       myStubIndex = (StubIndexImpl)StubIndex.getInstance();
@@ -269,8 +285,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
-    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Callable<Collection<Integer>> oldKeysGetter)
-        throws StorageException {
+    protected void updateWithMap(final int inputId,
+                                 final Map<Integer, SerializedStubTree> newData,
+                                 Callable<Collection<Integer>> oldKeysGetter)
+      throws StorageException {
 
       checkNameStorage();
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
@@ -296,7 +314,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         finally {
           getWriteLock().unlock();
         }
-
       }
       finally {
         for (StubIndexKey key : allStubIndices) {
@@ -332,7 +349,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       IndexStorage<Integer, SerializedStubTree> indexStorage = myStorage;
       if (indexStorage instanceof MemoryIndexStorage) {
-        final MemoryIndexStorage<Integer, SerializedStubTree> memIndexStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)indexStorage;
+        final MemoryIndexStorage<Integer, SerializedStubTree> memIndexStorage =
+          (MemoryIndexStorage<Integer, SerializedStubTree>)indexStorage;
         if (!memIndexStorage.isBufferingEnabled()) {
           // if buffering is not enabled, use backend storage to make sure
           // the returned stub tree contains no data corresponding to unsaved documents.

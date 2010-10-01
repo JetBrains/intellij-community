@@ -40,6 +40,8 @@
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
     <extensionPoint name="scriptType" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
 
+    <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
+
     <!-- Groovy DSL extension points -->
     <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
     <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
@@ -60,6 +62,8 @@
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
+
+    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" />
 
     <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
     <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
@@ -85,7 +89,7 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
-    
+
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -104,6 +108,9 @@
 
     <library.creator implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryCreator"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryPresentationProvider"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryPresentationProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>

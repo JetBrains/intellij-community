@@ -23,6 +23,7 @@ public class SCR17650Test extends PsiTestCase {
 
   private VirtualFile myDir;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -32,6 +33,7 @@ public class SCR17650Test extends PsiTestCase {
     myFilesToDelete.add(root);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));

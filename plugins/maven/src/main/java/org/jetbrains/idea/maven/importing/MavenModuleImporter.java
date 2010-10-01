@@ -108,7 +108,7 @@ public class MavenModuleImporter {
 
   private void configDependencies() {
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
-      if (!myMavenProject.isSupportedDependency(artifact)) continue;
+      if (!myMavenProject.isSupportedDependency(artifact, SupportedRequestType.FOR_IMPORT)) continue;
 
       DependencyScope scope = selectScope(artifact.getScope());
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());

@@ -53,7 +53,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public boolean LOG_ENABLED = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
-  private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
 
@@ -79,7 +79,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public abstract String getDisplayName ();
 
-  public @Nullable String getClassName() {
+  @Nullable
+  public String getClassName() {
     return null;
   }
 
@@ -87,7 +88,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     myCachedVerifiedState = isVerified;
   }
 
-  public @Nullable String getShortClassName() {
+  @Nullable
+  public String getShortClassName() {
     final String className = getClassName();
     if (className != null) {
       final int dotIndex = className.lastIndexOf('.');
@@ -96,7 +98,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     return className;
   }
 
-  public @Nullable String getPackageName() {
+  @Nullable
+  public String getPackageName() {
     return null;
   }
 

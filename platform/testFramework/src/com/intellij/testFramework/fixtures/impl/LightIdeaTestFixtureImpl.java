@@ -41,6 +41,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     myProjectDescriptor = projectDescriptor;
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
@@ -50,6 +51,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
   }
 
   private class MyDataProvider implements DataProvider {
+    @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
       if (PlatformDataKeys.PROJECT.is(dataId)) {
@@ -65,6 +67,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
   }
 
 
+  @Override
   public void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
@@ -72,6 +75,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     super.tearDown();
   }
 
+  @Override
   public Project getProject() {
     return LightPlatformTestCase.getProject();
   }
@@ -81,6 +85,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     return CodeStyleSettingsManager.getSettings(getProject());
   }
 
+  @Override
   public Module getModule() {
     return LightPlatformTestCase.getModule();
   }

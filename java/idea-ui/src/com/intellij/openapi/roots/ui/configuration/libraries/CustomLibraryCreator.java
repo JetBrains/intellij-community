@@ -16,14 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
@@ -37,24 +33,5 @@ public abstract class CustomLibraryCreator {
   public abstract Icon getIcon();
 
   @NotNull
-  public List<? extends LibraryKind<?>> getSuitableKinds() {
-    return Collections.emptyList();
-  }
-
-  @Nullable
-  public abstract NewLibraryConfiguration createNewLibrary(JComponent parentComponent);
-
-  public static abstract class NewLibraryConfiguration {
-    private String myDefaultLibraryName;
-
-    protected NewLibraryConfiguration(String defaultLibraryName) {
-      myDefaultLibraryName = defaultLibraryName;
-    }
-
-    public String getDefaultLibraryName() {
-      return myDefaultLibraryName;
-    }
-
-    public abstract void addRoots(@NotNull LibraryEditor editor);
-  }
+  public abstract CustomLibraryDescription getDescription();
 }

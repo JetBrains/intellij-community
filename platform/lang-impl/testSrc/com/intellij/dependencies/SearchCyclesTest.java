@@ -36,10 +36,12 @@ public class SearchCyclesTest extends TestCase{
     graph.put("c", new String[]{"d"});
     graph.put("d", new String[]{"a", "b"});
     Graph<String> graphToInvestigate = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -60,10 +62,12 @@ public class SearchCyclesTest extends TestCase{
     graph.put("d", new String[]{"b","e"});
     graph.put("e", new String[]{"d"});
     Graph<String> graphToInvestigate = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -82,10 +86,12 @@ public class SearchCyclesTest extends TestCase{
     graph.put("b", new String[]{"a"});
     graph.put("d", new String[]{"a", "b"});
     Graph<String> graphToInvestigate = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -107,10 +113,12 @@ public class SearchCyclesTest extends TestCase{
     graph.put("e", new String[]{"d", "f"});
     graph.put("f", new String[]{"d"});
     Graph<String> graphToInvestigate = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){
@@ -132,10 +140,12 @@ public class SearchCyclesTest extends TestCase{
     graph.put("e", new String[]{"d", "f", "a"});
     graph.put("f", new String[]{"d"});
     Graph<String> graphToInvestigate = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
+      @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @Override
       public Iterator<String> getIn(final String n) {
         String[] in = graph.get(n);
         if (in == null){

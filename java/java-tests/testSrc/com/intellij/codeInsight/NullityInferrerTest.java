@@ -64,6 +64,7 @@ public class NullityInferrerTest extends CodeInsightTestCase {
   private void doTest(boolean annotateLocalVariables) throws Exception  {
     final String nullityPath = "/codeInsight/nullityinferrer";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final VirtualFile aLib = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + nullityPath + "/lib/annotations.jar");
         if (aLib != null) {

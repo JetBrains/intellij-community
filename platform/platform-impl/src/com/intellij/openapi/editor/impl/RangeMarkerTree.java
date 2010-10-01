@@ -83,6 +83,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     try {
       l.writeLock().lock();
       checkMax(true);
+      normalized = false;
 
       modCount++;
       List<MyNode> affected = new ArrayList<MyNode>();
@@ -161,6 +162,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
 
   public boolean sweep(final int start, final int end, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
+    normalize();
     return sweep(new Generator<T>() {
       @Override
       public boolean generate(Processor<T> processor) {

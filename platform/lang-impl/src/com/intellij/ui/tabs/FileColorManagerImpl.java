@@ -16,6 +16,7 @@
 
 package com.intellij.ui.tabs;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -23,7 +24,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.NonProjectFilesScope;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColorUtil;
@@ -46,12 +46,11 @@ import java.util.List;
   name = "FileColors",
   storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")})
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
+  public static final String FC_ENABLED = "FileColorsEnabled";
+  public static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";
   private final Project myProject;
   private final FileColorsModel myModel;
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
-  private boolean myEnabled = true;
-  private boolean myEnabledForTabs = true;
-  private boolean myEnabledForNonProject = true;
 
   private static final Map<String, Color> ourDefaultColors;
 
@@ -77,39 +76,39 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   public boolean isEnabled() {
-    return myEnabled;
+    return PropertiesComponent.getInstance().getBoolean(FC_ENABLED, true);
   }
 
   public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
+    PropertiesComponent.getInstance().setValue(FC_ENABLED, Boolean.toString(enabled));
   }
 
-  public void setEnabledForTabs(boolean b) {
-    myEnabledForTabs = b;
+  public void setEnabledForTabs(boolean enabled) {
+    PropertiesComponent.getInstance().setValue(FC_TABS_ENABLED, Boolean.toString(enabled));
   }
 
   public boolean isEnabledForTabs() {
-    return myEnabledForTabs;
+    return PropertiesComponent.getInstance().getBoolean(FC_TABS_ENABLED, true);
   }
 
   public Element getState(final boolean shared) {
     Element element = new Element("state");
-    if (!shared) {
-      element.setAttribute("enabled", Boolean.toString(myEnabled));
-      element.setAttribute("enabledForTabs", Boolean.toString(myEnabledForTabs));
-    }
+    //if (!shared) {
+    //  element.setAttribute("enabled", Boolean.toString(myEnabled));
+    //  element.setAttribute("enabledForTabs", Boolean.toString(myEnabledForTabs));
+    //}
 
     myModel.save(element, shared);
-    if (!shared) {
-      final boolean exists = findConfigurationByName(NonProjectFilesScope.NAME, myModel.getLocalConfigurations()) != null;
-      if (myEnabledForNonProject && !exists) {
-        myEnabledForNonProject = false;
-      } else if (!myEnabledForNonProject && exists) {
-        myEnabledForNonProject = true;
-      }
-
-      element.setAttribute("showNonProject", Boolean.toString(myEnabledForNonProject));
-    }
+    //if (!shared) {
+    //  final boolean exists = findConfigurationByName(NonProjectFilesScope.NAME, myModel.getLocalConfigurations()) != null;
+    //  if (myEnabledForNonProject && !exists) {
+    //    myEnabledForNonProject = false;
+    //  } else if (!myEnabledForNonProject && exists) {
+    //    myEnabledForNonProject = true;
+    //  }
+    //
+    //  element.setAttribute("showNonProject", Boolean.toString(myEnabledForNonProject));
+    //}
 
     return element;
   }
@@ -129,21 +128,21 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @SuppressWarnings({"AutoUnboxing"})
   void loadState(Element state, final boolean shared) {
     if (!shared) {
-      final String enabled = state.getAttributeValue("enabled");
-      myEnabled = enabled == null ? true : Boolean.valueOf(enabled);
+      //final String enabled = state.getAttributeValue("enabled");
+      //myEnabled = enabled == null ? true : Boolean.valueOf(enabled);
+      //
+      //final String enabledForTabs = state.getAttributeValue("enabledForTabs");
+      //myEnabledForTabs = enabledForTabs == null ? true : Boolean.valueOf(enabledForTabs);
 
-      final String enabledForTabs = state.getAttributeValue("enabledForTabs");
-      myEnabledForTabs = enabledForTabs == null ? true : Boolean.valueOf(enabledForTabs);
-
-      final String showNonProject = state.getAttributeValue("showNonProject");
-      myEnabledForNonProject = showNonProject == null ? true : Boolean.valueOf(showNonProject);
+      //final String showNonProject = state.getAttributeValue("showNonProject");
+      //myEnabledForNonProject = showNonProject == null ? true : Boolean.valueOf(showNonProject);
     }
 
     myModel.load(state, shared);
-    final List<FileColorConfiguration> local = myModel.getLocalConfigurations();
-    if (!shared && myEnabledForNonProject && findConfigurationByName(NonProjectFilesScope.NAME, local) == null) {
-      local.add(new FileColorConfiguration(NonProjectFilesScope.NAME, NonProjectFilesScope.DEFAULT_COLOR));
-    }
+    //final List<FileColorConfiguration> local = myModel.getLocalConfigurations();
+    //if (!shared && myEnabledForNonProject && findConfigurationByName(NonProjectFilesScope.NAME, local) == null) {
+    //  local.add(new FileColorConfiguration(NonProjectFilesScope.NAME, NonProjectFilesScope.DEFAULT_COLOR));
+    //}
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})

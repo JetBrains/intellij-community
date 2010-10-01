@@ -63,11 +63,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NonNls private static final String SELECTION_START_MARKER = "<selection>";
   @NonNls private static final String SELECTION_END_MARKER = "</selection>";
 
+  @Override
   protected void runTest() throws Throwable {
     final Throwable[] throwable = {null};
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+          @Override
           public void run() {
 
             try {
@@ -203,6 +206,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private static void deleteVFile() {
     if (myVFile != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           try {
             myVFile.delete(this);
@@ -214,6 +218,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
@@ -384,6 +389,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.EDITOR.is(dataId)) {
       return myEditor;
@@ -462,6 +468,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static DataContext getCurrentEditorDataContext() {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
     return new DataContext() {
+      @Override
       @Nullable
       public Object getData(@NonNls String dataId) {
         if (PlatformDataKeys.EDITOR.is(dataId)) {

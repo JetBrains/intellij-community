@@ -25,6 +25,7 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
@@ -46,9 +47,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 /**
  * The dialog that allows pushing active branches.
@@ -598,6 +601,11 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myCommitTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        // Fix GTK backround
+        if (UIUtil.isUnderGTKLookAndFeel()) {
+          final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          setBackground(background);
+        }
         ColoredTreeCellRenderer r = getTextRenderer();
         if (!(value instanceof DefaultMutableTreeNode)) {
           // unknown node type

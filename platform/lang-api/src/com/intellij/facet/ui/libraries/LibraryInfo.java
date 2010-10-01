@@ -29,13 +29,14 @@ public class LibraryInfo {
 
   private @Nullable final LibraryDownloadInfo myDownloadInfo;
   private @NonNls final String myName;
+  @Nullable private String myMd5;
   private @NonNls final String[] myRequiredClasses;
-  private boolean mySelected = true;
 
   public LibraryInfo(final @NonNls String name,
                      final @Nullable @NonNls String downloadingUrl,
-                     final @Nullable String presentableUrl, final @NonNls String... requiredClasses) {
+                     final @Nullable String presentableUrl, final @Nullable String md5, final @NonNls String... requiredClasses) {
     myName = name;
+    myMd5 = md5;
     myRequiredClasses = requiredClasses;
     if (downloadingUrl != null) {
       int dot = name.lastIndexOf('.');
@@ -95,11 +96,8 @@ public class LibraryInfo {
     return getName();
   }
 
-  public boolean isSelected() {
-    return mySelected;
-  }
-
-  public void setSelected(boolean selected) {
-    mySelected = selected;
+  @Nullable
+  public String getMd5() {
+    return myMd5;
   }
 }

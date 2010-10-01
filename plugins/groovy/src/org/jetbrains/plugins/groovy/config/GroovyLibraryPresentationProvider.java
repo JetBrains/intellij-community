@@ -16,42 +16,25 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.util.List;
 
 /**
  * @author nik
  */
-public class GroovyLibraryPresentationProvider extends LibraryPresentationProvider<GroovyLibraryProperties> {
+public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
+  private GroovyLibraryManager myManager = new GroovyLibraryManager();
 
   public GroovyLibraryPresentationProvider() {
     super(GROOVY_KIND);
   }
 
   @Override
-  public Icon getIcon(GroovyLibraryProperties properties) {
-    return properties.getManager().getIcon();
+  public LibraryManager getLibraryManager() {
+    return myManager;
   }
 
   @Override
-  public String getDescription(@NotNull GroovyLibraryProperties properties) {
-    final String version = properties.getVersion();
-    return properties.getManager().getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");
-  }
-
-  @Override
-  public GroovyLibraryProperties detect(@NotNull List<VirtualFile> classesRoots) {
-    final VirtualFile[] libraryFiles = classesRoots.toArray(new VirtualFile[classesRoots.size()]);
-    final LibraryManager manager = LibraryManager.findManagerFor(AbstractGroovyLibraryManager.EP_NAME.getExtensions(), libraryFiles);
-    if (manager != null) {
-      final String version = manager.getLibraryVersion(libraryFiles);
-      return new GroovyLibraryProperties(manager, version);
-    }
-    return null;
+  protected boolean acceptManager(LibraryManager manager) {
+    return manager instanceof GroovyLibraryManager;
   }
 }

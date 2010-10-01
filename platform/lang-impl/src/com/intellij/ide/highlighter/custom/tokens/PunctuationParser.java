@@ -21,7 +21,7 @@ import com.intellij.psi.CustomHighlighterTokenType;
 /**
  * @author peter
  */
-public class PunctuationParser extends BaseTokenParser {
+public class PunctuationParser extends TokenParser {
   @Override
   public boolean hasToken(int position) {
     final char c = myBuffer.charAt(position);

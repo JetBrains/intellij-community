@@ -31,6 +31,7 @@ public class RadGridBagLayoutManagerTest extends TestCase {
   private RadGridBagLayoutManager myManager;
   private RadContainer myContainer;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myManager = new RadGridBagLayoutManager();

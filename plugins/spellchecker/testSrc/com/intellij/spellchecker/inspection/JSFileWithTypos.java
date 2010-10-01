@@ -23,6 +23,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  */
 public class JSFileWithTypos extends SpellcheckerInspectionTestCase {
 
+  @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/js";
   }

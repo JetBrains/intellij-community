@@ -23,20 +23,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class MavenImporter {
   public static ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
   protected final String myPluginGroupID;
@@ -61,7 +56,14 @@ public abstract class MavenImporter {
     return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
-  public abstract boolean isSupportedDependency(MavenArtifact artifact);
+  public void getSupportedPackagings(Collection<String> result) {
+  }
+
+  public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) {
+  }
+
+  public void getSupportedDependencyScopes(Collection<String> result) {
+  }
 
   @Nullable
   public Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {

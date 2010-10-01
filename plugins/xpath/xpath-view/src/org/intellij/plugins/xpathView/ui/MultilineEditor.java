@@ -118,7 +118,6 @@ public class MultilineEditor extends EditorTextField {
 
     protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.setOneLineMode(false);
 
         editor.setHorizontalScrollbarVisible(true);
         editor.setVerticalScrollbarVisible(true);
@@ -127,5 +126,10 @@ public class MultilineEditor extends EditorTextField {
         editor.getComponent().setPreferredSize(null);
 
         return editor;
+    }
+
+    @Override
+    protected boolean isOneLineMode() {
+        return false;
     }
 }

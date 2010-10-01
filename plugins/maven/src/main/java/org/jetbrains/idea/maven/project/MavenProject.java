@@ -220,7 +220,7 @@ public class MavenProject {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
-      
+
       if (name.length() == 0) continue;
 
       String originalName = name;
@@ -402,14 +402,12 @@ public class MavenProject {
 
   public List<MavenProjectProblem> getProblems() {
     State state = myState;
-    if (state.myProblemsCache == null) {
-      synchronized (state) {
-        if (state.myProblemsCache == null) {
-          state.myProblemsCache = collectProblems(myFile, state);
-        }
+    synchronized (state) {
+      if (state.myProblemsCache == null) {
+        state.myProblemsCache = collectProblems(myFile, state);
       }
+      return state.myProblemsCache;
     }
-    return state.myProblemsCache;
   }
 
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
@@ -466,39 +464,35 @@ public class MavenProject {
   }
 
   private static List<MavenArtifact> getUnresolvedDependencies(State state) {
-    if (state.myUnresolvedDependenciesCache == null) {
-      synchronized (state) {
-        if (state.myUnresolvedDependenciesCache == null) {
-          List<MavenArtifact> result = new ArrayList<MavenArtifact>();
-          for (MavenArtifact each : state.myDependencies) {
-            if (!each.isResolved()) result.add(each);
-          }
-          state.myUnresolvedDependenciesCache = result;
+    synchronized (state) {
+      if (state.myUnresolvedDependenciesCache == null) {
+        List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+        for (MavenArtifact each : state.myDependencies) {
+          if (!each.isResolved()) result.add(each);
         }
+        state.myUnresolvedDependenciesCache = result;
       }
+      return state.myUnresolvedDependenciesCache;
     }
-    return state.myUnresolvedDependenciesCache;
   }
 
   private static List<MavenArtifact> getUnresolvedExtensions(State state) {
-    if (state.myUnresolvedExtensionsCache == null) {
-      synchronized (state) {
-        if (state.myUnresolvedExtensionsCache == null) {
-          List<MavenArtifact> result = new ArrayList<MavenArtifact>();
-          for (MavenArtifact each : state.myExtensions) {
-            // Collect only extensions that were attempted to be resolved.
-            // It is because embedder does not even try to resolve extensions that
-            // are not necessary.
-            if (state.myUnresolvedArtifactIds.contains(each.getMavenId())
-                && !pomFileExists(state.myLocalRepository, each)) {
-              result.add(each);
-            }
+    synchronized (state) {
+      if (state.myUnresolvedExtensionsCache == null) {
+        List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+        for (MavenArtifact each : state.myExtensions) {
+          // Collect only extensions that were attempted to be resolved.
+          // It is because embedder does not even try to resolve extensions that
+          // are not necessary.
+          if (state.myUnresolvedArtifactIds.contains(each.getMavenId())
+              && !pomFileExists(state.myLocalRepository, each)) {
+            result.add(each);
           }
-          state.myUnresolvedExtensionsCache = result;
         }
+        state.myUnresolvedExtensionsCache = result;
       }
+      return state.myUnresolvedExtensionsCache;
     }
-    return state.myUnresolvedExtensionsCache;
   }
 
   private static boolean pomFileExists(File localRepository, MavenArtifact artifact) {
@@ -506,20 +500,18 @@ public class MavenProject {
   }
 
   private static List<MavenPlugin> getUnresolvedPlugins(State state) {
-    if (state.myUnresolvedPluginsCache == null) {
-      synchronized (state) {
-        if (state.myUnresolvedPluginsCache == null) {
-          List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-          for (MavenPlugin each : getDeclaredPlugins(state)) {
-            if (!MavenArtifactUtil.hasArtifactFile(state.myLocalRepository, each.getMavenId())) {
-              result.add(each);
-            }
+    synchronized (state) {
+      if (state.myUnresolvedPluginsCache == null) {
+        List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+        for (MavenPlugin each : getDeclaredPlugins(state)) {
+          if (!MavenArtifactUtil.hasArtifactFile(state.myLocalRepository, each.getMavenId())) {
+            result.add(each);
           }
-          state.myUnresolvedPluginsCache = result;
         }
+        state.myUnresolvedPluginsCache = result;
       }
+      return state.myUnresolvedPluginsCache;
     }
-    return state.myUnresolvedPluginsCache;
   }
 
   public List<VirtualFile> getExistingModuleFiles() {
@@ -558,19 +550,44 @@ public class MavenProject {
     return myState.myDependencyTree;
   }
 
-  public boolean isSupportedDependency(MavenArtifact artifact) {
-    String t = artifact.getType();
-    if (MavenConstants.TYPE_JAR.equalsIgnoreCase(t)
-        || MavenConstants.TYPE_TEST_JAR.equalsIgnoreCase(t)
-        || "ejb".equalsIgnoreCase(t)
-        || "ejb-client".equalsIgnoreCase(t)) {
-      return true;
+  public boolean isSupportedDependency(MavenArtifact artifact, SupportedRequestType type) {
+    return getSupportedDependencyTypes(type).contains(artifact.getType());
+  }
+
+  public Set<String> getSupportedPackagings() {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_POM,
+                                                            MavenConstants.TYPE_JAR,
+                                                            "ejb", "ejb-client", "war", "ear"));
+    for (MavenImporter each : getSuitableImporters()) {
+      each.getSupportedPackagings(result);
+    }
+    return result;
+  }
+
+  public Set<String> getSupportedDependencyTypes(SupportedRequestType type) {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_JAR,
+                                                            MavenConstants.TYPE_TEST_JAR,
+                                                            "ejb", "ejb-client", "war", "ear"));
+    if (type == SupportedRequestType.FOR_COMPLETION) {
+      result.add(MavenConstants.TYPE_POM);
     }
 
     for (MavenImporter each : getSuitableImporters()) {
-      if (each.isSupportedDependency(artifact)) return true;
+      each.getSupportedDependencyTypes(result, type);
     }
-    return false;
+    return result;
+  }
+
+  public Set<String> getSupportedDependencyScopes() {
+    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
+                                                            MavenConstants.SCOPE_PROVIDEED,
+                                                            MavenConstants.SCOPE_RUNTIME,
+                                                            MavenConstants.SCOPE_TEST,
+                                                            MavenConstants.SCOPE_SYSTEM));
+    for (MavenImporter each : getSuitableImporters()) {
+      each.getSupportedDependencyScopes(result);
+    }
+    return result;
   }
 
   public void addDependency(MavenArtifact dependency) {

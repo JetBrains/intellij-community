@@ -31,6 +31,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
 
+  @Override
   public VirtualFile findFileByPath(@NotNull String path) {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
@@ -43,36 +44,45 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
     return file;
   }
 
+  @Override
   @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
 
+  @Override
   public void refresh(boolean asynchronous) {
   }
 
+  @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
   }
 
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
   }
 
+  @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     return null;
   }
 
+  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
   }
 
+  @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     return null;
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new IOException();
   }
 
+  @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
@@ -86,6 +96,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       myParent = parent;
     }
 
+    @Override
     @NotNull
     public VirtualFileSystem getFileSystem() {
       return MockVirtualFileSystem.this;
@@ -100,19 +111,23 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       return file;
     }
 
+    @Override
     public boolean isDirectory() {
       return myChildren.size() != 0;
     }
 
+    @Override
     public String getPath() {
       final MockVirtualFileSystem.MyVirtualFile parent = getParent();
       return parent == null ? getName() : parent.getPath() + "/" + getName();
     }
 
+    @Override
     public MyVirtualFile getParent() {
       return myParent;
     }
 
+    @Override
     public VirtualFile[] getChildren() {
       Collection<MyVirtualFile> children = myChildren.values();
       return children.toArray(new MyVirtualFile[children.size()]);

@@ -79,39 +79,10 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor();
-
-      if (rootTagNSDescriptor instanceof XmlNSDescriptorImpl) {
-        final XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)rootTagNSDescriptor).getElementDescriptor(getCanonicalText());
-
-        if (elementDescriptor != null) return elementDescriptor.getDeclaration();
-      }
-      return null;
+      XmlElementDescriptor descriptor = resolveElementReference(getCanonicalText(), myElement);
+      return descriptor == null ? null : descriptor.getDeclaration();
     }
 
-    private XmlNSDescriptor getNsDescriptor() {
-      final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
-        PsiUtilBase.getOriginalElement(myElement,(Class<XmlElement>)myElement.getClass()),
-        XmlDocument.class,
-        XmlMarkupDecl.class
-      );
-
-      if (parentThatProvidesMetaData instanceof XmlDocument) {
-        final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
-        XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
-        if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
-        return rootTagNSDescriptor;
-      } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl) {
-        final XmlMarkupDecl markupDecl = (XmlMarkupDecl)parentThatProvidesMetaData;
-        final PsiMetaData psiMetaData = markupDecl.getMetaData();
-
-        if (psiMetaData instanceof XmlNSDescriptor) {
-          return (XmlNSDescriptor)psiMetaData;
-        }
-      }
-
-      return null;
-    }
 
     @NotNull
     public String getCanonicalText() {
@@ -139,7 +110,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     @NotNull
     public Object[] getVariants() {
-      final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor();
+      final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor(myElement);
       return rootTagNSDescriptor != null ?
              rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)getRealFile()).getDocument()):
              ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -170,6 +141,42 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.element.reference", getCanonicalText());
     }
+  }
+
+
+  @Nullable
+  private static XmlNSDescriptor getNsDescriptor(XmlElement element) {
+    final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
+      PsiUtilBase.getOriginalElement(element, element.getClass()),
+      XmlDocument.class,
+      XmlMarkupDecl.class
+    );
+
+    if (parentThatProvidesMetaData instanceof XmlDocument) {
+      final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
+      XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
+      if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
+      return rootTagNSDescriptor;
+    } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl) {
+      final XmlMarkupDecl markupDecl = (XmlMarkupDecl)parentThatProvidesMetaData;
+      final PsiMetaData psiMetaData = markupDecl.getMetaData();
+
+      if (psiMetaData instanceof XmlNSDescriptor) {
+        return (XmlNSDescriptor)psiMetaData;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static XmlElementDescriptor resolveElementReference(String name, XmlElement context) {
+    XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor(context);
+
+    if (rootTagNSDescriptor instanceof XmlNSDescriptorImpl) {
+      return ((XmlNSDescriptorImpl)rootTagNSDescriptor).getElementDescriptor(name);
+    }
+    return null;
   }
 
   static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
@@ -270,7 +277,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {
@@ -279,16 +286,18 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       nameElement = ((XmlElementDecl)element).getNameElement();
     } else if (element instanceof XmlAttlistDecl) {
       nameElement = ((XmlAttlistDecl)element).getNameElement();
-    } else if (element instanceof XmlElementContentSpec) {
-      final PsiElement[] children = element.getChildren();
-      final List<PsiReference> psiRefs = new ArrayList<PsiReference>(children.length);
-
-      for (final PsiElement child : children) {
-        if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
-          psiRefs.add(new ElementReference((XmlElement)element, (XmlElement)child));
+    }
+    else if (element instanceof XmlElementContentSpec) {
+      final List<PsiReference> psiRefs = new ArrayList<PsiReference>();
+      element.accept(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(PsiElement child) {
+          if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
+            psiRefs.add(new ElementReference((XmlElement)element, (XmlElement)child));
+          }
+          super.visitElement(child);
         }
-      }
-      
+      });
       return psiRefs.toArray(new PsiReference[psiRefs.size()]);
     }
 

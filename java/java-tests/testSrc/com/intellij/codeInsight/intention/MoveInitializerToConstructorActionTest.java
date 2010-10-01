@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 public class MoveInitializerToConstructorActionTest extends LightIntentionActionTestCase {
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/moveInitializerToConstructor";
   }

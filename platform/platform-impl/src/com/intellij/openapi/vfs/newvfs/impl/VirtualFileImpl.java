@@ -96,4 +96,8 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   public NewVirtualFile findChildById(int id) {
     return null;
   }
+
+  public NewVirtualFile findChildByIdIfCached(int id) {
+    return null;
+  }
 }

@@ -24,6 +24,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
 
 
+  @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/commentsWithMistakes";
   }

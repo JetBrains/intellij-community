@@ -75,6 +75,7 @@ public class XMLTestBean implements PluginAware {
     this.collectionProperty = collectionProperty;
   }
 
+  @Override
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     pluginId = pluginDescriptor.getPluginId();
   }

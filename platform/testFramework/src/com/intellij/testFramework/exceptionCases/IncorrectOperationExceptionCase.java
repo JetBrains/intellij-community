@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author Roman Chernyatchik
  */
 public abstract class IncorrectOperationExceptionCase extends AbstractExceptionCase<IncorrectOperationException> {
+  @Override
   public Class<IncorrectOperationException> getExpectedExceptionClass() {
     return IncorrectOperationException.class;
   }

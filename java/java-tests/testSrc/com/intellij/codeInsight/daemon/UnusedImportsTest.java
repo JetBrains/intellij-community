@@ -6,6 +6,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 public class UnusedImportsTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports";
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }

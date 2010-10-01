@@ -86,6 +86,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     assertEquals(messageBuilder.toString(), expectedChildren.size(), children.length);
 
     Arrays.sort(children, new Comparator<Object>() {
+      @Override
       public int compare(final Object first, final Object second) {
         return ((HierarchyNodeDescriptor)first).getHighlightedText().getText()
           .compareTo(((HierarchyNodeDescriptor)second).getHighlightedText().getText());
@@ -93,6 +94,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     });
 
     Collections.sort(expectedChildren, new Comparator<Element>() {
+      @Override
       public int compare(final Element first, final Element second) {
         return first.getAttributeValue(TEXT_ATTR_NAME).compareTo(second.getAttributeValue(TEXT_ATTR_NAME));
       }

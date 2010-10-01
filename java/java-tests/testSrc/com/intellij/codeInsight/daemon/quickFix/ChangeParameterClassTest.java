@@ -12,6 +12,7 @@ public class ChangeParameterClassTest extends LightQuickFix15TestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/changeParameterClass";
   }

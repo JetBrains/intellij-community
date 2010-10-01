@@ -124,7 +124,10 @@ public class EditorUtil {
       return result;
     }
 
-    assert false;
+    assert false : String.format(
+      "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: %s-%s%nDocument text: '%s'",
+      line, resultLogLine, resVisStart, resVisEnd, editor.getDocument().getText()
+    );
     return resVisEnd.column;
   }
 

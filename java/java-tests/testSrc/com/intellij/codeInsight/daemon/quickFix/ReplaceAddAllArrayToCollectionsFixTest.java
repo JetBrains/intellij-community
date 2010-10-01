@@ -12,6 +12,7 @@ public class ReplaceAddAllArrayToCollectionsFixTest extends LightQuickFixTestCas
      doAllTests();
    }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceAddAllArrayToCollections";
   }

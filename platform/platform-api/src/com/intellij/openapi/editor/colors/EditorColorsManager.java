@@ -19,6 +19,8 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class EditorColorsManager {
+  @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
+
   public static EditorColorsManager getInstance() {
     return ServiceManager.getService(EditorColorsManager.class);
   }

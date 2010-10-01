@@ -18,6 +18,8 @@ package com.intellij.openapi.editor;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * Highly customizable {@link LineWrapPositionStrategy} implementation.
  * <p/>
@@ -28,20 +30,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 
-  private static final TIntIntProcedure GT_COMPARATOR = new TIntIntProcedure() {
-    @Override
-    public boolean execute(int a, int b) {
-      return a > b;
-    }
-  };
-
-  //private static final TIntIntProcedure LT_COMPARATOR = new TIntIntProcedure() {
-  //  @Override
-  //  public boolean execute(int a, int b) {
-  //    return a < b;
-  //  }
-  //};
-
   /**
    * We consider that it's possible to wrap line on non-id symbol. However, weight of such position is expected to be less
    * than weight of wrap position bound to explicitly configured symbol.
@@ -50,6 +38,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
   /** Holds symbols wrap rules by symbol. */
   private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<Rule>();
+  private final Storage myOffset2weight = new Storage();
 
   @Override
   public int calculateWrapPosition(@NotNull CharSequence text,
@@ -62,11 +51,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       return endOffset;
     }
 
+    myOffset2weight.clear();
+    myOffset2weight.anchor = startOffset;
+
     // Normalization.
     int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;
     maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
-
-    TIntDoubleHashMap offset2Weight = new TIntDoubleHashMap();
 
     // Try to find out wrap position before preferred offset.
     for (int i = maxPreferredOffsetToUse; i > startOffset; i--) {
@@ -85,12 +75,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
             }
           }
           if (target <= maxPreferredOffsetToUse) {
-            offset2Weight.put(target, rule.weight);
+            myOffset2weight.store(target, rule.weight);
           }
         }
 
         if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.BEFORE) {
-          offset2Weight.put(i, rule.weight);
+          myOffset2weight.store(i, rule.weight);
         }
         continue;
       }
@@ -98,11 +88,11 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
       // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
       if (!isIdSymbol(c) && (i < startOffset + 2 || (isIdSymbol(text.charAt(i - 1)) && !myRules.contains(text.charAt(i - 1))))) {
-        offset2Weight.put(i, NON_ID_WEIGHT);
+        myOffset2weight.store(i, NON_ID_WEIGHT);
       }
     }
 
-    int result = chooseOffset(offset2Weight, GT_COMPARATOR, startOffset);
+    int result = chooseOffset();
     if (result > 0) {
       return result;
     }
@@ -159,49 +149,39 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   }
 
   /**
-   * Tries to derive offset to use at the given map assuming that it contains mappings like '{@code offset -> weight}'.
+   * Tries to derive offset to use from {@link #myOffset2weight} data structure assuming that it contains mappings
+   * like '{@code offset -> weight}'.
    *
-   * @param offset2Weight     map that holds '{@code offset -> weight}' entries (is allows to be empty)
-   * @param comparator        strategy interface that is expected to return <code>'true'</code> if the first parameter
-   *                          given to it is more preferred than the second
-   * @param startOffset       start offset of the line that is being wrapped
    * @return                  one of the keys of the given map to use; negative value if no appropriate key is found or the map is empty
    */
-  private static int chooseOffset(@NotNull TIntDoubleHashMap offset2Weight, @NotNull final TIntIntProcedure comparator,
-                                  final int startOffset)
-  {
-    if (offset2Weight.isEmpty()) {
+  private int chooseOffset() {
+    if (myOffset2weight.end <= 0) {
       return -1;
     }
 
     final double[] resultingWeight = new double[1];
     final int[] resultingOffset = new int[1];
-    offset2Weight.forEachEntry(new TIntDoubleProcedure() {
-      @Override
-      public boolean execute(int offset, double weight) {
-        boolean change = false;
-
-        // Check if current candidate is certainly better than the current result.
-        if (comparator.execute(offset, resultingOffset[0])) {
-          if (weight >= resultingWeight[0]) {
-            change = true;
-          }
-        }
-
-        // Check if it's worth to use current mapping because of it's weight.
-        if (!change && weight > resultingWeight[0]) {
-          change = (offset - startOffset) * weight > (resultingOffset[0] - startOffset) * resultingWeight[0];
-        }
-
-        if (change) {
-          resultingWeight[0] = weight;
-          resultingOffset[0] = offset;
-        }
-
-        return true;
+    for (int i = myOffset2weight.end - 1; i >= 0; i--) {
+      if (myOffset2weight.data[i] == 0) {
+        continue;
       }
-    });
-    return resultingOffset[0];
+
+      if (resultingWeight[0] <= 0) {
+        resultingWeight[0] = myOffset2weight.data[i];
+        resultingOffset[0] = i;
+        continue;
+      }
+
+      if (resultingWeight[0] < myOffset2weight.data[i]) {
+        boolean change = myOffset2weight.data[i] * i > resultingOffset[0] * resultingWeight[0];
+        if (change) {
+          resultingWeight[0] = myOffset2weight.data[i];
+          resultingOffset[0] = i;
+        }
+      }
+    }
+
+    return resultingOffset[0] + myOffset2weight.anchor;
   }
 
   /**
@@ -270,6 +250,36 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       this.symbol = symbol;
       this.condition = condition;
       this.weight = weight;
+    }
+  }
+
+  /**
+   * Primitive array-based data structure that contain mappings like {@code int -> double}.
+   * <p/>
+   * The key is array index plus anchor; the value is array value.
+   */
+  private static class Storage {
+    public double[] data = new double[256];
+    public int anchor;
+    public int end;
+
+    public void store(int key, double value) {
+      int index = key - anchor;
+      if (index >= data.length) {
+        double[] newData = new double[data.length << 1];
+        System.arraycopy(data, 0, newData, 0, end);
+        data = newData;
+      }
+      data[index] = value;
+      if (index >= end) {
+        end = index + 1;
+      }
+    }
+
+    public void clear() {
+      anchor = 0;
+      end = 0;
+      Arrays.fill(data, 0);
     }
   }
 }

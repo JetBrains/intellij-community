@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ClsBuilderTest extends LightIdeaTestCase {
+  @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17();
   }

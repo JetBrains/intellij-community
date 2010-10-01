@@ -23,12 +23,14 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(myProject).hideActiveLookup();
     super.tearDown();
     myItems = null;
   }
 
+  @Override
   protected void configureByFile(String filePath) throws Exception {
     super.configureByFile(filePath);
 

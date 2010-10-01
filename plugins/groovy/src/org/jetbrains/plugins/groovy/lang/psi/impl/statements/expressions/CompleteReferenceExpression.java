@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -219,7 +218,7 @@ public class CompleteReferenceExpression {
   private static GroovyResolveResult[] filterStaticsOK(GroovyResolveResult[] candidates) {
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>(candidates.length);
     for (GroovyResolveResult resolveResult : candidates) {
-      if (resolveResult.isStaticsOK() || resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) {
+      if (resolveResult.isStaticsOK() || ResolveUtil.isInUseScope(resolveResult)) {
         result.add(resolveResult);
       }
     }
@@ -234,7 +233,8 @@ public class CompleteReferenceExpression {
       PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass clazz = result.getElement();
       if (clazz != null) {
-        PsiClass listClass = JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.List", refExpr.getResolveScope());
+        PsiClass listClass =
+          JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, refExpr.getResolveScope());
         if (listClass != null && listClass.getTypeParameters().length == 1) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
           if (substitutor != null) {
@@ -260,11 +260,11 @@ public class CompleteReferenceExpression {
         PsiMethod method = (PsiMethod)element;
         String propName = null;
         PsiType propType = null;
-        if (isSimplePropertyGetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+        if (isSimplePropertyGetter(method, null, ResolveUtil.isInUseScope(resolveResult))) {
           propName = getPropertyNameByGetter(method);
           propType = PsiUtil.getSmartReturnType(method);
         }
-        else if (isSimplePropertySetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+        else if (isSimplePropertySetter(method, null, ResolveUtil.isInUseScope(resolveResult))) {
           propName = getPropertyName(method);
           propType = method.getParameterList().getParameters()[0].getType();
         }

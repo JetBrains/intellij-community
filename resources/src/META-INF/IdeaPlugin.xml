@@ -460,7 +460,7 @@
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
-                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
 
@@ -872,6 +872,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestVariableNameMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestFirstVariableNameMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestIndexNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GuessElementTypeMacro"/>
@@ -1052,6 +1053,7 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
 
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticParametersRenamerFactory"/>

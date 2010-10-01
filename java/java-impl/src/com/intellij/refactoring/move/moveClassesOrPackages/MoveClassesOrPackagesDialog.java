@@ -268,7 +268,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      if (name.length() == 0 || !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name)) {
+      if (name.length() != 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name)) {
         throw new ConfigurationException("\'" + StringUtil.last(name, 10, true) + "\' is invalid destination package name");
       }
     }

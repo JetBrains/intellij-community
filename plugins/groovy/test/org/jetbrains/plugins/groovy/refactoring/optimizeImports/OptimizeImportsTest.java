@@ -167,6 +167,7 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     final Runnable runnable = optimizer.processFile(myFixture.getFile());
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import com.intellij.util.text.DateFormatUtil;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -49,7 +50,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
             append(" " + entry.getAuthor(), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
           }
           if (entry.getDate() != null) {
-            append(" " + entry.getDate().toString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+            append(" " + DateFormatUtil.formatPrettyDateTime(entry.getDate()), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
         if (node.getSVNDirEntry().getKind() == SVNNodeKind.FILE) {

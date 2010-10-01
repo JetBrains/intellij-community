@@ -191,7 +191,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     String previousName = null;
     if (myDefault != null) {
       ((LocalChangeListImpl) myDefault).setDefault(false);
-      correctChangeListEditHandler(myDefault);
       previousName = myDefault.getName();
     }
 
@@ -239,7 +238,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (changeList != null) {
       ((LocalChangeListImpl) changeList).addChange(change);
       myIdx.changeAdded(change, vcsKey);
-      correctChangeListEditHandler(changeList);
     }
     return changeList != null;
   }
@@ -256,13 +254,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       if (((LocalChangeListImpl) list).processChange(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         myIdx.changeAdded(change, vcsKey);
-        correctChangeListEditHandler(list);
         return;
       }
     }
     ((LocalChangeListImpl) myDefault).processChange(change);
     myIdx.changeAdded(change, vcsKey);
-    correctChangeListEditHandler(myDefault);
   }
 
   public boolean removeChangeList(@NotNull String name) {
@@ -283,16 +279,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return true;
   }
 
-  void initialized() {
-    for (LocalChangeList list : myMap.values()) {
-      correctChangeListEditHandler(list);
-    }
-  }
-
-  // since currently it is only for P4, "composite" edit handler is not created - it does not make sence
-  private void correctChangeListEditHandler(final LocalChangeList list) {
-  }
-
   @Nullable
   public MultiMap<LocalChangeList, Change> moveChangesTo(final String name, final Change[] changes) {
     final LocalChangeListImpl changeList = (LocalChangeListImpl) myMap.get(name);
@@ -303,14 +289,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         for (Change change : changes) {
           final Change removedChange = ((LocalChangeListImpl)list).removeChange(change);
           if (removedChange != null) {
-            correctChangeListEditHandler(list);
-
             changeList.addChange(removedChange);
             result.putValue(list, removedChange);
           }
         }
       }
-      correctChangeListEditHandler(changeList);
       return result;
     }
     return null;

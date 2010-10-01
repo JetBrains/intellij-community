@@ -61,6 +61,7 @@ public class XmlSerializerTest extends TestCase {
     public BeanWithPublicFields() {
     }
 
+    @Override
     public int compareTo(final BeanWithPublicFields o) {
       return STRING_V.compareTo(o.STRING_V);
     }
@@ -454,6 +455,7 @@ public class XmlSerializerTest extends TestCase {
                      "  <option name=\"INT_V\" value=\"1\" />\n" +
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
+      @Override
       public boolean accepts(Accessor accessor, Object bean) {
         return accessor.getName().startsWith("I");
       }
@@ -764,6 +766,7 @@ public class XmlSerializerTest extends TestCase {
     public String STRING_V = "hello";
   }
   public static class PropertyFilterTest implements SerializationFilter {
+    @Override
     public boolean accepts(Accessor accessor, Object bean) {
       return !accessor.read(bean).equals("skip");
     }

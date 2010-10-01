@@ -575,7 +575,7 @@ public class UpdateHighlightersUtil {
       }
       LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
       LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
-      if (oldRenderer == null || renderer == null || !renderer.looksTheSameAs(oldRenderer)) {
+      if (oldRenderer == null || renderer == null || !renderer.equals(oldRenderer)) {
         marker.setGutterIconRenderer(renderer);
       }
       if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {

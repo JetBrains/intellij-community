@@ -50,12 +50,14 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     myUnusedSymbolLocalInspection = new UnusedSymbolLocalInspection();
     return new LocalInspectionTool[]{
@@ -211,10 +213,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
       }
 
+      @Override
       public void readExternal(Element element) {
 
       }
 
+      @Override
       public void writeExternal(Element element) {
 
       }
@@ -241,6 +245,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public static class MyAnnotator implements Annotator {
+    @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
         @Override public void visitXmlTag(XmlTag tag) {

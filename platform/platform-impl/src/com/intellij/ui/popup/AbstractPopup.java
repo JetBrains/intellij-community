@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -639,7 +640,9 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable);
+    boolean forcedDialog = SystemInfo.isMac && !(myOwner instanceof IdeFrame);
+
+    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
     myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
@@ -897,8 +900,8 @@ public class AbstractPopup implements JBPopup {
     return null;
   }
 
-  private PopupComponent.Factory getFactory(boolean forceHeavyweight) {
-    if (isPersistent()) {
+  private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
+    if (isPersistent() || forceDialog) {
       return new PopupComponent.Factory.Dialog();
     }
     else if (forceHeavyweight || !SystemInfo.isWindows) {

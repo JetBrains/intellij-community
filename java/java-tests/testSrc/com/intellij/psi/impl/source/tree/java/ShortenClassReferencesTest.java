@@ -49,8 +49,10 @@ public class ShortenClassReferencesTest extends PsiTestCase {
     final PsiFile file = createFile(fileName, text);
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(file);

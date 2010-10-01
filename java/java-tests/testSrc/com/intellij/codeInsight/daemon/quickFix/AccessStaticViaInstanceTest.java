@@ -8,6 +8,7 @@ public class AccessStaticViaInstanceTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { enableInspectionTool(new AccessStaticViaInstance()); doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/accessStaticViaInstance";
   }

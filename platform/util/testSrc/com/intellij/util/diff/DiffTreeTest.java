@@ -62,19 +62,23 @@ public class DiffTreeTest extends TestCase {
       myRoot = root;
     }
 
+    @Override
     @NotNull
     public Node prepareForGetChildren(@NotNull final Node node) {
       return node;
     }
 
+    @Override
     @NotNull
     public Node getRoot() {
       return myRoot;
     }
 
+    @Override
     public void disposeChildren(final Node[] nodes, final int count) {
     }
 
+    @Override
     public int getChildren(@NotNull final Node node, @NotNull final Ref<Node[]> into) {
       into.set(node.getChildren());
       return into.get().length;
@@ -82,14 +86,17 @@ public class DiffTreeTest extends TestCase {
   }
 
   private static class NodeComparator implements ShallowNodeComparator<Node, Node> {
+    @Override
     public ThreeState deepEqual(final Node node, final Node node1) {
       return ThreeState.UNSURE;
     }
 
+    @Override
     public boolean typesEqual(final Node node, final Node node1) {
       return node.getId() == node1.getId();
     }
 
+    @Override
     public boolean hashCodesEqual(final Node node, final Node node1) {
       return node.hashCode() == node1.hashCode();
     }
@@ -98,14 +105,17 @@ public class DiffTreeTest extends TestCase {
   public static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
     private final List<String> myResults = new ArrayList<String>();
 
+    @Override
     public void nodeReplaced(@NotNull final Node oldNode, @NotNull final Node newNode) {
       myResults.add("REPLACED: " + oldNode + " to " + newNode);
     }
 
+    @Override
     public void nodeDeleted(@NotNull final Node parent, @NotNull final Node child) {
       myResults.add("DELETED from " + parent + ": " + child);
     }
 
+    @Override
     public void nodeInserted(@NotNull final Node oldParent, @NotNull final Node node, final int pos) {
       myResults.add("INSERTED to " + oldParent + ": " + node + " at " + pos);
     }

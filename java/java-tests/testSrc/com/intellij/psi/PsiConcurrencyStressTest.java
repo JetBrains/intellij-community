@@ -23,12 +23,14 @@ import java.util.concurrent.CountDownLatch;
 
 public class PsiConcurrencyStressTest extends PsiTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
 
+        @Override
         public void run() {
           try {
             LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -62,10 +64,12 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     final Random random = new Random();
     for (int i = 0; i < numOfThreads; i++) {
       new Thread(new Runnable() {
+        @Override
         public void run() {
           for (int i = 0; i < readIterations; i++) {
             if (myPsiManager == null) return;
             ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
               public void run() {
                 try {
                   readStep(random);
@@ -87,6 +91,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     for (int i = 0; i < writeIterations; i++) {
       Thread.sleep(100);
       new WriteCommandAction(myProject, myFile) {
+        @Override
         protected void run(final Result result) throws Throwable {
           documentManager.commitAllDocuments();
           writeStep(random);
@@ -164,9 +169,11 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     }
   }
 
+  @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
     Runnable runnable1 = new Runnable() {
+      @Override
       public void run() {
         runnable.run();
       }

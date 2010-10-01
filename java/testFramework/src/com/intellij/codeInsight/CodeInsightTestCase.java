@@ -82,6 +82,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return editor;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     VirtualFile[] openFiles = editorManager.getOpenFiles();
@@ -92,6 +93,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     super.tearDown();
   }
 
+  @Override
   protected PsiTestData createData() {
     return new CodeInsightTestData();
   }
@@ -140,6 +142,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
+        @Override
         protected void run(Result result) throws Throwable {
           fileTypeManager.associateExtension(fileType, extension);
         }
@@ -164,6 +167,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
 
+  @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
@@ -217,6 +221,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       VirtualFile fromDir = getVirtualFile(projectRoot);
       editorInfos =
         copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
+          @Override
           public String fun(final VirtualFile s) {
             return s.getPath().substring(projectRoot.getPath().length());
           }
@@ -340,6 +345,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected final List<Editor> openEditors(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), new Function<VirtualFile, Editor>() {
+      @Override
       public Editor fun(final VirtualFile newVFile) {
         PsiFile file = myPsiManager.findFile(newVFile);
         if (myFile == null) myFile = file;
@@ -420,6 +426,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @Override
   protected void configure(String path, String dataName) throws Exception {
     super.configure(path, dataName);
 
@@ -528,6 +535,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
+  @Override
   protected void checkResult(String dataName) throws Exception {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
@@ -560,6 +568,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
+  @Override
   public Object getData(String dataId) {
     return PlatformDataKeys.EDITOR.is(dataId) ? myEditor : super.getData(dataId);
   }
@@ -600,6 +609,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected void backspace() {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);

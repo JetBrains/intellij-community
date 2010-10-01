@@ -23,6 +23,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  */
 public class GroovyFileWithTypos extends SpellcheckerInspectionTestCase {
 
+  @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/groovy";
   }

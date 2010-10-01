@@ -61,6 +61,7 @@ public class XPathHighlightingTest extends TestBase {
         myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath"));
     }
 
+    @Override
     protected String getSubPath() {
         return "xpath/highlighting";
     }

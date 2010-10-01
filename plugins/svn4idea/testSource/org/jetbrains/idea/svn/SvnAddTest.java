@@ -31,6 +31,7 @@ public class SvnAddTest extends SvnTestCase {
   public void testDirAndFileInCommand() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     new WriteCommandAction.Simple(myProject) {
+      @Override
       public void run() {
         try {
           VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");

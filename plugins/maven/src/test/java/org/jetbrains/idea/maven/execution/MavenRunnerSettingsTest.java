@@ -35,6 +35,7 @@ public class MavenRunnerSettingsTest extends MavenImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (Sdk each : myOldJdks) {
           ProjectJdkTable.getInstance().addJdk(each);

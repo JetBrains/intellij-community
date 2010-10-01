@@ -36,10 +36,12 @@ public class MiscImportingTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
         beforeRootsChangedCount++;
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         rootsChangedCount++;
       }

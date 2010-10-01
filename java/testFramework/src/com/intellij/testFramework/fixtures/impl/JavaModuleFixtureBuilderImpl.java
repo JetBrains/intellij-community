@@ -60,10 +60,12 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     super(moduleType, fixtureBuilder);
   }
 
+  @Override
   public JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel) {
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
+  @Override
   public JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath) {
     final HashMap<OrderRootType, String[]> map = new HashMap<OrderRootType, String[]>();
     map.put(OrderRootType.CLASSES, classPath);
@@ -71,11 +73,13 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     return this;
   }
 
+  @Override
   public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, final Map<OrderRootType, String[]> roots) {
     myLibraries.add(new Lib(libraryName, roots));
     return this;
   }
 
+  @Override
   public JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jars) {
     if (!basePath.endsWith("/")) {
       basePath += "/";
@@ -87,15 +91,18 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     return addLibrary(libraryName, classPath);
   }
 
+  @Override
   public JavaModuleFixtureBuilder addJdk(String jdkPath) {
     myJdk = jdkPath;
     return this;
   }
 
+  @Override
   public void setMockJdkLevel(final MockJdkLevel level) {
     myMockJdkLevel = level;
   }
 
+  @Override
   protected void initModule(final Module module) {
     super.initModule(module);
 

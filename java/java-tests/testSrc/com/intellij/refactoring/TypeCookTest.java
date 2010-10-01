@@ -29,6 +29,7 @@ import java.io.PrintWriter;
  */
 
 public class TypeCookTest extends MultiFileTestCase {
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
@@ -38,6 +39,7 @@ public class TypeCookTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   public String getTestRoot() {
     return "/refactoring/typeCook/";
   }
@@ -657,6 +659,7 @@ public class TypeCookTest extends MultiFileTestCase {
 
   public void start(final boolean cookObjects) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         TypeCookTest.this.performAction("Test", rootDir.getName(), cookObjects);
       }
@@ -670,26 +673,32 @@ public class TypeCookTest extends MultiFileTestCase {
 
     SystemBuilder b = new SystemBuilder(myPsiManager.getProject(),
                                         new Settings() {
+                                          @Override
                                           public boolean dropObsoleteCasts() {
                                             return true;
                                           }
 
+                                          @Override
                                           public boolean preserveRawArrays() {
                                             return false;
                                           }
 
+                                          @Override
                                           public boolean leaveObjectParameterizedTypesRaw() {
                                             return false;
                                           }
 
+                                          @Override
                                           public boolean exhaustive() {
                                             return false;
                                           }
 
+                                          @Override
                                           public boolean cookObjects(){
                                             return cookObjects;
                                           }
 
+                                          @Override
                                           public boolean cookToWildcards(){
                                             return false;
                                           }

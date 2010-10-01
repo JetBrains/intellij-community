@@ -98,7 +98,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    if (getDeclaredType() == null && getInitializer() == null) {
+    if (getDeclaredType() == null && getInitializerGroovy() == null) {
       final PsiType type = GrVariableEnhancer.getEnhancedType(this);
       if (type != null) {
         return type;

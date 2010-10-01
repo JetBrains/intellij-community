@@ -186,7 +186,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myCopyButton.setEnabled(true);
     myBaseKeymapLabel.setText("");
     Keymap parent = mySelectedKeymap.getParent();
-    if (parent != null) {
+    if (parent != null && mySelectedKeymap.canModify()) {
       myBaseKeymapLabel.setText(KeyMapBundle.message("based.on.keymap.label", parent.getPresentableName()));
       if (mySelectedKeymap.canModify() && mySelectedKeymap.getOwnActionIds().length > 0){
         myResetToDefault.setEnabled(true);
@@ -942,6 +942,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
       if (keymap.canModify()) {
         keymap = keymap.copy(true);
       }
+      else if (keymap.getPresentableName().startsWith("$")) {
+        continue;
+      }
+
       myKeymapListModel.addElement(keymap);
       if (Comparing.equal(keymapManager.getActiveKeymap(), keymap1)) {
         mySelectedKeymap = keymap;

@@ -262,11 +262,13 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals(myColumn.valueOf(mySuite), myFragmentsContainer.getTextAt(0));
   }
   
+  @Override
   protected ColoredRenderer createRenderer(final SMTestProxy testProxy,
                                            final UITestUtil.FragmentsContainer fragmentsContainer) {
     return new MyRenderer(testProxy, fragmentsContainer);
   }
 
+  @Override
   protected ColumnInfo<SMTestProxy, String> createColumn() {
     return new ColumnDuration();
   }

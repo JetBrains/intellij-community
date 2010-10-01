@@ -21,6 +21,7 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,6 +29,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -39,6 +42,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.targets.AliasingPsiTarget;
+import com.intellij.psi.targets.AliasingPsiTargetMapper;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -334,9 +339,25 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     }
 
+    if (element instanceof PomTarget) {
+       addAliasingUsages((PomTarget)element, processor, options);
+    }
     if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
       // todo add to fastTrack
       processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
+    }
+  }
+
+  private static void addAliasingUsages(PomTarget pomTarget, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+    for (AliasingPsiTargetMapper aliasingPsiTargetMapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
+      for (AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
+          ReferencesSearch.search(new ReferencesSearch.SearchParameters(PomService.convertToPsi(psiTarget), options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
+            public boolean processInReadAction(final PsiReference reference) {
+              addResult(processor, reference, options);
+              return true;
+            }
+          });
+      }
     }
   }
 
@@ -657,7 +678,15 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
     if (target instanceof PsiMethod) {
-      return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+      final PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
+      if (superMethods.length == 0) {
+        return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+      }
+      final Collection<PsiReference> result = new ArrayList<PsiReference>();
+      for (PsiMethod superMethod : superMethods) {
+        result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
+      }
+      return result;
     }
     return super.findReferencesToHighlight(target, searchScope);
   }

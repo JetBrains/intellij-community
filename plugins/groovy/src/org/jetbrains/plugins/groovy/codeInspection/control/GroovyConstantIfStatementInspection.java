@@ -25,12 +25,9 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public class GroovyConstantIfStatementInspection extends BaseInspection {
 
@@ -79,12 +76,12 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
       // todo still needs some handling for conflicting declarations
       if (isFalse(condition)) {
         if (elseBranch != null) {
-          replaceStatement(ifStatement, elseBranch);
+          replaceStatement(ifStatement, (GrStatement)elseBranch.copy());
         } else {
           ifStatement.delete();
         }
       } else {
-        replaceStatement(ifStatement, thenBranch);
+        replaceStatement(ifStatement, (GrStatement)thenBranch.copy());
       }
     }
   }

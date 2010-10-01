@@ -28,11 +28,13 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ArrayIndexOutOfBoundsTest");
   private VirtualFile myProjectRoot;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
@@ -74,6 +76,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
 
   private void restoreSources() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           FileUtil.copyDir(new File(JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src"),
@@ -90,6 +93,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
 
   private void deleteNewPackage() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
         assertNotNull("Package anotherBla not found", aPackage);
@@ -107,6 +111,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
 
   private void renamePackage() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("bla");
         assertNotNull("Package bla not found", aPackage);

@@ -57,6 +57,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   void doAndWaitForBuilder(final Runnable runnable, final Condition condition) throws Exception {
     final Ref<Boolean> started = new Ref<Boolean>();
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         started.set(true);
         runnable.run();
@@ -64,6 +65,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     });
 
     waitBuilderToCome(new Condition() {
+      @Override
       public boolean value(Object o) {
         return started.get() && condition.value(null);
       }
@@ -81,9 +83,11 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void waitBuilderToCome(final Condition<Object> condition) throws Exception {
     boolean success = new WaitFor(600000) {
+      @Override
       protected boolean condition() {
         final boolean[] ready = new boolean[]{false};
         invokeAndWaitIfNeeded(new Runnable() {
+          @Override
           public void run() {
             AbstractTreeUi ui = getBuilder().getUi();
             if (ui == null) {
@@ -112,6 +116,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void expand(final TreePath p) throws Exception {
     invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
         myTree.expandPath(p);
       }
@@ -121,6 +126,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void collapsePath(final TreePath p) throws Exception {
     invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
         myTree.collapsePath(p);
       }
@@ -180,6 +186,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       return super.updateNodeDescriptor(descriptor);
     }
 
+    @Override
     protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
       return myAutoExpand.contains(nodeDescriptor.getElement());
     }
@@ -336,6 +343,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         if (getBuilder() != null) {
           Disposer.dispose(getBuilder());
@@ -369,6 +377,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void updateFromRoot() throws Exception {
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().updateFromRoot();
       }
@@ -381,6 +390,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void updateFrom(final NodeElement element, final boolean forceResort) throws Exception {
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().queueUpdateFrom(element, forceResort);
       }
@@ -389,6 +399,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void showTree() throws Exception {
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getUi().activate(true);
       }
@@ -406,14 +417,17 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
     final Ref<Boolean> done = new Ref<Boolean>(false);
     doAndWaitForBuilder(new Runnable() {
+      @Override
       public void run() {
         getBuilder().select(elements, new Runnable() {
+          @Override
           public void run() {
             done.set(true);
           }
         }, addToSelection);
       }
     }, new Condition() {
+      @Override
       public boolean value(Object o) {
         return done.get() || (canBeInterrupted && getBuilder().getUi().isCancelledReady());
       }
@@ -492,6 +506,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       return myName;
     }
 
+    @Override
     public int compareTo(NodeElement o) {
       return myName.compareTo(o.myName);
     }

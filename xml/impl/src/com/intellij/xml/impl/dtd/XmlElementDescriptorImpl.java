@@ -33,15 +33,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -106,7 +105,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   // Read-only action
   protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
-    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+    final LinkedHashSet<XmlElementDescriptor> result = new LinkedHashSet<XmlElementDescriptor>();
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor nsDescriptor = getNSDescriptor();
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
@@ -139,7 +138,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
         }
         return true;
       }
-    }, false, false, XmlUtil.getContainingFile(getDeclaration()));
+    }, true, false, XmlUtil.getContainingFile(getDeclaration()));
 
     return result.toArray(new XmlElementDescriptor[result.size()]);
   }
@@ -225,6 +224,12 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     XmlUtil.processXmlElements(xmlElement, new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), false, false, XmlUtil.getContainingFile(xmlElement));
 
     return result.toArray(new XmlAttlistDecl[result.size()]);
+  }
+
+  @Override
+  public XmlElementsGroup getTopGroup() {
+    XmlElementContentGroup topGroup = myElementDecl.getContentSpecElement().getTopGroup();
+    return topGroup == null ? null : new XmlElementsGroupImpl(topGroup, null);
   }
 
   public int getContentType() {

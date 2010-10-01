@@ -31,10 +31,6 @@ public class CodeCompletionPanel {
   JPanel myPanel;
   private JCheckBox myCbAutocompletion;
   private JTextField myAutocompletionDelayField;
-  private JCheckBox myCbXmlAutocompletion;
-  private JTextField myXmlAutocompletionDelayField;
-  private JCheckBox myCbJavadocAutocompletion;
-  private JTextField myFldJavadocAutocompletionDelayField;
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
   private JCheckBox myCbAutocompleteCommonPrefix;
@@ -52,7 +48,6 @@ public class CodeCompletionPanel {
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
-  ButtonGroup buttonGroup = new ButtonGroup();
 
   public CodeCompletionPanel(){
    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER}));
@@ -65,20 +60,6 @@ public class CodeCompletionPanel {
        }
      }
    );
-
-   myCbXmlAutocompletion.addActionListener(
-     new ActionListener() {
-       public void actionPerformed(ActionEvent event) {
-         myXmlAutocompletionDelayField.setEnabled(myCbXmlAutocompletion.isSelected());
-       }
-     }
-   );
-
-   myCbJavadocAutocompletion.addActionListener(new ActionListener() {
-     public void actionPerformed(ActionEvent e) {
-       myFldJavadocAutocompletionDelayField.setEnabled(myCbJavadocAutocompletion.isSelected());
-     }
-   });
 
    myCbAutopopupJavaDoc.addActionListener(
      new ActionListener() {
@@ -97,10 +78,6 @@ public class CodeCompletionPanel {
    );
 
     hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
-    hideOption(myCbXmlAutocompletion, OptionId.COMPLETION_AUTO_POPUP_XML);
-    hideOption(myXmlAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_XML);
-    hideOption(myCbJavadocAutocompletion, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
-    hideOption(myFldJavadocAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
     hideOption(myCbOnClassNameCompletion, OptionId.COMPLETION_CLASS_NAME);
 
@@ -139,17 +116,9 @@ public class CodeCompletionPanel {
     myCbAutocompleteCommonPrefix.setSelected(codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     myCbShowStaticAfterInstance.setSelected(codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
 
-    myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
-    myAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
-    myAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.MEMBER_LOOKUP_DELAY));
-
-    myCbXmlAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_XML_LOOKUP);
-    myXmlAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_XML_LOOKUP);
-    myXmlAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.XML_LOOKUP_DELAY));
-
-    myCbJavadocAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
-    myFldJavadocAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
-    myFldJavadocAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.JAVADOC_LOOKUP_DELAY));
+    myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
+    myAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
+    myAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.AUTO_LOOKUP_DELAY));
 
     myCbAutopopupJavaDoc.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     myAutopopupJavaDocField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
@@ -160,7 +129,7 @@ public class CodeCompletionPanel {
     myParameterInfoDelayField.setText(String.valueOf(codeInsightSettings.PARAMETER_INFO_DELAY));
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
 
-    myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
+    myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
   }
 
   public void apply() {
@@ -177,14 +146,10 @@ public class CodeCompletionPanel {
     codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = myCbShowFullParameterSignatures.isSelected();
 
     codeInsightSettings.AUTO_POPUP_PARAMETER_INFO = myCbParameterInfoPopup.isSelected();
-    codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP = myCbAutocompletion.isSelected();
-    codeInsightSettings.AUTO_POPUP_XML_LOOKUP = myCbXmlAutocompletion.isSelected();
-    codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP = myCbJavadocAutocompletion.isSelected();
+    codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP = myCbAutocompletion.isSelected();
     codeInsightSettings.AUTO_POPUP_JAVADOC_INFO = myCbAutopopupJavaDoc.isSelected();
 
-    codeInsightSettings.MEMBER_LOOKUP_DELAY = getIntegerValue(myAutocompletionDelayField.getText(), 0);
-    codeInsightSettings.XML_LOOKUP_DELAY = getIntegerValue(myXmlAutocompletionDelayField.getText(), 0);
-    codeInsightSettings.JAVADOC_LOOKUP_DELAY = getIntegerValue(myFldJavadocAutocompletionDelayField.getText(), 0);
+    codeInsightSettings.AUTO_LOOKUP_DELAY = getIntegerValue(myAutocompletionDelayField.getText(), 0);
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText(), 0);
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
 
@@ -207,14 +172,10 @@ public class CodeCompletionPanel {
     isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
     isModified |= isModified(myCbParameterInfoPopup, codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
-    isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
-    isModified |= isModified(myCbXmlAutocompletion, codeInsightSettings.AUTO_POPUP_XML_LOOKUP);
-    isModified |= isModified(myCbJavadocAutocompletion, codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
+    isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
 
     isModified |= isModified(myCbAutopopupJavaDoc, codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
-    isModified |= isModified(myAutocompletionDelayField, codeInsightSettings.MEMBER_LOOKUP_DELAY, 0);
-    isModified |= isModified(myXmlAutocompletionDelayField, codeInsightSettings.XML_LOOKUP_DELAY, 0);
-    isModified |= isModified(myFldJavadocAutocompletionDelayField, codeInsightSettings.JAVADOC_LOOKUP_DELAY, 0);
+    isModified |= isModified(myAutocompletionDelayField, codeInsightSettings.AUTO_LOOKUP_DELAY, 0);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
 

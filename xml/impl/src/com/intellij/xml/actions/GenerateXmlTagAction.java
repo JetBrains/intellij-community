@@ -15,41 +15,54 @@
  */
 package com.intellij.xml.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.CompleteMacro;
+import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
 public class GenerateXmlTagAction extends SimpleCodeInsightAction {
+
+  public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
@@ -59,7 +72,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         throw new CommonRefactoringUtil.RefactoringErrorHintException("Caret should be positioned inside a tag");
       }
       XmlElementDescriptor currentTagDescriptor = contextTag.getDescriptor();
-      XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
+      final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, new Comparator<XmlElementDescriptor>() {
         @Override
         public int compare(XmlElementDescriptor o1, XmlElementDescriptor o2) {
@@ -75,60 +88,119 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           append(" " + getNamespace(descriptor), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       });
-      JBPopupFactory.getInstance().createListPopupBuilder(list).setTitle("Choose Tag Name").setItemChoosenCallback(new Runnable() {
+      Runnable runnable = new Runnable() {
         @Override
         public void run() {
           final XmlElementDescriptor selected = (XmlElementDescriptor)list.getSelectedValue();
-          final XmlElementsGroup topGroup = selected.getTopGroup();
-          if (topGroup == null) {
-            throw new CommonRefactoringUtil.RefactoringErrorHintException("XML Schema does not provide enough information to generate tags");
-          }
-          LinkedHashMap<String, XmlElementDescriptor> requiredSubTags = new LinkedHashMap<String, XmlElementDescriptor>();
-          computeRequiredSubTags(topGroup, requiredSubTags);
-          final Collection<XmlElementDescriptor> values = requiredSubTags.values();
           new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
             @Override
             protected void run() {
               XmlTag newTag = createTag(contextTag, selected);
               newTag = contextTag.addSubTag(newTag, false);
-              final ComplexTypeDescriptor typeDescriptor = getType(selected, newTag);
-              for (XmlElementDescriptor descriptor : values) {
-                if (true || typeDescriptor.canContainTag(descriptor.getName(), getNamespace(descriptor), newTag)) {
-                  newTag.addSubTag(createTag(newTag, descriptor), false);
-                }
-              }
-              TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(newTag);
-
+              generateTag(newTag);
             }
           }.execute();
-
         }
-      }).createPopup().showInBestPositionFor(editor);
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
+          @Override
+          public boolean value(XmlElementDescriptor xmlElementDescriptor) {
+            return xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get());
+          }
+        });
+        list.setSelectedValue(descriptor, false);
+        runnable.run();
+      }
+      else {
+        JBPopupFactory.getInstance().createListPopupBuilder(list)
+          .setTitle("Choose Tag Name")
+          .setItemChoosenCallback(runnable)
+          .setFilteringEnabled(new Function<Object, String>() {
+            @Override
+            public String fun(Object o) {
+              return ((XmlElementDescriptor)o).getName();
+            }
+          })
+          .createPopup()
+          .showInBestPositionFor(editor);
+      }
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       HintManager.getInstance().showErrorHint(editor, e.getMessage());
     }
   }
 
-  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
-    String bodyText = null;
-    if (descriptor instanceof XmlElementDescriptorImpl) {
-      if (((XmlElementDescriptorImpl)descriptor).getType() instanceof ComplexTypeDescriptor) {
-        bodyText = "";
-      }
-    }
-    return contextTag.createChildTag(descriptor.getName(), getNamespace(descriptor), bodyText, false);
+  public static void generateTag(XmlTag newTag) {
+    newTag = generateRaw(newTag);
+    newTag = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newTag);
+    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(newTag);
+    replaceElements(newTag, builder);
+    builder.run();
   }
 
-  @Nullable
-  private static ComplexTypeDescriptor getType(XmlElementDescriptor selected, XmlTag contextTag) {
-    if (selected instanceof XmlElementDescriptorImpl) {
-      TypeDescriptor type = ((XmlElementDescriptorImpl)selected).getType(contextTag);
-      if (type instanceof ComplexTypeDescriptor) {
-        return (ComplexTypeDescriptor)type;
+  private static XmlTag generateRaw(XmlTag newTag) {
+    XmlElementDescriptor selected = newTag.getDescriptor();
+    if (selected == null) return newTag;
+    switch (selected.getContentType()) {
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+        newTag.collapseIfEmpty();
+        ASTNode node = newTag.getNode();
+        assert node != null;
+        ASTNode elementEnd = node.findChildByType(XmlElementType.XML_EMPTY_ELEMENT_END);
+        if (elementEnd == null) {
+          LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
+          node.addChild(emptyTagEnd);
+        }
+        break;
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
+        newTag.getValue().setText("");
+    }
+    for (XmlAttributeDescriptor descriptor : selected.getAttributesDescriptors(newTag)) {
+      if (descriptor.isRequired()) {
+        newTag.setAttribute(descriptor.getName(), "");
       }
     }
-    return null;
+    XmlElementsGroup topGroup = selected.getTopGroup();
+    if (topGroup == null) return newTag;
+    List<XmlElementDescriptor> tags = new ArrayList<XmlElementDescriptor>();
+    computeRequiredSubTags(topGroup, tags);
+    for (XmlElementDescriptor descriptor : tags) {
+      if (descriptor == null) {
+        XmlTag tag = XmlElementFactory.getInstance(newTag.getProject()).createTagFromText("<", newTag.getLanguage());
+        newTag.addSubTag(tag, false);
+      }
+      else {
+        XmlTag subTag = newTag.addSubTag(createTag(newTag, descriptor), false);
+        generateRaw(subTag);
+      }
+    }
+    return newTag;
+  }
+
+  private static void replaceElements(XmlTag tag, TemplateBuilder builder) {
+    for (XmlAttribute attribute : tag.getAttributes()) {
+      XmlAttributeValue value = attribute.getValueElement();
+      builder.replaceElement(value, TextRange.from(1, 0), new MacroCallNode(new CompleteMacro()));
+    }
+    if ("<".equals(tag.getText())) {
+      builder.replaceElement(tag, TextRange.from(1, 0), new MacroCallNode(new CompleteSmartMacro()));
+    }
+    else if (tag.getSubTags().length == 0) {
+      int i = tag.getText().indexOf("></");
+      if (i > 0) {
+        builder.replaceElement(tag, TextRange.from(i + 1, 0), new MacroCallNode(new CompleteMacro()));
+      }
+    }
+    for (XmlTag subTag : tag.getSubTags()) {
+      replaceElements(subTag, builder);
+    }
+  }
+
+  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
+    String bodyText = descriptor.getContentType() == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
+    String namespace = getNamespace(descriptor);
+    return contextTag.createChildTag(descriptor.getName(), namespace, bodyText, false);
   }
 
   private static String getNamespace(XmlElementDescriptor descriptor) {
@@ -148,15 +220,15 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return tag;
   }
 
-  private static void computeRequiredSubTags(XmlElementsGroup group, LinkedHashMap<String, XmlElementDescriptor> tags) {
+  private static void computeRequiredSubTags(XmlElementsGroup group, List<XmlElementDescriptor> tags) {
 
     if (group.getMinOccurs() < 1) return;
     switch (group.getGroupType()) {
       case LEAF:
-        XmlElementDescriptor descriptor = group.getLeafDescriptor();
-        tags.put(descriptor.getName(), descriptor);
+        ContainerUtil.addIfNotNull(tags, group.getLeafDescriptor());
         return;
       case CHOICE:
+        tags.add(null); // placeholder for smart completion
         return;
       default:
         for (XmlElementsGroup subGroup : group.getSubGroups()) {

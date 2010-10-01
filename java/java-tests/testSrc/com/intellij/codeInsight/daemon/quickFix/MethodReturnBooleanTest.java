@@ -6,6 +6,7 @@ public class MethodReturnBooleanTest extends LightQuickFixTestCase {
     doAllTests();
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/methodReturnBooleanFix";
   }

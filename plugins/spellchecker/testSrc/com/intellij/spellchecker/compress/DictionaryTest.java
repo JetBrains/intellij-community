@@ -64,6 +64,7 @@ public class DictionaryTest extends TestCase {
     final Transformation transform = new Transformation();
     PlatformTestUtil.assertTiming("Dictionary load time depends on words count. Approximate word count: " + wordCount + ".", times.get(name),
         new Runnable() {
+          @Override
           public void run() {
             dictionary = CompressedDictionary.create(new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name), transform);
           }
@@ -71,6 +72,7 @@ public class DictionaryTest extends TestCase {
 
     final Set<String> wordsToStoreAndCheck = createWordSets(name, 50000, 1).getFirst();
     PlatformTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 2000, new Runnable() {
+      @Override
       public void run() {
         for (String s : wordsToStoreAndCheck) {
           assertTrue(dictionary.contains(s));
@@ -82,12 +84,14 @@ public class DictionaryTest extends TestCase {
 
   private static Loader createLoader(final Set<String> words) {
     return new Loader() {
+      @Override
       public void load(@NotNull Consumer<String> consumer) {
         for (String word : words) {
           consumer.consume(word);
         }
       }
 
+      @Override
       public String getName() {
         return "test";
       }
@@ -103,6 +107,7 @@ public class DictionaryTest extends TestCase {
     loader.load(new Consumer<String>() {
       private int counter = 0;
 
+      @Override
       public void consume(String s) {
         if (counter > maxCount) {
           return;

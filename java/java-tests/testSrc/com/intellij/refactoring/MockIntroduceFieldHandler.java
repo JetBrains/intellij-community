@@ -20,6 +20,7 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
     myDeclareStatic = declareStatic;
   }
 
+  @Override
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr, PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);

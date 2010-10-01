@@ -31,49 +31,63 @@ import java.util.List;
 public class MockChangelistBuilder implements ChangelistBuilder {
   private final List<Change> myChanges = new ArrayList<Change>();
 
+  @Override
   public void processChange(Change change, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
+  @Override
   public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
+  @Override
   public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
+  @Override
   public void processUnversionedFile(VirtualFile file) {
   }
 
+  @Override
   public void processLocallyDeletedFile(FilePath file) {
   }
 
+  @Override
   public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
   }
 
+  @Override
   public void processModifiedWithoutCheckout(VirtualFile file) {
   }
 
+  @Override
   public void processIgnoredFile(VirtualFile file) {
   }
 
+  @Override
   public void processLockedFolder(final VirtualFile file) {
   }
 
+  @Override
   public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
   }
 
+  @Override
   public void processSwitchedFile(VirtualFile file, String branch, final boolean recursive) {
   }
 
+  @Override
   public void processRootSwitch(VirtualFile file, String branch) {
   }
 
+  @Override
   public boolean isUpdatingUnversionedFiles() {
     return true;
   }
 
+  @Override
   public boolean reportChangesOutsideProject() {
     return false;
   }

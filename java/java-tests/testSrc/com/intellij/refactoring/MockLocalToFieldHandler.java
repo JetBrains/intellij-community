@@ -18,6 +18,7 @@ public class MockLocalToFieldHandler extends LocalToFieldHandler {
     myMakeEnumConstant = makeEnumConstant;
   }
 
+  @Override
   protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(PsiClass aClass, PsiLocalVariable local, PsiExpression[] occurences,
                                                                         boolean isStatic) {
     return new BaseExpressionToFieldHandler.Settings("xxx", true, isStatic, true, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,

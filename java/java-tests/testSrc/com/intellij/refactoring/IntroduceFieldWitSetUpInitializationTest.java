@@ -35,6 +35,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Module createModule(final String name) {
     final Module module = super.createModule(name);
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -77,6 +78,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     final PsiLocalVariable local =
       PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
     new LocalToFieldHandler(getProject(), false) {
+      @Override
       protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(final PsiClass aClass,
                                                                             final PsiLocalVariable local,
                                                                             final PsiExpression[] occurences,

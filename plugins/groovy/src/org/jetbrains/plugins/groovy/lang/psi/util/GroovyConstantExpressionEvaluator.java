@@ -39,13 +39,17 @@ public class GroovyConstantExpressionEvaluator implements ConstantExpressionEval
     return null;
   }
 
+  @Nullable
   public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
+    if (!(expression instanceof GrExpression)) return null;
     return evaluate((GrExpression)expression);
   }
 
+  @Nullable
   public Object computeExpression(PsiElement expression,
                                   boolean throwExceptionOnOverflow,
                                   @Nullable PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+    if (!(expression instanceof GrExpression)) return null;
     return evaluate((GrExpression)expression);
   }
 }

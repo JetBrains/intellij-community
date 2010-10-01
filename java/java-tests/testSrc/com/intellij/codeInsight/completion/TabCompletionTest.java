@@ -28,6 +28,7 @@ public class TabCompletionTest extends LightCompletionTestCase {
     checkResultByFile("/codeInsight/completion/normal/TabInXml2_After.xml");
   }
 
+  @Override
   protected void complete() {
     super.complete();
     selectItem(myItems[0], '\t');

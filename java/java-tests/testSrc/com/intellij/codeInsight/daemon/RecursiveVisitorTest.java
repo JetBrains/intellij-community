@@ -18,9 +18,11 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
     final PsiElement expression = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(text.toString(), null);
     final int[] n = {0};
     IdeaTestUtil.assertTiming("",20,new Runnable(){
+      @Override
       public void run() {
         n[0]=0;
         expression.accept(new JavaRecursiveElementWalkingVisitor(){
+          @Override
           public void visitBinaryExpression(final PsiBinaryExpression expression) {
             PsiExpression s = expression.getLOperand();
             super.visitBinaryExpression(expression);
@@ -42,6 +44,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
     final PsiElement expression = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(text.toString(), null);
     final int[] n = {0};
     IdeaTestUtil.assertTiming("",100,new Runnable(){
+      @Override
       public void run() {
         n[0]=0;
         expression.accept(new JavaRecursiveElementWalkingVisitor() {

@@ -25,6 +25,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
 
   public void testGenericTypes() throws Exception {
     doTest(null, null, "T", new GenParams() {
+      @Override
       public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         return new ParameterInfoImpl[]{
@@ -37,6 +38,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
 
   public void testGenericTypesInOldParameters() throws Exception {
     doTest(null, null, null, new GenParams() {
+      @Override
       public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         return new ParameterInfoImpl[] {
@@ -48,6 +50,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
 
   public void testTypeParametersInMethod() throws Exception {
     doTest(null, null, null, new GenParams() {
+             @Override
              public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
                final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
                return new ParameterInfoImpl[]{
@@ -195,6 +198,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   public void testAddException() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
+             @Override
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
                  new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
@@ -257,6 +261,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
       myInfos = infos;
     }
 
+    @Override
     public ParameterInfoImpl[] genParams(PsiMethod method) {
       for (ParameterInfoImpl info : myInfos) {
         info.updateFromMethod(method);
@@ -280,6 +285,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
       myInfos = infos;
     }
 
+    @Override
     public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
       for (ThrownExceptionInfo info : myInfos) {
         info.updateFromMethod(method);

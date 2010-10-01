@@ -40,6 +40,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
 
   public static Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<Runnable>("REMOTE_VERSION_CHANGED", Runnable.class);
+  public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
   private final RemoteRevisionsNumbersCache myRemoteRevisionsNumbersCache;
   private final RemoteRevisionsStateCache myRemoteRevisionsStateCache;
@@ -73,11 +74,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         myVcsManager.removeVcsListener(RemoteRevisionsCache.this);
       }
     });
-    updateKinds();
     myControlledCycle = new ControlledCycle(project, new ControlledCycle.MyCallback() {
       public boolean call(final AtomicSectionsAware atomicSectionsAware) {
         atomicSectionsAware.checkShouldExit();
-        final boolean shouldBeDone = VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
+        final boolean shouldBeDone = VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND &&
+          myVcsManager.hasActiveVcss();
+
         if (shouldBeDone) {
           boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep(atomicSectionsAware);
           atomicSectionsAware.checkShouldExit();
@@ -88,23 +90,40 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         }
         return shouldBeDone;
       }
-    }, "Finishing \"changed on server\" update", 3 * 60 * 1000);
+    }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+
+    updateRoots();
+
     if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
+      // do not start if there're no vcses
+      if (! myVcsManager.hasActiveVcss()) return;
+
       ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
                                                                            new Runnable() {
                                                                              public void run() {
-                                                                               myControlledCycle.start();
+                                                                               myControlledCycle.startIfNotStarted(-1);
                                                                              }
                                                                            });
     }
   }
 
-  public void startRefreshInBackground() {
-    if (myProject.isDefault()) return;
-    myControlledCycle.start();
+  public void updateAutomaticRefreshAlarmState() {
+    final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
+    if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.ENABLE_BACKGROUND_PROCESSES && vcsConfiguration.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
+      // will check whether is already started inside
+      // interval is checked further, this is small and constant
+      myControlledCycle.startIfNotStarted(-1);
+    } else {
+      myControlledCycle.stop();
+    }
   }
 
-  private void updateKinds() {
+  private void updateOnDirectoryMappingChanged() {
+    updateRoots();
+    updateAutomaticRefreshAlarmState();
+  }
+
+  private void updateRoots() {
     final VcsRoot[] roots = myVcsManager.getAllVcsRoots();
     synchronized (myLock) {
       for (VcsRoot root : roots) {
@@ -117,7 +136,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public void directoryMappingChanged() {
-    updateKinds();
+    updateOnDirectoryMappingChanged();
     myRemoteRevisionsNumbersCache.directoryMappingChanged();
     myRemoteRevisionsStateCache.directoryMappingChanged();
   }

@@ -21,6 +21,7 @@ public class SCR17094Test extends PsiTestCase {
   protected void setUpClasses(final String s) throws Exception {
     final String testRoot = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/scr17094";
     VirtualFile classesRoot  = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         String path = testRoot + "/" + s;
         path = path.replace(File.separatorChar, '/');
@@ -32,6 +33,7 @@ public class SCR17094Test extends PsiTestCase {
     final Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
     libraryModel.addRoot(classesRoot, OrderRootType.CLASSES);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         libraryModel.commit();
         rootModel.commit();
@@ -39,6 +41,7 @@ public class SCR17094Test extends PsiTestCase {
     });
   }
 
+  @Override
   protected void setUpJdk() {
 
   }

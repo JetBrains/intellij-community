@@ -6,6 +6,7 @@ package com.intellij.refactoring;
 
 public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{
 
+  @Override
   protected String getTestFilePath() {
     return "/refactoring/methodDuplicates/" + getTestName(false) + ".java";
   }

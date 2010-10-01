@@ -35,6 +35,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     PlatformTestCase.initPlatformLangPrefix();    
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myPropertyToAdd = PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");

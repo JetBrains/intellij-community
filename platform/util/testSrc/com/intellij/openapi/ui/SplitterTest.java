@@ -117,6 +117,7 @@ public class SplitterTest extends TestCase{
     }
     else {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           invokeRatherLater(runnable, n - 1);
         }

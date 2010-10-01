@@ -50,10 +50,12 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     return (M)adapter.getComponentInstance(myContainer);
   }
 
+  @Override
   public HeavyIdeaTestFixture getFixture() {
     return myFixture;
   }
 
+  @Override
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
     loadClassConstants(builderClass);
     final M builder = createModuleBuilder(builderClass);

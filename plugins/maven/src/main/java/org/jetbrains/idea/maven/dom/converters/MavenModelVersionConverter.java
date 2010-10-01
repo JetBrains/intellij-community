@@ -16,9 +16,10 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.converters.MavenConstantListConverter;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class MavenModelVersionConverter extends MavenConstantListConverter {
   private static final String VERSION = "4.0.0";
   private static final List<String> VALUES = Collections.singletonList(VERSION);
 
-  protected List<String> getValues(ConvertContext context) {
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }
 

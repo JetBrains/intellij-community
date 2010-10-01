@@ -418,6 +418,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
     result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
+      @Override
       public void run(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
         unresolved[0] = unresolvedArtifacts;
       }
@@ -481,6 +482,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
 
     CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
+      @Override
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         assertFalse(aborted);
         assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
@@ -501,6 +503,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected AtomicInteger configConfirmationForYesAnswer() {
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
+      @Override
       public int show(String message) {
         counter.set(counter.get() + 1);
         return 0;
@@ -512,6 +515,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected AtomicInteger configConfirmationForNoAnswer() {
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
+      @Override
       public int show(String message) {
         counter.set(counter.get() + 1);
         return 1;

@@ -131,7 +131,7 @@ public final class ReflectedProject {
         myProject = null;
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.info(e);
       myProject = null;
     }

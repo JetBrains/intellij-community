@@ -42,12 +42,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -692,6 +694,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setUseSoftWraps(EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
 
     final EditorColorsScheme scheme = editor.getColorsScheme();
     editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
@@ -969,7 +972,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     ConsoleFolding current = foldingForLine(getLineText(document, line, false));
-    myFolding.put(line, current);
+    if (current != null) {
+      myFolding.put(line, current);
+    }
 
     final ConsoleFolding prevFolding = myFolding.get(line - 1);
     if (current == null && prevFolding != null) {
@@ -1441,6 +1446,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
       }
     };
     final AnAction autoScrollToTheEndAction = new ToggleAutoScrollToTheEndToolbarAction() {

@@ -23,6 +23,7 @@ import com.intellij.testFramework.TestDataPath;
 public class CompletionStyleTest extends LightCodeInsightTestCase{
   private static final String BASE_PATH = "/codeInsight/completion/style";
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
@@ -345,6 +346,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();    //To change body of overriden methods use Options | File Templates.

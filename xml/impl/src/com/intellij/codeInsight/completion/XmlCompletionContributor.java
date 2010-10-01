@@ -178,14 +178,14 @@ public class XmlCompletionContributor extends CompletionContributor {
         for (Pair<String, String> pair : names) {
           final String name = pair.getFirst();
           final String ns = pair.getSecond();
-          final LookupElement item = createLookupElement(name, ns, " (" + ns + ")", namespacePrefix);
+          final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix);
           newResult.addElement(item);
         }
       }
     }
 
     else if (parameters.getCompletionType() == CompletionType.SMART) {
-//      new XmlSmartCompletionProvider().complete(parameters, result, element);
+      new XmlSmartCompletionProvider().complete(parameters, result, element);
     }
   }
 
@@ -195,7 +195,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     LookupElementBuilder builder =
       LookupElementBuilder.create(Pair.create(name, namespace), name).setInsertHandler(new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
     if (!StringUtil.isEmpty(namespace)) {
-      builder = builder.setTailText(tailText, true);
+      builder = builder.setTypeText(tailText, true);
     }
     return builder;
   }

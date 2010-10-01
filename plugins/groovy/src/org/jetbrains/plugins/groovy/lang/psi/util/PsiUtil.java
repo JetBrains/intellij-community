@@ -1012,4 +1012,10 @@ public class PsiUtil {
     return null;
   }
 
+  public static boolean isCommandExpression(GrMethodCall methodCall) {
+    final GrExpression expression = methodCall.getInvokedExpression();
+    if (!(expression instanceof GrReferenceExpression) || ((GrReferenceExpression)expression).getQualifier() == null) return false;
+
+    return ((GrReferenceExpression)expression).getDotToken() == null;
+  }
 }

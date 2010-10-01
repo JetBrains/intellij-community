@@ -16,9 +16,10 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.idea.maven.dom.converters.MavenConstantListConverter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenPhaseConverter extends MavenConstantListConverter {
@@ -55,7 +56,7 @@ public class MavenPhaseConverter extends MavenConstantListConverter {
                                                            "post-site",
                                                            "site-deploy");
 
-  protected List<String> getValues(ConvertContext context) {
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }
 }

@@ -24,6 +24,7 @@ import java.util.Map;
 public class MapDataContext implements DataContext {
   private final Map myMap = new HashMap();
 
+  @Override
   public Object getData(String dataId) {
     return myMap.get(dataId);
   }

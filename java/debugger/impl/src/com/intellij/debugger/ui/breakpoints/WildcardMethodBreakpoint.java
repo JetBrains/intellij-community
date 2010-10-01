@@ -112,19 +112,16 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   public Icon getIcon() {
     if (!ENABLED) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? WildcardMethodBreakpoint.DISABLED_ICON : WildcardMethodBreakpoint.DISABLED_DEP_ICON;
+      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
     }
-    return WildcardMethodBreakpoint.ICON;
+    return ICON;
   }
 
   public void reload() {
   }
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    if (!matchesEvent(event)) {
-      return false;
-    }
-    return super.evaluateCondition(context, event);
+    return matchesEvent(event) && super.evaluateCondition(context, event);
   }
 
   public void createRequest(DebugProcessImpl debugProcess) {

@@ -30,7 +30,7 @@ public class AssignmentEvaluator implements Evaluator{
 
   public AssignmentEvaluator(Evaluator leftEvaluator, Evaluator rightEvaluator) {
     myLeftEvaluator = leftEvaluator;
-    myRightEvaluator = rightEvaluator;
+    myRightEvaluator = new DisableGC(rightEvaluator);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

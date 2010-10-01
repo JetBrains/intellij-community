@@ -16,8 +16,9 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.DotAutoLookupHandler;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
@@ -82,7 +83,7 @@ public class AutoPopupController implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_MEMBER_LOOKUP) {
+    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
       if (file == null) return;
       final Runnable request = new Runnable(){
@@ -92,13 +93,13 @@ public class AutoPopupController implements Disposable {
 
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           if (condition != null && !condition.value(editor)) return;
-          new DotAutoLookupHandler().invoke(myProject, editor, file);
+          new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(myProject, editor, file);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              myAlarm.addRequest(request, settings.MEMBER_LOOKUP_DELAY);
+              myAlarm.addRequest(request, settings.AUTO_LOOKUP_DELAY);
             }
           });
     }

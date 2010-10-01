@@ -63,6 +63,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testProtectedFieldAccessFromOtherPackage() throws Exception { doTest(BASE_PATH+"/protectedAccessFromOtherPackage/a/A.java", BASE_PATH+"/protectedAccessFromOtherPackage", false, false); }
   public void testPackageLocalClassInTheMiddle1() throws Exception { doTest(BASE_PATH+"/foreignPackageInBetween/a/A1.java", BASE_PATH+"/foreignPackageInBetween", false, false); }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     @NonNls boolean is50 = "StaticImportConflict".equals(getTestName(false));
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(is50 ? LanguageLevel.JDK_1_5 : LanguageLevel.JDK_1_4);
@@ -147,6 +148,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     final ModuleRootManager rootManager4 = ModuleRootManager.getInstance(java4);
     final ModuleRootManager rootManager5 = ModuleRootManager.getInstance(java5);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel4 = rootManager4.getModifiableModel();
         rootModel4.setSdk(JavaSdkImpl.getMockJdk17("java 1.4"));

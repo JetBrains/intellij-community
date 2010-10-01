@@ -47,10 +47,12 @@ public class PsiTestData implements JDOMExternalizable {
     myText = StringUtil.convertLineSeparators(myText);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

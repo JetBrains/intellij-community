@@ -134,6 +134,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
                       final boolean generateAccessors,
                       final RefactoringTestUtil.MemberDescriptor... memberDescriptors) throws Exception {
     doTest(new PerformAction() {
+      @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
         assertNotNull("Class Test not found", aClass);

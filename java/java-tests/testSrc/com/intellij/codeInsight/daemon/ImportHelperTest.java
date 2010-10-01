@@ -30,6 +30,7 @@ import java.util.List;
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class ImportHelperTest extends DaemonAnalyzerTestCase {
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
@@ -52,8 +53,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testImportsInsertedAlphabetically() throws Exception {
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               @NonNls String text = "class I {}";
@@ -82,8 +85,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testStaticImportsGrouping() throws Exception {
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               @NonNls String text = "import static java.lang.Math.max;\n" +
@@ -134,6 +139,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }, "", "");
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17();
   }

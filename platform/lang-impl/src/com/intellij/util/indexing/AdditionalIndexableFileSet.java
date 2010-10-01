@@ -17,9 +17,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -27,20 +29,33 @@ import java.util.Set;
  * @author peter
  */
 public class AdditionalIndexableFileSet implements IndexableFileSet {
-  private final Set<VirtualFile> myRoots = new THashSet<VirtualFile>();
+
+  private NotNullLazyValue<Set<VirtualFile>> myRoots = new NotNullLazyValue<Set<VirtualFile>>() {
+    @NotNull
+    @Override
+    protected Set<VirtualFile> compute() {
+      THashSet<VirtualFile> virtualFiles = new THashSet<VirtualFile>();
+      if (myExtensions == null) {
+        myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
+      }
+        for (IndexedRootsProvider provider : myExtensions) {
+          virtualFiles.addAll(IndexableSetContributor.getRootsToIndex(provider));
+        }
+      return virtualFiles;
+    }
+  };
+
+  private IndexedRootsProvider[] myExtensions;
 
   public AdditionalIndexableFileSet() {
-    this(Extensions.getExtensions(IndexableSetContributor.EP_NAME));
   }
 
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
-    for (IndexedRootsProvider provider : extensions) {
-      myRoots.addAll(IndexableSetContributor.getRootsToIndex(provider));
-    }
+    myExtensions = extensions;
   }
 
   public boolean isInSet(VirtualFile file) {
-    for (final VirtualFile root : myRoots) {
+    for (final VirtualFile root : myRoots.getValue()) {
       if (VfsUtil.isAncestor(root, file, false)) {
         return true;
       }

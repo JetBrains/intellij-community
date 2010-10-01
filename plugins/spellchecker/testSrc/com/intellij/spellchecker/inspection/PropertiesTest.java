@@ -21,6 +21,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  * @author Konstantin Bulenkov
  */
 public class PropertiesTest extends SpellcheckerInspectionTestCase {
+  @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/propertiesWithMistakes";
   }

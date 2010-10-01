@@ -92,7 +92,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightVariable(PsiVariable variable, PsiElement elementToHighlight) {
+  public static HighlightInfo highlightVariableName(PsiVariable variable, PsiElement elementToHighlight) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
@@ -166,12 +166,10 @@ public class HighlightNamesUtil {
     if (variable instanceof PsiLocalVariable) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
     }
-    else if (variable instanceof PsiParameter) {
+    if (variable instanceof PsiParameter) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER, elementToHighlight, null);
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static TextAttributes getScopeAttributes(PsiElement element) {

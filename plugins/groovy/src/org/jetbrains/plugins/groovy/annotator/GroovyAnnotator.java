@@ -125,6 +125,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+   public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    super.visitApplicationStatement(applicationStatement);
+    checkForCommandExpressionSyntax(applicationStatement);
+  }
+
+  @Override
+  public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+    super.visitMethodCallExpression(methodCallExpression);
+    checkForCommandExpressionSyntax(methodCallExpression);
+  }
+
+  private void checkForCommandExpressionSyntax(GrMethodCall methodCall) {
+    final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
+    if (methodCall.isCommandExpression() && !groovyConfig.isVersionAtLeast(methodCall, GroovyConfigUtils.GROOVY1_8)) {
+      myHolder.createErrorAnnotation(methodCall, GroovyBundle.message("is.not.supported.in.version", groovyConfig.getSDKVersion(methodCall)));
+    }
+  }
+
+  @Override
   public void visitElement(GroovyPsiElement element) {
     if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(myHolder, element);
@@ -400,11 +419,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (duplicate instanceof GrVariable) {
-      if (duplicate instanceof GrField && !(variable instanceof GrField)) {
-        myHolder
-          .createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
-      }
-      else {
+      if (variable instanceof GrField || !(duplicate instanceof GrField)) {
         final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }
@@ -1379,7 +1394,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression, place)) {
+                                   ResolveUtil.isInUseScope(methodResolveResult), place)) {
       
       //check for implicit use of property getter which returns closure
       if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
@@ -1620,7 +1635,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return builder.toString();
   }
 
-  private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
+  public static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;
 

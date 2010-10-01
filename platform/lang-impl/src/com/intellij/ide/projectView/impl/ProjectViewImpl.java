@@ -27,6 +27,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -78,7 +79,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -463,7 +463,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private void showPane(AbstractProjectViewPane newPane) {
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     PsiElement selectedPsiElement = null;
-    Module selectedModule = null;
     if (currentPane != null) {
       if (currentPane != newPane) {
         currentPane.saveExpandedPaths();
@@ -471,11 +470,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       final PsiElement[] elements = currentPane.getSelectedPSIElements();
       if (elements.length > 0) {
         selectedPsiElement = elements[0];
-      } else {
-        Object selected = currentPane.getSelectedElement();
-        if (selected instanceof Module) {
-          selectedModule = (Module)selected;
-        }
       }
     }
     removeLabelFocusListener();
@@ -534,35 +528,40 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   // public for tests
   public synchronized void setupImpl(final ToolWindow toolWindow, final boolean loadPaneExtensions) {
-    myCombo.setRenderer(new DefaultListCellRenderer() {
+    myCombo.setRenderer(new ListCellRendererWrapper(myCombo.getRenderer()){
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return this;
-        Pair<String, String> ids = (Pair<String, String>)value;
-        String id = ids.first;
-        String subId = ids.second;
-        AbstractProjectViewPane pane = getProjectViewPaneById(id);
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) {
+          return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
+
+        final Pair<String, String> ids = (Pair<String, String>)value;
+        final String id = ids.first;
+        final String subId = ids.second;
+        final AbstractProjectViewPane pane = getProjectViewPaneById(id);
+        String name = null;
+        Icon icon = null;
         if (pane != null) {
           if (subId == null) {
-            setText(pane.getTitle());
-            setIcon(pane.getIcon());
+            name = pane.getTitle();
+            icon = pane.getIcon();
           }
           else {
             String presentable = pane.getPresentableSubIdName(subId);
             if (index == -1) {
-              setText(presentable);
-              setIcon(pane.getIcon());
+              name = presentable;
+              icon = pane.getIcon();
             }
             else {
               // indent sub id
-              setText(presentable);
-              setIcon(BULLET_ICON);
+              name = presentable;
+              icon = BULLET_ICON;
             }
           }
         }
-        return this;
+        return getListCellRendererComponent(list, name, icon, index, isSelected, cellHasFocus);
       }
     });
+
     myCombo.setMinimumAndPreferredWidth(10);
 
     myActionGroup = new DefaultActionGroup();

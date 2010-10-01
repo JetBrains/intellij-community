@@ -47,6 +47,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XML_NOTATION_DECL = new IXmlElementType("XML_NOTATION_DECL");
   IElementType XML_ENTITY_DECL = new IXmlElementType("XML_ENTITY_DECL");
   IElementType XML_ELEMENT_CONTENT_SPEC = new IXmlElementType("XML_ELEMENT_CONTENT_SPEC");
+  IElementType XML_ELEMENT_CONTENT_GROUP = new IXmlElementType("XML_ELEMENT_CONTENT_GROUP");
   IElementType XML_ATTRIBUTE_DECL = new IXmlElementType("XML_ATTRIBUTE_DECL");
   IElementType XML_ATTRIBUTE_VALUE = new IXmlElementType("XML_ATTRIBUTE_VALUE");
   IElementType XML_ENTITY_REF = new IXmlElementType("XML_ENTITY_REF");

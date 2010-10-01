@@ -103,6 +103,7 @@ public class XsltHighlightingTest extends TestBase {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       return ApplicationManager.getApplication().runReadAction(new Computable<Long>() {
+        @Override
         public Long compute() {
           final long l = System.currentTimeMillis();
           CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
@@ -116,6 +117,7 @@ public class XsltHighlightingTest extends TestBase {
         myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xsl"));
     }
 
+    @Override
     protected String getSubPath() {
         return "xslt/highlighting";
     }

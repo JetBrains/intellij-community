@@ -19,7 +19,6 @@ package com.intellij.ui.tabs;
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.packageDependencies.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -35,9 +34,7 @@ import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -79,14 +76,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       }
     }
 
-    final String[] names = ArrayUtil.toStringArray(myScopeNames.keySet());
-    Arrays.sort(names, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return o1 == NonProjectFilesScope.NAME ? 1 : o2 == NonProjectFilesScope.NAME ? -1 : 0;
-      }
-    });
-    myScopeComboBox = new JComboBox(names);
+    myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(myScopeNames.keySet()));
     myScopeComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateCustomButton();

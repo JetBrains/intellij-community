@@ -15,18 +15,21 @@ import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 
 public class JavadocInspectionQuickFixTest extends LightQuickFix15TestCase {
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
     javaDocLocalInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS = "param";
     return new LocalInspectionTool[]{javaDocLocalInspection};
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/javadocTags";
   }

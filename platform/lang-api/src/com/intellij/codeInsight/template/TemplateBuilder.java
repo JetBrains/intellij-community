@@ -46,6 +46,8 @@ public interface TemplateBuilder {
    */
   void replaceElement(PsiElement element, Expression expression);
 
+  void replaceElement(PsiElement element, TextRange rangeWithinElement, Expression expression);
+
   /**
    * Creates a replacement box for the specified text range within the container element.
    * @param rangeWithinElement range within the container element.
@@ -58,7 +60,7 @@ public interface TemplateBuilder {
    * @param rangeWithinElement range within the container element.
    * @param expression the replacement expression.
    */
-  public void replaceRange(TextRange rangeWithinElement, Expression expression);
+  void replaceRange(TextRange rangeWithinElement, Expression expression);
 
   /**
    * Shows the live template and initiates editing process.

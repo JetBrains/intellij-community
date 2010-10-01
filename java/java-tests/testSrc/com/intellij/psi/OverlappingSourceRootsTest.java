@@ -27,11 +27,13 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
   private VirtualFile myFile11;
   private VirtualFile myFile21;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
+              @Override
               public void run() {
 
                 try {

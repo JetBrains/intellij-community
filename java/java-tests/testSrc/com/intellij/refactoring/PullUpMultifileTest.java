@@ -41,6 +41,7 @@ import java.util.HashSet;
 
 //pull first method from class a.A to class b.B
 public class PullUpMultifileTest extends MultiFileTestCase {
+  @Override
   protected String getTestRoot() {
     return "/refactoring/pullUp/";
   }
@@ -50,6 +51,7 @@ public class PullUpMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk17("java 1.5");
   }
@@ -58,6 +60,7 @@ public class PullUpMultifileTest extends MultiFileTestCase {
   private void doTest(final String... conflicts) throws Exception {
     final MultiMap<PsiElement, String> conflictsMap = new MultiMap<PsiElement, String>();
     doTest(new PerformAction() {
+      @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
         assertTrue("Source class not found", srcClass != null);
@@ -76,6 +79,7 @@ public class PullUpMultifileTest extends MultiFileTestCase {
         final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
         conflictsMap.putAllValues(
           PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
+            @Override
             public boolean checkedInterfacesContain(PsiMethod psiMethod) {
               return PullUpHelper.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod);
             }

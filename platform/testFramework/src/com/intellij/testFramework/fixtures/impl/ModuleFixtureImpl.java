@@ -31,6 +31,7 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
     myBuilder = builder;
   }
 
+  @Override
   public Module getModule() {
     if (myModule != null) return myModule;
     myModule = myBuilder.buildModule();
@@ -38,11 +39,13 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
     return myModule;
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getModule();
   }
 
+  @Override
   public void tearDown() throws Exception {
     myModule = null;
     super.tearDown();

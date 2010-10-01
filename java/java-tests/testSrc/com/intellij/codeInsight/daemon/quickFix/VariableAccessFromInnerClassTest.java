@@ -17,6 +17,7 @@ public class VariableAccessFromInnerClassTest extends LightQuickFixTestCase {
     }
   }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mustBeFinal";
   }

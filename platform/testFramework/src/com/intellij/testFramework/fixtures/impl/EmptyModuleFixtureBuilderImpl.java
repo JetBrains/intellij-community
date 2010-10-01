@@ -29,6 +29,7 @@ public abstract class EmptyModuleFixtureBuilderImpl<T extends ModuleFixture> ext
     super(ModuleType.EMPTY, fixtureBuilder);
   }
 
+  @Override
   protected T instantiateFixture() {
     throw new UnsupportedOperationException();
   }

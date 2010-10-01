@@ -9,12 +9,15 @@ import org.jetbrains.annotations.NonNls;
 public class AnnotateMethodTest extends LightQuickFix15TestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/annotateMethod";
   }
 
+  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new NullableStuffInspection(){
+      @Override
       protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
         @NonNls String name = method.getName();
         int ret = name.startsWith("annotateBase") ? 0  // yes, annotate all
@@ -26,6 +29,7 @@ public class AnnotateMethodTest extends LightQuickFix15TestCase {
     }};
   }
 
+  @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return myMustBeAvailableAfterInvoke;
   }

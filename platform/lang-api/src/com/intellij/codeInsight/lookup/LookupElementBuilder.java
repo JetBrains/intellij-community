@@ -126,8 +126,13 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
+    return setTypeText(typeText, false);
+  }
+
+  public LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeText(typeText);
+    presentation.setTypeGrayed(grayed);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }

@@ -62,7 +62,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
 
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element) {
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }

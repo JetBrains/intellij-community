@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DottedBorder;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -115,6 +116,14 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean isSelected,
       boolean hasFocus) {
 
+
+    if (isSelected && !myLookup.isFocused() && myLookup.isCompletion()) {
+      myPanel.setBorder(new DottedBorder(Color.gray));
+      isSelected = false;
+    } else {
+      myPanel.setBorder(null);
+    }
+
     final LookupElement item = (LookupElement)value;
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);
@@ -130,7 +139,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, allowedWidth);
+      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, allowedWidth, isSelected);
     }
 
     myTailComponent.clear();
@@ -204,7 +213,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private static Color getTailTextColor(boolean isSelected, LookupElementPresentation presentation, Color defaultForeground) {
     if (presentation.isTailGrayed()) {
-      return isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
+      return getGrayedForeground(isSelected);
     }
 
     final Color tailForeground = presentation.getTailForeground();
@@ -213,6 +222,10 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     return defaultForeground;
+  }
+
+  private static Color getGrayedForeground(boolean isSelected) {
+    return isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
   }
 
   private int setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, LookupElementPresentation presentation, int allowedWidth) {
@@ -248,7 +261,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     return used;
   }
 
-  private int setTypeTextLabel(LookupElement item, final Color background, Color foreground, final LookupElementPresentation presentation, int allowedWidth) {
+  private int setTypeTextLabel(LookupElement item,
+                               final Color background,
+                               Color foreground,
+                               final LookupElementPresentation presentation,
+                               int allowedWidth,
+                               boolean selected) {
     final String givenText = presentation.getTypeText();
     final String labelText = trimLabelText(StringUtil.isEmpty(givenText) ? "" : "   " + givenText, allowedWidth, myNormalMetrics);
 
@@ -275,7 +293,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myTypeLabel.setBackground(sampleBackground);
-    myTypeLabel.setForeground(item instanceof EmptyLookupItem ? EMPTY_ITEM_FOREGROUND_COLOR : foreground);
+    myTypeLabel.setForeground(presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? EMPTY_ITEM_FOREGROUND_COLOR : foreground);
     return used;
   }
 

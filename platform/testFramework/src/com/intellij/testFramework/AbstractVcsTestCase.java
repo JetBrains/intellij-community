@@ -140,6 +140,7 @@ public class AbstractVcsTestCase {
     ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
         assert myWorkingCopyDir != null;
@@ -163,6 +164,7 @@ public class AbstractVcsTestCase {
   protected VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
+      @Override
       protected void run() throws Throwable {
         try {
           VirtualFile file = parent.createChildData(this, name);
@@ -189,6 +191,7 @@ public class AbstractVcsTestCase {
   protected VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
+      @Override
       protected void run() throws Throwable {
         try {
           VirtualFile dir = parent.findChild(name);
@@ -280,6 +283,7 @@ public class AbstractVcsTestCase {
 
   public static void renameFileInCommand(final Project project, final VirtualFile file, final String newName) {
     new WriteCommandAction.Simple(project) {
+      @Override
       protected void run() throws Throwable {
         try {
           file.rename(this, newName);
@@ -293,6 +297,7 @@ public class AbstractVcsTestCase {
 
   protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
     new WriteCommandAction.Simple(myProject) {
+      @Override
       protected void run() throws Throwable {
         try {
           element.setName(newName);
@@ -310,6 +315,7 @@ public class AbstractVcsTestCase {
 
   public static void deleteFileInCommand(final Project project, final VirtualFile file) {
     new WriteCommandAction.Simple(project) {
+      @Override
       protected void run() throws Throwable {
         try {
           file.delete(this);
@@ -327,6 +333,7 @@ public class AbstractVcsTestCase {
 
   public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {
     new WriteCommandAction.Simple(project) {
+      @Override
       protected void run() throws Throwable {
         try {
           file.setBinaryContent(newContent.getBytes());
@@ -341,6 +348,7 @@ public class AbstractVcsTestCase {
   protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
+      @Override
       protected void run() throws Throwable {
         try {
           res.set(file.copy(this, file.getParent(), toName));
@@ -359,6 +367,7 @@ public class AbstractVcsTestCase {
 
   public static void moveFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
     new WriteCommandAction.Simple(project) {
+      @Override
       protected void run() throws Throwable {
         try {
           file.move(this, newParent);
@@ -394,6 +403,7 @@ public class AbstractVcsTestCase {
 
   public static void sortChanges(final List<Change> changes) {
     Collections.sort(changes, new Comparator<Change>() {
+      @Override
       public int compare(final Change o1, final Change o2) {
         final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
         final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());

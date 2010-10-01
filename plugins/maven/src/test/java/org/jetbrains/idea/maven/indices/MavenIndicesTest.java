@@ -65,6 +65,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndexer = MavenFacadeManager.getInstance().createIndexer();
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myIndexer, myIndicesDir, new MavenIndex.IndexListener() {
+      @Override
       public void indexIsBroken(MavenIndex index) {
         isBroken = true;
       }

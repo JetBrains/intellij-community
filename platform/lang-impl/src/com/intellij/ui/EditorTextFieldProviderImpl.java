@@ -80,7 +80,6 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       @Override
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
-        ex.setOneLineMode(false);
         ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         ex.setHorizontalScrollbarVisible(true);
         EditorSettings settings = ex.getSettings();
@@ -96,6 +95,11 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
           }
         }
         return ex;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
       }
 
       @Override

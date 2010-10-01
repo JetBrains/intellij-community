@@ -141,21 +141,24 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     if (!(element instanceof PsiMember)) {
       toInsert = fqn;
     }
-    else if (elementAtCaret != null && element instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
+    else if (elementAtCaret != null && (element instanceof PsiMethod || element instanceof PsiField) && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
       // use fqn#methodName(ParamType)
-      PsiMethod method = (PsiMethod)element;
-      PsiClass aClass = method.getContainingClass();
+      PsiMember member = (PsiMember)element;
+      PsiClass aClass = member.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
       if (toInsert.length() != 0) toInsert += "#";
-      toInsert += method.getName() + "(";
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter parameter = parameters[i];
-        if (i != 0) toInsert += ", ";
-        toInsert += parameter.getType().getCanonicalText();
+      toInsert += member.getName();
+      if (member instanceof PsiMethod) {
+        toInsert += "(";
+        PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+          PsiParameter parameter = parameters[i];
+          if (i != 0) toInsert += ", ";
+          toInsert += parameter.getType().getCanonicalText();
+        }
+        toInsert += ")";
       }
-      toInsert += ")";
     }
     else if (elementAtCaret == null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||

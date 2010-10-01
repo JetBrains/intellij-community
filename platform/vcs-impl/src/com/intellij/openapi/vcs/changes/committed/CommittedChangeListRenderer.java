@@ -24,15 +24,14 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.text.DateFormatUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.text.DateFormat;
 import java.util.Date;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
-  private final static DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
   private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
   private final IssueLinkRenderer myRenderer;
   private final java.util.List<CommittedChangeListDecorator> myDecorators;
@@ -45,7 +44,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   }
 
   public static String getDateOfChangeList(final Date date) {
-    return myDateFormat.format(date);
+    return DateFormatUtil.formatPrettyDateTime(date);
   }
 
   public static Pair<String, Boolean> getDescriptionOfChangeList(final String text) {

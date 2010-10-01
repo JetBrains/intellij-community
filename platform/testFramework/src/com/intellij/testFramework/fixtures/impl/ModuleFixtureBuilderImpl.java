@@ -56,21 +56,25 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myFixtureBuilder = fixtureBuilder;
   }
 
+  @Override
   public ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath) {
     myContentRoots.add(contentRootPath);
     return this;
   }
 
+  @Override
   public ModuleFixtureBuilder<T> addSourceRoot(final String sourceRootPath) {
     assert !myContentRoots.isEmpty() : "content root should be added first";
     mySourceRoots.add(sourceRootPath);
     return this;
   }
 
+  @Override
   public void setOutputPath(final String outputPath) {
     myOutputPath = outputPath;
   }
 
+  @Override
   public void setTestOutputPath(String outputPath) {
     myTestOutputPath = outputPath;
   }
@@ -86,6 +90,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
 
+  @Override
   public synchronized T getFixture() {
     if (myModuleFixture == null) {
       myModuleFixture = instantiateFixture();
@@ -93,6 +98,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     return myModuleFixture;
   }
 
+  @Override
   public void addSourceContentRoot(final String path) {
     addContentRoot(path);
     addSourceRoot(path);
@@ -104,6 +110,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     final Module[] module = {null};
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         module[0] = createModule();
         initModule(module[0]);

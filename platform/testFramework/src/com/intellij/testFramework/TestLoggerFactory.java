@@ -43,6 +43,7 @@ import java.io.StringReader;
   private TestLoggerFactory() {
   }
 
+  @Override
   public Logger getLoggerInstance(String name) {
     synchronized (this) {
       try {

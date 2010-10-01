@@ -40,11 +40,13 @@ import java.util.Collection;
 public class FormPropertyUsageTest extends PsiTestCase {
   private VirtualFile myTestProjectRoot;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           try{
             String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/binding/" + getTestName(true);

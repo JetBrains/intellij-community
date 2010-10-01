@@ -163,7 +163,7 @@ public class GitUsersComponent {
 
     myIsActive = true;
     myManager.addVcsListener(myVcsListener);
-    myControlledCycle.start();
+    myControlledCycle.startIfNotStarted(-1);
   }
 
   public void deactivate() {

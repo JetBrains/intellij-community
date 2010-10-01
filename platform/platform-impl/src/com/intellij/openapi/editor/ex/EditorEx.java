@@ -31,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -136,8 +137,18 @@ public interface EditorEx extends Editor {
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
 
+  @NotNull
+  VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * @return true if caret cursor is blinking in this editor
    */
   boolean isCaretActive();
+
+  /**
+   * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
+   * @param customGlobalScheme
+   * @return
+   */
+  EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
 }

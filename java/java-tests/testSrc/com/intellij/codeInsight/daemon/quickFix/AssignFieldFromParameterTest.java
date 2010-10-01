@@ -11,6 +11,7 @@ import org.jdom.Element;
 public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
   private Element myOldSettings;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
@@ -20,6 +21,7 @@ public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
     settings.STATIC_FIELD_NAME_PREFIX = "our";
   }
 
+  @Override
   protected void tearDown() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.readExternal(myOldSettings);
@@ -28,6 +30,7 @@ public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
+  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/assignFieldFromParameter";
   }

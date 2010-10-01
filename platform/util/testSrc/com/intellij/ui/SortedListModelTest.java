@@ -27,6 +27,7 @@ import java.util.Iterator;
 
 public class SortedListModelTest extends TestCase {
   private final SortedListModel myModel = new SortedListModel(new Comparator() {
+    @Override
     public int compare(final Object o1, final Object o2) {
       return ((Comparable) o1).compareTo((Comparable) o2);
     }
@@ -53,14 +54,17 @@ public class SortedListModelTest extends TestCase {
     Iterator iterator = myModel.iterator();
     final TIntArrayList removed = new TIntArrayList();
     myModel.addListDataListener(new ListDataListener() {
+      @Override
       public void contentsChanged(ListDataEvent e) {
         throw new RuntimeException();
       }
 
+      @Override
       public void intervalAdded(ListDataEvent e) {
         throw new RuntimeException();
       }
 
+      @Override
       public void intervalRemoved(ListDataEvent e) {
         assertEquals(e.getIndex0(), e.getIndex1());
         removed.add(e.getIndex0());

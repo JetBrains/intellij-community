@@ -78,6 +78,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
       myProject = project;
     }
 
+    @Override
     public GrParameterInfo[] genParams(GrMethod method) {
       GrParameter[] params = method.getParameterList().getParameters();
       GrParameterInfo[] result = new GrParameterInfo[myInfos.length];
@@ -136,6 +137,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
       myInfos = infos;
     }
 
+    @Override
     public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
       for (ThrownExceptionInfo info : myInfos) {
         info.updateFromMethod(method);

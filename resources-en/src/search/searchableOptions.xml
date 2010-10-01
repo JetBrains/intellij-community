@@ -5888,11 +5888,6 @@
     <option name="history" hit="Show History for Selection" />
     <option name="selection" hit="Show History for Selection" />
     <option name="show" hit="Show History for Selection" />
-    <option name="history" hit="Show History for Selection..." />
-    <option name="selection" hit="Show History for Selection..." />
-    <option name="show" hit="Show History for Selection..." />
-    <option name="history" hit="Show History..." />
-    <option name="show" hit="Show History..." />
     <option name="ignored" hit="Show Ignored Projects" />
     <option name="projects" hit="Show Ignored Projects" />
     <option name="show" hit="Show Ignored Projects" />

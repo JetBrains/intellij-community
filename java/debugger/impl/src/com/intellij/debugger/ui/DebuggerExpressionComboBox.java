@@ -57,10 +57,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
     public void setItem(Object item) {
-      final Object currentItem = getItem();
-      if (currentItem == null || !currentItem.equals(item)) {
-        super.setItem(createDocument((TextWithImports)item));
-      }
+      super.setItem(createDocument((TextWithImports)item));
       /* Causes PSI being modified from PSI events. See IDEADEV-22102
       final Editor editor = getEditor();
       if (editor != null) {
@@ -175,6 +172,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myComboBox.setEnabled(enabled);
+    //if (enabled) {
+    //  final ComboBoxEditor editor = myComboBox.getEditor();
+    //  editor.setItem(editor.getItem());
+    //}
   }
 
   public JComponent getPreferredFocusedComponent() {

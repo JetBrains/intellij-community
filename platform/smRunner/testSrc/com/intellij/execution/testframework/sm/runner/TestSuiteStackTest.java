@@ -75,6 +75,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     enableDebugMode();
 
     assertException(new AssertionErrorCase() {
+      @Override
       public void tryClosure() {
         myTestSuiteStack.popSuite("some suite");
       }
@@ -99,6 +100,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
 
     assertException(new AssertionErrorCase() {
+      @Override
       public void tryClosure() {
         myTestSuiteStack.popSuite(suiteName);
       }

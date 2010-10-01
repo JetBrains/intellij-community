@@ -82,11 +82,6 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
     return GroovyConfigUtils.getInstance().getSDKVersion(path);
   }
 
-  @Override
-  public Icon getDialogIcon() {
-    return GroovyIcons.GROOVY_ICON_32x32;
-  }
-
   @Nls
   @NotNull
   @Override
