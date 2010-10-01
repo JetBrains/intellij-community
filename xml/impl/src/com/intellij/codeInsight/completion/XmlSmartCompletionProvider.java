@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlContentNFA;
+import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -103,7 +103,7 @@ public class XmlSmartCompletionProvider {
     if (topGroup == null) {
       return;
     }
-    XmlContentNFA nfa = new XmlContentNFA(topGroup);
+    XmlContentDFA nfa = new XmlContentDFA(topGroup);
     for (XmlTag subTag : parentTag.getSubTags()) {
       if (subTag == tag) {
         break;
