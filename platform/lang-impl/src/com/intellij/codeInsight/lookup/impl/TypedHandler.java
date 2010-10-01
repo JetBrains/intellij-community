@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -61,6 +62,7 @@ public class TypedHandler implements TypedActionHandler {
     }, "", editor.getDocument());
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
+      CompletionProgressIndicator.hideAutopopupIfMeaningless(lookup);
       return;
     }
 
