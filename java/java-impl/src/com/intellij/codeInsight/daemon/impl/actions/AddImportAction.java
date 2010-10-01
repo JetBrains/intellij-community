@@ -95,6 +95,10 @@ public class AddImportAction implements QuestionAction {
 
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<PsiClass>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
+        @Override
+        public boolean isAutoSelectionEnabled() {
+          return false;
+        }
 
         @Override
         public PopupStep onChosen(PsiClass selectedValue, boolean finalChoice) {
