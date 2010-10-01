@@ -521,7 +521,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     boolean renameFile = isRenameFileOnClassRenaming();
 
+    final String oldName = getName();
     PsiImplUtil.setName(name, getNameIdentifierGroovy());
+
+    for (PsiMethod method : getMethods()) {
+      if (method.isConstructor() && method.getName().equals(oldName)) method.setName(name);
+    }
 
     if (renameFile) {
       final GroovyFileBase file = (GroovyFileBase)getContainingFile();
