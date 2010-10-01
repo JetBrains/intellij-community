@@ -34,7 +34,7 @@ public class TruncatingIcon implements Icon {
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Shape old = g.getClip();
-    g.clipRect(x, y, myWidth, myHeight);
+    g.clipRect(x, y+myDelegate.getIconHeight()-2-myHeight, myWidth, myHeight+2);
     myDelegate.paintIcon(c, g, x, y);
     g.setClip(old);
   }
