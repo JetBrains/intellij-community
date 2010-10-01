@@ -1,3 +1,0 @@
-abcdefghijklmnopqrstuvwxyz<caret>
-123
-ABCDEFGHIJKLMNOPQRSTUVWXYZ

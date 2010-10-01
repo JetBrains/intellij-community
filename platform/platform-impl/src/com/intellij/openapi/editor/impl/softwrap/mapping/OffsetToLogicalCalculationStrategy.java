@@ -70,17 +70,6 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
       }
       return;
     }
-    else if (!cache.isEmpty()) {
-      CacheEntry lastEntry = cache.get(cache.size() - 1);
-      if (targetOffset > lastEntry.endOffset) {
-        LogicalPosition eager = new LogicalPosition(
-          lastEntry.endLogicalLine + 1, 0, lastEntry.endSoftWrapLinesBefore + lastEntry.endSoftWrapLinesCurrent,
-          0, 0, lastEntry.endFoldedLines, 0
-        );
-        setEagerMatch(eager);
-        return;
-      }
-    }
 
     int i = MappingUtil.getCacheEntryIndexForOffset(targetOffset, myEditor.getDocument(), cache);
     setCacheEntry(cache.get(i));

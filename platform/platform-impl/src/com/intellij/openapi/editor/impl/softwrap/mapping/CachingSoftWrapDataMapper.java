@@ -251,6 +251,15 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       case '\t': onTabulation(context); break;
       default: onNonLineFeedSymbol(context); break;
     }
+
+    int documentLength = myEditor.getDocument().getTextLength();
+    if (documentLength > 0 && context.offset >= documentLength - 1 && context.symbol != '\n') {
+      // Update information about end position of the last visual line.
+      CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
+      cacheEntry.endLogicalColumn = context.logicalColumn + context.symbolWidthInColumns - 1; // -1 because the first context's
+                                                                                              // column already points to the symbol
+      cacheEntry.endVisualColumn = context.visualColumn + context.symbolWidthInColumns - 1;
+    }
   }
 
   @Override

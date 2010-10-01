@@ -17,10 +17,8 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
@@ -31,9 +29,9 @@ import java.io.IOException;
  * @author Denis Zhdanov
  * @since 09/16/2010
  */
-public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCase {
+public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
 
-  private static final String PATH = "/codeInsight/softwrap/";
+  //private static final String PATH = "/codeInsight/softwrap/";
 
   @Override
   protected void tearDown() throws Exception {
@@ -42,7 +40,9 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
   }
 
   public void testSoftWrapAdditionOnTyping() throws Exception {
-    init(800);
+    String text =
+      "this is a test string that is expected to end just before right margin<caret>";
+    init(800, text);
 
     int offset = myEditor.getDocument().getTextLength() + 1;
     assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
@@ -51,7 +51,12 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
   }
 
   public void testLongLineOfIdSymbolsIsNotSoftWrapped() throws Exception {
-    init(100);
+    String text =
+      "abcdefghijklmnopqrstuvwxyz<caret>\n" +
+      "123\n" +
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    init(100, text);
     assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
     type('1');
     assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
@@ -130,10 +135,21 @@ public class SoftWrapApplianceManagerTest extends LightPlatformCodeInsightTestCa
     assertEquals(new VisualPosition(5, 0), myEditor.getCaretModel().getVisualPosition());
   }
 
-  private void init(final int visibleWidth) throws Exception {
-    configureByFile(PATH + getFileName());
-    initCommon(visibleWidth);
+  public void testTypingTabOnLastEmptyLine() throws IOException {
+    String text =
+      "class Test {\n" +
+      "}\n" +
+      "<caret>";
+
+    init(300, text);
+    type('\t');
+    assertEquals(new VisualPosition(2, 4), myEditor.getCaretModel().getVisualPosition());
   }
+
+  //private void init(final int visibleWidth) throws Exception {
+  //  configureByFile(PATH + getFileName());
+  //  initCommon(visibleWidth);
+  //}
 
   private void init(int visibleWidth, String fileText) throws IOException {
     configureFromFileText(getFileName(), fileText);
