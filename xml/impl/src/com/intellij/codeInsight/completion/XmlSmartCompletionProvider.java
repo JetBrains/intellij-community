@@ -83,6 +83,7 @@ public class XmlSmartCompletionProvider {
     });
     if (xsModel != null) {
       processXsModel(result, tag, parentTag, xsModel);
+      return;
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -119,7 +120,7 @@ public class XmlSmartCompletionProvider {
     }
   }
 
-  private static void processXsModel(CompletionResultSet result, XmlTag tag, final XmlTag parentTag, XSModel xsModel) {
+  private static void processXsModel(final CompletionResultSet result, XmlTag tag, final XmlTag parentTag, XSModel xsModel) {
     XSElementDeclaration decl = getElementDeclaration(parentTag, xsModel);
     if (decl == null) {
       return;
@@ -135,22 +136,27 @@ public class XmlSmartCompletionProvider {
       model.oneTransition(createQName(xmlTag), state, handler);
     }
 
-    List vector = model.whatCanGoHere(state);
-    XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
-    assert parentTagDescriptor != null;
-    XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
-    for (Object o : vector) {
-      if (o instanceof XSElementDecl) {
-        final XSElementDecl elementDecl = (XSElementDecl)o;
-        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor elementDescriptor) {
-            return elementDecl.getName().equals(elementDescriptor.getName());
+    final List vector = model.whatCanGoHere(state);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+        assert parentTagDescriptor != null;
+        XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
+        for (Object o : vector) {
+          if (o instanceof XSElementDecl) {
+            final XSElementDecl elementDecl = (XSElementDecl)o;
+            XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
+              @Override
+              public boolean value(XmlElementDescriptor elementDescriptor) {
+                return elementDecl.getName().equals(elementDescriptor.getName());
+              }
+            });
+            addElementToResult(descriptor, result);
           }
-        });
-        addElementToResult(descriptor, result);
+        }
       }
-    }
+    });
   }
 
   private static void addElementToResult(final XmlElementDescriptor descriptor, CompletionResultSet result) {
