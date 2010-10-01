@@ -31,4 +31,6 @@ public interface GrMethodCall extends GrCall {
 
   @Nullable
   PsiMethod resolveMethod();
+
+  boolean isCommandExpression();
 }
