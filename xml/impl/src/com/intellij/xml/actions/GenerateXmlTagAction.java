@@ -23,6 +23,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -33,16 +34,17 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -143,9 +145,21 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     switch (selected.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
         newTag.collapseIfEmpty();
+        ASTNode node = newTag.getNode();
+        assert node != null;
+        ASTNode elementEnd = node.findChildByType(XmlElementType.XML_EMPTY_ELEMENT_END);
+        if (elementEnd == null) {
+          LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
+          node.addChild(emptyTagEnd);
+        }
         break;
       case XmlElementDescriptor.CONTENT_TYPE_MIXED:
         newTag.getValue().setText("");
+    }
+    for (XmlAttributeDescriptor descriptor : selected.getAttributesDescriptors(newTag)) {
+      if (descriptor.isRequired()) {
+        newTag.setAttribute(descriptor.getName(), "");
+      }
     }
     XmlElementsGroup topGroup = selected.getTopGroup();
     if (topGroup == null) return newTag;
@@ -165,6 +179,10 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   private static void replaceElements(XmlTag newTag, TemplateBuilder builder) {
+    for (XmlAttribute attribute : newTag.getAttributes()) {
+      XmlAttributeValue value = attribute.getValueElement();
+      builder.replaceElement(value, TextRange.from(1, 0), new MacroCallNode(new CompleteMacro()));
+    }
     for (XmlTag tag : newTag.getSubTags()) {
       if ("<".equals(tag.getText())) {
         builder.replaceElement(tag, TextRange.from(1, 0), new MacroCallNode(new CompleteSmartMacro()));
@@ -173,9 +191,6 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         replaceElements(tag, builder);
       }
       else {
-        for (XmlAttribute attribute : tag.getAttributes()) {
-          builder.replaceElement(attribute.getValueElement(), new MacroCallNode(new CompleteMacro()));
-        }
         int i = tag.getText().indexOf("></");
         if (i > 0) {
           builder.replaceElement(tag, TextRange.from(i + 1, 0), new MacroCallNode(new CompleteMacro()));

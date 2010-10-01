@@ -148,8 +148,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
-    final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
+      final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
