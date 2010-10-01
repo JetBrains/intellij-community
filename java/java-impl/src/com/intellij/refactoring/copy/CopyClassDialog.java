@@ -55,6 +55,7 @@ class CopyClassDialog extends DialogWrapper{
   private EditorTextField myNameField;
   private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
+  private final PsiClass myClass2Copy;
   private final Project myProject;
   private PsiDirectory myTargetDirectory;
   private final boolean myDoClone;
@@ -63,6 +64,7 @@ class CopyClassDialog extends DialogWrapper{
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
+    myClass2Copy = aClass;
     myProject = project;
     myDefaultTargetDirectory = defaultTargetDirectory;
     init();
@@ -139,7 +141,12 @@ class CopyClassDialog extends DialogWrapper{
 
     panel.add(myTfPackage, gbConstraints);
 
-    myCbMoveToAnotherSourceFolder.setEnabled(ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1);
+    final boolean isLibraryClass = !myClass2Copy.getManager().isInProject(myClass2Copy);
+    myCbMoveToAnotherSourceFolder.setEnabled(ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1 ||
+                                             isLibraryClass);
+    if (isLibraryClass) {
+      myCbMoveToAnotherSourceFolder.setSelected(true);
+    }
     gbConstraints.gridy = 3;
     gbConstraints.gridx = 0;
     gbConstraints.gridwidth = 2;

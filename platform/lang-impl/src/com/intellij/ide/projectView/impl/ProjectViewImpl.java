@@ -463,7 +463,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private void showPane(AbstractProjectViewPane newPane) {
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     PsiElement selectedPsiElement = null;
-    Module selectedModule = null;
     if (currentPane != null) {
       if (currentPane != newPane) {
         currentPane.saveExpandedPaths();
@@ -471,11 +470,6 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       final PsiElement[] elements = currentPane.getSelectedPSIElements();
       if (elements.length > 0) {
         selectedPsiElement = elements[0];
-      } else {
-        Object selected = currentPane.getSelectedElement();
-        if (selected instanceof Module) {
-          selectedModule = (Module)selected;
-        }
       }
     }
     removeLabelFocusListener();

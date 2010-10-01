@@ -41,11 +41,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +111,17 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         runnable.run();
       }
       else {
-        JBPopupFactory.getInstance().createListPopupBuilder(list).setTitle("Choose Tag Name").setItemChoosenCallback(runnable).createPopup().showInBestPositionFor(editor);
+        JBPopupFactory.getInstance().createListPopupBuilder(list)
+          .setTitle("Choose Tag Name")
+          .setItemChoosenCallback(runnable)
+          .setFilteringEnabled(new Function<Object, String>() {
+            @Override
+            public String fun(Object o) {
+              return ((XmlElementDescriptor)o).getName();
+            }
+          })
+          .createPopup()
+          .showInBestPositionFor(editor);
       }
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
@@ -131,6 +140,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   private static XmlTag generateRaw(XmlTag newTag) {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return newTag;
+
     XmlElementsGroup topGroup = selected.getTopGroup();
     if (topGroup == null) return newTag;
     List<XmlElementDescriptor> tags = new ArrayList<XmlElementDescriptor>();
@@ -169,14 +179,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
-    String bodyText = null;
-    if (descriptor instanceof XmlElementDescriptorImpl) {
-      TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
-      if (type instanceof ComplexTypeDescriptor) {
-        int contentType = ((ComplexTypeDescriptor)type).getContentType();
-        bodyText = contentType == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
-      }
-    }
+    String bodyText = descriptor.getContentType() == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
     String namespace = getNamespace(descriptor);
     return contextTag.createChildTag(descriptor.getName(), namespace, bodyText, false);
   }
@@ -203,7 +206,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     if (group.getMinOccurs() < 1) return;
     switch (group.getGroupType()) {
       case LEAF:
-        tags.add(group.getLeafDescriptor());
+        ContainerUtil.addIfNotNull(tags, group.getLeafDescriptor());
         return;
       case CHOICE:
         tags.add(null); // placeholder for smart completion

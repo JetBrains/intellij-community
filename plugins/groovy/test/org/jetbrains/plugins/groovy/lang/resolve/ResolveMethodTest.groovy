@@ -621,4 +621,9 @@ class Zoo {
   public void testUpperCaseFieldWithoutGetter() {
     assertTrue resolve("A.groovy") instanceof GrAccessorMethod
   }
+
+  public void testSpreadOperatorNotList() {
+    assertInstanceOf resolve("A.groovy"), GrMethod
+
+  }
 }

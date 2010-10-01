@@ -16,7 +16,9 @@
 package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.ide.scriptingContext.ScriptingLibraryManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 
 import javax.swing.table.AbstractTableModel;
@@ -30,8 +32,8 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
 
   private LibraryTable myLibTable;
 
-  public ScriptingLibraryTableModel(Project project) {
-    myLibTable = ScriptingLibraryManager.getLibraryTable(project);
+  public ScriptingLibraryTableModel(LibraryTable libTable) {
+    myLibTable = libTable;
   }
 
   @Override
@@ -59,4 +61,5 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     }
     return "?";
   }
+
 }

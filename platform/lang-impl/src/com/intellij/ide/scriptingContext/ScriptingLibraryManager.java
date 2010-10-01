@@ -18,7 +18,9 @@ package com.intellij.ide.scriptingContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +33,12 @@ public class ScriptingLibraryManager {
   public static final String WEB_MODULE_TYPE = "WEB_MODULE";
 
   @Nullable
-  public static LibraryTable getLibraryTable(Project project) {
+  public static ModifiableRootModel getRootModel(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (WEB_MODULE_TYPE.equals(module.getModuleType().getId())) {
-        return ModuleRootManager.getInstance(module).getModifiableModel().getModuleLibraryTable();
+        return ModuleRootManager.getInstance(module).getModifiableModel();
       }
     }
-    return ProjectLibraryTable.getInstance(project);
+    return null;
   }
 }

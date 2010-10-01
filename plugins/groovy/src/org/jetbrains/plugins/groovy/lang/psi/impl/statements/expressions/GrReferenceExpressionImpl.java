@@ -614,11 +614,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
       PsiClass clazz = result.getElement();
       if (clazz != null) {
-        PsiClass listClass = ResolveUtil.findListClass(getManager(), getResolveScope());
-        if (listClass != null && listClass.getTypeParameters().length == 1) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
+        PsiClass collection =
+          JavaPsiFacade.getInstance(getManager().getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, getResolveScope());
+        if (collection != null && collection.getTypeParameters().length == 1) {
+          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collection, clazz, result.getSubstitutor());
           if (substitutor != null) {
-            PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
+            PsiType componentType = substitutor.substitute(collection.getTypeParameters()[0]);
             if (componentType != null) {
               processClassQualifierType(processor, componentType, qualifier);
             }

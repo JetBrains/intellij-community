@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,7 +212,8 @@ public class ResolveUtil {
 
   @Nullable
   public static PsiType getListTypeForSpreadOperator(GrReferenceExpression refExpr, PsiType componentType) {
-    PsiClass clazz = findListClass(refExpr.getManager(), refExpr.getResolveScope());
+    PsiClass clazz = JavaPsiFacade.getInstance(refExpr.getManager().getProject())
+      .findClass(CommonClassNames.JAVA_UTIL_LIST, refExpr.getResolveScope());
     if (clazz != null) {
       PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
       if (typeParameters.length == 1) {
@@ -223,11 +223,6 @@ public class ResolveUtil {
     }
 
     return null;
-  }
-
-  @Nullable
-  public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
-    return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", resolveScope);
   }
 
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {

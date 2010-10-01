@@ -16,11 +16,12 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.completion.CompletionType;
-import org.jetbrains.plugins.groovy.util.TestUtils
+
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
@@ -363,6 +364,10 @@ class A {
  { m (arg111: !, zzz) }
 }
 """, getFileText(file)
+  }
+
+  public void testSpreadOperator() {
+    doVariantableTest("foo1", "foo2")
   }
 
   def getFileText(PsiFile file) {

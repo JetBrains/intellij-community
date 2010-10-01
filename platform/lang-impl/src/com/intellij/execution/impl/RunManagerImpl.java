@@ -374,6 +374,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
     if (mySelectedConfiguration != null) {
       parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
+    } else if (mySelectedConfig != null) {
+      parentNode.setAttribute(SELECTED_ATTR, mySelectedConfig);
     }
   }
 
@@ -452,7 +454,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
 
-    myOrder.readExternal(parentNode);
+    if (myOrder != null) {
+      myOrder.readExternal(parentNode);
+    }
+
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
 
     fireBeforeRunTasksUpdated();

@@ -99,6 +99,6 @@ public class RenameAliasedUsagesUtil {
     else if (element instanceof PsiClass) {
       return new ClassResolverProcessor(null, place);
     }
-    throw new IllegalArgumentException("element must be method or field or class");
+    throw new IllegalArgumentException("element must be method or field or class: " + element.getClass() + ", text=" + element.getText());
   }
 }

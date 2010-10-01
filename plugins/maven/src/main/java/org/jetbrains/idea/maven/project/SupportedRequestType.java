@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.xml;
+package org.jetbrains.idea.maven.project;
 
-
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author Mike
- */
-public interface XmlElementContentSpec extends XmlElement {
-
-  boolean isEmpty();
-  boolean isAny();
-  boolean isMixed();
-  boolean hasChildren();
-
-  @Nullable
-  XmlElementContentGroup getTopGroup();
+public enum SupportedRequestType {
+  FOR_COMPLETION, FOR_IMPORT
 }

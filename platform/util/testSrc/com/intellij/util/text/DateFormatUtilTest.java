@@ -65,10 +65,15 @@ public class DateFormatUtilTest extends TestCase {
   public void testConvertingMacToJavaPattern() throws Throwable {
     Clock.setTime(new Date(2004 - 1900, 1, 5, 16, 6, 7).getTime() + 8);
 
+    String mon = new SimpleDateFormat("MMM").format(Clock.getTime());
+    String month = new SimpleDateFormat("MMMMM").format(Clock.getTime());
+    String weekd = new SimpleDateFormat("EEE").format(Clock.getTime());
+    String weekday = new SimpleDateFormat("EEEEE").format(Clock.getTime());
+
     assertConvertedFormat("%y %Y", "04 2004");
-    assertConvertedFormat("%b %B %m", "Feb February 02");
+    assertConvertedFormat("%b %B %m", mon + " " + month + " 02");
     assertConvertedFormat("%d %e %j", "05 5 036");
-    assertConvertedFormat("%a %A %w", "Thu Thursday Thu");
+    assertConvertedFormat("%a %A %w", weekd + " " + weekday + " " + weekd);
 
     assertConvertedFormat("%H %I", "16 04");
     assertConvertedFormat("%M %S %F %p", "06 07 008 PM");
@@ -77,7 +82,7 @@ public class DateFormatUtilTest extends TestCase {
 
     assertConvertedFormat(" foo bar ", " foo bar ");
     assertConvertedFormat(" 'foo''a'a'' '' ' ", " 'foo''a'a'' '' ' ");
-    assertConvertedFormat(" '%a''%a'%a'' '' ' '%a ", " 'Thu''Thu'Thu'' '' ' 'Thu ");
+    assertConvertedFormat(" '%a''%a'%a'' '' ' '%a ", " '" + weekd + "''" + weekd + "'" + weekd + "'' '' ' '" + weekd + " ");
     assertConvertedFormat("'a'", "'a'");
     assertConvertedFormat("'", "'");
     assertConvertedFormat("''", "''");

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -118,6 +119,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     });
+    final ProjectManagerListener busPublisher = messageBus.syncPublisher(AppTopics.PROJECTS);
 
     addProjectManagerListener(
       new ProjectManagerListener() {
@@ -134,7 +136,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             }
           });
 
-
+          busPublisher.projectOpened(project);
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             listener.projectOpened(project);
@@ -142,6 +144,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
 
         public void projectClosed(Project project) {
+          busPublisher.projectClosed(project);
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             listener.projectClosed(project);
@@ -149,6 +152,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
 
         public boolean canCloseProject(Project project) {
+          if (!busPublisher.canCloseProject(project)) return false;
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             if (!listener.canCloseProject(project)) {
@@ -159,6 +163,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
 
         public void projectClosing(Project project) {
+          busPublisher.projectClosing(project);
           ProjectManagerListener[] listeners = getListeners(project);
           for (ProjectManagerListener listener : listeners) {
             listener.projectClosing(project);

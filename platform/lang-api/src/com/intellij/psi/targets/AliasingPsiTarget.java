@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.targets;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
+import com.intellij.psi.DelegatePsiTarget;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import org.jetbrains.annotations.NotNull;

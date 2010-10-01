@@ -234,7 +234,8 @@ public class CompleteReferenceExpression {
       PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass clazz = result.getElement();
       if (clazz != null) {
-        PsiClass listClass = JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.List", refExpr.getResolveScope());
+        PsiClass listClass =
+          JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, refExpr.getResolveScope());
         if (listClass != null && listClass.getTypeParameters().length == 1) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
           if (substitutor != null) {

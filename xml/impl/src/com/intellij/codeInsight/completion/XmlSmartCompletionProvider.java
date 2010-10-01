@@ -18,20 +18,21 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.XmlContentNFA;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
@@ -62,7 +63,7 @@ import java.util.List;
  */
 public class XmlSmartCompletionProvider {
 
-  public void complete(CompletionParameters parameters, CompletionResultSet result, PsiElement element) {
+  public void complete(CompletionParameters parameters, final CompletionResultSet result, PsiElement element) {
     if (!XmlCompletionContributor.isXmlNameCompletion(parameters)) {
       return;
     }
@@ -80,9 +81,46 @@ public class XmlSmartCompletionProvider {
         return getXSModel((XmlFile)file);
       }
     });
-    if (xsModel == null) {
+    if (xsModel != null) {
+      processXsModel(result, tag, parentTag, xsModel);
       return;
     }
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        processDtd(result, tag, parentTag);
+      }
+    });
+  }
+
+  private static void processDtd(CompletionResultSet result, XmlTag tag, XmlTag parentTag) {
+    XmlElementDescriptor descriptor = parentTag.getDescriptor();
+    if (descriptor == null) {
+      return;
+    }
+    XmlElementsGroup topGroup = descriptor.getTopGroup();
+    if (topGroup == null) {
+      return;
+    }
+    XmlContentNFA nfa = new XmlContentNFA(topGroup);
+    for (XmlTag subTag : parentTag.getSubTags()) {
+      if (subTag == tag) {
+        break;
+      }
+      XmlElementDescriptor childDescriptor = subTag.getDescriptor();
+      if (childDescriptor != null) {
+        nfa.transition(childDescriptor);
+      }
+    }
+    List<XmlElementDescriptor> elements = new ArrayList<XmlElementDescriptor>();
+    nfa.getPossibleElements(elements);
+    for (XmlElementDescriptor elementDescriptor : elements) {
+      addElementToResult(elementDescriptor, result);
+    }
+  }
+
+  private static void processXsModel(final CompletionResultSet result, XmlTag tag, final XmlTag parentTag, XSModel xsModel) {
     XSElementDeclaration decl = getElementDeclaration(parentTag, xsModel);
     if (decl == null) {
       return;
@@ -98,37 +136,42 @@ public class XmlSmartCompletionProvider {
       model.oneTransition(createQName(xmlTag), state, handler);
     }
 
-    List vector = model.whatCanGoHere(state);
-    for (Object o : vector) {
-      if (o instanceof XSElementDecl) {
-        final XSElementDecl elementDecl = (XSElementDecl)o;
-        result.addElement(LookupElementBuilder.create(elementDecl.getName()).setTypeText(elementDecl.getNamespace()).setInsertHandler(new InsertHandler<LookupElement>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
-            context.commitDocument();
-            XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
-            assert parentTagDescriptor != null;
-            XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
-            for (XmlElementDescriptor descriptor : descriptors) {
-              if (descriptor.getName().equals(elementDecl.getName())) {
-                Project project = context.getProject();
-                Editor editor = context.getEditor();
-                // Need to insert " " to prevent creating tags like <tagThis is my text
-                final int offset = editor.getCaretModel().getOffset();
-                editor.getDocument().insertString(offset, " ");
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                PsiElement current = context.getFile().findElementAt(context.getStartOffset());
-
-                XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
-                GenerateXmlTagAction.generateTag(
-                  newTag);
-                return;
+    final List vector = model.whatCanGoHere(state);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+        assert parentTagDescriptor != null;
+        XmlElementDescriptor[] descriptors = parentTagDescriptor.getElementsDescriptors(parentTag);
+        for (Object o : vector) {
+          if (o instanceof XSElementDecl) {
+            final XSElementDecl elementDecl = (XSElementDecl)o;
+            XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
+              @Override
+              public boolean value(XmlElementDescriptor elementDescriptor) {
+                return elementDecl.getName().equals(elementDescriptor.getName());
               }
-            }
+            });
+            addElementToResult(descriptor, result);
           }
-        }));
+        }
       }
+    });
+  }
+
+  private static void addElementToResult(final XmlElementDescriptor descriptor, CompletionResultSet result) {
+    LookupElementBuilder builder = LookupElementBuilder.create(descriptor.getName());
+    if (descriptor instanceof XmlElementDescriptorImpl) {
+      builder.setTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace());
     }
+    result.addElement(builder.setInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        PsiElement current = context.getFile().findElementAt(context.getStartOffset());
+        XmlTag newTag = PsiTreeUtil.getParentOfType(current, XmlTag.class);
+        GenerateXmlTagAction.generateTag(newTag);
+      }
+    }));
   }
 
   @Nullable

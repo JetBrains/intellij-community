@@ -230,7 +230,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   @Override
   public XmlElementsGroup getTopGroup() {
-    return super.getTopGroup();    //To change body of overridden methods use File | Settings | File Templates.
+    XmlElementContentGroup topGroup = myElementDecl.getContentSpecElement().getTopGroup();
+    return topGroup == null ? null : new XmlElementsGroupImpl(topGroup, null);
   }
 
   public int getContentType() {

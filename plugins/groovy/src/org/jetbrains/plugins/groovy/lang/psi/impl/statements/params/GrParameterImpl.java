@@ -141,6 +141,12 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   }
 
   public void setType(@Nullable PsiType type) {
+    final GrTypeElement typeElement = getTypeElementGroovy();
+    if (type == null) {
+      if (typeElement != null) typeElement.delete();
+      return;
+    }
+
     GrTypeElement newTypeElement;
     try {
       newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
@@ -150,7 +156,6 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       return;
     }
 
-    final GrTypeElement typeElement = getTypeElementGroovy();
     if (typeElement == null) {
       final GrModifierList modifierList = getModifierList();
       newTypeElement = (GrTypeElement)addAfter(newTypeElement, modifierList);
