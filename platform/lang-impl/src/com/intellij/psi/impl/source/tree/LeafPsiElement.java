@@ -22,6 +22,8 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
@@ -79,9 +81,18 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public PsiFile getContainingFile() {
     PsiFile file = SharedImplUtil.getContainingFile(this);
     if (file == null || !file.isValid()) {
-      throw new PsiInvalidElementAccessException(this);
+      invalid();
     }
     return file;
+  }
+
+  private void invalid() {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+
+    throw new PsiInvalidElementAccessException(this);
   }
 
   public PsiElement findElementAt(int offset) {
@@ -208,7 +219,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
-    if (manager == null) throw new PsiInvalidElementAccessException(this);
+    if (manager == null) invalid();
 
     return manager.getProject();
   }

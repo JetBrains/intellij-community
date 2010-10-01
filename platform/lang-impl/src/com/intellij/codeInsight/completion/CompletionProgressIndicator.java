@@ -37,11 +37,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -422,7 +424,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public String cancelTrace;
+  public volatile String cancelTrace;
   @Override
   public void cancel() {
     if (cancelTrace == null) {
@@ -432,6 +434,24 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       cancelTrace = writer.toString();
     }
     super.cancel();
+  }
+
+  @Override
+  public void start() {
+    if (isCanceled()) {
+      throw new AssertionError("Restarting completion process is prohibited");
+    }
+
+    super.start();
+  }
+
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicatorEx indicator) {
+    if (isCanceled()) {
+      throw new AssertionError("Re-init-ting completion process is prohibited");
+    }
+
+    super.initStateFrom(indicator);
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
