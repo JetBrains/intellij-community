@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 
@@ -34,8 +36,8 @@ public class ScriptingLibrariesPanel {
   private JPanel myScriptingLibrariesPanel;
   private JBTable myLibraryTable;
 
-  public ScriptingLibrariesPanel(Project project) {
-    myLibraryTable.setModel(new ScriptingLibraryTableModel(project));
+  public ScriptingLibrariesPanel(LibraryTable libTable) {
+    myLibraryTable.setModel(new ScriptingLibraryTableModel(libTable));
     myAddLibrarytButton.addActionListener(new ActionListener(){
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -49,7 +51,11 @@ public class ScriptingLibrariesPanel {
   }
 
   private void addLibrary() {
-
+    EditLibraryDialog editLibDialog = new EditLibraryDialog();
+    editLibDialog.show();
+    if (editLibDialog.isOK()) {
+      //TODO: Implement
+    }
   }
 
 }

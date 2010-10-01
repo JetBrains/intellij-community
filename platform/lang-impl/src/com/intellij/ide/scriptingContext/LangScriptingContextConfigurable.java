@@ -19,6 +19,7 @@ import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -29,9 +30,13 @@ import javax.swing.*;
 public class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
   private LangScriptingContextProvider myProvider;
+  private ModifiableRootModel myRootModel;
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
-    myPanel = new ScriptingLibrariesPanel(project);
+    myRootModel = ScriptingLibraryManager.getRootModel(project);
+    if (myRootModel != null) {
+      myPanel = new ScriptingLibrariesPanel(myRootModel.getModuleLibraryTable());
+    }
     myProvider = provider;
   }
 
@@ -73,6 +78,6 @@ public class LangScriptingContextConfigurable implements Configurable {
 
   @Override
   public void disposeUIResources() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    myRootModel.dispose();
   }
 }
