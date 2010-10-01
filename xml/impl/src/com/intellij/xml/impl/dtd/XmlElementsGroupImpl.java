@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.impl.dtd;
 
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,18 @@ public class XmlElementsGroupImpl implements XmlElementsGroup {
 
   private final XmlContentParticle myParticle;
   private final XmlElementsGroup myParent;
+  private final NotNullLazyValue<List<XmlElementsGroup>> mySubGroups = new NotNullLazyValue<List<XmlElementsGroup>>() {
+    @NotNull
+    @Override
+    protected List<XmlElementsGroup> compute() {
+      return ContainerUtil.map(myParticle.getSubParticles(), new Function<XmlContentParticle, XmlElementsGroup>() {
+        @Override
+        public XmlElementsGroup fun(XmlContentParticle xmlContentParticle) {
+          return new XmlElementsGroupImpl(xmlContentParticle, XmlElementsGroupImpl.this);
+        }
+      });
+    }
+  };
 
   public XmlElementsGroupImpl(@NotNull XmlContentParticle particle, XmlElementsGroup parent) {
     myParticle = particle;
@@ -83,12 +96,7 @@ public class XmlElementsGroupImpl implements XmlElementsGroup {
 
   @Override
   public List<XmlElementsGroup> getSubGroups() {
-    return ContainerUtil.map(myParticle.getSubParticles(), new Function<XmlContentParticle, XmlElementsGroup>() {
-      @Override
-      public XmlElementsGroup fun(XmlContentParticle xmlContentParticle) {
-        return new XmlElementsGroupImpl(xmlContentParticle, XmlElementsGroupImpl.this);
-      }
-    });
+    return mySubGroups.getValue();
   }
 
   @Override
