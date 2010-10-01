@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -166,8 +167,9 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public V get(Object key) {
-    int hash = myHashingStrategy.computeHashCode((K)key); // throws NullPointerException if key null
-    return get((K)key, hash);
+    K kKey = (K)key;
+    int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
+    return get(kKey, hash);
   }
 
   /**
@@ -181,8 +183,9 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *                              <tt>null</tt>.
    */
   public boolean containsKey(Object key) {
-    int hash = myHashingStrategy.computeHashCode((K)key); // throws NullPointerException if key null
-    return containsKey((K)key, hash);
+    K kKey = (K)key;
+    int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
+    return containsKey(kKey, hash);
   }
 
   /**
@@ -219,10 +222,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key or value is
    *                              <tt>null</tt>.
    */
-  public V put(K key, V value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+  public V put(@NotNull K key, @NotNull V value) {
     int hash = myHashingStrategy.computeHashCode(key);
     return put(key, hash, value, false);
   }
@@ -246,10 +246,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or value is
    *                              <tt>null</tt>.
    */
-  public V putIfAbsent(K key, V value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+  public V putIfAbsent(@NotNull K key, @NotNull V value) {
     int hash = myHashingStrategy.computeHashCode(key);
     return put(key, hash, value, true);
   }
@@ -263,7 +260,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @param t Mappings to be stored in this map.
    */
-  public void putAll(Map<? extends K, ? extends V> t) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     for (Entry<? extends K, ? extends V> e : t.entrySet()) {
       put(e.getKey(), e.getValue());
     }
@@ -279,9 +276,10 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
-  public V remove(Object key) {
-    int hash = myHashingStrategy.computeHashCode((K)key);
-    return remove((K)key, hash, null);
+  public V remove(@NotNull Object key) {
+    K kKey = (K)key;
+    int hash = myHashingStrategy.computeHashCode(kKey);
+    return remove(kKey, hash, null);
   }
 
   /**
@@ -301,9 +299,10 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key is
    *                              <tt>null</tt>.
    */
-  public boolean remove(Object key, Object value) {
-    int hash = myHashingStrategy.computeHashCode((K)key);
-    return remove((K)key, hash, value) != null;
+  public boolean remove(@NotNull Object key, @NotNull Object value) {
+    K kKey = (K)key;
+    int hash = myHashingStrategy.computeHashCode(kKey);
+    return remove(kKey, hash, value) != null;
   }
 
 
@@ -325,10 +324,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or values are
    *                              <tt>null</tt>.
    */
-  public boolean replace(K key, V oldValue, V newValue) {
-    if (oldValue == null || newValue == null) {
-      throw new NullPointerException();
-    }
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     int hash = myHashingStrategy.computeHashCode(key);
     return replace(key, hash, oldValue, newValue);
   }
@@ -350,10 +346,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or value is
    *                              <tt>null</tt>.
    */
-  public V replace(K key, V value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+  public V replace(@NotNull K key, @NotNull V value) {
     int hash = myHashingStrategy.computeHashCode(key);
     return replace(key, hash, value);
   }
@@ -780,7 +773,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
     }
   }
 
-  public static class CanonicalHashingStrategy<K> implements TObjectHashingStrategy<K> {
+  static class CanonicalHashingStrategy<K> implements TObjectHashingStrategy<K> {
     private static final CanonicalHashingStrategy INSTANCE = new CanonicalHashingStrategy();
 
     static <K> CanonicalHashingStrategy<K> getInstance() {
@@ -789,10 +782,11 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
 
     public int computeHashCode(final K object) {
       int h = object.hashCode();
-      h += ~(h << 9);
-      h ^= h >>> 14;
-      h += h << 4;
-      h ^= h >>> 10;
+      // performance matters here
+      //h += ~(h << 9);
+      //h ^= h >>> 14;
+      //h += h << 4;
+      //h ^= h >>> 10;
       return h;
     }
 
@@ -812,6 +806,7 @@ class _CHMSegment<K, V> {
 
   private void lock() {
     lock.lock();
+    if (modificationBlocked) throw new ConcurrentModificationException();
   }
 
   private void unlock() {
@@ -859,7 +854,7 @@ class _CHMSegment<K, V> {
    */
   volatile int count;
 
-  /**
+  /*
    * The table is rehashed when its size exceeds this threshold.
    */
   private int threshold() {
@@ -881,6 +876,7 @@ class _CHMSegment<K, V> {
    */
   final float loadFactor;
   protected final TObjectHashingStrategy<K> myHashingStrategy;
+  private volatile boolean modificationBlocked; // the only state transition is 0 -> 1
 
   _CHMSegment(int initialCapacity, float lf, TObjectHashingStrategy<K> hashingStrategy) {
     loadFactor = lf;
@@ -888,7 +884,17 @@ class _CHMSegment<K, V> {
     setTable(new HashEntry[initialCapacity]);
   }
 
-  /**
+  public void blockModification() {
+    try {
+      lock();
+      modificationBlocked = true;
+    }
+    finally {
+      unlock();
+    }
+  }
+
+  /*
    * Set table to new HashEntry array.
    * Call only while holding lock or in constructor.
    */
@@ -896,7 +902,7 @@ class _CHMSegment<K, V> {
     table = newTable;
   }
 
-  /**
+  /*
    * Return properly casted first entry of bin for given hash
    */
   HashEntry<K, V> getFirst(int hash) {
@@ -904,7 +910,7 @@ class _CHMSegment<K, V> {
     return tab[hash & tab.length - 1];
   }
 
-  /**
+  /*
    * Read value field of an entry under lock. Called if value
    * field ever appears to be null. This is possible only if a
    * compiler happens to reorder a HashEntry initialization with
@@ -912,8 +918,8 @@ class _CHMSegment<K, V> {
    * but is not known to ever occur.
    */
   V readValueUnderLock(HashEntry<K, V> e) {
-    lock();
     try {
+      lock();
       return e.value;
     }
     finally {
@@ -975,9 +981,9 @@ class _CHMSegment<K, V> {
     return false;
   }
 
-  boolean replace(K key, int hash, V oldValue, V newValue) {
-    lock();
+  boolean replace(@NotNull K key, int hash, @NotNull V oldValue, @NotNull V newValue) {
     try {
+      lock();
       HashEntry<K, V> e = getFirst(hash);
       while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
         e = e.next;
@@ -995,9 +1001,9 @@ class _CHMSegment<K, V> {
     }
   }
 
-  V replace(K key, int hash, V newValue) {
-    lock();
+  V replace(@NotNull K key, int hash, @NotNull V newValue) {
     try {
+      lock();
       HashEntry<K, V> e = getFirst(hash);
       while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
         e = e.next;
@@ -1016,9 +1022,9 @@ class _CHMSegment<K, V> {
   }
 
 
-  V put(K key, int hash, V value, boolean onlyIfAbsent) {
-    lock();
+  V put(@NotNull K key, int hash, @NotNull V value, boolean onlyIfAbsent) {
     try {
+      lock();
       int c = count;
       if (c++ > threshold()) // ensure capacity
       {
@@ -1107,8 +1113,7 @@ class _CHMSegment<K, V> {
           for (HashEntry<K, V> p = e; p != lastRun; p = p.next) {
             int k = p.hash & sizeMask;
             HashEntry<K, V> n = newTable[k];
-            newTable[k] = new HashEntry<K, V>(p.key, p.hash,
-                                              n, p.value);
+            newTable[k] = new HashEntry<K, V>(p.key, p.hash, n, p.value);
           }
         }
       }
@@ -1116,12 +1121,12 @@ class _CHMSegment<K, V> {
     setTable(newTable);
   }
 
-  /**
+  /*
    * Remove; match on key only if value null, else match both.
    */
   V remove(K key, int hash, Object value) {
-    lock();
     try {
+      lock();
       int c = count - 1;
       HashEntry[] tab = table;
       int index = hash & tab.length - 1;
@@ -1141,8 +1146,7 @@ class _CHMSegment<K, V> {
           // cloned.
           HashEntry<K, V> newFirst = e.next;
           for (HashEntry<K, V> p = first; p != e; p = p.next) {
-            newFirst = new HashEntry<K, V>(p.key, p.hash,
-                                           newFirst, p.value);
+            newFirst = new HashEntry<K, V>(p.key, p.hash, newFirst, p.value);
           }
           tab[index] = newFirst;
           count = c; // write-volatile
@@ -1157,8 +1161,8 @@ class _CHMSegment<K, V> {
 
   public void clear() {
     if (count != 0) {
-      lock();
       try {
+        lock();
         HashEntry[] tab = table;
         for (int i = 0; i < tab.length; i++) {
           tab[i] = null;
@@ -1189,7 +1193,7 @@ class _CHMSegment<K, V> {
       volatile V value;
       final HashEntry<K, V> next;
 
-      HashEntry(K key, int hash, HashEntry<K, V> next, V value) {
+      HashEntry(@NotNull K key, int hash, HashEntry<K, V> next, @NotNull V value) {
         this.key = key;
         this.hash = hash;
         this.next = next;
