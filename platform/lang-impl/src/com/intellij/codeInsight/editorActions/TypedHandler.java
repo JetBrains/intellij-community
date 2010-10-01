@@ -38,6 +38,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -286,6 +288,9 @@ public class TypedHandler implements TypedActionHandler {
     int margin = editor.getSettings().getRightMargin(project);
     VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
     if (margin > visEndLinePosition.column) {
+      if (change != null) {
+        change.modificationStamp = document.getModificationStamp();
+      }
       return;
     }
 
@@ -324,7 +329,6 @@ public class TypedHandler implements TypedActionHandler {
       new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
     ));
 
-    int documentLengthBeforeWrapping = document.getTextLength();
     int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, true);
     WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
     if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
@@ -334,23 +338,41 @@ public class TypedHandler implements TypedActionHandler {
       // on first non-white space symbol because wrapped part will have the same indent value).
       return;
     }
+
+    final int[] wrapIntroducedSymbolsNumber = new int[1];
+    DocumentListener listener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        if (event.getNewLength() <= 0) {
+          // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
+          return;
+        }
+        wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+      }
+    };
+
     caretModel.moveToOffset(wrapOffset);
     DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
+    document.addDocumentListener(listener);
     try {
       EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
     }
     finally {
       DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, null);
+      document.removeDocumentListener(listener);
     }
 
-    int wrapIntroducedSymbolsNumber = document.getTextLength() - documentLengthBeforeWrapping;
     change.modificationStamp = document.getModificationStamp();
     change.change.setStart(wrapOffset);
-    change.change.setEnd(wrapOffset + wrapIntroducedSymbolsNumber);
+    change.change.setEnd(wrapOffset + wrapIntroducedSymbolsNumber[0]);
 
     int newCaretOffset = caretOffset;
     if (wrapOffset <= caretOffset) {
-      newCaretOffset += wrapIntroducedSymbolsNumber;
+      newCaretOffset += wrapIntroducedSymbolsNumber[0];
     }
     caretModel.moveToOffset(newCaretOffset);
   }
@@ -672,6 +694,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   private static class AutoWrapChange {
+
     final TextChangeImpl change = new TextChangeImpl("", 0, 0);
     int visualLine;
     int logicalLine;
@@ -709,6 +732,12 @@ public class TypedHandler implements TypedActionHandler {
     private boolean matches(CaretModel caretModel, long modificationStamp) {
       return this.modificationStamp == modificationStamp && caretModel.getOffset() <= change.getStart()
         && visualLine == caretModel.getVisualPosition().line && logicalLine == caretModel.getLogicalPosition().line;
+    }
+
+    @Override
+    public String toString() {
+      return "visual line: " + visualLine + ", logical line: " + logicalLine + ", modification stamp: " + modificationStamp
+             + ", text change: " + change;
     }
   }
 }
