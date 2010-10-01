@@ -224,7 +224,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     return defaultForeground;
   }
 
-  private static Color getGrayedForeground(boolean isSelected) {
+  public static Color getGrayedForeground(boolean isSelected) {
     return isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
   }
 
