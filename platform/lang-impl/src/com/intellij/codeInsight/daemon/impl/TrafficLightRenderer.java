@@ -279,7 +279,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
     if (status.errorAnalyzingFinished) return icon;
     double progress = getOverallProgress(status);
-    TruncatingIcon trunc = new TruncatingIcon(icon, (int)(icon.getIconWidth() * progress), (int)(icon.getIconHeight() * progress));
+    TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
     return LayeredIcon.create(trunc, STARING_EYE_ICON);
   }
 
