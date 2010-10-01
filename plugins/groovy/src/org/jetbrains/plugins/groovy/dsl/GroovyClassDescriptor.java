@@ -95,7 +95,7 @@ public class GroovyClassDescriptor {
 
     GroovyClassDescriptor that = (GroovyClassDescriptor)o;
 
-    if (!myPsiType.isValid() || !that.myPsiType.isValid()) return false;
+    //if (!myPsiType.isValid() || !that.myPsiType.isValid()) return false;
     if (!myPsiType.equals(that.myPsiType)) return false;
 
     if (myPlaceDependent) {
