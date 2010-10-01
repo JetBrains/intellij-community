@@ -317,7 +317,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       indicator.rememberDocumentState();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, items, item.getLookupString(), item);
-      indicator.liveAfterDeath(null);
+
+      // the insert handler may have started a live template with completion
+      if (CompletionService.getCompletionService() == null) {
+        indicator.liveAfterDeath(null);
+      }
     }
   }
 
