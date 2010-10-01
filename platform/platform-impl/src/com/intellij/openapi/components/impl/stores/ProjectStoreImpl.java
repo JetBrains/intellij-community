@@ -23,6 +23,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -301,8 +303,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     String temp = getProjectFileName();
-    if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
+    if (fileType instanceof ProjectFileType) {
+      temp = temp.substring(0, temp.length() - ((ProjectFileType) fileType).getDefaultExtension().length()-1);
     }
     final int i = temp.lastIndexOf(File.separatorChar);
     if (i >= 0) {
