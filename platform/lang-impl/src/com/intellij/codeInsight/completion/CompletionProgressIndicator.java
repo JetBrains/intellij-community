@@ -453,7 +453,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void start() {
     if (isCanceled()) {
-      throw new AssertionError("Restarting completion process is prohibited");
+      throw new AssertionError("Restarting completion process is prohibited: trace=" + cancelTrace);
     }
 
     super.start();
@@ -462,7 +462,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void initStateFrom(@NotNull ProgressIndicatorEx indicator) {
     if (isCanceled()) {
-      throw new AssertionError("Re-init-ting completion process is prohibited");
+      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + cancelTrace);
+    }
+
+    if (indicator.isCanceled()) {
+      LOG.error("initStateFrom canceled: " + indicator);
     }
 
     super.initStateFrom(indicator);
