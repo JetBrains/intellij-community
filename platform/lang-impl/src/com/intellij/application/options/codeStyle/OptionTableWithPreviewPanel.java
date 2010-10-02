@@ -304,6 +304,15 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return false;
   }
 
+  protected void addOption(Class<? extends CustomCodeStyleSettings> clazz, @NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+    myOptions.add(new BooleanOption(clazz, fieldName, title, groupName));
+  }
+
+  protected void addOption(Class<? extends CustomCodeStyleSettings> clazz, @NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                           @NotNull String[] options, @NotNull int[] values) {
+    myOptions.add(new SelectionOption(clazz, fieldName, title, groupName, options, values));
+  }
+
   protected void addOption(@NotNull String fieldName, @NotNull String title) {
     addOption(fieldName, title, null);
   }
