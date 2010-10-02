@@ -86,12 +86,12 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      if (!UISettings.getInstance().CYCLE_SCROLLING) {
-        myOriginalHandler.execute(lookup.getEditor(), context);
-        return;
-      }
-
       if (!lookup.isFocused()) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) {
+          myOriginalHandler.execute(lookup.getEditor(), context);
+          return;
+        }
+
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
         lookup.refreshUi();
