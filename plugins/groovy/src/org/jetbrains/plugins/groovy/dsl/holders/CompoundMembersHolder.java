@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +30,9 @@ public class CompoundMembersHolder implements CustomMembersHolder {
 
   private final List<CustomMembersHolder> myHolders = new ArrayList<CustomMembersHolder>();
 
-  public boolean processMembers(PsiScopeProcessor processor) {
+  public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
     for (CustomMembersHolder holder : myHolders) {
-      if (!holder.processMembers(processor)) return false;
+      if (!holder.processMembers(descriptor, processor, state)) return false;
     }
     return true;
   }

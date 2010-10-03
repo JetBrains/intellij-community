@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 /**
  * @author ilyas
@@ -24,10 +26,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public interface CustomMembersHolder {
   CustomMembersHolder EMPTY = new CustomMembersHolder() {
     @Override
-    public boolean processMembers(PsiScopeProcessor processor) {
+    public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
       return true;
     }
   };
 
-  boolean processMembers(PsiScopeProcessor processor);
+  boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state);
 }

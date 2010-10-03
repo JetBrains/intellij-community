@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -79,7 +80,7 @@ public class GroovyDslScript {
       }
     }
 
-    return holder.processMembers(processor);
+    return holder.processMembers(descriptor, processor, ResolveState.initial());
   }
 
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname) {

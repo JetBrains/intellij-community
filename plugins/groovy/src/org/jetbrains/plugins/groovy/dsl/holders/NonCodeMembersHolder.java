@@ -24,7 +24,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,9 +83,9 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 
-  public boolean processMembers(PsiScopeProcessor processor) {
+  public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
     for (PsiMethod method : myMethods) {
-      if (!ResolveUtil.processElement(processor, method, ResolveState.initial())) {
+      if (!processor.execute(method, state)) {
         return false;
       }
     }
