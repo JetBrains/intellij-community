@@ -130,7 +130,6 @@ public class NameUtil {
       }
     }
 
-    //buffer.append("_*").append(pattern).append(".*|");
     if (exactPrefixLen == 0) {
       buffer.append("_*");  // ignore leading underscores
     }
@@ -151,7 +150,7 @@ public class NameUtil {
           buffer.append('(');
 
           if (!firstIdentifierLetter) {
-            //buffer.append("[a-z\\s0-9\\$]*");
+            buffer.append("[a-z\\s0-9\\$]*");
           }
 
           buffer.append(c);
@@ -160,7 +159,7 @@ public class NameUtil {
             buffer.append(Character.toLowerCase(c));
           }
           if (!firstIdentifierLetter) {
-            buffer.append("|[A-Za-z\\s0-9\\$]*[_-]?[");
+            buffer.append("|[A-Za-z\\s0-9\\$]*[_-][");
             buffer.append(c);
             buffer.append(Character.toLowerCase(c));
             buffer.append("]");
