@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
 
 /**
@@ -10,8 +9,8 @@ import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
  */
 public class ExtensibleCustomMembersGenerator extends CustomMembersGenerator {
 
-  public ExtensibleCustomMembersGenerator(GroovyClassDescriptor descriptor) {
-    super(descriptor)
+  public ExtensibleCustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type) {
+    super(descriptor, type)
   }
 
   def methodMissing(String name, args) {

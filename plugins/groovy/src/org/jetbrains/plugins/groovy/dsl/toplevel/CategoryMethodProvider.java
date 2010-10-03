@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -42,12 +41,9 @@ public class CategoryMethodProvider {
   }
 
   public static List<PsiMethod> provideMethods(@NotNull PsiType psiType,
-                                        final Project project,
-                                        String className,
-                                        final GlobalSearchScope scope,
-                                        final Function<PsiMethod, PsiMethod> converter) {
-    final PsiClass categoryClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-    if (categoryClass == null) return Collections.emptyList();
+                                               final Project project,
+                                               final GlobalSearchScope scope,
+                                               final Function<PsiMethod, PsiMethod> converter, @NotNull final PsiClass categoryClass) {
     final MultiMap<String, PsiMethod> map = CachedValuesManager.getManager(project)
       .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<MultiMap<String, PsiMethod>>() {
         @Override

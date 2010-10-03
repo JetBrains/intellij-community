@@ -15,10 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
@@ -53,13 +52,20 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
   }
 
   public static void processCategoryMethods(final String className, final GdslMembersHolderConsumer consumer, final Function<PsiMethod, PsiMethod> converter) {
+    final GlobalSearchScope scope = consumer.getResolveScope();
+    final PsiClass categoryClass = JavaPsiFacade.getInstance(consumer.getProject()).findClass(className, scope);
+    if (categoryClass == null) {
+      return;
+    }
+
     consumer.addMemberHolder(new CustomMembersHolder() {
       @Override
       public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
         final PsiType psiType = descriptor.getPsiType();
         if (psiType == null)  return true;
 
-        for (PsiMethod method : CategoryMethodProvider.provideMethods(psiType, descriptor.getProject(), className, descriptor.getResolveScope(), converter)) {
+
+        for (PsiMethod method : CategoryMethodProvider.provideMethods(psiType, descriptor.getProject(), scope, converter, categoryClass)) {
           if (!processor.execute(method, state)) {
             return false;
           }

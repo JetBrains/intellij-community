@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +26,9 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private final GroovyClassDescriptor myDescriptor;
   private final String myQualifiedName;
 
-  public CustomMembersGenerator(GroovyClassDescriptor descriptor) {
+  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type) {
     myDescriptor = descriptor;
     myProject = descriptor.getProject();
-    final PsiType type = descriptor.getPsiType();
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
       if (psiClass != null) {
@@ -72,9 +72,13 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
 
   @Nullable
   public CustomMembersHolder getMembersHolder() {
-    // Add non-code members holder
     if (!myMethods.isEmpty()) {
-      addMemberHolder(NonCodeMembersHolder.generateMembers(myMethods, myDescriptor.getPlaceFile()));
+      addMemberHolder(new CustomMembersHolder() {
+        @Override
+        public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
+          return NonCodeMembersHolder.generateMembers(myMethods, descriptor.getPlaceFile()).processMembers(descriptor, processor, state);
+        }
+      });
     }
     return myDepot;
   }
