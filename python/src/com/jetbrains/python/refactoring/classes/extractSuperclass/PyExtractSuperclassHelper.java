@@ -18,14 +18,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -174,7 +171,7 @@ public class PyExtractSuperclassHelper {
     if (the_rest != null) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
       final PsiManager psi_mgr = PsiManager.getInstance(project);
-      String[] dirs = the_rest.split(File.separator);
+      String[] dirs = the_rest.split("/");
       int i = 0;
       if ("".equals(dirs[0])) i = 1;
       while (i < dirs.length) {
