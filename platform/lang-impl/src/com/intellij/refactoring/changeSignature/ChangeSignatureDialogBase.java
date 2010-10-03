@@ -196,7 +196,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       panel.add(typePrompt);
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
-      myReturnTypeField = new EditorTextField(document, myProject, getFileType());
+      myReturnTypeField = createReturnTypeTextField(document);
       typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
       typePrompt.setLabelFor(myReturnTypeField);
       panel.add(myReturnTypeField);
@@ -218,6 +218,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
 
     return panel;
+  }
+
+  protected EditorTextField createReturnTypeTextField(Document document) {
+    return new EditorTextField(document, myProject, getFileType());
   }
 
   private DelegationPanel createDelegationPanel() {

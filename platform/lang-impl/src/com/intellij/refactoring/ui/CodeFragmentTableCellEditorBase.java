@@ -45,12 +45,16 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
     myCodeFragment = (PsiCodeFragment)value;
 
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
-    myEditorTextField = new EditorTextField(myDocument, myProject, myFileType) {
+    myEditorTextField = createEditorField(myDocument);
+    return myEditorTextField;
+  }
+
+  protected EditorTextField createEditorField(Document document) {
+    return new EditorTextField(document, myProject, myFileType) {
       protected boolean shouldHaveBorder() {
         return false;
       }
     };
-    return myEditorTextField;
   }
 
   public PsiCodeFragment getCellEditorValue() {

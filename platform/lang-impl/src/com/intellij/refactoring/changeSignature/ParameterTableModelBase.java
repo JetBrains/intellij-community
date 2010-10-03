@@ -115,7 +115,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
   }
 
   protected static class TypeColumn<P extends ParameterInfo> extends ColumnInfoBase<P, PsiCodeFragment> {
-    private final Project myProject;
+    protected final Project myProject;
     private final FileType myFileType;
 
     public TypeColumn(Project project, FileType fileType) {
