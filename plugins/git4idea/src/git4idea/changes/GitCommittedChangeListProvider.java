@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesRenameContext;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -34,9 +34,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
+import git4idea.GitFileRevision;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.history.GitHistoryUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,24 +230,24 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
     final FilePathImpl filePath = new FilePathImpl(file);
     final GitRepositoryLocation l = (GitRepositoryLocation) getLocationFor(filePath);
-    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
+    final VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
     }
 
     final CommittedChangeList[] result = new CommittedChangeList[1];
     GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
-      public void consume(GitSimpleHandler h) {
+      public void consume(final GitSimpleHandler h) {
         h.addParameters("-n1");
         h.addParameters("-M");
         h.addParameters(number.asString());
       }
     }, new Consumer<CommittedChangeList>() {
       @Override
-      public void consume(CommittedChangeList committedChangeList) {
+      public void consume(final CommittedChangeList committedChangeList) {
         result[0] = committedChangeList;
       }
     }, false);
@@ -259,22 +261,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         return new Pair<CommittedChangeList, FilePath>(result[0], filePath);
       }
     }
-    // go for history
-    final ChangesRenameContext renameContext = new ChangesRenameContext(filePath.getIOFile());
-    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
-      public void consume(GitSimpleHandler h) {
-        h.addParameters("-M");
-        h.addParameters(number.asString() + "..");
-      }
-    }, new Consumer<CommittedChangeList>() {
-      @Override
-      public void consume(CommittedChangeList committedChangeList) {
-        final Collection<Change> list = committedChangeList.getChanges();
-        renameContext.checkForRename(list);
-      }
-    }, false);
-    renameContext.checkForRename(result[0].getChanges());
-    return new Pair<CommittedChangeList, FilePath>(result[0], new FilePathImpl(renameContext.getCurrentPath(), false));
+    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, root, number.asString() + "^..");
+    return new Pair<CommittedChangeList, FilePath>(result[0], ((GitFileRevision) history.get(history.size() - 1)).getPath());
   }
 
   public int getFormatVersion() {
