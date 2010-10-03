@@ -72,7 +72,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     final PsiElement original_elt = marks.get("<the_ref>");
     PsiElement ref_elt = original_elt.getParent(); // ident -> expr
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    checkByHTML(myProvider.getQuickNavigateInfo(doc_owner));
+    checkByHTML(myProvider.getQuickNavigateInfo(doc_owner, original_elt));
   }
 
   public void testDirectFunc() throws Exception {

@@ -64,6 +64,7 @@ public class PyAutoUnindentTest extends PyLightFixtureTestCase {
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
     final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+      @Override
       public PsiFile compute() {
         myFixture.getEditor().getCaretModel().moveToOffset(offset);
         myFixture.type(character);

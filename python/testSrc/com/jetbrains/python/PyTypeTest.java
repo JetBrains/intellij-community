@@ -108,6 +108,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
 
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myFixture.configureByText(PythonFileType.INSTANCE, text);
         }

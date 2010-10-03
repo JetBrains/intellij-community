@@ -16,6 +16,7 @@ public class PythonParsingTest extends ParsingTestCase {
     PyLightFixtureTestCase.initPlatformPrefix();
   }
 
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }

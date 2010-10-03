@@ -18,6 +18,7 @@ import java.util.Map;
  */
 public class PyAssignmentMappingTest extends LightMarkedTestCase {
 
+  @Override
   public String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/psi/assignment/";
   }

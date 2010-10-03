@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PydevDocumentationProvider extends QuickDocumentationProvider {
-  public String getQuickNavigateInfo(final PsiElement element) {
+  public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
     return null;
   }
 

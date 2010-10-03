@@ -190,6 +190,7 @@
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
+    <lang.substitutor language="JavaScript" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"

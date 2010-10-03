@@ -17,6 +17,7 @@ public class FPTest extends TestCase {
   public void testMap() {
     List<String> sequence = Arrays.asList("a", "b", "c");
     FP.Lambda1<String, String> func = new FP.Lambda1<String, String>() {
+      @Override
       public String apply(String arg) {
         return arg.toUpperCase();
       }
@@ -33,6 +34,7 @@ public class FPTest extends TestCase {
   public void testMapEmpty() {
     List<String> sequence = Arrays.asList();
     FP.Lambda1<String, String> func = new FP.Lambda1<String, String>() {
+      @Override
       public String apply(String arg) {
         return arg.toUpperCase();
       }
@@ -49,6 +51,7 @@ public class FPTest extends TestCase {
   public void testMapLazy() {
     List<Float> sequence = Arrays.asList(1.0f, 2.0f, 3.0f, 0.0f);
     FP.Lambda1<Float, Float> func = new FP.Lambda1<Float, Float>() {
+      @Override
       public Float apply(Float arg) {
         return 1.0f/arg;
       }
@@ -67,6 +70,7 @@ public class FPTest extends TestCase {
   public void testFold() {
     List<String> sequence = Arrays.asList("a", "b", "c");
     FP.Lambda2<StringBuilder, String, StringBuilder> adder = new FP.Lambda2<StringBuilder, String, StringBuilder>() {
+      @Override
       public StringBuilder apply(StringBuilder builder, String arg2) {
         return builder.append(arg2);
       }
@@ -78,6 +82,7 @@ public class FPTest extends TestCase {
   public void testFoldr() {
     List<String> sequence = Arrays.asList("a", "b", "c");
     FP.Lambda2<String, String, String> adder = new FP.Lambda2<String, String, String>() {
+      @Override
       public String apply(String left, String right) {
         return left + right;
       }

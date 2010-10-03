@@ -239,6 +239,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     final PsiReference ref = psiFile.findReferenceAt(offset);
     final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
+      @Override
       public boolean accept(VirtualFile file) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
         return fileType == PythonFileType.INSTANCE;

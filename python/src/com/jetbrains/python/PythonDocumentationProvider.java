@@ -42,7 +42,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
 
   // provides ctrl+hover info
-  public String getQuickNavigateInfo(final PsiElement element) {
+  public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
     if (element instanceof PyFunction) {
       PyFunction func = (PyFunction)element;
       StringBuilder cat = new StringBuilder();
