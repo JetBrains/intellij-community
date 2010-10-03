@@ -45,6 +45,10 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
       return;
     }
 
+    if (!lookup.isVisible()) {
+      return;
+    }
+
     if (!showItemActions(lookup, element)) {
       lookup.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
     }
