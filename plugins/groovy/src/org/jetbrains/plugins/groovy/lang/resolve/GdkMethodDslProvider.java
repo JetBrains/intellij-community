@@ -15,15 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
-import org.jetbrains.plugins.groovy.dsl.toplevel.CategoryMethodProvider;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 
 /**
@@ -31,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
  */
 @SuppressWarnings({"MethodMayBeStatic"})
 public class GdkMethodDslProvider implements GdslMembersProvider {
+  private static final Key<CachedValue<MultiMap<String, PsiMethod>>> METHOD_KEY = Key.create("Category methods");
+
   public void category(String className, GdslMembersHolderConsumer consumer) {
     processCategoryMethods(className, consumer, new Function<PsiMethod, PsiMethod>() {
       public PsiMethod fun(PsiMethod m) {
@@ -58,20 +67,54 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       return;
     }
 
+    final VolatileNotNullLazyValue<MultiMap<String, PsiMethod>> methodsMap = new VolatileNotNullLazyValue<MultiMap<String, PsiMethod>>() {
+      @NotNull
+      @Override
+      protected MultiMap<String, PsiMethod> compute() {
+        return retrieveMethodMap(consumer.getProject(), scope, converter, categoryClass);
+      }
+    };
+
     consumer.addMemberHolder(new CustomMembersHolder() {
+
       @Override
       public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
         final PsiType psiType = descriptor.getPsiType();
         if (psiType == null)  return true;
 
-
-        for (PsiMethod method : CategoryMethodProvider.provideMethods(psiType, descriptor.getProject(), scope, converter, categoryClass)) {
-          if (!processor.execute(method, state)) {
-            return false;
+        final MultiMap<String, PsiMethod> map = methodsMap.getValue();
+        for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
+          for (PsiMethod method : map.get(superType)) {
+            if (!processor.execute(method, state)) {
+              return false;
+            }
           }
         }
+
         return true;
       }
     });
+  }
+
+  public static MultiMap<String, PsiMethod> retrieveMethodMap(final Project project,
+                                                              final GlobalSearchScope scope,
+                                                              final Function<PsiMethod, PsiMethod> converter,
+                                                              @NotNull final PsiClass categoryClass) {
+    return CachedValuesManager.getManager(project)
+      .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<MultiMap<String, PsiMethod>>() {
+        @Override
+        public Result<MultiMap<String, PsiMethod>> compute() {
+          MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+          PsiManager manager = PsiManager.getInstance(project);
+          for (PsiMethod m : categoryClass.getMethods()) {
+            final PsiParameter[] params = m.getParameterList().getParameters();
+            if (params.length == 0) continue;
+            final PsiType parameterType = TypesUtil.boxPrimitiveType(params[0].getType(), manager, scope);
+            PsiType targetType = TypeConversionUtil.erasure(parameterType);
+            map.putValue(targetType.getCanonicalText(), converter.fun(m));
+          }
+          return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        }
+      }, false);
   }
 }
