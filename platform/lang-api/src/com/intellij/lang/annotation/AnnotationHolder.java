@@ -144,4 +144,6 @@ public interface AnnotationHolder {
    */
   Annotation createInfoAnnotation(@NotNull TextRange range, String message);
 
+
+  AnnotationSession getCurrentAnnotationSession();
 }

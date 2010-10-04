@@ -21,6 +21,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
@@ -38,10 +39,16 @@ public class HighlightInfoHolder {
   private final HighlightInfoFilter[] myFilters;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
+  private final AnnotationSession myAnnotationSession;
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
     myContextFile = contextFile;
     myFilters = filters;
+    myAnnotationSession = new AnnotationSession(contextFile);
+  }
+
+  public AnnotationSession getAnnotationSession() {
+    return myAnnotationSession;
   }
 
   public boolean add(@Nullable HighlightInfo info) {
