@@ -15,23 +15,33 @@
  */
 package com.intellij.ide;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
@@ -50,7 +60,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Runnable myHideRunnable;
 
   private JBPopupFactory myPopupFactory;
-  private JLabel myTipLabel;
+  private JEditorPane myTipLabel;
 
   private boolean myShowDelay = true;
 
@@ -63,11 +73,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private IdeTooltip myCurrentTooltip;
   private Runnable myShowRequest;
 
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "IDE Tooltip Manager";
-  }
+
 
   public IdeTooltipManager(JBPopupFactory popupFactory) {
     myPopupFactory = popupFactory;
@@ -86,8 +92,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }, ApplicationManager.getApplication());
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
-    myTipLabel = new JLabel();
-    myTipLabel.setOpaque(false);
 
     processEnabled();
   }
@@ -147,14 +151,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter) {
-    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), myTipLabel) {
+    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null) {
       @Override
       protected boolean beforeShow() {
         myCurrentEvent = me;
 
+        if (!c.isShowing()) return false;
+
         String text = c.getToolTipText(myCurrentEvent);
         if (text == null || text.trim().length() == 0) return false;
-        myTipLabel.setText(text);
+
+        JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
+
+        myTipLabel = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
+
+        setTipComponent(myTipLabel);
         return true;
       }
     }.setToCenter(toCenter);
@@ -403,4 +414,128 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myHideRunnable = null;
   }
 
+
+  public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable JLayeredPane layeredPane) {
+    final Ref<Dimension> prefSize = new Ref<Dimension>(null);
+    String htmlBody = getHtmlBody(text);
+    htmlBody = UIUtil.convertSpace2Nbsp(htmlBody);
+    text = "<html><head>" +
+           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
+           "</head><body>" +
+           htmlBody +
+           "</body></html>";
+
+    final JEditorPane pane = new JEditorPane() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension s = prefSize.get() != null ? new Dimension(prefSize.get()) : super.getPreferredSize();
+        Border b = getBorder();
+        if (b != null) {
+          Insets insets = b.getBorderInsets(this);
+          if (insets != null) {
+            s.width += insets.left + insets.right;
+            s.height += insets.top + insets.bottom;
+          }
+        }
+        return s;
+      }
+    };
+
+    final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {
+      @Override
+      public View create(Element elem) {
+        AttributeSet attrs = elem.getAttributes();
+        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+        Object o = (elementName != null) ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+        if (o instanceof HTML.Tag) {
+          HTML.Tag kind = (HTML.Tag)o;
+          if (kind == HTML.Tag.HR) {
+            return new CustomHrView(elem, hintHint.getTextForeground());
+          }
+        }
+        return super.create(elem);
+      }
+    };
+
+    HTMLEditorKit kit = new HTMLEditorKit() {
+      @Override
+      public ViewFactory getViewFactory() {
+        return factory;
+      }
+    };
+    pane.setEditorKit(kit);
+    pane.setText(text);
+
+    pane.setCaretPosition(0);
+    pane.setEditable(false);
+
+    if (hintHint.isOwnBorderAllowed()) {
+      setBorder(pane);
+      setColors(pane);
+    }
+    else {
+      pane.setBorder(null);
+    }
+
+    if (hintHint.isAwtTooltip()) {
+      Dimension size = layeredPane.getSize();
+      int fitWidth = (int)(size.width * 0.8);
+      Dimension prefSizeOriginal = pane.getPreferredSize();
+      if (prefSizeOriginal.width > fitWidth) {
+        pane.setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+        Dimension fixedWidthSize = pane.getPreferredSize();
+        prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
+      }
+      else {
+        prefSize.set(new Dimension(prefSizeOriginal));
+      }
+    }
+
+    pane.setOpaque(hintHint.isOpaqueAllowed());
+    pane.setBackground(hintHint.getTextBackground());
+
+    return pane;
+  }
+
+  public static void setColors(JComponent pane) {
+    pane.setForeground(Color.black);
+    pane.setBackground(HintUtil.INFORMATION_COLOR);
+    pane.setOpaque(true);
+  }
+
+  public static void setBorder(JComponent pane) {
+    pane.setBorder(
+      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+  }
+
+  public static String getHtmlBody(@NonNls String text) {
+    String result = text;
+    if (!text.startsWith("<html>")) {
+      result = text.replaceAll("\n", "<br>");
+    }
+    else {
+      final int bodyIdx = text.indexOf("<body>");
+      final int closedBodyIdx = text.indexOf("</body>");
+      if (bodyIdx != -1 && closedBodyIdx != -1) {
+        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
+      }
+      else {
+        text = StringUtil.trimStart(text, "<html>").trim();
+        text = StringUtil.trimEnd(text, "</html>").trim();
+        text = StringUtil.trimStart(text, "<body>").trim();
+        text = StringUtil.trimEnd(text, "</body>").trim();
+        result = text;
+      }
+    }
+
+
+
+    return result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "IDE Tooltip Manager";
+  }
 }

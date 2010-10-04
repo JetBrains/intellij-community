@@ -116,5 +116,9 @@ public class IdeTooltip {
     myHighlighter = isHighlighter;
     return this;
   }
+
+  void setTipComponent(JComponent tipComponent) {
+    myTipComponent = tipComponent;
+  }
 }
 
