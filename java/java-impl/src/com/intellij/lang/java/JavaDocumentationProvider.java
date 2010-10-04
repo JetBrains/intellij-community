@@ -399,7 +399,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     StringBuffer buffer = new StringBuffer();
     PsiClass parentClass = field.getContainingClass();
 
-    if (parentClass != null) {
+    if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
       buffer.append(JavaDocUtil.getShortestClassName(parentClass, field));
       newLine(buffer);
     }
