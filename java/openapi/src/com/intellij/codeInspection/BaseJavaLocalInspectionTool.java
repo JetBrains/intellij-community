@@ -118,7 +118,6 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
     return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
   }
 
-  @Nullable
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
