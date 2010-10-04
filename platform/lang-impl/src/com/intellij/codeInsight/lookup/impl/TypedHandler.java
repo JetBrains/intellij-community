@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -26,6 +27,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
@@ -41,7 +43,7 @@ public class TypedHandler implements TypedActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext){
+  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){
       myOriginalHandler.execute(editor, charTyped, dataContext);
@@ -56,7 +58,10 @@ public class TypedHandler implements TypedActionHandler {
         EditorModificationUtil.deleteSelectedText(editor);
         if (result == CharFilter.Result.ADD_TO_PREFIX) {
           lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
+          Document document = editor.getDocument();
+          long modificationStamp = document.getModificationStamp();
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
+          AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
         }
       }
     }, "", editor.getDocument());

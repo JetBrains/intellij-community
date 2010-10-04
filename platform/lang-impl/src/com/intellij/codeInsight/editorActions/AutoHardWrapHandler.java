@@ -1,0 +1,247 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.codeInsight.editorActions;
+
+import com.intellij.formatting.FormatConstants;
+import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
+import com.intellij.util.containers.WeakHashMap;
+
+import java.util.Map;
+
+/**
+ * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
+ *
+ * @author Denis Zhdanov
+ * @since 10/4/10 9:56 AM
+ */
+public class AutoHardWrapHandler {
+
+  /**
+   * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
+   *
+   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
+   */
+  public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
+
+  private static final AutoHardWrapHandler INSTANCE = new AutoHardWrapHandler();
+
+  /**
+   * There is a possible case that the user configured editor to
+   * {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project) wrap line on reaching right margin} and that he or she
+   * types in the middle of the long line. One line part is cut from end and moved to the next line as a result. But the user
+   * keeps typing and another part of the line should be moved to the next line then. We don't want to have a number of
+   * such line endings to be located on distinct lines.
+   * <p/>
+   * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
+   * holds that <code>'document -> last auto-wrap change'</code> mappings.
+   */
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<Document, AutoWrapChange>();
+
+  public static AutoHardWrapHandler getInstance() {
+    return INSTANCE;
+  }
+
+  /**
+   * The user is allowed to configured IJ in a way that it automatically wraps line on right margin exceeding on typing
+   * (check {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)}).
+   * <p/>
+   * This method encapsulates that functionality, i.e. it performs the following logical actions:
+   * <pre>
+   * <ol>
+   *   <li>Check if IJ is configured to perform automatic line wrapping on typing. Return in case of the negative answer;</li>
+   *   <li>Check if right margin is exceeded. Return in case of the negative answer;</li>
+   *   <li>Perform line wrapping;</li>
+   * </ol>
+   </pre>
+   *
+   * @param editor                          active editor
+   * @param dataContext                     current data context
+   * @param modificationStampBeforeTyping   document modification stamp before the current symbols typing
+   */
+  public void wrapLineIfNecessary(Editor editor, DataContext dataContext, long modificationStampBeforeTyping) {
+    Project project = editor.getProject();
+    Document document = editor.getDocument();
+    AutoWrapChange change = myAutoWrapChanges.get(document);
+    if (change != null) {
+      change.charTyped(editor, modificationStampBeforeTyping);
+    }
+
+    // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
+    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)) {
+      return;
+    }
+
+    CaretModel caretModel = editor.getCaretModel();
+    int caretOffset = caretModel.getOffset();
+    int line = document.getLineNumber(caretOffset);
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = document.getLineEndOffset(line);
+
+    // Check if right margin is exceeded.
+    int margin = editor.getSettings().getRightMargin(project);
+    VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
+    if (margin > visEndLinePosition.column) {
+      if (change != null) {
+        change.modificationStamp = document.getModificationStamp();
+      }
+      return;
+    }
+
+    // We assume that right margin is exceeded if control flow reaches this place. Hence, we define wrap position and perform
+    // smart line break there.
+    LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
+
+    // There is a possible case that user starts typing in the middle of the long string. Hence, there is a possible case that
+    // particular symbols were already wrapped because of typing. Example:
+    //    a b c d e f g <caret>h i j k l m n o p| <- right margin
+    // Suppose the user starts typing at caret:
+    //    type '1': a b c d e f g 1<caret>h i j k l m n o | <- right margin
+    //              p                                     | <- right margin
+    //    type '2': a b c d e f g 12<caret>h i j k l m n o| <- right margin
+    //                                                    | <- right margin
+    //              p                                     | <- right margin
+    //    type '3': a b c d e f g 123<caret>h i j k l m n | <- right margin
+    //              o                                     | <- right margin
+    //                                                    | <- right margin
+    //              p                                     | <- right margin
+    // We want to prevent such behavior, hence, we remove automatically generated wraps and wrap the line as a whole.
+    if (change == null) {
+      change = new AutoWrapChange();
+      myAutoWrapChanges.put(document, change);
+    }
+    else {
+      if (!change.isEmpty()) {
+        document.replaceString(change.change.getStart(), change.change.getEnd(), change.change.getText());
+      }
+      change.reset();
+    }
+    change.update(editor);
+
+    // Is assumed to be max possible number of characters inserted on the visual line with caret.
+    int maxPreferredOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(
+      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+    ));
+
+    int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, true);
+    WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
+    if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
+        || formattingStrategy.check(document.getCharsSequence(), startOffset, wrapOffset) >= wrapOffset)
+    {
+      // Don't perform hard line wrapping if it doesn't makes sense (no point to wrap at first position and no point to wrap
+      // on first non-white space symbol because wrapped part will have the same indent value).
+      return;
+    }
+
+    final int[] wrapIntroducedSymbolsNumber = new int[1];
+    DocumentListener listener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        if (event.getNewLength() <= 0) {
+          // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
+          return;
+        }
+        wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+      }
+    };
+
+    caretModel.moveToOffset(wrapOffset);
+    DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
+    document.addDocumentListener(listener);
+    try {
+      EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+    }
+    finally {
+      DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, null);
+      document.removeDocumentListener(listener);
+    }
+
+    change.modificationStamp = document.getModificationStamp();
+    change.change.setStart(wrapOffset);
+    change.change.setEnd(wrapOffset + wrapIntroducedSymbolsNumber[0]);
+
+    int newCaretOffset = caretOffset;
+    if (wrapOffset <= caretOffset && newCaretOffset + wrapIntroducedSymbolsNumber[0] < document.getTextLength()) {
+      newCaretOffset += wrapIntroducedSymbolsNumber[0];
+    }
+    newCaretOffset = Math.min(document.getLineEndOffset(line + 1), newCaretOffset);
+    caretModel.moveToOffset(newCaretOffset);
+  }
+
+  private static class AutoWrapChange {
+
+    final TextChangeImpl change = new TextChangeImpl("", 0, 0);
+    int visualLine;
+    int logicalLine;
+    long modificationStamp;
+
+    void reset() {
+      visualLine = -1;
+      logicalLine = -1;
+      change.setStart(0);
+      change.setEnd(0);
+    }
+
+    void update(Editor editor) {
+      modificationStamp = editor.getDocument().getModificationStamp();
+
+      CaretModel caretModel = editor.getCaretModel();
+      visualLine = caretModel.getVisualPosition().line;
+      logicalLine = caretModel.getLogicalPosition().line;
+    }
+
+    void charTyped(Editor editor, long modificationStamp) {
+      if (matches(editor.getCaretModel(), modificationStamp)) {
+        this.modificationStamp = editor.getDocument().getModificationStamp();
+        change.advance(1);
+      }
+      else {
+        reset();
+      }
+    }
+
+    boolean isEmpty() {
+      return change.getDiff() == 0;
+    }
+
+    private boolean matches(CaretModel caretModel, long modificationStamp) {
+      return this.modificationStamp == modificationStamp && caretModel.getOffset() <= change.getStart()
+             && visualLine == caretModel.getVisualPosition().line && logicalLine == caretModel.getLogicalPosition().line;
+    }
+
+    @Override
+    public String toString() {
+      return "visual line: " + visualLine + ", logical line: " + logicalLine + ", modification stamp: " + modificationStamp
+             + ", text change: " + change;
+    }
+  }
+
+}
