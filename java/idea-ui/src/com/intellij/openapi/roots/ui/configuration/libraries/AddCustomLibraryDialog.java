@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ParametrizedRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,9 @@ public class AddCustomLibraryDialog extends DialogWrapper {
     setTitle(IdeBundle.message("setup.library.dialog.title"));
     VirtualFile baseDir = myModule.getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    myPanel = new LibraryOptionsPanel(new LibraryCompositionSettings(description, baseDirPath), myLibrariesContainer, false);
+    final LibraryCompositionSettings settings = new LibraryCompositionSettings(description, baseDirPath);
+    Disposer.register(myDisposable, settings);
+    myPanel = new LibraryOptionsPanel(settings, myLibrariesContainer, false);
     init();
   }
 

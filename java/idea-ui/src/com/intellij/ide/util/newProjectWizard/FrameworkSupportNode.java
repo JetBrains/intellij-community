@@ -79,6 +79,8 @@ public class FrameworkSupportNode extends CheckedTreeNode {
       return ((FrameworkVersionWithLibrary)version).getLibraryDescription();
     }
 
+    if (version.getLibraries().length == 0) return null;
+
     CustomLibraryDescription description = myLibraryDescriptions.get(version);
     if (description == null) {
       description = new CustomLibraryDescriptionImpl(version.getLibraries(), StringUtil.notNullize(version.getLibraryName()));
