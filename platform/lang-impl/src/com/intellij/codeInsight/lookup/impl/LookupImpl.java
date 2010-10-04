@@ -331,7 +331,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateListHeight(model);
 
+    myAdComponent.setPreferredSize(null);
     myAdComponent.setText(myAdText);
+    if (myAdText != null) {
+      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+    }
 
     if (hasItems) {
       myList.setFixedCellWidth(Math.max(myLookupWidth, myAdComponent.getPreferredSize().width));
