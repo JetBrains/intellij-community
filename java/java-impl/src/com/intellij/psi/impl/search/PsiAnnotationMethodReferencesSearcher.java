@@ -9,12 +9,13 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.openapi.application.ReadActionProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     if (refElement instanceof PsiAnnotationMethod) {
       PsiMethod method = (PsiMethod)refElement;

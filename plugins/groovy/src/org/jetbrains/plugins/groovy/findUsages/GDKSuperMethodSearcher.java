@@ -25,6 +25,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -42,7 +43,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
-  public boolean execute(SuperMethodsSearch.SearchParameters queryParameters, Processor<MethodSignatureBackedByPsiMethod> consumer) {
+  public boolean execute(@NotNull SuperMethodsSearch.SearchParameters queryParameters, @NotNull Processor<MethodSignatureBackedByPsiMethod> consumer) {
     final PsiMethod method = queryParameters.getMethod();
     if (!(method instanceof GrMethod)) {
       return true;

@@ -12,12 +12,13 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
-  public boolean execute(final OverridingMethodsSearch.SearchParameters p, final Processor<PsiMethod> consumer) {
+  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters p, @NotNull final Processor<PsiMethod> consumer) {
     final PsiMethod method = p.getMethod();
     final SearchScope scope = p.getScope();
 

@@ -11,6 +11,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -21,7 +22,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
   }
 
   @Override
-  public void processQuery(MethodReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     final SearchRequestCollector collector = p.getOptimizer();
 

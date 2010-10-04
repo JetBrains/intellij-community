@@ -41,6 +41,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,7 +51,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
-  public boolean execute(final IndexPatternSearch.SearchParameters queryParameters, final Processor<IndexPatternOccurrence> consumer) {
+  public boolean execute(@NotNull final IndexPatternSearch.SearchParameters queryParameters, @NotNull final Processor<IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();
     VirtualFile virtualFile = file.getVirtualFile();
     if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || virtualFile == null) {

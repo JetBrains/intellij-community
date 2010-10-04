@@ -63,7 +63,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     return result;
   }
 
-  public boolean execute(final AnnotatedElementsSearch.Parameters p, final Processor<PsiModifierListOwner> consumer) {
+  public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 

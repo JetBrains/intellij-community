@@ -26,6 +26,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class PropertyReferenceViaLastWordSearcher extends QueryExecutorBase<PsiR
   // <bla:bla ref.key="lastWord> (can reference to xxx.lastWord property)
 
   @Override
-  public void processQuery(ReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiElement refElement = queryParameters.getElementToSearch();
     if (!(refElement instanceof Property)) return;
 

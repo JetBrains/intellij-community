@@ -15,6 +15,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -25,7 +26,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
   }
 
   @Override
-  public void processQuery(ReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
 
     String text = null;

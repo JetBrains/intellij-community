@@ -63,7 +63,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     return inheritors.toArray(new PsiClass[inheritors.size()]);
   }
 
-  public boolean execute(DirectClassInheritorsSearch.SearchParameters queryParameters, final Processor<PsiClass> consumer) {
+  public boolean execute(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
