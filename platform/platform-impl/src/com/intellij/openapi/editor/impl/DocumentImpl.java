@@ -77,7 +77,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private volatile MarkupModelEx myMarkupModel;
-  private DocumentListener[] myCachedDocumentListeners;
   private final List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
 
   private int myCheckGuardedBlocks = 0;
@@ -470,10 +469,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
-    DocumentListener[] listeners = getCachedListeners();
-    for (int i = listeners.length - 1; i >= 0; i--) {
+    for (int i = myDocumentListeners.size() - 1; i >= 0; i--) {
       try {
-        listeners[i].beforeDocumentChange(event);
+        myDocumentListeners.get(i).beforeDocumentChange(event);
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -484,6 +482,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return event;
   }
 
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
     if (ShutDownTracker.isShutdownHookRunning()) {
       return; // suppress events in shutdown hook
@@ -494,10 +493,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myLineSet.changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
-      DocumentListener[] listeners = getCachedListeners();
-      for (DocumentListener listener : listeners) {
+      // Don't use for-each in order to avoid unnecessary iterator construction during frequent document updates.
+      for (int i = 0; i < myDocumentListeners.size(); i++) {
         try {
-          listener.documentChanged(event);
+          myDocumentListeners.get(i).documentChanged(event);
         }
         catch (Throwable e) {
           LOG.error(e);
@@ -554,9 +553,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
 
   public void addDocumentListener(@NotNull DocumentListener listener) {
-    myCachedDocumentListeners = null;
     LOG.assertTrue(!myDocumentListeners.contains(listener), listener);
-    myDocumentListeners.add(listener);
+    if (!(listener instanceof PrioritizedDocumentListener)) {
+      myDocumentListeners.add(listener);
+      return;
+    }
+    int i = Collections.binarySearch(myDocumentListeners, listener, PrioritizedDocumentListener.COMPARATOR);
+    if (i < 0) {
+      i = -i - 1;
+    }
+    if (i >= myDocumentListeners.size()) {
+      myDocumentListeners.add(listener);
+    }
+    else {
+      myDocumentListeners.add(i, listener);
+    }
   }
 
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
@@ -569,7 +580,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void removeDocumentListener(@NotNull DocumentListener listener) {
-    myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
     LOG.assertTrue(success);
   }
@@ -615,15 +625,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     int lineCount = myLineSet.getLineCount();
     assert lineCount >= 0;
     return lineCount;
-  }
-
-  private DocumentListener[] getCachedListeners() {
-    if (myCachedDocumentListeners == null) {
-      Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
-      myCachedDocumentListeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
-    }
-
-    return myCachedDocumentListeners;
   }
 
   public void fireReadOnlyModificationAttempt() {
