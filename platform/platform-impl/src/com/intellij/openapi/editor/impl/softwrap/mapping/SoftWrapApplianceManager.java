@@ -388,7 +388,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     int initialAnchor = myOffset2fontType.anchor;
     int initialLength = myOffset2fontType.data.length;
 
-    int newLength = start - end;
+    int newLength = end - start;
     if (myOffset2fontType.anchor > 0) {
       newLength += myOffset2fontType.end;
     }
