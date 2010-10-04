@@ -25,10 +25,10 @@ import java.util.*;
  * @author irengrig
  */
 public class AreaMap<Key extends Comparable<Key>, Val> {
-  private final List<Key> myKeys;
-  private final Map<Key, Val> myMap;
+  protected final List<Key> myKeys;
+  protected final Map<Key, Val> myMap;
   // [admittedly] parent, [-"-] child
-  private final PairProcessor<Key, Key> myKeysResemblance;
+  protected final PairProcessor<Key, Key> myKeysResemblance;
 
   public AreaMap(final PairProcessor<Key, Key> keysResemblance) {
     myKeysResemblance = keysResemblance;
@@ -37,11 +37,15 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
   }
 
   public void put(final Key key, final Val val) {
+    putImpl(key, val);
+  }
+
+  protected int putImpl(final Key key, final Val val) {
     myMap.put(key, val);
 
     if (myKeys.isEmpty()) {
       myKeys.add(key);
-      return;
+      return 0;
     }
 
     final int idx = Collections.binarySearch(myKeys, key);
@@ -50,7 +54,9 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
       final int insertionIdx = - idx - 1;
       // insertionIdx not necessarily exist
       myKeys.add(insertionIdx, key);
+      return insertionIdx;
     }
+    return idx;
   }
 
   public Collection<Val> values() {
