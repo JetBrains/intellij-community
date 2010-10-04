@@ -540,12 +540,14 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       public void treeExpanded(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
-        String nodeTitle = getExpandedString(event.getPath());
-        final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
-        if (parentProfile != null) {
-          parentProfile.getExpandedNodes().expandNode(nodeTitle);
+        if (selected != null) {
+          String nodeTitle = getExpandedString(event.getPath());
+          final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
+          if (parentProfile != null) {
+            parentProfile.getExpandedNodes().expandNode(nodeTitle);
+          }
+          selected.getExpandedNodes().expandNode(nodeTitle);
         }
-        selected.getExpandedNodes().expandNode(nodeTitle);
       }
     });
 
