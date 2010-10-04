@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import org.gradle.openapi.external.ui.SettingsNodeVersion1;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.gradle.GradleLibraryManager;
+import org.jetbrains.plugins.groovy.gradle.GradleLibraryPresentationProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +53,7 @@ public class ShowGradleUIAction extends AnAction implements DumbAware {
     }
 
     Project project = e.getData(DataKeys.PROJECT);
-    return project != null && GradleLibraryManager.getSdkHome(e.getData(DataKeys.MODULE), project) != null;
+    return project != null && GradleLibraryPresentationProvider.getSdkHome(e.getData(DataKeys.MODULE), project) != null;
   }
 
   private static class GradleUiDialog extends DialogWrapper {

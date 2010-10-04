@@ -115,7 +115,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private static ClassLoader createGradleClassLoader(@NotNull Module module) {
-    final VirtualFile sdkHome = GradleLibraryManager.getSdkHome(module, module.getProject());
+    final VirtualFile sdkHome = GradleLibraryPresentationProvider.getSdkHome(module, module.getProject());
     if (sdkHome == null) {
       return null;
     }
