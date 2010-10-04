@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -182,7 +183,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isOutdated()) {
                   return;
                 }
-                if (!myLookup.isFocused() && !myInitialized) {
+                if (isAutopopupCompletion() && !myInitialized) {
                   return;
                 }
                 if (!isBackgrounded()) {
@@ -297,6 +298,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myInitialized) {
       myInitialized = true;
+
+      if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
+        final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
+        if (text != null) {
+          myLookup.setAdvertisementText(text);
+        }
+      }
+
       myLookup.show();
     }
     myLookup.refreshUi();
@@ -407,7 +416,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           LookupManager.getInstance(myContextOriginal.project).hideActiveLookup();
           assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
 
-          if (myLookup.isFocused() ) {
+          if (!isAutopopupCompletion() ) {
             myHandler.handleEmptyLookup(myContextOriginal.project, myEditor, myParameters, CompletionProgressIndicator.this);
           }
         } else {
@@ -531,5 +540,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
     return completionType == myParameters.getCompletionType() && editor == myEditor;
+  }
+
+  @Override
+  public boolean isAutopopupCompletion() {
+    return !myLookup.isFocused();
   }
 }
