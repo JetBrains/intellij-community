@@ -36,8 +36,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.FocusRequestor;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBusConnection;
 
@@ -52,7 +50,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
 
-    if (!Character.isLetter(charTyped)) {
+    if (!Character.isLetter(charTyped) && charTyped != '_') {
       finishAutopopupCompletion();
       return Result.CONTINUE;
     }
