@@ -11,12 +11,13 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public boolean execute(ReferencesSearch.SearchParameters queryParameters, final Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyFunction)) {
       return true;
