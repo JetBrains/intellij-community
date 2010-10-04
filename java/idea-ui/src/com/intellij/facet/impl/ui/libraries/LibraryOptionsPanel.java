@@ -254,7 +254,7 @@ public class LibraryOptionsPanel {
     final String downloadPath = mySettings.getDirectoryForDownloadedLibrariesPath();
     final String basePath = mySettings.getBaseDirectoryForDownloadedFiles();
     String path;
-    if (FileUtil.startsWith(downloadPath, basePath)) {
+    if (!StringUtil.isEmpty(basePath) && FileUtil.startsWith(downloadPath, basePath)) {
       path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
     }
     else {
