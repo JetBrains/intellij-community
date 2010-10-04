@@ -84,11 +84,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     final Instruction[] instructions = flow.getInstructions();
 
     // Iteration over write accesses
-    for (int i = 0; i < instructions.length; i++) {
-      final Instruction instruction = instructions[i];
+    for (final Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
-      if (element instanceof PyFunction && owner instanceof PyFunction){
-        if (!myUsedElements.contains(element)){
+      if (element instanceof PyFunction && owner instanceof PyFunction) {
+        if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
       }
@@ -99,7 +98,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           continue;
         }
         // Ignore elements out of scope
-        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)){
+        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
           continue;
         }
         // Ignore arguments of import statement
@@ -110,13 +109,13 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           continue;
         }
         // Ingore self references assignments
-        if (element instanceof PyTargetExpression && element.getChildren().length != 0){
+        if (element instanceof PyTargetExpression && element.getChildren().length != 0) {
           continue;
         }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
         if (access.isWriteAccess()) {
-          if (!myUsedElements.contains(element)){
+          if (!myUsedElements.contains(element)) {
             myUnusedElements.add(element);
           }
         }
