@@ -123,13 +123,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
             maybeShowFor(c, me);
           }
         }
-      } else if (myCurrentComponent == null) {
-        //maybeShowFor(c, me);
+      } else if (myCurrentComponent == null && myQueuedComponent == null) {
+        maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
         hideCurrent(me);
       }
+    } else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
+      hideCurrent(me);
     }
   }
 
@@ -170,7 +172,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myShowRequest = new Runnable() {
       @Override
       public void run() {
-        if (myShowRequest == null) return;
+        if (myShowRequest == null) {
+          return;
+        }
 
         if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
           hideCurrent(null);
@@ -249,6 +253,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myCurrentTipIsCentered = toCenter;
     myCurrentTooltip = tooltip;
     myShowRequest = null;
+    myQueuedComponent = null;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(new Runnable() {
@@ -311,6 +316,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private boolean hideCurrent(@Nullable MouseEvent me) {
     myShowRequest = null;
+    myQueuedComponent = null;
+
     if (myCurrentTooltip == null) return true;
 
     if (me != null && myCurrentTipUi != null) {
