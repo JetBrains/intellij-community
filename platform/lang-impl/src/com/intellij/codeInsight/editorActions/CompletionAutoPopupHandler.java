@@ -36,6 +36,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.FocusRequestor;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBusConnection;
 
@@ -92,11 +94,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       }
     });
 
+    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
+
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed() || !file.isValid()) return;
-        if (editor.isDisposed() || FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
+        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
         final Lookup lookup = LookupManager.getActiveLookup(editor);
