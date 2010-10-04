@@ -62,7 +62,7 @@ public class HighlightMethodUtil {
                                      HighlightUtil.formatClass(method2.getContainingClass()));
   }
 
-  public static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
+  static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                           @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
                                                           boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
@@ -110,7 +110,7 @@ public class HighlightMethodUtil {
   }
 
 
-  public static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
+  static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
                                                                 List<HierarchicalMethodSignature> superMethodSignatures,
                                                                 boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
@@ -214,7 +214,7 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
+  static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                             List<HierarchicalMethodSignature> superMethodSignatures,
                                                             boolean includeRealPositionInfo, PsiClass analyzedClass) {
     PsiMethod method = methodSignature.getMethod();
@@ -294,7 +294,7 @@ public class HighlightMethodUtil {
     return false;
   }
 
-  public static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
+  static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
     JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
