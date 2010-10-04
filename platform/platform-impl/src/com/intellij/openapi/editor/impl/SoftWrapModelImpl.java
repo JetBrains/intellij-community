@@ -108,7 +108,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   public boolean isSoftWrappingEnabled() {
-    if (myEditor.isOneLineMode()) {
+    if (myEditor.isOneLineMode() || myEditor.getScrollingModel().getVisibleArea().width <= 0) {
       return false;
     }
 
