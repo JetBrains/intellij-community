@@ -219,7 +219,7 @@ public class CodeInsightUtil {
   public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
     return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, new Comparator<PsiElement>() {
       public int compare(PsiElement o1, PsiElement o2) {
-        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter) {
+        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter && ((PsiParameter)o1).getDeclarationScope() instanceof PsiMethod) {
           return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
         }
         return 1;
