@@ -138,9 +138,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else
       envs = new HashMap<String, String>(envs);
 
-    addPredefinedEnvironmentVariables(envs);
+    addPredefinedEnvironmentVariables(envs, myConfig.isPassParentEnvs());
     addCommonEnvironmentVariables(envs);
-
 
     commandLine.setEnvParams(envs);
     commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
@@ -150,7 +149,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonEnvUtil.setPythonUnbuffered(envs);
   }
 
-  protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+  protected void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);

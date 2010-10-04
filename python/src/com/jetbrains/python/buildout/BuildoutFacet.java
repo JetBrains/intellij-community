@@ -185,7 +185,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
     // add pycharm helpers to pythonpath so that fixGetpass is importable
     String PYTHONPATH = "PYTHONPATH";
-    new_env.put(PYTHONPATH, GeneralCommandLine.appendToPathEnvVar(new_env.get(PYTHONPATH), PythonHelpersLocator.getHelpersRoot().getAbsolutePath()));
+    new_env.put(PYTHONPATH, PythonEnvUtil.appendToPathEnvVar(new_env.get(PYTHONPATH), PythonHelpersLocator.getHelpersRoot().getAbsolutePath()));
     /*
     // set prependable paths
     List<String> paths = facet.getAdditionalPythonPath();

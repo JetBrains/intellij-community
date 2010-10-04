@@ -14,6 +14,14 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public abstract class PythonSdkFlavor {
+  public static String appendSystemPythonPath(String pythonPath) {
+    String syspath = systemPythonPath();
+    if (syspath != null) {
+      pythonPath += File.pathSeparator + syspath;
+    }
+    return pythonPath;
+  }
+
   public Collection<String> suggestHomePaths() {
     return Collections.emptyList();
   }
@@ -79,7 +87,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public static void addToEnv(GeneralCommandLine cmd, final String key, String value) {
-    Map<String,String> envs = cmd.getEnvParams();
+    Map<String, String> envs = cmd.getEnvParams();
     if (envs == null) {
       envs = new HashMap<String, String>();
       cmd.setEnvParams(envs);
@@ -94,12 +102,18 @@ public abstract class PythonSdkFlavor {
   public static void addToEnv(Map<String, String> envs, String key, String value) {
     if (envs.containsKey(key)) {
       envs.put(key, value + File.pathSeparatorChar + envs.get(key));
-    } else {
+    }
+    else {
       envs.put(key, value);
     }
   }
 
-  private static final String PYTHONPATH = "PYTHONPATH";
+  @Nullable
+  public static String systemPythonPath() {
+    return System.getenv(PYTHONPATH);
+  }
+
+  public static final String PYTHONPATH = "PYTHONPATH";
 
   public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
   }

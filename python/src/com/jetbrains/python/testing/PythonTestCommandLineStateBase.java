@@ -23,7 +23,6 @@ import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
-import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,19 +59,28 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
     }
 
-    Collection<String> pythonPathList = buildPythonPath();
-    String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfiguration.getInterpreterPath());
-    if (flavor != null) {
-      flavor.addToPythonPath(cmd, pythonPath);
-    }
-
     ParamsGroup exe_options = cmd.getParametersList().getParamsGroup(GROUP_EXE_OPTIONS);
     assert exe_options != null;
     exe_options.addParametersString(myConfiguration.getInterpreterOptions());
     addTestRunnerParameters(cmd);
 
     return cmd;
+  }
+
+  @Override
+  protected void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
+    super.addPredefinedEnvironmentVariables(envs, passParentEnvs);
+    Collection<String> pythonPathList = buildPythonPath();
+    String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
+
+    if (passParentEnvs && !envs.containsKey(PythonSdkFlavor.PYTHONPATH)) {
+      pythonPath = PythonSdkFlavor.appendSystemPythonPath(pythonPath);
+    }
+
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfiguration.getInterpreterPath());
+    if (flavor != null) {
+      flavor.addToPythonPath(envs, pythonPath);
+    }
   }
 
   protected Collection<String> buildPythonPath() {
