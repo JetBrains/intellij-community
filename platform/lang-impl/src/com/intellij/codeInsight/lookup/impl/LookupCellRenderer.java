@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DottedBorder;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -118,10 +117,10 @@ public class LookupCellRenderer implements ListCellRenderer {
 
 
     if (isSelected && !myLookup.isFocused() && myLookup.isCompletion()) {
-      myPanel.setBorder(new DottedBorder(Color.gray));
+      //myPanel.setBorder(new DottedBorder(Color.gray));
       isSelected = false;
     } else {
-      myPanel.setBorder(null);
+      //myPanel.setBorder(null);
     }
 
     final LookupElement item = (LookupElement)value;
