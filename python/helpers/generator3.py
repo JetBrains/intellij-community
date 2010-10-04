@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 9, 21, 17, 53, 8) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 10, 2, 17, 55, 36) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -28,7 +28,6 @@ OUR_OWN_DATETIME = datetime(2010, 9, 21, 17, 53, 8) # datetime.now() of edit tim
 import sys
 import os
 import string
-import stat
 import types
 import atexit
 import keyword
@@ -380,7 +379,7 @@ def transformSeq(results, toplevel=True):
                     return ["p_" + results[0][1]] # NOTE: fishy. investigate.
             elif token_name == TRIPLE_DOT:
                 if toplevel and not hasItemStartingWith(ret, "*"):
-                    ret.append("*more") # TODO check if *param is present already
+                    ret.append("*more")
                 else:
                 # we're in a "foo, (bar1, bar2, ...)"; make it "foo, bar_tuple"
                     return extractAlphaPrefix(results[0][1]) + "_tuple"
@@ -620,6 +619,11 @@ class ModuleRedeclarator(object):
         ("datetime", "tzinfo", "fromutc"): "(self, date_time)",
         ("datetime", "tzinfo", "tzname"): "(self, date_time)",
         ("datetime", "tzinfo", "utcoffset"): "(self, date_time)",
+
+        # NOTE: here we stand on shaky ground providing sigs for 3rd-party modules, though well-known
+        ("numpy.core.multiarray", "ndarray", "__array__") : "(self, dtype=None)",
+        ("numpy.core.multiarray", None, "arange") : "(start=None, stop=None, step=None, dtype=None)", # same as range()
+        ("numpy.core.multiarray", None, "set_numeric_ops") : "(**ops)",
     }
 
     # known properties of modules
@@ -767,6 +771,14 @@ class ModuleRedeclarator(object):
             ("datetime", "microsecond"): ('r', G_INT),
         },
     }
+
+    # symbols that look re-exported but surely aren't
+    # (qualified_module_name",..
+    KNOWN_FAKE_REEXPORTERS = (
+      "gtk._gtk",
+      "gobject._gobject",
+      "numpy.core.multiarray",
+    )
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -1290,7 +1302,11 @@ class ModuleRedeclarator(object):
         """
         self.out("# encoding: utf-8", 0) # NOTE: maybe encoding should be selectable
         if hasattr(self.module, "__name__"):
-            mod_name = " calls itself " + self.module.__name__
+            self_name = self.module.__name__
+            if self_name != p_name:
+              mod_name = " calls itself " + self_name
+            else:
+              mod_name = ""
         else:
             mod_name = " does not know its name"
         self.out("# module " + p_name + mod_name, 0)
@@ -1330,7 +1346,7 @@ class ModuleRedeclarator(object):
             if sys.platform == "cli" and p_name != "System":
                 # IronPython has non-trivial reexports in System module, but not in others
                 imported_name = None
-            elif p_name == 'gtk._gtk' or p_name == 'gobject._gobject':
+            elif p_name in self.KNOWN_FAKE_REEXPORTERS:
                 # some weirdness with module references, can't figure it out, assume no reexports
                 imported_name = None
             else:

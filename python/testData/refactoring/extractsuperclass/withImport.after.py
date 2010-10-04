@@ -1,5 +1,5 @@
 import os
-from refactoring.extractsuperclass.suppa import Suppa
+from refactoring.extractsuperclass import Suppa
 
 class A(Suppa):
     pass

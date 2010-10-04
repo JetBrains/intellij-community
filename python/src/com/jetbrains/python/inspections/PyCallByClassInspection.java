@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -18,7 +19,13 @@ import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
 
 /**
- * Checks for for calls like X.method(y,...), where y is not an instance of X.
+ * Checks for for calls like <code>X.method(y,...)</code>, where y is not an instance of X.
+ * <br/>
+ * Not marked are cases of inheritance calls in old-style classes, like:<pre>
+ * class B(A):
+ *   def foo(self):
+ *     A.foo(self)
+ * </pre>
  * <br/>
  * User: dcheryasov
  * Date: Sep 22, 2010 12:21:44 PM
@@ -91,11 +98,18 @@ public class PyCallByClassInspection extends PyInspection {
                             }
                             PyClass first_arg_class = first_arg_class_type.getPyClass();
                             if (first_arg_class != null && first_arg_class != qual_class) {
-                              // in constructors it's fine
+                              // delegating to a parent is fine
                               if (markedCallee.getCallable() instanceof PyFunction) {
-                                if (PyNames.INIT.equals(markedCallee.getCallable().getName())) {
-                                  if (first_arg_class.isSubclass(qual_class)) {
-                                    break;
+                                Callable callable = PsiTreeUtil.getParentOfType(call, Callable.class);
+                                if (callable != null) {
+                                  PyFunction method = callable.asMethod();
+                                  if (method != null) {
+                                    PyClass calling_class = method.getContainingClass();
+                                    assert calling_class != null; // it's a method
+                                    if (first_arg_class.isSubclass(qual_class) && calling_class.isSubclass(qual_class)) {
+                                      break;
+                                      // TODO: might propose to switch to super() here
+                                    }
                                   }
                                 }
                               }

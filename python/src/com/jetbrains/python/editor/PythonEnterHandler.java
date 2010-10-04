@@ -1,5 +1,6 @@
 package com.jetbrains.python.editor;
 
+import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
@@ -61,7 +62,7 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     }
 
     if (statementBefore != null && PsiTreeUtil.hasErrorElements(statementBefore)) {
-      final Boolean autoWrapping = DataManager.getInstance().loadFromDataContext(dataContext, TypedHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
+      final Boolean autoWrapping = DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
       if (autoWrapping == null) {
         // code is already bad, don't mess it up even further
         return Result.Continue;

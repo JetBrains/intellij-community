@@ -234,7 +234,7 @@ public class PythonSdkType extends SdkType {
       if (passParentEnvs) {
         // append to PATH
         path_value = System.getenv(PATH);
-        path_value = GeneralCommandLine.appendToPathEnvVar(path_value, virtualenv_bin);
+        path_value = PythonEnvUtil.appendToPathEnvVar(path_value, virtualenv_bin);
       }
       else path_value = virtualenv_bin;
       Map<String, String> new_env = PythonEnvUtil.cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.

@@ -5,7 +5,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -16,12 +18,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -91,62 +92,117 @@ public class PyExtractSuperclassHelper {
     }
 
     PsiFile psiFile = null;
-    final PsiDirectory psiDir;
-    // file does not exist
-    if (file == null) {
-      final String filename;
-      final String path;
-      if (targetFile.endsWith(PythonFileType.INSTANCE.getDefaultExtension())) {
-        path = PathUtil.getParentPath(targetFile);
-        filename = PathUtil.getFileName(targetFile);
-      } else {
-        path = targetFile;
-        filename = constructFilename(newClass);
+    try {
+      if (file == null) {
+        // file does not exist
+        final String filename;
+        final String path;
+        if (targetFile.endsWith(PythonFileType.INSTANCE.getDefaultExtension())) {
+          path = PathUtil.getParentPath(targetFile);
+          filename = PathUtil.getFileName(targetFile);
+        }
+        else {
+          path = targetFile;
+          filename = PyNames.INIT_DOT_PY; // user requested putting the class into this package directly
+        }
+        psiFile = placeFile(project, path, filename);
       }
-      try {
-        final boolean shouldCreateInit = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(path)) == null;
-        final VirtualFile dir = VfsUtil.createDirectoryIfMissing(path);
-        psiDir = dir != null ? PsiManager.getInstance(project).findDirectory(dir) : null;
-        psiFile = psiDir != null ? psiDir.createFile(filename) : null;
-        //noinspection ConstantConditions
-        createInitIfNeeded(psiDir, shouldCreateInit, NameSuggestorUtil.toUnderscoreCase(newClass.getName()));
-      } catch (IOException e) {
-        LOG.error(e);
+      else if (file.isDirectory()) { // existing directory
+        psiFile = placeFile(project, file.getPath(), PyNames.INIT_DOT_PY);
       }
-    } else if (file.isDirectory()) {
-      // existing directory
-      psiDir = PsiManager.getInstance(project).findDirectory(file);
-      final String filename = constructFilename(newClass);
-      LOG.assertTrue(psiDir != null);
-      
-      psiFile = psiDir.findFile(filename);
-      psiFile = psiFile != null ? psiFile : psiDir.createFile(filename);
-      if ((file.findChild(PyNames.INIT_DOT_PY)) == null) {
-        //noinspection ConstantConditions
-        createInitIfNeeded(psiDir, true, NameSuggestorUtil.toUnderscoreCase(newClass.getName()));
+      else { // existing file
+        psiFile = PsiManager.getInstance(project).findFile(file);
       }
-    } else {
-      // existing file
-      psiFile = PsiManager.getInstance(project).findFile(file);
+    } catch (IOException e) {
+      LOG.error(e);
     }
 
     LOG.assertTrue(psiFile != null);
+    if (psiFile.getLastChild() != null) {
+      // TODO: make the number of newlines depend on style setting
+      psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON24, PsiWhiteSpace.class, "\n\n"));
+    }
     newClass = (PyClass)psiFile.add(newClass);
     PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
     return newClass;
   }
 
-  private static void createInitIfNeeded(PsiDirectory psiDir, boolean shouldCreateInit, String filename) {
-    if (psiDir != null && shouldCreateInit) {
-      final PsiFile psiFile = psiDir.createFile(PyNames.INIT_DOT_PY);
-      final PyElementGenerator gen = PyElementGenerator.getInstance(psiDir.getProject());
-      final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + filename + "\"]");
-      psiFile.add(statement);
-    }
+  /**
+   * Places a file at the end of given path, creating intermediate dirs and inits.
+   * @param project
+   * @param path
+   * @param filename
+   * @return the placed file
+   * @throws IOException
+   */
+  private static PsiFile placeFile(Project project, String path, String filename) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path);
+    LOG.assertTrue(psiDir != null);
+    PsiFile psiFile = psiDir.findFile(filename);
+    psiFile = psiFile != null ? psiFile : psiDir.createFile(filename);
+    return psiFile;
   }
 
-  private static String constructFilename(PyClass newClass) {
-    //noinspection ConstantConditions
-    return NameSuggestorUtil.toUnderscoreCase(newClass.getName()) + "." + PythonFileType.INSTANCE.getDefaultExtension();
+  /**
+   * Create all intermediate dirs with inits from one of roots up to target dir.
+   * @param project
+   * @param target a full path to target dir
+   * @return deepest child directory, or null if target is not in roots or process fails at some point.
+   */
+  @Nullable
+  private static PsiDirectory createDirectories(Project project, String target) throws IOException {
+    String the_rest = null;
+    VirtualFile the_root = null;
+    PsiDirectory ret = null;
+
+    // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
+    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
+      final String root_path = file.getPath();
+      if (target.startsWith(root_path)) {
+        the_rest = target.substring(root_path.length());
+        the_root = file;
+        break;
+      }
+    }
+    if (the_root == null) {
+      LOG.error("Can't find '"+ target +"' among roots");
+      return null;
+    }
+    if (the_rest != null) {
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      final PsiManager psi_mgr = PsiManager.getInstance(project);
+      String[] dirs = the_rest.split("/");
+      int i = 0;
+      if ("".equals(dirs[0])) i = 1;
+      while (i < dirs.length) {
+        VirtualFile subdir = the_root.findChild(dirs[i]);
+        if (subdir != null) {
+          if (!subdir.isDirectory()) {
+            LOG.error("Expected dir, but got non-dir: " + subdir.getPath());
+            return null;
+          }
+        }
+        else subdir = the_root.createChildDirectory(lfs, dirs[i]);
+        ret = psi_mgr.findDirectory(subdir);
+        VirtualFile init_vfile = subdir.findChild(PyNames.INIT_DOT_PY);
+        if (init_vfile == null) init_vfile = subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
+        /*
+        // here we could add an __all__ clause to the __init__.py.
+        // * there's no point to do so; we import the class directly;
+        // * we can't do this consistently since __init__.py may already exist and be nontrivial.
+        if (i == dirs.length - 1) {
+          PsiFile init_file = psi_mgr.findFile(init_vfile);
+          LOG.assertTrue(init_file != null);
+          final PyElementGenerator gen = PyElementGenerator.getInstance(project);
+          final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
+          init_file.add(statement);
+        }
+        */
+        the_root = subdir;
+        i += 1;
+      }
+    }
+    return ret;
   }
+
 }
