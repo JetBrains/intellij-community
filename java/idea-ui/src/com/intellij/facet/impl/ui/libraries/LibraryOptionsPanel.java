@@ -104,6 +104,7 @@ public class LibraryOptionsPanel {
         return StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
       }
     });
+
     for (Library library : libraries) {
       ExistingLibraryEditor libraryEditor = librariesContainer.getLibraryEditor(library);
       if (libraryEditor == null) {
@@ -274,14 +275,23 @@ public class LibraryOptionsPanel {
   }
 
   public void apply() {
+    final Choice option = myButtonEnumModel.getSelected();
+    mySettings.setDownloadLibraries(option == Choice.DOWNLOAD);
+
     final Object item = myExistingLibraryComboBox.getSelectedItem();
-    if (item instanceof ExistingLibraryEditor) {
+    if (option == Choice.USE_LIBRARY && item instanceof ExistingLibraryEditor) {
       mySettings.setSelectedExistingLibrary(((ExistingLibraryEditor)item).getLibrary());
     }
-    else if (item instanceof NewLibraryEditor) {
+    else {
+      mySettings.setSelectedExistingLibrary(null);
+    }
+
+    if (option == Choice.USE_LIBRARY && item instanceof NewLibraryEditor) {
       mySettings.setNewLibraryEditor((NewLibraryEditor)item);
     }
-    mySettings.setDownloadLibraries(myButtonEnumModel.getSelected() == Choice.DOWNLOAD);
+    else {
+      mySettings.setNewLibraryEditor(null);
+    }
   }
 
   public JComponent getMainPanel() {

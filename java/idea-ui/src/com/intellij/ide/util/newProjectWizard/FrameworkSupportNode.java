@@ -22,7 +22,6 @@ import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -88,18 +87,12 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     return description;
   }
 
-  @Nullable
-  public LibraryOptionsPanel getLibraryCompositionOptionsPanel(LibrariesContainer librariesContainer) {
-    final LibraryCompositionSettings libraryCompositionSettings = getLibraryCompositionSettings();
-    if (myLibraryCompositionOptionsPanel == null || !myLibraryCompositionOptionsPanel.getSettings().equals(libraryCompositionSettings)) {
-      if (libraryCompositionSettings != null) {
-        myLibraryCompositionOptionsPanel = new LibraryOptionsPanel(libraryCompositionSettings, librariesContainer, myConfigurable.getComponent() != null);
-      }
-      else {
-        myLibraryCompositionOptionsPanel = null;
-      }
-    }
+  public LibraryOptionsPanel getLibraryCompositionOptionsPanel() {
     return myLibraryCompositionOptionsPanel;
+  }
+
+  public void setLibraryCompositionOptionsPanel(LibraryOptionsPanel libraryCompositionOptionsPanel) {
+    myLibraryCompositionOptionsPanel = libraryCompositionOptionsPanel;
   }
 
   public void setConfigurableComponentEnabled(final boolean enable) {

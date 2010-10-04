@@ -124,9 +124,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
       applyLibraryOptionsForSelected();
 
       myLastSelectedNode = selectedNode;
-      if (selectedNode != null) {
-        selectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer);
-      }
     }
   }
 
@@ -136,7 +133,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void applyLibraryOptionsForSelected() {
     if (myLastSelectedNode != null) {
-      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel(myLibrariesContainer);
+      final LibraryOptionsPanel optionsPanel = myLastSelectedNode.getLibraryCompositionOptionsPanel();
       if (optionsPanel != null) {
         optionsPanel.apply();
       }
@@ -195,14 +192,26 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void addLibrariesOptionsPanel(FrameworkSupportNode node, JPanel librariesOptionsPanelWrapper, boolean addSeparator) {
-    final LibraryOptionsPanel libraryOptionsPanel = node.getLibraryCompositionOptionsPanel(myLibrariesContainer);
-    if (libraryOptionsPanel != null) {
+    final LibraryCompositionSettings libraryCompositionSettings = node.getLibraryCompositionSettings();
+    final LibraryOptionsPanel oldPanel = node.getLibraryCompositionOptionsPanel();
+    LibraryOptionsPanel newPanel = oldPanel;
+    if (oldPanel == null || !oldPanel.getSettings().equals(libraryCompositionSettings)) {
+      if (libraryCompositionSettings != null) {
+        newPanel = new LibraryOptionsPanel(libraryCompositionSettings, myLibrariesContainer, node.getConfigurable().getComponent() != null);
+      }
+      else {
+        newPanel = null;
+      }
+    }
+    node.setLibraryCompositionOptionsPanel(newPanel);
+
+    if (newPanel != null) {
       if (addSeparator) {
         JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
         separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
         librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
       }
-      librariesOptionsPanelWrapper.add(BorderLayout.CENTER, libraryOptionsPanel.getMainPanel());
+      librariesOptionsPanelWrapper.add(BorderLayout.CENTER, newPanel.getMainPanel());
     }
   }
 
