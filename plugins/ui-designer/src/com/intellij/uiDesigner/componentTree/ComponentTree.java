@@ -404,7 +404,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
-        LOG.assertTrue(component != null);
+        if (component == null) return;
 
         final HighlightDisplayLevel level = ErrorAnalyzer.getHighlightDisplayLevel(myProject, component);
 
