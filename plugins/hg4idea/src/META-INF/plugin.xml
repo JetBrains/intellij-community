@@ -1,21 +1,7 @@
 <idea-plugin>
   <id>hg4idea</id>
   <name>hg4idea</name>
-  <description>
-  <![CDATA[
-  <b>IntelliJ IDEA</b> plugin for Mercurial integration - Luciad fork<br>
-  RubyMine and WebIDE should work but hg4idea was never tested against them.
-  <p>
-  System Requirements:
-  <ul>
-    <li>IntelliJ IDEA (Ultimate or Community)
-    <li>Java 5+
-    <li>Mercurial 1.3+
-  </ul>
-  <p>
-  Please refer to the bitbucket site for more information.
-  ]]>
-  </description>
+  <description>Provides integration with Mercurial version control system. Supports Mercurial 1.3+.</description>
   <category>VCS Integration</category>
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
