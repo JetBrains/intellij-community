@@ -188,39 +188,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   myUnusedElements.remove(element);
                   // In case when assignment is inside try part
                   final PyTryPart tryPart = PsiTreeUtil.getParentOfType(element, PyTryPart.class);
-                  if (tryPart != null) {
-                    boolean assignedOnEachFlow = true;
-                    final PyTryExceptStatement tryStatement = (PyTryExceptStatement)tryPart.getParent();
-                    for (final PyExceptPart exceptPart : tryStatement.getExceptParts()) {
-                      final Ref<Boolean> assignedOnThisFlow = new Ref<Boolean>(false);
-                      ControlFlowUtil.process(instructions, inst.num(), new Processor<Instruction>() {
-                        @Override
-                        public boolean process(final Instruction instruction) {
-                          if (assignedOnThisFlow.get() == Boolean.TRUE){
-                            return false;
-                          }
-                          final PsiElement instElement = instruction.getElement();
-                          if (instElement == null || !PsiTreeUtil.isAncestor(tryStatement, instElement, false)){
-                            return false;
-                          }
-                          if (((ReadWriteInstruction)inst).getAccess().isWriteAccess() &&
-                              name.equals(((ReadWriteInstruction)inst).getName()) &&
-                              PsiTreeUtil.isAncestor(exceptPart, instElement, false)){
-                            assignedOnThisFlow.set(true);
-                            return false;
-                          }
-                          return true;
-                        }
-                      });
-                      assignedOnEachFlow = assignedOnEachFlow && assignedOnThisFlow.get() == Boolean.TRUE;
-                      if (!assignedOnEachFlow){
-                        break;
-                      }
-                    }
-                    if (assignedOnEachFlow) {
-                      return ControlFlowUtil.Operation.CONTINUE;
-                    }
+                  if (tryPart != null && !isAssignedOnEachExceptFlow(inst, tryPart, instructions, name)) {
+                    return ControlFlowUtil.Operation.NEXT;
                   }
+                  return ControlFlowUtil.Operation.CONTINUE;
                 }
                 return ControlFlowUtil.Operation.NEXT;
               }
@@ -228,6 +199,43 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  private static boolean isAssignedOnEachExceptFlow(final Instruction inst,
+                                                    final PyTryPart tryPart,
+                                                    final Instruction[] instructions,
+                                                    final String name) {
+    final PyTryExceptStatement tryStatement = (PyTryExceptStatement)tryPart.getParent();
+    final PyExceptPart[] exceptParts = tryStatement.getExceptParts();
+    if (exceptParts.length == 0){
+      return false;
+    }
+    for (final PyExceptPart exceptPart : exceptParts) {
+      final Ref<Boolean> assignedOnThisFlow = new Ref<Boolean>(false);
+      ControlFlowUtil.process(instructions, inst.num(), new Processor<Instruction>() {
+        @Override
+        public boolean process(final Instruction instruction) {
+          if (assignedOnThisFlow.get() == Boolean.TRUE){
+            return false;
+          }
+          final PsiElement instElement = instruction.getElement();
+          if (instElement == null || !PsiTreeUtil.isAncestor(tryStatement, instElement, false)){
+            return false;
+          }
+          if (((ReadWriteInstruction)inst).getAccess().isWriteAccess() &&
+              name.equals(((ReadWriteInstruction)inst).getName()) &&
+              PsiTreeUtil.isAncestor(exceptPart, instElement, false)){
+            assignedOnThisFlow.set(true);
+            return false;
+          }
+          return true;
+        }
+      });
+      if (assignedOnThisFlow.get() != Boolean.TRUE){
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean callsLocals(final ScopeOwner owner) {
