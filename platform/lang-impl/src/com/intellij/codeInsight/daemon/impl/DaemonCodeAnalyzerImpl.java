@@ -446,7 +446,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         Object tt = marker.getErrorStripeTooltip();
         if (!(tt instanceof HighlightInfo)) return true;
         HighlightInfo info = (HighlightInfo)tt;
-        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0 || processor.process(info);
+        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
+               || info.highlighter == null
+               || processor.process(info);
       }
     });
   }
