@@ -624,7 +624,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final int index = method.getParameterList().getParameterIndex(parameter);
-        return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null);
+        return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null, null);
       }
     }
     return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false);

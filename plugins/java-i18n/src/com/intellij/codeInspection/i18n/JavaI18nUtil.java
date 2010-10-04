@@ -84,7 +84,7 @@ public class JavaI18nUtil extends I18nUtil {
 
     if (grParent instanceof PsiCall) {
       PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      if (method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, nonNlsTargets)) {
+      if (method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, annotationAttributeValues, nonNlsTargets)) {
         return true;
       }
     }
@@ -107,6 +107,7 @@ public class JavaI18nUtil extends I18nUtil {
                                                        final int idx,
                                                        @Nullable Collection<PsiMethod> processed,
                                                        final String annFqn,
+                                                       @Nullable Map<String, Object> annotationAttributeValues,
                                                        @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
     if (processed != null) {
       if (processed.contains(method)) return false;
@@ -135,6 +136,16 @@ public class JavaI18nUtil extends I18nUtil {
     }
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
     if (annotation != null) {
+      if (annotationAttributeValues != null) {
+        final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+        final PsiNameValuePair[] attributes = parameterList.getAttributes();
+        for (PsiNameValuePair attribute : attributes) {
+          final String name = attribute.getName();
+          if (annotationAttributeValues.containsKey(name)) {
+            annotationAttributeValues.put(name, attribute.getValue());
+          }
+        }
+      }
       return true;
     }
     if (nonNlsTargets != null) {
@@ -143,7 +154,7 @@ public class JavaI18nUtil extends I18nUtil {
 
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
-      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, null)) return true;
+      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, annotationAttributeValues, null)) return true;
     }
 
     return false;
