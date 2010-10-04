@@ -440,6 +440,28 @@ def layoutFull(String target, Set usedJars) {
       }
     }
   }
+
+  ant.echo(file: "$target/bin/idea.properties", append: "true", message:
+  isEap() ?
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'disabled' if you do not need to receive instant visual
+# notifications about fatal errors that happen to PyCharm or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=enabled
+"""
+
+  :
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'enabled' if you need to receive instant visual notifications about
+# fatal errors that happen to PyCharm or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=disabled
+"""
+  )
 }
 
 def layoutMac(Map args, String target) {
