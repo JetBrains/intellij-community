@@ -128,7 +128,11 @@ public class CompletionUtil {
 
 
   public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
-    return FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject());
+    if (FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject())) {
+      FeatureUsageTracker.getInstance().triggerFeatureShown(id);
+      return true;
+    }
+    return false;
   }
 
   public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
