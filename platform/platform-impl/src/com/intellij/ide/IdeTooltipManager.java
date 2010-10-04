@@ -107,11 +107,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (me.getComponent() == myCurrentComponent) {
+      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         hideCurrent(me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-      if (me.getComponent() == myCurrentComponent) {
+      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
           if (hideCurrent(me)) {
             maybeShowFor(c, me);
