@@ -100,16 +100,16 @@ public class EditorModificationUtil {
       s = filler + s;
     }
 
+    Document document = editor.getDocument();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
         oldOffset = selectionModel.getSelectionStart();
-        editor.getDocument().replaceString(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), s);
+        document.replaceString(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), s);
       } else {
-        editor.getDocument().insertString(oldOffset, s);
+        document.insertString(oldOffset, s);
       }
     } else {
       deleteSelectedText(editor);
-      Document document = editor.getDocument();
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       if (lineNumber >= document.getLineCount()){
         return insertStringAtCaret(editor, s, false, toMoveCaret);
