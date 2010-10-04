@@ -121,7 +121,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     });
   }
 
-  private void runAnnotators(final PsiElement element, HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
+  private void runAnnotators(final PsiElement element, final HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
@@ -131,6 +131,8 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         if (dumb && !DumbService.isDumbAware(annotator)) {
           return true;
         }
+
+        annotationHolder.setSession(holder.getAnnotationSession());
 
         annotator.annotate(element, annotationHolder);
         return true;
