@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,22 @@
  * Date: Jul 26, 2007
  * Time: 3:52:05 PM
  */
-package com.intellij.psi.impl.source.tree.java;
+package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
-public class PsiFieldUpdater<T,V> {
+public class AtomicFieldUpdater<T,V> {
   private static final Unsafe unsafe = getUnsafe();
 
+  @NotNull
   private static Unsafe getUnsafe() {
     Unsafe unsafe = null;
+    Class uc = Unsafe.class;
     try {
-      Class uc = Unsafe.class;
       Field[] fields = uc.getDeclaredFields();
       for (Field field : fields) {
         if (field.getName().equals("theUnsafe")) {
@@ -45,35 +48,46 @@ public class PsiFieldUpdater<T,V> {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    if (unsafe == null) {
+      throw new RuntimeException("Could not find 'theUnsafe' field in the " + uc);
+    }
     return unsafe;
   }
 
   private final long offset;
 
-  public static <T,V> PsiFieldUpdater<T,V> forOnlyFieldWithType(Class<T> ownerClass, Class<V> fieldType) {
-    return new PsiFieldUpdater<T,V>(ownerClass, fieldType);
+  @NotNull
+  public static <T,V> AtomicFieldUpdater<T,V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
+    return new AtomicFieldUpdater<T,V>(ownerClass, fieldType);
   }
-  private PsiFieldUpdater(Class<T> ownerClass, Class<V> fieldType) {
+
+  private AtomicFieldUpdater(Class<T> ownerClass, Class<V> fieldType) {
     Field[] declaredFields = ownerClass.getDeclaredFields();
     Field found = null;
     for (Field field : declaredFields) {
-      if (field.getType().equals(fieldType)) {
+      if (fieldType.isAssignableFrom(field.getType())) {
         if (found == null) {
           found = field;
         }
         else {
-          throw new IllegalArgumentException("Two fields with the "+fieldType+" found in the "+ownerClass+": "+found.getName() + " and "+field.getName());
+          throw new IllegalArgumentException("Two fields of "+fieldType+" found in the "+ownerClass+": "+found.getName() + " and "+field.getName());
         }
       }
     }
     if (found == null) {
-      throw new IllegalArgumentException("No field with the "+fieldType+" found in the "+ownerClass);
+      throw new IllegalArgumentException("No field of "+fieldType+" found in the "+ownerClass);
     }
     found.setAccessible(true);
+    if ((found.getModifiers() & Modifier.VOLATILE) == 0) {
+      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be volatile");
+    }
+    if ((found.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
+      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must non-final instance");
+    }
     offset = unsafe.objectFieldOffset(found);
   }
 
-  public boolean compareAndSet(T owner, V expected, V newValue) {
+  public boolean compareAndSet(@NotNull T owner, V expected, V newValue) {
     return unsafe.compareAndSwapObject(owner, offset, expected, newValue);
   }
 }

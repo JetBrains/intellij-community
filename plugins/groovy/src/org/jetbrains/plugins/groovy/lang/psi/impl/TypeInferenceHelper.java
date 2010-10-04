@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,7 +146,7 @@ public class TypeInferenceHelper {
           if (refName != null) {
             final PsiType type = infos.get(i).get(refName);
             if (type != null) {
-              result.put(ref, type);
+              result.put(ref, TypesUtil.boxPrimitiveType(type, owner.getManager(), owner.getResolveScope()));
             }
           }
         }

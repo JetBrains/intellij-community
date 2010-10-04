@@ -26,8 +26,10 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -46,6 +48,10 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -184,5 +190,21 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return findTargetElementNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
     }
     return null;
+  }
+
+  @Override
+  public void update(final AnActionEvent event) {
+    final InputEvent inputEvent = event.getInputEvent();
+    if (inputEvent instanceof MouseEvent) {
+      final MouseEvent mouseEvent = (MouseEvent)inputEvent;
+      final Point point = mouseEvent.getPoint();
+      final Component componentAt = SwingUtilities.getDeepestComponentAt(inputEvent.getComponent(), point.x, point.y);
+      if (componentAt instanceof EditorGutterComponentEx) {
+        event.getPresentation().setEnabled(false);
+        return;
+      }
+    }
+
+    super.update(event);
   }
 }
