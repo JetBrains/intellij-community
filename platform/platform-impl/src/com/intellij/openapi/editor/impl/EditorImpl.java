@@ -4326,13 +4326,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myCommandProcessor != null) {
         Runnable runnable = new Runnable() {
           public void run() {
-            processMousePressed(e);
+            processMousePressed(e, e.getSource() == getContentComponent());
           }
         };
         myCommandProcessor.executeCommand(myProject, runnable, "", DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
       }
       else {
-        processMousePressed(e);
+        processMousePressed(e, e.getSource() == getContentComponent());
       }
     }
 
@@ -4393,7 +4393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void processMousePressed(MouseEvent e) {
+    private void processMousePressed(MouseEvent e, boolean moveCaretToClickPosition) {
       myInitialMouseEvent = e;
 
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
@@ -4435,7 +4435,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-      moveCaretToScreenPos(x, y);
+      if (moveCaretToClickPosition) {
+        moveCaretToScreenPos(x, y);
+      }
 
       if (e.isPopupTrigger()) return;
 
