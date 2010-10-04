@@ -210,7 +210,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   if (progress.isCanceled()) return;
                   MarkupModel markupModel = myDocument.getMarkupModel(myProject);
 
-                  UpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, toApply, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
+                  ProperTextRange range = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
+                  UpdateHighlightersUtil.setHighlightersInRange(range, toApply, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
                 }
               });
               UIUtil.invokeLaterIfNeeded(new Runnable() {
