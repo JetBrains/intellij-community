@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   /**
    * Hides popup as if Enter was pressed or or any other "accept" action
    */
-
   void closeOk(@Nullable InputEvent e);
 
   /**
@@ -122,6 +121,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * @param e
    */
   void cancel(@Nullable InputEvent e);
+
   /**
    * Checks if it's currently allowed to close the popup.
    *
@@ -145,8 +145,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
   JComponent getContent();
 
   /**
-   * Moves popup to the given point. Does nothhinbg if popup is invisible.
-   * @param screenPoint
+   * Moves popup to the given point. Does nothing if popup is invisible.
+   * @param screenPoint Point to move to.
    */
   void setLocation(@NotNull Point screenPoint);
 
