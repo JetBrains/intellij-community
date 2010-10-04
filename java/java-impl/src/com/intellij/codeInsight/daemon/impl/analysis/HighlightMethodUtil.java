@@ -683,6 +683,8 @@ public class HighlightMethodUtil {
   @Language("HTML")
   private static String createMismatchedArgsHtmlTooltipArgumentsRow(final PsiExpression[] expressions, final PsiParameter[] parameters,
                                                                       final PsiSubstitutor substitutor, final int cols) {
+    @Language("HTML")
+
     @NonNls String ms = "";
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
