@@ -135,7 +135,7 @@ target('default': "Build artifacts") {
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
   setProperty("isEap", isEap())
 
-  if (isEap()) {
+  if (isEap) {
     setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
@@ -212,7 +212,7 @@ target('default': "Build artifacts") {
   
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
-  def root = "PyCharm-${buildNumber}.app"
+  def root = isEap() ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
