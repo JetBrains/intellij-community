@@ -156,7 +156,7 @@ public class IdeaProjectLoader {
       project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
     def outputTag = componentTag?.output?.getAt(0)
-    String outputPath = outputTag != null ? pathFromUrl(outputTag.'@url') : null
+    String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
     projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
     project.projectSdk = sdk
   }
@@ -198,7 +198,7 @@ public class IdeaProjectLoader {
 
       libraryTag.CLASSES.root.each {Node rootTag ->
         def url = rootTag.@url
-        def path = macroExpander.expandMacros(pathFromUrl(url))
+        def path = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))
         if (url in jarDirs.keySet()) {
           def paths = []
           collectChildJars(path, jarDirs[url], paths)
@@ -318,7 +318,7 @@ public class IdeaProjectLoader {
         def srcFolderExists = componentTag.content.sourceFolder[0] != null;
 
         componentTag.content.sourceFolder.each {Node folderTag ->
-          String path = moduleMacroExpander.expandMacros(pathFromUrl(folderTag.@url))
+          String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(folderTag.@url))
           String prefix = folderTag.@packagePrefix
 
           if (folderTag.attribute("isTestSource") == "true") {
@@ -334,7 +334,7 @@ public class IdeaProjectLoader {
         }
 
         componentTag.content.excludeFolder.each {Node exTag ->
-          String path = moduleMacroExpander.expandMacros(pathFromUrl(exTag.@url))
+          String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(exTag.@url))
           exclude path
         }
 
@@ -354,8 +354,8 @@ public class IdeaProjectLoader {
             currentModule.testOutputPath = new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath
           }
           else {
-            currentModule.outputPath = moduleMacroExpander.expandMacros(pathFromUrl(componentTag.output[0]?.@url))
-            currentModule.testOutputPath = moduleMacroExpander.expandMacros(pathFromUrl(componentTag."output-test"[0]?.'@url'))
+            currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))
+            currentModule.testOutputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url'))
             if (currentModule.testOutputPath == null) {
               currentModule.testOutputPath = currentModule.outputPath
             }
@@ -381,19 +381,6 @@ public class IdeaProjectLoader {
     }
 
     return "1.6"
-  }
-
-  static String pathFromUrl(String url) {
-    if (url == null) return null
-    if (url.startsWith("file://")) {
-      return url.substring("file://".length())
-    }
-    else if (url.startsWith("jar://")) {
-      url = url.substring("jar://".length())
-      if (url.endsWith("!/"))
-        url = url.substring(0, url.length() - "!/".length())
-    }
-    url
   }
 
   private DependencyScope getScopeById(String id) {

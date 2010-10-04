@@ -6,8 +6,9 @@ import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.idea.OwnServiceLoader
 
- /**
+/**
  * @author max
  */
 class ProjectBuilder {
@@ -26,6 +27,7 @@ class ProjectBuilder {
   final List<ModuleBuilder> weavingBuilders = []
   final CustomTasksBuilder preTasksBuilder = new CustomTasksBuilder()
   final CustomTasksBuilder postTasksBuilder = new CustomTasksBuilder()
+  static final OwnServiceLoader<ModuleBuilderService> moduleBuilderLoader = OwnServiceLoader.load(ModuleBuilderService.class)
 
   final List<JpsBuildListener> listeners = [new BuildStatisticsListener()]
   BuildInfoPrinter buildInfoPrinter = new DefaultBuildInfoPrinter()
@@ -42,6 +44,8 @@ class ProjectBuilder {
     weavingBuilders << new JetBrainsInstrumentations(project)
     productionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE)
     testChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE)
+
+    moduleBuilderLoader*.registerBuilders(this)
   }
 
   private def ProjectChunks getChunks(boolean includeTests) {

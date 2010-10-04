@@ -4,6 +4,7 @@ import org.jetbrains.jps.Module
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.dag.DagNode
+import org.jetbrains.jps.builders.BuildUtil
 
 /**
  * @author nik
@@ -121,7 +122,7 @@ class ArtifactBuilder {
     if (targetFolder == null) {
       return artifact.outputPath
     }
-    return new File(new File(targetFolder, "artifacts"), suggestFileName(artifact.name)).absolutePath
+    return new File(new File(targetFolder, "artifacts"), BuildUtil.suggestFileName(artifact.name)).absolutePath
   }
 
   def preBuildTask(String artifactName, Closure task) {
@@ -138,10 +139,6 @@ class ArtifactBuilder {
         task(artifact, output)
       }
     } as ArtifactBuildTask)
-  }
-
-  private static String suggestFileName(String text) {
-    return text.replaceAll(/(;|:|\s)/, "_");
   }
 }
 

@@ -2,6 +2,8 @@ package org.jetbrains.jps.javaee
 
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.*
+import org.jetbrains.jps.idea.Facet
+import org.jetbrains.jps.idea.IdeaProjectLoadingUtil
 
 /**
  * @author nik
@@ -10,11 +12,7 @@ class JavaeeFacetResourcesElement extends ComplexLayoutElement {
   String facetId
 
   List<LayoutElement> getSubstitution(Project project) {
-    def moduleName = facetId.substring(0, facetId.indexOf('/'))
-    def facet = project.modules[moduleName]?.facets[facetId]
-    if (facet == null) {
-      project.error("Unknown facet id: $facetId")
-    }
+    Facet facet = IdeaProjectLoadingUtil.findFacetById(project, facetId)
 
     if (!(facet instanceof JavaeeFacet)) {
       project.error("$facetId facet is not JavaEE facet")
