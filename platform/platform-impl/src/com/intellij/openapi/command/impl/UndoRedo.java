@@ -16,8 +16,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.Function;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
@@ -27,10 +25,11 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,16 +41,16 @@ abstract class UndoRedo {
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
-    do {
-      UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
-      undoOrRedo.execute();
-      boolean shouldRepeat = undoOrRedo.isTransparentsOnly() && undoOrRedo.hasMoreActions();
-      if (!shouldRepeat) break;
-    }
-    while (true);
-  }
-
+  //public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
+  //  do {
+  //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
+  //    undoOrRedo.doExecute();
+  //    boolean shouldRepeat = undoOrRedo.isTransparentsOnly() && undoOrRedo.hasMoreActions();
+  //    if (!shouldRepeat) break;
+  //  }
+  //  while (true);
+  //}
+  //
   protected UndoRedo(UndoManagerImpl manager, FileEditor editor) {
     myManager = manager;
     myEditor = editor;
@@ -62,11 +61,11 @@ abstract class UndoRedo {
     return getStackHolder().getLastAction(getDecRefs());
   }
 
-  private boolean isTransparentsOnly() {
+  boolean isTransparentsOnly() {
     return myUndoableGroup.isTransparentsOnly();
   }
 
-  private boolean hasMoreActions() {
+  boolean hasMoreActions() {
     return getStackHolder().hasActions(getDecRefs());
   }
 
@@ -90,7 +89,7 @@ abstract class UndoRedo {
 
   protected abstract void setBeforeState(EditorAndState state);
 
-  public void execute() {
+  public void execute(boolean drop) {
     if (!myUndoableGroup.isUndoable()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
@@ -137,7 +136,9 @@ abstract class UndoRedo {
     }
 
     getStackHolder().removeFromStacks(myUndoableGroup);
-    getReverseStackHolder().addToStacks(myUndoableGroup);
+    if (!drop) {
+      getReverseStackHolder().addToStacks(myUndoableGroup);
+    }
 
     performAction();
 
@@ -170,7 +171,8 @@ abstract class UndoRedo {
 
   private void reportCannotUndo(String message, Collection<DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));
+      throw new RuntimeException(
+        message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));
     }
     new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();
   }
