@@ -222,7 +222,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
-      final Set<GroovyResolveResult> resultSet = filterCorrectParameterCount(myInapplicableCandidates);
+      final Set<GroovyResolveResult> resultSet =
+        myAllVariants ? myInapplicableCandidates : filterCorrectParameterCount(myInapplicableCandidates);
       return ResolveUtil.filterSameSignatureCandidates(resultSet, myArgumentTypes != null ? myArgumentTypes.length : -1);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
