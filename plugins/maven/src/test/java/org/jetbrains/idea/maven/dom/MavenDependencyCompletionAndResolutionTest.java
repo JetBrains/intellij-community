@@ -590,6 +590,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     }
     finally {
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
+      ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(null);
     }
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom);
