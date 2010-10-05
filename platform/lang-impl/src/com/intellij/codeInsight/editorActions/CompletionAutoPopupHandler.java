@@ -60,6 +60,10 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         finishAutopopupCompletion();
         return Result.CONTINUE;
       }
+    } else {
+      if (LookupManager.getActiveLookup(editor) != null) {
+        return Result.CONTINUE;
+      }
     }
 
     myEditor = editor;
