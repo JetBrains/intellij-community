@@ -96,12 +96,8 @@ public class AutoPopupController implements Disposable {
           new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(myProject, editor, file);
         }
       };
-      // invoke later prevents cancelling request by keyPressed from the same action
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myAlarm.addRequest(request, settings.AUTO_LOOKUP_DELAY);
-            }
-          });
+
+      myAlarm.addRequest(request, settings.AUTO_LOOKUP_DELAY);
     }
   }
 
@@ -112,12 +108,7 @@ public class AutoPopupController implements Disposable {
       currentCompletion.closeAndFinish();
     }
 
-    // invoke later prevents cancelling request by keyPressed from the same action
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myAlarm.addRequest(request, delay);
-          }
-        });
+    myAlarm.addRequest(request, delay);
   }
 
   public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){
@@ -145,12 +136,8 @@ public class AutoPopupController implements Disposable {
           }
         }
       };
-      // invoke later prevents cancelling request by keyPressed from the same action
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myAlarm.addRequest(request, settings.PARAMETER_INFO_DELAY);
-            }
-          });
+
+      myAlarm.addRequest(request, settings.PARAMETER_INFO_DELAY);
     }
   }
 
