@@ -116,11 +116,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean hasFocus) {
 
 
-    if (isSelected && !myLookup.isFocused() && myLookup.isCompletion()) {
-      //myPanel.setBorder(new DottedBorder(Color.gray));
+    if (!myLookup.isFocused()) {
       isSelected = false;
-    } else {
-      //myPanel.setBorder(null);
     }
 
     final LookupElement item = (LookupElement)value;
