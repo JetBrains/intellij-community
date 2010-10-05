@@ -19,9 +19,9 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class Timer implements Disposable, Runnable  {
-
   private final int mySpan;
 
   private volatile boolean myRunning;
@@ -38,7 +38,7 @@ public abstract class Timer implements Disposable, Runnable  {
 
   private final Object LOCK = new Object();
 
-  public Timer(String name, int span) {
+  public Timer(@NonNls String name, int span) {
     myName = name;
     mySpan = span;
   }
@@ -75,7 +75,7 @@ public abstract class Timer implements Disposable, Runnable  {
         }
 
         if (myTakeInitialDelay || myInitiallySlept) {
-          Thread.currentThread().sleep(mySpan);
+          Thread.sleep(mySpan);
         }
         myInitiallySlept = true;
 
@@ -150,6 +150,7 @@ public abstract class Timer implements Disposable, Runnable  {
     void run(Runnable runnable);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Timer=" + myName;
   }
@@ -169,5 +170,4 @@ public abstract class Timer implements Disposable, Runnable  {
       myThread.start();
     }
   }
-
 }

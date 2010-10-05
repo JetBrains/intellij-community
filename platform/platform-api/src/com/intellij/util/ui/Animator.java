@@ -19,11 +19,11 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public abstract class Animator implements Disposable {
-
   private int myTotalFrames;
   private int myCycleLength;
   private final Timer myTimer;
@@ -39,7 +39,7 @@ public abstract class Animator implements Disposable {
 
   private boolean myForward = true;
 
-  public Animator(final String name,
+  public Animator(@NonNls final String name,
                   final int totalFrames,
                   final int cycleLength,
                   boolean repeatable,
@@ -49,7 +49,7 @@ public abstract class Animator implements Disposable {
     this(name, totalFrames, cycleLength, repeatable, interCycleGap, maxRepeatCount, true);
   }
 
-  public Animator(final String name,
+  public Animator(@NonNls final String name,
                   final int totalFrames,
                   final int cycleLength,
                   boolean repeatable,
@@ -117,6 +117,7 @@ public abstract class Animator implements Disposable {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (isDisposed()) return;
               myQueuedFrames--;
               paintNow(myCurrentFrame, (float)myTotalFrames, (float)myCycleLength);
             }
@@ -129,8 +130,7 @@ public abstract class Animator implements Disposable {
       try {
         cycleEnd();
       }
-      catch (InterruptedException e) {
-        return;
+      catch (InterruptedException ignored) {
       }
     }
   }
