@@ -53,8 +53,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private boolean myForceShowAsPopup = false;
   private String myTitle = null;
-  private boolean myCancelOnClickOutside;
-  private boolean myCancelOnOtherWindowOpen;
+  private boolean myCancelOnClickOutside = true;
+  private boolean myCancelOnOtherWindowOpen = true;
   private boolean myResizable;
 
   private IdeTooltip myCurrentIdeTooltip;
