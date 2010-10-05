@@ -35,7 +35,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, false, true, isTestClass(file, editor));
+    performAction(project, editor, file, null, InitPlace.SAME_METHOD, false, true, isTestClass(file, editor));
   }
 
   private static boolean isTestClass(PsiFile file, Editor editor) {
@@ -78,12 +78,23 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     assert anchor instanceof PyClass;
     final PyClass clazz = (PyClass)anchor;
     final Project project = anchor.getProject();
-    if (initInConstructor == InitPlace.CONSTRUCTOR) {
+    if (initInConstructor == InitPlace.CONSTRUCTOR && !inConstructor(clazz, expression)) {
       return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
     } else if (initInConstructor == InitPlace.SET_UP) {
       return addFieldToSetUp(project, clazz, declaration);
     }
     return VariableIntroduceHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+  }
+
+  private boolean inConstructor(@Nullable PyClass clazz, @NotNull PsiElement expression) {
+    PsiElement current = PyUtil.getConcealingParent(expression);
+    if (clazz != null && current != null && current instanceof PyFunction) {
+      PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
+      if (current == init) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

@@ -83,7 +83,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, false, false, false);
+    performAction(project, editor, file, null, InitPlace.SAME_METHOD, false, false, false);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -134,6 +134,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
+    performAction(project, editor, file, name, InitPlace.SAME_METHOD, replaceAll, hasConstructor, isTestClass);
+  }
+
+  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, InitPlace initInConstructor, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
@@ -154,7 +158,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     else {
-      if (smartIntroduce(file, editor, name, replaceAll, hasConstructor, isTestClass)) {
+      if (smartIntroduce(file, editor, name, initInConstructor, replaceAll, hasConstructor, isTestClass)) {
         return;
       }
       final CaretModel caretModel = editor.getCaretModel();
@@ -180,10 +184,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
     }
-    performActionOnElement(editor, element1, name, replaceAll, hasConstructor, isTestClass);
+    performActionOnElement(editor, element1, name, initInConstructor, replaceAll, hasConstructor, isTestClass);
   }
 
-  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {
+  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final InitPlace initInConstructor, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
     if (!checkIntroduceContext(file, editor, elementAtCaret)) return true;
@@ -198,14 +202,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       elementAtCaret = elementAtCaret.getParent();
     }
     if (expressions.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      performActionOnElement(editor, expressions.get(0), name, replaceAll, hasConstructor, isTestClass);
+      performActionOnElement(editor, expressions.get(0), name, initInConstructor, replaceAll, hasConstructor, isTestClass);
       return true;
     }
     else if (expressions.size() > 1) {
       IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
         @Override
         public void pass(PyExpression pyExpression) {
-          performActionOnElement(editor, pyExpression, name, replaceAll, hasConstructor, isTestClass);
+          performActionOnElement(editor, pyExpression, name, initInConstructor, replaceAll, hasConstructor, isTestClass);
         }
       }, new Function<PyExpression, String>() {
         public String fun(PyExpression pyExpression) {
@@ -245,6 +249,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   private void performActionOnElement(Editor editor,
                                       @NotNull PsiElement element,
                                       String name,
+                                      InitPlace initInConstructor,
                                       boolean replaceAll,
                                       boolean hasConstructor,
                                       boolean isTestClass) {
@@ -267,7 +272,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     Collection<String> possibleNames = getSuggestedNames(expression);
     replaceAll &= occurrences.size() > 0;
-    InitPlace initInConstructor = InitPlace.SAME_METHOD;
+
     if (name == null) {
       PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor, isTestClass);
       dialog.show();
@@ -278,6 +283,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       replaceAll = dialog.doReplaceAllOccurrences();
       initInConstructor = dialog.getInitPlace();
     }
+    initInConstructor = initInConstructor != null ? initInConstructor : InitPlace.SAME_METHOD;
+
     String assignmentText = name + " = " + expression.getText();
     PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
     PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
