@@ -37,7 +37,7 @@ public class ReadonlyListsMerger<T> {
   }
 
   public static<T extends Comparable<T>> void merge(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer) {
-    new ReadonlyListsMerger<T>(lists, consumer, new ComparableComparator<T>()).execute();
+    new ReadonlyListsMerger<T>(lists, consumer, new MyComparator<T>()).execute();
   }
 
   public static<T> void merge(final List<ReadonlyList<T>> lists, final Consumer<CompoundNumber> consumer, final Comparator<Pair<CompoundNumber, T>> comparator) {
@@ -68,9 +68,9 @@ public class ReadonlyListsMerger<T> {
     }
   }
 
-  private static class ComparableComparator<T extends Comparable<T>> implements Comparator<Pair<CompoundNumber, T>> {
+  private static class MyComparator<T extends Comparable<T>> implements Comparator<Pair<CompoundNumber, T>> {
     @Override
-    public int compare(Pair<CompoundNumber, T> o1, Pair<CompoundNumber, T> o2) {
+    public int compare(final Pair<CompoundNumber, T> o1, final Pair<CompoundNumber, T> o2) {
       return o1.getSecond().compareTo(o2.getSecond());
     }
   }

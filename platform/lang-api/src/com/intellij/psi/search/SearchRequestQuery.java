@@ -5,6 +5,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.AbstractQuery;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author peter
@@ -19,7 +20,7 @@ public class SearchRequestQuery extends AbstractQuery<PsiReference> {
   }
 
   @Override
-  protected boolean processResults(Processor<PsiReference> consumer) {
+  protected boolean processResults(@NotNull Processor<PsiReference> consumer) {
     return PsiManager.getInstance(myProject).getSearchHelper().processRequests(myRequests, consumer);
   }
 }

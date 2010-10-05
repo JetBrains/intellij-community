@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,27 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.RemoveAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.intellij.codeInspection.ui.AddAction;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -54,41 +56,69 @@ public class QuestionableNameInspection extends BaseInspection {
         parseString(nameString, nameList);
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "questionable.name.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "questionable.name.problem.descriptor");
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseString(nameString, nameList);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException{
         nameString = formatString(nameList);
         super.writeSettings(element);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
-        final Form form = new Form();
-        return form.getContentPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final ListTable table = new ListTable(new ListWrappingTableModel(
+                nameList, InspectionGadgetsBundle.message(
+                "questionable.name.column.title")));
+        final JScrollPane scrollPane =
+                ScrollPaneFactory.createScrollPane(table);
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveToolbar(table);
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        return panel;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new QuestionableNameVisitor();
     }
@@ -116,30 +146,6 @@ public class QuestionableNameInspection extends BaseInspection {
             if(nameSet.contains(name)){
                 registerClassError(aClass);
             }
-        }
-    }
-
-    private class Form{
-
-        JPanel contentPanel;
-        JButton addButton;
-        JButton removeButton;
-        ListTable table;
-
-        Form(){
-            super();
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(new ListWrappingTableModel(
-                    nameList, InspectionGadgetsBundle.message(
-                    "questionable.name.column.title")));
-        }
-
-        public JComponent getContentPanel(){
-            return contentPanel;
         }
     }
 }

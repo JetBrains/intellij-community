@@ -219,6 +219,17 @@ public class Messages {
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
+  public static int shpwTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      TwoStepConfirmationDialog dialog = new TwoStepConfirmationDialog(message, title, checkboxText, icon);
+      dialog.show();
+      return dialog.getExitCode();
+    }
+  }
+
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
@@ -548,7 +559,11 @@ public class Messages {
       this(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
     }
 
-    private void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+    protected MessageDialog() {
+      super(false);
+    }
+
+    protected void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
       setTitle(title);
       myMessage = message;
       myOptions = options;
@@ -670,6 +685,62 @@ public class Messages {
     @Override
     protected void doHelpAction() {
       // do nothing
+    }
+  }
+
+  protected static class TwoStepConfirmationDialog extends MessageDialog {
+    private JCheckBox myCheckBox;
+    private String myCheckboxText;
+
+    public TwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+      myCheckboxText = checkboxText;
+      _init(title, message, new String[] {OK_BUTTON, CANCEL_BUTTON}, -1, -1, icon, null);
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      JPanel panel = new JPanel(new BorderLayout(15, 0));
+      if (myIcon != null) {
+        JLabel iconLabel = new JLabel(myIcon);
+        Container container = new Container();
+        container.setLayout(new BorderLayout());
+        container.add(iconLabel, BorderLayout.NORTH);
+        panel.add(container, BorderLayout.WEST);
+      }
+
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        textLabel.setUI(new MultiLineLabelUI());
+        messagePanel.add(textLabel, BorderLayout.NORTH);
+      }
+
+      final JPanel checkboxPanel = new JPanel();
+      checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.X_AXIS));
+
+      myCheckBox = new JCheckBox(myCheckboxText);
+      myCheckBox.setSelected(true);
+      messagePanel.add(myCheckBox, BorderLayout.SOUTH);
+      panel.add(messagePanel, BorderLayout.CENTER);
+
+      return panel;
+    }
+
+    @Override
+    public int getExitCode() {
+      final int exitCode = super.getExitCode();
+      return exitCode == OK_EXIT_CODE ? myCheckBox.isSelected() ? OK_EXIT_CODE : CANCEL_EXIT_CODE : CANCEL_EXIT_CODE;
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myCheckBox;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
     }
   }
 

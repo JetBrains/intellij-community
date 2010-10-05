@@ -79,7 +79,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   @Override
-  public void processQuery(MethodReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
   }
 

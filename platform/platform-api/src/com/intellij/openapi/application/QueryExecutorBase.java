@@ -2,6 +2,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,7 +21,7 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
   }
 
   @Override
-  public final boolean execute(final Params queryParameters, final Processor<Result> consumer) {
+  public final boolean execute(@NotNull final Params queryParameters, @NotNull final Processor<Result> consumer) {
     final AtomicBoolean toContinue = new AtomicBoolean(true);
     final Processor<Result> wrapper = new Processor<Result>() {
       @Override
@@ -51,5 +52,5 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
     return toContinue.get();
   }
 
-  public abstract void processQuery(Params queryParameters, Processor<Result> consumer);
+  public abstract void processQuery(@NotNull Params queryParameters, @NotNull Processor<Result> consumer);
 }

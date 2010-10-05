@@ -438,8 +438,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
+      final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       Runnable askReloadRunnable = new Runnable() {
         public void run() {
+          if (!unitTestMode) IdeEventQueue.getInstance().removeIdleListener(this);
           if (!file.isValid()) return;
           if (askReloadFromDisk(file, document)) {
             reloadFromDisk(document);
@@ -447,7 +449,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       };
 
-      IdeEventQueue.getInstance().addIdleListener(askReloadRunnable, 2000);
+      if (unitTestMode) {
+        askReloadRunnable.run();
+      } else {
+        IdeEventQueue.getInstance().addIdleListener(askReloadRunnable, 2000);
+      }
     }
     else {
       reloadFromDisk(document);

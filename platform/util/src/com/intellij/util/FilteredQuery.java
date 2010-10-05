@@ -19,10 +19,8 @@ package com.intellij.util;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author max
@@ -57,15 +55,9 @@ public class FilteredQuery<T> implements Query<T> {
 
   @NotNull
   public Collection<T> findAll() {
-    final List<T> result = new ArrayList<T>();
-    forEach(new Processor<T>() {
-      public boolean process(final T t) {
-        result.add(t);
-        return true;
-      }
-    });
-
-    return result;
+    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
+    forEach(processor);
+    return processor.getResults();
   }
 
   public T[] toArray(final T[] a) {

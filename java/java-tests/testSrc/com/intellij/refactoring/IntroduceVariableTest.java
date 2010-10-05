@@ -218,6 +218,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("foo1", true, true, false, "Foo"));
   }
 
+  public void testDifferentForeachParameters () throws Exception {
+    doTest(new MockIntroduceVariableHandler("tostr", true, true, false, "java.lang.String"));
+  }
+
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B"){
       @Override

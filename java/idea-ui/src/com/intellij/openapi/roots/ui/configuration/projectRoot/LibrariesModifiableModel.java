@@ -103,7 +103,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
       libraryEditor.commit(); // TODO: is seems like commit will recreate the editor, but it should not
       Disposer.dispose(libraryEditor);
     }
-    if (!libraryEditors.isEmpty() || !myRemovedLibraries.isEmpty()) {
+    if (!libraryEditors.isEmpty() || !myRemovedLibraries.isEmpty() || myLibrariesModifiableModel != null && myLibrariesModifiableModel.isChanged()) {
       getLibrariesModifiableModel().commit();
       myLibrariesModifiableModel = null;
     }

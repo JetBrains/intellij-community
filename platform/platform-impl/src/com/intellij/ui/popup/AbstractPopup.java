@@ -901,7 +901,10 @@ public class AbstractPopup implements JBPopup {
   }
 
   private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
-    if (isPersistent() || forceDialog) {
+    boolean noFocus = !myFocusable || !myRequestFocus;
+    boolean cannotBeDialog = noFocus && SystemInfo.isLinux;
+
+    if (!cannotBeDialog && (isPersistent() || forceDialog)) {
       return new PopupComponent.Factory.Dialog();
     }
     else if (forceHeavyweight || !SystemInfo.isWindows) {

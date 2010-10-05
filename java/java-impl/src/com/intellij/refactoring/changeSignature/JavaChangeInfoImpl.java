@@ -411,7 +411,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (!newName.equals(that.newName)) return false;
     if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
     if (!Arrays.equals(newParms, that.newParms)) return false;
-    if (newReturnType != null ? !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText()) : that.newReturnType != null) return false;
+    if (newReturnType != null ? that.newReturnType == null || !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText()) : that.newReturnType != null) return false;
     if (newVisibility != null ? !newVisibility.equals(that.newVisibility) : that.newVisibility != null) return false;
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;

@@ -24,11 +24,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.ui.components.JBList;
@@ -64,6 +65,7 @@ import java.util.*;
  */
 public class CreateParameterForFieldIntention extends Intention {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention");
+  private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 
   @NotNull
   @Override
@@ -125,7 +127,6 @@ public class CreateParameterForFieldIntention extends Intention {
           }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
         }
       }).createPopup().showInBestPositionFor(editor);
-
   }
 
   private static void performForConstructor(PsiElement element, final Project project, Editor editor, List<GrField> candidates) {
@@ -243,12 +244,11 @@ public class CreateParameterForFieldIntention extends Intention {
     final PsiClass clazz = constructor.getContainingClass();
 
     if (!(clazz instanceof GrTypeDefinition)) return null;
-    return findCandidates(constructor, (GrTypeDefinition)clazz);
+    return findCandidatesCached(constructor, (GrTypeDefinition)clazz);
   }
 
   private static List<GrField> findCandidates(GrMethod constructor, final GrTypeDefinition clazz) {
     final List<GrField> usedFields = new ArrayList<GrField>();
-    //ContainerUtil.addAll(fields, clazz.getFields());
     final GrOpenBlock block = constructor.getBlock();
     LOG.assertTrue(block != null);
 
@@ -290,6 +290,21 @@ public class CreateParameterForFieldIntention extends Intention {
     return fields;
   }
 
+  private static List<GrField> findCandidatesCached(final GrMethod constructor, final GrTypeDefinition clazz) {
+    final CachedValue<List<GrField>> value = constructor.getUserData(FIELD_CANDIDATES);
+    if (value != null && value.getValue() != null) return value.getValue();
+    final CachedValue<List<GrField>> cachedValue =
+      CachedValuesManager.getManager(constructor.getProject()).createCachedValue(new CachedValueProvider<List<GrField>>() {
+        @Override
+        public Result<List<GrField>> compute() {
+          return Result.create(findCandidates(constructor, clazz), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      }, false);
+    constructor.putUserData(FIELD_CANDIDATES, cachedValue);
+    return cachedValue.getValue();
+  }
+
+
   @Nullable
   private static List<GrMethod> findConstructorCandidates(PsiElement element) {
     final GrField field = PsiTreeUtil.getParentOfType(element, GrField.class);
@@ -302,7 +317,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final PsiMethod[] constructors = psiClass.getConstructors();
     final PsiManager manager = field.getManager();
     for (PsiMethod constructor : constructors) {
-      final List<GrField> fields = findCandidates(((GrMethod)constructor), psiClass);
+      final List<GrField> fields = findCandidatesCached(((GrMethod)constructor), psiClass);
       if (ContainerUtil.find(fields, new Condition<GrField>() {
         @Override
         public boolean value(GrField grField) {

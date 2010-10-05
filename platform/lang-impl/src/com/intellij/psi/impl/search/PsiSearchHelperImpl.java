@@ -514,7 +514,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  public boolean processRequests(@NotNull SearchRequestCollector collector, Processor<PsiReference> processor) {
+  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
     Map<SearchRequestCollector, Processor<PsiReference>> collectors = CollectionFactory.hashMap();
     collectors.put(collector, processor);
 

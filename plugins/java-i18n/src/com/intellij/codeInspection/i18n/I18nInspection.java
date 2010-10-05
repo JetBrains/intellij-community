@@ -49,7 +49,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -262,9 +262,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
             if (e.length() > 0) initialList.add(e);
           }
         }
-        myPanel = new AddDeleteListPanel(null,
-                                         initialList) {
-          protected Object findItemToAdd() {
+        myPanel = new AddDeleteListPanel<String>(null, initialList) {
+          protected String findItemToAdd() {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
               createInheritanceClassChooser(
@@ -422,11 +421,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return;
       }
 
-      Set<PsiModifierListOwner> nonNlsTargets = new HashSet<PsiModifierListOwner>();
+      Set<PsiModifierListOwner> nonNlsTargets = new THashSet<PsiModifierListOwner>();
       if (canBeI18ned(expression, stringValue, nonNlsTargets)) {
-        final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value",
-                                                             "#ref");
-                                                             //JDOMUtil.escapeText(stringValue));
+        final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
         List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
         if (ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(expression) != null) {
@@ -573,11 +570,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   private static boolean isClassNonNls(final PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
-    if (directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory))) {
-      return true;
-    }
-
-    return false;
+    return directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory));
   }
 
   public static boolean isPackageNonNls(final PsiPackage psiPackage) {
@@ -585,10 +578,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
     final PsiModifierList pkgModifierList = psiPackage.getAnnotationList();
-    if (pkgModifierList != null && pkgModifierList.findAnnotation(AnnotationUtil.NON_NLS) != null) {
-      return true;
-    }
-    return isPackageNonNls(psiPackage.getParentPackage());
+    return pkgModifierList != null && pkgModifierList.findAnnotation(AnnotationUtil.NON_NLS) != null
+           || isPackageNonNls(psiPackage.getParentPackage());
   }
 
   private boolean isPassedToNonNlsVariable(final PsiLiteralExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
@@ -633,8 +624,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final int index = method.getParameterList().getParameterIndex(parameter);
-        return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, new HashSet<PsiMethod>(), AnnotationUtil.NON_NLS,
-                                                       new HashMap<String, Object>(), null);
+        return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null, null);
       }
     }
     return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false);
@@ -749,12 +739,18 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    final PsiElement returnStmt = PsiTreeUtil.getParentOfType(expression,
-                                                              PsiReturnStatement.class, PsiMethodCallExpression.class);
-    if (returnStmt == null || !(returnStmt instanceof PsiReturnStatement)) {
-      return false;
+    PsiElement parent = expression.getParent();
+    PsiMethod method;
+    if (parent instanceof PsiNameValuePair) {
+      method = AnnotationUtil.getAnnotationMethod((PsiNameValuePair)parent);
     }
-    final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+    else {
+      final PsiElement returnStmt = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class, PsiMethodCallExpression.class);
+      if (returnStmt == null || !(returnStmt instanceof PsiReturnStatement)) {
+        return false;
+      }
+      method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+    }
     if (method == null) return false;
 
     if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true)) {

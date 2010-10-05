@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.openapi.vcs;
 
-import org.jetbrains.annotations.NotNull;
+import java.util.Comparator;
 
 /**
- * Consider extending {@link com.intellij.openapi.application.QueryExecutorBase} instead unless you know what you're doing.
- *
- * @author max
- */
-public interface QueryExecutor<Result, Param> {
-  boolean execute(@NotNull Param queryParameters, @NotNull Processor<Result> consumer);
+* @author irengrig
+*/
+public class ComparableComparator<T extends Comparable<T>> implements Comparator<T> {
+  @Override
+  public int compare(final T o1, final T o2) {
+    return o1.compareTo(o2);
+  }
 }

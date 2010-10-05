@@ -19,10 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import dk.brics.automaton.Automaton;
-import dk.brics.automaton.DatatypesAutomatonProvider;
-import dk.brics.automaton.RegExp;
-import dk.brics.automaton.RunAutomaton;
+import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -384,17 +384,19 @@ public class NameUtil {
   private static class OptimizedMatcher implements Matcher {
     private final char[] myPreparedPattern;
     private final boolean myEnsureFirstSymbolsMatch;
-    private final RunAutomaton myRunAutomaton;
+    private final Perl5Matcher myMatcher;
+    private final Pattern myPattern;
 
     public OptimizedMatcher(String pattern, String regexp) {
       myPreparedPattern = preparePattern(pattern).toCharArray();
       myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
-
-      //final long t = System.currentTimeMillis();
-      final RegExp regExp = new RegExp(regexp);
-      final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
-      myRunAutomaton = new RunAutomaton(automaton, true);
-      //System.out.println("t = " + (System.currentTimeMillis() - t));
+      try {
+        myPattern = new Perl5Compiler().compile(regexp);
+      }
+      catch (MalformedPatternException e) {
+        throw new RuntimeException(e);
+      }
+      myMatcher = new Perl5Matcher();
     }
 
     public boolean matches(String name) {
@@ -402,7 +404,7 @@ public class NameUtil {
         return false;
       }
 
-      return myRunAutomaton.run(name);
+      return myMatcher.matches(name, myPattern);
     }
 
     private static String preparePattern(String pattern) {

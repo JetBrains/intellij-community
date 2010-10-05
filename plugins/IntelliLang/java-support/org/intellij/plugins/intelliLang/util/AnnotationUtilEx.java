@@ -93,11 +93,11 @@ public class AnnotationUtilEx {
         final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
         final PsiElement pair = value.getParent();
         if (pair instanceof PsiNameValuePair) {
-          return getAnnotationMethod((PsiNameValuePair)pair);
+          return AnnotationUtil.getAnnotationMethod((PsiNameValuePair)pair);
         }
       }
       else if (parent instanceof PsiNameValuePair) {
-        return getAnnotationMethod((PsiNameValuePair)parent);
+        return AnnotationUtil.getAnnotationMethod((PsiNameValuePair)parent);
       }
       else {
         return PsiUtilEx.getParameterForArgument(element);
@@ -171,23 +171,6 @@ public class AnnotationUtilEx {
       return visitor.visitMethodParameter((PsiExpression)element, (PsiCallExpression)parent.getParent());
     }
     return true;
-  }
-
-  @Nullable
-  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair) {
-    final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
-    assert annotation != null;
-
-    final String fqn = annotation.getQualifiedName();
-    if (fqn == null) return null;
-
-    final PsiClass psiClass = JavaPsiFacade.getInstance(pair.getProject()).findClass(fqn, pair.getResolveScope());
-    if (psiClass != null && psiClass.isAnnotationType()) {
-      final String name = pair.getName();
-      final PsiMethod[] methods = psiClass.findMethodsByName(name != null ? name : "value", false);
-      return methods.length > 0 ? methods[0] : null;
-    }
-    return null;
   }
 
   /**

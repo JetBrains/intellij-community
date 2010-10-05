@@ -597,7 +597,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private class PackageSink extends QueryFactory<VirtualFile, List<VirtualFile>> {
     private PackageSink() {
       registerExecutor(new QueryExecutor<VirtualFile, List<VirtualFile>>() {
-        public boolean execute(final List<VirtualFile> allDirs, final Processor<VirtualFile> consumer) {
+        public boolean execute(@NotNull final List<VirtualFile> allDirs, @NotNull final Processor<VirtualFile> consumer) {
           for (VirtualFile dir : allDirs) {
             DirectoryInfo info = getInfoForDirectory(dir);
             assert info != null;

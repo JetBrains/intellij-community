@@ -124,6 +124,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
     myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
     updateVisibilityPanel();
+    updateButtons();
   }
 
   public String getEnteredName() {
@@ -172,7 +173,11 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     myNameField = new NameSuggestionsField(myProject);
     myNameSuggestionPanel.setLayout(new BorderLayout());
-
+    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+      public void dataChanged() {
+        updateButtons();
+      }
+    });
     myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
@@ -278,6 +283,10 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     enableEnumDependant(introduceEnumConstant());
     return myPanel;
+  }
+
+  private void updateButtons() {
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getEnteredName()));
   }
 
   private void targetClassChanged() {

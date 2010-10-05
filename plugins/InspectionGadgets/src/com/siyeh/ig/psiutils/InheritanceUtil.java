@@ -21,6 +21,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.util.Processor;
 import com.intellij.util.Query;
 
 public class InheritanceUtil{
@@ -30,7 +31,7 @@ public class InheritanceUtil{
     }
 
     public static boolean existsMutualSubclass(PsiClass class1,
-                                               PsiClass class2){
+                                               final PsiClass class2){
         if (class1 instanceof PsiTypeParameter) {
             final PsiClass[] superClasses = class1.getSupers();
             for (PsiClass superClass : superClasses) {
@@ -59,13 +60,12 @@ public class InheritanceUtil{
                 GlobalSearchScope.allScope(class1.getProject());
         final Query<PsiClass> search =
                 ClassInheritorsSearch.search(class1, scope, true, true);
-        for (PsiClass inheritor : search) {
-            if (inheritor.equals(class2) ||
-                    inheritor.isInheritor(class2, true)) {
-                return true;
-            }
-        }
-        return false;
+        return !search.forEach(new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass inheritor) {
+            return !inheritor.equals(class2) && !inheritor.isInheritor(class2, true);
+          }
+        });
     }
 
     public static boolean hasImplementation(PsiClass aClass) {

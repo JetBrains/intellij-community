@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.List;
  * @author ven
  */
 public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
-  public boolean execute(final AllOverridingMethodsSearch.SearchParameters p, final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
+  public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
     PsiMethod[] methodsArray = psiClass.getMethods();
