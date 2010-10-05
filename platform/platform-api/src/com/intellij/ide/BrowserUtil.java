@@ -383,15 +383,11 @@ public class BrowserUtil {
   }
 
   public static boolean canStartDefaultBrowser() {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || SystemInfo.isWindows) {
       return true;
     }
 
-    if (SystemInfo.isWindows) {
-      return true;
-    }
-
-    if (SystemInfo.isLinux && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+    if (SystemInfo.isLinux && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
       return true;
     }
 
