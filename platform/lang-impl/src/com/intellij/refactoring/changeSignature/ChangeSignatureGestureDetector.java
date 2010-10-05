@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -92,13 +94,17 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   public void projectOpened() {
     myPsiManager.addPsiTreeChangeListener(this);
     EditorFactory.getInstance().addEditorFactoryListener(this);
+    Disposer.register(myPsiManager.getProject(), new Disposable() {
+      public void dispose() {
+        myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
+        EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
+        myListenerMap.clear();
+      }
+    });
   }
 
   @Override
   public void projectClosed() {
-    myListenerMap.clear();
-    myPsiManager.removePsiTreeChangeListener(this);
-    EditorFactory.getInstance().removeEditorFactoryListener(this);
   }
 
   @NotNull
