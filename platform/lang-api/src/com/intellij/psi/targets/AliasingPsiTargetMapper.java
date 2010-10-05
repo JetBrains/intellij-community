@@ -10,5 +10,5 @@ public interface AliasingPsiTargetMapper {
   ExtensionPointName<AliasingPsiTargetMapper> EP_NAME = ExtensionPointName.create("com.intellij.aliasingPsiTargetMapper");
 
   @NotNull
-  Set<AliasingPsiTarget> getTargets(@NotNull PomTarget psiTarget);
+  Set<AliasingPsiTarget> getTargets(@NotNull PomTarget target);
 }

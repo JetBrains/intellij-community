@@ -367,7 +367,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myCaretPositionSaved = oldCaretPositionSaved;
 
-    if (!hasBlockSelection) {
+    if (!hasBlockSelection && selectionStart < myEditor.getDocument().getTextLength()) {
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 

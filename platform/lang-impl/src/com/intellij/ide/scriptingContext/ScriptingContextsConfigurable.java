@@ -16,9 +16,11 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.ide.scriptingContext.ui.MainScriptingContextsPanel;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -32,11 +34,13 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
   private MainScriptingContextsPanel myPanel;
   private String myLangNames;
   private Project myProject;
+  private ModifiableRootModel myRootModel;
 
   public ScriptingContextsConfigurable(Project project) {
     myPanel = new MainScriptingContextsPanel();
     myLangNames = getLangNames();
     myProject = project;
+    myRootModel = ScriptingLibraryManager.getRootModel(project);
   }
 
   @Nls
@@ -67,7 +71,9 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public void apply() throws ConfigurationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    if (myRootModel != null) {
+      myRootModel.commit();
+    }
   }
 
   @Override
@@ -77,14 +83,14 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public void disposeUIResources() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    disposeModel();
   }
 
   @Override
   public Configurable[] getConfigurables() {
     ArrayList<LangScriptingContextConfigurable> configurables = new ArrayList<LangScriptingContextConfigurable>();
     for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
-      configurables.add(new LangScriptingContextConfigurable(myProject, provider));
+      configurables.add(new LangScriptingContextConfigurable(myRootModel, provider));
     }
     return configurables.toArray(new LangScriptingContextConfigurable[configurables.size()]);
   }
@@ -96,5 +102,11 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
     }
     String result = buf.toString();
     return result.substring(0, result.length() - 1);
+  }
+
+  public void disposeModel() {
+    if (myRootModel != null && !myRootModel.isDisposed()) {
+      myRootModel.dispose();
+    }
   }
 }

@@ -238,6 +238,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       }
       int ei = 0;
       int pi = 0;
+      PsiParameter varargParam = targetMethod.isVarArgs() ? parameters[parameters.length - 1] : null;
       while (ei < expressions.length || pi < parameters.length) {
         PsiExpression expression = ei < expressions.length ? expressions[ei] : null;
         PsiParameter parameter = pi < parameters.length ? parameters[pi] : null;
@@ -248,7 +249,16 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
           pi++;
           ei++;
         }
+        else if (isArgumentInVarargPosition(expressions, ei, varargParam, substitutor)) {
+          if (pi == parameters.length - 1) {
+            assert varargParam != null;
+            result.add(new ParameterInfoImpl(pi, varargParam.getName(), varargParam.getType()));
+          }
+          pi++;
+          ei++;
+        }
         else if (expression != null) {
+          if (varargParam != null && pi >= parameters.length) return null;
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
           if (exprType == null) return null;
           JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
@@ -257,7 +267,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
           ei++;
         }
       }
-      if (result.size() != expressions.length) return null;
+      if (result.size() != expressions.length && varargParam == null) return null;
     }
     else {
       //parameter type changed
@@ -289,6 +299,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       if (isSilly) return null;
     }
     return result.toArray(new ParameterInfoImpl[result.size()]);
+  }
+
+  private static boolean isArgumentInVarargPosition(PsiExpression[] expressions, int ei, PsiParameter varargParam, PsiSubstitutor substitutor) {
+    if (varargParam == null) return false;
+    final PsiExpression expression = expressions[ei];
+    if (expression == null || TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(((PsiEllipsisType)varargParam.getType()).getComponentType()), expression)) {
+      final int lastExprIdx = expressions.length - 1;
+      if (ei == lastExprIdx) return true;
+      return expressions[lastExprIdx].getType() != PsiType.NULL;
+    }
+    return false;
   }
 
   private static String suggestUniqueParameterName(JavaCodeStyleManager codeStyleManager,

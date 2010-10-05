@@ -23,10 +23,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 /**
  * @author peter
  */
@@ -35,18 +31,16 @@ public class GroovyDslScript {
   public final Project project;
   public final VirtualFile file;
   public final GroovyDslExecutor executor;
-  private final CachedValue<Pair<ConcurrentMap<String, Boolean>, ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder>>> myMaps;
+  private final CachedValue<FactorTree> myMaps;
 
   public GroovyDslScript(final Project project, VirtualFile file, GroovyDslExecutor executor) {
     this.project = project;
     this.file = file;
     this.executor = executor;
-    myMaps = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Pair<ConcurrentMap<String, Boolean>, ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder>>>() {
+    myMaps = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<FactorTree>() {
       @Override
-      public Result<Pair<ConcurrentMap<String, Boolean>, ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder>>> compute() {
-        ConcurrentMap<String, Boolean> specificities = new ConcurrentHashMap<String, Boolean>();
-        ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> holders = new ConcurrentHashMap<GroovyClassDescriptor, CustomMembersHolder>();
-        return Result.create(Pair.create(specificities, holders), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+      public Result<FactorTree> compute() {
+        return Result.create(new FactorTree(), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     }, false);
   }
@@ -57,41 +51,26 @@ public class GroovyDslScript {
                                  final GroovyPsiElement place,
                                  final PsiFile placeFile,
                                  final String qname) {
-    final Pair<ConcurrentMap<String, Boolean>, ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder>> maps = myMaps.getValue();
-    Map<String, Boolean> specificities = maps.first;
-    boolean firstTime = !specificities.containsKey(qname);
-
-    final boolean placeDependent = firstTime || specificities.get(qname);
-    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeDependent, placeFile);
-
-    final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = maps.second;
-    CustomMembersHolder holder = members.get(descriptor);
+    final FactorTree cache = myMaps.getValue();
+    CustomMembersHolder holder = cache.retrieve(place, qname);
+    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
     if (holder == null) {
-      holder = addGdslMembers(descriptor, qname);
-
-      if (firstTime) {
-        final boolean placeAccessed = descriptor.placeAccessed();
-        specificities.put(qname, placeAccessed);
-        final GroovyClassDescriptor newDescriptor = new GroovyClassDescriptor(psiType, place, placeAccessed, placeFile);
-        members.putIfAbsent(newDescriptor, holder);
-      }
-      else {
-        members.putIfAbsent(descriptor, holder);
-      }
+      holder = addGdslMembers(descriptor, qname, psiType);
+      cache.cache(descriptor, holder);
     }
 
     return holder.processMembers(descriptor, processor, ResolveState.initial());
   }
 
-  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname) {
+  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {
     final ProcessingContext ctx = new ProcessingContext();
-    ctx.put(ClassContextFilter.getClassKey(qname), descriptor.getPsiType());
+    ctx.put(ClassContextFilter.getClassKey(qname), psiType);
     try {
       if (!isApplicable(executor, descriptor, ctx)) {
         return CustomMembersHolder.EMPTY;
       }
 
-      final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(descriptor);
+      final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(descriptor, psiType);
       executor.processVariants(descriptor, generator, ctx);
       return generator.getMembersHolder();
     }

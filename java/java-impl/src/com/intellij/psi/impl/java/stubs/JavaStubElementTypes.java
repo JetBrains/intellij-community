@@ -22,30 +22,31 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 
-public class JavaStubElementTypes {
-  public static final JavaClassElementType CLASS = new JavaClassElementType("CLASS");
-  public static final JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS");
-  public static final JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");
+public interface JavaStubElementTypes {
+  JavaClassElementType CLASS = new JavaClassElementType("CLASS");
+  JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS");
+  JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");
 
-  public static final JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
-  public static final JavaMethodElementType METHOD = new JavaMethodElementType("METHOD");
-  public static final JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD");
-  public static final JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD");
-  public static final JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT");
+  JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
+  JavaMethodElementType METHOD = new JavaMethodElementType("METHOD");
+  JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD");
+  JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD");
+  JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT");
 
-  public static final JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
-  public static final JavaClassReferenceListElementType EXTENDS_LIST = new JavaClassReferenceListElementType("EXTENDS_LIST");
-  public static final JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST");
-  public static final JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST");
-  public static final JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST");
+  JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
+  JavaClassReferenceListElementType EXTENDS_LIST = new JavaClassReferenceListElementType("EXTENDS_LIST");
+  JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST");
+  JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST");
+  JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST");
 
-  public static final JavaParameterElementType PARAMETER = new JavaParameterElementType();
-  public static final JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
-  public static final JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
-  public static final JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
-  public static final JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
-  public static final JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
-  public static final JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT");
-  public static final JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT");
-  public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
+  JavaParameterElementType PARAMETER = new JavaParameterElementType();
+  JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
+  JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
+  JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
+  JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
+  JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
+  JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT");
+  JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT");
+
+  IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }

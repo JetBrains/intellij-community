@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -44,13 +46,13 @@ public class GroovyClassDescriptor {
   private final PsiType myPsiType;
   private final PsiElement myPlace;
   private final PsiFile myFile;
-  private final boolean myPlaceDependent;
-  private boolean myPlaceElementAccessed;
 
-  public GroovyClassDescriptor(@NotNull PsiType psiType, GroovyPsiElement place, boolean placeDependent, final PsiFile placeFile) {
+  @SuppressWarnings({"SetReplaceableByEnumSet"}) //order is important
+  final Set<Factor> affectingFactors = new LinkedHashSet<Factor>();
+
+  public GroovyClassDescriptor(@NotNull PsiType psiType, GroovyPsiElement place, final PsiFile placeFile) {
     myPsiType = psiType;
     myPlace = place;
-    myPlaceDependent = placeDependent;
     myFile = placeFile;
   }
 
@@ -59,58 +61,32 @@ public class GroovyClassDescriptor {
   }
 
   public GlobalSearchScope getResolveScope() {
+    //affectingFactors.add(Factor.placeFile);
     return myPlace.getResolveScope();
   }
 
   @Nullable
   public String getTypeText() {
-    return myPsiType.getCanonicalText();
+    return getPsiType().getCanonicalText();
   }
 
   public boolean isInheritor(String qname) {
-    return InheritanceUtil.isInheritor(myPsiType, qname);
+    return InheritanceUtil.isInheritor(getPsiType(), qname);
   }
 
   public PsiElement getPlace() {
-    myPlaceElementAccessed = true;
+    affectingFactors.add(Factor.placeElement);
     return myPlace;
   }
 
   public PsiType getPsiType() {
+    affectingFactors.add(Factor.qualifierType);
     return myPsiType;
   }
 
   public PsiFile getPlaceFile() {
+    //affectingFactors.add(Factor.placeFile);
     return myFile;
   }
 
-  public boolean placeAccessed() {
-    return myPlaceElementAccessed;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GroovyClassDescriptor that = (GroovyClassDescriptor)o;
-
-    if (!myPsiType.isValid() || !that.myPsiType.isValid()) return false;
-    if (!myPsiType.equals(that.myPsiType)) return false;
-
-    if (myPlaceDependent) {
-      return myPlace.equals(that.myPlace);
-    }
-
-    return myFile.equals(that.myFile);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myPsiType.hashCode() * 31 + myFile.hashCode();
-    if (myPlaceDependent) {
-      return result * 31 + myPlace.hashCode();
-    }
-    return result;
-  }
 }

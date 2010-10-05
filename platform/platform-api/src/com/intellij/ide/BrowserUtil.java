@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class BrowserUtil {
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     if (SystemInfo.isWindows) {
-      return url.indexOf(' ') > 0? "\"" + url + "\"" : url;
+      return (url.indexOf(' ') > 0 || url.indexOf('&') > -1) ? "\"" + url + "\"" : url;
     }
     else {
       return url.replaceAll(" ", "%20");
@@ -383,15 +383,11 @@ public class BrowserUtil {
   }
 
   public static boolean canStartDefaultBrowser() {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || SystemInfo.isWindows) {
       return true;
     }
 
-    if (SystemInfo.isWindows) {
-      return true;
-    }
-
-    if (SystemInfo.isLinux && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+    if (SystemInfo.isLinux && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
       return true;
     }
 

@@ -57,7 +57,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
   @NotNull PsiElement[] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
 
   /**
-   * Returns the list of classs which have been imported as
+   * Returns the list of classes which have been imported as
    * single-class imports.
    *
    * @param checkIncludes deprecated, no longer used.

@@ -34,7 +34,7 @@ import java.io.IOException;
 
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
   public JavaTypeParameterElementType() {
-    super("TYPE_PARAMETR");
+    super("TYPE_PARAMETER");
   }
 
   public PsiTypeParameter createPsi(final PsiTypeParameterStub stub) {
