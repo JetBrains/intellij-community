@@ -121,8 +121,8 @@ public class SuspendManagerUtil {
   }
 
   public static SuspendContextImpl getEvaluatingContext(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (SuspendContextImpl suspendContext : ((SuspendManagerImpl)suspendManager).getEventContexts()) {
-      if (suspendContext.isEvaluating() && suspendContext.getThread() == thread) {
+    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
+      if (!suspendContext.isResumed() && suspendContext.isEvaluating() && suspendContext.getThread() == thread) {
         return suspendContext;
       }
     }
