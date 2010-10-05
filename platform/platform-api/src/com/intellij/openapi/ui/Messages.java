@@ -720,6 +720,7 @@ public class Messages {
       checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.X_AXIS));
 
       myCheckBox = new JCheckBox(myCheckboxText);
+      myCheckBox.setSelected(true);
       messagePanel.add(myCheckBox, BorderLayout.SOUTH);
       panel.add(messagePanel, BorderLayout.CENTER);
 
