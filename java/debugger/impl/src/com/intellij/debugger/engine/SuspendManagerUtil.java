@@ -27,9 +27,8 @@ public class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManagerUtil");
 
   public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (Iterator<SuspendContextImpl> iterator = ((SuspendManagerImpl) suspendManager).getEventContexts().iterator(); iterator.hasNext();) {
-      SuspendContextImpl suspendContext = iterator.next();
-      if(suspendContext.isEvaluating() && thread.equals(suspendContext.getThread())) {
+    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
+      if (suspendContext.isEvaluating() && thread.equals(suspendContext.getThread())) {
         return true;
       }
     }
