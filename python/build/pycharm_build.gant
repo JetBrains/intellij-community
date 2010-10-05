@@ -432,6 +432,7 @@ def layoutFull(String target, Set usedJars) {
 
     dir("license") {
       fileset(dir: "$home/python/license")
+      fileset(dir: "$home/community/license")
     }
 
     def layouts = includeFile("$home/build/scripts/layouts.gant")
@@ -527,7 +528,7 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
 }
 
 def layoutUnix(String target) {
