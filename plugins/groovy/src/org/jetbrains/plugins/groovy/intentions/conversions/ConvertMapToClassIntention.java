@@ -54,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -193,8 +192,7 @@ public class ConvertMapToClassIntention extends Intention {
     final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
     if (resolveResult == null) return null;
 
-    GrClosableBlock[] closures =
-      methodCall instanceof GrCallExpression ? ((GrCallExpression)methodCall).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
+    GrClosableBlock[] closures = methodCall.getClosureArguments();
     final Map<GrExpression, Pair<PsiParameter, PsiType>> mapToParams = GrClosureSignatureUtil
       .mapArgumentsToParameters(resolveResult, arg, false, argList.getNamedArguments(), argList.getExpressionArguments(), closures);
     if (mapToParams == null) return null;

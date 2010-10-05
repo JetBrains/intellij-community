@@ -17,8 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -26,16 +24,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
-public class GrApplicationStatementImpl extends GrExpressionImpl implements GrApplicationStatement {
-
+public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrApplicationStatement {
   public GrApplicationStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -58,36 +51,14 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
     return list.getExpressionArguments();
   }
 
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.resolveMethod(this);
-  }
-
   @Override
-  public boolean isCommandExpression() {
-    return PsiUtil.isCommandExpression(this);
-  }
-
-  @Override
-  public GrExpression getInvokedExpression() {
-    return findNotNullChildByClass(GrExpression.class);
-  }
-
   public GrCommandArgumentList getArgumentList() {
     return findChildByClass(GrCommandArgumentList.class);
-  }
-
-  public GrExpression removeArgument(final int number) {
-    final GrCommandArgumentList list = getArgumentList();
-    return list != null ? list.removeArgument(number) : null;
   }
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrCommandArgumentList list = getArgumentList();
     assert list != null;
     return list.addNamedArgument(namedArgument);
-  }
-
-  public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, GrMethodCallExpressionImpl.METHOD_CALL_TYPES_CALCULATOR);
   }
 }

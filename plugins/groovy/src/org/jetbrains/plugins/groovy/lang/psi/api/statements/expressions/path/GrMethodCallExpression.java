@@ -25,8 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 /**
  * @author ilyas
  */
-public interface GrMethodCallExpression extends GrCallExpression, GrMethodCall {
+public interface GrMethodCallExpression extends GrMethodCall {
 
   GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException;
+
 
 }

@@ -114,7 +114,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     final Processor<GrNewExpression> newExpressionProcessor = new Processor<GrNewExpression>() {
       @Override
       public boolean process(GrNewExpression grNewExpression) {
-        final PsiMethod resolvedConstructor = grNewExpression.resolveConstructor();
+        final PsiMethod resolvedConstructor = grNewExpression.resolveMethod();
         if (includeOverloads || constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor)) {
           return consumer.process(grNewExpression.getReferenceElement());
         }
@@ -373,7 +373,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
         if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
           final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
           if (invocation.isThisCall() == processThisRefs &&
-              invocation.getManager().areElementsEquivalent(invocation.resolveConstructor(), searchedConstructor) &&
+              invocation.getManager().areElementsEquivalent(invocation.resolveMethod(), searchedConstructor) &&
               !consumer.process(invocation.getThisOrSuperKeyword())) {
             return false;
           }

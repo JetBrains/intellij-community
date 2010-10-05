@@ -53,7 +53,7 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
         return null;
       }
 
-      final PsiMethod constructor = newExpr.resolveConstructor();
+      final PsiMethod constructor = newExpr.resolveMethod();
       final GrArgumentList argumentList = newExpr.getArgumentList();
       if (constructor != null &&
           argumentList != null &&

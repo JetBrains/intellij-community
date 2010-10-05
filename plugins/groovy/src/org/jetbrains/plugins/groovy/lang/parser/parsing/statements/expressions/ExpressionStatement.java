@@ -61,7 +61,6 @@ public class ExpressionStatement implements GroovyElementTypes {
   }
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-    builder.setDebugMode(true);
     PsiBuilder.Marker marker = builder.mark();
 
     final IElementType result = parseExpressionStatement(builder, parser);

@@ -5,7 +5,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
 /**
  * @author ilyas
@@ -31,13 +28,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
 
   @Nullable
   public PsiType getNominalType() {
-    final TypeInferenceHelper helper = GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper();
-
-    return helper.doWithInferenceDisabled(new Computable<PsiType>() {
-      public PsiType compute() {
-        return getType();
-      }
-    });
+    return PsiImplUtil.getNominalType(this);
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {

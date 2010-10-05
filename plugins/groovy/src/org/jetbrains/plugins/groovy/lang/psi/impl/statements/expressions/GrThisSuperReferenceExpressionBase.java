@@ -41,7 +41,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
   @Override
   public PsiElement resolve() {
     final PsiElement parent = getParent();
-    if (parent instanceof GrConstructorInvocation)return ((GrConstructorInvocation)parent).resolveConstructor();
+    if (parent instanceof GrConstructorInvocation)return ((GrConstructorInvocation)parent).resolveMethod();
     return null;
   }
 

@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiClass;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 
@@ -30,9 +28,6 @@ public interface GrConstructorInvocation extends GrStatement, GrConstructorCall 
   boolean isSuperCall();
 
   boolean isThisCall();
-
-  @NotNull
-  GrArgumentList getArgumentList();
 
   GrThisSuperReferenceExpression getThisOrSuperKeyword();
 

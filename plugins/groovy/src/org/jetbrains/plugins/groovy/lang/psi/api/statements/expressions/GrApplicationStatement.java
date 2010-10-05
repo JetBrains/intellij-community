@@ -29,4 +29,6 @@ public interface GrApplicationStatement extends GrStatement, GrMethodCall {
 
   GrExpression[] getArguments();
 
+  GrCommandArgumentList getArgumentList();
+
 }
