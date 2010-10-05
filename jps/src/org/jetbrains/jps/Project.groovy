@@ -28,6 +28,7 @@ class Project {
   final Map<String, Artifact> artifacts = [:]
 
   String targetFolder = null
+  String tempFolder = null
 
   boolean dryRun = false
 

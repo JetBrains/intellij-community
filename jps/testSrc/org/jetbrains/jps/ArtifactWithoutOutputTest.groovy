@@ -9,6 +9,7 @@ class ArtifactWithoutOutputTest extends JpsBuildTestCase {
   public void test() throws Exception {
     def outDir = FileUtil.createTempDirectory("output").absolutePath
     Project project = loadProject("testData/artifactWithoutOutput/artifactWithoutOutput.ipr", ["OUTPUT_DIR":outDir])
+    project.tempFolder = FileUtil.createTempDirectory("tmp").absolutePath
     project.clean()
     project.buildArtifact("main")
     project.deleteTempFiles()

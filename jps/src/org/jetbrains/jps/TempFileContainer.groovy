@@ -19,7 +19,8 @@ class TempFileContainer {
   private File getBaseDirectory() {
     if (baseDirectory == null) {
       def ant = project.binding.ant
-      baseDirectory = new File(project.targetFolder != null ? project.targetFolder : ".", tempDirectoryName)
+      String basePath = project.tempFolder ?: project.targetFolder ?: "."
+      baseDirectory = new File(basePath, tempDirectoryName)
       ant.delete(dir: baseDirectory.absolutePath)
       ant.mkdir(dir: baseDirectory.absolutePath)
     }
