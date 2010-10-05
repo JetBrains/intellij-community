@@ -105,7 +105,5 @@ public interface ChangelistBuilder {
 
   void processRootSwitch(VirtualFile file, String branch);
 
-  boolean isUpdatingUnversionedFiles();
-
   boolean reportChangesOutsideProject();
 }

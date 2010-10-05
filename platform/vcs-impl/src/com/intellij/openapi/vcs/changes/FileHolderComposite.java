@@ -53,9 +53,9 @@ public class FileHolderComposite implements FileHolder {
     }
   }
 
-  public void cleanScope(final VcsDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
     for (FileHolder holder : myHolders.values()) {
-      holder.cleanScope(scope);
+      holder.cleanAndAdjustScope(scope);
     }
   }
 

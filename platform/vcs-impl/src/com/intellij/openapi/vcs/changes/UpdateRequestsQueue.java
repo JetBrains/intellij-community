@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 @SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
+  private final static String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
   private final ScheduledExecutorService myExecutor;
   private final LocalChangesUpdater myDelegate;
@@ -51,15 +53,16 @@ public class UpdateRequestsQueue {
   private boolean myRequestSubmitted;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
-  private boolean myUpdateUnversionedRequested;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
   private final ExecutorWrapper myExecutorWrapper;
   @NonNls public static final String LOCAL_CHANGES_UPDATE = "Local changes update";
+  private final boolean myTrackHeavyLatch;
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
     myProject = project;
     myExecutor = executor;
+    myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty(ourHeavyLatchOptimization));
 
     //mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, LOCAL_CHANGES_UPDATE, executor);
     myExecutorWrapper = new ExecutorWrapper(myProject, LOCAL_CHANGES_UPDATE);
@@ -72,7 +75,6 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
-    myUpdateUnversionedRequested = false;
   }
 
   public void initialized() {
@@ -84,7 +86,7 @@ public class UpdateRequestsQueue {
     return myStopped;
   }
 
-  public void schedule(final boolean updateUnversionedFiles) {
+  public void schedule() {
     synchronized (myLock) {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -94,9 +96,6 @@ public class UpdateRequestsQueue {
           myRequestSubmitted = true;
           myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
           LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
-          myUpdateUnversionedRequested |= updateUnversionedFiles;
-        } else if (updateUnversionedFiles && (! myUpdateUnversionedRequested)) {
-          myUpdateUnversionedRequested = true;
         }
       }
     }
@@ -136,7 +135,7 @@ public class UpdateRequestsQueue {
         }
         
         myWaitingUpdateCompletionQueue.add(data.getCallback());
-        schedule(true);
+        schedule();
       }
     }
     // do not run under lock; stopped cannot be switched into not stopped - can check without lock
@@ -165,11 +164,11 @@ public class UpdateRequestsQueue {
       try {
         synchronized (myLock) {
           if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning()) ||
-            (! ((StartupManagerImpl) myStartupManager).startupActivityPassed())) {
+            (! ((StartupManagerImpl) myStartupManager).startupActivityPassed()) || myTrackHeavyLatch && HeavyProcessLatch.INSTANCE.isRunning()) {
             LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
             myRequestSubmitted = false;
             // try again after time
-            schedule(myUpdateUnversionedRequested);
+            schedule();
             return;
           }
 
@@ -180,17 +179,12 @@ public class UpdateRequestsQueue {
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
             return;
           }
-
-          // take it under lock
-          updateUnversioned = myUpdateUnversionedRequested;
-          // for concurrent schedules to tigger flag correctly
-          myUpdateUnversionedRequested = false;
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
         myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
           public void consume(AtomicSectionsAware atomicSectionsAware) {
-            myDelegate.execute(updateUnversioned, atomicSectionsAware);
+            myDelegate.execute(atomicSectionsAware);
           }
         });
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());

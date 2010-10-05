@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public class LogicallyLockedHolder implements FileHolder {
     myMap.put(file, lock);
   }
 
-  public void cleanScope(VcsDirtyScope scope) {
+  public void cleanAndAdjustScope(VcsAppendableDirtyScope scope) {
     VirtualFileHolder.cleanScope(myProject, myMap.keySet(), scope);
   }
 
@@ -52,7 +53,28 @@ public class LogicallyLockedHolder implements FileHolder {
     return HolderType.LOGICALLY_LOCKED;
   }
 
+  public boolean containsKey(final VirtualFile vf) {
+    return myMap.containsKey(vf);
+  }
+
   public Map<VirtualFile, LogicalLock> getMap() {
-    return myMap;
+    return Collections.unmodifiableMap(myMap);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    LogicallyLockedHolder that = (LogicallyLockedHolder)o;
+
+    if (!myMap.equals(that.myMap)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myMap.hashCode();
   }
 }

@@ -134,4 +134,24 @@ public class AreaMap<Key, Val> {
     myKeys.clear();
     myMap.clear();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AreaMap areaMap = (AreaMap)o;
+
+    if (!myKeys.equals(areaMap.myKeys)) return false;
+    if (!myMap.equals(areaMap.myMap)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myKeys.hashCode();
+    result = 31 * result + myMap.hashCode();
+    return result;
+  }
 }

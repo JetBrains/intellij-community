@@ -83,11 +83,6 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public boolean isUpdatingUnversionedFiles() {
-    return true;
-  }
-
-  @Override
   public boolean reportChangesOutsideProject() {
     return false;
   }
