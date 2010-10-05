@@ -712,6 +712,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     IdeEventQueue.getInstance().addIdleListener(new Runnable() {
       @Override
       public void run() {
+        IdeEventQueue.getInstance().removeIdleListener(this);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (!tryToReloadApplication()) return;
