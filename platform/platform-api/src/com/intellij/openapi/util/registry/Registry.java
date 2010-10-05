@@ -25,6 +25,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Registry  {
 
@@ -35,8 +36,7 @@ public class Registry  {
 
   private final LinkedHashMap<String, String> myUserProperties = new LinkedHashMap<String, String>();
   private final Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
-
-  private final Map<String, RegistryValue> myValues = new HashMap<String, RegistryValue>();
+  private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
 
   private static final Registry ourInstance = new Registry();
 
