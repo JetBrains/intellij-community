@@ -539,7 +539,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
-    return completionType == myParameters.getCompletionType() && editor == myEditor;
+    return completionType == myParameters.getCompletionType() && editor == myEditor && !isAutopopupCompletion();
   }
 
   @Override
