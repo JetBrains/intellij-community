@@ -98,6 +98,7 @@ public class CreateNewLibraryAction extends AnAction {
   private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
     final List<Module> modules = new ArrayList<Module>();
     ContainerUtil.addAll(modules, rootConfigurable.getModules());
+    if (modules.isEmpty()) return;
     final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                             modules, ProjectBundle.message("choose.modules.dialog.title"),
                                                             ProjectBundle
