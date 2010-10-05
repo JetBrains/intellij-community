@@ -1410,9 +1410,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isReleased) {
       g.setColor(new Color(128, 255, 128));
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
-
       return;
     }
+    if (myProject != null && myProject.isDisposed()) return;
 
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
