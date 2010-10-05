@@ -15,19 +15,26 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.PairProcessor;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author irengrig
  */
-public class MembershipMap<Key extends Comparable<Key>, Val> extends AreaMap<Key, Val> {
-  public MembershipMap(final PairProcessor<Key, Key> keysResemblance) {
-    super(keysResemblance);
+public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
+  public static<Key extends Comparable<Key>, Val> MembershipMap<Key, Val> createMembershipMap(final PairProcessor<Key, Key> keysResemblance) {
+    return new MembershipMap<Key,Val>(keysResemblance, new ComparableComparator<Key>());
+  }
+
+  public static<Key, Val> MembershipMap<Key, Val> createMembershipMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
+    return new MembershipMap<Key,Val>(keysResemblance, comparator);
+  }
+
+  private MembershipMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
+    super(keysResemblance, comparator);
   }
 
   public void putOptimal(final Key key, final Val val) {
@@ -80,5 +87,17 @@ public class MembershipMap<Key extends Comparable<Key>, Val> extends AreaMap<Key
       }
       ++ i;
     }
+  }
+
+  public Pair<Key, Val> getMapping(final Key key) {
+    final Ref<Pair<Key, Val>> result = new Ref<Pair<Key, Val>>();
+    getSimiliar(key, new PairProcessor<Key, Val>() {
+      @Override
+      public boolean process(final Key key, final Val val) {
+        result.set(new Pair<Key,Val>(key, val));
+        return true;
+      }
+    });
+    return result.get();
   }
 }

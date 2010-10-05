@@ -19,6 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Comparator;
 
+/**
+ * not a bug: Orders directories, shortest paths first, files are left as is.
+ * correct alphabet ordering is not here
+ */
 public class VirtualFileHierarchicalComparator implements Comparator<VirtualFile> {
   private static final VirtualFileHierarchicalComparator ourInstance = new VirtualFileHierarchicalComparator();
 
