@@ -34,9 +34,12 @@ class ProjectBuilder {
   boolean useInProcessJavac
   boolean compressJars = true
 
+  private final TempFileContainer tempFileContainer
+
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
     this.binding = binding
+    tempFileContainer = new TempFileContainer(project, "__build_temp__")
     sourceGeneratingBuilders << new GroovyStubGenerator(project)
     translatingBuilders << new JavacBuilder()
     translatingBuilders << new GroovycBuilder(project)
@@ -109,6 +112,14 @@ class ProjectBuilder {
 
   def makeModuleTests(Module module) {
     return makeModuleWithDependencies(module, true);
+  }
+
+  def deleteTempFiles() {
+    tempFileContainer.clean()
+  }
+
+  String getTempDirectoryPath(String name) {
+    return tempFileContainer.getTempDirPath(name)
   }
 
   private def makeModuleWithDependencies(Module module, boolean includeTests) {

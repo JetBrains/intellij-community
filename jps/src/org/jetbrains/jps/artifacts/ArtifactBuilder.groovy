@@ -106,8 +106,7 @@ class ArtifactBuilder {
     project.stage("Building '${artifact.name}' artifact")
     output = getArtifactOutputFolder(artifact)
     if (output == null) {
-      def dirName = BuildUtil.suggestFileName(artifact.name)
-      output = new File(project.targetFolder != null ? project.targetFolder : ".", "__temp_artifact_$dirName").absolutePath
+      output = project.builder.getTempDirectoryPath(artifact.name)
       project.info("Output path for artifact '$artifact.name' is not specified so it will be built to $output")
     }
     artifactOutputs[artifact] = output

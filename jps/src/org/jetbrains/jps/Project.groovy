@@ -173,6 +173,10 @@ class Project {
     builder.clean()
   }
 
+  def deleteTempFiles() {
+    builder.deleteTempFiles()
+  }
+
   def ClasspathItem resolve(Object dep) {
     if (dep instanceof ClasspathItem) {
       return dep

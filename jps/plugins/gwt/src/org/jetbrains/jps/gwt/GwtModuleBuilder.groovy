@@ -4,9 +4,8 @@ import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleBuilder
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.Project
-import org.jetbrains.jps.builders.BuildUtil
 
-/**
+ /**
  * @author nik
  */
 class GwtModuleBuilder implements ModuleBuilder {
@@ -41,9 +40,7 @@ class GwtModuleBuilder implements ModuleBuilder {
       return
     }
 
-    String baseDir = project.targetFolder != null ? project.targetFolder : "."
-    String dirName = BuildUtil.suggestFileName(facet.module.name)
-    String outputDir = new File(baseDir, "__temp_gwt_output_$dirName").absolutePath
+    String outputDir = project.builder.getTempDirectoryPath("GWT_Output_$facet.module.name")
     facet.tempOutputDir = outputDir
 
     def ant = project.binding.ant
