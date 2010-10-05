@@ -72,8 +72,11 @@ public class PyStringFormatInspection extends PyInspection {
 
       // return number of arguments or -1 if it can not be computed
       private int inspectArguments(@Nullable final PyExpression rightExpression, final PsiElement problemTarget) {
-        final Class[] SIMPLE_RHS_EXPRESSIONS =
-          {PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class};
+        final Class[] SIMPLE_RHS_EXPRESSIONS = {
+          PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
+        };
+
+        final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PySliceExpression.class, PyListCompExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -124,7 +127,7 @@ public class PyStringFormatInspection extends PyInspection {
           for (PyExpression expression : expressions) {
             final String formatSpec = myFormatSpec.get(Integer.toString(i));
             if (formatSpec != null) {
-              checkExpressionType(expression, formatSpec, problemTarget);
+              checkExpressionType(expression, formatSpec, expression);
             }
             ++i;
           }
@@ -132,8 +135,21 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
           final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)rightExpression).getElements();
-          if (myUsedMappingKeys.isEmpty() && expressions.length != 0) {
-            registerProblem(rightExpression, "Format doesn't require a mapping");
+          if (myUsedMappingKeys.isEmpty()) {
+            if (myExpectedArguments > 0) {
+              if (myExpectedArguments == expressions.length) {
+                // probably "%s %s" % {'a':1, 'b':2}, with names forgotten in template
+                registerProblem(rightExpression, PyBundle.message("INSP.format.requires.no.mapping"));
+              }
+              else {
+                // "braces: %s" % {'foo':1} gives "braces: {'foo':1}", implicit str() kicks in
+                return 1;
+              }
+            }
+            else {
+              // "foo" % {whatever} is just "foo"
+              return 0;
+            }
           }
           for (PyKeyValueExpression expression : expressions) {
             final PyExpression key = expression.getKey();
@@ -150,25 +166,13 @@ public class PyStringFormatInspection extends PyInspection {
           }
           for (String key : myUsedMappingKeys.keySet()) {
             if (!myUsedMappingKeys.get(key).booleanValue()) {
-              registerProblem(rightExpression, "Key '" + key + "' has no following argument");
+              registerProblem(rightExpression, PyBundle.message("INSP.key.$0.has.no.arg", key));
               break;
             }
           }
           return expressions.length;
         }
-        else if (rightExpression instanceof PyListLiteralExpression) {
-          if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
-            return 1;
-          }
-        }
-        else if (rightExpression instanceof PySliceExpression) {
-          if (myFormatSpec.get("1") != null) {
-            checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
-            return 1;
-          }
-        }
-        else if (rightExpression instanceof PyListCompExpression) {
+        else if (PyUtil.instanceOf(rightExpression, LIST_LIKE_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
             checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
             return 1;
@@ -199,7 +203,7 @@ public class PyStringFormatInspection extends PyInspection {
         if ("int".equals(typeName) || "float".equals(typeName)) {
           return;
         }
-        registerProblem(problemTarget, "Unexpected type " + typeName);
+        registerProblem(problemTarget, PyBundle.message("INSP.unexpected.type.$0", typeName));
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
@@ -223,7 +227,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (mapping) {
             characterNumber = section.indexOf(")");
             if (section.charAt(0) != '(' || characterNumber == -1) {
-              registerProblem(formatExpression, "Too few mapping keys");
+              registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
               break;
             }
             mappingKey = section.substring(1, characterNumber);
@@ -261,7 +265,7 @@ public class PyStringFormatInspection extends PyInspection {
               continue;
             }
           }
-          registerProblem(formatExpression, "There are no format specifier character");
+          registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"));
         }
       }
 
@@ -299,7 +303,7 @@ public class PyStringFormatInspection extends PyInspection {
           final PyType type = myTypeEvalContext.getType(rightExpression);
           if (type != null) {
             if (myUsedMappingKeys.size() > 0 && !("dict".equals(type.getName()))) {
-              registerProblem(rightExpression, "Format requires a mapping");
+              registerProblem(rightExpression, PyBundle.message("INSP.format.requires.mapping"));
               return;
             }
           }
@@ -311,10 +315,10 @@ public class PyStringFormatInspection extends PyInspection {
         final int arguments = inspectArguments(rightExpression, rightExpression);
         if (myUsedMappingKeys.isEmpty() && arguments >= 0) {
           if (myExpectedArguments < arguments) {
-            registerProblem(rightExpression, "Too many arguments for format string");
+            registerProblem(rightExpression, PyBundle.message("INSP.too.many.args.for.fmt.string"));
           }
           else if (myExpectedArguments > arguments) {
-            registerProblem(rightExpression, "Too few arguments for format string");
+            registerProblem(rightExpression, PyBundle.message("INSP.too.few.args.for.fmt.string"));
           }
         }
       }

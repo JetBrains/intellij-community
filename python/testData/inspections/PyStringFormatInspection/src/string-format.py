@@ -74,3 +74,8 @@ for item in my_list:
 def bar():
     return None
 "%s %s" % bar()   #Too few arguments for format string
+
+"%s" % {} # ok; str() works
+"%s" % {'a': 1, 'b': 2} # ok, no names in template and arg counts don't match
+"%s" % object() # ok, str() works
+"foo" % {'bar':1, 'baz':2} # ok: empty template that could use names

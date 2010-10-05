@@ -13,7 +13,7 @@
   <problem>
     <file>string-format.py</file>
     <line>6</line>
-    <description>There are no format specifier character</description>
+    <description>Format specifier character missing</description>
   </problem>
   <problem>
     <file>string-format.py</file>
@@ -33,7 +33,7 @@
   <problem>
     <file>string-format.py</file>
     <line>12</line>
-    <description>There are no format specifier character</description>
+    <description>Format specifier character missing</description>
   </problem>
   <problem>
     <file>string-format.py</file>
