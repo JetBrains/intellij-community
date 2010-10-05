@@ -117,7 +117,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (myIgnoredFilesComponent.isIgnoredFile(file)) {
-        myComposite.getIgnoredFileHolder().addFile(file, "", false);
+        myComposite.getIgnoredFileHolder().addFile(file);
       } else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
         // does not need to add: parent dir is already added
       }
@@ -157,7 +157,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      myComposite.getIgnoredFileHolder().addFile(file, "", false);
+      myComposite.getIgnoredFileHolder().addFile(file);
     }
   }
 

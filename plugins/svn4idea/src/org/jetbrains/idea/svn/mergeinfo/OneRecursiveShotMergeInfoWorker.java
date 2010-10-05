@@ -45,7 +45,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     myProject = project;
     myWCInfo = WCInfo;
     
-    myDataMap = new AreaMap<String, Map<String, SVNMergeRangeList>>(new PairProcessor<String, String>() {
+    myDataMap = AreaMap.create(new PairProcessor<String, String>() {
       public boolean process(String parentUrl, String childUrl) {
         if (".".equals(parentUrl)) return true;
         return SVNPathUtil.isAncestor(ensureUrlFromSlash(parentUrl), ensureUrlFromSlash(childUrl));

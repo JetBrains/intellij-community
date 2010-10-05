@@ -448,7 +448,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             myUpdateException = e;
           }
         }
-        composite.getIgnoredFileHolder().calculateChildren();
       }
     }
     finally {
@@ -516,7 +515,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    * @return only roots for ignored folders, and ignored files
    */
   List<VirtualFile> getIgnoredFiles() {
-    return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().getBranchToFileMap().values());
+    return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().values());
   }
 
   public List<VirtualFile> getLockedFolders() {
@@ -918,6 +917,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.set(filesToIgnore);
+    // todo!!!!!! dont synchronously
     updateIgnoredFiles(true);
   }
 
@@ -930,7 +930,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (isIgnoredFile(file)) {
           somethingChanged = true;
           myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
-          myComposite.getIgnoredFileHolder().addFile(file, "", false);
+          myComposite.getIgnoredFileHolder().addFile(file);
         }
       }
       /*if (checkIgnored) {
