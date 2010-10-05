@@ -1,7 +1,6 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,7 +29,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PyListLiteralExpression.class,
     PyArgumentList.class,
     PyParameterList.class,
-    PyFunction.class
+    PyFunction.class,
+    PySliceExpression.class
   };
 
   @Override
