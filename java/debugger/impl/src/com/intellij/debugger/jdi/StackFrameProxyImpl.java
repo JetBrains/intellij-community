@@ -154,7 +154,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       return getStackFrame().location();
     }
     catch (InvalidStackFrameException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.resumed"), e);
+      clearCaches();
+      return location();
     }
   }
 
