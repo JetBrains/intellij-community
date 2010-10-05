@@ -25,6 +25,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -155,28 +156,29 @@ public class CommandMerger {
   }
 
   public void undoOrRedo(FileEditor editor, boolean isUndo) {
-    boolean fullyTransparent = isTransparent();
-
     flushCurrentCommand();
 
-    // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undo/redo. Such actions should not get
-    // into redo/undo stacks.
-    if (fullyTransparent) {
-      while (true) {
-        Undo undo = new Undo(myManager, editor);
-        if (!undo.isTransparentsOnly()) break;
-        undo.execute(true);
-        if (!undo.hasMoreActions()) break;
-      }
+    // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undoRedo/redo.
+    // Such actions should not get into redo/undoRedo stacks.  Note that 'transparent' actions that have been merged with normal actions
+    // are not dropped, since this means they did not occur after undo/redo
+    UndoRedo undoRedo;
+    while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
+      if (!undoRedo.isTransparentsOnly()) break;
+      undoRedo.execute(true);
+      if (!undoRedo.hasMoreActions()) break;
     }
 
-    do {
-      UndoRedo undoOrRedo = isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
-      undoOrRedo.execute(false);
-      boolean shouldRepeat = undoOrRedo.isTransparentsOnly() && undoOrRedo.hasMoreActions();
+    while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
+      undoRedo.execute(false);
+      boolean shouldRepeat = undoRedo.isTransparentsOnly() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }
-    while (true);
+  }
+
+  @Nullable
+  private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
+    if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
+    return isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
   }
 
   public UndoConfirmationPolicy getUndoConfirmationPolicy() {

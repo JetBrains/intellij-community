@@ -151,7 +151,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void runStartupActivity() {
     myEditorProvider = new FocusBasedCurrentEditorProvider();
     CommandListener commandListener = new CommandAdapter() {
-      private boolean myFakeCommandStarted = false;
+      private boolean myStarted = false;
 
       public void commandStarted(CommandEvent event) {
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
@@ -163,14 +163,14 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       public void undoTransparentActionStarted() {
         if (!isInsideCommand()) {
-          myFakeCommandStarted = true;
+          myStarted = true;
           onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT);
         }
       }
 
       public void undoTransparentActionFinished() {
-        if (myFakeCommandStarted) {
-          myFakeCommandStarted = false;
+        if (myStarted) {
+          myStarted = false;
           onCommandFinished(myProject, "", null);
         }
       }
@@ -336,7 +336,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return isUndoOrRedoAvailable(editor, false);
   }
 
-  private boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
+  protected boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
