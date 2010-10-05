@@ -15,7 +15,6 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,7 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,28 +39,22 @@ import java.util.Map;
  * @author nik
 */
 public class LibraryCompositionSettings implements Disposable {
-  @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final CustomLibraryDescription myLibraryDescription;
-  private final String myBaseDirectoryForDownloadedFiles;
-  private String myDirectoryForDownloadedLibrariesPath;
-  private boolean myDownloadLibraries = true;
-  private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
-  private String myDownloadedLibraryName;
-  private boolean myDownloadSources = true;
-  private boolean myDownloadJavadocs = true;
-  private List<LibraryDownloadInfo> mySelectedDownloads;
+  private final String myBaseDirectoryPath;
+  private LibrariesContainer.LibraryLevel myNewLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private NewLibraryEditor myNewLibraryEditor;
   private Library mySelectedLibrary;
+  private boolean myDownloadLibraries;
+  private LibraryDownloadSettings myDownloadSettings;
   private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new HashMap<Library, ExistingLibraryEditor>();
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
-                                    final @NotNull String baseDirectoryForDownloadedFiles) {
+                                    final @NotNull String baseDirectoryFiles) {
     myLibraryDescription = libraryDescription;
-    myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
+    myBaseDirectoryPath = baseDirectoryFiles;
     final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
     if (downloadDescription != null) {
-      myDownloadedLibraryName = downloadDescription.getDefaultLibraryName();
-      mySelectedDownloads = downloadDescription.getDownloads();
+      myDownloadSettings = new LibraryDownloadSettings(downloadDescription, baseDirectoryFiles);
     }
   }
 
@@ -81,13 +73,14 @@ public class LibraryCompositionSettings implements Disposable {
     return myLibraryDescription;
   }
 
-  @NotNull
-  public String getBaseDirectoryForDownloadedFiles() {
-    return myBaseDirectoryForDownloadedFiles;
+  @Nullable
+  public LibraryDownloadSettings getDownloadSettings() {
+    return myDownloadSettings;
   }
 
-  public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
-    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+  @NotNull
+  public String getBaseDirectoryPath() {
+    return myBaseDirectoryPath;
   }
 
   public void setDownloadLibraries(final boolean downloadLibraries) {
@@ -98,65 +91,36 @@ public class LibraryCompositionSettings implements Disposable {
     mySelectedLibrary = library;
   }
 
-  public void setLibraryLevel(final LibrariesContainer.LibraryLevel libraryLevel) {
-    myLibraryLevel = libraryLevel;
-  }
-
-  public void setDownloadedLibraryName(final String downloadedLibraryName) {
-    myDownloadedLibraryName = downloadedLibraryName;
-  }
-
-  public String getDirectoryForDownloadedLibrariesPath() {
-    if (myDirectoryForDownloadedLibrariesPath == null) {
-      myDirectoryForDownloadedLibrariesPath = myBaseDirectoryForDownloadedFiles + "/" + DEFAULT_LIB_FOLDER;
-    }
-    return myDirectoryForDownloadedLibrariesPath;
-  }
-
-  public List<LibraryDownloadInfo> getSelectedDownloads() {
-    return mySelectedDownloads;
-  }
-
-  public void setSelectedDownloads(List<LibraryDownloadInfo> selectedDownloads) {
-    mySelectedDownloads = selectedDownloads;
+  public void setNewLibraryLevel(final LibrariesContainer.LibraryLevel newLibraryLevel) {
+    myNewLibraryLevel = newLibraryLevel;
   }
 
   public boolean downloadFiles(final @NotNull JComponent parent) {
-    final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
-    if (myDownloadLibraries && downloadDescription != null) {
-      LibraryDownloadInfo[] toDownload = mySelectedDownloads.toArray(new LibraryDownloadInfo[mySelectedDownloads.size()]);
-      LibraryDownloader downloader = new LibraryDownloader(toDownload, null, parent,
-                                                           getDirectoryForDownloadedLibrariesPath(), myDownloadedLibraryName);
-      VirtualFile[] files = downloader.download();
-      if (files.length != toDownload.length) {
-        return false;
-      }
-      myNewLibraryEditor = new NewLibraryEditor();
-      myNewLibraryEditor.setName(myDownloadedLibraryName);
-      for (VirtualFile file : files) {
-        myNewLibraryEditor.addRoot(file, OrderRootType.CLASSES);
+    if (myDownloadLibraries && myDownloadSettings != null) {
+      final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent);
+      if (libraryEditor != null) {
+        myNewLibraryEditor = libraryEditor;
       }
     }
     return true;
   }
-
 
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myNewLibraryEditor != null) {
       VirtualFile[] roots = myNewLibraryEditor.getFiles(OrderRootType.CLASSES);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
-                                                     myNewLibraryEditor.getName(), myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
+                                                     myNewLibraryEditor.getName(), getLibraryLevel(), roots, VirtualFile.EMPTY_ARRAY);
     }
     return null;
   }
 
-  public LibrariesContainer.LibraryLevel getLibraryLevel() {
-    return myLibraryLevel;
+  private LibrariesContainer.LibraryLevel getLibraryLevel() {
+    return myDownloadLibraries ? myDownloadSettings.getLibraryLevel() : myNewLibraryLevel;
   }
 
-  public String getDownloadedLibraryName() {
-    return myDownloadedLibraryName;
+  public LibrariesContainer.LibraryLevel getNewLibraryLevel() {
+    return myNewLibraryLevel;
   }
 
   @Nullable
@@ -175,22 +139,6 @@ public class LibraryCompositionSettings implements Disposable {
       rootModel.addLibraryEntry(mySelectedLibrary);
     }
     return library;
-  }
-
-  public boolean isDownloadSources() {
-    return myDownloadSources;
-  }
-
-  public void setDownloadSources(boolean downloadSources) {
-    myDownloadSources = downloadSources;
-  }
-
-  public boolean isDownloadJavadocs() {
-    return myDownloadJavadocs;
-  }
-
-  public void setDownloadJavadocs(boolean downloadJavadocs) {
-    myDownloadJavadocs = downloadJavadocs;
   }
 
   public void setNewLibraryEditor(NewLibraryEditor libraryEditor) {

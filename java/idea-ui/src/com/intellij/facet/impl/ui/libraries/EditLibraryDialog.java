@@ -48,7 +48,7 @@ public class EditLibraryDialog extends DialogWrapper {
     final boolean newLibrary = libraryEditor instanceof NewLibraryEditor;
     setTitle((newLibrary ? "Create" : "Edit") + " Library");
 
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(libraryEditor.getName(), newLibrary ? settings.getLibraryLevel() : null);
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(libraryEditor.getName(), newLibrary ? settings.getNewLibraryLevel() : null);
     init();
   }
 
@@ -64,7 +64,7 @@ public class EditLibraryDialog extends DialogWrapper {
   protected void doOKAction() {
     myLibraryEditor.setName(myNameAndLevelPanel.getLibraryName());
     if (myLibraryEditor instanceof NewLibraryEditor) {
-      mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
+      mySettings.setNewLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     }
     super.doOKAction();
   }
