@@ -66,6 +66,7 @@ public class LibraryOptionsPanel {
   private JButton myCreateButton;
   private JRadioButton myDownloadRadioButton;
   private JRadioButton myUseLibraryRadioButton;
+  private JLabel myUseLibraryLabel;
   private ButtonGroup myButtonGroup;
 
   private final LibraryCompositionSettings mySettings;
@@ -134,6 +135,7 @@ public class LibraryOptionsPanel {
 
     if (!canDownload && !showDoNotCreateOption) {
       myUseLibraryRadioButton.setVisible(false);
+      myUseLibraryLabel.setVisible(true);
     }
 
     myCreateButton.addActionListener(new ActionListener() {
