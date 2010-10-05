@@ -509,6 +509,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInitialMouseEvent != null) {
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
+
+    // There is a possible case that 'use soft wrap' setting value is changed and we need to repaint all affected lines then.
+    repaintToScreenBottom(getCaretModel().getLogicalPosition().line);
+    int y = getCaretModel().getVisualLineStart() * getLineHeight();
+    myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - y);
+    getCaretModel().moveToOffset(getCaretModel().getOffset());
   }
 
   private void initTabPainter() {
@@ -929,60 +935,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         offset = region.getEndOffset();
       }
       else {
-        //SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
-        //if (softWrap != null) {
-        //  // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
-        //  // from its first line.
-        //  int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
-        //
-        //  // Process 'before soft wrap' drawing.
-        //  if (softWrapLinesToSkip <= 0) {
-        //    prevX = x;
-        //    charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-        //    x += charWidth;
-        //    if (x >= px) {
-        //      onSoftWrapDrawing = true;
-        //      break outer;
-        //    }
-        //    column++;
-        //  }
-        //
-        //  CharSequence softWrapText = softWrap.getText();
-        //  for (int i = 0; i < softWrapText.length(); i++) {
-        //    c = softWrapText.charAt(i);
-        //    if (softWrapLinesToSkip > 0) {
-        //      if (c == '\n') {
-        //        softWrapLinesToSkip--;
-        //      }
-        //      continue;
-        //    }
-        //    prevX = x;
-        //
-        //    charWidth = charToVisibleWidth(c, fontType, x);
-        //    if (charWidth == 0) {
-        //      charWidth = spaceSize;
-        //      break outer;
-        //    }
-        //
-        //    x += charWidth;
-        //    if (x >= px) {
-        //      break outer;
-        //    }
-        //    column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
-        //  }
-        //  activeSoftWrapProcessed = true;
-        //
-        //  // Process 'after soft wrap' sign.
-        //  prevX = x;
-        //  charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
-        //  x += charWidth;
-        //  if (x >= px) {
-        //    onSoftWrapDrawing = true;
-        //    break outer;
-        //  }
-        //  column++;
-        //}
-
         prevX = x;
         c = text.charAt(offset);
         charWidth = charToVisibleWidth(c, fontType, x);
@@ -1087,24 +1039,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int logicalToVisualLine(int line) {
     assertReadAccess();
     return logicalToVisualPosition(new LogicalPosition(line, 0)).line;
-    //if (!myFoldingModel.isFoldingEnabled()) return line;
-    //
-    //
-    //int offset = line >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(line);
-    //
-    //FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
-    //if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
-    //  if (offset < getDocument().getTextLength()) {
-    //    offset = outermostCollapsed.getStartOffset();
-    //    return offsetToVisualLine(offset);
-    //  }
-    //  else {
-    //    offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
-    //  }
-    //}
-    //
-    //line -= myFoldingModel.getFoldedLinesCountBefore(offset);
-    //return line;
   }
 
   @NotNull
@@ -1701,6 +1635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
+    boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     int start = logicalPositionToOffset(logicalPosition);
     getSoftWrapModel().registerSoftWrapsIfNecessary(clip, start);
 
@@ -1801,22 +1736,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
     }
 
-    //TODO den check
     // Perform additional activity if soft wrap is added or removed during repainting.
-    //if (mySoftWrapsChanged) {
-    //  mySoftWrapsChanged = false;
-    //  validateSize();
-    //
-    //  // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
-    //  repaintToScreenBottom(xyToLogicalPosition(position).line);
-    //
-    //  // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
-    //  // in accordance with the newly introduced soft wrap(s).
-    //  myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
-    //
-    //  // Ask caret model to update visual caret position.
-    //  getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
-    //}
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
+      // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
+      repaintToScreenBottom(xyToLogicalPosition(position).line);
+
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
+
+      // Ask caret model to update visual caret position.
+      getCaretModel().moveToOffset(getCaretModel().getOffset(), locateBeforeSoftWrap);
+    }
   }
 
   private void paintRectangularSelection(Graphics g) {
