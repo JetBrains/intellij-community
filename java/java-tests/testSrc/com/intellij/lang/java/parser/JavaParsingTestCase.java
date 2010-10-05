@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -120,7 +121,9 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void doTest(final boolean checkResult) {
     doTestDefaultParser(checkResult);
-    doTestNewParser();
+    if (JavaParserDefinition.USE_NEW_PARSER) {
+      doTestNewParser();
+    }
   }
 
   protected void doTestDefaultParser(final boolean checkResult) {

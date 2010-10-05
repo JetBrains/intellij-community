@@ -40,14 +40,16 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
+  public static final boolean USE_NEW_PARSER = false;
 
   @NotNull
-  public Lexer createLexer(Project project) {
-    return new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+  public Lexer createLexer(final Project project) {
+    final LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    return createLexer(languageLevel);
   }
 
   @NotNull
-  public static Lexer createLexer(LanguageLevel languageLevel) {
+  public static Lexer createLexer(final LanguageLevel languageLevel) {
     return new JavaLexer(languageLevel);
   }
 
@@ -72,11 +74,11 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiParser createParser(final Project project) {
-    return PsiUtil.NULL_PARSER;
+    throw new UnsupportedOperationException("Should not be called directly");
   }
 
   @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(final ASTNode node) {
     final IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
       return ((JavaStubElementType)type).createPsi(node);
@@ -85,7 +87,7 @@ public class JavaParserDefinition implements ParserDefinition {
     return PsiUtil.NULL_PSI_ELEMENT;
   }
 
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public PsiFile createFile(final FileViewProvider viewProvider) {
     return new PsiJavaFileImpl(viewProvider);
   }
 
