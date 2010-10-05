@@ -21,12 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
  * @author peter
  */
 public interface GrMethodCall extends GrCallExpression {
-
   GrExpression getInvokedExpression();
 
-
-
   boolean isCommandExpression();
-
-
 }

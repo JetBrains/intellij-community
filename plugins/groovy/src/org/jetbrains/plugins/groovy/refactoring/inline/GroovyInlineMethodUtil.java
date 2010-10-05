@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -368,16 +367,9 @@ public class GroovyInlineMethodUtil {
   }
 
   private static boolean checkCalls(PsiElement scope, PsiMethod method) {
-    if (scope instanceof GrMethodCallExpression) {
-      PsiMethod refMethod = ((GrMethodCallExpression)scope).resolveMethod();
+    if (scope instanceof GrMethodCall) {
+      PsiMethod refMethod = ((GrMethodCall)scope).resolveMethod();
       if (method.equals(refMethod)) return true;
-    }
-    else if (scope instanceof GrApplicationStatement) {
-      final GrExpression expression = ((GrApplicationStatement)scope).getFunExpression();
-      if (expression instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (method.equals(resolved)) return true;
-      }
     }
 
     for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {

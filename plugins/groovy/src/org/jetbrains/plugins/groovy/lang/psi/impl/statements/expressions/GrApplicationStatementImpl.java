@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -39,16 +38,6 @@ public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrAp
 
   public String toString() {
     return "Call expression";
-  }
-
-  public GrExpression getFunExpression() {
-    return getInvokedExpression();
-  }
-
-  public GrExpression[] getArguments() {
-    final GrCommandArgumentList list = getArgumentList();
-    if (list == null) return GrExpression.EMPTY_ARRAY;
-    return list.getExpressionArguments();
   }
 
   @Override
