@@ -80,38 +80,42 @@ public class GroovyInlineMethodUtil {
       return null;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
-    if (!invokedOnReference || reference == null) {
-      String message = GroovyRefactoringBundle.message("multiple.method.inline.is.not.suppored", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
+    if (invokedOnReference) {
+      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      if (reference == null) return null;
 
-    PsiElement element = reference.getElement();
+      PsiElement element = reference.getElement();
 
-    if (element.getContainingFile() instanceof GroovyFile) {
-      if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
+      if (element.getContainingFile() instanceof GroovyFile) {
+        if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
 //        showErrorMessage("Other class support will be implemented soon", myProject);
 //        return null;
+        }
+      }
+
+      if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+        String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
+      }
+
+      GrCallExpression call = (GrCallExpression)element.getParent();
+
+      if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
+        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
+      }
+
+
+      GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
+      if (hasBadReturns(method) && !isTailMethodCall(call)) {
+        String message = GroovyRefactoringBundle
+          .message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
       }
     }
-
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-    GrCallExpression call = (GrCallExpression) element.getParent();
-
-    if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
     if (method.getBlock() == null) {
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -119,12 +123,6 @@ public class GroovyInlineMethodUtil {
       } else {
         message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-    if (hasBadReturns(method) && !isTailMethodCall(call)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       showErrorMessage(message, project, editor);
       return null;
     }
