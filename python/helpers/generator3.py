@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 10, 2, 17, 55, 36) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 10, 4, 15, 53, 2) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -531,7 +531,9 @@ class ModuleRedeclarator(object):
     # Some values are special and are better represented by hand-crafted constructs.
     # Dict is keyed by (module name, member name) and value is the replacement.
     REPLACE_MODULE_VALUES = {
-        (BUILTIN_MOD_NAME, "None"): "object()"
+        (BUILTIN_MOD_NAME, "None"): "object()",
+        # numpy
+        ("numpy.core.multiarray", "typeinfo") : "{}",
     }
     if version[0] <= 2:
         for std_file in ("stdin", "stdout", "stderr"):
@@ -778,6 +780,8 @@ class ModuleRedeclarator(object):
       "gtk._gtk",
       "gobject._gobject",
       "numpy.core.multiarray",
+      "numpy.core._dotblas",
+      "numpy.core.umath",
     )
 
     # Some builtin classes effectively change __init__ signature without overriding it.
