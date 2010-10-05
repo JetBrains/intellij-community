@@ -111,7 +111,6 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(toolbar.getComponent(), constraints);
 
-        constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
@@ -122,9 +121,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 new CheckBox(InspectionGadgetsBundle.message(
                         "ignore.methods.with.boolean.return.type.option"),
                         this, "ignoreBooleanMethods");
-        constraints.gridy = 3;
-        constraints.gridx = 0;
-        constraints.gridwidth = 2;
+        constraints.gridy = 2;
         constraints.weighty = 0.0;
         panel.add(checkBox1, constraints);
 
@@ -132,14 +129,14 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 new CheckBox(InspectionGadgetsBundle.message(
                         "ignore.boolean.methods.in.an.interface.option"),
                         this, "ignoreInAnnotationInterface");
-        constraints.gridy = 4;
+        constraints.gridy = 3;
         panel.add(checkBox2, constraints);
 
         final CheckBox checkBox3 =
                 new CheckBox(InspectionGadgetsBundle.message(
                         "ignore.methods.overriding.super.method"),
                         this, "onlyWarnOnBaseMethods");
-        constraints.gridy = 5;
+        constraints.gridy = 4;
         panel.add(checkBox3, constraints);
         return panel;
     }
@@ -191,10 +188,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 if (superSearch.findFirst() != null) {
                     return;
                 }
-            } else {
-                if(LibraryUtil.isOverrideOfLibraryMethod(method)){
-                    return;
-                }
+            } else if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+                return;
             }
             registerMethodError(method);
         }

@@ -15,22 +15,25 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.RemoveAction;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.ui.*;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +53,9 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreBooleanMethods = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyWarnOnBaseMethods = true;
 
     List<String> questionList = new ArrayList(32);
 
@@ -90,43 +96,36 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
                 new ListTable(new ListWrappingTableModel(questionList,
                         InspectionGadgetsBundle.message(
                                 "boolean.method.name.must.start.with.question.table.column.name")));
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+        final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
 
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveToolbar(table);
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.gridheight = 3;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
         constraints.fill = GridBagConstraints.BOTH;
         panel.add(scrollPane, constraints);
 
-        final JButton addButton = new JButton(new AddAction(table));
-        constraints.gridx = 1;
-        constraints.gridheight = 1;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(addButton, constraints);
-
-        final JButton removeButton = new JButton(new RemoveAction(table));
-        constraints.gridy = 1;
-        panel.add(removeButton, constraints);
-
-        final BlankFiller filler = new BlankFiller();
-        constraints.gridy = 2;
-        constraints.weighty = 1.0;
-        panel.add(filler, constraints);
-
-        final CheckBox checkBox =
+        final CheckBox checkBox1 =
                 new CheckBox(InspectionGadgetsBundle.message(
                         "ignore.methods.with.boolean.return.type.option"),
                         this, "ignoreBooleanMethods");
-        constraints.gridy = 3;
-        constraints.gridx = 0;
-        constraints.gridwidth = 2;
+        constraints.gridy = 2;
         constraints.weighty = 0.0;
-        panel.add(checkBox, constraints);
+        panel.add(checkBox1, constraints);
+
+        final CheckBox checkBox2 =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.methods.overriding.super.method"),
+                        this, "onlyWarnOnBaseMethods");
+        constraints.gridy = 3;
+        panel.add(checkBox2, constraints);
         return panel;
     }
 
@@ -173,8 +172,16 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
                     }
                 }
             }
-            if(!startsWithQuestionWord ||
-                    LibraryUtil.isOverrideOfLibraryMethod(method)){
+            if(!startsWithQuestionWord){
+                return;
+            }
+            if (onlyWarnOnBaseMethods) {
+                final Query<MethodSignatureBackedByPsiMethod> superSearch =
+                        SuperMethodsSearch.search(method, null, true, false);
+                if (superSearch.findFirst() != null) {
+                    return;
+                }
+            } else if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
                 return;
             }
             registerMethodError(method);
