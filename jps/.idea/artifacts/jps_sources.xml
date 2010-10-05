@@ -4,6 +4,8 @@
     <root id="archive" name="jps-sources.zip">
       <element id="dir-copy" path="$PROJECT_DIR$/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/plugins/javaee/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/plugins/gwt/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/plugins/jpa/src" />
     </root>
   </artifact>
 </component>
