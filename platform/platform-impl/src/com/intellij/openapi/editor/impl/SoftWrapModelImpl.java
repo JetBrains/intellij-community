@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -108,7 +109,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   public boolean isSoftWrappingEnabled() {
-    if (myEditor.isOneLineMode() || myEditor.getScrollingModel().getVisibleArea().width <= 0) {
+    if (myEditor.isOneLineMode()) {
+      return false;
+    }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() && myEditor.getScrollingModel().getVisibleArea().width <= 0) {
       return false;
     }
 
