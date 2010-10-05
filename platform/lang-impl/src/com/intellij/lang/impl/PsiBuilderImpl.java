@@ -924,6 +924,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       else if (item instanceof DoneMarker) {
         curNode = nodes.pop();
+        item.next = i < myProduction.size() - 1 ? myProduction.get(i + 1) : null;
       }
       else if (item instanceof ErrorItem) {
         int curToken = item.myLexemeIndex;
@@ -986,10 +987,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CompositeElement curNode = rootNode;
 
     int lexIndex = rootMarker.myLexemeIndex;
-    int lastErrorIndex = -1;
-    for (int i = myProduction.indexOf(rootMarker) + 1; i <= myProduction.indexOf(rootMarker.myDoneMarker); i++) {
-      final ProductionMarker item = myProduction.get(i);
-
+    ProductionMarker item = rootMarker.firstChild != null ? rootMarker.firstChild : rootMarker.myDoneMarker;
+    while (item != null) {
       lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
 
       if (item instanceof StartMarker) {
@@ -1002,25 +1001,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           curNode.rawAddChildren(childNode);
           nodes.push(curNode);
           curNode = childNode;
+
+          item = marker.firstChild != null ? marker.firstChild : marker.myDoneMarker;
         }
         else {
           lexIndex = collapseLeaves(curNode, marker);
-          //noinspection AssignmentToForLoopParameter
-          i = myProduction.indexOf(marker.myDoneMarker);
+          item = marker.myDoneMarker.next;
         }
+      }
+      else if (item instanceof ErrorItem) {
+        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
+        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
+        curNode.rawAddChildren(errorElement);
+        item = item.next != null ? item.next : curMarker.myDoneMarker;
       }
       else if (item instanceof DoneMarker) {
         curMarker = markers.pop();
         curNode = nodes.pop();
-      }
-      else if (item instanceof ErrorItem) {
-        int curToken = item.myLexemeIndex;
-        if (curToken == lastErrorIndex) continue;
-        lastErrorIndex = curToken;
-
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
-        curNode.rawAddChildren(errorElement);
+        item = item.next;
       }
     }
   }
