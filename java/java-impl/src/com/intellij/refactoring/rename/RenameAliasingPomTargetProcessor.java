@@ -17,6 +17,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTarget;
@@ -30,14 +31,14 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
 
   @Override
   public boolean canProcessElement(@Nullable PsiElement element) {
-    return element instanceof PomTarget;
+    return element instanceof PomTargetPsiElement;
   }
 
   @Override
   public void prepareRenaming(PsiElement element, String newName, Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiTarget) {
+    if (element instanceof PomTargetPsiElement) {
       for (AliasingPsiTargetMapper mapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
-        for (AliasingPsiTarget psiTarget : mapper.getTargets((PsiTarget)element)) {
+        for (AliasingPsiTarget psiTarget : mapper.getTargets(((PomTargetPsiElement)element).getTarget())) {
           allRenames.put(PomService.convertToPsi(psiTarget), psiTarget.getNameAlias(newName));
         }
       }
