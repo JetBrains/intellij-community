@@ -121,50 +121,78 @@ class UndoRedoStacksHolder {
   }
 
   public void addToStacks(UndoableGroup group) {
-    if (group.isGlobal()) doAddToStack(myGlobalStack, group, UndoManagerImpl.GLOBAL_UNDO_LIMIT);
-    for (DocumentReference each : group.getAffectedDocuments()) {
-      doAddToStack(getStack(each), group, UndoManagerImpl.LOCAL_UNDO_LIMIT);
+    for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
+      doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.GLOBAL_UNDO_LIMIT : UndoManagerImpl.LOCAL_UNDO_LIMIT);
     }
   }
 
   private void doAddToStack(LinkedList<UndoableGroup> stack, UndoableGroup group, int limit) {
     if (!group.isUndoable() && stack.isEmpty()) return;
-    
+
     stack.addLast(group);
     while (stack.size() > limit) {
-      stack.removeFirst();
+      clearStacksFrom(stack.getFirst());
     }
   }
 
   public void removeFromStacks(UndoableGroup group) {
-    if (group.getAffectedDocuments().isEmpty()) return;
-
-    if (group.isGlobal()) {
-      assert myGlobalStack.getLast() == group;
-      myGlobalStack.removeLast();
-    }
-    for (DocumentReference each : group.getAffectedDocuments()) {
-      LinkedList<UndoableGroup> stack = getStack(each);
-      assert stack.getLast() == group;
-      stack.removeLast();
+    for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
+      assert each.getLast() == group;
+      each.removeLast();
     }
   }
 
-  public void clearStacks(boolean clearGlobal, Set<DocumentReference> affectedDocuments) {
-    if (clearGlobal) myGlobalStack.clear();
-    for (DocumentReference ref : affectedDocuments) {
-      List<UndoableGroup> stack = getStack(ref);
-      stack.clear();
-
-      if (ref.getFile() != null) {
-        myDocumentStacks.remove(ref);
-      }
-      else {
-        Document d = ref.getDocument();
-        d.putUserData(STACK_IN_DOCUMENT_KEY, null);
-        myDocumentsWithStacks.remove(d);
+  public void clearStacks(boolean clearGlobal, Set<DocumentReference> refs) {
+    for (LinkedList<UndoableGroup> each : getAffectedStacks(clearGlobal, refs)) {
+      while(!each.isEmpty()) {
+        clearStacksFrom(each.getLast());
       }
     }
+
+    Set<DocumentReference> stacksToDrop = new THashSet<DocumentReference>();
+    for (Map.Entry<DocumentReference, LinkedList<UndoableGroup>> each : myDocumentStacks.entrySet()) {
+      if (each.getValue().isEmpty()) stacksToDrop.add(each.getKey());
+    }
+    for (DocumentReference each : stacksToDrop) {
+      myDocumentStacks.remove(each);
+    }
+
+
+    Set<Document> docsToDrop = new THashSet<Document>();
+    for (Document each : myDocumentsWithStacks) {
+      LinkedList<UndoableGroup> stack = each.getUserData(STACK_IN_DOCUMENT_KEY);
+      if (stack != null && stack.isEmpty()) {
+        each.putUserData(STACK_IN_DOCUMENT_KEY, null);
+        docsToDrop.add(each);
+      }
+    }
+    myDocumentsWithStacks.removeAll(docsToDrop);
+  }
+
+  private void clearStacksFrom(UndoableGroup from) {
+    for (LinkedList<UndoableGroup> each : getAffectedStacks(from)) {
+      int pos = each.indexOf(from);
+      if (pos == -1) continue;
+
+      if (pos > 0) {
+        int top = each.size() - pos;
+        clearStacksFrom(each.get(pos - 1));
+        assert each.size() == top && each.indexOf(from) == 0;
+      }
+      each.removeFirst();
+    }
+  }
+
+  private List<LinkedList<UndoableGroup>> getAffectedStacks(UndoableGroup group) {
+    return getAffectedStacks(group.isGlobal(), group.getAffectedDocuments());
+  }
+  private List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, Collection<DocumentReference> refs) {
+    List<LinkedList<UndoableGroup>> result = new ArrayList<LinkedList<UndoableGroup>>();
+    if (global) result.add(myGlobalStack);
+    for (DocumentReference each : refs) {
+      result.add(getStack(each));
+    }
+    return result;
   }
 
   public void clearAllStacksInTests() {
