@@ -19,7 +19,7 @@ if [ -z "$PYCHARM_JDK" ]; then
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
       JAVA_LOCATION=`readlink -f $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
-      if [ -x "$JAVA_LOCATION/bin/java" -a -e "$JAVA_LOCATION/lib/tools.jar" ]; then
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
         PYCHARM_JDK=$JAVA_LOCATION
       fi
     fi
