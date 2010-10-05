@@ -327,7 +327,7 @@ def buildExe() {
 
 def buildTarGz() {
   project.stage("tar.gz")
-  def tarRoot = "pycharm-$buildNumber"
+  def tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
   def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
   ant.tar(tarfile: tarPath) {
     tarfileset(dir: paths.distAll, prefix: tarRoot) {
