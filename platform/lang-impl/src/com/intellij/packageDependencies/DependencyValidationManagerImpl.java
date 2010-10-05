@@ -55,7 +55,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public boolean SKIP_IMPORT_STATEMENTS = false;
 
-  private final Project myProject;
   private ContentManager myContentManager;
   @NonNls private static final String DENY_RULE_KEY = "deny_rule";
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
@@ -70,7 +69,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
   public DependencyValidationManagerImpl(final Project project) {
-    myProject = project;
+    super(project);
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {

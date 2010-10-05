@@ -133,4 +133,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("returnTypeByTailExpression/A.groovy");
     assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
   }
+
+  public void testParameterWithBuiltinType() {
+    GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy");
+    assertEquals("java.lang.Integer", refExpr.getType().getCanonicalText());
+  }
 }

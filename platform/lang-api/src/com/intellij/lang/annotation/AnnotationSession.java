@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-
-/**
- * @author peter
+/*
+ * @author max
  */
-public abstract class AbstractGroovyLibraryManager extends LibraryManager {
-  public static final ExtensionPointName<AbstractGroovyLibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
+package com.intellij.lang.annotation;
 
-  protected abstract void fillLibrary(String path, LibraryEditor libraryEditor);
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.PsiFile;
+
+public class AnnotationSession extends UserDataHolderBase {
+  private final PsiFile myFile;
+
+  public AnnotationSession(PsiFile file) {
+    myFile = file;
+  }
+
+  public PsiFile getFile() {
+    return myFile;
+  }
 }

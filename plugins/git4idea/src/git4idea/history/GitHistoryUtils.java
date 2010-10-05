@@ -51,6 +51,7 @@ import java.util.*;
  */
 public class GitHistoryUtils {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
+  public static final String[] RENAME_PARAMETERS = {"-M", "--follow"};
 
   private GitHistoryUtils() {
   }
@@ -372,15 +373,30 @@ public class GitHistoryUtils {
    * @return the list of the revisions
    * @throws VcsException if there is problem with running git
    */
-  public static List<VcsFileRevision> history(Project project, FilePath path) throws VcsException {
+  public static List<VcsFileRevision> history(final Project project, final FilePath path) throws VcsException {
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    return history(project, path, root);
+  }
+
+  /**
+   * Get history for the file
+   *
+   * @param project the context project
+   * @param path    the file path
+   * @return the list of the revisions
+   * @throws VcsException if there is problem with running git
+   */
+  public static List<VcsFileRevision> history(final Project project, FilePath path, final VirtualFile root, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
                     "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00", "--encoding=UTF-8");
+    if (parameters != null && parameters.length > 0) {
+      h.addParameters(parameters);
+    }
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
@@ -399,9 +415,14 @@ public class GitHistoryUtils {
 
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final String... parameters)
     throws VcsException {
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    return onlyHashesHistory(project, path, root, parameters);
+  }
+
+  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final VirtualFile root, final String... parameters)
+    throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);

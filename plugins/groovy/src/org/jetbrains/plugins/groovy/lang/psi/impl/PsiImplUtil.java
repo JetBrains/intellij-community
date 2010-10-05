@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -328,14 +329,13 @@ public class PsiImplUtil {
         method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  @Nullable
-  public static PsiMethod resolveMethod(GrMethodCall expression) {
-    final GrExpression methodExpr = expression.getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
-      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
-    }
+  public static PsiType getNominalType(final GrExpression expr) {
+    final TypeInferenceHelper helper = GroovyPsiManager.getInstance(expr.getProject()).getTypeInferenceHelper();
 
-    return null;
+    return helper.doWithInferenceDisabled(new Computable<PsiType>() {
+      public PsiType compute() {
+        return expr.getType();
+      }
+    });
   }
 }

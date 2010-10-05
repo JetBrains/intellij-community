@@ -24,6 +24,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
@@ -211,7 +214,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       final PsiMethod method = info.getSuperMethod();
 
       //if (ApplicationManager.getApplication().isUnitTestMode()) {
-        temporallyRevertChanges(method, oldText);
+        temporallyRevertChanges(info.getMethod(), oldText);
         createChangeSignatureProcessor(info, method).run();
         return true;
       /*}
@@ -306,13 +309,28 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   @Nullable
   @Override
-  public TextRange getHighlightingRange(PsiElement element) {
+  public TextRange getQuickFixRange(PsiElement element) {
     element = element.getParent();
     if (element instanceof PsiMethod) {
       final PsiCodeBlock body = ((PsiMethod)element).getBody();
       return new TextRange(element.getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
     }
     return null;
+  }
+
+  @Override
+  public boolean isToHighlight(PsiElement element) {
+    element = element.getParent();
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      SearchScope useScope = method.getUseScope();
+      if (useScope instanceof GlobalSearchScope) {
+        final PsiSearchHelper.SearchCostResult cheapEnough = element.getManager().getSearchHelper()
+          .isCheapEnoughToSearch(method.getName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+      }
+    }
+    return true;
   }
 
   @Override

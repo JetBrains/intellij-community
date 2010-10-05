@@ -47,13 +47,15 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
@@ -180,9 +182,9 @@ public class PsiUtil {
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
     PsiElement parent = place.getParent();
-    if (parent instanceof GrCallExpression) {
+    if (parent instanceof GrCall) {
       List<PsiType> result = new ArrayList<PsiType>();
-      GrCallExpression call = (GrCallExpression)parent;
+      GrCall call = (GrCall)parent;
 
       GrNamedArgument[] namedArgs = call.getNamedArguments();
       if (namedArgs.length > 0) {
@@ -237,54 +239,6 @@ public class PsiUtil {
         if (stopAt == expression) {
           break;
         }
-      }
-
-      return result.toArray(new PsiType[result.size()]);
-    }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrApplicationStatement call = (GrApplicationStatement)parent;
-      GrExpression[] args = call.getArguments();
-      final GrArgumentList argList = call.getArgumentList();
-      GrNamedArgument[] namedArgs = argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
-      final ArrayList<PsiType> result = new ArrayList<PsiType>();
-      if (namedArgs.length > 0) {
-        result.add(createMapType(place.getResolveScope()));
-      }
-      for (GrExpression arg : args) {
-        PsiType argType = arg.getType();
-        if (argType == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(parent));
-        }
-        else {
-          result.add(argType);
-        }
-        if (stopAt == arg) {
-          break;
-        }
-
-      }
-      return result.toArray(new PsiType[result.size()]);
-    } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
-      final GrArgumentList argList = ((GrCall)parent).getArgumentList();
-      if (argList == null) return PsiType.EMPTY_ARRAY;
-
-      List<PsiType> result = new ArrayList<PsiType>();
-      if (argList.getNamedArguments().length > 0) {
-        result.add(createMapType(place.getResolveScope()));
-      }
-
-      GrExpression[] expressions = argList.getExpressionArguments();
-      for (GrExpression expression : expressions) {
-        PsiType type = expression.getType();
-        if (type == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
-        } else {
-          result.add(type);
-        }
-        if (stopAt == expression) {
-          break;
-        }
-
       }
 
       return result.toArray(new PsiType[result.size()]);
@@ -1010,12 +964,5 @@ public class PsiUtil {
     }
 
     return null;
-  }
-
-  public static boolean isCommandExpression(GrMethodCall methodCall) {
-    final GrExpression expression = methodCall.getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression) || ((GrReferenceExpression)expression).getQualifier() == null) return false;
-
-    return ((GrReferenceExpression)expression).getDotToken() == null;
   }
 }

@@ -241,6 +241,9 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
     PsiJavaCodeReferenceElement methodRef = (PsiJavaCodeReferenceElement)element;
     PsiElement parent = methodRef.getParent();
+    if (parent instanceof PsiAnonymousClass) {
+      parent = parent.getParent();
+    }
     LOG.assertTrue(parent instanceof PsiCallExpression, "call expression expected, found " + parent);
 
     PsiCallExpression call = (PsiCallExpression)parent;
@@ -322,17 +325,24 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       if (call instanceof PsiMethodCallExpression) {
         instanceRef.replace(newQualifier);
       } else {
-        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassReference();
-        LOG.assertTrue(classReference != null);
-        final PsiNewExpression newExpr =
-          (PsiNewExpression)factory.createExpressionFromText("new " + newQualifier.getText() + "." + classReference.getText() + "()", classReference);
-        final PsiExpressionList callArgs = call.getArgumentList();
-        if (callArgs != null) {
-          final PsiExpressionList argumentList = newExpr.getArgumentList();
-          LOG.assertTrue(argumentList != null);
-          argumentList.replace(callArgs);
+        final PsiAnonymousClass anonymousClass = ((PsiNewExpression)call).getAnonymousClass();
+        if (anonymousClass != null) {
+          ((PsiNewExpression)call).getQualifier().delete();
+          final PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
+          baseClassReference.replace(((PsiNewExpression)factory.createExpressionFromText("new " + newQualifier.getText() + "." + baseClassReference.getText() + "()", baseClassReference)).getClassReference());
+        } else {
+          PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassReference();
+          LOG.assertTrue(classReference != null);
+          final PsiNewExpression newExpr =
+            (PsiNewExpression)factory.createExpressionFromText("new " + newQualifier.getText() + "." + classReference.getText() + "()", classReference);
+          final PsiExpressionList callArgs = call.getArgumentList();
+          if (callArgs != null) {
+            final PsiExpressionList argumentList = newExpr.getArgumentList();
+            LOG.assertTrue(argumentList != null);
+            argumentList.replace(callArgs);
+          }
+          call.replace(newExpr);
         }
-        call.replace(newExpr);
       }
     }
   }

@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -478,18 +477,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr) {
     StringBuffer text = new StringBuffer();
-    text.append(callExpr.getFunExpression().getText());
+    text.append(callExpr.getInvokedExpression().getText());
     text.append("(");
-    for (GrExpression expr : callExpr.getArguments()) {
-      text.append(((GrExpression)PsiUtil.skipParentheses(expr, false)).getText()).append(", ");
-    }
-    if (callExpr.getArguments().length > 0) {
-      text.delete(text.length() - 2, text.length());
-    }
+    final GrCommandArgumentList argumentList = callExpr.getArgumentList();
+    if (argumentList != null) text.append(argumentList.getText());
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
-    return ((GrMethodCallExpression) file.getChildren()[0]);
+    return ((GrMethodCallExpression)file.getChildren()[0]);
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

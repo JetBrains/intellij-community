@@ -15,22 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 /**
  * @author peter
  */
-public interface GrMethodCall extends GrCall {
-
+public interface GrMethodCall extends GrCallExpression {
   GrExpression getInvokedExpression();
-
-  @Nullable
-  GrArgumentList getArgumentList();
-
-  @Nullable
-  PsiMethod resolveMethod();
 
   boolean isCommandExpression();
 }

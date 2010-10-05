@@ -15,11 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 /**
  * @author ven
@@ -28,8 +32,21 @@ public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();
 
+  GrNamedArgument[] getNamedArguments();
+
+  GrExpression[] getExpressionArguments();
+
   @Nullable
   GrExpression removeArgument(int number);
 
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
+
+  @NotNull
+  GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument);
+
+  @NotNull
+  GrClosableBlock[] getClosureArguments();
+
+  @Nullable
+  PsiMethod resolveMethod();
 }

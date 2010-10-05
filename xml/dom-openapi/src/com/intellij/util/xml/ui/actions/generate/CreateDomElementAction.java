@@ -16,11 +16,16 @@
 package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,5 +56,11 @@ public abstract class CreateDomElementAction<T extends DomElement> extends Simpl
   @Nullable
   protected T getContextElement(Editor editor) {
     return DomUtil.getContextElement(editor, myContextClass);
+  }
+
+  public static void replaceElementValue(TemplateBuilder builder, GenericDomValue element, Expression expression) {
+    element.setStringValue("");
+    XmlElement xmlElement = element.getXmlElement();
+    builder.replaceElement(xmlElement, ElementManipulators.getValueTextRange(xmlElement), expression);
   }
 }

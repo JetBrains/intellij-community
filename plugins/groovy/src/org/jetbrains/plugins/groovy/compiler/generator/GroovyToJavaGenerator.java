@@ -391,7 +391,7 @@ public class GroovyToJavaGenerator {
       if (i > 0) text.append(", ");
       GrEnumConstant enumConstant = enumConstants[i];
       text.append(enumConstant.getName());
-      PsiMethod constructor = enumConstant.resolveConstructor();
+      PsiMethod constructor = enumConstant.resolveMethod();
       if (constructor != null) {
         text.append("(");
         writeStubConstructorInvocation(text, constructor, PsiSubstitutor.EMPTY);

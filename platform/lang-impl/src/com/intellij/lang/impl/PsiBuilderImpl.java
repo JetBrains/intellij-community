@@ -808,16 +808,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public ASTNode getTreeBuilt() {
     try {
       final StartMarker rootMarker = prepareLightTree();
-
       if (myOriginalTree != null) {
         merge(myOriginalTree, rootMarker);
         throw new BlockSupport.ReparsedSuccessfullyException();
       }
       else {
         final ASTNode rootNode = createRootAST(rootMarker);
-
-        bind((CompositeElement)rootNode, rootMarker);
-
+        bind(rootMarker, (CompositeElement)rootNode);
         return rootNode;
       }
     }
@@ -903,12 +900,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private StartMarker prepareLightTree() {
-    final StartMarker rootMarker = (StartMarker)myProduction.get(0);
-
     markTokenTypeChecked();
-
     balanceWhiteSpaces();
 
+    final StartMarker rootMarker = (StartMarker)myProduction.get(0);
     rootMarker.firstChild = rootMarker.lastChild = rootMarker.next = null;
     StartMarker curNode = rootMarker;
     final Stack<StartMarker> nodes = new Stack<StartMarker>();
@@ -982,43 +977,55 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private void bind(CompositeElement ast, StartMarker marker) {
-    bind(ast, marker, marker.myLexemeIndex);
-  }
+  private void bind(final StartMarker rootMarker, final CompositeElement rootNode) {
+    final Stack<StartMarker> markers = new Stack<StartMarker>();
+    final Stack<CompositeElement> nodes = new Stack<CompositeElement>();
+    markers.push(rootMarker);
+    nodes.push(rootNode);
+    StartMarker curMarker = rootMarker;
+    CompositeElement curNode = rootNode;
 
-  private int bind(CompositeElement ast, StartMarker marker, int lexIndex) {
-    ProductionMarker child = marker.firstChild;
-    while (child != null) {
-      if (child instanceof StartMarker) {
-        final StartMarker childMarker = (StartMarker)child;
+    int lexIndex = rootMarker.myLexemeIndex;
+    int lastErrorIndex = -1;
+    for (int i = myProduction.indexOf(rootMarker) + 1; i <= myProduction.indexOf(rootMarker.myDoneMarker); i++) {
+      final ProductionMarker item = myProduction.get(i);
 
-        lexIndex = insertLeafs(lexIndex, childMarker.myLexemeIndex, ast);
+      lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
 
-        if (!childMarker.myDoneMarker.myCollapse) {
-          CompositeElement childNode = createComposite(childMarker);
-          ast.rawAddChildren(childNode);
-          lexIndex = bind(childNode, childMarker, lexIndex);
+      if (item instanceof StartMarker) {
+        final StartMarker marker = (StartMarker)item;
+        if (!marker.myDoneMarker.myCollapse) {
+          markers.push(curMarker);
+          curMarker = marker;
+
+          final CompositeElement childNode = createComposite(curMarker);
+          curNode.rawAddChildren(childNode);
+          nodes.push(curNode);
+          curNode = childNode;
         }
         else {
-          lexIndex = collapseLeafs(ast, childMarker);
+          lexIndex = collapseLeaves(curNode, marker);
+          //noinspection AssignmentToForLoopParameter
+          i = myProduction.indexOf(marker.myDoneMarker);
         }
-
-        lexIndex = insertLeafs(lexIndex, childMarker.myDoneMarker.myLexemeIndex, ast);
       }
-      else if (child instanceof ErrorItem) {
-        lexIndex = insertLeafs(lexIndex, child.myLexemeIndex, ast);
+      else if (item instanceof DoneMarker) {
+        curMarker = markers.pop();
+        curNode = nodes.pop();
+      }
+      else if (item instanceof ErrorItem) {
+        int curToken = item.myLexemeIndex;
+        if (curToken == lastErrorIndex) continue;
+        lastErrorIndex = curToken;
+
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)child).myMessage);
-        ast.rawAddChildren(errorElement);
+        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
+        curNode.rawAddChildren(errorElement);
       }
-
-      child = child.next;
     }
-
-    return insertLeafs(lexIndex, marker.myDoneMarker.myLexemeIndex, ast);
   }
 
-  private int insertLeafs(int curToken, int lastIdx, final CompositeElement curNode) {
+  private int insertLeaves(int curToken, int lastIdx, final CompositeElement curNode) {
     lastIdx = Math.min(lastIdx, myLexemeCount);
     while (curToken < lastIdx) {
       final int start = myLexStarts[curToken];
@@ -1034,7 +1041,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return curToken;
   }
 
-  private int collapseLeafs(CompositeElement ast, StartMarker startMarker) {
+  private int collapseLeaves(CompositeElement ast, StartMarker startMarker) {
     final int start = myLexStarts[startMarker.myLexemeIndex];
     final int end = myLexStarts[startMarker.myDoneMarker.myLexemeIndex];
     final TreeElement leaf = createLeaf(startMarker.myType, start, end);
@@ -1316,7 +1323,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       else {
         final StartMarker startMarker = (StartMarker)n;
         final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot) : createComposite(startMarker);
-        startMarker.myBuilder.bind(composite, startMarker);
+        startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }
     }

@@ -249,11 +249,16 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     if (dialog != null) {
       root = dialog.getRootPane();
     } else {
-      JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
-      if (frame != null) {
-        root = frame.getRootPane();
+      JWindow jwindow = IJSwingUtilities.findParentOfType(tracker.getComponent(), JWindow.class);
+      if (jwindow != null) {
+        root = jwindow.getRootPane();
       } else {
-        assert false;
+        JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
+        if (frame != null) {
+          root = frame.getRootPane();
+        } else {
+          assert false;
+        }
       }
     }
 

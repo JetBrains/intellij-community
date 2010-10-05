@@ -15,26 +15,85 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+
+import javax.swing.*;
+import java.io.File;
 
 /**
  * @author nik
  */
 public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
-  private GroovyLibraryManager myManager = new GroovyLibraryManager();
 
   public GroovyLibraryPresentationProvider() {
     super(GROOVY_KIND);
   }
 
-  @Override
-  public LibraryManager getLibraryManager() {
-    return myManager;
+  public boolean managesLibrary(final VirtualFile[] libraryFiles) {
+    return LibrariesUtil.getGroovyLibraryHome(libraryFiles) != null;
+  }
+
+  @Nls
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+    final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
+    if (home == null) return AbstractConfigUtils.UNDEFINED_VERSION;
+
+    return GroovyConfigUtils.getInstance().getSDKVersion(home);
+  }
+
+  @NotNull
+  public Icon getIcon() {
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   @Override
-  protected boolean acceptManager(LibraryManager manager) {
-    return manager instanceof GroovyLibraryManager;
+  public boolean isSDKHome(@NotNull VirtualFile file) {
+    return GroovyConfigUtils.getInstance().isSDKHome(file);
   }
+
+  @Override
+  protected void fillLibrary(String path, LibraryEditor libraryEditor) {
+    File srcRoot = new File(path + "/src/main");
+      if (srcRoot.exists()) {
+        libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+      }
+
+      File[] jars;
+      File libDir = new File(path + "/lib");
+      if (libDir.exists()) {
+        jars = libDir.listFiles();
+      } else {
+        jars = new File(path + "/embeddable").listFiles();
+      }
+      if (jars != null) {
+        for (File file : jars) {
+          if (file.getName().endsWith(".jar")) {
+            libraryEditor.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+          }
+        }
+      }
+  }
+
+  @NotNull
+  @Override
+  public String getSDKVersion(String path) {
+    return GroovyConfigUtils.getInstance().getSDKVersion(path);
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getLibraryCategoryName() {
+    return "Groovy";
+  }
+
 }

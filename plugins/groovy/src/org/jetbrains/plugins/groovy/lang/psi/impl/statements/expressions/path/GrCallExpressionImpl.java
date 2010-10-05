@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,74 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 
 /**
- * @author ven
+ * @author Maxim.Medvedev
  */
-public abstract class GrCallExpressionImpl extends GrExpressionImpl implements GrCallExpression{
+public abstract class GrCallExpressionImpl extends GrCallImpl implements GrCallExpression{
   public GrCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrArgumentList getArgumentList() {
-    return findChildByClass(GrArgumentList.class);
+  @Nullable
+  public PsiType getNominalType() {
+    return PsiImplUtil.getNominalType(this);
   }
 
-  public GrNamedArgument[] getNamedArguments() {
-    GrArgumentList argList = getArgumentList();
-    return argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
-  }
-
-  public GrExpression[] getExpressionArguments() {
-    GrArgumentList argList = getArgumentList();
-    return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
-  }
-
-  public GrClosableBlock[] getClosureArguments() {
-    return findChildrenByClass(GrClosableBlock.class);
-  }
-
-  public GrExpression removeArgument(int number) {
-    final GrArgumentList list = getArgumentList();
-    final int exprLength = list.getExpressionArguments().length;
-    if (exprLength > number) {
-      return list.removeArgument(number);
-    }
-    else {
-      number -= exprLength;
-      for (int i = 0; i < getClosureArguments().length; i++) {
-        GrClosableBlock block = getClosureArguments()[i];
-        if (i == number) {
-          final ASTNode node = block.getNode();
-          getNode().removeChild(node);
-          return block;
-        }
-      }
-    }
-    return null;
-  }
-
-  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
-    GrArgumentList list = getArgumentList();
-    assert list != null;
-    if (list.getText().trim().length() == 0) {
-      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-      final GrArgumentList newList = factory.createExpressionArgumentList();
-      list = (GrArgumentList)list.replace(newList);
-    }
-    return list.addNamedArgument(namedArgument);
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
+    return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 }

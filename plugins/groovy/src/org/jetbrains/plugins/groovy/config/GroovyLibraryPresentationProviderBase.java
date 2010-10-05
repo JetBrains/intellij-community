@@ -17,8 +17,12 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -31,29 +35,51 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
     super(kind);
   }
 
-  public abstract LibraryManager getLibraryManager();
-
   @Override
   public Icon getIcon(GroovyLibraryProperties properties) {
-    return getLibraryManager().getIcon();
+    return getIcon();
   }
 
   @Override
   public String getDescription(@NotNull GroovyLibraryProperties properties) {
     final String version = properties.getVersion();
-    return getLibraryManager().getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");
+    return getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");
   }
 
   @Override
   public GroovyLibraryProperties detect(@NotNull List<VirtualFile> classesRoots) {
     final VirtualFile[] libraryFiles = classesRoots.toArray(new VirtualFile[classesRoots.size()]);
-    final LibraryManager manager = LibraryManager.findManagerFor(AbstractGroovyLibraryManager.EP_NAME.getExtensions(), libraryFiles);
-    if (manager != null && acceptManager(manager)) {
-      final String version = manager.getLibraryVersion(libraryFiles);
+    if (managesLibrary(libraryFiles)) {
+      final String version = getLibraryVersion(libraryFiles);
       return new GroovyLibraryProperties(version);
     }
     return null;
   }
 
-  protected abstract boolean acceptManager(LibraryManager manager);
+  protected abstract void fillLibrary(String path, LibraryEditor libraryEditor);
+
+  public abstract boolean managesLibrary(final VirtualFile[] libraryFiles);
+
+  @Nullable
+  @Nls
+  public abstract String getLibraryVersion(final VirtualFile[] libraryFiles);
+
+  @NotNull
+  public abstract Icon getIcon();
+
+  public abstract boolean isSDKHome(@NotNull VirtualFile file);
+
+  public abstract @NotNull String getSDKVersion(String path);
+
+  @NotNull @Nls public abstract String getLibraryCategoryName();
+
+  @NotNull
+  @Nls
+  public String getLibraryPrefix() {
+    return StringUtil.toLowerCase(getLibraryCategoryName());
+  }
+
+  public boolean managesName(@NotNull String name) {
+    return StringUtil.startsWithIgnoreCase(name, getLibraryPrefix());
+  }
 }

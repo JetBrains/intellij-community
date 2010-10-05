@@ -38,19 +38,6 @@ public class GeneralCommandLine {
   private ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
 
-  /**
-   * Appends a value to the end os a path-like environment variable, using system-dependent path separator.
-   * @param source path-like string to append to
-   * @param value what to append
-   * @return modified path-like string
-   */
-  @NotNull
-  public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
-    if (source != null) source = value + File.pathSeparator + source;
-    else source = value;
-    return source;
-  }
-
   public void setExePath(@NonNls final String exePath) {
     myExePath = exePath.trim();
   }
@@ -153,6 +140,18 @@ public class GeneralCommandLine {
 
   @Nullable
   private String[] getEnvParamsArray() {
+    final Map<String, String> envParams = collectEnvParams();
+    if (envParams == null) return null;
+    final String[] result = new String[envParams.size()];
+    int i=0;
+    for (final String key : envParams.keySet()) {
+      result[i++] = key + "=" + envParams.get(key).trim();
+    }
+    return result;
+  }
+
+  @Nullable
+  private Map<String, String> collectEnvParams() {
     if (myEnvParams == null) {
       return null;
     }
@@ -161,12 +160,7 @@ public class GeneralCommandLine {
       envParams.putAll(System.getenv());
     }
     envParams.putAll(myEnvParams);
-    final String[] result = new String[envParams.size()];
-    int i=0;
-    for (final String key : envParams.keySet()) {
-      result[i++] = key + "=" + envParams.get(key).trim();
-    }
-    return result;
+    return envParams;
   }
 
   public String[] getCommands() {

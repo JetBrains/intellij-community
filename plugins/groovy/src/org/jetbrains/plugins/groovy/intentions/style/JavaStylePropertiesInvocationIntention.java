@@ -25,14 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiElementUtil.*;
 
@@ -46,46 +42,33 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
   }
 
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    assert element instanceof GrMethodCallExpression || element instanceof GrApplicationStatement;
-    GrCall call = ((GrCall) element);
-    GrExpression invoked = call instanceof GrMethodCallExpression ?
-        ((GrMethodCallExpression) call).getInvokedExpression() :
-        ((GrApplicationStatement) call).getFunExpression();
+    assert element instanceof GrMethodCall;
+    GrMethodCall call = ((GrMethodCall) element);
+    GrExpression invoked = call.getInvokedExpression();
     if (isGetterInvocation(call) && invoked instanceof GrReferenceExpression) {
       String name = ((GrReferenceExpression) invoked).getName();
       assert name != null;
       name = StringUtil.trimStart(name, GETTER_PREFIX);
       name = StringUtil.decapitalize(name);
-      replaceWithGetter(((GrMethodCallExpression) call), name);
+      replaceWithGetter(call, name);
     } else if (isSetterInvocation(call) && invoked instanceof GrReferenceExpression) {
       String name = ((GrReferenceExpression) invoked).getName();
       assert name != null;
       name = StringUtil.trimStart(name, SETTER_PREFIX);
       name = StringUtil.decapitalize(name);
-      GrExpression value;
-      if (call instanceof GrMethodCallExpression) {
-        GrArgumentList args = call.getArgumentList();
-        assert args != null;
-        value = args.getExpressionArguments()[0];
-      } else {
-        GrArgumentList args = call.getArgumentList();
-        assert args != null;
-        value = args.getExpressionArguments()[0];
-      }
+      GrExpression value = call.getExpressionArguments()[0];
       replaceWithSetter(call, name, value);
     }
   }
 
-  private static void replaceWithSetter(GrCall call, String name, GrExpression value) throws IncorrectOperationException {
-    GrReferenceExpression refExpr = (GrReferenceExpression) (call instanceof GrMethodCallExpression ?
-        ((GrMethodCallExpression) call).getInvokedExpression() :
-        ((GrApplicationStatement) call).getFunExpression());
+  private static void replaceWithSetter(GrMethodCall call, String name, GrExpression value) throws IncorrectOperationException {
+    GrReferenceExpression refExpr = (GrReferenceExpression) call.getInvokedExpression();
     String oldNameStr = refExpr.getReferenceNameElement().getText();
     String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
-    IntentionUtils.replaceStatement(newRefExpr + " = " + value.getText(), ((GrStatement) call));
+    IntentionUtils.replaceStatement(newRefExpr + " = " + value.getText(), call);
   }
 
-  private static void replaceWithGetter(GrMethodCallExpression call, String name) throws IncorrectOperationException {
+  private static void replaceWithGetter(GrMethodCall call, String name) throws IncorrectOperationException {
     GrReferenceExpression refExpr = (GrReferenceExpression) call.getInvokedExpression();
     String oldNameStr = refExpr.getReferenceNameElement().getText();
     String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
@@ -99,9 +82,8 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
 
   private static class JavaPropertyInvocationPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      if (!(element instanceof GrCall)) return false;
-      GrCall call = (GrCall) element;
-      return isPropertyAccessor(call);
+      if (!(element instanceof GrMethodCall)) return false;
+      return isPropertyAccessor((GrMethodCall) element);
     }
   }
 }

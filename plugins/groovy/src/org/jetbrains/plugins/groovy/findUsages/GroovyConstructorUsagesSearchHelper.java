@@ -98,7 +98,7 @@ public class GroovyConstructorUsagesSearchHelper {
             newExpression = (GrNewExpression)element.getParent().getParent();
           }
           if (newExpression != null) {
-            final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
+            final PsiMethod resolvedConstructor = newExpression.resolveMethod();
             final PsiManager manager = constructor.getManager();
             if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
           }
@@ -152,7 +152,7 @@ public class GroovyConstructorUsagesSearchHelper {
         if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
           final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
           if (invocation.isThisCall() == processThisRefs &&
-              invocation.getManager().areElementsEquivalent(invocation.resolveConstructor(), searchedConstructor) &&
+              invocation.getManager().areElementsEquivalent(invocation.resolveMethod(), searchedConstructor) &&
               !consumer.process(invocation.getThisOrSuperKeyword())) {
             return false;
           }

@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author irengrig
+ */
 public class AreaMap<Key extends Comparable<Key>, Val> {
   private final List<Key> myKeys;
   private final Map<Key, Val> myMap;

@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -111,6 +112,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
+    setForceShowAsPopup(!SystemInfo.isLinux);
     myProject = project;
     myEditor = editor;
     myArranger = arranger;
@@ -329,7 +331,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateListHeight(model);
 
+    myAdComponent.setPreferredSize(null);
     myAdComponent.setText(myAdText);
+    if (myAdText != null) {
+      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+    }
 
     if (hasItems) {
       myList.setFixedCellWidth(Math.max(myLookupWidth, myAdComponent.getPreferredSize().width));

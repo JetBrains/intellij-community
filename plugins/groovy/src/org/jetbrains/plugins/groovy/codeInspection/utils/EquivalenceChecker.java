@@ -153,9 +153,26 @@ public class EquivalenceChecker {
     if (!expressionsAreEquivalent(funExpression1, funExpression2)) {
       return false;
     }
-    final GrExpression[] arguments1 = statement1.getArguments();
-    final GrExpression[] arguments2 = statement2.getArguments();
-    return expressionListsAreEquivalent(arguments1, arguments2);
+
+    final GrArgumentList argumentList1 = statement1.getArgumentList();
+    if (argumentList1 == null) {
+      return false;
+    }
+    final GrArgumentList argumentList2 = statement2.getArgumentList();
+    if (argumentList2 == null) {
+      return false;
+    }
+    final GrExpression[] args1 = argumentList1.getExpressionArguments();
+    final GrExpression[] args2 = argumentList2.getExpressionArguments();
+    if (!expressionListsAreEquivalent(args1, args2)) {
+      return false;
+    }
+    final GrNamedArgument[] namedArgs1 = argumentList1.getNamedArguments();
+    final GrNamedArgument[] namedArgs2 = argumentList2.getNamedArguments();
+    if (!namedArgumentListsAreEquivalent(namedArgs1, namedArgs2)) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean assertStatementsAreEquivalent(GrAssertStatement statement1, GrAssertStatement statement2) {
@@ -639,9 +656,9 @@ public class EquivalenceChecker {
   private static boolean newExpressionsAreEquivalent(@NotNull GrNewExpression newExp1,
                                                      @NotNull GrNewExpression newExp2) {
     final PsiMethod constructor1 =
-        newExp1.resolveConstructor();
+        newExp1.resolveMethod();
     final PsiMethod constructor2 =
-        newExp2.resolveConstructor();
+        newExp2.resolveMethod();
     if (constructor1 == null || constructor2 == null || constructor1.equals(constructor2)) {
       return false;
     }

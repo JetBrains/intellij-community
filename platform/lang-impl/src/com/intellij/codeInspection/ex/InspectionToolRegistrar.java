@@ -179,7 +179,7 @@ public class InspectionToolRegistrar {
     for (final Factory<InspectionTool> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
       final InspectionTool toolWrapper = factory.create();
-      if (checkTool(toolWrapper)) {
+      if (toolWrapper != null && checkTool(toolWrapper)) {
         tools.add(toolWrapper);
       }
       else {
@@ -245,7 +245,7 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private static boolean checkTool(final InspectionTool toolWrapper) {
+  private static boolean checkTool(@NotNull final InspectionTool toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
       if (!LocalInspectionTool.isValidID(localTool.getID())) {

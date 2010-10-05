@@ -267,7 +267,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
-    //usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
+    usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
     return usageInfos;
   }
 

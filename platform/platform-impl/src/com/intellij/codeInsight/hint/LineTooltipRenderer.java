@@ -16,16 +16,14 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
@@ -36,13 +34,9 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.*;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.regex.Pattern;
 
 /**
  * @author cdr
@@ -81,7 +75,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JComponent editorComponent = editor.getComponent();
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    final JEditorPane pane = initPane(myText, hintHint, layeredPane);
+    final JEditorPane pane = IdeTooltipManager.initPane(myText, hintHint, layeredPane);
     hintHint.setContentActive(isActiveHtml(myText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, pane, p, alignToRight, expanded, myCurrentWidth);
@@ -300,125 +294,18 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return html.indexOf("</a>") >= 0;
   }
 
-  static JEditorPane initPane(@NonNls String text, final HintHint hintHint, JLayeredPane layeredPane) {
-    final Ref<Dimension> prefSize = new Ref<Dimension>(null);
-    text = "<html><head>" +
-           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
-           "</head><body>" +
-           getHtmlBody(text) +
-           "</body></html>";
-
-    final JEditorPane pane = new JEditorPane() {
-      @Override
-      public Dimension getPreferredSize() {
-        return prefSize.get() != null ? prefSize.get() : super.getPreferredSize();
-      }
-    };
-
-    final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {
-      @Override
-      public View create(Element elem) {
-        AttributeSet attrs = elem.getAttributes();
-        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-        Object o = (elementName != null) ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-        if (o instanceof HTML.Tag) {
-          HTML.Tag kind = (HTML.Tag)o;
-          if (kind == HTML.Tag.HR) {
-            return new CustomHrView(elem, hintHint.getTextForeground());
-          }
-        }
-        return super.create(elem);
-      }
-    };
-
-    HTMLEditorKit kit = new HTMLEditorKit() {
-      @Override
-      public ViewFactory getViewFactory() {
-        return factory;
-      }
-    };
-    pane.setEditorKit(kit);
-    pane.setText(text);
-
-    pane.setCaretPosition(0);
-    pane.setEditable(false);
-
-    if (hintHint.isOwnBorderAllowed()) {
-      setBorder(pane);
-      setColors(pane);
-    }
-    else {
-      pane.setBorder(null);
-    }
-
-    if (hintHint.isAwtTooltip()) {
-      Dimension size = layeredPane.getSize();
-      int fitWidth = (int)(size.width * 0.8);
-      Dimension prefSizeOriginal = pane.getPreferredSize();
-      if (prefSizeOriginal.width > fitWidth) {
-        pane.setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-        Dimension fixedWidthSize = pane.getPreferredSize();
-        prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
-      }
-      else {
-        prefSize.set(prefSizeOriginal);
-      }
-    }
-
-    pane.setOpaque(hintHint.isOpaqueAllowed());
-    pane.setBackground(hintHint.getTextBackground());
-
-    return pane;
-  }
-
-
-  public static void setColors(JComponent pane) {
-    pane.setForeground(Color.black);
-    pane.setBackground(HintUtil.INFORMATION_COLOR);
-    pane.setOpaque(true);
-  }
-
-  public static void setBorder(JComponent pane) {
-    pane.setBorder(
-      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
-  }
 
   public void addBelow(String text) {
     @NonNls String newBody;
     if (myText == null) {
-      newBody = getHtmlBody(text);
+      newBody = IdeTooltipManager.getHtmlBody(text);
     }
     else {
-      String html1 = getHtmlBody(myText);
-      String html2 = getHtmlBody(text);
+      String html1 = IdeTooltipManager.getHtmlBody(myText);
+      String html2 = IdeTooltipManager.getHtmlBody(text);
       newBody = html1 + BORDER_LINE + html2;
     }
     myText = "<html><body>" + newBody + "</body></html>";
-  }
-
-  protected static String getHtmlBody(@NonNls String text) {
-    String result = text;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
-
-
-    return result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
   public String getText() {

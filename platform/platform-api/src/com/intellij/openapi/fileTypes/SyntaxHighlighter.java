@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Controls the syntax highlighting of a file.
  *
- * @see com.intellij.lang.Language#getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile)
- * @see FileType#getHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile) 
+ * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+ * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
  */
-
 public interface SyntaxHighlighter {
   SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
 
   /**
-   * Returns the lexer used for highlighing the file. The lexer is invoked incrementally when the file is changed, so it must be
+   * Returns the lexer used for highlighting the file. The lexer is invoked incrementally when the file is changed, so it must be
    * capable of saving/restoring state and resuming lexing from the middle of the file.
    *
    * @return The lexer implementation.

@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.openapi.external.ui.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.gradle.GradleLibraryManager;
+import org.jetbrains.plugins.groovy.gradle.GradleLibraryPresentationProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +66,7 @@ public class GradlePanelWrapper
       this.myProject = myProject;
       this.settings = GradleUISettings.getInstance(myProject);
 
-      File gradleHomeDirectory = new File( GradleLibraryManager.getSdkHome( module, myProject ).getPath() );
+      File gradleHomeDirectory = new File( GradleLibraryPresentationProvider.getSdkHome( module, myProject ).getPath() );
 
       //this will either load the UI from gradle or display the gradle setup panel.
       setupUI( gradleHomeDirectory );

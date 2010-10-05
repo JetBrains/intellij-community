@@ -16,14 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
-import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.CategoryMethodProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
-
-import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -50,14 +52,20 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
     processCategoryMethods(className, consumer, converter);
   }
 
-  public static void processCategoryMethods(String className, GdslMembersHolderConsumer consumer, Function<PsiMethod, PsiMethod> converter) {
-    if (consumer.getPsiType() == null) return;
-    List<PsiMethod> methods =
-      CategoryMethodProvider.provideMethods(consumer.getPsiType(), consumer.getProject(), className, consumer.getResolveScope(), converter);
-    final DelegatedMembersHolder holder = new DelegatedMembersHolder();
-    for (PsiMethod m : methods) {
-      holder.addMember(m);
-    }
-    consumer.addMemberHolder(holder);
+  public static void processCategoryMethods(final String className, final GdslMembersHolderConsumer consumer, final Function<PsiMethod, PsiMethod> converter) {
+    consumer.addMemberHolder(new CustomMembersHolder() {
+      @Override
+      public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
+        final PsiType psiType = descriptor.getPsiType();
+        if (psiType == null)  return true;
+
+        for (PsiMethod method : CategoryMethodProvider.provideMethods(psiType, descriptor.getProject(), className, descriptor.getResolveScope(), converter)) {
+          if (!processor.execute(method, state)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 }

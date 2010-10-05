@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Defines the implementation of a parser for a custom language.
  *
- * @see com.intellij.lang.Language#getParserDefinition()
+ * @see LanguageParserDefinitions#forLanguage(Language)
  */
-
 public interface ParserDefinition {
   /**
    * Returns the lexer for lexing files in the specified project. This lexer does not need to support incremental relexing - it is always
@@ -102,7 +101,7 @@ public interface ParserDefinition {
   /**
    * Creates a PSI element for the specified virtual file.
    *
-   * @param viewProvider
+   * @param viewProvider virtual file.
    * @return the PSI file element.
    */
   PsiFile createFile(FileViewProvider viewProvider);

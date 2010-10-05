@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,21 @@ import org.jdom.Element;
 
 import java.awt.*;
 
+/**
+ * Defines the visual representation (colors and effects) of text.
+ */
 public class TextAttributes implements JDOMExternalizable, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
+  /**
+   * Merges (layers) the two given text attributes.
+   *
+   * @param under Text attributes to merge "under".
+   * @param above Text attributes to merge "above", overriding settings from "under".
+   * @return Merged attributes instance.
+   */
   public static TextAttributes merge(TextAttributes under, TextAttributes above) {
     if (under == null) return above;
     if (above == null) return under;

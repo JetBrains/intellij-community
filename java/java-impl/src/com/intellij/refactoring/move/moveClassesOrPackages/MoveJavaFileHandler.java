@@ -88,12 +88,18 @@ public class MoveJavaFileHandler extends MoveFileHandler {
     if (containingDirectory != null) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
       if (aPackage != null) {
-        final PsiPackageStatement packageStatement =
-          JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(aPackage.getQualifiedName());
+        final String qualifiedName = aPackage.getQualifiedName();
+        final PsiPackageStatement packageStatement = qualifiedName.length() > 0
+                                                     ? JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(qualifiedName)
+                                                     : null;
         if (file instanceof PsiJavaFile) {
           final PsiPackageStatement filePackageStatement = ((PsiJavaFile)file).getPackageStatement();
           if (filePackageStatement != null) {
-            filePackageStatement.getPackageReference().replace(packageStatement.getPackageReference());
+            if (packageStatement != null) {
+              filePackageStatement.getPackageReference().replace(packageStatement.getPackageReference());
+            } else {
+              filePackageStatement.delete();
+            }
           }
         }
       }

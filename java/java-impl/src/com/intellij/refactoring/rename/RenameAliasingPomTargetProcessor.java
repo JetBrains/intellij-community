@@ -16,9 +16,9 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiTarget;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
@@ -30,7 +30,7 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
 
   @Override
   public boolean canProcessElement(@Nullable PsiElement element) {
-    return element instanceof PsiNamedElement;
+    return element instanceof PomTarget;
   }
 
   @Override

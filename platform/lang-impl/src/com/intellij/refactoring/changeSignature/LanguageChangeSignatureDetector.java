@@ -37,7 +37,9 @@ public interface LanguageChangeSignatureDetector {
   boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo);
 
   @Nullable
-  TextRange getHighlightingRange(PsiElement element);
+  TextRange getQuickFixRange(PsiElement element);
+
+  boolean isToHighlight(PsiElement element);
 
   boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo);
 

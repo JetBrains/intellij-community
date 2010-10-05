@@ -152,7 +152,7 @@ public class DfaUtil {
       if (targetElement instanceof PsiVariable) {
         final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
         if ((variableValues == null || variableValues.isEmpty())) {
-          return getVariableAssignmentsInFile((PsiVariable)targetElement, false);
+          return getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
         }
         return variableValues;
       }
@@ -164,8 +164,12 @@ public class DfaUtil {
   }
 
   @NotNull
-  public static Collection<PsiExpression> getVariableAssignmentsInFile(final PsiVariable psiVariable, final boolean literalsOnly) {
+  public static Collection<PsiExpression> getVariableAssignmentsInFile(final PsiVariable psiVariable,
+                                                                       final boolean literalsOnly,
+                                                                       final PsiElement place) {
     final Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
+    final PsiCodeBlock codeBlock = place == null? null : getTopmostBlockInSameClass(place);
+    final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
     final List<PsiExpression> list = ContainerUtil.mapNotNull(
       ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
       new NullableFunction<PsiReference, PsiExpression>() {
@@ -177,8 +181,14 @@ public class DfaUtil {
             final IElementType operation = assignmentExpression.getOperationTokenType();
             if (assignmentExpression.getLExpression() == psiReference) {
               if (JavaTokenType.EQ.equals(operation)) {
-                if (!literalsOnly || allOperandsAreLiterals(assignmentExpression.getRExpression())) {
-                  return assignmentExpression.getRExpression();
+                final PsiExpression rValue = assignmentExpression.getRExpression();
+                if (!literalsOnly || allOperandsAreLiterals(rValue)) {
+                  // if there's a codeBlock omit the values assigned later
+                  if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
+                      && placeOffset < parent.getTextRange().getStartOffset()) {
+                    return null;
+                  }
+                  return rValue;
                 }
                 else {
                   modificationRef.set(Boolean.TRUE);

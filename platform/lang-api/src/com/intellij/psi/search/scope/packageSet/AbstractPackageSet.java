@@ -15,31 +15,22 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class AbstractPackageSet implements PackageSet {
   private final String myText;
-  private final Project myProject;
   private final int myPriority;
 
-  public AbstractPackageSet(@NotNull String text, @Nullable Project project) {
-    this(text, project, 1);
+  public AbstractPackageSet(@NotNull String text) {
+    this(text, 1);
   }
 
-  public AbstractPackageSet(@NotNull String text, @Nullable Project project, int priority) {
+  public AbstractPackageSet(@NotNull String text, int priority) {
     myText = text;
-    myProject = project;
     myPriority = priority;
-  }
-
-  @Nullable
-  public Project getProject() {
-    return myProject;
   }
 
   public PackageSet createCopy() {

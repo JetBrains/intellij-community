@@ -382,7 +382,8 @@ public final class ErrorAnalyzer {
     return (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
   }
 
-  @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, final RadComponent component) {
+  @Nullable
+  public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, @NotNull final RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
       if (displayLevel == null || SeverityRegistrar.getInstance(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -446,7 +447,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       };
 
-      askReloadRunnable.run();
+      IdeEventQueue.getInstance().addIdleListener(askReloadRunnable, 2000);
     }
     else {
       reloadFromDisk(document);

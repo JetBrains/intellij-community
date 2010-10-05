@@ -18,6 +18,7 @@ package com.intellij.xml.actions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
@@ -27,6 +28,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -39,8 +43,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -80,14 +83,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         }
       });
       final JBList list = new JBList(descriptors);
-      list.setCellRenderer(new ColoredListCellRenderer() {
-        @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          XmlElementDescriptor descriptor = (XmlElementDescriptor)value;
-          append(descriptor.getName());
-          append(" " + getNamespace(descriptor), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-      });
+      list.setCellRenderer(new MyListCellRenderer());
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -198,9 +194,12 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
-    String bodyText = descriptor.getContentType() == XmlElementDescriptor.CONTENT_TYPE_EMPTY ? null : "";
     String namespace = getNamespace(descriptor);
-    return contextTag.createChildTag(descriptor.getName(), namespace, bodyText, false);
+    XmlTag tag = contextTag.createChildTag(descriptor.getName(), namespace, null, false);
+    PsiElement lastChild = tag.getLastChild();
+    assert lastChild != null;
+    lastChild.delete(); // remove XML_EMPTY_ELEMENT_END
+    return tag;
   }
 
   private static String getNamespace(XmlElementDescriptor descriptor) {
@@ -245,5 +244,44 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  private static class MyListCellRenderer implements ListCellRenderer {
+    private final JPanel myPanel;
+    private final JLabel myNameLabel;
+    private final JLabel myNSLabel;
+
+    public MyListCellRenderer() {
+      myPanel = new JPanel(new BorderLayout());
+      myPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      myNameLabel = new JLabel();
+
+      myPanel.add(myNameLabel, BorderLayout.WEST);
+      myPanel.add(new JLabel("     "));
+      myNSLabel = new JLabel();
+      myPanel.add(myNSLabel, BorderLayout.EAST);
+
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      Font font = scheme.getFont(EditorFontType.PLAIN);
+      myNameLabel.setFont(font);
+      myNSLabel.setFont(font);
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+
+      XmlElementDescriptor descriptor = (XmlElementDescriptor)value;
+      Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
+
+      myNameLabel.setText(descriptor.getName());
+      myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
+      myPanel.setBackground(backgroundColor);
+
+      myNSLabel.setText(getNamespace(descriptor));
+      myNSLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
+      myNSLabel.setBackground(backgroundColor);
+
+      return myPanel;
+    }
   }
 }

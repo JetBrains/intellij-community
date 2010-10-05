@@ -302,6 +302,9 @@ public class JavaDocExternalFilter {
     }
 
     URL url = BrowserUtil.getURL(surl);
+    if (url == null) {
+      return null;
+    }
     httpConfigurable.prepareURL(url.toString());
     final URLConnection urlConnection = url.openConnection();
     final String contentEncoding = urlConnection.getContentEncoding();

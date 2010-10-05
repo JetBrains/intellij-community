@@ -21,7 +21,10 @@ import com.intellij.util.ArrayUtil;
 
 public class InternalInspectionToolsProvider implements InspectionToolProvider {
   public static final String GROUP_NAME = "IDEA Platform Inspections";
-  private static final Class[] CLASSES = new Class[] { UndesirableClassUsageInspection.class };
+  private static final Class[] CLASSES = new Class[] {
+    UndesirableClassUsageInspection.class,
+    GtkPreferredJComboboxRendererInspection.class
+  };
 
   @Override
   public Class[] getInspectionClasses() {

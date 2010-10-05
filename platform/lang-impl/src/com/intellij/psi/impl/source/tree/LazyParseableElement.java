@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -166,6 +167,8 @@ public class LazyParseableElement extends CompositeElement {
     if (TreeUtil.getFileElement(this) == null) {
       LOG.error("Chameleons must not be parsed till they're in file tree");
     }
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
     ASTNode parsedNode = type.parseContents(this);
