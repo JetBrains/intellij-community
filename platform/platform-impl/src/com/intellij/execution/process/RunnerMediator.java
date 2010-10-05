@@ -220,7 +220,7 @@ public class RunnerMediator {
           return true;
         }
         else if (canSendSignals()) {
-          sendSigInt(myProcessUid);
+          sendSigKill(myProcessUid);
           return true;
         }
         else {
