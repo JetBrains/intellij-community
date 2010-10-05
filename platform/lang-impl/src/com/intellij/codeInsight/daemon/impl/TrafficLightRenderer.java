@@ -18,28 +18,23 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
-import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,11 +49,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   private final Document myDocument;
   private final PsiFile myFile;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
-
-  @NonNls private static final String HTML_HEADER = "<html><body>";
-  @NonNls private static final String HTML_FOOTER = "</body></html>";
-  @NonNls private static final String BR = "<br>";
-  @NonNls private static final String NO_PASS_FOR_MESSAGE_KEY_SUFFIX = ".for";
   private final SeverityRegistrar mySeverityRegistrar;
 
   public TrafficLightRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
@@ -167,101 +157,40 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   public String getTooltipMessage() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(true, mySeverityRegistrar);
-
-    if (status == null) return null;
-    @NonNls String text = HTML_HEADER;
-    if (PowerSaveMode.isEnabled()) {
-      text += "Code analysis is disabled in power save mode.";
-      text += HTML_FOOTER;
-      return text;
-    }
-    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      text += DaemonBundle.message("analysis.hasnot.been.run");
-      text += HTML_FOOTER;
-      return text;
-    }
-
-    if (status.errorAnalyzingFinished) {
-      text += DaemonBundle.message("analysis.completed");
-    }
-    else {
-      text += DaemonBundle.message("performing.code.analysis");
-      text += "<table>";
-      for (ProgressableTextEditorHighlightingPass passStatus : status.passStati) {
-        if (passStatus.isFinished()) continue;
-        text += "<tr><td>" + passStatus.getPresentableName() + ":</td><td>" + renderProgressHtml(passStatus.getProgress()) +  "</td></tr>";
-      }
-      text += "</table>";
-    }
-
-    int currentSeverityErrors = 0;
-    for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] > 0) {
-        final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
-        text += BR;
-        String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
-        text += status.errorAnalyzingFinished
-                ? DaemonBundle.message("errors.found", status.errorCount[i], name)
-                : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
-        currentSeverityErrors += status.errorCount[i];
-      }
-    }
-    if (currentSeverityErrors == 0) {
-      text += BR;
-      text += status.errorAnalyzingFinished
-              ? DaemonBundle.message("no.errors.or.warnings.found")
-              : DaemonBundle.message("no.errors.or.warnings.found.so.far");
-    }
-
-    text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");
-    text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
-    text += HTML_FOOTER;
-
-    text = UIUtil.convertSpace2Nbsp(text);
-
-    return text;
-  }
-
-  private static final URL progressUrl = TrafficLightRenderer.class.getClassLoader().getResource("/general/progress.png");
-  private static final URL progressPlaceHolderUrl = TrafficLightRenderer.class.getClassLoader().getResource("/general/progressTransparentPlaceHolder.png");
-
-  private static String renderProgressHtml(double progress) {
-    @NonNls String text = "<table><tr><td>";
-    int nBricks = 5;
-    int nFilledBricks = (int)(nBricks * progress);
-    int i;
-    for (i = 0; i < nFilledBricks; i++) {
-      text += "<img src=\"" + progressUrl + "\">";
-    }
-    for (; i < nBricks; i++) {
-      text += "<img src=\"" + progressPlaceHolderUrl + "\">";
-    }
-    text += "&nbsp;"+String.format("%2.0f%%", progress * 100);
-    text += "</td></tr></table>";
-    return text;
-  }
-
-  private static String getMessageByRoots(String [] roots, int rootsNumber, @NonNls String prefix){
-    if (roots != null && roots.length > 0) {
-      return BR + (rootsNumber > 1
-                   ? DaemonBundle.message(prefix + NO_PASS_FOR_MESSAGE_KEY_SUFFIX, StringUtil.join(roots, ", "))
-                   : DaemonBundle.message(prefix));
-    }
-    return "";
+    // see TrafficProgressPanel
+    return null;
   }
 
   public void paint(Component c, Graphics g, Rectangle r) {
-    Icon icon = getIcon();
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false, mySeverityRegistrar);
+    Icon icon = getIcon(status);
 
     int height = icon.getIconHeight();
     int width = icon.getIconWidth();
-    icon.paintIcon(c, g, r.x + (r.width - width) / 2, r.y + (r.height - height) / 2);
+    int x = r.x + (r.width - width) / 2;
+    int y = r.y + (r.height - height) / 2;
+    icon.paintIcon(c, g, x, y);
+
+    /*
+    if (status != null && status.enabled && !status.errorAnalyzingFinished) {
+    Color oldColor = g.getColor();
+    g.setColor(Color.gray);
+    //UIUtil.drawDottedRectangle(g, x, y, x + width, y + height);
+
+
+    Graphics2D g2 = (Graphics2D)g;
+    final Stroke saved = g2.getStroke();
+    g2.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3,1,1,1}, System.currentTimeMillis() % 400 / 100));
+    g2.drawRect(x-1, y-1, width, height);
+    //g2.drawRect(r.x, r.y, r.width, r.height);
+    g2.setStroke(saved);
+
+    g.setColor(oldColor);
+    }
+    */
   }
 
-  private Icon getIcon() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false, mySeverityRegistrar);
-
+  private Icon getIcon(DaemonCodeAnalyzerStatus status) {
     if (status == null) {
       return NO_ICON;
     }
@@ -280,10 +209,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     if (status.errorAnalyzingFinished) return icon;
     double progress = getOverallProgress(status);
     TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
-    return LayeredIcon.create(trunc, STARING_EYE_ICON);
+
+    return new LayeredIcon(NO_ANALYSIS_ICON, trunc, STARING_EYE_ICON);
   }
 
-  private static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
+  static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
     long advancement = 0;
     long limit = 0;
     for (ProgressableTextEditorHighlightingPass ps : status.passStati) {
