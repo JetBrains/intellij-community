@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
@@ -30,20 +27,29 @@ import java.awt.event.ActionListener;
  */
 public class ScriptingLibrariesPanel {
   private JPanel myTopPanel;
-  private JButton myAddLibrarytButton;
+  private JButton myAddLibraryButton;
   private JButton myRemoveLibraryButton;
-  private JButton myEditLibrarytButton;
+  private JButton myEditLibraryButton;
   private JPanel myScriptingLibrariesPanel;
   private JBTable myLibraryTable;
+  private ScriptingLibraryTableModel myLibTableModel;
+  private boolean myModified;
 
   public ScriptingLibrariesPanel(LibraryTable libTable) {
-    myLibraryTable.setModel(new ScriptingLibraryTableModel(libTable));
-    myAddLibrarytButton.addActionListener(new ActionListener(){
+    myLibTableModel = new ScriptingLibraryTableModel(libTable);
+    myLibraryTable.setModel(myLibTableModel);
+    myAddLibraryButton.addActionListener(new ActionListener(){
       @Override
       public void actionPerformed(ActionEvent e) {
         addLibrary();
       }
     });
+    if (libTable == null) {
+      myAddLibraryButton.setEnabled(false);
+    }
+    myRemoveLibraryButton.setEnabled(false);
+    myEditLibraryButton.setEnabled(false);
+    myModified = false;
   }
 
   public JPanel getPanel() {
@@ -54,8 +60,18 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog();
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      //TODO: Implement
+      createLibrary(editLibDialog.getLibName());
+      myModified = true;
     }
+  }
+
+  private void createLibrary(String name) {
+    myLibTableModel.getLibraryTable().createLibrary(name);
+    myLibraryTable.repaint();
+  }
+
+  public boolean isModified() {
+    return myModified;
   }
 
 }

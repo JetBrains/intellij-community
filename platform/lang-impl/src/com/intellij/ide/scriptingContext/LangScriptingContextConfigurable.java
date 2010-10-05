@@ -16,28 +16,31 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
 /**
- * @author Rustam Vishnyakov <dyadix@gmail.com>
+ * @author Rustam Vishnyakov
  */
 public class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
   private LangScriptingContextProvider myProvider;
   private ModifiableRootModel myRootModel;
 
-  public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
-    myRootModel = ScriptingLibraryManager.getRootModel(project);
-    if (myRootModel != null) {
-      myPanel = new ScriptingLibrariesPanel(myRootModel.getModuleLibraryTable());
-    }
+  public LangScriptingContextConfigurable(ModifiableRootModel rootModel, LangScriptingContextProvider provider) {
+    LibraryTable libTable = rootModel != null ?
+                            rootModel.getModuleLibraryTable() : null;
+    myPanel = new ScriptingLibrariesPanel(libTable);
     myProvider = provider;
+    myRootModel = rootModel;
   }
 
   @Nls
@@ -63,12 +66,19 @@ public class LangScriptingContextConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return myPanel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    if (myRootModel != null) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myRootModel.commit();
+        }
+      });
+    }
   }
 
   @Override
@@ -78,6 +88,6 @@ public class LangScriptingContextConfigurable implements Configurable {
 
   @Override
   public void disposeUIResources() {
-    myRootModel.dispose();
+
   }
 }

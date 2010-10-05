@@ -36,4 +36,8 @@ public class EditLibraryDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return contentPane;
   }
+
+  public String getLibName() {
+    return myLibName.getText();
+  }
 }
