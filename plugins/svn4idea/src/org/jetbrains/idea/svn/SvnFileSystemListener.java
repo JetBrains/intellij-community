@@ -246,7 +246,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     long srcTime = src.lastModified();
     try {
       // delete old??? (deleted in listener, but we could do it here)
-      final String list = SvnChangelistListener.getCurrentMapping(vcs.getProject(), src);
       if (isUndo(vcs)) {
         myUndoingMove = true;
         restoreFromUndoStorage(dst);
@@ -261,6 +260,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                 srcStatus.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
             return false;
         }
+        final String list = SvnChangelistListener.getCurrentMapping(vcs.getProject(), src);
         // todo move back?
         mover.doMove(src, dst);
         if (list != null) {
