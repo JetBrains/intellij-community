@@ -85,7 +85,7 @@ class CacheUpdateRunner {
       while (!myProject.isDisposed()) {
         indicator.checkCanceled();
         // todo wait for the user...
-        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, mySession, processInReadAction)) {
+        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, processInReadAction)) {
           break;
         }
       }
@@ -113,7 +113,6 @@ class CacheUpdateRunner {
 
   private boolean processSomeFilesWhileUserIsInactive(final FileContentQueue queue,
                                                       final Consumer<VirtualFile> progressUpdater,
-                                                      final CacheUpdateSession session,
                                                       final boolean processInReadAction) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase();
     final ApplicationAdapter canceller = new ApplicationAdapter() {
@@ -148,7 +147,7 @@ class CacheUpdateRunner {
 
                   final VirtualFile file = fileContent.getVirtualFile();
                   progressUpdater.consume(file);
-                  session.processFile(fileContent);
+                  mySession.processFile(fileContent);
                 }
               };
               if (processInReadAction) {
