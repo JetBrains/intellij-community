@@ -391,9 +391,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
     initInspectionTools();
-    ArrayList<InspectionProfileEntry> result = new ArrayList<InspectionProfileEntry>();
+    List<InspectionTool> result = new ArrayList<InspectionTool>();
     for (Tools toolList : myTools.values()) {
-      result.add(toolList.getInspectionTool(element));
+      result.add((InspectionTool)toolList.getInspectionTool(element));
     }
     return result.toArray(new InspectionTool[result.size()]);
   }
