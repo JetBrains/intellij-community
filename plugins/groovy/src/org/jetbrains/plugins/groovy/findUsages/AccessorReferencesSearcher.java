@@ -22,6 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -35,7 +36,7 @@ public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, 
   }
 
   @Override
-  public void processQuery(MethodReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
     final String propertyName = GroovyPropertyUtils.getPropertyName(method);
     if (propertyName != null) {

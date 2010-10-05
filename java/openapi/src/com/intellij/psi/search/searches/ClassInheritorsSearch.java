@@ -47,7 +47,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   static {
     INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
-      public boolean execute(final SearchParameters parameters, final Processor<PsiClass> consumer) {
+      public boolean execute(@NotNull final SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
         final PsiClass baseClass = parameters.getClassToProcess();
         final SearchScope searchScope = parameters.getScope();
 

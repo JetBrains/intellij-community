@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +183,10 @@ public class PropertyUtil {
       }
     }
     return list;
+  }
+  @NotNull
+  public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass, final String propertyName) {
+    return ContainerUtil.concat(getGetters(psiClass, propertyName), getSetters(psiClass, propertyName));
   }
 
   @Nullable public static PsiMethod findPropertyGetter(PsiClass aClass,

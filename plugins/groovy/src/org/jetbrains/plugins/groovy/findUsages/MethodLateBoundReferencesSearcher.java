@@ -43,7 +43,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   }
 
   @Override
-  public void processQuery(MethodReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
     SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
 

@@ -71,5 +71,5 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     }
   }
 
-  protected abstract boolean processResults(Processor<Result> consumer);
+  protected abstract boolean processResults(@NotNull Processor<Result> consumer);
 }

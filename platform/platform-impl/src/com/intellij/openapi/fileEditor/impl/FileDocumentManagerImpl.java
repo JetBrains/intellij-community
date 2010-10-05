@@ -440,6 +440,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       Runnable askReloadRunnable = new Runnable() {
         public void run() {
+          IdeEventQueue.getInstance().removeIdleListener(this);
           if (!file.isValid()) return;
           if (askReloadFromDisk(file, document)) {
             reloadFromDisk(document);

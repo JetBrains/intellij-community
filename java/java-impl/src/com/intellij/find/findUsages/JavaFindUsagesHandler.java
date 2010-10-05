@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
@@ -53,13 +54,11 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -157,30 +156,38 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final PsiField field = (PsiField)element;
       PsiClass containingClass = field.getContainingClass();
       if (containingClass != null) {
-        final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-        PsiMethod getter = PropertyUtil.
-          findPropertyGetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
+        String fieldName = field.getName();
+        final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
+        Set<PsiMethod> accessors = new THashSet<PsiMethod>();
+        boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+        PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
-        PsiMethod setter = PropertyUtil.
-          findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
+        if (getter != null) accessors.add(getter);
+        PsiMethod setter = PropertyUtil.findPropertySetterWithType(propertyName, isStatic, field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
-        if (getter != null || setter != null) {
+        if (setter != null) accessors.add(setter);
+        accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
+        if (!accessors.isEmpty()) {
           final boolean doSearch;
-          if ((getter == null || !getter.isPhysical()) && (setter == null || !setter.isPhysical())) {
+          boolean containsPhysical = ContainerUtil.find(accessors, new Condition<PsiMethod>() {
+            @Override
+            public boolean value(PsiMethod psiMethod) {
+              return psiMethod.isPhysical();
+            }
+          }) != null;
+          if (!containsPhysical) {
             doSearch = true;
-          } else {
-            doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
+          }
+          else {
+            doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                            FindBundle.message("find.field.accessors.title"),
                                            new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
                                            Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
           }
           if (doSearch) {
-            final List<PsiElement> elements = new ArrayList<PsiElement>();
-            if (getter != null) {
-              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
-            }
-            if (setter != null) {
-              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
+            final Set<PsiElement> elements = new THashSet<PsiElement>();
+            for (PsiMethod accessor : accessors) {
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
             }
             return elements.toArray(new PsiElement[elements.size()]);
           }

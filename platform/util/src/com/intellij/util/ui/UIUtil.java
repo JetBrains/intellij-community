@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,9 +79,9 @@ public class UIUtil {
   public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
 
   // accessed only from EDT
-  private static HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
+  private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
-  public static final String CENTER_TOOLTIP = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP = "ToCenterTooltip";
 
   private UIUtil() {
   }
@@ -1023,16 +1024,18 @@ public class UIUtil {
     return getCssFontDeclaration(font, null, null, null);
   }
 
+  @Language("HTML")
   @NonNls
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    @Language("CSS")
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
       body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
     }
-    String link = (linkColor != null ? ("a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}") : "");
+    String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
     return "<style> " + body + " " + link + "</style>";
   }
 
@@ -1399,7 +1402,7 @@ public class UIUtil {
       myWideSelection = wideSelection;
     }
 
-    private MouseListener mySelectionListener = new MouseAdapter() {
+    private final MouseListener mySelectionListener = new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull final MouseEvent e) {
         final JTree tree = (JTree)e.getSource();

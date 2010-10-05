@@ -29,6 +29,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -40,7 +41,7 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
   }
 
   @Override
-  public void processQuery(ReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     PsiElement refElement = queryParameters.getElementToSearch();
     if (!(refElement instanceof PsiMethod)) return;
 
