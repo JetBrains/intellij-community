@@ -42,7 +42,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
@@ -105,6 +104,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
     InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
     myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
+
+    // initial guess
+    setProgressLimit(300 * 2);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -112,21 +114,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = myProfileWrapper;
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-    checkInspectionsDuplicates(tools);
     inspect(tools, iManager, true, true, true, progress);
-  }
-
-  // check whether some inspection got registered twice by accident. Bit only once.
-  private static boolean alreadyChecked;
-  private static void checkInspectionsDuplicates(List<LocalInspectionTool> tools) {
-    if (alreadyChecked) return;
-    alreadyChecked = true;
-    Set<LocalInspectionTool> uniqTools = new THashSet<LocalInspectionTool>(tools.size());
-    for (LocalInspectionTool tool : tools) {
-      if (!uniqTools.add(tool)) {
-        LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
-      }
-    }
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
@@ -206,7 +194,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     ArrayList<PsiElement> outside = new ArrayList<PsiElement>();
     Divider.getInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside, HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT);
 
-    setProgressLimit(1L * tools.size() * (inside.size() + outside.size()));
+    setProgressLimit(1L * tools.size() *2/** (inside.size() + outside.size())*/);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
@@ -261,7 +249,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           element.accept(elementVisitor);
         }
 
-        advanceProgress(elements.size());
+        advanceProgress(1);
 
         if (holder.hasResults()) {
           appendDescriptors(myFile, holder.getResults(), tool);
@@ -301,7 +289,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           element.accept(elementVisitor);
         }
 
-        advanceProgress(elements.size());
+        advanceProgress(1);
 
         tool.inspectionFinished(session);
 

@@ -19,18 +19,23 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  * Date: 15-Feb-2006
  */
 public class InspectionProfileWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
+
   /**
    * Generic-purpose key object that is intended to be used for customizing inspection profile wrapper retrieval
    * via {@link com.intellij.openapi.util.UserDataHolder} API.
@@ -49,6 +54,7 @@ public class InspectionProfileWrapper {
   public List<LocalInspectionTool> getHighlightingLocalInspectionTools(PsiElement element) {
     List<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
     final InspectionTool[] tools = getInspectionTools(element);
+    checkInspectionsDuplicates(tools);
     for (InspectionTool tool : tools) {
       if (tool instanceof LocalInspectionToolWrapper) {
         if (myProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()), element)) {
@@ -57,6 +63,19 @@ public class InspectionProfileWrapper {
       }
     }
     return enabled;
+  }
+
+  // check whether some inspection got registered twice by accident. Bit only once.
+  private static boolean alreadyChecked;
+  private static void checkInspectionsDuplicates(InspectionTool[] tools) {
+    if (alreadyChecked) return;
+    alreadyChecked = true;
+    Set<InspectionTool> uniqTools = new THashSet<InspectionTool>(tools.length);
+    for (InspectionTool tool : tools) {
+      if (!uniqTools.add(tool)) {
+        LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
+      }
+    }
   }
 
   public String getName() {

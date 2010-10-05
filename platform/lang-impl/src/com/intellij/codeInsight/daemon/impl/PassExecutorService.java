@@ -157,7 +157,8 @@ public abstract class PassExecutorService implements Disposable {
       }
     }
 
-    List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size());
+    List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size()*5);
+    List<ScheduledPass> dependentPasses = new ArrayList<ScheduledPass>(documentToEditors.size()*10);
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     for (List<FileEditor> fileEditors : documentToEditors.values()) {
       List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
@@ -178,7 +179,7 @@ public abstract class PassExecutorService implements Disposable {
           newId = currentPass.getId();
         }
         if (newId != passId) {
-          createScheduledPass(fileEditors, currentPass, toBeSubmitted, passes, freePasses, updateProgress, threadsToStartCountdown,
+          createScheduledPass(fileEditors, currentPass, toBeSubmitted, passes, freePasses, dependentPasses, updateProgress, threadsToStartCountdown,
                               jobPriority);
           passId = newId;
         }
@@ -190,6 +191,9 @@ public abstract class PassExecutorService implements Disposable {
     for (ScheduledPass freePass : freePasses) {
       submit(freePass);
     }
+    for (ScheduledPass dependentPass : dependentPasses) {
+      mySubmittedPasses.put(dependentPass, JobImpl.NULL_JOB);
+    }
   }
 
   private ScheduledPass createScheduledPass(@NotNull List<FileEditor> fileEditors,
@@ -197,6 +201,7 @@ public abstract class PassExecutorService implements Disposable {
                                             @NotNull Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
                                             @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses,
                                             @NotNull List<ScheduledPass> freePasses,
+                                            @NotNull List<ScheduledPass> dependentPasses,
                                             @NotNull DaemonProgressIndicator updateProgress,
                                             @NotNull AtomicInteger threadsToStartCountdown,
                                             int jobPriority) {
@@ -208,7 +213,7 @@ public abstract class PassExecutorService implements Disposable {
     scheduledPass = new ScheduledPass(fileEditors, pass, updateProgress, threadsToStartCountdown, jobPriority);
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses, dependentPasses,
                                                               updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
@@ -217,7 +222,7 @@ public abstract class PassExecutorService implements Disposable {
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
       ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
+                                                              dependentPasses, updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
@@ -225,6 +230,9 @@ public abstract class PassExecutorService implements Disposable {
     }
     if (scheduledPass.myRunningPredecessorsCount.get() == 0 && !freePasses.contains(scheduledPass)) {
       freePasses.add(scheduledPass);
+    }
+    else if (!dependentPasses.contains(scheduledPass)) {
+      dependentPasses.add(scheduledPass);
     }
     return scheduledPass;
   }
@@ -234,6 +242,7 @@ public abstract class PassExecutorService implements Disposable {
                                                     final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
                                                     final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
                                                     final List<ScheduledPass> freePasses,
+                                                    List<ScheduledPass> dependentPasses,
                                                     final DaemonProgressIndicator updateProgress,
                                                     final AtomicInteger myThreadsToStartCountdown,
                                                     final int jobPriority,
@@ -243,7 +252,7 @@ public abstract class PassExecutorService implements Disposable {
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
       predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                                        updateProgress, myThreadsToStartCountdown, jobPriority);
+                                                                        dependentPasses, updateProgress, myThreadsToStartCountdown, jobPriority);
     }
     return predecessor;
   }

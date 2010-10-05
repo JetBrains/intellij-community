@@ -40,11 +40,11 @@ public class TruncatingIcon implements Icon {
   }
 
   public int getIconWidth() {
-    return myWidth;
+    return myDelegate.getIconWidth();
   }
 
   public int getIconHeight() {
-    return myHeight;
+    return myDelegate.getIconHeight();
   }
 }
 

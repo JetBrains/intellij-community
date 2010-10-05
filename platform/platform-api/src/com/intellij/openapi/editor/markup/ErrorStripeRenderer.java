@@ -18,6 +18,6 @@ package com.intellij.openapi.editor.markup;
 import java.awt.*;
 
 public interface ErrorStripeRenderer {
-  String getTooltipMessage();
+  @Deprecated String getTooltipMessage();
   void paint(Component c, Graphics g, Rectangle r);
 }
