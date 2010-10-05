@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class BrowserUtil {
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     if (SystemInfo.isWindows) {
-      return url.indexOf(' ') > 0? "\"" + url + "\"" : url;
+      return (url.indexOf(' ') > 0 || url.indexOf('&') > -1) ? "\"" + url + "\"" : url;
     }
     else {
       return url.replaceAll(" ", "%20");
