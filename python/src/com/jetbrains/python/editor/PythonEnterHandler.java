@@ -29,7 +29,9 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PySetLiteralExpression.class,
     PyListLiteralExpression.class,
     PyArgumentList.class,
-    PyParameterList.class};
+    PyParameterList.class,
+    PyFunction.class
+  };
 
   @Override
   public Result preprocessEnter(PsiFile file,
