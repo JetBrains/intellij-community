@@ -36,7 +36,7 @@ public abstract class IntroduceHandlerBase {
     final Editor editor;
     if (dataContext != null) {
       final Editor editorFromDC = PlatformDataKeys.EDITOR.getData(dataContext);
-      final PsiFile cachedPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument());
+      final PsiFile cachedPsiFile = editorFromDC != null ? PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument()) : null;
       if (cachedPsiFile != null && PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
         editor = editorFromDC;
       }

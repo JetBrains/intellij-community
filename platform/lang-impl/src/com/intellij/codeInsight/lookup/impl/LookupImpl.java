@@ -112,7 +112,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
-    setForceShowAsPopup(!SystemInfo.isLinux);
+    setForceShowAsPopup(true);
     myProject = project;
     myEditor = editor;
     myArranger = arranger;
@@ -331,7 +331,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateListHeight(model);
 
+    myAdComponent.setPreferredSize(null);
     myAdComponent.setText(myAdText);
+    if (myAdText != null) {
+      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+    }
 
     if (hasItems) {
       myList.setFixedCellWidth(Math.max(myLookupWidth, myAdComponent.getPreferredSize().width));

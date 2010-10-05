@@ -41,76 +41,25 @@ import java.awt.event.KeyEvent;
  * @author peter
  */
 public class CreateFileFromTemplateDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateFileFromTemplateDialog");
   private JTextField myNameField;
-  private JComboBox myKindCombo;
+  private TemplateKindCombo myKindCombo;
   private JPanel myPanel;
   private JLabel myUpDownHint;
+  private JLabel myKindLabel;
 
   private ElementCreator myCreator;
 
   private CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
 
-    myKindCombo.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        @SuppressWarnings({"unchecked"}) Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>) value;
-        setText(trinity == null ? "" : trinity.first);
-        setIcon(trinity == null ? null : trinity.second);
-        return this;
-      }
-    });
-
-      //myNameLabel.setText(prompt);
-
-    new ComboboxSpeedSearch(myKindCombo) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((Trinity<String, Icon, String>)element).first;
-      }
-    };
-
-    final AnAction arrow = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
-
-          final int size = myKindCombo.getModel().getSize();
-          int next = myKindCombo.getSelectedIndex() + delta;
-          if (next < 0 || next >= size) {
-            if (!UISettings.getInstance().CYCLE_SCROLLING) {
-              return;
-            }
-            next = (next + size) % size;
-          }
-          myKindCombo.setSelectedIndex(next);
-        }
-      }
-    };
-    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
-    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNameField);
-
+    myKindLabel.setLabelFor(myKindCombo);
+    myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
     init();
   }
 
   private String getEnteredName() {
     return myNameField.getText();
-  }
-
-  private String getTemplateName() {
-    //noinspection unchecked
-    final Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)myKindCombo.getSelectedItem();
-    if (trinity == null) {
-      LOG.error("Model: " + myKindCombo.getModel());
-    }
-
-    return trinity.third;
   }
 
   @Override
@@ -143,36 +92,23 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
 
       public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
-        dialog.myKindCombo.addItem(new Trinity<String, Icon, String>(name, icon, templateName));
+        dialog.myKindCombo.addItem(name, icon, templateName);
         return this;
       }
 
       public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                            @NotNull final FileCreator<T> creator) {
         final Ref<T> created = Ref.create(null);
-        if (selectedTemplateName != null) {
-          Object item = null;
-          ComboBoxModel model = dialog.myKindCombo.getModel();
-          for (int i = 0, n = model.getSize(); i < n; i++) {
-            Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)model.getElementAt(i);
-            if (selectedTemplateName.equals(trinity.third)) {
-              item = trinity;
-              break;
-            }
-          }
-          if (item != null) {
-            dialog.myKindCombo.setSelectedItem(item);
-          }
-        }
+        dialog.myKindCombo.setSelectedName(selectedTemplateName);
         dialog.myCreator = new ElementCreator(project, errorTitle) {
           @Override
           protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
-            creator.checkBeforeCreate(newName, dialog.getTemplateName());
+            creator.checkBeforeCreate(newName, dialog.myKindCombo.getSelectedName());
           }
 
           @Override
           protected PsiElement[] create(String newName) throws Exception {
-            final T element = creator.createFile(dialog.getEnteredName(), dialog.getTemplateName());
+            final T element = creator.createFile(dialog.getEnteredName(), dialog.myKindCombo.getSelectedName());
             created.set(element);
             if (element != null) {
               return new PsiElement[]{element};
@@ -182,7 +118,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
           @Override
           protected String getActionName(String newName) {
-            return creator.getActionName(newName, dialog.getTemplateName());
+            return creator.getActionName(newName, dialog.myKindCombo.getSelectedName());
           }
         };
         dialog.show();

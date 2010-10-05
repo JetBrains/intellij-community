@@ -75,6 +75,51 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
+  public void testComposites() {
+    doTest("1(a(b)c)2(d)3",
+           new Parser() {
+             @Override
+             public void parse(PsiBuilder builder) {
+               PsiBuilderUtil.advance(builder, 1);
+               final PsiBuilder.Marker marker1 = builder.mark();
+               PsiBuilderUtil.advance(builder, 2);
+               final PsiBuilder.Marker marker2 = builder.mark();
+               PsiBuilderUtil.advance(builder, 3);
+               marker2.done(OTHER);
+               PsiBuilderUtil.advance(builder, 2);
+               marker1.done(OTHER);
+               PsiBuilderUtil.advance(builder, 1);
+               final PsiBuilder.Marker marker3 = builder.mark();
+               PsiBuilderUtil.advance(builder, 1);
+               builder.mark().done(OTHER);
+               PsiBuilderUtil.advance(builder, 2);
+               marker3.done(OTHER);
+               PsiBuilderUtil.advance(builder, 1);
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(DIGIT)('1')\n" +
+           "  Element(OTHER)\n" +
+           "    PsiElement(OTHER)('(')\n" +
+           "    PsiElement(LETTER)('a')\n" +
+           "    Element(OTHER)\n" +
+           "      PsiElement(OTHER)('(')\n" +
+           "      PsiElement(LETTER)('b')\n" +
+           "      PsiElement(OTHER)(')')\n" +
+           "    PsiElement(LETTER)('c')\n" +
+           "    PsiElement(OTHER)(')')\n" +
+           "  PsiElement(DIGIT)('2')\n" +
+           "  Element(OTHER)\n" +
+           "    PsiElement(OTHER)('(')\n" +
+           "    Element(OTHER)\n" +
+           "      <empty list>\n" +
+           "    PsiElement(LETTER)('d')\n" +
+           "    PsiElement(OTHER)(')')\n" +
+           "  PsiElement(DIGIT)('3')\n"
+    );
+  }
+
+  @Test
   public void testCollapse() {
     doTest("a<<>>b",
            new Parser() {

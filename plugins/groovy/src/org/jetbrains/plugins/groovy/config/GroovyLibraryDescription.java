@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -73,21 +74,21 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   @Nullable
-  public static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
+  public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
     if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length == 0) {
       return null;
     }
 
     final String name = dir.getName();
 
-    final AbstractGroovyLibraryManager[] managers = AbstractGroovyLibraryManager.EP_NAME.getExtensions();
-    for (final AbstractGroovyLibraryManager manager : managers) {
-      if (manager.managesName(name) && manager.isSDKHome(dir)) {
-        return manager;
+    final List<GroovyLibraryPresentationProviderBase> providers = ContainerUtil.findAll(LibraryPresentationProvider.EP_NAME.getExtensions(), GroovyLibraryPresentationProviderBase.class);
+    for (final GroovyLibraryPresentationProviderBase provider : providers) {
+      if (provider.managesName(name) && provider.isSDKHome(dir)) {
+        return provider;
       }
     }
 
-    for (final AbstractGroovyLibraryManager manager : managers) {
+    for (final GroovyLibraryPresentationProviderBase manager : providers) {
       if (manager.isSDKHome(dir)) {
         return manager;
       }
@@ -113,22 +114,22 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     if (files.length != 1) return null;
 
     final VirtualFile dir = files[0];
-    final AbstractGroovyLibraryManager manager = findManager(dir);
-    if (manager == null) {
+    final GroovyLibraryPresentationProviderBase provider = findManager(dir);
+    if (provider == null) {
       //todo[nik,peter] show error message in file chooser
       return null;
     }
 
     final String path = dir.getPath();
-    final String sdkVersion = manager.getSDKVersion(path);
+    final String sdkVersion = provider.getSDKVersion(path);
     if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
       return null;
     }
 
-    return new NewLibraryConfiguration(manager.getLibraryPrefix() + "-" + sdkVersion) {
+    return new NewLibraryConfiguration(provider.getLibraryPrefix() + "-" + sdkVersion) {
       @Override
       public void addRoots(@NotNull LibraryEditor editor) {
-        manager.fillLibrary(path, editor);
+        provider.fillLibrary(path, editor);
       }
     };
   }

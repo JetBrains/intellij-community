@@ -31,13 +31,20 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
+
+  private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
+
   public RefCountingStorage(String path) throws IOException {
     super(path);
   }
 
   @Override
   protected byte[] readBytes(int record) throws IOException {
+
+    if (myDoNotZipCaches) return super.readBytes(record);
+
     synchronized (myLock) {
+
       byte[] result = super.readBytes(record);
       InflaterInputStream in = new InflaterInputStream(new ByteArrayInputStream(result));
       try {
@@ -56,6 +63,12 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   protected void writeBytes(int record, byte[] bytes) throws IOException {
+
+    if (myDoNotZipCaches) {
+      super.writeBytes(record, bytes);
+      return;
+    }
+
     synchronized (myLock) {
       ByteArrayOutputStream s = new ByteArrayOutputStream();
       DeflaterOutputStream out = new DeflaterOutputStream(s);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * For old-style components, the contract specifies a lifecycle: the component gets created and notified during the project opening process.
- * For services, there's no such contract, so we don't even load the class implementing the service until someone requests it. 
+ * For services, there's no such contract, so we don't even load the class implementing the service until someone requests it.
  */
 @SuppressWarnings({"unchecked"})
 public class ServiceManager {
@@ -40,6 +40,13 @@ public class ServiceManager {
     return (T)project.getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
+  /**
+   * Creates lazy caching key to store project-level service instance from {@link #getService(com.intellij.openapi.project.Project, Class)}.
+   *
+   * @param serviceClass Service class to create key for.
+   * @param <T>          Service class type.
+   * @return Key instance.
+   */
   public static <T> NotNullLazyKey<T, Project> createLazyKey(final Class<T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), new NotNullFunction<Project, T>() {
       @NotNull

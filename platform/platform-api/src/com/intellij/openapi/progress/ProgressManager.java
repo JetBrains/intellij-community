@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,10 @@ public abstract class ProgressManager {
   public abstract void registerFunComponentProvider(ProgressFunComponentProvider provider);
   @Deprecated
   public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);
+
+  /**
+   * @see ProgressFunComponentProvider
+   */
   public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
 
   public abstract void executeNonCancelableSection(Runnable r);

@@ -75,7 +75,7 @@ public class GradleScriptType extends GroovyScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return GradleLibraryManager.GRADLE_ICON;
+    return GradleLibraryPresentationProvider.GRADLE_ICON;
   }
 
   @Override
@@ -142,19 +142,19 @@ public class GradleScriptType extends GroovyScriptType {
     return new GroovyScriptRunner() {
       @Override
       public boolean isValidModule(@NotNull Module module) {
-        return GradleLibraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
+        return GradleLibraryPresentationProvider.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
       }
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
-        if (GradleLibraryManager.getSdkHome(module, project) == null) {
+        if (GradleLibraryPresentationProvider.getSdkHome(module, project) == null) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
-                                GradleLibraryManager.GRADLE_ICON);
+                                GradleLibraryPresentationProvider.GRADLE_ICON);
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
           }
-          if (GradleLibraryManager.getSdkHome(module, project) == null) {
+          if (GradleLibraryPresentationProvider.getSdkHome(module, project) == null) {
             return false;
           }
         }
@@ -167,7 +167,7 @@ public class GradleScriptType extends GroovyScriptType {
                                        boolean tests,
                                        VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
         final Project project = configuration.getProject();
-        final VirtualFile gradleHome = GradleLibraryManager.getSdkHome(module, project);
+        final VirtualFile gradleHome = GradleLibraryPresentationProvider.getSdkHome(module, project);
         assert gradleHome != null;
 
         params.setMainClass(findMainClass(gradleHome, script, project));
@@ -187,7 +187,7 @@ public class GradleScriptType extends GroovyScriptType {
           params.getClassPath().add(userDefinedClasspath);
         } else {
           params.getClassPath().addAllFiles(
-            GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryManager.ANY_GRADLE_JAR_FILE_PATTERN));
+            GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryPresentationProvider.ANY_GRADLE_JAR_FILE_PATTERN));
         }
 
         params.getVMParametersList().addParametersString(configuration.vmParams);
@@ -242,7 +242,7 @@ public class GradleScriptType extends GroovyScriptType {
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module != null) {
-      if (GradleLibraryManager.getSdkHomeFromClasspath(module) != null) {
+      if (GradleLibraryPresentationProvider.getSdkHomeFromClasspath(module) != null) {
         return baseScope;
       }
     }

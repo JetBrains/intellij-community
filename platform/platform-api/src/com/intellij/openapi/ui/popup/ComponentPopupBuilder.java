@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
+  /**
+   * @see com.intellij.openapi.util.DimensionService
+   */
   @NotNull
   ComponentPopupBuilder setDimensionServiceKey(@Nullable final Project project, @NonNls final String dimensionServiceKey, final boolean useForXYLocation);
 
@@ -104,6 +107,12 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setFocusOwners(@NotNull Component[] focusOwners);
 
+  /**
+   * Adds "advertising" text to the bottom (e.g.: hints in code completion popup).
+   *
+   * @param text Text to set.
+   * @return This.
+   */
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text);
 

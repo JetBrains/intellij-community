@@ -386,7 +386,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     public Document getDocument() {
-      return myEditor.getDocument();
+      return LexerEditorHighlighter.this.getDocument();
     }
   }
 }

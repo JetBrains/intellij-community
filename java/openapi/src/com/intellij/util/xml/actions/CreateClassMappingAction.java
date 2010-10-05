@@ -68,6 +68,15 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     }
     if (selectedClass == null) return null;
 
+    return createElement(context, editor, file, project, selectedClass);
+  }
+
+  @Nullable
+  protected DomElement createElement(final T context,
+                                     final Editor editor,
+                                     final PsiFile file,
+                                     final Project project,
+                                     PsiClass selectedClass) {
     final Map<String,String> map = new HashMap<String, String>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
     new WriteCommandAction.Simple(project, file) {
@@ -80,7 +89,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
   }
 
   protected String getChooserTitle() {
-    return "Choose " + getTemplatePresentation().getTextWithMnemonic() + " Class";
+    return "Choose " + getTemplatePresentation().getText() + " Class";
   }
 
   protected abstract DomElement createElement(T context);

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -437,8 +438,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
+      final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       Runnable askReloadRunnable = new Runnable() {
         public void run() {
+          if (!unitTestMode) IdeEventQueue.getInstance().removeIdleListener(this);
           if (!file.isValid()) return;
           if (askReloadFromDisk(file, document)) {
             reloadFromDisk(document);
@@ -446,7 +449,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       };
 
-      askReloadRunnable.run();
+      if (unitTestMode) {
+        askReloadRunnable.run();
+      } else {
+        IdeEventQueue.getInstance().addIdleListener(askReloadRunnable, 2000);
+      }
     }
     else {
       reloadFromDisk(document);

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
+  private AnnotationSession myAnnotationSession;
+
   public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
   }
@@ -89,5 +92,14 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   public boolean hasAnnotations() {
     return !isEmpty();
+  }
+
+  public void setSession(AnnotationSession annotationSession) {
+    myAnnotationSession = annotationSession;
+  }
+
+  @Override
+  public AnnotationSession getCurrentAnnotationSession() {
+    return myAnnotationSession;
   }
 }

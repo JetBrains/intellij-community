@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -103,10 +104,15 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   }
 
   public GroovyResolveResult[] multiResolveConstructor() {
+    return multiResolveConstructorImpl(false);
+  }
+
+  private GroovyResolveResult[] multiResolveConstructorImpl(boolean allVariants) {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
     PsiClass clazz = getContainingClass();
     PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
-    MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
+    MethodResolverProcessor processor =
+      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, allVariants);
     clazz.processDeclarations(processor, ResolveState.initial(), null, this);
     return processor.getCandidates();
   }
@@ -115,11 +121,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     final PsiClass psiClass = getContainingClass();
     GroovyResolveResult result = new GroovyResolveResultImpl(psiClass, this, PsiSubstitutor.EMPTY, true, true);
     return new GroovyResolveResult[]{result};
-  }
-
-  @Nullable
-  public PsiMethod resolveConstructor() {
-    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
   @Nullable
@@ -134,6 +135,36 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     return null;
+  }
+
+  @Override
+  public GrNamedArgument[] getNamedArguments() {
+    final GrArgumentList argumentList = getArgumentList();
+    return argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
+  }
+
+  @Override
+  public GrExpression[] getExpressionArguments() {
+    final GrArgumentList argumentList = getArgumentList();
+    return argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
+
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+    return multiResolveConstructorImpl(true);
+  }
+
+  @NotNull
+  @Override
+  public GrClosableBlock[] getClosureArguments() {
+    return GrClosableBlock.EMPTY_ARRAY;
+  }
+
+  @Override
+  public PsiMethod resolveMethod() {
+    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
   public GrTypeDefinitionBody getAnonymousBlock() {
@@ -159,7 +190,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   }
 
   public PsiElement resolve() {
-    return resolveConstructor();
+    return resolveMethod();
   }
 
   @NotNull

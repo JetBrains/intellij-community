@@ -27,6 +27,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +37,7 @@ import java.util.Set;
  * @author max
  */
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     if (!scopeCanContainForms(p.getScope())) return true;
     final PsiElement refElement = p.getElementToSearch();
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {

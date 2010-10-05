@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -201,14 +199,9 @@ public class BrowserUtil {
 
   private static boolean launchDefaultBrowserUsingJdk6Api(String sUrl) {
     try {
-      Class desktopClass = BrowserUtil.class.getClassLoader().loadClass("java.awt.Desktop");
-      Object desktop = desktopClass.getMethod("getDesktop").invoke(null);
-
       URL url = getURL(sUrl);
-
       if (url == null) return false;
-
-      desktopClass.getMethod("browse", new Class[]{URI.class}).invoke(desktop, url.toURI());
+      Desktop.getDesktop().browse(url.toURI());
       LOG.debug("Browser launched using JDK 1.6 API");
       return true;
     }
@@ -220,7 +213,7 @@ public class BrowserUtil {
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     if (SystemInfo.isWindows) {
-      return url.indexOf(' ') > 0? "\"" + url + "\"" : url;
+      return (url.indexOf(' ') > 0 || url.indexOf('&') > -1) ? "\"" + url + "\"" : url;
     }
     else {
       return url.replaceAll(" ", "%20");
@@ -359,7 +352,7 @@ public class BrowserUtil {
       if (url == null) return;
     }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
-      if (launchDefaultBrowserUsingJdk6Api(url)) {
+      if (SystemInfo.isLinux && launchDefaultBrowserUsingJdk6Api(url)) {
         return;
       }
 
@@ -390,29 +383,15 @@ public class BrowserUtil {
   }
 
   public static boolean canStartDefaultBrowser() {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || SystemInfo.isWindows) {
       return true;
     }
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isLinux && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
       return true;
     }
 
-    try {
-      Class desktopClass = BrowserUtil.class.getClassLoader().loadClass("java.awt.Desktop");
-      Object desktop = desktopClass.getMethod("getDesktop", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(null);
-
-
-      Class browseActionClass = BrowserUtil.class.getClassLoader().loadClass("java.awt.Desktop$Action");
-      Object browseAction = browseActionClass.getField("BROWSE").get(null);
-
-      Object res = desktopClass.getMethod("isSupported", new Class[]{browseActionClass}).invoke(desktop, browseAction);
-
-      return (Boolean)res;
-    }
-    catch (Exception e) {
-      return false;
-    }
+    return false;
   }
 
   public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {

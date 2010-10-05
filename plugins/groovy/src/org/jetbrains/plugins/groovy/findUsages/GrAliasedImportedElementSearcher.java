@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -36,7 +37,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
   }
 
   @Override
-  public void processQuery(ReferencesSearch.SearchParameters parameters, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters parameters, @NotNull Processor<PsiReference> consumer) {
     final PsiElement target = parameters.getElementToSearch();
     if (!(target instanceof PsiMember) || !(target instanceof PsiNamedElement)) return;
 

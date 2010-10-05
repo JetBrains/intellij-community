@@ -39,7 +39,7 @@ public class PackageFilter implements ElementFilter {
         return true;
       }
       if (context.getParent() instanceof GrApplicationStatement &&
-          ((GrApplicationStatement) context.getParent()).getArguments()[0] instanceof GrReferenceExpression) {
+          ((GrApplicationStatement) context.getParent()).getExpressionArguments()[0] instanceof GrReferenceExpression) {
         return true;
       }
       return false;

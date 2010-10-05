@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -20,7 +21,7 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
   }
 
   @Override
-  public void processQuery(ReferencesSearch.SearchParameters p, Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
       new ConstructorReferencesSearchHelper(PsiManager.getInstance(element.getProject()))

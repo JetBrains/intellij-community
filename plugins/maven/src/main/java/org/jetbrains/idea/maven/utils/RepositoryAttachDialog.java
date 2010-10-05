@@ -86,7 +86,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProject = project;
     myManaged = managed;
     myProgressIcon.suspend();
-    myCaptionLabel.setText("Enter keywords to search by, class name or Maven coordinates,\n" +
+    myCaptionLabel.setText("Enter keyword, pattern or class name to search by or Maven coordinates,\n" +
                            "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':");
     myCaptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
     myCaptionLabel.setUI(new MultiLineLabelUI());

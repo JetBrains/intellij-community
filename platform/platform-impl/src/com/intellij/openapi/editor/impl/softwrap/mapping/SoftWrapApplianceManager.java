@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -65,6 +66,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
      */
     CUSTOM
   }
+
+  private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
 
   /**
    * @see #fillOffsetFonts(CharSequence, int, int, int)
@@ -382,7 +385,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    * @param end               end offset of the symbol that uses given font type (exclusive)
    */
   private void fillOffsetFonts(CharSequence text, int fontType, int start, int end) {
-    int newLength = start - end;
+    int initialAnchor = myOffset2fontType.anchor;
+    int initialLength = myOffset2fontType.data.length;
+
+    int newLength = end - start;
     if (myOffset2fontType.anchor > 0) {
       newLength += myOffset2fontType.end;
     }
@@ -398,7 +404,15 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
 
     for (int i = start, counter = 0; i < end; i++, counter++) {
-      myOffset2fontType.data[start - myOffset2fontType.anchor] = fontType;
+      if (i - myOffset2fontType.anchor >= myOffset2fontType.data.length) {
+        LOG.error(String.format(
+          "Invalid soft wraps processing detected during filling 'offset -> font' mappings. Data array length: initial=%d, current=%d; "
+          + "anchor: initial=%d, current=%d; data array end=%d; offset: start=%d, end=%d, current=%d; document='%s'",
+          initialLength, myOffset2fontType.data.length, initialAnchor, myOffset2fontType.anchor, myOffset2fontType.end, start, end, i,
+          myEditor.getDocument().getCharsSequence()
+        ));
+      }
+      myOffset2fontType.data[i - myOffset2fontType.anchor] = fontType;
       char c = text.charAt(i);
       if (c == '\n' || counter >= STORAGE_SEGMENT_SIZE) {
         myOffset2fontType.end = i - myOffset2fontType.anchor;

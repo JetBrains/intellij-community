@@ -34,8 +34,10 @@ public class NavigatableRule implements GetDataRule {
         return openFileDescriptor;
       }
     }
-
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    if (element instanceof Navigatable) {
+      return element;
+    }
     if (element != null) {
       return EditSourceUtil.getDescriptor(element);
     }

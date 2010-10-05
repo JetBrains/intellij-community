@@ -78,57 +78,73 @@ public class EclipseProjectFinder implements EclipseXml {
     return name;
   }
 
-  public static boolean isExternalResource(@NotNull String projectPath, @NotNull String relativePath) {
-    String independentPath = extractPathVariableName(relativePath);
-    final File file = new File(projectPath, DOT_PROJECT_EXT);
-    if (file.isFile()) {
-      try {
-        for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
-          for (Object l : ((Element)o).getChildren(LINK)) {
-            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), independentPath)) {
-              return true;
-            }
-          }
-        }
-      }
-      catch (Exception e) {
-        return false;
-      }
-    }
-    return false;
-  }
-
-  public static String extractPathVariableName(String relativePath) {
+  @Nullable
+  public static LinkedResource findLinkedResource(@NotNull String projectPath, @NotNull String relativePath) {
     String independentPath = FileUtil.toSystemIndependentName(relativePath);
+    @NotNull String resourceName = independentPath;
     final int idx = independentPath.indexOf('/');
     if (idx != -1) {
-      independentPath = independentPath.substring(0, idx);
+      resourceName = independentPath.substring(0, idx);
     }
-    return independentPath;
-  }
-
-  public static String replaceLinkedPathLocationVariable(@NotNull String projectPath, @NotNull String relativePath) {
-    relativePath = FileUtil.toSystemIndependentName(relativePath);
-    String independentPath = extractPathVariableName(relativePath);
     final File file = new File(projectPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
       try {
         for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
           for (Object l : ((Element)o).getChildren(LINK)) {
-            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), independentPath)) {
+            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), resourceName)) {
+              LinkedResource linkedResource = new LinkedResource();
+              final String relativeToLinkedResourcePath =
+                independentPath.length() > resourceName.length() ? independentPath.substring(resourceName.length()) : "";
+
               final Element locationURI = ((Element)l).getChild("locationURI");
               if (locationURI != null) {
-                String text = FileUtil.toSystemIndependentName(locationURI.getText());
-                return text + (relativePath.length() > independentPath.length() ? relativePath.substring(independentPath.length()) : "");
+                linkedResource.setURI(FileUtil.toSystemIndependentName(locationURI.getText()) + relativeToLinkedResourcePath);
               }
+
+              final Element location = ((Element)l).getChild("location");
+              if (location != null) {
+                linkedResource.setLocation(FileUtil.toSystemIndependentName(location.getText()) + relativeToLinkedResourcePath);
+              }
+              return linkedResource;
             }
           }
         }
       }
-      catch (Exception e) {
-        return relativePath;
+      catch (Exception ignore) {
       }
     }
-    return relativePath;
+    return null;
+  }
+
+  public static class LinkedResource {
+    private String myURI;
+    private String myLocation;
+
+    public String getVariableName() {
+      final int idx = myURI.indexOf('/');
+      return idx > -1 ? myURI.substring(0, idx) : myURI;
+    }
+
+    @Nullable
+    public String getRelativeToVariablePath() {
+      final int idx = myURI.indexOf('/');
+      return idx > -1 && idx + 1 < myURI.length() ? myURI.substring(idx + 1) : null;
+    }
+
+    public boolean containsPathVariable() {
+      return myURI != null;
+    }
+
+    public void setURI(String URI) {
+      myURI = URI;
+    }
+
+    public String getLocation() {
+      return myLocation;
+    }
+
+    public void setLocation(String location) {
+      myLocation = location;
+    }
   }
 }

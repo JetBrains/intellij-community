@@ -21,21 +21,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -44,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
  * User: Dmitry.Krasilschikov
  * Date: 29.05.2007
  */
-public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements GrConstructorInvocation {
+public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
   public GrConstructorInvocationImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -55,20 +52,6 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
 
   public String toString() {
     return "Constructor invocation";
-  }
-
-  @NotNull
-  public GrArgumentList getArgumentList() {
-    return findChildByClass(GrArgumentList.class);
-  }
-
-  @Nullable
-  public GrExpression removeArgument(final int number) {
-    return getArgumentList().removeArgument(number);
-  }
-
-  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
-    return getArgumentList().addNamedArgument(namedArgument);
   }
 
   public boolean isSuperCall() {
@@ -83,10 +66,14 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     TokenSet.create(GroovyElementTypes.THIS_REFERENCE_EXPRESSION, GroovyElementTypes.SUPER_REFERENCE_EXPRESSION);
 
   public GrThisSuperReferenceExpression getThisOrSuperKeyword() {
-    return (GrThisSuperReferenceExpression)findChildByType(THIS_OR_SUPER_SET);
+    return (GrThisSuperReferenceExpression)findNotNullChildByType(THIS_OR_SUPER_SET);
   }
 
   public GroovyResolveResult[] multiResolveConstructor() {
+    return multiResolveImpl(false);
+  }
+
+  private GroovyResolveResult[] multiResolveImpl(boolean allVariants) {
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
       PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
@@ -100,7 +87,8 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
         substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
       }
       PsiType thisType = factory.createType(clazz, substitutor);
-      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY,
+                                                                      allVariants);
       clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, this);
 
       NonCodeMembersContributor.runContributors(thisType, processor, this, ResolveState.initial());
@@ -114,7 +102,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     return new GroovyResolveResult[]{new GroovyResolveResultImpl(getDelegatedClass(), this, PsiSubstitutor.EMPTY, true, true)};
   }
 
-  public PsiMethod resolveConstructor() {
+  public PsiMethod resolveMethod() {
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
@@ -146,11 +134,17 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
 
   @Nullable
   public PsiElement resolve() {
-    return resolveConstructor();
+    return resolveMethod();
   }
 
   @NotNull
   public String getCanonicalText() {
     return getText(); //TODO
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+    return multiResolveImpl(true);
   }
 }

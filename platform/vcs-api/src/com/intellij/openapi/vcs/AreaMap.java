@@ -21,37 +21,65 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AreaMap<Key extends Comparable<Key>, Val> {
-  private final List<Key> myKeys;
-  private final Map<Key, Val> myMap;
+/**
+ * @author irengrig
+ */
+public class AreaMap<Key, Val> {
+  protected final List<Key> myKeys;
+  protected final Map<Key, Val> myMap;
   // [admittedly] parent, [-"-] child
-  private final PairProcessor<Key, Key> myKeysResemblance;
+  protected final PairProcessor<Key, Key> myKeysResemblance;
+  private final Comparator<Key> myComparator;
 
-  public AreaMap(final PairProcessor<Key, Key> keysResemblance) {
+  public static<Key extends Comparable<Key>, Val> AreaMap<Key, Val> create(final PairProcessor<Key, Key> keysResemblance) {
+    return new AreaMap<Key,Val>(keysResemblance, new ComparableComparator<Key>());
+  }
+
+  public static<Key, Val> AreaMap<Key, Val> create(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
+    return new AreaMap<Key,Val>(keysResemblance, comparator);
+  }
+
+  protected AreaMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
     myKeysResemblance = keysResemblance;
+    myComparator = comparator;
     myKeys = new LinkedList<Key>();
     myMap = new HashMap<Key, Val>();
   }
 
+  public void putAll(final AreaMap<Key, Val> other) {
+    myKeys.addAll(other.myKeys);
+    myMap.putAll(other.myMap);
+  }
+
   public void put(final Key key, final Val val) {
+    putImpl(key, val);
+  }
+
+  protected int putImpl(final Key key, final Val val) {
     myMap.put(key, val);
 
     if (myKeys.isEmpty()) {
       myKeys.add(key);
-      return;
+      return 0;
     }
 
-    final int idx = Collections.binarySearch(myKeys, key);
+    final int idx = Collections.binarySearch(myKeys, key, myComparator);
     if (idx < 0) {
       // insertion, no copy exist
       final int insertionIdx = - idx - 1;
       // insertionIdx not necessarily exist
       myKeys.add(insertionIdx, key);
+      return insertionIdx;
     }
+    return idx;
   }
 
   public Collection<Val> values() {
     return Collections.unmodifiableCollection(myMap.values());
+  }
+
+  public Collection<Key> keySet() {
+    return Collections.unmodifiableCollection(myKeys);
   }
 
   @Nullable
@@ -71,12 +99,17 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     }
   }
 
+  public void remove(final Key key) {
+    myKeys.remove(key);
+    myMap.remove(key);
+  }
+
   public boolean contains(final Key key) {
     return myKeys.contains(key);
   }
 
   public void getSimiliar(final Key key, final PairProcessor<Key, Val> consumer) {
-    final int idx = Collections.binarySearch(myKeys, key);
+    final int idx = Collections.binarySearch(myKeys, key, myComparator);
     if (idx < 0) {
       final int insertionIdx = - idx - 1;
       // take item before
@@ -95,5 +128,10 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
   
   public boolean isEmpty() {
     return myKeys.isEmpty();
+  }
+
+  public void clear() {
+    myKeys.clear();
+    myMap.clear();
   }
 }

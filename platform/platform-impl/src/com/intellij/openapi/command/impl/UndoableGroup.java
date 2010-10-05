@@ -27,10 +27,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -215,11 +216,20 @@ class UndoableGroup {
   }
 
   public String toString() {
-    @NonNls StringBuilder result = new StringBuilder("UndoableGroup{ ");
-    for (UndoableAction action : myActions) {
-      result.append(action).append(" ");
-    }
-    result.append("}");
+    StringBuilder result = new StringBuilder("UndoableGroup[");
+    final boolean multiline = myActions.size() > 1;
+
+    if (multiline) result.append("\n");
+
+    result.append(StringUtil.join(myActions, new Function<UndoableAction, String>() {
+      @Override
+      public String fun(UndoableAction each) {
+        return (multiline ? "  " : "") + each.toString();
+      }
+    }, ",\n"));
+
+    if (multiline) result.append("\n");
+    result.append("]");
     return result.toString();
   }
 }

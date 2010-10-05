@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -81,38 +80,42 @@ public class GroovyInlineMethodUtil {
       return null;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
-    if (!invokedOnReference || reference == null) {
-      String message = GroovyRefactoringBundle.message("multiple.method.inline.is.not.suppored", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
+    if (invokedOnReference) {
+      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      if (reference == null) return null;
 
-    PsiElement element = reference.getElement();
+      PsiElement element = reference.getElement();
 
-    if (element.getContainingFile() instanceof GroovyFile) {
-      if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
+      if (element.getContainingFile() instanceof GroovyFile) {
+        if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
 //        showErrorMessage("Other class support will be implemented soon", myProject);
 //        return null;
+        }
+      }
+
+      if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+        String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
+      }
+
+      GrCallExpression call = (GrCallExpression)element.getParent();
+
+      if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
+        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
+      }
+
+
+      GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
+      if (hasBadReturns(method) && !isTailMethodCall(call)) {
+        String message = GroovyRefactoringBundle
+          .message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return null;
       }
     }
-
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-    GrCallExpression call = (GrCallExpression) element.getParent();
-
-    if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
     if (method.getBlock() == null) {
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -120,12 +123,6 @@ public class GroovyInlineMethodUtil {
       } else {
         message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
-      showErrorMessage(message, project, editor);
-      return null;
-    }
-
-    if (hasBadReturns(method) && !isTailMethodCall(call)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       showErrorMessage(message, project, editor);
       return null;
     }
@@ -368,16 +365,9 @@ public class GroovyInlineMethodUtil {
   }
 
   private static boolean checkCalls(PsiElement scope, PsiMethod method) {
-    if (scope instanceof GrMethodCallExpression) {
-      PsiMethod refMethod = ((GrMethodCallExpression)scope).resolveMethod();
+    if (scope instanceof GrMethodCall) {
+      PsiMethod refMethod = ((GrMethodCall)scope).resolveMethod();
       if (method.equals(refMethod)) return true;
-    }
-    else if (scope instanceof GrApplicationStatement) {
-      final GrExpression expression = ((GrApplicationStatement)scope).getFunExpression();
-      if (expression instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (method.equals(resolved)) return true;
-      }
     }
 
     for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {

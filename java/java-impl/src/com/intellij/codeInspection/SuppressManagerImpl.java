@@ -53,6 +53,7 @@ import java.util.regex.Matcher;
 
 public class SuppressManagerImpl extends SuppressManager {
 
+  @NotNull
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
         new SuppressByJavaCommentFix(displayKey),

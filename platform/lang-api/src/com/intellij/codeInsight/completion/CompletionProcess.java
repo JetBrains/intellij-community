@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-
 /**
  * @author peter
  */
 public interface CompletionProcess {
-
+  boolean isAutopopupCompletion();
 }

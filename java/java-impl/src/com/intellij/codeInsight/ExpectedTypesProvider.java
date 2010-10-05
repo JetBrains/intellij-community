@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1001,20 +1002,26 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    protected static PsiType checkMethod(PsiMethod method, @NonNls String className, NullableFunction<PsiClass,PsiType> function) {
+    protected static PsiType checkMethod(PsiMethod method, @NonNls final String className, final NullableFunction<PsiClass,PsiType> function) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return null;
 
       if (className.equals(containingClass.getQualifiedName())) {
         return function.fun(containingClass);
       }
-      for (final PsiMethod psiMethod : DeepestSuperMethodsSearch.search(method).findAll()) {
-        final PsiClass rootClass = psiMethod.getContainingClass();
-        if (className.equals(rootClass.getQualifiedName())) {
-          return function.fun(rootClass);
+      final PsiType[] type = {null};
+      DeepestSuperMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
+        @Override
+        public boolean process(PsiMethod psiMethod) {
+          final PsiClass rootClass = psiMethod.getContainingClass();
+          if (className.equals(rootClass.getQualifiedName())) {
+            type[0] = function.fun(rootClass);
+            return false;
+          }
+          return true;
         }
-      }
-      return null;
+      });
+      return type[0];
     }
 
     @Nullable

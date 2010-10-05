@@ -37,6 +37,7 @@ public abstract class SuppressManager {
     return ServiceManager.getService(SuppressManager.class);
   }
 
+  @NotNull
   public abstract SuppressIntentionAction[] createSuppressActions(@NotNull HighlightDisplayKey key);
 
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, final String toolId);

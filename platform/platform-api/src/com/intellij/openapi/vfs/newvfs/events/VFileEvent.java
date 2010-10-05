@@ -19,7 +19,9 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class VFileEvent {
   private final boolean myIsFromRefresh;
@@ -39,6 +41,13 @@ public abstract class VFileEvent {
   }
 
   public abstract String getPath();
+
+  /**
+   * Returns the VirtualFile which this event belongs to.
+   * In some cases it may be null - it is not guaranteed that there is such file.
+   */
+  @Nullable
+  public abstract VirtualFile getFile();
 
   public abstract VirtualFileSystem getFileSystem();
 

@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
@@ -234,10 +233,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   private void show(PositionTracker<Balloon> tracker, Position position) {
-    if (isVisible()) return;
-
     assert !myDisposed : "Balloon is already disposed";
-    assert tracker.getComponent().isShowing() : "Target component is not showing: " + tracker;
+
+    if (isVisible()) return;
+    if (!tracker.getComponent().isShowing()) return;
 
     myTracker = tracker;
     myTracker.init(this);
@@ -249,11 +248,16 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     if (dialog != null) {
       root = dialog.getRootPane();
     } else {
-      JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
-      if (frame != null) {
-        root = frame.getRootPane();
+      JWindow jwindow = IJSwingUtilities.findParentOfType(tracker.getComponent(), JWindow.class);
+      if (jwindow != null) {
+        root = jwindow.getRootPane();
       } else {
-        assert false;
+        JFrame frame = IJSwingUtilities.findParentOfType(tracker.getComponent(), JFrame.class);
+        if (frame != null) {
+          root = frame.getRootPane();
+        } else {
+          assert false;
+        }
       }
     }
 

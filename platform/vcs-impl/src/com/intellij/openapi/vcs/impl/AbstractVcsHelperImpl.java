@@ -164,7 +164,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private FileHistoryPanelImpl ensureHistoryPanelCreated() {
       if (myFileHistoryPanel == null) {
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, mySession, myVcsHistoryProvider,
+        final VcsHistorySession copy = mySession.copy();
+        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
                                                       myAnnotationProvider, contentManager, myRefresher);
       }
       return myFileHistoryPanel;

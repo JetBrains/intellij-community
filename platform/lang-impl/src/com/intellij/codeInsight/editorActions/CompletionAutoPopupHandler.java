@@ -50,7 +50,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
 
-    if (!Character.isLetter(charTyped)) {
+    if (!Character.isLetter(charTyped) && charTyped != '_') {
       finishAutopopupCompletion();
       return Result.CONTINUE;
     }
@@ -92,11 +92,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       }
     });
 
+    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
+
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed() || !file.isValid()) return;
-        if (editor.isDisposed() || FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
+        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
         final Lookup lookup = LookupManager.getActiveLookup(editor);

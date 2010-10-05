@@ -17,46 +17,24 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMethodCallImpl;
 
 import java.util.ArrayList;
 
 /**
  * @author ilyas
  */
-public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
-  public static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
-    @Nullable
-    public PsiType fun(GrMethodCall callExpression) {
-      for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-        PsiType res = typeCalculator.calculateReturnType(callExpression);
-        if (res != null) {
-          return res;
-        }
-      }
-
-      return null;
-    }
-  };
+public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMethodCallExpression, GrCallExpression {
 
   public GrMethodCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -68,18 +46,6 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitMethodCallExpression(this);
-  }
-
-  public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, METHOD_CALL_TYPES_CALCULATOR);
-  }
-
-  @Nullable
-  public GrExpression getInvokedExpression() {
-    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrExpression) return (GrExpression)cur;
-    }
-    return null;
   }
 
   public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException {
@@ -115,21 +81,28 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     }
   }
 
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.resolveMethod(this);
-  }
-
-  @Override
-  public boolean isCommandExpression() {
-    return PsiUtil.isCommandExpression(this);
-  }
-
   @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpressionImpl)) return GroovyResolveResult.EMPTY_ARRAY;
-
-    return ((GrReferenceExpressionImpl)invoked).getCallVariants(upToArgument);
+  public GrClosableBlock[] getClosureArguments() {
+    return findChildrenByClass(GrClosableBlock.class);
   }
 
+  public GrExpression removeArgument(int number) {
+    final GrArgumentList list = getArgumentList();
+    final int exprLength = list.getExpressionArguments().length;
+    if (exprLength > number) {
+      return list.removeArgument(number);
+    }
+    else {
+      number -= exprLength;
+      for (int i = 0; i < getClosureArguments().length; i++) {
+        GrClosableBlock block = getClosureArguments()[i];
+        if (i == number) {
+          final ASTNode node = block.getNode();
+          getNode().removeChild(node);
+          return block;
+        }
+      }
+    }
+    return null;
+  }
 }

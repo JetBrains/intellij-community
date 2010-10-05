@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
@@ -291,5 +292,22 @@ public class AnnotationUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiMethod getAnnotationMethod(PsiNameValuePair pair) {
+    final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
+    assert annotation != null;
+
+    final String fqn = annotation.getQualifiedName();
+    if (fqn == null) return null;
+
+    final PsiClass psiClass = JavaPsiFacade.getInstance(pair.getProject()).findClass(fqn, pair.getResolveScope());
+    if (psiClass != null && psiClass.isAnnotationType()) {
+      final String name = pair.getName();
+      final PsiMethod[] methods = psiClass.findMethodsByName(name != null ? name : "value", false);
+      return methods.length > 0 ? methods[0] : null;
+    }
+    return null;
   }
 }

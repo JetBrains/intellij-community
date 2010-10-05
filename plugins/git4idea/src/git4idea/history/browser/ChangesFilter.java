@@ -331,7 +331,7 @@ public class ChangesFilter {
     private MemoryFilter myMemoryFilter;
 
     public StructureFilter() {
-      myMap = new AreaMap<String, VirtualFile>(new PairProcessor<String, String>() {
+      myMap = AreaMap.create(new PairProcessor<String, String>() {
         public boolean process(final String candidate, final String key) {
           return key.startsWith(candidate);
         }
@@ -358,6 +358,7 @@ public class ChangesFilter {
       };
     }
 
+    // todo optimization here
     public boolean addPath(final VirtualFile vf) {
       final Collection<VirtualFile> filesWeAlreadyHave = myMap.values();
       final Collection<VirtualFile> childrenToRemove = new LinkedList<VirtualFile>();

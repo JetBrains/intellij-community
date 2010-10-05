@@ -355,7 +355,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   private void delegate(IndicatorAction action) {
     CopyOnWriteArrayList<ProgressIndicatorEx> list = myStateDelegates;
-    if (list != null) {
+    if (list != null && !list.isEmpty()) {
       for (ProgressIndicatorEx each : list) {
         action.execute(each);
       }

@@ -22,11 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  * @author ilyas
  */
 public interface GrApplicationStatement extends GrStatement, GrMethodCall {
-  /**
-   * @deprecated use {@link GrMethodCall#getInvokedExpression()}
-   */
-  GrExpression getFunExpression();
 
-  GrExpression[] getArguments();
+  GrCommandArgumentList getArgumentList();
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import java.util.Comparator;
 
 /**
- * @author peter
- */
-public abstract class AbstractGroovyLibraryManager extends LibraryManager {
-  public static final ExtensionPointName<AbstractGroovyLibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
-
-  protected abstract void fillLibrary(String path, LibraryEditor libraryEditor);
+* @author irengrig
+*/
+public class ComparableComparator<T extends Comparable<T>> implements Comparator<T> {
+  @Override
+  public int compare(final T o1, final T o2) {
+    return o1.compareTo(o2);
+  }
 }

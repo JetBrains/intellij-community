@@ -171,8 +171,31 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void paint(Graphics g) {
     final Rectangle visible = getVisibleRect();
 
-    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
-      mySelectionModel.holdSelection();
+    boolean canHoldSelection = false;
+    TreePath[] paths = getSelectionModel().getSelectionPaths();
+    if (paths != null) {
+      for (TreePath each : paths) {
+        Rectangle selection = getPathBounds(each);
+        if (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection)) {
+          if (myBusy) {
+            Rectangle busyIconBounds = myBusyIcon.getBounds();
+            if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
+              canHoldSelection = false;
+              break;
+            } else {
+              canHoldSelection = true;
+            }
+          } else {
+            canHoldSelection = true;
+          }
+        }
+      }
+    }
+
+    if (canHoldSelection) {
+      if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+        mySelectionModel.holdSelection();
+      }
     }
 
     try {

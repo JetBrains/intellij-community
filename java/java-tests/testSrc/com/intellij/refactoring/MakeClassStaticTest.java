@@ -41,6 +41,9 @@ public class MakeClassStaticTest extends LightCodeInsightTestCase {
 
   public void testNewExpressionQualifications() throws Exception {perform();}
 
+  public void testNonDefaultConstructorAnonymousClass() throws Exception {perform();}
+  public void testDefaultConstructorAnonymousClass() throws Exception {perform();}
+
   public void testRegularReference() throws Exception {
     perform();
   }

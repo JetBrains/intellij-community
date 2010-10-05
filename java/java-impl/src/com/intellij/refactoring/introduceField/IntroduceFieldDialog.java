@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -42,6 +41,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 
 class IntroduceFieldDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
@@ -103,7 +104,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     init();
 
     initializeControls(initializerExpression);
-
+    updateButtons();
   }
 
   private void initializeControls(PsiExpression initializerExpression) {
@@ -270,12 +271,21 @@ class IntroduceFieldDialog extends DialogWrapper {
     gbConstraints.gridy = 1;
     myNameField = new NameSuggestionsField(myProject);
     panel.add(myNameField.getComponent(), gbConstraints);
+    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+      public void dataChanged() {
+        updateButtons();
+      }
+    });
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, createGenerator());
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
+  }
+
+  private void updateButtons() {
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getEnteredName()));
   }
 
   private String getTypeLabel() {

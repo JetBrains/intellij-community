@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
@@ -134,7 +135,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     }
 
     protected boolean dressDescription(Editor editor) {
-      final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
+      final String[] problems = IdeTooltipManager.getHtmlBody(myText).split(BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String descriptionPrefix = getDescriptionPrefix(problem);
@@ -142,8 +143,9 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
           for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
             final String description = handlerEP.getDescription(descriptionPrefix, editor);
             if (description != null) {
-              text += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
-                                                     DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + getHtmlBody(description) + BORDER_LINE;
+              text += IdeTooltipManager.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
+                                                     DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + IdeTooltipManager
+                .getHtmlBody(description) + BORDER_LINE;
               break;
             }
           }
@@ -170,12 +172,12 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     }
 
     protected void stripDescription() {
-      final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
+      final String[] problems = IdeTooltipManager.getHtmlBody(myText).split(BORDER_LINE);
       myText = "<html><body>";
       for (int i = 0; i < problems.length; i++) {
         final String problem = problems[i];
         if (i % 2 == 0) {
-          myText += getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
+          myText += IdeTooltipManager.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
                                                  DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
         }
       }

@@ -367,9 +367,10 @@ public class GitChangeUtils {
       fullComment = commentBody + "\n\n" + commentSubject;
     }
     GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
-    GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
+
     long number = longForSHAHash(revisionNumber);
     if (skipDiffsForMerge || (parents.length <= 1)) {
+      final GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
       parseChanges(project, root, thisRevision, parentRevision, s, changes, null);
@@ -377,16 +378,13 @@ public class GitChangeUtils {
     else {
       // This is the merge commit. It has multiple parent commits.
       // Find the first commit with changes and report it as a change list.
-      // If no changes are found (why to merge than?). Empty changelist is reported.
-      int i = 0;
-      assert parentRevision != null;
-      do {
-        if (i != 0) {
-          parentRevision = loadRevision(project, root, parents[i]);
-          if (parentRevision == null) {
-            // the repository was cloned with --depth parameter
-            continue;
-          }
+      // If no changes are found (why to merge then?). Empty changelist is reported.
+
+      for (String parent : parents) {
+        final GitRevisionNumber parentRevision = loadRevision(project, root, parent);
+        if (parentRevision == null) {
+          // the repository was cloned with --depth parameter
+          continue;
         }
         GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitCommand.DIFF);
         diffHandler.setNoSSH(true);
@@ -394,12 +392,11 @@ public class GitChangeUtils {
         diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());
         String diff = diffHandler.run();
         parseChanges(project, root, thisRevision, parentRevision, diff, changes, null);
+
         if (changes.size() > 0) {
           break;
         }
-        i++;
       }
-      while (i < parents.length);
     }
     return new CommittedChangeListImpl(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
                                        changes);

@@ -31,7 +31,7 @@ public class GradleConfigurable extends SdkHomeConfigurable {
   }
 
   public Icon getIcon() {
-    return GradleLibraryManager.GRADLE_ICON;
+    return GradleLibraryPresentationProvider.GRADLE_ICON;
   }
 
   public String getHelpTopic() {
@@ -40,7 +40,7 @@ public class GradleConfigurable extends SdkHomeConfigurable {
 
   @Override
   protected boolean isSdkHome(VirtualFile file) {
-    return GradleLibraryManager.isGradleSdkHome(file);
+    return GradleLibraryPresentationProvider.isGradleSdkHome(file);
   }
 
   @Override

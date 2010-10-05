@@ -25,6 +25,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -32,7 +33,7 @@ public class CommandMerger {
   private final UndoManagerImpl myManager;
   private Object myLastGroupId = null;
   private boolean myGlobal = false;
-  private boolean myOnlyUndoTransparents = true;
+  private boolean myHasUndoTransparentsOnly = true;
   private boolean myHasUndoTransparents = false;
   private String myCommandName = null;
   private List<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
@@ -50,7 +51,7 @@ public class CommandMerger {
   }
 
   public void addAction(UndoableAction action, boolean isUndoTransparent) {
-    if (!isUndoTransparent) myOnlyUndoTransparents = false;
+    if (!isUndoTransparent) myHasUndoTransparentsOnly = false;
     if (isUndoTransparent) myHasUndoTransparents = true;
     myCurrentActions.add(action);
     DocumentReference[] refs = action.getAffectedDocuments();
@@ -66,7 +67,9 @@ public class CommandMerger {
       myManager.compact();
     }
     merge(nextCommandToMerge);
-    clearRedoStacks(nextCommandToMerge);
+
+    // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
+    if (!nextCommandToMerge.isTransparent()) clearRedoStacks(nextCommandToMerge);
 
     myLastGroupId = groupId;
     if (myCommandName == null) myCommandName = commandName;
@@ -88,7 +91,7 @@ public class CommandMerger {
     myCurrentActions.addAll(nextCommandToMerge.myCurrentActions);
     myAffectedDocuments.addAll(nextCommandToMerge.myAffectedDocuments);
     myGlobal |= nextCommandToMerge.myGlobal;
-    myOnlyUndoTransparents &= nextCommandToMerge.myOnlyUndoTransparents;
+    myHasUndoTransparentsOnly &= nextCommandToMerge.myHasUndoTransparentsOnly;
     myHasUndoTransparents |= nextCommandToMerge.myHasUndoTransparents;
     myStateAfter = nextCommandToMerge.myStateAfter;
     mergeUndoConfirmationPolicy(nextCommandToMerge.getUndoConfirmationPolicy());
@@ -118,7 +121,7 @@ public class CommandMerger {
     myAffectedDocuments = new THashSet<DocumentReference>();
     myLastGroupId = null;
     myGlobal = false;
-    myOnlyUndoTransparents = true;
+    myHasUndoTransparentsOnly = true;
     myHasUndoTransparents = false;
     myCommandName = null;
     myStateAfter = null;
@@ -139,7 +142,7 @@ public class CommandMerger {
   }
 
   private boolean isTransparent() {
-    return myOnlyUndoTransparents && myHasUndoTransparents;
+    return myHasUndoTransparentsOnly && myHasUndoTransparents;
   }
 
   private boolean affectsMultiplePhysicalDocs() {
@@ -154,7 +157,28 @@ public class CommandMerger {
 
   public void undoOrRedo(FileEditor editor, boolean isUndo) {
     flushCurrentCommand();
-    UndoRedo.execute(myManager, editor, isUndo);
+
+    // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undoRedo/redo.
+    // Such actions should not get into redo/undoRedo stacks.  Note that 'transparent' actions that have been merged with normal actions
+    // are not dropped, since this means they did not occur after undo/redo
+    UndoRedo undoRedo;
+    while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
+      if (!undoRedo.isTransparentsOnly()) break;
+      undoRedo.execute(true);
+      if (!undoRedo.hasMoreActions()) break;
+    }
+
+    while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
+      undoRedo.execute(false);
+      boolean shouldRepeat = undoRedo.isTransparentsOnly() && undoRedo.hasMoreActions();
+      if (!shouldRepeat) break;
+    }
+  }
+
+  @Nullable
+  private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
+    if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
+    return isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
   }
 
   public UndoConfirmationPolicy getUndoConfirmationPolicy() {

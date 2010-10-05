@@ -17,6 +17,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -692,7 +693,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
 
-    return Messages.showYesNoDialog(project, message, ProjectBundle.message("project.reload.external.change.title"), Messages.getQuestionIcon()) == 0;
+    return Messages.shpwTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project", Messages.getQuestionIcon()) == 0;
   }
 
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
@@ -708,14 +709,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void scheduleReloadApplicationAndProject() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    IdeEventQueue.getInstance().addIdleListener(new Runnable() {
+      @Override
       public void run() {
-        if (!tryToReloadApplication()) return;
-        askToReloadProjectIfConfigFilesChangedExternally();
+        IdeEventQueue.getInstance().removeIdleListener(this);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (!tryToReloadApplication()) return;
+            askToReloadProjectIfConfigFilesChangedExternally();
+          }
+
+        }, ModalityState.NON_MODAL);
       }
-
-    }, ModalityState.NON_MODAL);
-
+    }, 2000);
   }
 
   public void setCurrentTestProject(@Nullable final Project project) {
