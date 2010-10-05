@@ -1060,6 +1060,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myProjectFixture.tearDown();
     myTempDirFixture.tearDown();
 
+    myEditor = null;
+    myFile = null;
+    myPsiManager = null;
+    myInspections = null;
+    myAvailableLocalTools.clear();
+    myAvailableTools.clear();
+    myFileContext = null;
+
     super.tearDown();
   }
 
