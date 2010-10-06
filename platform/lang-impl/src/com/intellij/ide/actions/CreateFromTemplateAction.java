@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -74,11 +75,11 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
       });
     if (createdElement != null) {
       view.selectElement(createdElement);
-      postProcess(createdElement, selectedTemplateName.get());
+      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
     }
   }
 
-  protected void postProcess(T createdElement, String templateName) {
+  protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
   }
 
   @Nullable

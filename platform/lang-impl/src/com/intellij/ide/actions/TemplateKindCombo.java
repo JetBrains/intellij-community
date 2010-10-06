@@ -65,7 +65,8 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
     //noinspection unchecked
     final Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)getComboBox().getSelectedItem();
     if (trinity == null) {
-      LOG.error("Model: " + getComboBox().getModel());
+      // design time
+      return null;
     }
     return trinity.third;
   }
@@ -98,6 +99,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   private void scrollBy(int delta) {
+    if (delta == 0) return;
     final int size = getComboBox().getModel().getSize();
     int next = getComboBox().getSelectedIndex() + delta;
     if (next < 0 || next >= size) {
@@ -117,5 +119,9 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
     if (listener != null) {
       addActionListener(listener);
     }
+  }
+
+  public void clear() {
+    getComboBox().removeAllItems();
   }
 }
