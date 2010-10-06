@@ -44,7 +44,7 @@ import java.util.List;
  * @author ven
  */
 public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
-  private final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix");
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix");
 
   private final PsiClass myClass;
 
@@ -74,6 +74,15 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       if (PsiUtil.isAccessible(baseConstr, myClass, myClass)) baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
     }
 
+    chooseConstructor2Delegate(project, editor, substitutor, baseConstructors, baseConstrs, myClass);
+  }
+
+  public static void chooseConstructor2Delegate(final Project project,
+                                                final Editor editor,
+                                                PsiSubstitutor substitutor,
+                                                List<PsiMethodMember> baseConstructors,
+                                                PsiMethod[] baseConstrs,
+                                                final PsiClass targetClass) {
     PsiMethodMember[] constructors = baseConstructors.toArray(new PsiMethodMember[baseConstructors.size()]);
     if (constructors.length == 0) {
       constructors = new PsiMethodMember[baseConstrs.length];
@@ -99,7 +108,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       new Runnable() {
         public void run() {
           try {
-            PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+            PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
             for (PsiMethodMember candidate : constructors1) {
@@ -113,7 +122,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                 }
               }
 
-              derived.getNameIdentifier().replace(myClass.getNameIdentifier());
+              derived.getNameIdentifier().replace(targetClass.getNameIdentifier());
               @NonNls StringBuffer buffer = new StringBuffer();
               buffer.append("void foo () {\nsuper(");
 
@@ -124,11 +133,11 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                 if (j < params.length - 1) buffer.append(",");
               }
               buffer.append(");\n}");
-              PsiMethod stub = factory.createMethodFromText(buffer.toString(), myClass);
+              PsiMethod stub = factory.createMethodFromText(buffer.toString(), targetClass);
 
               derived.getBody().replace(stub.getBody());
               derived = (PsiMethod)reformatter.reformat(derived);
-              derived = (PsiMethod)myClass.add(derived);
+              derived = (PsiMethod)targetClass.add(derived);
             }
             if (derived != null) {
               editor.getCaretModel().moveToOffset(derived.getTextRange().getStartOffset());
@@ -139,7 +148,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
             LOG.error(e);
           }
 
-          UndoUtil.markPsiFileForUndo(myClass.getContainingFile());
+          UndoUtil.markPsiFileForUndo(targetClass.getContainingFile());
         }
       }
     );

@@ -26,10 +26,14 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -41,10 +45,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
@@ -176,11 +185,33 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
           }
         });
         if (targetClass[0] == null) return;
-
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final Editor editor1 = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
-          if (editor1 == null) return;
-          OverrideImplementUtil.chooseAndImplementMethods(project, editor1, targetClass[0]);
+
+          final Editor editor = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
+          if (editor == null) return;
+
+          boolean hasNonTrivialConstructor = false;
+          final PsiMethod[] constructors = psiClass.getConstructors();
+          for (PsiMethod constructor : constructors) {
+            if (constructor.getParameterList().getParametersCount() > 0) {
+              hasNonTrivialConstructor = true;
+              break;
+            }
+          }
+          if (hasNonTrivialConstructor) {
+            final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass[0], PsiSubstitutor.EMPTY);
+            final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
+            for (PsiMethod baseConstr : constructors) {
+              if (PsiUtil.isAccessible(baseConstr, targetClass[0], targetClass[0])) {
+                baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
+              }
+            }
+            CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
+                                                                         substitutor,
+                                                                         baseConstructors, constructors, targetClass[0]);
+          }
+
+          OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass[0]);
         }
       }
     });
