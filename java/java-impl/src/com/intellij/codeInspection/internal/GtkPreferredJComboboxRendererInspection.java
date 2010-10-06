@@ -68,7 +68,9 @@ public class GtkPreferredJComboboxRendererInspection extends BaseJavaLocalInspec
       public void visitClass(final PsiClass aClass) {
         final PsiClass superClass = aClass.getSuperClass();
         if (superClass != null && "javax.swing.DefaultListCellRenderer".equals(superClass.getQualifiedName())){
-          holder.registerProblem(superClass, "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.");
+          final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+          holder.registerProblem(nameIdentifier != null ? nameIdentifier : aClass,
+                                 "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.");
         }
       }
 
