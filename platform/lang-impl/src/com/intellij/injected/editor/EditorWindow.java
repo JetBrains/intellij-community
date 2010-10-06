@@ -98,7 +98,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
-    myFoldingModelWindow = new FoldingModelWindow((FoldingModelEx)delegate.getFoldingModel(), documentWindow, this);
+    myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
   }
 
   public static void disposeInvalidEditors() {
@@ -210,7 +210,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @NotNull
-  public SoftWrapModel getSoftWrapModel() {
+  public SoftWrapModelEx getSoftWrapModel() {
     return myDelegate.getSoftWrapModel();
   }
 
