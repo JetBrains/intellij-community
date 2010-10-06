@@ -272,6 +272,9 @@ def zkmScramble(String script, String dir, String jarName) {
       fileset(dir: "$home/lib") {
         include(name: "*.jar")
       }
+      fileset(dir: "$home/community/lib") {
+        include(name: "*.jar")
+      }
 
       pathelement(location: "$home/build/lib/ZKM.jar")
     }
