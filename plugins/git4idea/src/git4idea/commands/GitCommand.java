@@ -23,124 +23,38 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitCommand {
 
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand STASH = write("stash");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand CLONE = write("clone");
-
-  public static final GitCommand CHERRY_PICK = write("cherry-pick");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand RM = write("rm");
-  /**
-   * The constant for git command
-   */
   public static final GitCommand ADD = write("add");
-  /**
-   * The constant for git command
-   */
   public static final GitCommand ANNOTATE = read("annotate");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand COMMIT = write("commit");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand CONFIG = meta("config");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand FETCH = write("fetch");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand SHOW = write("show");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand LOG = meta("log");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand INIT = write("init");
-  /**
-   * The constant for git command
-   */
   public static final GitCommand BRANCH = meta("branch");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand MERGE = write("merge");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand MERGE_BASE = meta("merge-base");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand PUSH = write("push");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand LS_REMOTE = meta("ls-remote");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand REMOTE = meta("remote");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand REV_LIST = meta("rev-list");
-  /**
-   * The constant for git command
-   */
   public static final GitCommand CHECKOUT = write("checkout");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand TAG = meta("tag");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand PULL = write("pull");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand LS_FILES = read("ls-files");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand DIFF = read("diff");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand VERSION = meta("version");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand REBASE = writeSuspendable("rebase");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand RESET = write("reset");
-  /**
-   * The constant for git command
-   */
-  public static final GitCommand UPDATE_INDEX = write("update-index");
-  /**
-   * Check attributes command
-   */
+  public static final GitCommand COMMIT = write("commit");
+  public static final GitCommand CONFIG = meta("config");
   public static final GitCommand CHECK_ATTR = read("check-attr");
-  /**
-   * The constant for git command
-   */
+  public static final GitCommand CHERRY_PICK = write("cherry-pick");
+  public static final GitCommand CLONE = write("clone");
   public static final GitCommand DESCRIBE = meta("describe");
+  public static final GitCommand DIFF = read("diff");
+  public static final GitCommand DIFF_INDEX = read("diff-index");
+  public static final GitCommand FETCH = write("fetch");
+  public static final GitCommand INIT = write("init");
+  public static final GitCommand LOG = meta("log");
+  public static final GitCommand LS_FILES = read("ls-files");
+  public static final GitCommand LS_REMOTE = meta("ls-remote");
+  public static final GitCommand MERGE = write("merge");
+  public static final GitCommand MERGE_BASE = meta("merge-base");
+  public static final GitCommand PULL = write("pull");
+  public static final GitCommand PUSH = write("push");
+  public static final GitCommand REBASE = writeSuspendable("rebase");
+  public static final GitCommand REMOTE = meta("remote");
+  public static final GitCommand RESET = write("reset");
+  public static final GitCommand REV_LIST = meta("rev-list");
+  public static final GitCommand RM = write("rm");
+  public static final GitCommand SHOW = write("show");
+  public static final GitCommand STASH = write("stash");
+  public static final GitCommand TAG = meta("tag");
+  public static final GitCommand UPDATE_INDEX = write("update-index");
+  public static final GitCommand VERSION = meta("version");
+
   /**
    * Name of environment variable that specifies editor for the git
    */
