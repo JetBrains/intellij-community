@@ -215,13 +215,20 @@ public class HintManagerImpl extends HintManager implements Disposable {
     Rectangle newRectangle = e.getOldRectangle();
     Rectangle oldRectangle = e.getNewRectangle();
     Rectangle bounds = hint.getBounds();
-    Point location = bounds.getLocation();
+    Point location;
 
-    location = SwingUtilities.convertPoint(
-      editor.getComponent().getRootPane().getLayeredPane(),
-      location,
-      editor.getContentComponent()
-    );
+    final Window window = SwingUtilities.getWindowAncestor(hint.getComponent());
+    final boolean realPopup = window != SwingUtilities.getWindowAncestor(editor.getComponent());
+    if (realPopup) {
+      location = window.getLocationOnScreen();
+      SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
+    } else {
+      location = SwingUtilities.convertPoint(
+        editor.getComponent().getRootPane().getLayeredPane(),
+        bounds.getLocation(),
+        editor.getContentComponent()
+      );
+    }
 
 
     int xOffset = location.x - oldRectangle.x;
@@ -232,13 +239,18 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     final boolean valid = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
     if (valid) {
-      location = SwingUtilities.convertPoint(
-        editor.getContentComponent(),
-        location,
-        editor.getComponent().getRootPane().getLayeredPane()
-      );
+      if (!realPopup) {
+        location = SwingUtilities.convertPoint(
+          editor.getContentComponent(),
+          location,
+          editor.getComponent().getRootPane().getLayeredPane()
+        );
+        hint.updateBounds(location.x, location.y);
+      } else {
+        SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
+        window.setLocation(location);
+      }
 
-      hint.updateBounds(location.x, location.y);
     }
     else {
       hint.hide();
