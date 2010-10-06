@@ -20,15 +20,13 @@ import com.intellij.util.xml.events.*;
 /**
  * @author peter
  */
-public abstract class DomChangeAdapter extends DomEventAdapter {
+public abstract class DomChangeAdapter implements DomEventListener {
 
   protected abstract void elementChanged(DomElement element);
 
-  public void elementChanged(ElementChangedEvent event) {
+  @Override
+  public void eventOccured(DomEvent event) {
     elementChanged(event.getElement());
   }
 
-  public void elementDefined(ElementDefinedEvent event) {
-    elementChanged(event.getElement());
-  }
 }

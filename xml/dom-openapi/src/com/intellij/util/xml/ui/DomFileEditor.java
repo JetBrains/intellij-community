@@ -99,7 +99,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     new MnemonicHelper().register(getComponent());
     myComponent = myComponentFactory.create();
     DomUIFactory.getDomUIFactory().setupErrorOutdatingUserActivityWatcher(this, getDomElement());
-    DomManager.getDomManager(getProject()).addDomEventListener(new DomEventAdapter() {
+    DomManager.getDomManager(getProject()).addDomEventListener(new DomEventListener() {
       public void eventOccured(DomEvent event) {
         checkIsValid();
       }

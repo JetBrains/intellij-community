@@ -37,7 +37,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import net.sf.cglib.proxy.AdvancedProxy;
@@ -210,9 +209,9 @@ public final class DomManagerImpl extends DomManager {
     return list.length > 0;
   }
 
-  static final DomEvent[] recomputeFileElement(final XmlFile file) {
+  static DomEvent[] recomputeFileElement(final XmlFile file) {
     final DomFileElementImpl oldElement = getCachedFileElement(file);
-    return oldElement == null ? DomEvent.EMPTY_ARRAY : new DomEvent[]{new ElementChangedEvent(oldElement)};
+    return oldElement == null ? DomEvent.EMPTY_ARRAY : new DomEvent[]{new DomEvent(oldElement, false)};
   }
 
   private void processDirectoryChange(final VirtualFile directory) {

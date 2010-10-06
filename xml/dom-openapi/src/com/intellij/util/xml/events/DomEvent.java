@@ -15,13 +15,34 @@
  */
 package com.intellij.util.xml.events;
 
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventVisitor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public interface DomEvent {
-  DomEvent[] EMPTY_ARRAY = new DomEvent[0];
+public class DomEvent {
+  public static final DomEvent[] EMPTY_ARRAY = new DomEvent[0];
 
-  void accept(DomEventVisitor visitor);
+  private final DomElement myElement;
+  private final boolean myDefined;
+
+  public DomEvent(@NotNull final DomElement element, boolean defined) {
+    myDefined = defined;
+    myElement = element;
+  }
+
+  public final DomElement getElement() {
+    return myElement;
+  }
+
+  public boolean isDefined() {
+    return myDefined;
+  }
+
+  public String toString() {
+    return (myDefined ? "Defined " : "Changed ") + myElement;
+  }
+
 }

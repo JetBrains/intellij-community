@@ -22,8 +22,8 @@ import com.intellij.util.xml.events.*;
  */
 public interface DomEventVisitor {
 
-  void visitElementDefined(final ElementDefinedEvent event);
+  void visitElementDefined(final DomEvent event);
 
-  void visitElementChangedEvent(final ElementChangedEvent event);
+  void visitElementChangedEvent(final DomEvent event);
 
 }

@@ -15,29 +15,9 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.xml.events.*;
-
 /**
  * @author peter
  */
-public abstract class DomEventAdapter implements DomEventVisitor, DomEventListener {
-
-  public void elementDefined(ElementDefinedEvent event) {
-  }
-
-  public void elementChanged(ElementChangedEvent event) {
-  }
-
-  public void eventOccured(DomEvent event) {
-    event.accept(this);
-  }
-
-  public final void visitElementDefined(final ElementDefinedEvent event) {
-    elementDefined(event);
-  }
-
-  public final void visitElementChangedEvent(final ElementChangedEvent event) {
-    elementChanged(event);
-  }
-
+@Deprecated
+public abstract class DomEventAdapter implements DomEventListener {
 }
