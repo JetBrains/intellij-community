@@ -2,10 +2,7 @@ package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.*;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,6 +28,10 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
 
   public static Collection<AppEngineFacet> getInstances(Module module) {
     return FacetManager.getInstance(module).getFacetsByType(ID);
+  }
+
+  public static FacetType<AppEngineFacet, AppEngineFacetConfiguration> getFacetType() {
+    return FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
   @NotNull

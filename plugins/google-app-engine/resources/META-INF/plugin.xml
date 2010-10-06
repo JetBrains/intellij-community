@@ -10,6 +10,7 @@
      <li> run configuration for Google App Engine Dev server
      <li> option to run JDO/JPA Enhancer on make (in Google App Engine Facet settings)
      <li> action for uploading an application to Google (Tools | Upload App Engine Application)
+     <li> integration with GWT Dev Mode run configurations
     </ul>
    ]]>
   </description>
@@ -19,13 +20,6 @@
   <depends>com.intellij.modules.ultimate</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <category>Web/JavaEE Technologies</category>
-  <change-notes>
-      <![CDATA[
-        <ul>
-          <li> integration with GWT Dev Mode run configurations
-        </ul>
-      ]]>
-  </change-notes>
 
   <extensionPoints>
     <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
@@ -44,6 +38,8 @@
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
+
+    <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
   </extensions>
 
   <actions>

@@ -8,7 +8,6 @@ import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -66,7 +65,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
   private static final String JPA_PROVIDER_ID = "facet:jpa";
 
   public AppEngineSupportProvider() {
-    super(FacetTypeRegistry.getInstance().findFacetType(AppEngineFacet.ID));
+    super(AppEngineFacet.getFacetType());
   }
 
   @Override
