@@ -724,7 +724,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
         }, 2000);
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   public void setCurrentTestProject(@Nullable final Project project) {
