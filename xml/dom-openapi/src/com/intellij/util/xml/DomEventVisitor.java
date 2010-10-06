@@ -24,8 +24,6 @@ public interface DomEventVisitor {
 
   void visitElementDefined(final ElementDefinedEvent event);
 
-  void visitElementUndefined(final ElementUndefinedEvent event);
-
   void visitElementChangedEvent(final ElementChangedEvent event);
 
 }

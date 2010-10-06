@@ -25,9 +25,6 @@ public abstract class DomEventAdapter implements DomEventVisitor, DomEventListen
   public void elementDefined(ElementDefinedEvent event) {
   }
 
-  public void elementUndefined(ElementUndefinedEvent event) {
-  }
-
   public void elementChanged(ElementChangedEvent event) {
   }
 
@@ -37,10 +34,6 @@ public abstract class DomEventAdapter implements DomEventVisitor, DomEventListen
 
   public final void visitElementDefined(final ElementDefinedEvent event) {
     elementDefined(event);
-  }
-
-  public final void visitElementUndefined(final ElementUndefinedEvent event) {
-    elementUndefined(event);
   }
 
   public final void visitElementChangedEvent(final ElementChangedEvent event) {

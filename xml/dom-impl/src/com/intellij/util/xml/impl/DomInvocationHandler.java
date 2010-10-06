@@ -29,7 +29,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.reflect.*;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -365,7 +364,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void fireUndefinedEvent() {
-    myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
+    myManager.fireEvent(new ElementChangedEvent(getProxy()));
   }
 
   protected abstract XmlTag setEmptyXmlTag();

@@ -31,9 +31,4 @@ public abstract class DomChangeAdapter extends DomEventAdapter {
   public void elementDefined(ElementDefinedEvent event) {
     elementChanged(event.getElement());
   }
-
-  public void elementUndefined(ElementUndefinedEvent event) {
-    elementChanged(event.getElement());
-  }
-
 }

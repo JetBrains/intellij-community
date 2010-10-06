@@ -38,8 +38,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
-import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import net.sf.cglib.proxy.AdvancedProxy;
@@ -212,16 +210,9 @@ public final class DomManagerImpl extends DomManager {
     return list.length > 0;
   }
 
-  final DomEvent[] recomputeFileElement(final XmlFile file) {
+  static final DomEvent[] recomputeFileElement(final XmlFile file) {
     final DomFileElementImpl oldElement = getCachedFileElement(file);
-    final DomFileElementImpl<DomElement> newElement = getFileElement(file);
-    if (newElement == null) {
-      return oldElement == null ? DomEvent.EMPTY_ARRAY : new DomEvent[]{new ElementUndefinedEvent(oldElement)};
-    }
-
-    if (oldElement == null) return new DomEvent[]{new ElementDefinedEvent(newElement)};
-    if (oldElement.equals(newElement)) return new DomEvent[]{new ElementChangedEvent(newElement)};
-    return new DomEvent[]{new ElementUndefinedEvent(oldElement), new ElementDefinedEvent(newElement)};
+    return oldElement == null ? DomEvent.EMPTY_ARRAY : new DomEvent[]{new ElementChangedEvent(oldElement)};
   }
 
   private void processDirectoryChange(final VirtualFile directory) {
