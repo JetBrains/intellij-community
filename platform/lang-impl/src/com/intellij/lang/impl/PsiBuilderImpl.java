@@ -987,6 +987,44 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CompositeElement curNode = rootNode;
 
     int lexIndex = rootMarker.myLexemeIndex;
+    int lastErrorIndex = -1;
+    for (int i = myProduction.indexOf(rootMarker) + 1; i <= myProduction.indexOf(rootMarker.myDoneMarker); i++) {
+      final ProductionMarker item = myProduction.get(i);
+
+      lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
+
+      if (item instanceof StartMarker) {
+        final StartMarker marker = (StartMarker)item;
+        if (!marker.myDoneMarker.myCollapse) {
+          markers.push(curMarker);
+          curMarker = marker;
+
+          final CompositeElement childNode = createComposite(curMarker);
+          curNode.rawAddChildren(childNode);
+          nodes.push(curNode);
+          curNode = childNode;
+        }
+        else {
+          lexIndex = collapseLeaves(curNode, marker);
+          //noinspection AssignmentToForLoopParameter
+          i = myProduction.indexOf(marker.myDoneMarker);
+        }
+      }
+      else if (item instanceof DoneMarker) {
+        curMarker = markers.pop();
+        curNode = nodes.pop();
+      }
+      else if (item instanceof ErrorItem) {
+        int curToken = item.myLexemeIndex;
+        if (curToken == lastErrorIndex) continue;
+        lastErrorIndex = curToken;
+
+        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
+        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
+        curNode.rawAddChildren(errorElement);
+      }
+    }
+    /*
     ProductionMarker item = rootMarker.firstChild != null ? rootMarker.firstChild : rootMarker.myDoneMarker;
     while (item != null) {
       lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
@@ -1021,6 +1059,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         item = item.next;
       }
     }
+    */
   }
 
   private int insertLeaves(int curToken, int lastIdx, final CompositeElement curNode) {

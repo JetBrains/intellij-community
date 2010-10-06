@@ -19,9 +19,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -38,23 +36,27 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.ILightLazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
-public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
+public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> implements ILightLazyParseableElementType {
   public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? 4 : 3;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
   }
 
+  @Override
   public StubBuilder getBuilder() {
     return new JavaFileStubBuilder();
   }
 
+  @Override
   public int getStubVersion() {
     return STUB_VERSION;
   }
@@ -65,6 +67,13 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }
 
+  public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
+    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    FileParser.parse(builder);
+    return builder.getLightTree();
+  }
+
+  @Override
   public ASTNode parseContents(final ASTNode chameleon) {
     if (JavaParserDefinition.USE_NEW_PARSER) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
@@ -84,16 +93,19 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
   }
 
+  @Override
   public String getExternalId() {
     return "java.FILE";
   }
 
+  @Override
   public void serialize(final PsiJavaFileStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
     dataStream.writeName(stub.getPackageName());
   }
 
+  @Override
   public PsiJavaFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     StringRef packName = dataStream.readName();
