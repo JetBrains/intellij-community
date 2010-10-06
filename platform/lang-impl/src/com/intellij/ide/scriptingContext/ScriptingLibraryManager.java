@@ -32,12 +32,46 @@ public class ScriptingLibraryManager {
 
   public static final String WEB_MODULE_TYPE = "WEB_MODULE";
 
+  private ModifiableRootModel myRootModel;
+  private Project myProject;
+
+  public ScriptingLibraryManager(Project project) {
+    myProject = project;
+    myRootModel = getRootModel(project);
+  }
+
   @Nullable
-  public static ModifiableRootModel getRootModel(Project project) {
+  private static ModifiableRootModel getRootModel(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (WEB_MODULE_TYPE.equals(module.getModuleType().getId())) {
         return ModuleRootManager.getInstance(module).getModifiableModel();
       }
+    }
+    return null;
+  }
+
+  public void disposeModel() {
+    if (myRootModel != null && !myRootModel.isDisposed()) {
+      myRootModel.dispose();
+      myRootModel = null;
+    }
+  }
+
+  public void commitModel() {
+    if (myRootModel != null && !myRootModel.isDisposed()) {
+      myRootModel.commit();
+    }
+  }
+
+  public void resetModel() {
+    disposeModel();
+    myRootModel = getRootModel(myProject);
+  }
+
+  @Nullable
+  public LibraryTable getLibraryTable() {
+    if (myRootModel != null) {
+      return myRootModel.getModuleLibraryTable();
     }
     return null;
   }

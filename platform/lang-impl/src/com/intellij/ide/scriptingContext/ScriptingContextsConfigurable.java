@@ -33,14 +33,12 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   private MainScriptingContextsPanel myPanel;
   private String myLangNames;
-  private Project myProject;
-  private ModifiableRootModel myRootModel;
+  private ScriptingLibraryManager myLibManager;
 
   public ScriptingContextsConfigurable(Project project) {
     myPanel = new MainScriptingContextsPanel();
     myLangNames = getLangNames();
-    myProject = project;
-    myRootModel = ScriptingLibraryManager.getRootModel(project);
+    myLibManager = new ScriptingLibraryManager(project);
   }
 
   @Nls
@@ -71,9 +69,7 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myRootModel != null) {
-      myRootModel.commit();
-    }
+    myLibManager.commitModel();
   }
 
   @Override
@@ -83,14 +79,14 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public void disposeUIResources() {
-    disposeModel();
+    myLibManager.disposeModel();
   }
 
   @Override
   public Configurable[] getConfigurables() {
     ArrayList<LangScriptingContextConfigurable> configurables = new ArrayList<LangScriptingContextConfigurable>();
     for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
-      configurables.add(new LangScriptingContextConfigurable(myRootModel, provider));
+      configurables.add(new LangScriptingContextConfigurable(myLibManager, provider));
     }
     return configurables.toArray(new LangScriptingContextConfigurable[configurables.size()]);
   }
@@ -104,9 +100,4 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
     return result.substring(0, result.length() - 1);
   }
 
-  public void disposeModel() {
-    if (myRootModel != null && !myRootModel.isDisposed()) {
-      myRootModel.dispose();
-    }
-  }
 }
