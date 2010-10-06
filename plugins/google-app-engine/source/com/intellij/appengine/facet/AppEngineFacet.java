@@ -1,14 +1,20 @@
 package com.intellij.appengine.facet;
 
+import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.facet.*;
+import com.intellij.javaee.util.JamCommonUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.source.jsp.WebDirectoryUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -42,6 +48,14 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
   @NotNull 
   public WebFacet getWebFacet() {
     return (WebFacet)getUnderlyingFacet();
+  }
+
+  @Nullable
+  public AppEngineWebApp getDescriptorRoot() {
+    final Module module = getModule();
+    final PsiFileSystemItem file = WebDirectoryUtil.getWebDirectoryUtil(module.getProject()).findFileByPath("WEB-INF/appengine-web.xml", getWebFacet());
+    if (!(file instanceof PsiFile)) return null;
+    return JamCommonUtil.getRootElement((PsiFile)file, AppEngineWebApp.class, module);
   }
 
   public boolean shouldRunEnhancerFor(@NotNull VirtualFile file) {

@@ -1,6 +1,7 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.facet.AppEngineAccountDialog;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
@@ -25,10 +26,14 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -39,7 +44,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +98,27 @@ public class AppEngineUploader {
     if (!sdk.getAppCfgFile().exists()) {
       Messages.showErrorDialog(project, "Path to App Engine SDK isn't specified correctly in App Engine Facet settings", CommonBundle.getErrorTitle());
       return null;
+    }
+
+    final AppEngineWebApp root = appEngineFacet.getDescriptorRoot();
+    if (root != null) {
+      final GenericDomValue<String> application = root.getApplication();
+      if (StringUtil.isEmptyOrSpaces(application.getValue())) {
+        final String name = Messages.showInputDialog(project, "<html>Application name is not specified in appengine-web.xml.<br>" +
+              "Enter application name (see your <a href=\"http://appengine.google.com\">AppEngine account</a>):</html>", CommonBundle.getErrorTitle(), null, "", null);
+        if (name == null) return null;
+
+        final PsiFile file = application.getXmlTag().getContainingFile();
+        new WriteCommandAction(project, file) {
+          protected void run(final Result result) {
+            application.setStringValue(name);
+          }
+        }.execute();
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (document != null) {
+          FileDocumentManager.getInstance().saveDocument(document);
+        }
+      }
     }
 
     String email = appEngineFacet.getConfiguration().getUserEmail();
