@@ -924,7 +924,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       else if (item instanceof DoneMarker) {
         curNode = nodes.pop();
-        item.next = i < myProduction.size() - 1 ? myProduction.get(i + 1) : null;
       }
       else if (item instanceof ErrorItem) {
         int curToken = item.myLexemeIndex;
@@ -987,47 +986,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CompositeElement curNode = rootNode;
 
     int lexIndex = rootMarker.myLexemeIndex;
-    int lastErrorIndex = -1;
-    for (int i = myProduction.indexOf(rootMarker) + 1; i <= myProduction.indexOf(rootMarker.myDoneMarker); i++) {
-      final ProductionMarker item = myProduction.get(i);
-
-      lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
-
-      if (item instanceof StartMarker) {
-        final StartMarker marker = (StartMarker)item;
-        if (!marker.myDoneMarker.myCollapse) {
-          markers.push(curMarker);
-          curMarker = marker;
-
-          final CompositeElement childNode = createComposite(curMarker);
-          curNode.rawAddChildren(childNode);
-          nodes.push(curNode);
-          curNode = childNode;
-        }
-        else {
-          lexIndex = collapseLeaves(curNode, marker);
-          //noinspection AssignmentToForLoopParameter
-          i = myProduction.indexOf(marker.myDoneMarker);
-        }
-      }
-      else if (item instanceof DoneMarker) {
-        curMarker = markers.pop();
-        curNode = nodes.pop();
-      }
-      else if (item instanceof ErrorItem) {
-        int curToken = item.myLexemeIndex;
-        if (curToken == lastErrorIndex) continue;
-        lastErrorIndex = curToken;
-
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
-        curNode.rawAddChildren(errorElement);
-      }
-    }
-    /*
     ProductionMarker item = rootMarker.firstChild != null ? rootMarker.firstChild : rootMarker.myDoneMarker;
-    while (item != null) {
+    while (true) {
       lexIndex = insertLeaves(lexIndex, item.myLexemeIndex, curNode);
+
+      if (item == rootMarker.myDoneMarker) break;
 
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
@@ -1035,31 +998,31 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           markers.push(curMarker);
           curMarker = marker;
 
-          final CompositeElement childNode = createComposite(curMarker);
+          final CompositeElement childNode = createComposite(marker);
           curNode.rawAddChildren(childNode);
           nodes.push(curNode);
           curNode = childNode;
 
           item = marker.firstChild != null ? marker.firstChild : marker.myDoneMarker;
+          continue;
         }
         else {
           lexIndex = collapseLeaves(curNode, marker);
-          item = marker.myDoneMarker.next;
         }
       }
       else if (item instanceof ErrorItem) {
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
         errorElement.setErrorDescription(((ErrorItem)item).myMessage);
         curNode.rawAddChildren(errorElement);
-        item = item.next != null ? item.next : curMarker.myDoneMarker;
       }
       else if (item instanceof DoneMarker) {
         curMarker = markers.pop();
         curNode = nodes.pop();
-        item = item.next;
+        item = ((DoneMarker)item).myStart;
       }
+
+      item = item.next != null ? item.next : curMarker.myDoneMarker;
     }
-    */
   }
 
   private int insertLeaves(int curToken, int lastIdx, final CompositeElement curNode) {
