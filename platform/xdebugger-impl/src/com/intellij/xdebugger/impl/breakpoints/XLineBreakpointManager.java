@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -29,11 +30,13 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -201,10 +204,11 @@ public class XLineBreakpointManager {
     public void mouseClicked(final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
-      if (mouseEvent.isPopupTrigger() ||
-          mouseEvent.getButton() != MouseEvent.BUTTON1 ||
-          MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor) ||
-          e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) {
+      if (mouseEvent.isPopupTrigger()
+          || mouseEvent.getButton() != MouseEvent.BUTTON1
+          || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
+          || e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA
+          ||!isFromMyProject(editor)) {
         return;
       }
 
@@ -225,6 +229,15 @@ public class XLineBreakpointManager {
         }
       });
     }
+  }
+
+  private boolean isFromMyProject(Editor editor) {
+    for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+      if (fileEditor instanceof TextEditor && ((TextEditor)fileEditor).getEditor().equals(editor)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
