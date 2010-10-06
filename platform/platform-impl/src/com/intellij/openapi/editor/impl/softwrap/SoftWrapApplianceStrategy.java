@@ -16,14 +16,19 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 /**
- * Enumerates distinct places where soft wraps may be used.
+ * Strategy interface for ruling if soft wraps should be processed.
  * <p/>
- * The general idea is that we may want to allow configure distinct soft wrap settings for distinct use-cases. E.g. we may want
- * to use soft wraps at console editor but avoid using them at the main editor etc.
+ * Implementations of this interface are not obliged to be thread-safe.
  *
  * @author Denis Zhdanov
- * @since 9/30/10 7:32 PM
+ * @since 10/6/10 8:08 AM
  */
-public enum SoftWrapAppliancePlaces {
-  MAIN_EDITOR, CONSOLE, VCS_DIFF
+public interface SoftWrapApplianceStrategy {
+
+  /**
+   * Allows to answer if soft wraps should be processed.
+   *
+   * @return    <code>true</code> if soft wraps should be processed; <code>false</code> otherwise
+   */
+  boolean processSoftWraps();
 }

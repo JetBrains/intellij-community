@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,4 +106,13 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * @return            <code>true</code> if given listener was not registered before; <code>false</code> otherwise
    */
   boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener);
+
+  /**
+   * Instructs current soft wrap model about the place where corresponding editor is used.
+   * <p/>
+   * {@link SoftWrapAppliancePlaces#MAIN_EDITOR} is used by default.
+   *
+   * @param place   place where corresponding editor is used
+   */
+  void setPlace(@NotNull SoftWrapAppliancePlaces place);
 }
