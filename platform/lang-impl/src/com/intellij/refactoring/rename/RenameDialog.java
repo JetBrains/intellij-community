@@ -16,8 +16,6 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -45,11 +43,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -126,11 +122,6 @@ public class RenameDialog extends RefactoringDialog {
     };
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
-    myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        completeVariable(myNameSuggestionsField.getEditor());
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   public String[] getSuggestedNames() {
@@ -146,21 +137,6 @@ public class RenameDialog extends RefactoringDialog {
     return ArrayUtil.toStringArray(result);
   }
 
-  private void completeVariable(Editor editor) {
-    final String prefix = myNameSuggestionsField.getEnteredName();
-    Collection<LookupElement> items = null;
-    for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-      items = provider.completeName(myPsiElement, myNameSuggestionContext, prefix);
-      if (items != null) break;
-    }
-
-    if (items != null) {
-      final LookupElement[] lookupItems = items.toArray(new LookupElement[items.size()]);
-      editor.getCaretModel().moveToOffset(prefix.length());
-      editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix);
-    }
-  }
 
   public String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
