@@ -1,6 +1,7 @@
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.server.instance.AppEngineServerModel;
 import com.intellij.appengine.server.run.AppEngineServerConfigurationType;
 import com.intellij.appengine.util.AppEngineUtil;
@@ -9,6 +10,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.*;
@@ -32,6 +34,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -39,11 +43,15 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
@@ -206,16 +214,52 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     private AppEngineSdkEditor mySdkEditor;
     private JComboBox myPersistenceApiComboBox;
     private JPanel mySdkPanel;
+    private HyperlinkLabel myErrorLabel;
+    private JPanel myErrorPanel;
 
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {
       super(AppEngineSupportProvider.this, model);
-      mySdkEditor = new AppEngineSdkEditor(null, true);
+      mySdkEditor = new AppEngineSdkEditor(null);
       mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "AppEngine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
       if (model.isFrameworkSelected(JPA_PROVIDER_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
       }
       model.addFrameworkListener(this);
+
+      myErrorLabel = new HyperlinkLabel();
+      myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+      myErrorLabel.setVisible(false);
+      myErrorLabel.setHyperlinkTarget(AppEngineSdkUtil.APP_ENGINE_DOWNLOAD_URL);
+      myErrorPanel.add(BorderLayout.CENTER, myErrorLabel);
+
+      final Component component = mySdkEditor.getComboBox().getEditor().getEditorComponent();
+      if (component instanceof JTextComponent) {
+        ((JTextComponent)component).getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(DocumentEvent e) {
+            checkSdk();
+          }
+        });
+      }
+      checkSdk();
+    }
+
+    private void checkSdk() {
+      final String path = mySdkEditor.getPath();
+      if (StringUtil.isEmptyOrSpaces(path)) {
+        myErrorLabel.setVisible(true);
+        myErrorLabel.setHyperlinkText("App Engine SDK path not specified. ", "Download", "");
+        myMainPanel.repaint();
+        return;
+      }
+
+      final ValidationResult result = AppEngineSdkUtil.checkPath(path);
+      myErrorLabel.setVisible(!result.isOk());
+      if (!result.isOk()) {
+        myErrorLabel.setText("App Engine SDK path is not correct");
+      }
+      myMainPanel.repaint();
     }
 
     public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {

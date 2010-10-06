@@ -1,6 +1,6 @@
 package com.intellij.appengine.facet;
 
-import com.intellij.appengine.sdk.impl.AppEngineSdkImpl;
+import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.*;
@@ -48,11 +48,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;
     myContext = context;
-    mySdkEditor = new AppEngineSdkEditor(myContext.getProject(), false);
+    mySdkEditor = new AppEngineSdkEditor(myContext.getProject());
     validatorsManager.registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
-        return AppEngineSdkImpl.checkPath(mySdkEditor.getPath());
+        return AppEngineSdkUtil.checkPath(mySdkEditor.getPath());
       }
     }, mySdkEditor.getComboBox());
 
@@ -112,7 +112,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   public JComponent createComponent() {
-    mySdkEditorPanel.add(mySdkEditor.getMainComponent());
+    mySdkEditorPanel.add(BorderLayout.CENTER, mySdkEditor.getMainComponent());
     return myMainPanel;
   }
 

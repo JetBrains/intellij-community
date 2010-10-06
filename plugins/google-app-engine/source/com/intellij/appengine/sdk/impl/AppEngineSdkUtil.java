@@ -1,11 +1,17 @@
 package com.intellij.appengine.sdk.impl;
 
+import com.intellij.facet.ui.FacetConfigurationQuickFix;
+import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.Collections;
 import java.util.Map;
@@ -16,6 +22,13 @@ import java.util.Set;
  */
 public class AppEngineSdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.sdk.impl.AppEngineSdkUtil");
+  @NonNls public static final String APP_ENGINE_DOWNLOAD_URL = "http://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Java";
+  private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {
+    @Override
+    public void run(JComponent place) {
+      BrowserUtil.launchBrowser(APP_ENGINE_DOWNLOAD_URL);
+    }
+  };
 
   private AppEngineSdkUtil() {
   }
@@ -83,5 +96,27 @@ public class AppEngineSdkUtil {
       LOG.error(e);
       return Collections.emptyMap();
     }
+  }
+
+  @NotNull
+  public static ValidationResult checkPath(String path) {
+    final AppEngineSdkImpl sdk = new AppEngineSdkImpl(path);
+
+    final File appCfgFile = sdk.getAppCfgFile();
+    if (!appCfgFile.exists()) {
+      return createNotFoundMessage(path, appCfgFile);
+    }
+
+    final File toolsApiJarFile = sdk.getToolsApiJarFile();
+    if (!toolsApiJarFile.exists()) {
+      return createNotFoundMessage(path, toolsApiJarFile);
+    }
+
+    return ValidationResult.OK;
+  }
+
+  private static ValidationResult createNotFoundMessage(@NotNull String path, @NotNull File file) {
+    return new ValidationResult("'" + path + "' is not valid App Engine SDK installation: " + "'" + file + "' file not found",
+                                DOWNLOAD_SDK_QUICK_FIX);
   }
 }
