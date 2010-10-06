@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.properties.references;
 
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -180,6 +182,11 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @NotNull
   public Object[] getVariants() {
+    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (process != null && process.isAutopopupCompletion() && isSoft()) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
     final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
         if (object instanceof Property) {
