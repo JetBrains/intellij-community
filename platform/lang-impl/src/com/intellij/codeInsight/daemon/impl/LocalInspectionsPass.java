@@ -43,6 +43,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
@@ -50,6 +51,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -102,9 +104,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
-    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
     InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
     myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
+    mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
 
     // initial guess
     setProgressLimit(300 * 2);
@@ -325,16 +327,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlights;
   }
 
-  private static HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
-                                                           final HighlightInfoType highlightInfoType,
-                                                           final String message,
-                                                           final String toolTip) {
+  private HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
+                                                    final HighlightInfoType highlightInfoType,
+                                                    final String message,
+                                                    final String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
 
-    return new HighlightInfo(null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                             highlightInfoType.getSeverity(element), problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
+    final HighlightSeverity severity = highlightInfoType.getSeverity(element);
+    return new HighlightInfo(mySeverityRegistrar.getTextAttributesBySeverity(severity), highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+                             severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
   private final AtomicBoolean haveInfosToProcess = new AtomicBoolean();
