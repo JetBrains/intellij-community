@@ -223,7 +223,7 @@ public class ClassloaderUtil {
       final File libFolder = new File(aFolderPath + File.separator + "lib");
       addLibraries(classPath, libFolder, selfRootUrl);
 
-      final File extLib = new File(new File(libFolder, "ext"), "lib");
+      final File extLib = new File(libFolder, "ext");
       addLibraries(classPath, extLib, selfRootUrl);
 
       final File antLib = new File(new File(libFolder, "ant"), "lib");
