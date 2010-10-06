@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -67,8 +68,9 @@ public class PathsList  {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 
-  public void remove(String path) {
+  public void remove(@NotNull String path) {
     myPath.remove(path);
+    myPathTail.remove(path);
     myPathSet.remove(path);
   }
 
