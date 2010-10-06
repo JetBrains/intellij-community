@@ -107,12 +107,11 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
       final JavaParameters javaParameters = new JavaParameters();
       new ReadAction() {
         protected void run(final Result result) throws Throwable {
-          final JavaParameters tempJavaParameters = new JavaParameters();
           context.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
-          tempJavaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
-          final PathsList classPath = tempJavaParameters.getClassPath();
+          javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
+          final PathsList classPath = javaParameters.getClassPath();
           classPath.addFirst(sdk.getToolsApiJarFile().getAbsolutePath());
-          clearClasspath(classPath, javaParameters.getClassPath());
+          removeAsmJarFromClasspath(classPath);
 
           final ParametersList vmParameters = javaParameters.getVMParametersList();
           vmParameters.add("-Xmx256m");
@@ -126,10 +125,6 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
           }
 
           javaParameters.setMainClass("com.google.appengine.tools.enhancer.Enhance");
-
-          javaParameters.setCharset(tempJavaParameters.getCharset());
-          javaParameters.setEnv(tempJavaParameters.getEnv());
-          javaParameters.setJdk(tempJavaParameters.getJdk());
         }
       }.execute().throwException();
 
@@ -153,16 +148,19 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
     return context.getMessageCount(CompilerMessageCategory.ERROR) == 0;
   }
 
-  private static void clearClasspath(PathsList classPath, PathsList clearedClasspath) {
+  private static void removeAsmJarFromClasspath(PathsList classPath) {
+    List<String> toRemove = new ArrayList<String>();
     for (String filePath : classPath.getPathList()) {
       if (filePath.endsWith(".jar")) {
         final VirtualFile root =
           JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(filePath) + JarFileSystem.JAR_SEPARATOR);
         if (root != null && LibraryUtil.isClassAvailableInLibrary(new VirtualFile[]{root}, "org.objectweb.asm.ClassReader")) {
-          continue;
+          toRemove.add(filePath);
         }
       }
-      clearedClasspath.add(filePath);
+    }
+    for (String path : toRemove) {
+      classPath.remove(path);
     }
   }
 
