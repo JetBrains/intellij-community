@@ -16,17 +16,20 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.XmlAutoLookupHandler;
+import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlUtil;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
@@ -53,24 +56,73 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void autoPopupXmlLookup(final Project project, final Editor editor){
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
-      final Runnable request = new Runnable(){
-        public void run(){
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
+      @Override
+      public boolean value(PsiFile file) {
+        int offset = editor.getCaretModel().getOffset();
 
-          final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-          if (file == null) return;
-
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            public void run() {
-              new XmlAutoLookupHandler().invoke(project, editor, file);
-            }
-          }, null, null);
+        PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
+        if (lastElement instanceof PsiFile) { //the very end of an injected file
+          lastElement = file.findElementAt(offset - 1);
         }
-      };
-      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.AUTO_LOOKUP_DELAY);
-    }
+        if (lastElement == null) return false;
+
+        if (doCompleteIfNeeded(offset, file, lastElement)) {
+          return true;
+        }
+
+        FileViewProvider fileViewProvider = file.getViewProvider();
+        Language templateDataLanguage;
+
+        final PsiElement parent = lastElement.getParent();
+        if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
+            (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
+          lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
+          if (lastElement == null) return false;
+          return doCompleteIfNeeded(offset, file, lastElement);
+        }
+        return false;
+      }
+    });
   }
+
+  private static boolean doCompleteIfNeeded(int offset, PsiFile file, PsiElement lastElement) {
+    final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
+    final Ref<Boolean> isAnt = new Ref<Boolean>();
+    String text = lastElement.getText();
+    final int len = offset - lastElement.getTextRange().getStartOffset();
+    if (len < text.length()) {
+      text = text.substring(0, len);
+    }
+    if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
+        text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
+        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean isLanguageRelevant(final PsiElement element,
+                                            final PsiFile file,
+                                            final Ref<Boolean> isRelevantLanguage,
+                                            final Ref<Boolean> isAnt) {
+    Boolean isAntFile = isAnt.get();
+    if (isAntFile == null) {
+      isAntFile = XmlUtil.isAntFile(file);
+      isAnt.set(isAntFile);
+    }
+    Boolean result = isRelevantLanguage.get();
+    if (result == null) {
+      Language language = element.getLanguage();
+      if (element instanceof PsiWhiteSpace) language = element.getParent().getLanguage();
+      result = language instanceof XMLLanguage || isAntFile.booleanValue();
+      isRelevantLanguage.set(result);
+    }
+    return result.booleanValue();
+  }
+
 
 }
