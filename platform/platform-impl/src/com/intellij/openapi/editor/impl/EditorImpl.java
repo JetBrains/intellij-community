@@ -2958,7 +2958,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (lineNumber >= totalLines && totalLines > 0) {
       int visibleLineCount = getVisibleLineCount();
-      moveCaretToScreenPos(x, visibleLineCount > 0 ? visibleLineNumberToYPosition( visibleLineCount - 1) : 0);
+      int newY = visibleLineCount > 0 ? visibleLineNumberToYPosition(visibleLineCount - 1) : 0;
+      if (newY > 0 && newY == y) {
+        newY = visibleLineNumberToYPosition(getVisibleLogicalLinesCount());
+      }
+      moveCaretToScreenPos(x, newY);
       return;
     }
 

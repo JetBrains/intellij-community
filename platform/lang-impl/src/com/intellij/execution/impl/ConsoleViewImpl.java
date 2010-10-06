@@ -683,6 +683,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     });
     final EditorEx editor = (EditorEx)document.createViewer(editorDocument, myProject);
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
+    editor.getSoftWrapModel().setPlace(SoftWrapAppliancePlaces.CONSOLE);
+
     final EditorHighlighter highlighter = new MyHighlighter();
     editor.setHighlighter(highlighter);
 

@@ -22,6 +22,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -130,6 +131,10 @@ public interface EditorEx extends Editor {
   @NotNull
   @Override
   FoldingModelEx getFoldingModel();
+
+  @NotNull
+  @Override
+  SoftWrapModelEx getSoftWrapModel();
 
   @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);

@@ -76,6 +76,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   private final List<SoftWrapAwareDocumentParsingListener> myListeners = new ArrayList<SoftWrapAwareDocumentParsingListener>();
   private final List<DirtyRegion> myDirtyRegions = new ArrayList<DirtyRegion>();
+  private final List<SoftWrapApplianceStrategy> myApplianceStrategies = new ArrayList<SoftWrapApplianceStrategy>();
 
   private final Storage myOffset2fontType = new Storage();
   private final Storage myOffset2widthInPixels = new Storage();
@@ -119,9 +120,26 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myLineWrapPositionStrategy = null;
   }
 
+  /**
+   * Registers given strategy to use within the current manager.
+   *
+   * @param strategy    strategy to use during deciding if soft wraps should be recalculated for particular document region.
+   */
+  public void addApplianceStrategy(@NotNull SoftWrapApplianceStrategy strategy) {
+    myApplianceStrategies.add(strategy);
+  }
+
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void recalculateSoftWraps() {
-    if (myVisibleAreaWidth <= 0 || myDirtyRegions.isEmpty() || !myEditor.getFoldingModel().isFoldingEnabled()) {
+    if (myVisibleAreaWidth <= 0 || myDirtyRegions.isEmpty()) {
       return;
+    }
+
+    // Counter-based loop is preferred to for-each in order to avoid unnecessary performance degradation.
+    for (int i = 0; i < myApplianceStrategies.size(); i++) {
+      if (!myApplianceStrategies.get(i).processSoftWraps()) {
+        return;
+      }
     }
 
     myLastDocumentStamp = myEditor.getDocument().getModificationStamp();
@@ -756,8 +774,14 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     public void update(int logicalLine, int spaceWidth, Editor editor) {
       Document document = myEditor.getDocument();
-      int startLineOffset = document.getLineStartOffset(logicalLine);
-      endLineOffset = document.getLineEndOffset(logicalLine);
+      int startLineOffset;
+      if (logicalLine >= document.getLineCount()) {
+        startLineOffset = endLineOffset = document.getTextLength();
+      }
+      else {
+        startLineOffset = document.getLineStartOffset(logicalLine);
+        endLineOffset = document.getLineEndOffset(logicalLine);
+      }
       CharSequence text = document.getCharsSequence();
       indentInColumns = 0;
       indentInPixels = 0;

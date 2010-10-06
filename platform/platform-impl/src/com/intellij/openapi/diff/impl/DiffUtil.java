@@ -25,12 +25,14 @@ import com.intellij.openapi.diff.impl.util.FocusDiffSide;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DiffUtil {
   private DiffUtil() {
@@ -46,6 +48,7 @@ public class DiffUtil {
     frameWrapper.addDisposable(diffPanel);
   }
 
+  @Nullable
   public static FocusDiffSide getFocusDiffSide(DataContext dataContext) {
     return FocusDiffSide.DATA_KEY.getData(dataContext);
   }
@@ -86,6 +89,7 @@ public class DiffUtil {
     EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
+    editor.getSoftWrapModel().setPlace(SoftWrapAppliancePlaces.VCS_DIFF);
     editor.getGutterComponentEx().revalidateMarkup();
     return editor;
   }
