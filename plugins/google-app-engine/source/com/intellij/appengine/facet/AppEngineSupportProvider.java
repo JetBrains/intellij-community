@@ -219,8 +219,8 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {
       super(AppEngineSupportProvider.this, model);
-      mySdkEditor = new AppEngineSdkEditor(null);
-      mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "AppEngine SDK:"), BorderLayout.CENTER);
+      mySdkEditor = new AppEngineSdkEditor(model.getProject());
+      mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "Google App Engine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
       if (model.isFrameworkSelected(JPA_PROVIDER_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
