@@ -158,9 +158,15 @@ public class AutoHardWrapHandler {
     }
 
     final int[] wrapIntroducedSymbolsNumber = new int[1];
+    final int[] caretOffsetDiff = new int[1];
+    final int baseCaretOffset = caretModel.getOffset();
     DocumentListener listener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
+        if (event.getOffset() <= baseCaretOffset) {
+          caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
+        }
+
         if (event.getNewLength() <= 0) {
           // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
           return;
@@ -188,12 +194,7 @@ public class AutoHardWrapHandler {
     change.change.setStart(wrapOffset);
     change.change.setEnd(wrapOffset + wrapIntroducedSymbolsNumber[0]);
 
-    int newCaretOffset = caretOffset;
-    if (wrapOffset <= caretOffset && newCaretOffset + wrapIntroducedSymbolsNumber[0] < document.getTextLength()) {
-      newCaretOffset += wrapIntroducedSymbolsNumber[0];
-    }
-    newCaretOffset = Math.min(document.getLineEndOffset(line + 1), newCaretOffset);
-    caretModel.moveToOffset(newCaretOffset);
+    caretModel.moveToOffset(baseCaretOffset + caretOffsetDiff[0]);
   }
 
   private static class AutoWrapChange {
