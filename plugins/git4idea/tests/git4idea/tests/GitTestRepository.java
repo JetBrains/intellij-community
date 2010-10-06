@@ -118,8 +118,12 @@ public class GitTestRepository {
     return result.get();
   }
 
-  public void add() throws IOException {
-    execute(true, "add", ".");
+  public void add(String... filenames) throws IOException {
+    if (filenames.length == 0) {
+      execute(true, "add", ".");
+    } else {
+      execute(true, join("add", filenames));
+    }
   }
 
   public void commit(@Nullable String commitMessage) throws IOException {
@@ -137,10 +141,7 @@ public class GitTestRepository {
   }
 
   public void config(String... parameters) throws IOException {
-    String[] pars = new String[parameters.length+1];
-    pars[0] = "config";
-    System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    execute(true, pars);
+    execute(true, join("config", parameters));
   }
 
   /**
@@ -156,29 +157,32 @@ public class GitTestRepository {
   public void checkout(String branchName) throws IOException {
     execute(true, "checkout", branchName);
     // need to refresh the root directory, because checkouting a branch changes files on disk, but VFS is unaware of it.
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override public void run() {
-        getDir().refresh(false, true);
-      }
-    });
+    refreshFile(getDir(), true);
   }
 
   public ProcessOutput log(String... parameters) throws IOException {
-    String[] pars = new String[parameters.length+1];
-    pars[0] = "log";
-    System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    return execute(false, pars);
+    return execute(false, join("log", parameters));
   }
 
   public void merge(String... parameters) throws IOException {
-    String[] pars = new String[parameters.length+1];
-    pars[0] = "merge";
-    System.arraycopy(parameters, 0, pars, 1, parameters.length);
-    execute(true, pars);
+    execute(true, join("merge", parameters));
   }
 
   public void mv(VirtualFile file, String newPath) throws IOException {
     execute(true, "mv", file.getPath(), newPath);
+  }
+
+  public void mv(String oldPath, String newPath) throws IOException {
+    execute(true, "mv", oldPath, newPath);
+    refreshFile(getDir(), true);
+  }
+
+  private static void refreshFile(final VirtualFile file, final boolean recursive) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override public void run() {
+        file.refresh(false, recursive);
+      }
+    });
   }
 
   public void pull() throws IOException {
@@ -187,6 +191,11 @@ public class GitTestRepository {
 
   public void push() throws IOException {
     execute(true, "push");
+  }
+
+  public void rm(String... filenames) throws IOException {
+    execute(true, join("rm", filenames));
+    refreshFile(getDir(), true);
   }
 
   public void update() throws IOException {
@@ -233,4 +242,14 @@ public class GitTestRepository {
     }
   }
 
+  private static String[] join(String parameter, String[] parameters) {
+    String[] pars = new String[parameters.length+1];
+    pars[0] = parameter;
+    System.arraycopy(parameters, 0, pars, 1, parameters.length);
+    return pars;
+  }
+
+  public void refresh() {
+    refreshFile(getDir(), true);
+  }
 }
