@@ -3539,6 +3539,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 lineNumber += myDy;
               }
 
+              lineNumber = Math.max(0, lineNumber);
               columnNumber = Math.max(0, columnNumber);
               VisualPosition pos = new VisualPosition(lineNumber, columnNumber);
               getCaretModel().moveToVisualPosition(pos);
