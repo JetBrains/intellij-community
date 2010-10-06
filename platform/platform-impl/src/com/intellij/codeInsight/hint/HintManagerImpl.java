@@ -210,6 +210,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
       ((ScrollAwareHint)hint.getComponent()).editorScrolled();
     }
 
+    if (!hint.isVisible()) {
+      return;
+    }
+
     Editor editor = e.getEditor();
     if (!editor.getComponent().isShowing() || editor.isOneLineMode()) return;
     Rectangle newRectangle = e.getOldRectangle();
