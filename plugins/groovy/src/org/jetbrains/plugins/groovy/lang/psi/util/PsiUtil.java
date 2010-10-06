@@ -562,11 +562,15 @@ public class PsiUtil {
 
   @Nullable
   public static PsiClass getContextClass(PsiElement context) {
-    GroovyPsiElement parent = PsiTreeUtil.getParentOfType(context, GrTypeDefinition.class, GroovyFileBase.class);
-    if (parent instanceof GrTypeDefinition) {
-      return (PsiClass)parent;
-    } else if (parent instanceof GroovyFileBase) {
-      return ((GroovyFileBase)parent).getScriptClass();
+    while (context != null) {
+      if (context instanceof GrTypeDefinition) {
+        return (PsiClass)context;
+      }
+      else if (context instanceof GroovyFileBase) {
+        return ((GroovyFileBase)context).getScriptClass();
+      }
+
+      context = context.getContext();
     }
     return null;
   }
