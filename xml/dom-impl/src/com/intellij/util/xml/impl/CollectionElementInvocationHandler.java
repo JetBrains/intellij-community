@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.events.ElementChangedEvent;
+import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
     getManager().cacheHandler(getCacheKey(), tag, null);
     deleteTag(tag);
-    getManager().fireEvent(new ElementChangedEvent(parent));
+    getManager().fireEvent(new DomEvent(parent, false));
   }
 
   public DomElement createPathStableCopy() {

@@ -709,19 +709,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void scheduleReloadApplicationAndProject() {
-    IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-      @Override
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        IdeEventQueue.getInstance().removeIdleListener(this);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        IdeEventQueue.getInstance().addIdleListener(new Runnable() {
+          @Override
           public void run() {
-            if (!tryToReloadApplication()) return;
-            askToReloadProjectIfConfigFilesChangedExternally();
+            IdeEventQueue.getInstance().removeIdleListener(this);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (!tryToReloadApplication()) return;
+                askToReloadProjectIfConfigFilesChangedExternally();
+              }
+            }, ModalityState.NON_MODAL);
           }
-
-        }, ModalityState.NON_MODAL);
+        }, 2000);
       }
-    }, 2000);
+    }, ModalityState.NON_MODAL);
   }
 
   public void setCurrentTestProject(@Nullable final Project project) {

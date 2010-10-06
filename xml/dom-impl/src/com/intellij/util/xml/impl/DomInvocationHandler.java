@@ -27,9 +27,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.events.ElementChangedEvent;
-import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -171,7 +169,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         setTagValue(tag, value);
       }
     });
-    myManager.fireEvent(new ElementChangedEvent(getProxy()));
+    myManager.fireEvent(new DomEvent(getProxy(), false));
   }
 
   public void copyFrom(final DomElement other) {
@@ -221,7 +219,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     });
 
     if (!myManager.getSemService().isInsideAtomicChange()) {
-      myManager.fireEvent(new ElementChangedEvent(myProxy));
+      myManager.fireEvent(new DomEvent(myProxy, false));
     }
   }
 
@@ -276,7 +274,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     tag = setEmptyXmlTag();
     setXmlElement(tag);
 
-    myManager.fireEvent(new ElementDefinedEvent(getProxy()));
+    final DomElement element = getProxy();
+    myManager.fireEvent(new DomEvent(element, true));
     addRequiredChildren();
     myManager.cacheHandler(getCacheKey(), tag, this);
     return getXmlTag();
@@ -365,7 +364,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void fireUndefinedEvent() {
-    myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
+    myManager.fireEvent(new DomEvent(getProxy(), false));
   }
 
   protected abstract XmlTag setEmptyXmlTag();
@@ -666,7 +665,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final EvaluatedXmlName name = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = addEmptyTag(name, index);
     final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
-    myManager.fireEvent(new ElementChangedEvent(getProxy()));
+    myManager.fireEvent(new DomEvent(getProxy(), false));
     getManager().getTypeChooserManager().getTypeChooser(description.getType()).distinguishTag(tag, type);
     handler.addRequiredChildren();
     return handler.getProxy();

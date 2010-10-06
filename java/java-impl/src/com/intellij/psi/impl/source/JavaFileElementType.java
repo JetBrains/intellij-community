@@ -45,7 +45,7 @@ import com.intellij.util.io.StringRef;
 import java.io.IOException;
 
 public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? 4 : 3;
+  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? 5 : 4;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);

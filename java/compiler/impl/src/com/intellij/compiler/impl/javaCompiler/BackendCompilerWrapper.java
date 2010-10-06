@@ -46,6 +46,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -89,6 +90,9 @@ public class BackendCompilerWrapper {
   private static final FileObject myStopThreadToken = new FileObject(new File(""), new byte[0]);
   public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
   private final Set<VirtualFile> myProcessedPackageInfos = new HashSet<VirtualFile>();
+  private final CompileStatistics myStatistics;
+  private volatile String myModuleName = null;
+  
 
   public BackendCompilerWrapper(Chunk<Module> chunk, @NotNull final Project project,
                                 @NotNull List<VirtualFile> filesToCompile,
@@ -101,6 +105,12 @@ public class BackendCompilerWrapper {
     myFilesToCompile = filesToCompile;
     mySink = sink;
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    CompileStatistics stat = compileContext.getUserData(CompileStatistics.KEY);
+    if (stat == null) {
+      stat = new CompileStatistics();
+      compileContext.putUserData(CompileStatistics.KEY, stat);
+    }
+    myStatistics = stat;
   }
 
   public void compile() throws CompilerException, CacheCorruptedException {
@@ -155,7 +165,6 @@ public class BackendCompilerWrapper {
   }
 
   private void compileModules(final Map<Module, List<VirtualFile>> moduleToFilesMap) throws CompilerException {
-    myProcessedFilesCount = 0;
     try {
       compileChunk(new ModuleChunk(myCompileContext, myChunk, moduleToFilesMap));
     }
@@ -765,12 +774,8 @@ public class BackendCompilerWrapper {
     return out;
   }
 
-  private volatile int myProcessedFilesCount = 0;
-  private volatile int myClassesCount = 0;
-  private volatile String myModuleName = null;
-
   private void sourceFileProcessed() {
-    myProcessedFilesCount++;
+    myStatistics.incFilesCount();
     updateStatistics();
   }
 
@@ -778,10 +783,10 @@ public class BackendCompilerWrapper {
     final String msg;
     String moduleName = myModuleName;
     if (moduleName != null) {
-      msg = CompilerBundle.message("statistics.files.classes.module", myProcessedFilesCount, myClassesCount, moduleName);
+      msg = CompilerBundle.message("statistics.files.classes.module", myStatistics.getFilesCount(), myStatistics.getClassesCount(), moduleName);
     }
     else {
-      msg = CompilerBundle.message("statistics.files.classes", myProcessedFilesCount, myClassesCount);
+      msg = CompilerBundle.message("statistics.files.classes", myStatistics.getFilesCount(), myStatistics.getClassesCount());
     }
     myCompileContext.getProgressIndicator().setText2(msg);
     //myCompileContext.getProgressIndicator().setFraction(1.0* myProcessedFilesCount /myTotalFilesToCompile);
@@ -888,7 +893,7 @@ public class BackendCompilerWrapper {
         LOG.info(e);
       }
       finally {
-        myClassesCount++;
+        myStatistics.incClassesCount();
         updateStatistics();
       }
     }
@@ -922,5 +927,27 @@ public class BackendCompilerWrapper {
       }
     }
     return isJDK16;
+  }
+  
+  private static final class CompileStatistics {
+    private static final Key<CompileStatistics> KEY = Key.create("_Compile_Statistics_");
+    private int myClassesCount;
+    private int myFilesCount;
+
+    public int getClassesCount() {
+      return myClassesCount;
+    }
+
+    public int incClassesCount() {
+      return ++myClassesCount;
+    }
+
+    public int getFilesCount() {
+      return myFilesCount;
+    }
+
+    public int incFilesCount() {
+      return ++myFilesCount;
+    }
   }
 }

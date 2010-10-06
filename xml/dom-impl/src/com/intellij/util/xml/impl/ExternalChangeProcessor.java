@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
@@ -40,7 +39,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   public void processChanges() {
     if (myDocumentChanged) return;
     for (DomInvocationHandler handler : myChangeSets.values()) {
-      myDomManager.fireEvent(new ElementChangedEvent(handler.getProxy()));
+      myDomManager.fireEvent(new DomEvent(handler.getProxy(), false));
     }
   }
 
@@ -105,7 +104,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
         LOG.assertTrue(rootTag.isValid());
         rootHandler.setXmlElement(rootTag);
       }
-      myDomManager.fireEvent(new ElementChangedEvent(oldElement.getRootElement()));
+      myDomManager.fireEvent(new DomEvent(oldElement.getRootElement(), false));
     }
   }
 
