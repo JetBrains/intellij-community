@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,7 +77,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private LightweightHint myHint;
-  private final CompletionContext myContextOriginal;
   private final Semaphore myFreezeSemaphore;
 
   private boolean myModifiersReleased;
@@ -86,14 +86,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldStart;
   private int myOldEnd;
   private boolean myBackgrounded = true;
+  private OffsetMap myOffsetMap;
 
-  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
-                                     final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
+  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
+                                     final OffsetMap offsetMap) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
-    myContextOriginal = contextOriginal;
     myFreezeSemaphore = freezeSemaphore;
+    myOffsetMap = offsetMap;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", new CompletionLookupArranger(parameters));
     if (editor.isOneLineMode()) {
@@ -114,8 +115,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         setMergeCommand();
 
-        contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
-        CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), contextOriginal, myLookup.getItems());
+        myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET, myEditor.getCaretModel().getOffset() - item.getLookupString().length());
+        CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), CompletionProgressIndicator.this, myLookup.getItems());
       }
 
 
@@ -135,6 +136,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     trackModifiers();
+  }
+
+  public OffsetMap getOffsetMap() {
+    return myOffsetMap;
+  }
+
+  public int getSelectionEndOffset() {
+    return getOffsetMap().getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
   void notifyBackgrounded() {
@@ -315,8 +324,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myCount;
   }
 
-  private boolean isInsideIdentifier() {
-    return myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset();
+  final boolean isInsideIdentifier() {
+    return getIdentifierEndOffset() != getSelectionEndOffset();
+  }
+
+  public int getIdentifierEndOffset() {
+    return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
 
@@ -353,7 +366,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myHint != null) {
       myHint.hide();
     }
-    LookupManager.getInstance(myEditor.getProject()).hideActiveLookup();
+    LookupManager.getInstance(getProject()).hideActiveLookup();
   }
 
   private void lookupClosed() {
@@ -413,11 +426,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
 
         if (myCount == 0) {
-          LookupManager.getInstance(myContextOriginal.project).hideActiveLookup();
+          LookupManager.getInstance(getProject()).hideActiveLookup();
           assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
 
           if (!isAutopopupCompletion() ) {
-            myHandler.handleEmptyLookup(myContextOriginal.project, myEditor, myParameters, CompletionProgressIndicator.this);
+            myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);
           }
         } else {
           updateLookup();
@@ -489,7 +502,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return false;
     }
 
-    final Boolean aBoolean = new WriteCommandAction<Boolean>(myEditor.getProject()) {
+    final Boolean aBoolean = new WriteCommandAction<Boolean>(getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
         if (!explicit) {
           setMergeCommand();
@@ -545,5 +558,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public boolean isAutopopupCompletion() {
     return !myLookup.isFocused();
+  }
+
+  public Project getProject() {
+    return myEditor.getProject();
   }
 }
