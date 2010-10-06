@@ -221,7 +221,7 @@ public class EclipseClasspathWriter {
     final Element element = myOldEntries.get(kind + getJREKey(path));
     if (element != null){
       final Element clonedElement = (Element)element.clone();
-      if (idx == -1) {
+      if (idx == -1 || idx >= classpathRoot.getContentSize()) {
         classpathRoot.addContent(clonedElement);
       } else {
         classpathRoot.addContent(idx, clonedElement);
