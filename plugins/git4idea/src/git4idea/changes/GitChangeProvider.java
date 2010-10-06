@@ -38,16 +38,8 @@ import java.util.Set;
  */
 public class GitChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#git4idea.changes.GitChangeProvider");
-  /**
-   * the project
-   */
   private final Project myProject;
 
-  /**
-   * A constructor
-   *
-   * @param project a project
-   */
   public GitChangeProvider(@NotNull Project project) {
     myProject = project;
   }
@@ -55,10 +47,12 @@ public class GitChangeProvider implements ChangeProvider {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void getChanges(final VcsDirtyScope dirtyScope,
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
+    
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
     if (dirtyScope.getAffectedContentRoots().size() != affected.size()) {
       final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
