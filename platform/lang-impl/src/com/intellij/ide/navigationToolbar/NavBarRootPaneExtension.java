@@ -21,12 +21,13 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -37,51 +38,88 @@ import java.awt.event.MouseEvent;
 public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private static final Icon CROSS_ICON = IconLoader.getIcon("/actions/cross.png");
 
-  private JComponent myPanel;
+  private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
   private final Project myProject;
   private NavBarPanel myNavigationBar;
+  private JPanel myRunPanel;
 
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
+
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR);
+      }
+    }, project);
   }
 
   public JComponent getComponent() {
-    if (myPanel == null) {
-      myPanel = new OpaquePanel.List(new BorderLayout());
-
-      myNavigationBar = new NavBarPanel(myProject);
-
-      JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
-      scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-      scroller.setHorizontalScrollBar(null);
-      scroller.setBorder(null);
-
-      myPanel.add(scroller, BorderLayout.CENTER);
-
-      JLabel closeLabel = new JLabel(CROSS_ICON);
-
-      closeLabel.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
-          uiSettingsChanged(UISettings.getInstance());
-        }
-      });
-      myPanel.add(closeLabel, BorderLayout.EAST);
-
-      myPanel.putClientProperty("NavBarPanel", myNavigationBar);
-      myNavigationBar.installBorder(0, true);
-      myPanel.setBorder(myNavigationBar.getBorder());
-      myNavigationBar.setBorder(null);
+    if (myWrapperPanel == null) {
+      myWrapperPanel = new JPanel(new BorderLayout());
+      myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
+      toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
     }
 
-    return myPanel;
+    return myWrapperPanel;
+  }
+
+  private void toggleRunPanel(final boolean show) {
+    if (show && myRunPanel == null) {
+      final ActionManager manager = ActionManager.getInstance();
+      final AnAction toolbarRunGroup = manager.getAction("ToolbarRunGroup");
+      if (toolbarRunGroup instanceof DefaultActionGroup) {
+        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.UNKNOWN, (ActionGroup)toolbarRunGroup, true);
+        final JComponent component = actionToolbar.getComponent();
+        component.setBackground(Color.WHITE);
+        myRunPanel = new JPanel(new BorderLayout());
+        final Color color = myRunPanel.getBackground() != null ? myRunPanel.getBackground().darker() : Color.darkGray;
+        myRunPanel.setBackground(Color.WHITE);
+        myRunPanel.add(component);
+        myRunPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, color),
+                                                                BorderFactory.createEmptyBorder(1, 1, 0, 0)));
+        myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
+      }
+    }
+    else if (!show && myRunPanel != null) {
+      myWrapperPanel.remove(myRunPanel);
+      myRunPanel = null;
+    }
+  }
+
+  private JComponent buildNavBarPanel() {
+    final JComponent result = new OpaquePanel.List(new BorderLayout());
+    myNavigationBar = new NavBarPanel(myProject);
+
+    JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
+    scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+    scroller.setHorizontalScrollBar(null);
+    scroller.setBorder(null);
+
+    result.add(scroller, BorderLayout.CENTER);
+
+    JLabel closeLabel = new JLabel(CROSS_ICON);
+
+    closeLabel.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(final MouseEvent e) {
+        UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
+        uiSettingsChanged(UISettings.getInstance());
+      }
+    });
+    result.add(closeLabel, BorderLayout.EAST);
+
+    result.putClientProperty("NavBarPanel", myNavigationBar);
+    myNavigationBar.installBorder(0, true);
+    result.setBorder(myNavigationBar.getBorder());
+    myNavigationBar.setBorder(null);
+    return result;
   }
 
   public void uiSettingsChanged(final UISettings settings) {
     if (myNavigationBar != null) {
       myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
-      myPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
+      myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
     }
   }
 
@@ -90,9 +128,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return NAV_BAR;
   }
 
+
   public void dispose() {
-    myPanel.setVisible(false);
-    myPanel = null;
+    myWrapperPanel.setVisible(false);
+    myWrapperPanel = null;
+    myRunPanel = null;
     myNavigationBar = null;
   }
 }
