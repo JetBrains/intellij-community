@@ -27,8 +27,11 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.lang.LanguageExtension#forLanguage(com.intellij.lang.Language)
  */
 public interface FindUsagesProvider {
+
   /**
    * Gets the word scanner for building a word index for the specified language.
+   * Note that the implementation MUST be thread-safe, otherwise you should return a new instance of your scanner
+   * (that can be recommended as a best practice).
    *
    * @return the word scanner implementation, or null if {@link com.intellij.lang.cacheBuilder.SimpleWordsScanner} is OK.
    */
