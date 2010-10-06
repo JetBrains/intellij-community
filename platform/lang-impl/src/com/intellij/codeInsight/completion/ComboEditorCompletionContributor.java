@@ -31,6 +31,11 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (process != null && process.isAutopopupCompletion()) {
+      return;
+    }
+
     final PsiFile file = parameters.getOriginalFile();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
