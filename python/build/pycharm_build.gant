@@ -164,7 +164,7 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
-  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar"]
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib"]
 
   project.clean()
   modules.each {
@@ -406,6 +406,12 @@ def layoutFull(String target, Set usedJars) {
 
       usedJars.each {
         fileset(file: it)
+      }
+
+      dir("ext") {
+        fileset(dir: "$home/community/lib") {
+          include(name: "cglib*.jar")
+        }
       }
 
       dir("src") {
