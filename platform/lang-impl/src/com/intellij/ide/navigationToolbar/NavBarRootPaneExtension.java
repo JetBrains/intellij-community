@@ -60,6 +60,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (myWrapperPanel == null) {
       myWrapperPanel = new JPanel(new BorderLayout());
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
+      myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
       toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
     }
 
@@ -122,7 +123,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     });
     result.add(closeLabel, BorderLayout.EAST);
 
-    result.putClientProperty("NavBarPanel", myNavigationBar);
     myNavigationBar.installBorder(0, true);
     result.setBorder(myNavigationBar.getBorder());
     myNavigationBar.setBorder(null);
