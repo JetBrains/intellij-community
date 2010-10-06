@@ -363,11 +363,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myOrientation == SwingConstants.HORIZONTAL) {
       int eachX = 0;
       int eachY = 0;
+      int maxHeight = 0;
       for (int i = 0; i < componentCount; i++) {
         final Component eachComp = getComponent(i);
         final boolean isLast = i == componentCount - 1;
 
         final Rectangle eachBound = new Rectangle(eachComp.getPreferredSize());
+        maxHeight = Math.max(eachBound.height, maxHeight);
+
         if (!full) {
           boolean inside;
           if (isLast) {
@@ -408,6 +411,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
         bounds.get(i).setBounds(eachBound);
       }
+
+      for (final Rectangle r : bounds) {
+        if (r.height < maxHeight && r.y == 0) {
+          r.y = (maxHeight - r.height) / 2;
+        }
+      }
+
     }
     else {
       int eachX = 0;
