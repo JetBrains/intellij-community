@@ -1,8 +1,9 @@
 package com.intellij.appengine.enhancement;
 
 import com.intellij.appengine.facet.AppEngineFacet;
-import com.intellij.openapi.compiler.FileProcessingCompiler;
-import com.intellij.openapi.compiler.ValidityState;
+import com.intellij.openapi.compiler.generic.CompileItem;
+import com.intellij.openapi.compiler.generic.DummyPersistentState;
+import com.intellij.openapi.compiler.generic.VirtualFileWithDependenciesState;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,17 +12,47 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ClassFileItem implements FileProcessingCompiler.ProcessingItem {
+public class ClassFileItem extends CompileItem<String, VirtualFileWithDependenciesState, DummyPersistentState> {
   private final VirtualFile myClassFile;
   private final VirtualFile mySourceFile;
-  private final AppEngineFacet myFacet;
   private final List<VirtualFile> myDependencies;
 
-  public ClassFileItem(VirtualFile classFile, VirtualFile sourceFile, AppEngineFacet facet, List<VirtualFile> dependencies) {
+  public ClassFileItem(VirtualFile classFile, VirtualFile sourceFile, List<VirtualFile> dependencies) {
     myClassFile = classFile;
     mySourceFile = sourceFile;
-    myFacet = facet;
     myDependencies = dependencies;
+  }
+
+  @NotNull
+  @Override
+  public String getKey() {
+    return myClassFile.getUrl();
+  }
+
+  @Override
+  public boolean isSourceUpToDate(@NotNull VirtualFileWithDependenciesState state) {
+    return state.isUpToDate(myClassFile);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFileWithDependenciesState computeSourceState() {
+    final VirtualFileWithDependenciesState state = new VirtualFileWithDependenciesState(myClassFile.getTimeStamp());
+    for (VirtualFile dependency : myDependencies) {
+      state.addDependency(dependency);
+    }
+    return state;
+  }
+
+  @Override
+  public boolean isOutputUpToDate(@NotNull DummyPersistentState dummyPersistentState) {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public DummyPersistentState computeOutputState() {
+    return DummyPersistentState.INSTANCE;
   }
 
   @NotNull
@@ -32,13 +63,4 @@ public class ClassFileItem implements FileProcessingCompiler.ProcessingItem {
   public VirtualFile getSourceFile() {
     return mySourceFile;
   }
-
-  public AppEngineFacet getFacet() {
-    return myFacet;
-  }
-
-  public ValidityState getValidityState() {
-    return new ClassFileItemDependenciesState(myDependencies);
-  }
-
 }
