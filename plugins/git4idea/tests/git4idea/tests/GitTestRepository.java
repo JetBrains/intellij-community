@@ -143,6 +143,26 @@ public class GitTestRepository {
     execute(true, pars);
   }
 
+  /**
+   * Create new branch and switch to it.
+   */
+  public void createBranch(String branchName) throws IOException {
+    execute(true, "checkout", "-b", branchName);
+  }
+
+  /**
+   * Checkout the given branch.
+   */
+  public void checkout(String branchName) throws IOException {
+    execute(true, "checkout", branchName);
+    // need to refresh the root directory, because checkouting a branch changes files on disk, but VFS is unaware of it.
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override public void run() {
+        getDir().refresh(false, true);
+      }
+    });
+  }
+
   public ProcessOutput log(String... parameters) throws IOException {
     String[] pars = new String[parameters.length+1];
     pars[0] = "log";
@@ -150,8 +170,11 @@ public class GitTestRepository {
     return execute(false, pars);
   }
 
-  public void merge() throws IOException {
-    execute(true, "merge");
+  public void merge(String... parameters) throws IOException {
+    String[] pars = new String[parameters.length+1];
+    pars[0] = "merge";
+    System.arraycopy(parameters, 0, pars, 1, parameters.length);
+    execute(true, pars);
   }
 
   public void mv(VirtualFile file, String newPath) throws IOException {
