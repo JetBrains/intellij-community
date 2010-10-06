@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
               final List<OrderEntry> list = fileIndex.getOrderEntriesForFile(virtualFile);
               for (OrderEntry entry : list) {
                 if (entry instanceof JdkOrderEntry) {
-                  final String className = ((PsiClass)resolved).getQualifiedName();
+                  final String className = ClassUtil.getJVMClassName((PsiClass)resolved);
                   if (className != null && !appEngineSdk.isClassInWhiteList(className)) {
                     problems.add(manager.createProblemDescriptor(reference, "Class '" + className + "' is not included in App Engine JRE White List",
                                                                  isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
