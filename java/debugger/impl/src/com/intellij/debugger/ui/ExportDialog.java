@@ -143,10 +143,14 @@ public class ExportDialog extends DialogWrapper {
   }
 
   public static String getExportThreadsText(VirtualMachineProxyImpl vmProxy) {
-    StringBuffer buffer = new StringBuffer(512);
+    final StringBuffer buffer = new StringBuffer(512);
     List<ThreadReference> threads = vmProxy.getVirtualMachine().allThreads();
     for (ThreadReference threadReference : threads) {
-      buffer.append(threadName(threadReference));
+      final String name = threadName(threadReference);
+      if (name == null) {
+        continue;
+      }
+      buffer.append(name);
       ReferenceType referenceType = threadReference.referenceType();
       if (referenceType != null) {
         //noinspection HardCodedStringLiteral
@@ -181,7 +185,10 @@ public class ExportDialog extends DialogWrapper {
           for (ObjectReference reference : list) {
             final List<ThreadReference> waiting = reference.waitingThreads();
             for (ThreadReference thread : waiting) {
-              buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.blocks.thread", threadName(thread)));
+              final String waitingThreadName = threadName(thread);
+              if (waitingThreadName != null) {
+                buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.blocks.thread", waitingThreadName));
+              }
             }
           }
         }
@@ -191,8 +198,10 @@ public class ExportDialog extends DialogWrapper {
           if (vmProxy.canGetMonitorInfo()) {
             ThreadReference waitedThread = waitedMonitor.owningThread();
             if (waitedThread != null) {
-              buffer.append("\n\t ")
-                .append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", threadName(waitedThread)));
+              final String waitedThreadName = threadName(waitedThread);
+              if (waitedThreadName != null) {
+                buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", waitedThreadName));
+              }
             }
           }
         }
@@ -228,7 +237,12 @@ public class ExportDialog extends DialogWrapper {
   }
 
   private static String threadName(ThreadReference threadReference) {
-    return threadReference.name() + "@" + threadReference.uniqueID();
+    try {
+      return threadReference.name() + "@" + threadReference.uniqueID();
+    }
+    catch (ObjectCollectedException e) {
+      return null;
+    }
   }
 
   private class CopyToClipboardAction extends AbstractAction {
