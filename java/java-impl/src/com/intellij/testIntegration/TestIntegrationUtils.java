@@ -81,8 +81,16 @@ public class TestIntegrationUtils {
 
   public static PsiClass findOuterClass(PsiElement element) {
     PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    if (result == null) {
+       final PsiFile containingFile = element.getContainingFile();
+       if (containingFile instanceof PsiClassOwner){
+        final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) {
+          result = classes[0];
+        }
+      }
+    }
     if (result == null) return null;
-
     do {
       PsiClass nextParent = PsiTreeUtil.getParentOfType(result, PsiClass.class, true);
       if (nextParent == null) return result;
