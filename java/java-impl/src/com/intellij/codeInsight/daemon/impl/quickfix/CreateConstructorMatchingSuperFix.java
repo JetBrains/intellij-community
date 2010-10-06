@@ -66,8 +66,8 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
-    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
     LOG.assertTrue(baseClass != null);
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
     List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
     PsiMethod[] baseConstrs = baseClass.getConstructors();
     for (PsiMethod baseConstr : baseConstrs) {
@@ -103,7 +103,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
             for (PsiMethodMember candidate : constructors1) {
-              PsiMethod base = (PsiMethod)candidate.getElement();
+              PsiMethod base = candidate.getElement();
               derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
 
               if (!isCopyJavadoc1) {
