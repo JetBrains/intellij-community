@@ -23,6 +23,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
@@ -70,7 +71,19 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       final ActionManager manager = ActionManager.getInstance();
       final AnAction toolbarRunGroup = manager.getAction("ToolbarRunGroup");
       if (toolbarRunGroup instanceof DefaultActionGroup) {
-        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.UNKNOWN, (ActionGroup)toolbarRunGroup, true);
+        final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
+        boolean needsGap = false;
+        int i = 0;
+        for (final AnAction action : group.getChildActionsOrStubs()) {
+          if (action instanceof ComboBoxAction) {
+            needsGap = i == 0;
+            break;
+          } else if (!(action instanceof Separator)) {
+            i++;
+          }
+        }
+
+        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.UNKNOWN, group, true);
         final JComponent component = actionToolbar.getComponent();
         component.setBackground(Color.WHITE);
         myRunPanel = new JPanel(new BorderLayout());
@@ -78,7 +91,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myRunPanel.setBackground(Color.WHITE);
         myRunPanel.add(component);
         myRunPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, color),
-                                                                BorderFactory.createEmptyBorder(1, 1, 0, 0)));
+                                                                BorderFactory.createEmptyBorder(1, needsGap ? 5 : 1, 0, 0)));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
