@@ -823,27 +823,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     public boolean equals(Object other) {
       if (other instanceof TypeToNameMap) {
         TypeToNameMap otherMap = (TypeToNameMap)other;
-        if (myPatterns.size() != otherMap.myPatterns.size()) {
-          return false;
-        }
-        if (myNames.size() != otherMap.myNames.size()) {
-          return false;
-        }
-        for (int i = 0; i < myPatterns.size(); i++) {
-          String s1 = myPatterns.get(i);
-          String s2 = otherMap.myPatterns.get(i);
-          if (!Comparing.equal(s1, s2)) {
-            return false;
-          }
-        }
-        for (int i = 0; i < myNames.size(); i++) {
-          String s1 = myNames.get(i);
-          String s2 = otherMap.myNames.get(i);
-          if (!Comparing.equal(s1, s2)) {
-            return false;
-          }
-        }
-        return true;
+        return myPatterns.equals(otherMap.myPatterns) && myNames.equals(otherMap.myNames);
       }
       return false;
     }
@@ -858,13 +838,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
       return code;
     }
-
   }
 
   private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
     boolean exist = false;
     for (final FileType existing : myAdditionalIndentOptions.keySet()) {
-      if (existing.getDefaultExtension() == fileType.getDefaultExtension()) {
+      if (Comparing.strEqual(existing.getDefaultExtension(), fileType.getDefaultExtension())) {
         exist = true;
         break;
       }
@@ -883,11 +862,13 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
   private void loadAdditionalIndentOptions() {
-    myLoadedAdditionalIndentOptions = true;
-    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    for (final FileTypeIndentOptionsProvider provider : providers) {
-      if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
-        registerAdditionalIndentOptions(provider.getFileType(), provider.createIndentOptions());
+    synchronized (myAdditionalIndentOptions) {
+      myLoadedAdditionalIndentOptions = true;
+      final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+      for (final FileTypeIndentOptionsProvider provider : providers) {
+        if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
+          registerAdditionalIndentOptions(provider.getFileType(), provider.createIndentOptions());
+        }
       }
     }
   }
