@@ -117,7 +117,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   }
 
   private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
-    return !settings.getBaseDirectoryForDownloadedFiles().equals(myBaseDirForLibrariesGetter.compute())
+    return !settings.getBaseDirectoryPath().equals(myBaseDirForLibrariesGetter.compute())
            || !Comparing.equal(settings.getLibraryDescription(), getOrCreateLibraryDescription());
   }
 

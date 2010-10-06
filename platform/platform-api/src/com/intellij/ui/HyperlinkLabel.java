@@ -63,11 +63,11 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public void setHyperlinkText(String text) {
-    myUseIconAsLink = true;
     setHyperlinkText("", text, "");
   }
 
   public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
+    myUseIconAsLink = beforeLinkText.length() == 0;
     prepareText(beforeLinkText, linkText, afterLinkText);
     revalidate();
     adjustSize();
@@ -117,6 +117,12 @@ public class HyperlinkLabel extends HighlightableComponent {
     myHighlightedText.appendText(afterLinkText, null);
     myHighlightedText.applyToComponent(this);
     adjustSize();
+  }
+
+  @Override
+  public void setText(String text) {
+    myUseIconAsLink = false;
+    super.setText(text);
   }
 
   public void setHyperlinkTarget(@NotNull final String url) {

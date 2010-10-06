@@ -185,6 +185,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
+    else if (myRole1 == ChildRole.LBRACKET || myRole2 == ChildRole.RBRACKET) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
+    }
   }
 
   @Override public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {

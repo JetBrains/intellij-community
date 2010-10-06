@@ -20,10 +20,13 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -75,18 +78,25 @@ public class CacheUpdateSession {
     return myFilesToUpdate;
   }
 
+  @Nullable
+  private synchronized Pair<CacheUpdater, Collection<VirtualFile>> getPair(final VirtualFile file) {
+    return ContainerUtil.find(myUpdatersWithFiles, new Condition<Pair<CacheUpdater, Collection<VirtualFile>>>() {
+      @Override
+      public boolean value(Pair<CacheUpdater, Collection<VirtualFile>> cacheUpdaterCollectionPair) {
+        return cacheUpdaterCollectionPair.second.contains(file);
+      }
+    });
+  }
+
   public void processFile(FileContent content) {
     VirtualFile file = content.getVirtualFile();
     boolean isValid = file.isValid();
 
-    Iterator<Pair<CacheUpdater, Collection<VirtualFile>>> it = myUpdatersWithFiles.iterator();
-    while (it.hasNext()) {
-      Pair<CacheUpdater, Collection<VirtualFile>> eachPair = it.next();
-      CacheUpdater eachUpdater = eachPair.first;
-      Collection<VirtualFile> eachFiles = eachPair.second;
-
-      if (!eachFiles.contains(file)) continue;
-
+    while (true) {
+      Pair<CacheUpdater, Collection<VirtualFile>> pair = getPair(file);
+      if (pair == null) return;
+      CacheUpdater eachUpdater = pair.getFirst();
+      Collection<VirtualFile> eachFiles = pair.getSecond();
       try {
         if (isValid && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
           eachUpdater.processFile(content);
@@ -99,19 +109,22 @@ public class CacheUpdateSession {
         LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
         file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
       }
-      eachFiles.remove(file);
+      removeFile(file, eachUpdater, eachFiles);
+    }
+  }
 
-      if (eachFiles.isEmpty()) {
-        try {
-          eachUpdater.updatingDone();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        it.remove();
+  private synchronized void removeFile(VirtualFile file, CacheUpdater eachUpdater, Collection<VirtualFile> eachFiles) {
+    eachFiles.remove(file);
+
+    if (eachFiles.isEmpty()) {
+      try {
+        eachUpdater.updatingDone();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
   }

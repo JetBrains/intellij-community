@@ -29,7 +29,7 @@
               </component>
             </children>
           </scrollpane>
-          <component id="76cd4" class="javax.swing.JButton" binding="myAddLibrarytButton">
+          <component id="76cd4" class="javax.swing.JButton" binding="myAddLibraryButton">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -45,7 +45,7 @@
               <text value="Remove"/>
             </properties>
           </component>
-          <component id="7d17d" class="javax.swing.JButton" binding="myEditLibrarytButton">
+          <component id="7d17d" class="javax.swing.JButton" binding="myEditLibraryButton">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

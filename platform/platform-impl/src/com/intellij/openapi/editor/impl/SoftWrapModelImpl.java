@@ -56,10 +56,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
 
-  private final CachingSoftWrapDataMapper myDataMapper;
-  private final SoftWrapsStorage          myStorage;
-  private final SoftWrapPainter           myPainter;
-  private final SoftWrapApplianceManager  myApplianceManager;
+  private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
+  private final CachingSoftWrapDataMapper          myDataMapper;
+  private final SoftWrapsStorage                   myStorage;
+  private final SoftWrapPainter                    myPainter;
+  private final SoftWrapApplianceManager           myApplianceManager;
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
@@ -96,6 +97,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myPainter = painter;
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
+    myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
 
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
@@ -110,6 +112,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   public boolean isSoftWrappingEnabled() {
     if (myEditor.isOneLineMode()) {
+      return false;
+    }
+
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+    if (visibleArea.width <= 0 || visibleArea.height <= 0) {
       return false;
     }
 
@@ -323,7 +330,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   private boolean prepareToMapping() {
     boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0
-                           && myEditor.getFoldingModel().isFoldingEnabled();
+                             && myFoldBasedApplianceStrategy.processSoftWraps();
+
     if (!useSoftWraps) {
       return useSoftWraps;
     }
@@ -430,6 +438,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     //  // Restore caret position.
     //  caretModel.moveToVisualPosition(visualCaretPosition);
     //}
+  }
+
+  @Override
+  public void setPlace(@NotNull SoftWrapAppliancePlaces place) {
+    myFoldBasedApplianceStrategy.setCurrentPlace(place);
   }
 
   @Override

@@ -50,6 +50,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -102,9 +103,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
-    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
     InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
     myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
+    mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
+
+    // initial guess
+    setProgressLimit(300 * 2);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -112,21 +116,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = myProfileWrapper;
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-    checkInspectionsDuplicates(tools);
     inspect(tools, iManager, true, true, true, progress);
-  }
-
-  // check whether some inspection got registered twice by accident. Bit only once.
-  private static boolean alreadyChecked;
-  private static void checkInspectionsDuplicates(List<LocalInspectionTool> tools) {
-    if (alreadyChecked) return;
-    alreadyChecked = true;
-    Set<LocalInspectionTool> uniqTools = new THashSet<LocalInspectionTool>(tools.size());
-    for (LocalInspectionTool tool : tools) {
-      if (!uniqTools.add(tool)) {
-        LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
-      }
-    }
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
@@ -206,7 +196,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     ArrayList<PsiElement> outside = new ArrayList<PsiElement>();
     Divider.getInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside, HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT);
 
-    setProgressLimit(1L * tools.size() * (inside.size() + outside.size()));
+    setProgressLimit(1L * tools.size() *2/** (inside.size() + outside.size())*/);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
@@ -256,7 +246,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           element.accept(elementVisitor);
         }
 
-        advanceProgress(elements.size());
+        advanceProgress(1);
 
         if (holder.hasResults()) {
           appendDescriptors(myFile, holder.getResults(), tool);
@@ -291,7 +281,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           element.accept(elementVisitor);
         }
 
-        advanceProgress(elements.size());
+        advanceProgress(1);
 
         tool.inspectionFinished(session);
 
@@ -336,16 +326,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlights;
   }
 
-  private static HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
-                                                           final HighlightInfoType highlightInfoType,
-                                                           final String message,
-                                                           final String toolTip) {
+  private HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
+                                                    final HighlightInfoType highlightInfoType,
+                                                    final String message,
+                                                    final String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
 
-    return new HighlightInfo(null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                             highlightInfoType.getSeverity(element), problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
+    final HighlightSeverity severity = highlightInfoType.getSeverity(element);
+    return new HighlightInfo(mySeverityRegistrar.getTextAttributesBySeverity(severity), highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+                             severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
   private final AtomicBoolean haveInfosToProcess = new AtomicBoolean();

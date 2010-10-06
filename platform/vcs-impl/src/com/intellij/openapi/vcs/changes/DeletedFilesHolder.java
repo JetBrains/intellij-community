@@ -37,7 +37,7 @@ public class DeletedFilesHolder implements FileHolder {
     myFiles.putAll(holder.myFiles);
   }
 
-  public void cleanScope(final VcsDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
     if (scope == null) {
       myFiles.clear();
     }

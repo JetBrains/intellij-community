@@ -61,10 +61,6 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void processRootSwitch(VirtualFile file, String branch) {
   }
 
-  public boolean isUpdatingUnversionedFiles() {
-    return true;
-  }
-
   public boolean reportChangesOutsideProject() {
     return false;
   }

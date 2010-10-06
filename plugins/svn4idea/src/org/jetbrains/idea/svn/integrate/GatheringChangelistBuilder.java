@@ -126,10 +126,6 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   public void processRootSwitch(VirtualFile file, String branch) {
   }
 
-  public boolean isUpdatingUnversionedFiles() {
-    return false;
-  }
-
   public boolean reportChangesOutsideProject() {
     return true;
   }

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,14 @@ public abstract class LookupElement extends UserDataHolderBase {
   @NotNull
   public Object getObject() {
     return this;
+  }
+
+  public boolean isValid() {
+    final Object object = getObject();
+    if (object instanceof PsiElement) {
+      return ((PsiElement)object).isValid();
+    }
+    return true;
   }
 
   public void handleInsert(InsertionContext context) {

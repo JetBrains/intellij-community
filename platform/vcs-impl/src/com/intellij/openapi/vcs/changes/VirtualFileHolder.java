@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
@@ -49,16 +48,17 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   // returns number of removed directories
-  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsDirtyScope scope) {
+  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsAppendableDirtyScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       public Integer compute() {
         int result = 0;
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
         if (project.isDisposed() || files.isEmpty()) return 0;
-        final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(files);
+
         if (scope.getRecursivelyDirtyDirectories().size() == 0) {
           final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
-          boolean cleanedDroppedFiles = false;
+          boolean cleanDroppedFiles = false;
+
           for(FilePath dirtyFile: dirtyFiles) {
             VirtualFile f = dirtyFile.getVirtualFile();
             if (f != null) {
@@ -66,22 +66,30 @@ public class VirtualFileHolder implements FileHolder {
               if (f.isDirectory()) ++ result;
             }
             else {
-              if (!cleanedDroppedFiles) {
-                cleanedDroppedFiles = true;
-                for(VirtualFile file: currentFiles) {
-                  if (fileDropped(project, file)) {
-                    files.remove(file);
-                    if (file.isDirectory()) ++ result;
-                  }
+              cleanDroppedFiles = true;
+            }
+
+            if (cleanDroppedFiles) {
+              for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
+                final VirtualFile file = iterator.next();
+                if (fileDropped(file)) {
+                  iterator.remove();
+                  scope.addDirtyFile(new FilePathImpl(file));
+                  if (file.isDirectory()) ++ result;
                 }
               }
             }
           }
         }
         else {
-          for (VirtualFile file : currentFiles) {
-            if (fileDropped(project, file) || scope.belongsTo(new FilePathImpl(file))) {
-              files.remove(file);
+          for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
+            final VirtualFile file = iterator.next();
+            final boolean fileDropped = fileDropped(file);
+            if (fileDropped) {
+              scope.addDirtyFile(new FilePathImpl(file));
+            }
+            if (fileDropped || scope.belongsTo(new FilePathImpl(file))) {
+              iterator.remove();
               if (file.isDirectory()) ++ result;
             }
           }
@@ -91,12 +99,12 @@ public class VirtualFileHolder implements FileHolder {
     });
   }
 
-  public void cleanScope(final VcsDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
     myNumDirs -= cleanScope(myProject, myFiles, scope);
   }
 
-  private static boolean fileDropped(final Project project, final VirtualFile file) {
-    return !file.isValid() || ProjectLevelVcsManager.getInstance(project).getVcsFor(file) == null;
+  private static boolean fileDropped(final VirtualFile file) {
+    return ! file.isValid();
   }
 
   public void addFile(VirtualFile file) {
@@ -109,6 +117,7 @@ public class VirtualFileHolder implements FileHolder {
     if (file.isDirectory()) -- myNumDirs;
   }
 
+  // todo track number of copies made
   public List<VirtualFile> getFiles() {
     return new ArrayList<VirtualFile>(myFiles);
   }

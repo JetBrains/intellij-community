@@ -1410,9 +1410,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isReleased) {
       g.setColor(new Color(128, 255, 128));
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
-
       return;
     }
+    if (myProject != null && myProject.isDisposed()) return;
 
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
@@ -2964,7 +2964,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (lineNumber >= totalLines && totalLines > 0) {
       int visibleLineCount = getVisibleLineCount();
-      moveCaretToScreenPos(x, visibleLineCount > 0 ? visibleLineNumberToYPosition( visibleLineCount - 1) : 0);
+      int newY = visibleLineCount > 0 ? visibleLineNumberToYPosition(visibleLineCount - 1) : 0;
+      if (newY > 0 && newY == y) {
+        newY = visibleLineNumberToYPosition(getVisibleLogicalLinesCount());
+      }
+      moveCaretToScreenPos(x, newY);
       return;
     }
 
@@ -3535,6 +3539,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 lineNumber += myDy;
               }
 
+              lineNumber = Math.max(0, lineNumber);
               columnNumber = Math.max(0, columnNumber);
               VisualPosition pos = new VisualPosition(lineNumber, columnNumber);
               getCaretModel().moveToVisualPosition(pos);

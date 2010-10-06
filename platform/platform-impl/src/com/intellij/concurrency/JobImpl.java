@@ -39,6 +39,21 @@ public class JobImpl<T> implements Job<T> {
   private volatile boolean scheduled;
   private final boolean myFailFastOnAcquireReadAction;
 
+  public static final Job NULL_JOB = new JobImpl(0,false) {
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public void waitForTermination() throws Throwable {
+    }
+
+    @Override
+    public void cancel() {
+    }
+  };
+
   JobImpl(int priority, boolean failFastOnAcquireReadAction) {
     myPriority = priority;
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;

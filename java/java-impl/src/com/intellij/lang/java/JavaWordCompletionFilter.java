@@ -19,6 +19,8 @@
  */
 package com.intellij.lang.java;
 
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.lang.WordCompletionElementFilter;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
@@ -30,6 +32,11 @@ public class JavaWordCompletionFilter implements WordCompletionElementFilter {
                                                                  JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
 
   public boolean isWordCompletionEnabledIn(final IElementType element) {
+    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (process != null && process.isAutopopupCompletion()) {
+      return false;
+    }
+
     return ENABLED_TOKENS.contains(element);
   }
 }

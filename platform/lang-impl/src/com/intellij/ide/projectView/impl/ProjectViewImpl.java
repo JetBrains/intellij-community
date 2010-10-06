@@ -528,37 +528,37 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
 
   // public for tests
   public synchronized void setupImpl(final ToolWindow toolWindow, final boolean loadPaneExtensions) {
-    myCombo.setRenderer(new ListCellRendererWrapper(myCombo.getRenderer()){
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    myCombo.setRenderer(new ListCellRendererWrapper<Pair<String, String>>(myCombo.getRenderer()){
+      @Override
+      public void customize(final JList list,
+                            final Pair<String, String> value,
+                            final int index,
+                            final boolean selected,
+                            final boolean cellHasFocus) {
         if (value == null) {
-          return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          return;
         }
 
-        final Pair<String, String> ids = (Pair<String, String>)value;
-        final String id = ids.first;
-        final String subId = ids.second;
+        final String id = value.first;
+        final String subId = value.second;
         final AbstractProjectViewPane pane = getProjectViewPaneById(id);
-        String name = null;
-        Icon icon = null;
         if (pane != null) {
           if (subId == null) {
-            name = pane.getTitle();
-            icon = pane.getIcon();
+            setText(pane.getTitle());
+            setIcon(pane.getIcon());
+            return;
+          }
+          final String presentable = pane.getPresentableSubIdName(subId);
+          if (index == -1) {
+            setText(presentable);
+            setIcon(pane.getIcon());
           }
           else {
-            String presentable = pane.getPresentableSubIdName(subId);
-            if (index == -1) {
-              name = presentable;
-              icon = pane.getIcon();
-            }
-            else {
-              // indent sub id
-              name = presentable;
-              icon = BULLET_ICON;
-            }
+            // indent sub id
+            setText(presentable);
+            setIcon(BULLET_ICON);
           }
         }
-        return getListCellRendererComponent(list, name, icon, index, isSelected, cellHasFocus);
       }
     });
 

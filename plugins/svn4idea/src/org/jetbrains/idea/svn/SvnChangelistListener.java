@@ -33,7 +33,9 @@ import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class SvnChangelistListener implements ChangeListListener {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangelistListener");
@@ -192,7 +194,12 @@ public class SvnChangelistListener implements ChangeListListener {
       return refResult.get();
     }
     catch (SVNException e) {
-      LOG.info(e);
+      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+      if (SVNErrorCode.WC_NOT_DIRECTORY.equals(errorCode) || SVNErrorCode.WC_NOT_FILE.equals(errorCode)) {
+        LOG.debug("Logging only, exception is valid (caught) here", e);
+      } else {
+        LOG.info("Logging only, exception is valid (caught) here", e);
+      }
     }
     return null;
   }

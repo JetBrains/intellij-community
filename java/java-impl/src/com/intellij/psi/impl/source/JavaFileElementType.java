@@ -20,7 +20,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.java.parser.FileParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -41,7 +45,7 @@ import com.intellij.util.io.StringRef;
 import java.io.IOException;
 
 public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 3;
+  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? 5 : 4;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
@@ -61,7 +65,17 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }
 
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(final ASTNode chameleon) {
+    if (JavaParserDefinition.USE_NEW_PARSER) {
+      final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+
+      final PsiBuilder.Marker root = builder.mark();
+      FileParser.parse(builder);
+      root.done(this);
+
+      return builder.getTreeBuilt().getFirstChildNode();
+    }
+
     FileElement node = (FileElement)chameleon;
     final CharSequence seq = node.getChars();
 

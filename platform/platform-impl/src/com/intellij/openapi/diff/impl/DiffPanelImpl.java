@@ -259,7 +259,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myDiffUpdater.contentAdded(source);
     editor.getSettings().setLineNumbersShown(true);
     editor.getSettings().setFoldingOutlineShown(false);
-    ((FoldingModelEx)editor.getFoldingModel()).setFoldingEnabled(false);
+    editor.getFoldingModel().setFoldingEnabled(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
     Editor editor1 = getEditor(FragmentSide.SIDE1);

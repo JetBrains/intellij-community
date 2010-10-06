@@ -25,6 +25,7 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class DownloadingOptionsDialog extends DialogWrapper {
-
   private JPanel myPanel;
   private CheckBoxList myFilesList;
   private TextFieldWithBrowseButton myDirectoryField;
@@ -44,16 +44,16 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private JLabel myCopyDownloadedFilesToLabel;
   private JCheckBox myDownloadJavadocsCheckBox;
   private JPanel myNameWrappingPanel;
-  private final LibraryCompositionSettings mySettings;
+  private final LibraryDownloadSettings mySettings;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private LibraryDownloadDescription myDownloadDescription;
 
-  protected DownloadingOptionsDialog(Component parent, LibraryCompositionSettings settings) {
+  protected DownloadingOptionsDialog(@NotNull Component parent, @NotNull LibraryDownloadSettings settings) {
     super(parent, true);
     setTitle("Downloading Options");
     mySettings = settings;
 
-    myDownloadDescription = settings.getLibraryDescription().getDownloadDescription();
+    myDownloadDescription = settings.getDescription();
     final List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();
     myFilesList.setModel(new CollectionListModel(ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<LibraryDownloadInfo, JCheckBox>() {
       @Override
@@ -73,7 +73,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myDownloadSourcesCheckBox.setSelected(settings.isDownloadSources());
     myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavadocs());
 
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getDownloadedLibraryName(), settings.getLibraryLevel());
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(settings.getLibraryName(), settings.getLibraryLevel());
     myNameWrappingPanel.add(myNameAndLevelPanel.getPanel());
     init();
   }
@@ -90,7 +90,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    mySettings.setDownloadedLibraryName(myNameAndLevelPanel.getLibraryName());
+    mySettings.setLibraryName(myNameAndLevelPanel.getLibraryName());
     mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     mySettings.setDirectoryForDownloadedLibrariesPath(myDirectoryField.getText());
 

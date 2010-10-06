@@ -16,8 +16,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.events.ElementChangedEvent;
-import com.intellij.util.xml.events.ElementDefinedEvent;
+import com.intellij.util.xml.events.DomEvent;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +76,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), "");
       setXmlElement(attribute);
       getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
-      manager.fireEvent(new ElementDefinedEvent(getProxy()));
+      final DomElement element = getProxy();
+      manager.fireEvent(new DomEvent(element, true));
       return attribute;
     }
     catch (IncorrectOperationException e) {
@@ -165,7 +165,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       }
     });
     final DomElement proxy = getProxy();
-    getManager().fireEvent(oldValue != null ? new ElementChangedEvent(proxy) : new ElementDefinedEvent(proxy));
+    final DomElement element = proxy;
+    getManager().fireEvent(oldValue != null ? new DomEvent(proxy, false) : new DomEvent(element, true));
   }
 
 }

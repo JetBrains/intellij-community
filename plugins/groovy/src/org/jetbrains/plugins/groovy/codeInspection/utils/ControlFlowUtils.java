@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"OverlyComplexClass"})
@@ -442,17 +443,18 @@ public class ControlFlowUtils {
     return false;
   }
 
-  public static List<GrStatement> collectReturns(PsiElement element) {
+  public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock);
   }
-  public static List<GrStatement> collectReturns(PsiElement element, final boolean allExitPoints) {
+  public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
+    if (element == null) return Collections.emptyList();
+
     final Instruction[] flow;
     if (element instanceof GrCodeBlock) {
       flow = ((GrCodeBlock)element).getControlFlow();
     }
     else {
-      flow = new ControlFlowBuilder(element.getProject()).buildControlFlow(
-        (GroovyPsiElement)element, null, null);
+      flow = new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element, null, null);
     }
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<GrStatement>();

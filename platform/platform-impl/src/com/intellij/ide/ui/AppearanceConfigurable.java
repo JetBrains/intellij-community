@@ -284,30 +284,33 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return "preferences.lookFeel";
   }
 
-  private static final class MyLafComboBoxRenderer extends ListCellRendererWrapper {
+  private static final class MyLafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
     public MyLafComboBoxRenderer(final ListCellRenderer listCellRenderer) {
       super(listCellRenderer);
     }
 
-    @Nullable
     @Override
-    public String getDisplayedName(final Object value) {
-      return value instanceof UIManager.LookAndFeelInfo ? ((UIManager.LookAndFeelInfo)value).getName() : null;
+    public void customize(final JList list,
+                          final UIManager.LookAndFeelInfo value,
+                          final int index,
+                          final boolean selected,
+                          final boolean cellHasFocus) {
+      setText(value.getName());
     }
   }
 
-  private static final class MyTooltipModeRenderer extends ListCellRendererWrapper {
+  private static final class MyTooltipModeRenderer extends ListCellRendererWrapper<String> {
     public MyTooltipModeRenderer(final ListCellRenderer listCellRenderer) {
       super(listCellRenderer);
     }
 
     @Override
-    public String getDisplayedName(final Object value) {
+    public void customize(final JList list, final String value, final int index, final boolean selected, final boolean cellHasFocus) {
       String s = (String)value;
       if (s != null && s.length() > 1) {
         s = s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
       }
-      return s;
+      setText(s);
     }
   }
 

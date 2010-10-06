@@ -37,19 +37,11 @@ public class TemplateKindCombo extends JComboBox {
 
     setRenderer(new ListCellRendererWrapper(getRenderer()) {
       @Override
-      public String getDisplayedName(Object value) {
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
         if (value instanceof Trinity) {
-          return (String)((Trinity)value).first;
+          setText((String)((Trinity)value).first);
+          setIcon ((Icon)((Trinity)value).second);
         }
-        return null;
-      }
-
-      @Override
-      public Icon getIcon(Object value) {
-        if (value instanceof Trinity) {
-          return (Icon)((Trinity)value).second;
-        }
-        return null;
       }
     });
 

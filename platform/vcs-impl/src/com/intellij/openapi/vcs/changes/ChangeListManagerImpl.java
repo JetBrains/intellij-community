@@ -263,20 +263,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   static class DisposedException extends RuntimeException {}
 
   public void scheduleUpdate() {
-    myUpdater.schedule(true);
+    myUpdater.schedule();
   }
 
   public void scheduleUpdate(boolean updateUnversionedFiles) {
-    myUpdater.schedule(updateUnversionedFiles);
+    myUpdater.schedule();
   }
 
   private class ActualUpdater implements LocalChangesUpdater {
-    public void execute(boolean updateUnversioned, AtomicSectionsAware atomicSectionsAware) {
-      updateImmediately(updateUnversioned, atomicSectionsAware);
+    public void execute(AtomicSectionsAware atomicSectionsAware) {
+      updateImmediately(atomicSectionsAware);
     }
   }
 
-  private void updateImmediately(final boolean updateUnversionedFiles, final AtomicSectionsAware atomicSectionsAware) {
+  private void updateImmediately(final AtomicSectionsAware atomicSectionsAware) {
     FileHolderComposite composite;
     ChangeListWorker changeListWorker;
 
@@ -313,13 +313,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       // after update of copies of objects is complete, it would apply the same modifications to copies.)
       synchronized (myDataLock) {
         changeListWorker = myWorker.copy();
-        composite = updateUnversionedFiles ? (FileHolderComposite) myComposite.copy() : myComposite;
+        composite = (FileHolderComposite) myComposite.copy();
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
-        }
-        if (updateUnversionedFiles && wasEverythingDirty) {
-          composite.cleanAll();         
+          composite.cleanAll();
         }
       }
       if (wasEverythingDirty) {
@@ -334,7 +332,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public Boolean get() {
           return myUpdater.isStopped();
         }
-      }, updateUnversionedFiles, myIgnoredIdeaLevel, gate);
+      }, myIgnoredIdeaLevel, gate);
 
       myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
         @Override
@@ -356,29 +354,26 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
         if (! wasEverythingDirty) {
+          composite.cleanAndAdjustScope(adjustedScope);
           changeListWorker.notifyStartProcessingChanges(adjustedScope);
         }
-        if (updateUnversionedFiles && !wasEverythingDirty) {
-          composite.cleanScope(adjustedScope);
-        }
-        
+
         try {
           actualUpdate(wasEverythingDirty, composite, builder, adjustedScope, vcs, changeListWorker, gate);
         }
         catch (Throwable t) {
           LOG.info(t);
-          if (t instanceof Error) {
-            throw (Error) t;
-          } else if (t instanceof RuntimeException) {
-            throw (RuntimeException) t;
-          }
-          throw new RuntimeException(t);
+          reThrowRuntime(t);
         }
 
         if (myUpdateException != null) break;
       }
 
       final boolean takeChanges = (myUpdateException == null);
+      if (takeChanges) {
+        // update IDEA-level ignored files
+        updateIgnoredFiles(composite);
+      }
       
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
@@ -394,16 +389,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myWorker.takeData(changeListWorker);
         }
 
-        if (takeChanges && updateUnversionedFiles) {
-          boolean statusChanged = !myComposite.equals(composite);
+        if (takeChanges) {
+          final boolean statusChanged = ! myComposite.equals(composite);
           myComposite = composite;
           if (statusChanged) {
             myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
           }
-        }
-
-        if (takeChanges) {
-          updateIgnoredFiles(false);
         }
         myShowLocalChangesInvalidated = false;
       }
@@ -429,6 +420,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myChangesViewManager.scheduleRefresh();
       }
     }
+  }
+
+  private static void reThrowRuntime(final Throwable t) {
+    if (t instanceof Error) {
+      throw (Error) t;
+    } else if (t instanceof RuntimeException) {
+      throw (RuntimeException) t;
+    }
+    throw new RuntimeException(t);
   }
 
   private void actualUpdate(final boolean wasEverythingDirty, final FileHolderComposite composite, final UpdatingChangeListBuilder builder,
@@ -499,35 +499,49 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public List<VirtualFile> getUnversionedFiles() {
-    return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+    synchronized (myDataLock) {
+      return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+    }
   }
 
   Pair<Integer, Integer> getUnversionedFilesSize() {
-    final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-    return new Pair<Integer, Integer>(holder.getSize(), holder.getNumDirs());
+    synchronized (myDataLock) {
+      final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
+      return new Pair<Integer, Integer>(holder.getSize(), holder.getNumDirs());
+    }
   }
 
   List<VirtualFile> getModifiedWithoutEditing() {
-    return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles());
+    synchronized (myDataLock) {
+      return myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles();
+    }
   }
 
   /**
    * @return only roots for ignored folders, and ignored files
    */
   List<VirtualFile> getIgnoredFiles() {
-    return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().values());
+    synchronized (myDataLock) {
+      return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().values());
+    }
   }
 
   public List<VirtualFile> getLockedFolders() {
-    return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles());
+    synchronized (myDataLock) {
+      return myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles();
+    }
   }
 
   Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
-    return new HashMap<VirtualFile, LogicalLock>(((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap());
+    synchronized (myDataLock) {
+      return new HashMap<VirtualFile, LogicalLock>(((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap());
+    }
   }
 
   public boolean isLogicallyLocked(final VirtualFile file) {
-    return ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap().containsKey(file);
+    synchronized (myDataLock) {
+      return ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).containsKey(file);
+    }
   }
 
   public boolean isContainedInLocallyDeleted(final FilePath filePath) {
@@ -732,7 +746,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public boolean isUnversioned(VirtualFile file) {
-    return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file);
+    synchronized (myDataLock) {
+      return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file);
+    }
   }
 
   @NotNull
@@ -912,39 +928,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
-    updateIgnoredFiles(true);
+    scheduleUpdate();
   }
 
   public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.set(filesToIgnore);
-    // todo!!!!!! dont synchronously
-    updateIgnoredFiles(true);
+    scheduleUpdate();
   }
 
-  private void updateIgnoredFiles(final boolean checkIgnored) {
-    synchronized (myDataLock) {
-      List<VirtualFile> unversionedFiles = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
-      //List<VirtualFile> ignoredFiles = myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles();
-      boolean somethingChanged = false;
-      for(VirtualFile file: unversionedFiles) {
-        if (isIgnoredFile(file)) {
-          somethingChanged = true;
-          myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
-          myComposite.getIgnoredFileHolder().addFile(file);
-        }
-      }
-      /*if (checkIgnored) {
-        for(VirtualFile file: ignoredFiles) {
-          if (!isIgnoredFile(file)) {
-            somethingChanged = true;
-            // the file may have been reported as ignored by the VCS, so we can't directly move it to unversioned files
-            VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-          }
-        }
-      }*/
-      if (somethingChanged) {
-        myFileStatusManager.fileStatusesChanged();
-        myChangesViewManager.scheduleRefresh();
+  private void updateIgnoredFiles(final FileHolderComposite composite) {
+    List<VirtualFile> unversionedFiles = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+
+    for(VirtualFile file: unversionedFiles) {
+      if (isIgnoredFile(file)) {
+        composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
+        composite.getIgnoredFileHolder().addFile(file);
       }
     }
   }

@@ -43,7 +43,7 @@ public class RecursiveFileHolder<T> implements FileHolder {
     myMap.clear();
   }
 
-  public void cleanScope(final VcsDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
@@ -93,5 +93,20 @@ public class RecursiveFileHolder<T> implements FileHolder {
 
   public synchronized Collection<VirtualFile> values() {
     return myMap.keySet();
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final RecursiveFileHolder that = (RecursiveFileHolder)o;
+
+    if (!myMap.equals(that.myMap)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myMap.hashCode();
   }
 }

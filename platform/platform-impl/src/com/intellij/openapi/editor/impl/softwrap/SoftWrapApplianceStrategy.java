@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.events;
-
-import com.intellij.util.xml.events.ElementChangedEvent;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventVisitor;
+package com.intellij.openapi.editor.impl.softwrap;
 
 /**
- * @author peter
+ * Strategy interface for ruling if soft wraps should be processed.
+ * <p/>
+ * Implementations of this interface are not obliged to be thread-safe.
+ *
+ * @author Denis Zhdanov
+ * @since 10/6/10 8:08 AM
  */
-public class ElementUndefinedEvent extends ElementChangedEvent {
+public interface SoftWrapApplianceStrategy {
 
-  public ElementUndefinedEvent(final DomElement element) {
-    super(element);
-  }
-
-  public String toString() {
-    return "Undefined " + getElement();
-  }
-
-  public void accept(DomEventVisitor visitor) {
-    visitor.visitElementUndefined(this);
-  }
+  /**
+   * Allows to answer if soft wraps should be processed.
+   *
+   * @return    <code>true</code> if soft wraps should be processed; <code>false</code> otherwise
+   */
+  boolean processSoftWraps();
 }

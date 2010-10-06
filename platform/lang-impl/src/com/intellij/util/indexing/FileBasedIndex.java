@@ -535,34 +535,37 @@ public class FileBasedIndex implements ApplicationComponent {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
-    if (myFlushingFuture != null) {
-      myFlushingFuture.cancel(false);
-      myFlushingFuture = null;
-    }
-
-    myFileDocumentManager.saveAllDocuments();
-    
-    LOG.info("START INDEX SHUTDOWN");
     try {
-      myChangedFilesCollector.forceUpdate(null, null, true);
-
-      for (ID<?, ?> indexId : myIndices.keySet()) {
-        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-        assert index != null;
-        checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
-        //LOG.info("DISPOSING " + indexId);
-        index.dispose();
+      if (myFlushingFuture != null) {
+        myFlushingFuture.cancel(false);
+        myFlushingFuture = null;
       }
 
-      myVfManager.removeVirtualFileListener(myChangedFilesCollector);
+      myFileDocumentManager.saveAllDocuments();
+    }
+    finally {
+      LOG.info("START INDEX SHUTDOWN");
+      try {
+        myChangedFilesCollector.forceUpdate(null, null, true);
 
-      //FileUtil.delete(getMarkerFile());
+        for (ID<?, ?> indexId : myIndices.keySet()) {
+          final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+          assert index != null;
+          checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
+          //LOG.info("DISPOSING " + indexId);
+          index.dispose();
+        }
+
+        myVfManager.removeVirtualFileListener(myChangedFilesCollector);
+
+        //FileUtil.delete(getMarkerFile());
+      }
+      catch (Throwable e) {
+        LOG.info("Problems during index shutdown", e);
+        throw new RuntimeException(e);
+      }
+      LOG.info("END INDEX SHUTDOWN");
     }
-    catch (Throwable e) {
-      LOG.info("Problems during index shutdown", e);
-      throw new RuntimeException(e);
-    }
-    LOG.info("END INDEX SHUTDOWN");
   }
 
   private void flushAllIndices() {

@@ -550,6 +550,9 @@ public class CompilerTask extends Task.Backgroundable {
 
     public boolean canCloseProject(final Project project) {
       assert project != null;
+      if (!project.equals(myProject)) {
+        return true;
+      }
       if (shouldAskUser()) {
         int result = Messages.showOkCancelDialog(
           myProject,
@@ -627,13 +630,15 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     public void projectClosed(Project project) {
-      if (myContent != null) {
+      if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
     }
 
     public void projectClosing(Project project) {
-      myIsApplicationExitingOrProjectClosing = true;
+      if (project.equals(myProject)) {
+        myIsApplicationExitingOrProjectClosing = true;
+      }
     }
   }
 }

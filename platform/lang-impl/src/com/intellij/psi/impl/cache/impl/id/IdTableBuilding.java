@@ -178,13 +178,13 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof AbstractFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(createWordScaner((AbstractFileType)fileType));
+      return new WordsScannerFileTypeIdIndexerAdapter(createWordScanner((AbstractFileType)fileType));
     }
 
     return null;
   }
 
-  private static WordsScanner createWordScaner(final AbstractFileType abstractFileType) {
+  private static WordsScanner createWordScanner(final AbstractFileType abstractFileType) {
     return new DefaultWordsScanner(new CustomFileTypeLexer(abstractFileType.getSyntaxTable(), true),
                                    TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,

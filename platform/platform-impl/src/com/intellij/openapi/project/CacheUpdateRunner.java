@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
@@ -32,6 +36,7 @@ import java.util.Collection;
 import java.util.Set;
 
 class CacheUpdateRunner {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private final Project myProject;
   private final Collection<CacheUpdater> myUpdaters;
   private CacheUpdateSession mySession;
@@ -85,7 +90,7 @@ class CacheUpdateRunner {
       while (!myProject.isDisposed()) {
         indicator.checkCanceled();
         // todo wait for the user...
-        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, mySession, processInReadAction)) {
+        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, processInReadAction)) {
           break;
         }
       }
@@ -113,7 +118,6 @@ class CacheUpdateRunner {
 
   private boolean processSomeFilesWhileUserIsInactive(final FileContentQueue queue,
                                                       final Consumer<VirtualFile> progressUpdater,
-                                                      final CacheUpdateSession session,
                                                       final boolean processInReadAction) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase();
     final ApplicationAdapter canceller = new ApplicationAdapter() {
@@ -127,49 +131,88 @@ class CacheUpdateRunner {
 
     final boolean[] isFinished = new boolean[1];
     try {
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        public void run() {
-          while (true) {
-            if (myProject.isDisposed()) return;
-            if (innerIndicator.isCanceled()) return;
-
-            final FileContent fileContent = queue.take();
-            if (fileContent == null) {
-              isFinished[0] = true;
-              return;
-            }
-
-            try {
-              final Runnable action = new Runnable() {
-                public void run() {
-                  innerIndicator.checkCanceled();
-
-                  if (myProject.isDisposed()) return;
-
-                  final VirtualFile file = fileContent.getVirtualFile();
-                  progressUpdater.consume(file);
-                  session.processFile(fileContent);
-                }
-              };
-              if (processInReadAction) {
-                application.runReadAction(action);
-              }
-              else {
-                action.run();
-              }
-            }
-            catch (ProcessCanceledException e) {
-              queue.pushback(fileContent);
-              return;
-            }
-          }
+      int threadsCount = Registry.intValue("caches.indexerThreadsCount");
+      if (threadsCount == 1) {
+        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
+        ProgressManager.getInstance().runProcess(process, innerIndicator);
+      }
+      else {
+        Job<Object> job = JobScheduler.getInstance().createJob("Indexing", Thread.NORM_PRIORITY);
+        for (int i = 0; i < threadsCount; i++) {
+          Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
+          job.addTask(process);
         }
-      }, innerIndicator);
+        try {
+          job.scheduleAndWaitForResults();
+        }
+        catch (Throwable throwable) {
+          LOG.error(throwable);
+        }
+      }
     }
     finally {
       application.removeApplicationListener(canceller);
     }
 
     return isFinished[0];
+  }
+
+  private class MyRunnable implements Runnable {
+    private final ProgressIndicatorBase myInnerIndicator;
+    private final FileContentQueue myQueue;
+    private final boolean[] myFinished;
+    private final Consumer<VirtualFile> myProgressUpdater;
+    private final boolean myProcessInReadAction;
+    private final Application myApplication;
+
+    public MyRunnable(ProgressIndicatorBase innerIndicator,
+                      FileContentQueue queue,
+                      boolean[] finished,
+                      Consumer<VirtualFile> progressUpdater,
+                      boolean processInReadAction, Application application) {
+      myInnerIndicator = innerIndicator;
+      myQueue = queue;
+      myFinished = finished;
+      myProgressUpdater = progressUpdater;
+      myProcessInReadAction = processInReadAction;
+      myApplication = application;
+    }
+
+    public void run() {
+      while (true) {
+        if (myProject.isDisposed()) return;
+        if (myInnerIndicator.isCanceled()) return;
+
+        final FileContent fileContent = myQueue.take();
+        if (fileContent == null) {
+          myFinished[0] = true;
+          return;
+        }
+
+        try {
+          final Runnable action = new Runnable() {
+            public void run() {
+              myInnerIndicator.checkCanceled();
+
+              if (myProject.isDisposed()) return;
+
+              final VirtualFile file = fileContent.getVirtualFile();
+              myProgressUpdater.consume(file);
+              mySession.processFile(fileContent);
+            }
+          };
+          if (myProcessInReadAction) {
+            myApplication.runReadAction(action);
+          }
+          else {
+            action.run();
+          }
+        }
+        catch (ProcessCanceledException e) {
+          myQueue.pushback(fileContent);
+          return;
+        }
+      }
+    }
   }
 }

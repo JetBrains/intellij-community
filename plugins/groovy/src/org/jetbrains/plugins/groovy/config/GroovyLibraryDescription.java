@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -110,13 +110,23 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
       initial = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(envHome));
     }
 
-    final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, FileChooserDescriptorFactory.createSingleFolderDescriptor(), initial);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        if (!super.isFileSelectable(file)) {
+          return false;
+        }
+        return findManager(file) != null;
+      }
+    };
+    descriptor.setTitle("Groovy SDK");
+    descriptor.setDescription("Choose a directory containing Groovy distribution");
+    final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, initial);
     if (files.length != 1) return null;
 
     final VirtualFile dir = files[0];
     final GroovyLibraryPresentationProviderBase provider = findManager(dir);
     if (provider == null) {
-      //todo[nik,peter] show error message in file chooser
       return null;
     }
 

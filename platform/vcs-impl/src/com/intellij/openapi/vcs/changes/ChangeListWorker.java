@@ -370,8 +370,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     // scope should be modified for correct moves tracking
     correctScopeForMoves(scope, oldChanges);
 
-    myLocallyDeleted.cleanScope(scope);
-    mySwitchedHolder.cleanScope(scope);
+    myLocallyDeleted.cleanAndAdjustScope(scope);
+    mySwitchedHolder.cleanAndAdjustScope(scope);
   }
 
   private void correctScopeForMoves(final VcsAppendableDirtyScope scope, final Collection<Change> changes) {

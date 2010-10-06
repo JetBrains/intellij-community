@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ShutDownTracker implements Runnable {
@@ -25,7 +26,7 @@ public class ShutDownTracker implements Runnable {
   private static ShutDownTracker ourInstance;
   private final List<Thread> myThreads = new ArrayList<Thread>();
   private final List<Thread> myShutdownThreads = new ArrayList<Thread>();
-  private final List<Runnable> myShutdownTasks = new ArrayList<Runnable>();
+  private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
   private volatile boolean myIsShutdownHookRunning = false;
 
   private ShutDownTracker() {
@@ -46,6 +47,18 @@ public class ShutDownTracker implements Runnable {
 
   public void run() {
     myIsShutdownHookRunning = true;
+
+    while (!myShutdownTasks.isEmpty()) {
+      //  task can change myShutdownTasks
+      final Runnable task = myShutdownTasks.removeLast();
+      try {
+        task.run();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
     Thread[] threads = getStopperThreads();
     while (threads.length > 0) {
       Thread thread = threads[0];
@@ -63,17 +76,6 @@ public class ShutDownTracker implements Runnable {
         }
       }
       threads = getStopperThreads();
-    }
-
-    while (!myShutdownTasks.isEmpty()) {
-      //  task can change myShutdownTasks
-      final Runnable task = myShutdownTasks.remove(myShutdownTasks.size()-1);
-      try {
-        task.run();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
     }
 
     for (int idx = myShutdownThreads.size() - 1; idx >= 0; idx--) {
@@ -111,7 +113,7 @@ public class ShutDownTracker implements Runnable {
   }
 
   public void registerShutdownTask(Runnable task) {
-    myShutdownTasks.add(task);
+    myShutdownTasks.addLast(task);
   }
 
   public void unregisterShutdownTask(Runnable task) {

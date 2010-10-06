@@ -29,8 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -97,7 +95,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
       if (fireEvents) {
-        events.add(new ElementUndefinedEvent(oldValue));
+        events.add(new DomEvent(oldValue, false));
       }
     }
 
@@ -116,7 +114,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     }
 
     if (fireEvents) {
-      events.add(new ElementDefinedEvent(myLastResult));
+      final DomElement element = myLastResult;
+      events.add(new DomEvent(element, true));
     }
   }
 

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -41,7 +41,7 @@ public class FileContentQueue {
   private long myTotalSize;
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
-  private FileContent myPushbackBuffer;
+  private Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -134,12 +134,12 @@ public class FileContentQueue {
     }
   }
 
+  @Nullable
   public FileContent take() {
     FileContent result;
     synchronized (this) {
-      if (myPushbackBuffer != null) {
-        result = myPushbackBuffer;
-        myPushbackBuffer = null;
+      result = myPushbackBuffer.poll();
+      if (result != null) {
         return result;
       }
     }
@@ -153,6 +153,12 @@ public class FileContentQueue {
 
     final VirtualFile file = result.getVirtualFile();
     if (file == null) {
+      try {
+        myQueue.put(result); // put it back to notify the others
+      }
+      catch (InterruptedException ignore) {
+        // should not happen
+      }
       return null;
     }
     if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
@@ -170,7 +176,6 @@ public class FileContentQueue {
   }
 
   public synchronized void pushback(@NotNull FileContent content) {
-    LOG.assertTrue(myPushbackBuffer == null, "Pushback buffer is already full");
-    myPushbackBuffer = content;
+    myPushbackBuffer.add(content);
   }
 }

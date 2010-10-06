@@ -172,7 +172,6 @@ public class JavaParserUtil {
     return builder;
   }
 
-  @NotNull
   public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
     final PsiElement psi = (chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi());
     assert psi != null : chameleon;

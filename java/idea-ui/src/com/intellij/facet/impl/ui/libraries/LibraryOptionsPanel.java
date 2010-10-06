@@ -20,7 +20,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
-import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -66,6 +65,7 @@ public class LibraryOptionsPanel {
   private JButton myCreateButton;
   private JRadioButton myDownloadRadioButton;
   private JRadioButton myUseLibraryRadioButton;
+  private JLabel myUseLibraryLabel;
   private ButtonGroup myButtonGroup;
 
   private final LibraryCompositionSettings mySettings;
@@ -128,12 +128,13 @@ public class LibraryOptionsPanel {
     });
     myExistingLibraryComboBox.setRenderer(new LibraryListCellRenderer());
 
-    boolean canDownload = mySettings.getLibraryDescription().getDownloadDescription() != null;
+    boolean canDownload = mySettings.getDownloadSettings() != null;
     myDownloadRadioButton.setVisible(canDownload);
     myButtonEnumModel.setSelected(libraries.isEmpty() && canDownload ? Choice.DOWNLOAD : Choice.USE_LIBRARY);
 
     if (!canDownload && !showDoNotCreateOption) {
       myUseLibraryRadioButton.setVisible(false);
+      myUseLibraryLabel.setVisible(true);
     }
 
     myCreateButton.addActionListener(new ActionListener() {
@@ -153,7 +154,7 @@ public class LibraryOptionsPanel {
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
-        new DownloadingOptionsDialog(myPanel, mySettings).show();
+        new DownloadingOptionsDialog(myPanel, mySettings.getDownloadSettings()).show();
         break;
       case USE_LIBRARY:
         final Object item = myExistingLibraryComboBox.getSelectedItem();
@@ -204,7 +205,7 @@ public class LibraryOptionsPanel {
 
   @Nullable
   private VirtualFile getBaseDirectory() {
-    String path = mySettings.getBaseDirectoryForDownloadedFiles();
+    String path = mySettings.getBaseDirectoryPath();
     VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
     if (dir == null) {
       path = path.substring(0, path.lastIndexOf('/'));
@@ -231,7 +232,7 @@ public class LibraryOptionsPanel {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
           message = MessageFormat.format("{0} level library <b>{1}</b>" +
                                          " with {2} file(s) will be created",
-                                         mySettings.getLibraryLevel(),
+                                         mySettings.getNewLibraryLevel(),
                                          libraryEditor.getName(),
                                          libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
@@ -243,7 +244,7 @@ public class LibraryOptionsPanel {
         showConfigurePanel = false;
     }
 
-    if (!showConfigurePanel && mySettings.getLibraryDescription().getDownloadDescription() != null) {
+    if (!showConfigurePanel && mySettings.getDownloadSettings() != null) {
         //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
         message = getDownloadFilesMessage();
     }
@@ -252,8 +253,11 @@ public class LibraryOptionsPanel {
   }
 
   private String getDownloadFilesMessage() {
-    final String downloadPath = mySettings.getDirectoryForDownloadedLibrariesPath();
-    final String basePath = mySettings.getBaseDirectoryForDownloadedFiles();
+    final LibraryDownloadSettings downloadSettings = mySettings.getDownloadSettings();
+    if (downloadSettings == null) return "";
+
+    final String downloadPath = downloadSettings.getDirectoryForDownloadedLibrariesPath();
+    final String basePath = mySettings.getBaseDirectoryPath();
     String path;
     if (!StringUtil.isEmpty(basePath) && FileUtil.startsWith(downloadPath, basePath)) {
       path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
@@ -261,13 +265,12 @@ public class LibraryOptionsPanel {
     else {
       path = PathUtil.getFileName(downloadPath);
     }
-    final LibraryDownloadDescription downloadDescription = mySettings.getLibraryDescription().getDownloadDescription();
     return MessageFormat.format("{0} jar(s) will be downloaded into <b>{1}</b> directory <br>" +
                                    "{2} library <b>{3}</b> will be created",
-                                   downloadDescription.getDownloads().size(),
+                                   downloadSettings.getSelectedDownloads().size(),
                                    path,
-                                   mySettings.getLibraryLevel(),
-                                   mySettings.getDownloadedLibraryName());
+                                   downloadSettings.getLibraryLevel(),
+                                   downloadSettings.getLibraryName());
   }
 
   public LibraryCompositionSettings getSettings() {

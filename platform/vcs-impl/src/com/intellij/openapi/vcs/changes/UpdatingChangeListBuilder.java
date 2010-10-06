@@ -34,7 +34,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final Getter<Boolean> myDisposedGetter;
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
-  private final boolean myUpdateUnversioned;
   private final IgnoredFilesComponent myIgnoredFilesComponent;
   private final ExcludedFileIndex myIndex;
   private final ChangeListManagerGate myGate;
@@ -42,12 +41,10 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
-                            final boolean updateUnversioned,
                             final IgnoredFilesComponent ignoredFilesComponent, final ChangeListManagerGate gate) {
     myChangeListWorker = changeListWorker;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myUpdateUnversioned = updateUnversioned;
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
     myIndex = ExcludedFileIndex.getInstance(changeListWorker.getProject());
@@ -112,7 +109,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processUnversionedFile(final VirtualFile file) {
-    if (file == null || ! myUpdateUnversioned) return;
+    if (file == null) return;
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
@@ -134,7 +131,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
-    if (! myUpdateUnversioned) return;
     checkIfDisposed();
     final FilePath file = locallyDeletedChange.getPath();
     if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
@@ -144,7 +140,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processModifiedWithoutCheckout(final VirtualFile file) {
-    if (file == null || ! myUpdateUnversioned) return;
+    if (file == null) return;
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
@@ -153,7 +149,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processIgnoredFile(final VirtualFile file) {
-    if (file == null || ! myUpdateUnversioned) return;
+    if (file == null) return;
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
@@ -180,7 +176,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
-    if (file == null || ! myUpdateUnversioned) return;
+    if (file == null) return;
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
@@ -194,10 +190,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (myScope.belongsTo(new FilePathImpl(file))) {
       ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
     }
-  }
-
-  public boolean isUpdatingUnversionedFiles() {
-    return myUpdateUnversioned;
   }
 
   public boolean reportChangesOutsideProject() {

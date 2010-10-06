@@ -39,6 +39,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -60,17 +61,18 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     PsiClass psiClass = getContainingClass(element);
 
+    assert psiClass != null;
     PsiJavaToken leftBrace = psiClass.getLBrace();
     if (leftBrace == null) return false;
     if (element.getTextOffset() >= leftBrace.getTextOffset()) return false;
 
-    TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
-    if (!declarationRange.contains(element.getTextRange())) return false;
+    //TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
+    //if (!declarationRange.contains(element.getTextRange())) return false;
 
     return true;
   }
 
-  public boolean isAvailableForElement(PsiElement element) {
+  public static boolean isAvailableForElement(PsiElement element) {
     if (element == null) return false;
     
     PsiClass psiClass = getContainingClass(element);
@@ -91,7 +93,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return true;
   }
 
-  private boolean isUnderTestSources(PsiClass c) {
+  private static boolean isUnderTestSources(PsiClass c) {
     ProjectRootManager rm = ProjectRootManager.getInstance(c.getProject());
     VirtualFile f = c.getContainingFile().getVirtualFile();
     if (f == null) return false;
@@ -144,7 +146,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     });
   }
 
-  private void showErrorLater(final Project project, final String targetClassName) {
+  private static void showErrorLater(final Project project, final String targetClassName) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         Messages.showErrorDialog(project,
@@ -154,7 +156,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     });
   }
 
-  private void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
+  private static void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
     if (superClassName == null) return;
 
     PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -170,12 +172,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     targetClass.getExtendsList().add(superClassRef);
   }
 
-  private PsiClass findClass(Project project, String fqName) {
+  @Nullable
+  private static PsiClass findClass(Project project, String fqName) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
 
-  private void addTestMethods(Editor editor,
+  private static void addTestMethods(Editor editor,
                               PsiClass targetClass,
                               TestFramework descriptor,
                               Collection<MemberInfo> methods,
@@ -192,14 +195,25 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFramework descriptor, PsiClass targetClass, Editor editor, String name) {
+  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFramework descriptor, PsiClass targetClass, Editor editor, String name) {
     PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
   }
 
-  private PsiClass getContainingClass(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+  @Nullable
+  private static PsiClass getContainingClass(PsiElement element) {
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    if (psiClass == null) {
+      final PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof PsiClassOwner){
+        final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) {
+          return classes[0];
+        }
+      }
+    }
+    return psiClass;
   }
 
   public boolean startInWriteAction() {

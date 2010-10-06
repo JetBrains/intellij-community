@@ -38,7 +38,10 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
 
   @Override
   public int getRowCount() {
-    return myLibTable.getLibraries().length;
+    if (myLibTable != null) {
+      return myLibTable.getLibraries().length;
+    }
+    return 0;
   }
 
   @Override
@@ -60,6 +63,10 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
       return "Name";
     }
     return "?";
+  }
+
+  public LibraryTable getLibraryTable() {
+    return myLibTable;
   }
 
 }
