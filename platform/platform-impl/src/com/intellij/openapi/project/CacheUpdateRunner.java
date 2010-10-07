@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 class CacheUpdateRunner {
@@ -72,7 +73,7 @@ class CacheUpdateRunner {
       Consumer<VirtualFile> progressUpdater = new Consumer<VirtualFile>() {
         // need set here to handle queue.pushbacks after checkCancelled() in order
         // not to count the same file several times
-        final Set<VirtualFile> processed = new THashSet<VirtualFile>();
+        final Set<VirtualFile> processed = Collections.synchronizedSet(new THashSet<VirtualFile>());
 
         public void consume(VirtualFile virtualFile) {
           indicator.checkCanceled();
