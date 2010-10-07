@@ -19,19 +19,22 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.util.Arrays;
 
 public class SerializedStubTree {
   private final byte[] myBytes;
+  private final StubElement myStub;
 
-  public SerializedStubTree(final byte[] bytes) {
+  public SerializedStubTree(final byte[] bytes, @Nullable StubElement stub) {
     myBytes = bytes;
+    myStub = stub;
   }
 
   public StubElement getStub() {
-    return SerializationManager.getInstance().deserialize(new ByteArrayInputStream(myBytes));
+    return myStub == null ? SerializationManager.getInstance().deserialize(new ByteArrayInputStream(myBytes)) : myStub;
   }
 
   public boolean equals(final Object that) {
