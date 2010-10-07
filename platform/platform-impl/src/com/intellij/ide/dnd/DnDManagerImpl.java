@@ -17,7 +17,6 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -84,9 +83,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     if (!getApplication().isHeadlessEnvironment()) {
       final JComponent c = source.getComponent();
       registerSource(source, c);
-
-      final DnDEnabler enabler = new DnDEnabler(source, source);
-      c.putClientProperty(DnDEnabler.KEY, enabler);
     }
   }
 
@@ -100,14 +96,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
   public void unregisterSource(AdvancedDnDSource source) {
     final JComponent c = source.getComponent();
-    if (c != null) {
-      final DnDEnabler enabler = (DnDEnabler)c.getClientProperty(DnDEnabler.KEY);
-      if (enabler != null) {
-        Disposer.dispose(enabler);
-        c.putClientProperty(DnDEnabler.KEY, null);
-      }
-    }
-
     unregisterSource(source, c);
   }
 

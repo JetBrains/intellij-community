@@ -36,8 +36,6 @@ public class ValueNodeDnD {
   public ValueNodeDnD(DnDAwareTree tree, Disposable parent) {
     myTree = tree;
 
-    tree.enableDnd(parent);
-
     DnDManager.getInstance().registerSource(new DnDSource() {
       public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
         return getNodesToDrag().length > 0;

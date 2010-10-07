@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
@@ -26,10 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
@@ -46,6 +44,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private Component myLastCursorComponent;
   private Cursor myLastOriginalCursor;
+  private MouseEvent myPrevPressEvent;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
@@ -74,9 +73,100 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       return false;
     }
 
+    MouseEvent me = (MouseEvent)e;
+    if (!dispatched && me.getComponent() != null) {
+      int button1 = MouseEvent.BUTTON1_MASK | MouseEvent.BUTTON1_DOWN_MASK;
+      final boolean pureMouse1Event = (me.getModifiersEx() | button1) == button1;
+      if (pureMouse1Event && me.getClickCount() == 1 && !me.isPopupTrigger()) {
+        final Point point = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myRootPane.getContentPane());
+
+        if (myRootPane.getMenuBar() != null && myRootPane.getMenuBar().isVisible()) {
+          point.y += myRootPane.getMenuBar().getHeight();
+        }
+
+        final Component target =
+          SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+        if (target instanceof DnDAware) {
+          final Point targetPoint = SwingUtilities.convertPoint(myRootPane.getContentPane().getParent(), point.x, point.y, target);
+          final boolean overSelection = ((DnDAware)target).isOverSelection(targetPoint);
+          if (overSelection) {
+            final MouseListener[] listeners = target.getListeners(MouseListener.class);
+            final MouseEvent mouseEvent = convertEvent(me, target);
+            switch (me.getID()) {
+              case MouseEvent.MOUSE_PRESSED:
+                boolean consumed = false;
+                if (target.isFocusable()) target.requestFocus();
+                for (final MouseListener listener : listeners) {
+                  final String className = listener.getClass().getName();
+                  if (className.indexOf("BasicTreeUI$") >= 0 || className.indexOf("MacTreeUI$") >= 0) continue;
+                  fireMouseEvent(listener, mouseEvent);
+                  if (mouseEvent.isConsumed()) {
+                    consumed = true;
+                    break;
+                  }
+                }
+
+                if (!mouseEvent.isConsumed()) {
+                  final AWTEventListener[] eventListeners = Toolkit.getDefaultToolkit().getAWTEventListeners(MouseEvent.MOUSE_EVENT_MASK);
+                  if (eventListeners != null && eventListeners.length > 0) {
+                    for (final AWTEventListener eventListener : eventListeners) {
+                      eventListener.eventDispatched(me);
+                      if (me.isConsumed()) break;
+                    }
+
+                    if (me.isConsumed()) {
+                      consumed = true;
+                      break;
+                    }
+                  }
+                }
+
+                if (!consumed) {
+                  myPrevPressEvent = mouseEvent;
+                } else {
+                  me.consume();
+                }
+
+                dispatched = true;
+                break;
+              case MouseEvent.MOUSE_RELEASED:
+                if (myPrevPressEvent != null && myPrevPressEvent.getComponent() == target) {
+                  for (final MouseListener listener : listeners) {
+                    final String className = listener.getClass().getName();
+                    if (className.indexOf("BasicTreeUI$") >= 0 || className.indexOf("MacTreeUI$") >= 0) {
+                      fireMouseEvent(listener, myPrevPressEvent);
+                      fireMouseEvent(listener, mouseEvent);
+                      if (mouseEvent.isConsumed()) {
+                        break;
+                      }
+                    }
+
+                    fireMouseEvent(listener, mouseEvent);
+                    if (mouseEvent.isConsumed()) {
+                      break;
+                    }
+                  }
+
+                  if (mouseEvent.isConsumed()) {
+                    me.consume();
+                  }
+
+                  myPrevPressEvent = null;
+                  dispatched = true;
+                }
+                break;
+              default:
+                myPrevPressEvent = null;
+                break;
+            }
+          }
+        }
+      }
+    }
+
+
     if (isVisible() && getComponentCount() == 0) {
       boolean cursorSet = false;
-      MouseEvent me = (MouseEvent)e;
       if (me.getComponent() != null) {
         final Point point = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myRootPane.getContentPane());
 
