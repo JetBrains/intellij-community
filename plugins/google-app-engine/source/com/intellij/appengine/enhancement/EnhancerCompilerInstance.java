@@ -1,6 +1,7 @@
 package com.intellij.appengine.enhancement;
 
 import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.appengine.rt.EnhancerRunner;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.impl.CompilerUtil;
@@ -31,11 +32,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -138,6 +142,7 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
         protected void run(final Result result) throws Throwable {
           context.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
           javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
+
           final PathsList classPath = javaParameters.getClassPath();
           classPath.addFirst(sdk.getToolsApiJarFile().getAbsolutePath());
           removeAsmJarFromClasspath(classPath);
@@ -145,15 +150,27 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
           final ParametersList vmParameters = javaParameters.getVMParametersList();
           vmParameters.add("-Xmx256m");
 
+          javaParameters.setMainClass(EnhancerRunner.class.getName());
+          classPath.addFirst(PathUtil.getJarPathForClass(EnhancerRunner.class));
+
+          final File argsFile = FileUtil.createTempFile("appEngineEnhanceFiles", ".txt");
+          PrintWriter writer = new PrintWriter(argsFile);
+          try {
+            for (ClassFileItem item : items) {
+              writer.println(FileUtil.toSystemDependentName(item.getFile().getPath()));
+            }
+          }
+          finally {
+            writer.close();
+          }
+
           final ParametersList programParameters = javaParameters.getProgramParametersList();
+          programParameters.add(argsFile.getAbsolutePath());
+          programParameters.add("com.google.appengine.tools.enhancer.Enhance");
           programParameters.add("-api");
           programParameters.add(facet.getConfiguration().getPersistenceApi().getName());
           programParameters.add("-v");
-          for (ClassFileItem item : items) {
-            programParameters.add(FileUtil.toSystemDependentName(item.getFile().getPath()));
-          }
 
-          javaParameters.setMainClass("com.google.appengine.tools.enhancer.Enhance");
         }
       }.execute().throwException();
 
