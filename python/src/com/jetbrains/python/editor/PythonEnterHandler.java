@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -114,7 +115,7 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       offset--;
       final PsiElement element = file.findElementAt(offset);
       if (element != null && !(element instanceof PsiWhiteSpace)) {
-        return PsiTreeUtil.getNonStrictParentOfType(element, classes);
+        return getNonStrictParentOfType(element, classes);
       }
     }
     return null;
@@ -125,10 +126,24 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     while(offset < file.getTextLength()) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null && !(element instanceof PsiWhiteSpace)) {
-        return PsiTreeUtil.getNonStrictParentOfType(element, classes);
+        return getNonStrictParentOfType(element, classes);
       }
       offset++;
     }
+    return null;
+  }
+
+  @Nullable
+  private static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
+    PsiElement run = element;
+    while (run != null) {
+      for (Class<? extends T> aClass : classes) {
+        if (aClass.isInstance(run)) return (T)run;
+      }
+      if (run instanceof PsiFile || run instanceof PyStatementList) break;
+      run = run.getParent();
+    }
+
     return null;
   }
 }
