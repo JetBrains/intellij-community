@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 
 public class FileChooserDescriptorFactory {
-  private FileChooserDescriptorFactory() {}
+  private FileChooserDescriptorFactory() {
+  }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, true);
@@ -58,5 +61,19 @@ public class FileChooserDescriptorFactory {
     final FileChooserDescriptor fileChooserDescriptor = createSingleFileNoJarsDescriptor();
     fileChooserDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
     return fileChooserDescriptor;
+  }
+
+  public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
+    return new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
+        return file.isDirectory() || file.getFileType() == fileType;
+      }
+
+      @Override
+      public boolean isFileSelectable(final VirtualFile file) {
+        return super.isFileSelectable(file) && file.getFileType() == fileType;
+      }
+    };
   }
 }
