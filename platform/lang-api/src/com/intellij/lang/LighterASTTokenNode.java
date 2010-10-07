@@ -15,10 +15,12 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.CharTable;
 
-public interface LighterLazyParseableNode extends LighterASTTokenNode {
-  Project getProject();
-  CharTable getCharTable();
+public interface LighterASTTokenNode extends LighterASTNode {
+  /**
+   * <b>Note</b>: a text returned may be linked back to file content text and therefore should be internalized
+   * through {@linkplain com.intellij.util.CharTable} if referenced as is.
+   * @return text of a token
+   */
+  CharSequence getText();
 }
