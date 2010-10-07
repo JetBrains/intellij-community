@@ -45,7 +45,7 @@ abstract class UndoRedo {
   //  do {
   //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
   //    undoOrRedo.doExecute();
-  //    boolean shouldRepeat = undoOrRedo.isTransparentsOnly() && undoOrRedo.hasMoreActions();
+  //    boolean shouldRepeat = undoOrRedo.isTransparent() && undoOrRedo.hasMoreActions();
   //    if (!shouldRepeat) break;
   //  }
   //  while (true);
@@ -61,8 +61,8 @@ abstract class UndoRedo {
     return getStackHolder().getLastAction(getDecRefs());
   }
 
-  boolean isTransparentsOnly() {
-    return myUndoableGroup.isTransparentsOnly();
+  boolean isTransparent() {
+    return myUndoableGroup.isTransparent();
   }
 
   boolean hasMoreActions() {

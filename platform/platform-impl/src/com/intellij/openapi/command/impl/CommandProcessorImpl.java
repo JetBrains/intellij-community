@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -282,14 +281,12 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   public void runUndoTransparentAction(Runnable action) {
-    if (myUndoTransparentCount == 0) fireUndoTransparentStarted();
-    myUndoTransparentCount++;
+    if (myUndoTransparentCount++ == 0) fireUndoTransparentStarted();
     try {
       action.run();
     }
     finally {
-      myUndoTransparentCount--;
-      if (myUndoTransparentCount == 0) fireUndoTransparentFinished();
+      if (--myUndoTransparentCount == 0) fireUndoTransparentFinished();
     }
   }
 

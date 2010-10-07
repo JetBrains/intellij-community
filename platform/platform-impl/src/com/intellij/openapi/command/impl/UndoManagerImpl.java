@@ -223,7 +223,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
-      myCurrentMerger = new CommandMerger(this);
+      myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
     }
     LOG.assertTrue(myCurrentMerger != null, String.valueOf(myCommandLevel));
     myCurrentMerger.setBeforeState(getCurrentState());
@@ -276,12 +276,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
       commandStarted(UndoConfirmationPolicy.DEFAULT);
-      myCurrentMerger.addAction(action, false);
+      myCurrentMerger.addAction(action);
       commandFinished("", null);
       return;
     }
 
-    myCurrentMerger.addAction(action, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+    myCurrentMerger.addAction(action);
   }
 
   public void undo(@Nullable FileEditor editor) {

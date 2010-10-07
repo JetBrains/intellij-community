@@ -38,16 +38,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author max
- */
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
 
   private final String myCommandName;
   private final boolean myGlobal;
   private final int myCommandTimestamp;
-  private final boolean myTransparentsOnly;
+  private final boolean myTransparent;
   private final List<UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
@@ -62,7 +59,7 @@ class UndoableGroup {
                        List<UndoableAction> actions,
                        int commandTimestamp,
                        UndoConfirmationPolicy confirmationPolicy,
-                       boolean transparentsOnly) {
+                       boolean transparent) {
     myCommandName = commandName;
     myGlobal = isGlobal;
     myCommandTimestamp = commandTimestamp;
@@ -71,15 +68,15 @@ class UndoableGroup {
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
-    myTransparentsOnly = transparentsOnly;
+    myTransparent = transparent;
   }
 
   public boolean isGlobal() {
     return myGlobal;
   }
 
-  public boolean isTransparentsOnly() {
-    return myTransparentsOnly;
+  public boolean isTransparent() {
+    return myTransparent;
   }
 
   public boolean isUndoable() {
@@ -87,10 +84,6 @@ class UndoableGroup {
       if (action instanceof NonUndoableAction) return false;
     }
     return true;
-  }
-
-  public void addTailActions(Collection<UndoableAction> actions) {
-    myActions.addAll(actions);
   }
 
   public void undo() {

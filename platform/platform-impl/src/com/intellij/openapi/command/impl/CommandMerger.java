@@ -32,9 +32,8 @@ import java.util.*;
 public class CommandMerger {
   private final UndoManagerImpl myManager;
   private Object myLastGroupId = null;
-  private boolean myGlobal = false;
-  private boolean myHasUndoTransparentsOnly = true;
-  private boolean myHasUndoTransparents = false;
+  private boolean myForcedGlobal = false;
+  private boolean myTransparent = false;
   private String myCommandName = null;
   private List<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
   private Set<DocumentReference> myAffectedDocuments = new THashSet<DocumentReference>();
@@ -46,19 +45,22 @@ public class CommandMerger {
     myManager = manager;
   }
 
+  public CommandMerger(@NotNull UndoManagerImpl manager, boolean isTransparent) {
+    myManager = manager;
+    myTransparent = isTransparent;
+  }
+
   public String getCommandName() {
     return myCommandName;
   }
 
-  public void addAction(UndoableAction action, boolean isUndoTransparent) {
-    if (!isUndoTransparent) myHasUndoTransparentsOnly = false;
-    if (isUndoTransparent) myHasUndoTransparents = true;
+  public void addAction(UndoableAction action) {
     myCurrentActions.add(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {
       Collections.addAll(myAffectedDocuments, refs);
     }
-    myGlobal |= action.isGlobal() || !isUndoTransparent && affectsMultiplePhysicalDocs();
+    myForcedGlobal |= action.isGlobal();
   }
 
   public void commandFinished(String commandName, Object groupId, CommandMerger nextCommandToMerge) {
@@ -69,7 +71,9 @@ public class CommandMerger {
     merge(nextCommandToMerge);
 
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
-    if (!nextCommandToMerge.isTransparent()) clearRedoStacks(nextCommandToMerge);
+    if (nextCommandToMerge.isTransparent() || !hasActions()) return;
+
+    clearRedoStacks(nextCommandToMerge);
 
     myLastGroupId = groupId;
     if (myCommandName == null) myCommandName = commandName;
@@ -77,9 +81,9 @@ public class CommandMerger {
 
   private boolean shouldMerge(Object groupId, CommandMerger nextCommandToMerge) {
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
-      return myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
+      return !hasActions() || !nextCommandToMerge.hasActions() || myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
     }
-    return !myGlobal && !nextCommandToMerge.isGlobal() && canMergeGroup(groupId, myLastGroupId);
+    return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, myLastGroupId);
   }
 
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
@@ -88,29 +92,44 @@ public class CommandMerger {
 
   private void merge(CommandMerger nextCommandToMerge) {
     setBeforeState(nextCommandToMerge.myStateBefore);
+    myStateAfter = nextCommandToMerge.myStateAfter;
+    if(myTransparent) { // todo write test
+      if (nextCommandToMerge.hasActions()) {
+        myTransparent &= nextCommandToMerge.myTransparent;
+      }
+    } else {
+      if (!hasActions()) {
+        myTransparent = nextCommandToMerge.myTransparent;
+      }
+    }
+    myForcedGlobal |= nextCommandToMerge.myForcedGlobal;
     myCurrentActions.addAll(nextCommandToMerge.myCurrentActions);
     myAffectedDocuments.addAll(nextCommandToMerge.myAffectedDocuments);
-    myGlobal |= nextCommandToMerge.myGlobal;
-    myHasUndoTransparentsOnly &= nextCommandToMerge.myHasUndoTransparentsOnly;
-    myHasUndoTransparents |= nextCommandToMerge.myHasUndoTransparents;
-    myStateAfter = nextCommandToMerge.myStateAfter;
     mergeUndoConfirmationPolicy(nextCommandToMerge.getUndoConfirmationPolicy());
+  }
+
+  public void mergeUndoConfirmationPolicy(UndoConfirmationPolicy undoConfirmationPolicy) {
+    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
+      myUndoConfirmationPolicy = undoConfirmationPolicy;
+    }
+    else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) {
+      if (undoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) {
+        myUndoConfirmationPolicy = UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+      }
+    }
   }
 
   public void flushCurrentCommand() {
     if (hasActions()) {
-      // make sure group is global if was merged from several different changes.
-      myGlobal |= !isTransparent() && affectsMultiplePhysicalDocs();
-      UndoableGroup undoableGroup = new UndoableGroup(myCommandName,
-                                                      myGlobal,
-                                                      myManager.getProject(),
-                                                      myStateBefore,
-                                                      myStateAfter,
-                                                      myCurrentActions,
-                                                      myManager.nextCommandTimestamp(),
-                                                      myUndoConfirmationPolicy,
-                                                      isTransparent());
-      myManager.getUndoStacksHolder().addToStacks(undoableGroup);
+      myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
+                                                                    isGlobal(),
+                                                                    myManager.getProject(),
+                                                                    myStateBefore,
+                                                                    myStateAfter,
+                                                                    myCurrentActions,
+                                                                    myManager.nextCommandTimestamp(),
+                                                                    myUndoConfirmationPolicy,
+                                                                    isTransparent()));
     }
 
     reset();
@@ -120,9 +139,8 @@ public class CommandMerger {
     myCurrentActions = new ArrayList<UndoableAction>();
     myAffectedDocuments = new THashSet<DocumentReference>();
     myLastGroupId = null;
-    myGlobal = false;
-    myHasUndoTransparentsOnly = true;
-    myHasUndoTransparents = false;
+    myForcedGlobal = false;
+    myTransparent = false;
     myCommandName = null;
     myStateAfter = null;
     myStateBefore = null;
@@ -130,19 +148,19 @@ public class CommandMerger {
   }
 
   private void clearRedoStacks(CommandMerger nextMerger) {
-    myManager.getRedoStacksHolder().clearStacks(myGlobal, nextMerger.myAffectedDocuments);
+    myManager.getRedoStacksHolder().clearStacks(isGlobal(), nextMerger.myAffectedDocuments);
   }
 
   boolean isGlobal() {
-    return myGlobal;
+    return myForcedGlobal || affectsMultiplePhysicalDocs();
   }
 
   public void markAsGlobal() {
-    myGlobal = true;
+    myForcedGlobal = true;
   }
 
   private boolean isTransparent() {
-    return myHasUndoTransparentsOnly && myHasUndoTransparents;
+    return myTransparent;
   }
 
   private boolean affectsMultiplePhysicalDocs() {
@@ -163,14 +181,14 @@ public class CommandMerger {
     // are not dropped, since this means they did not occur after undo/redo
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
-      if (!undoRedo.isTransparentsOnly()) break;
+      if (!undoRedo.isTransparent()) break;
       undoRedo.execute(true);
       if (!undoRedo.hasMoreActions()) break;
     }
 
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       undoRedo.execute(false);
-      boolean shouldRepeat = undoRedo.isTransparentsOnly() && undoRedo.hasMoreActions();
+      boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }
   }
@@ -195,7 +213,7 @@ public class CommandMerger {
 
   public boolean isUndoAvailable(Collection<DocumentReference> refs) {
     if (hasNonUndoableActions()) return false;
-    if (refs.isEmpty()) return myGlobal && hasActions();
+    if (refs.isEmpty()) return isGlobal() && hasActions();
     for (DocumentReference each : refs) {
       if (hasChangesOf(each)) return true;
     }
@@ -225,16 +243,5 @@ public class CommandMerger {
 
   public void setAfterState(EditorAndState state) {
     myStateAfter = state;
-  }
-
-  public void mergeUndoConfirmationPolicy(UndoConfirmationPolicy undoConfirmationPolicy) {
-    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
-      myUndoConfirmationPolicy = undoConfirmationPolicy;
-    }
-    else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) {
-      if (undoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) {
-        myUndoConfirmationPolicy = UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-      }
-    }
   }
 }
