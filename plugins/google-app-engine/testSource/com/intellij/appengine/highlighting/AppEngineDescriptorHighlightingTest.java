@@ -9,8 +9,13 @@ import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
  */
 @TestDataPath("$CONTENT_ROOT/testData/highlighting/descriptor/")
 public class AppEngineDescriptorHighlightingTest extends AppEngineCodeInsightTestCase {
-  public void testNamespace() throws Exception {
+  public void testAppEngineWeb() throws Exception {
     myCodeInsightFixture.configureByFile("appengine-web.xml");
+    checkXmlHighlighting();
+  }
+
+  public void testJdoConfig() throws Exception {
+    myCodeInsightFixture.configureByFile("jdoconfig.xml");
     checkXmlHighlighting();
   }
 

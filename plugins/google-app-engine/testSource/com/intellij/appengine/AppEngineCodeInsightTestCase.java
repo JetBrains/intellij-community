@@ -9,6 +9,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -49,7 +52,15 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   private static void addAppEngineSupport(Module module, String version) {
     final WebFacet webFacet = JavaeeUtil.addFacet(module, WebFacetType.INSTANCE);
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", webFacet);
-    appEngine.getConfiguration().setSdkHomePath(FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version);
+    final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
+    appEngine.getConfiguration().setSdkHomePath(sdkPath);
+
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final Library library = model.getModuleLibraryTable().createLibrary();
+    final Library.ModifiableModel libraryModel = library.getModifiableModel();
+    libraryModel.addJarDirectory(VfsUtil.pathToUrl(sdkPath) + "/lib", true);
+    libraryModel.commit();
+    model.commit();
   }
 
   @Override
