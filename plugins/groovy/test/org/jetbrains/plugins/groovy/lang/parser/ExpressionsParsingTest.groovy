@@ -122,6 +122,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testpath$path8() throws Throwable { doTest(); }
   public void testpath$path9() throws Throwable { doTest(); }
   public void testpath$path10() throws Throwable {doTest(); }
+  public void testpath$typeVsExpr() {doTest();}
   public void testreferences$ref1() throws Throwable { doTest(); }
   public void testreferences$ref2() throws Throwable { doTest(); }
   public void testreferences$ref3() throws Throwable { doTest(); }

@@ -23,7 +23,6 @@ import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -111,7 +110,10 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   public void beforeFileDeletion(VirtualFileEvent e) {
-    if (shouldNotProcess(e)) return;
+    if (shouldNotProcess(e)) {
+      invalidateActionsFor(e);
+      return;
+    }
     if (isUndoable(e)) {
       VirtualFile file = e.getFile();
       file.putUserData(DELETION_WAS_UNDOABLE, createDocumentReference(e));
@@ -153,6 +155,10 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
   private void registerNonUndoableAction(VirtualFileEvent e) {
     getUndoManager().nonundoableActionPerformed(createDocumentReference(e), true);
+  }
+
+  private void invalidateActionsFor(VirtualFileEvent e) {
+    getUndoManager().invalidateActionsFor(createDocumentReference(e));
   }
 
   private DocumentReference createDocumentReference(VirtualFileEvent e) {

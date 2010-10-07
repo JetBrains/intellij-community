@@ -933,22 +933,76 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return Collections.unmodifiableList(myExecutors);
   }
 
+  private static class MyDirtyFilesScheduler {
+    private final static int ourPiecesLimit = 100;
+    final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> myDirs = new ArrayList<VirtualFile>();
+    private boolean myEveryThing;
+    private int myCnt;
+    private final Project myProject;
+
+    private MyDirtyFilesScheduler(final Project project) {
+      myProject = project;
+      myCnt = 0;
+      myEveryThing = false;
+    }
+
+    public void accept(final Collection<VirtualFile> coll) {
+      for (VirtualFile vf : coll) {
+        if (myCnt > ourPiecesLimit) {
+          myEveryThing = true;
+          break;
+        }
+        if (vf.isDirectory()) {
+          myDirs.add(vf);
+        } else {
+          myFiles.add(vf);
+        }
+        ++ myCnt;
+      }
+    }
+
+    public void arise() {
+      final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      if (myEveryThing) {
+        vcsDirtyScopeManager.markEverythingDirty();
+      } else {
+        vcsDirtyScopeManager.filesDirty(myFiles, myDirs);
+      }
+    }
+  }
+
   public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
-    scheduleUpdate();
+    scheduleUnversionedUpdate();
+  }
+
+  private void scheduleUnversionedUpdate() {
+    final MyDirtyFilesScheduler scheduler = new MyDirtyFilesScheduler(myProject);
+
+    synchronized (myDataLock) {
+      final VirtualFileHolder unversionedHolder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
+      final RecursiveFileHolder<Object> ignoredHolder = (RecursiveFileHolder) myComposite.get(FileHolder.HolderType.IGNORED);
+
+      scheduler.accept(unversionedHolder.getFiles());
+      scheduler.accept(ignoredHolder.values());
+    }
+
+    scheduler.arise();
   }
 
   public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.set(filesToIgnore);
-    scheduleUpdate();
+    scheduleUnversionedUpdate();
   }
 
   private void updateIgnoredFiles(final FileHolderComposite composite) {
-    List<VirtualFile> unversionedFiles = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+    final VirtualFileHolder vfHolder = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
+    final List<VirtualFile> unversionedFiles = vfHolder.getFiles();
 
     for(VirtualFile file: unversionedFiles) {
       if (isIgnoredFile(file)) {
-        composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
+        vfHolder.removeFile(file);
         composite.getIgnoredFileHolder().addFile(file);
       }
     }

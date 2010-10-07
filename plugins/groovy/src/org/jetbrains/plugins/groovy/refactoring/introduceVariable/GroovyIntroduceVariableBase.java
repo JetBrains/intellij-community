@@ -180,7 +180,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (selectedExpr instanceof GrReferenceExpression &&
         selectedExpr.getParent() instanceof GrMethodCall &&
-        ((GrMethodCall)selectedExpr.getParent()).isCommandExpression()) {
+        (((GrMethodCall)selectedExpr.getParent()).isCommandExpression() || selectedExpr.getParent() instanceof GrApplicationStatement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.in.command.expression"));
       showErrorMessage(project, editor, message);
       return false;

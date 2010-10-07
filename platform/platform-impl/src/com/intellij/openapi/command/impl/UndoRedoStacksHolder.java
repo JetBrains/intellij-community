@@ -68,10 +68,10 @@ class UndoRedoStacksHolder {
     return result;
   }
 
-  public boolean hasActions(Collection<DocumentReference> refs) {
-    if (refs.isEmpty()) return !myGlobalStack.isEmpty();
+  public boolean canBeUndoneOrRedone(Collection<DocumentReference> refs) {
+    if (refs.isEmpty()) return !myGlobalStack.isEmpty() && myGlobalStack.getLast().isValid();
     for (DocumentReference each : refs) {
-      if (!getStack(each).isEmpty()) return true;
+      if (!getStack(each).isEmpty() && getStack(each).getLast().isValid()) return true;
     }
     return false;
   }
@@ -223,5 +223,13 @@ class UndoRedoStacksHolder {
     LinkedList<UndoableGroup> stack = getStack(r);
     if (stack.isEmpty()) return 0;
     return Math.max(stack.getFirst().getCommandTimestamp(), stack.getLast().getCommandTimestamp());
+  }
+
+  public void invalidateActionsFor(DocumentReference ref) {
+    for (LinkedList<UndoableGroup> eachStack : getAffectedStacks(true, Collections.singleton(ref))) {
+      for (UndoableGroup eachGroup : eachStack) {
+        eachGroup.invalidateActionsFor(ref);
+      }
+    }
   }
 }

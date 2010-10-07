@@ -41,6 +41,7 @@ public class TypeArguments implements GroovyElementTypes {
       return false;
     }
 
+    boolean hasComma = ParserUtils.lookAhead(builder, mCOMMA);
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
@@ -54,10 +55,17 @@ public class TypeArguments implements GroovyElementTypes {
 
     if (ParserUtils.getToken(builder, mGT)) {
       rb.drop();
-    } else {
+    }
+    else if (hasComma) {
       rb.rollbackTo();
       builder.error(GroovyBundle.message("gt.expected"));
     }
+    else {
+      rb.drop();
+      marker.rollbackTo();
+      return false;
+    }
+
 
     marker.done(TYPE_ARGUMENTS);
     return true;

@@ -44,16 +44,12 @@ public class CompletionContext {
     getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, newStartOffset);
   }
 
-  public int getSelectionEndOffset() {
-    return getOffsetMap().getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-  }
-
-  public void setSelectionEndOffset(final int selectionEndOffset) {
-    getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, selectionEndOffset);
-  }
-
   public OffsetMap getOffsetMap() {
     return myOffsetMap;
+  }
+
+  public Project getProject() {
+    return project;
   }
 }
 
