@@ -121,7 +121,7 @@ class Foo {
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcmethod1
 
-abcmethod1(<caret>)"""
+abcmethod1 <caret>"""
 
   }
 
@@ -134,7 +134,7 @@ class Foo {
     myFixture.complete(CompletionType.CLASS_NAME)
     myFixture.checkResult """import foo.Foo
 
-Foo.abcmethod(<caret>)"""
+Foo.abcmethod <caret>"""
 
   }
 
