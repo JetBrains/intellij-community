@@ -20,7 +20,6 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiTarget;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
 import org.jetbrains.annotations.Nullable;
@@ -31,15 +30,32 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
 
   @Override
   public boolean canProcessElement(@Nullable PsiElement element) {
-    return element instanceof PomTargetPsiElement;
+    return element instanceof PomTarget || element instanceof PomTargetPsiElement;
   }
 
   @Override
   public void prepareRenaming(PsiElement element, String newName, Map<PsiElement, String> allRenames) {
+    PomTarget target = null;
     if (element instanceof PomTargetPsiElement) {
+      target = ((PomTargetPsiElement)element).getTarget();
+    }
+    else if (element instanceof PomTarget) {
+      target = (PomTarget)element;
+    }
+
+    if (target != null) {
       for (AliasingPsiTargetMapper mapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
-        for (AliasingPsiTarget psiTarget : mapper.getTargets(((PomTargetPsiElement)element).getTarget())) {
-          allRenames.put(PomService.convertToPsi(psiTarget), psiTarget.getNameAlias(newName));
+        for (AliasingPsiTarget psiTarget : mapper.getTargets(target)) {
+          PsiElement psiElement = PomService.convertToPsi(psiTarget);
+          String name = psiTarget.getNameAlias(newName);
+
+          String definedName = allRenames.put(psiElement, name);
+          if (definedName != null) {
+            assert definedName.equals(name);
+          }
+          else {
+            prepareRenaming(psiElement, name, allRenames);
+          }
         }
       }
     }

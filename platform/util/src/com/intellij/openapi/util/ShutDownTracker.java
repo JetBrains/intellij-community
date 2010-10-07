@@ -25,7 +25,7 @@ public class ShutDownTracker implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ShutDownTracker");
   private static ShutDownTracker ourInstance;
   private final List<Thread> myThreads = new ArrayList<Thread>();
-  private final List<Thread> myShutdownThreads = new ArrayList<Thread>();
+  private final LinkedList<Thread> myShutdownThreads = new LinkedList<Thread>();
   private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
   private volatile boolean myIsShutdownHookRunning = false;
 
@@ -48,17 +48,6 @@ public class ShutDownTracker implements Runnable {
   public void run() {
     myIsShutdownHookRunning = true;
 
-    while (!myShutdownTasks.isEmpty()) {
-      //  task can change myShutdownTasks
-      final Runnable task = myShutdownTasks.removeLast();
-      try {
-        task.run();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
     Thread[] threads = getStopperThreads();
     while (threads.length > 0) {
       Thread thread = threads[0];
@@ -77,14 +66,27 @@ public class ShutDownTracker implements Runnable {
       }
       threads = getStopperThreads();
     }
-
-    for (int idx = myShutdownThreads.size() - 1; idx >= 0; idx--) {
-      final Thread thread = myShutdownThreads.remove(idx);
-      thread.start();
+    
+    while (!myShutdownTasks.isEmpty()) {
+      //  task can change myShutdownTasks
+      final Runnable task = myShutdownTasks.removeLast();
       try {
-        thread.join();
+        task.run();
       }
-      catch (InterruptedException e) { }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    if (!myShutdownThreads.isEmpty()) {
+      for (Thread thread = myShutdownThreads.removeLast(); thread != null; thread = myShutdownThreads.removeLast()) {
+        thread.start();
+        try {
+          thread.join();
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
     }
   }
 
@@ -105,7 +107,7 @@ public class ShutDownTracker implements Runnable {
   }
 
   public void registerShutdownThread(final Thread thread) {
-    myShutdownThreads.add(thread);
+    myShutdownThreads.addLast(thread);
   }
 
   public void registerShutdownThread(int index, final Thread thread) {

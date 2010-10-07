@@ -163,4 +163,15 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}");
   }
+
+  public void testSpaceWithArrayBrackets() throws Exception {
+    // Inspired by IDEA-58510
+    getSettings().SPACE_WITHIN_BRACKETS = true;
+    doMethodTest(
+      "int[] i = new int[1]\n" +
+      "i[0] = 1;",
+      "int[] i = new int[ 1 ]\n" +
+      "i[ 0 ] = 1;"
+    );
+  }
 }

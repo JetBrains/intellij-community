@@ -276,24 +276,29 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  private VcsDirtyScopeManagerImpl getVcsManager() {
+    try {
+      return ((VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject));
+    }
+    catch(ProcessCanceledException ex) {
+      return null;
+    }
+    catch(Exception ex) {
+      LOG.error(ex);
+      return null;
+    }
+  }
+
   private void updateImmediately(final AtomicSectionsAware atomicSectionsAware) {
-    FileHolderComposite composite;
-    ChangeListWorker changeListWorker;
+    final FileHolderComposite composite;
+    final ChangeListWorker changeListWorker;
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! vcsManager.hasActiveVcss()) return;
 
-    final VcsDirtyScopeManagerImpl dirtyScopeManager;
-    try {
-      dirtyScopeManager = ((VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstanceChecked(myProject));
-    }
-    catch(ProcessCanceledException ex) {
-      return;
-    }
-    catch(Exception ex) {
-      LOG.error(ex);
-      return;
-    }
+    final VcsDirtyScopeManagerImpl dirtyScopeManager = getVcsManager();
+    if (dirtyScopeManager == null) return;
+
     final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
     if (invalidated == null || invalidated.isEmpty()) {
       // a hack here; but otherwise everything here should be refactored ;)
@@ -304,6 +309,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
+
+
 
     try {
       checkIfDisposed();

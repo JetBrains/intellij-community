@@ -74,4 +74,10 @@ public class ScriptingLibrariesPanel {
     return myModified;
   }
 
+  public void resetTable(LibraryTable libTable) {
+    myLibTableModel.resetTable(libTable);
+    myModified = false;
+    myLibraryTable.repaint();
+  }
+
 }

@@ -116,11 +116,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
 
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    if (visibleArea.width <= 0 || visibleArea.height <= 0) {
-      return false;
-    }
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && myEditor.getScrollingModel().getVisibleArea().width <= 0) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
       return false;
     }
 
