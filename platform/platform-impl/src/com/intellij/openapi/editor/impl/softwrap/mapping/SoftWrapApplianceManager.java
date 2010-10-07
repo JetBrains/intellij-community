@@ -143,13 +143,15 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     }
 
     myLastDocumentStamp = myEditor.getDocument().getModificationStamp();
+    // There is a possible case that new dirty regions are encountered during processing, hence, we iterate on regions snapshot here.
+    List<DirtyRegion> regions = new ArrayList<DirtyRegion>(myDirtyRegions);
+    myDirtyRegions.clear();
     myInProgress = true;
     //TODO den think about sorting and merging dirty ranges here.
     try {
-      for (DirtyRegion dirtyRegion : myDirtyRegions) {
+      for (DirtyRegion dirtyRegion : regions) {
         recalculateSoftWraps(dirtyRegion);
       }
-      myDirtyRegions.clear();
     }
     finally {
       myInProgress = false;
@@ -212,6 +214,18 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     while (!iterationState.atEnd() && start <= range.getEndOffset()) {
       FoldRegion currentFold = iterationState.getCurrentFold();
       if (currentFold != null) {
+        if (currentFold.getEndOffset() > document.getTextLength()) {
+          // There is a possible case that user just removed text that contained fold region and fold model is not updated yet
+          int startLineOffset = document.getLineStartOffset(context.logicalLine);
+          myDirtyRegions.add(new DirtyRegion(startLineOffset, document.getTextLength() - 1));
+
+          // We need to inform listeners about processing end.
+          context.offset = document.getTextLength() - 1;
+          context.symbol = document.getCharsSequence().charAt(context.offset);
+          notifyListenersOnProcessedSymbol(context);
+          return;
+        }
+
         String placeholder = currentFold.getPlaceholderText();
         FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), fontType, myEditor);
         newX = context.x;
