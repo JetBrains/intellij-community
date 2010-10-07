@@ -179,7 +179,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                             final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
     final Pair<CompletionContext, PsiElement> insertedInfo = new WriteCommandAction<Pair<CompletionContext, PsiElement>>(context.project) {
       protected void run(Result<Pair<CompletionContext, PsiElement>> result) throws Throwable {
-        result.setResult(insertDummyIdentifier(context, patcher));
+        result.setResult(insertDummyIdentifier(context, patcher, context.file, context.editor));
       }
     }.execute().getResultObject();
 
@@ -187,11 +187,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionContext newContext = insertedInfo.getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
-    PsiFile originalFile = newContext.file;
-    final PsiFile rightLanguagedOriginal = originalFile.getViewProvider().getPsi(insertedElement.getContainingFile().getLanguage());
-    if (rightLanguagedOriginal != null) {
-      originalFile = rightLanguagedOriginal;
-    }
+    PsiFile originalFile = context.file;
 
     final CompletionParameters parameters = new CompletionParameters(insertedElement, originalFile, myCompletionType, newContext.getStartOffset(), invocationCount);
 
@@ -376,8 +372,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     lookupItemSelected(context, item, completionChar, items);
   }
 
-  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final FileCopyPatcher patcher) {
-    PsiFile oldFileCopy = createFileCopy(context.file);
+  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context,
+                                                                    final FileCopyPatcher patcher,
+                                                                    final PsiFile file, final Editor originalEditor) {
+    PsiFile oldFileCopy = createFileCopy(file);
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
     boolean wasInjected = hostFile != oldFileCopy;
     Project project = hostFile.getProject();
@@ -402,7 +400,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (oldFileCopy != fileCopy && !wasInjected) {
       // newly inserted identifier can well end up in the injected language region
-      Editor oldEditor = context.editor;
       Editor editor = EditorFactory.getInstance().createEditor(document, project);
       Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, hostFile, context.getStartOffset());
       if (newEditor instanceof EditorWindow) {
@@ -411,9 +408,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final OffsetMap map = new OffsetMap(newEditor.getDocument());
         final OffsetMap oldMap = context.getOffsetMap();
         for (final OffsetKey key : oldMap.keySet()) {
-          map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(oldMap.getOffset(key)))));
+          map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(originalEditor.offsetToLogicalPosition(oldMap.getOffset(key)))));
         }
-        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, map);
+        CompletionContext newContext = new CompletionContext(file.getProject(), injectedEditor, injectedFile, map);
         int injectedOffset = newContext.getStartOffset();
         PsiElement element = findElementAt(injectedFile, injectedOffset);
 
