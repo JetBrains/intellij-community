@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -46,8 +45,7 @@ public class RelationalExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     if (ShiftExpression.parse(builder, parser)) {
-      if (ParserUtils.getToken(builder, RELATIONS) ||
-              getCompositeSign(builder)) {
+      if (ParserUtils.getToken(builder, RELATIONS) || getCompositeSign(builder)) {
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder, parser);
         marker.done(RELATIONAL_EXPRESSION);

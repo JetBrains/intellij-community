@@ -317,8 +317,8 @@ class ChangeCollector {
     }
 
     for (String changedPath : changed) {
-      ContentRevision before = GitContentRevision.createRevision(myVcsRoot, changedPath, null, myProject, false, true);
-      ContentRevision after = GitContentRevision.createRevision(myVcsRoot, changedPath, myHeadRevision, myProject, false, false);
+      ContentRevision before = GitContentRevision.createRevision(myVcsRoot, changedPath, myHeadRevision, myProject, false, true);
+      ContentRevision after = GitContentRevision.createRevision(myVcsRoot, changedPath, null, myProject, false, false);
       myChanges.add(new Change(before, after, FileStatus.MODIFIED));
     }
   }

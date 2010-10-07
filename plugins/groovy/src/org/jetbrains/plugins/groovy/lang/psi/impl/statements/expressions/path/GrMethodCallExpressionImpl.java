@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMethodCallImpl;
@@ -106,13 +105,4 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     }
     return null;
   }
-
-  @Override
-  public boolean isCommandExpression() {
-    final GrExpression expression = getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression) || ((GrReferenceExpression)expression).getQualifier() == null) return false;
-
-    return ((GrReferenceExpression)expression).getDotToken() == null;
-  }
-
 }
