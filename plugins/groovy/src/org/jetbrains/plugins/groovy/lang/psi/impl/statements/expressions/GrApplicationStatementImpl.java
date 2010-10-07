@@ -32,6 +32,11 @@ public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrAp
     super(node);
   }
 
+  @Override
+  public boolean isCommandExpression() {
+    return true;
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitApplicationStatement(this);
   }
