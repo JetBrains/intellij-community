@@ -55,7 +55,7 @@ public class TestFinderHelper {
     return false;
   }
 
-  private static TestFinder[] getFinders() {
+  public static TestFinder[] getFinders() {
     return Extensions.getExtensions(TestFinder.EP_NAME);
   }
 }
