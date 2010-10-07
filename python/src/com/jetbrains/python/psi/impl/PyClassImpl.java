@@ -103,7 +103,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyStatementList getStatementList() {
-    return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
+    final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
+    assert statementList != null: "Statement list missing for class " + getText();
+    return statementList;
   }
 
   @Override

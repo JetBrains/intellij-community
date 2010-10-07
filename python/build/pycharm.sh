@@ -19,7 +19,7 @@ if [ -z "$PYCHARM_JDK" ]; then
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
       JAVA_LOCATION=`readlink -f $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
-      if [ -x "$JAVA_LOCATION/bin/java" -a -e "$JAVA_LOCATION/lib/tools.jar" ]; then
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
         PYCHARM_JDK=$JAVA_LOCATION
       fi
     fi
@@ -83,9 +83,9 @@ if [ -z "$PYCHARM_VM_OPTIONS" ]; then
 fi
 
 # isEap
-#if ["@@isEap@@" -eq "true" ]
-# $AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
-#fi
+if ["@@isEap@@" -eq "true" ]
+ $AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
+fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.platform.prefix=Python -Didea.no.jre.check=true $AGENT $PYCHARM_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 JVM_ARGS=`tr '\n' ' ' < "$PYCHARM_VM_OPTIONS"`

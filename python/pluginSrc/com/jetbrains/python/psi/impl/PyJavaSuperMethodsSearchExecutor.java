@@ -7,14 +7,14 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyJavaSuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
-  public boolean execute(final PySuperMethodsSearch.SearchParameters queryParameters, final Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiElement> consumer) {
     PyFunction func = queryParameters.getDerivedMethod();
     PyClass containingClass = func.getContainingClass();
     if (containingClass != null) {

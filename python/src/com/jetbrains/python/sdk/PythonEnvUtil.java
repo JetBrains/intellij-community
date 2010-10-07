@@ -1,8 +1,10 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -12,7 +14,7 @@ public class PythonEnvUtil {
   private PythonEnvUtil() {
   }
 
-  public static void setPythonUnbuffered(Map<String, String> envs) {
+  public static void setPythonUnbuffered(@NotNull Map<String, String> envs) {
     envs.put("PYTHONUNBUFFERED", "1");
   }
 
@@ -25,5 +27,18 @@ public class PythonEnvUtil {
     if (source != null) new_env = new HashMap<String, String>(source);
     else new_env = new HashMap<String, String>();
     return new_env;
+  }
+
+  /**
+   * Appends a value to the end os a path-like environment variable, using system-dependent path separator.
+   * @param source path-like string to append to
+   * @param value what to append
+   * @return modified path-like string
+   */
+  @NotNull
+  public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
+    if (source != null) source = value + File.pathSeparator + source;
+    else source = value;
+    return source;
   }
 }

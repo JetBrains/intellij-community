@@ -138,6 +138,14 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("def test(a):\n <caret># some comment\n if a: return", "def test(a):\n \n # some comment\n if a: return");
   }
 
+  public void testEnterBetweenDecoratorAndFunction() {  // PY-1985
+    doTestEnter("@foo\n<caret>def bar(x): pass", "@foo\n\ndef bar(x): pass");
+  }
+
+  public void testEnterInSliceExpression() {  // PY-1992
+    doTestEnter("a = some_list[<caret>slice_start:slice_end]", "a = some_list[\n    slice_start:slice_end]");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

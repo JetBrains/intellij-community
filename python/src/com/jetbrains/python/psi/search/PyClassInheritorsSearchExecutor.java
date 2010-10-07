@@ -9,6 +9,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
    */
   protected static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
 
-  public boolean execute(final PyClassInheritorsSearch.SearchParameters queryParameters, final Processor<PyClass> consumer) {
+  public boolean execute(@NotNull final PyClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PyClass> consumer) {
     Set<PyClass> processed = new HashSet<PyClass>();
     return processDirectInheritors(queryParameters.getSuperClass(), consumer, queryParameters.isCheckDeepInheritance(), processed);
   }

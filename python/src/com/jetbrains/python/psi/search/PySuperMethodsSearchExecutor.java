@@ -5,6 +5,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +14,7 @@ import java.util.Set;
  * @author yole
  */
 public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
-  public boolean execute(final PySuperMethodsSearch.SearchParameters queryParameters, final Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiElement> consumer) {
     PyFunction func = queryParameters.getDerivedMethod();
     String name = func.getName();
     PyClass containingClass = func.getContainingClass();

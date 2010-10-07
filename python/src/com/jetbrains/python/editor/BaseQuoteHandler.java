@@ -24,7 +24,11 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
   @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     // don't assume an opening quote unless we're in an explicitly "blank" context
-    CharSequence text = iterator.getDocument().getCharsSequence();
+    final Document document = iterator.getDocument();
+    if (document == null) {
+      return false;
+    }
+    CharSequence text = document.getCharsSequence();
     if (offset+1 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset+1)) >= 0) {
       char the_quote = text.charAt(offset);
       // if we're next to two same quotes, don't auto-close, the user may want a triple quote

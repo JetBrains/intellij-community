@@ -8,12 +8,13 @@ import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
-  public boolean execute(final PsiElement queryParameters, final Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {
     if (queryParameters instanceof PyClass) {
       final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);
       return query.forEach(new Processor<PyClass>() {

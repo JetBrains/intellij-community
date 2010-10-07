@@ -10,6 +10,7 @@ requireProperty("buildNumber", requireProperty("build.number", "98.SNAPSHOT"))
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
+setProperty("vmoptions", "-Xms128m -Xmx512m -XX:MaxPermSize=150m -ea")
 
 setProperty("pluginFilter", [
         "htmltools",
@@ -66,6 +67,7 @@ class Paths {
   final distAll
   final distWin
   final distMac
+  final distUnix
   final artifacts
   final ideaSystem
   final ideaConfig
@@ -75,6 +77,7 @@ class Paths {
     distAll = "$sandbox/layout"
     distWin = "$sandbox/win"
     distMac = "$sandbox/mac"
+    distUnix = "$sandbox/unix"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
@@ -132,6 +135,10 @@ target('default': "Build artifacts") {
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
   setProperty("isEap", isEap())
 
+  if (isEap) {
+    setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
+  }
+
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
@@ -157,7 +164,7 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
-  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar"]
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib"]
 
   project.clean()
   modules.each {
@@ -193,6 +200,7 @@ target('default': "Build artifacts") {
   scramble()
 
   layoutWin(paths.distWin)
+  layoutUnix(paths.distUnix)
   layoutMac(buildName: buildName,
             version: "1.0",
             system_selector: "PyCharm10",
@@ -204,7 +212,7 @@ target('default': "Build artifacts") {
   
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
-  def root = "PyCharm-${buildNumber}.app"
+  def root = isEap ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
@@ -264,6 +272,9 @@ def zkmScramble(String script, String dir, String jarName) {
       fileset(dir: "$home/lib") {
         include(name: "*.jar")
       }
+      fileset(dir: "$home/community/lib") {
+        include(name: "*.jar")
+      }
 
       pathelement(location: "$home/build/lib/ZKM.jar")
     }
@@ -319,7 +330,7 @@ def buildExe() {
 
 def buildTarGz() {
   project.stage("tar.gz")
-  def tarRoot = "pycharm-$buildNumber"
+  def tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
   def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
   ant.tar(tarfile: tarPath) {
     tarfileset(dir: paths.distAll, prefix: tarRoot) {
@@ -335,7 +346,7 @@ def buildTarGz() {
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
-    tarfileset(dir: "$home/python/build", filemode: "755", prefix: "$tarRoot/bin") {
+    tarfileset(dir: "$paths.distUnix/bin", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "pycharm.sh")
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
@@ -400,6 +411,12 @@ def layoutFull(String target, Set usedJars) {
         fileset(file: it)
       }
 
+      dir("ext") {
+        fileset(dir: "$home/community/lib") {
+          include(name: "cglib*.jar")
+        }
+      }
+
       dir("src") {
         fileset(dir: "$home/community/lib/src") {
           include(name: "trove4j_changes.txt")
@@ -424,6 +441,7 @@ def layoutFull(String target, Set usedJars) {
 
     dir("license") {
       fileset(dir: "$home/python/license")
+      fileset(dir: "$home/community/license")
     }
 
     def layouts = includeFile("$home/build/scripts/layouts.gant")
@@ -440,6 +458,28 @@ def layoutFull(String target, Set usedJars) {
       }
     }
   }
+
+  ant.echo(file: "$target/bin/idea.properties", append: "true", message:
+  isEap() ?
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'disabled' if you do not need to receive instant visual
+# notifications about fatal errors that happen to PyCharm or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=enabled
+"""
+
+  :
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'enabled' if you need to receive instant visual notifications about
+# fatal errors that happen to PyCharm or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=disabled
+"""
+  )
 }
 
 def layoutMac(Map args, String target) {
@@ -497,6 +537,14 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
+}
+
+def layoutUnix(String target) {
+  ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
+  ant.replace(file: "$target/bin/pycharm.sh") {
+    replacefilter(token: "@@isEap@@", value: isEap())
+  }
 }
 
 def set(Map args, String key, Object value) {
