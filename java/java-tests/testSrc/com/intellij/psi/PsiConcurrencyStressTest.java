@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class PsiConcurrencyStressTest extends PsiTestCase {
 
@@ -101,7 +102,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
       }.execute();
     }
 
-    reads.await();
+    reads.await(5, TimeUnit.MINUTES);
   }
 
   private static void mark(final String s) {
