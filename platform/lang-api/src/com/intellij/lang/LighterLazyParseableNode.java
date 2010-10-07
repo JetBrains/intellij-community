@@ -18,7 +18,8 @@ package com.intellij.lang;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.CharTable;
 
-public interface LighterLazyParseableNode extends LighterASTTokenNode {
+public interface LighterLazyParseableNode extends LighterASTNode {
   Project getProject();
   CharTable getCharTable();
+  CharSequence getText();
 }

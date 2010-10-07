@@ -19,7 +19,6 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -148,7 +147,7 @@ public class DebugUtil {
     final IElementType tokenType = node.getTokenType();
     if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
 
-    final boolean composite = !(node instanceof LighterASTTokenNode && !(node instanceof LighterLazyParseableNode));
+    final boolean isLeaf = (node instanceof LighterASTTokenNode);
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     if (tokenType == TokenType.ERROR_ELEMENT) {
@@ -158,16 +157,16 @@ public class DebugUtil {
       buffer.append("PsiWhiteSpace");
     }
     else {
-      buffer.append(composite ? "Element" : "PsiElement").append('(').append(tokenType).append(')');
+      buffer.append(isLeaf ? "PsiElement" : "Element").append('(').append(tokenType).append(')');
     }
 
-    if (!composite) {
+    if (isLeaf) {
       final String text = ((LighterASTTokenNode)node).getText().toString();
       buffer.append("('").append(fixWhiteSpaces(text)).append("')");
     }
     buffer.append('\n');
 
-    if (composite) {
+    if (!isLeaf) {
       final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
       final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
       if (numKids == 0) {

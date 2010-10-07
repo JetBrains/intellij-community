@@ -402,7 +402,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private static class Token extends Node implements LighterASTTokenNode {
+  private static abstract class Token extends Node {
     public PsiBuilderImpl myBuilder;
     public IElementType myTokenType;
     public int myTokenStart;
@@ -459,6 +459,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType getTokenType() {
       return myTokenType;
     }
+  }
+
+  private static class TokenNode extends Token implements LighterASTTokenNode {
   }
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
@@ -1169,7 +1172,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           }
 
           public Token create() {
-            return new Token();
+            return new TokenNode();
           }
         });
         myLazyPool = new LimitedPool<LazyParseableToken>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
@@ -1285,7 +1288,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     private void insertLeaf(Ref<LighterASTNode[]> into, int start, int end, IElementType type, PsiBuilderImpl builder) {
-      Token lexeme;
+      final Token lexeme;
       if (type instanceof ILightLazyParseableElementType) {
         lexeme = myLazyPool.alloc();
         ((LazyParseableToken)lexeme).myParent = this;
