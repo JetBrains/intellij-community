@@ -19,6 +19,7 @@ import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -112,19 +113,15 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         model.addElement(generator);
       }
       myProjectTypeComboBox.setModel(model);
-      myProjectTypeComboBox.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(final JList list,
-                                             final Object value,
-                                             final int index,
-                                             final boolean selected,
-                                             final boolean hasFocus) {
+      myProjectTypeComboBox.setRenderer(new ListCellRendererWrapper(myProjectTypeComboBox.getRenderer()) {
+        @Override
+        public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
           if (value == null) return;
           if (value == EMPTY_PROJECT_GENERATOR) {
-            append("Empty project", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            setText("Empty project");
           }
           else {
-            DirectoryProjectGenerator generator = (DirectoryProjectGenerator)value;
-            append(generator.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            setText(((DirectoryProjectGenerator)value).getName());
           }
         }
       });
