@@ -1385,6 +1385,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return next(1, true);
   }
 
+  @Nullable
   private OccurenceInfo next(final int delta, boolean doMove) {
     List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
     for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
@@ -1412,7 +1413,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       scrollTo(next.getStartOffset());
     }
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
-    return new OccurenceInfo(new Navigatable.Adapter() {
+    return  hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
       public void navigate(final boolean requestFocus) {
         hyperlinkInfo.navigate(myProject);
         linkFollowed(hyperlinkInfo);
