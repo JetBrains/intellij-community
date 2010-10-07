@@ -11,12 +11,12 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,8 +59,16 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
           final LookupItem typeItem = getDelegate();
           final InsertionContext typeContext = CompletionUtil.newContext(context, typeItem, context.getStartOffset(), oldTail);
           new DefaultInsertHandler().handleInsert(typeContext, typeItem);
-          PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+          final PsiTypeCastExpression castExpression =
+            PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiTypeCastExpression.class, false);
+          if (castExpression != null) {
+            final PsiTypeElement typeElement = castExpression.getCastType();
+            if (typeElement != null) {
+              CodeStyleManager.getInstance(context.getProject()).reformat(typeElement);
+            }
+          }
 
+          PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
           if (csSettings.SPACE_AFTER_TYPE_CAST) {
             context.setTailOffset(TailType.insertChar(editor, context.getTailOffset(), ' '));
           }
