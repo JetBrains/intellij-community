@@ -84,22 +84,12 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
 
     VisualPosition foldStartPosition = myEditor.offsetToVisualPosition(startOffset);
 
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldingModel.addFoldRegion(startOffset, endOffset, "...");
-      }
-    });
+    addFoldRegion(startOffset, endOffset, "...");
 
     final FoldRegion foldRegion = foldingModel.getAllFoldRegions()[0];
     assertNotNull(foldRegion);
     assertTrue(foldRegion.isExpanded());
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldRegion.setExpanded(false);
-      }
-    });
+    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
 
     // Expecting that all offsets that belong to collapsed fold region point to the region's start.
     assertEquals(foldStartPosition, myEditor.offsetToVisualPosition(startOffset + 5));
@@ -146,6 +136,28 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     assertEquals(new VisualPosition(2, 4), myEditor.getCaretModel().getVisualPosition());
   }
 
+  public void testTrailingFoldRegionRemoval() throws IOException {
+    String text =
+      "public class BrokenAlignment {\n" +
+      "    @SuppressWarnings({ \"SomeInspectionIWantToIgnore\" })\n" +
+      "    public void doSomething(int x, int y) {\n" +
+      "    }\n" +
+      "}";
+
+    init(700, text);
+
+    int startFoldOffset = text.indexOf('@');
+    int endFoldOffset = text.indexOf(')');
+    addFoldRegion(startFoldOffset, endFoldOffset, "/SomeInspectionIWantToIgnore/");
+    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
+
+    int endSelectionOffset = text.lastIndexOf("}\n") + 1;
+    myEditor.getSelectionModel().setSelection(startFoldOffset, endSelectionOffset);
+
+    delete();
+    // Don't expect any exceptions here.
+  }
+
   //private void init(final int visibleWidth) throws Exception {
   //  configureByFile(PATH + getFileName());
   //  initCommon(visibleWidth);
@@ -158,6 +170,24 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
 
   private String getFileName() {
     return getTestName(false) + ".txt";
+  }
+
+  private static void addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder);
+      }
+    });
+  }
+
+  private static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        foldRegion.setExpanded(expanded);
+      }
+    });
   }
 
   private static void initCommon(final int visibleWidth) {
