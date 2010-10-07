@@ -446,7 +446,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       lookup.refreshUi();
       final List<LookupElement> items = lookup.getItems();
       if (items.size() == 0 || items.size() == 1 && (items.get(0).getPrefixMatcher().getPrefix() + lookup.getAdditionalPrefix()).equals(items.get(0).getLookupString())) {
-        lookup.hide();
+        lookup.hideLookup(false);
         assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
         return true;
       }

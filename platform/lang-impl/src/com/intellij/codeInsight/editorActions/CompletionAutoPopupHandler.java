@@ -37,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBusConnection;
@@ -46,7 +47,11 @@ import com.intellij.util.messages.MessageBusConnection;
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private Editor myEditor;
-  private int myLastOffset;
+
+  //todo store this in some less nasty place
+  public static int ourLastOffset;
+
+  private static final Key<Object> COMPLETION_AUTO_POPUP_HANDLER = Key.create("CompletionAutoPopupHandler");
 
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
@@ -58,10 +63,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (myEditor != null) {
-      if (editor != myEditor || editor.getCaretModel().getOffset() != myLastOffset + 1) {
+      if (editor != myEditor || editor.getCaretModel().getOffset() != ourLastOffset + 1) {
         finishAutopopupCompletion();
-        return Result.CONTINUE;
+      } else {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourLastOffset = editor.getCaretModel().getOffset();
       }
+      return Result.CONTINUE;
     } else {
       if (LookupManager.getActiveLookup(editor) != null) {
         return Result.CONTINUE;
@@ -69,14 +77,43 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     myEditor = editor;
-    myLastOffset = editor.getCaretModel().getOffset();
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        finishAutopopupCompletion();
-      }
-    });
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    ourLastOffset = editor.getCaretModel().getOffset();
 
+    trackProjectClosing(project);
+    trackUserActivity(project, editor);
+
+    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
+
+    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed() || !file.isValid()) return;
+        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
+
+        new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
+        final Lookup lookup = LookupManager.getActiveLookup(editor);
+        if (lookup != null) {
+          lookup.addLookupListener(new LookupAdapter() {
+            @Override
+            public void itemSelected(LookupEvent event) {
+              myEditor = null;
+            }
+
+            @Override
+            public void lookupCanceled(LookupEvent event) {
+              if (event.isCanceledExplicitly()) {
+                myEditor = null;
+              }
+            }
+          });
+        }
+      }
+    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    return Result.STOP;
+  }
+
+  private void trackUserActivity(Project project, final Editor editor) {
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
@@ -103,33 +140,18 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         }
       }
     });
+  }
 
-    final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
-
-    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed() || !file.isValid()) return;
-        if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
-
-        new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
-        final Lookup lookup = LookupManager.getActiveLookup(editor);
-        if (lookup != null) {
-          lookup.addLookupListener(new LookupAdapter() {
-            @Override
-            public void itemSelected(LookupEvent event) {
-              myEditor = null;
-            }
-
-            @Override
-            public void lookupCanceled(LookupEvent event) {
-              myEditor = null;
-            }
-          });
+  private void trackProjectClosing(Project project) {
+    if (project.getUserData(COMPLETION_AUTO_POPUP_HANDLER) == null) {
+      project.putUserData(COMPLETION_AUTO_POPUP_HANDLER, new Object());
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          myEditor = null;
         }
-      }
-    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
-    return Result.STOP;
+      });
+    }
   }
 
   private void finishAutopopupCompletion() {

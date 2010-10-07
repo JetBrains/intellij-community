@@ -25,16 +25,22 @@ public class LookupEvent extends EventObject {
   private final Lookup myLookup;
   private final LookupElement myItem;
   private final char myCompletionChar;
+  private final boolean myCanceledExplicitly;
 
-  public LookupEvent(Lookup lookup, LookupElement item){
-    this(lookup, item, (char)0);
+  public LookupEvent(Lookup lookup, boolean canceledExplicitly){
+    super(lookup);
+    myLookup = lookup;
+    myItem = null;
+    myCompletionChar = 0;
+    myCanceledExplicitly = canceledExplicitly;
   }
 
-  public LookupEvent(Lookup lookup, LookupElement item, char completionChar){
+  public LookupEvent(Lookup lookup, LookupElement item, char completionChar) {
     super(lookup);
     myLookup = lookup;
     myItem = item;
     myCompletionChar = completionChar;
+    myCanceledExplicitly = false;
   }
 
   public Lookup getLookup(){
@@ -48,5 +54,9 @@ public class LookupEvent extends EventObject {
 
   public char getCompletionChar(){
     return myCompletionChar;
+  }
+
+  public boolean isCanceledExplicitly() {
+    return myCanceledExplicitly;
   }
 }

@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -497,7 +496,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     final LookupElement item = (LookupElement)myList.getSelectedValue();
-    doHide(false);
+    doHide(false, true);
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
@@ -736,9 +735,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private void fireLookupCanceled(){
+  private void fireLookupCanceled(final boolean explicitly) {
     if (!myListeners.isEmpty()){
-      LookupEvent event = new LookupEvent(this, null);
+      LookupEvent event = new LookupEvent(this, explicitly);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
         try {
@@ -753,7 +752,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private void fireCurrentItemChanged(LookupElement item){
     if (!myListeners.isEmpty()){
-      LookupEvent event = new LookupEvent(this, item);
+      LookupEvent event = new LookupEvent(this, item, (char)0);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
         listener.currentItemChanged(event);
@@ -895,16 +894,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void hide(){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    hideLookup(true);
+  }
 
-    //if (IdeEventQueue.getInstance().getPopupManager().closeAllPopups()) return;
+  public void hideLookup(boolean explicitly) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myDisposed) return;
 
-    doHide(true);
+    doHide(true, explicitly);
   }
 
-  private void doHide(final boolean fireCanceled) {
+  private void doHide(final boolean fireCanceled, final boolean explicitly) {
     assert !myDisposed;
     myHidden = true;
 
@@ -913,7 +914,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Disposer.dispose(this);
 
     if (fireCanceled) {
-      fireLookupCanceled();
+      fireLookupCanceled(explicitly);
     }
   }
 
