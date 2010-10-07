@@ -68,6 +68,16 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     return result.toArray(new GrExpression[result.size()]);
   }
 
+  @NotNull
+  @Override
+  public PsiElement[] getAllArguments() {
+    List<PsiElement> args = new ArrayList<PsiElement>();
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add(child);
+    }
+    return args.toArray(new PsiElement[args.size()]);
+  }
+
   public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {
     if (this.getParent() == null || this.getParent().getNode() == null) {
       throw new IncorrectOperationException();

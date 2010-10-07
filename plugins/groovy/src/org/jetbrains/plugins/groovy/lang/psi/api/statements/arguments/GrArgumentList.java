@@ -32,6 +32,8 @@ public interface GrArgumentList extends GroovyPsiElement {
 
   @NotNull GrExpression[] getExpressionArguments();
 
+  @NotNull PsiElement[] getAllArguments();
+
   GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException;
 
   boolean isIndexPropertiesList();

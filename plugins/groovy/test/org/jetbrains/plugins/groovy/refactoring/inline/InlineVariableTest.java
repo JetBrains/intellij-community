@@ -15,12 +15,8 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.io.IOException;
 
 /**
  * @author ilyas
@@ -42,7 +38,9 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   public void _testVarInGString() throws Throwable { doTest(); }
   public void _testVarInGString2() throws Throwable { doTest(); }
 
-  protected void doTest() throws IncorrectOperationException, InvalidDataException, IOException {
+  public void testField() {doTest();}
+
+  protected void doTest() {
     InlineMethodTest.doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", true, new GroovyInlineHandler());
   }
 

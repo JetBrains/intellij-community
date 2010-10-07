@@ -123,7 +123,9 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false, handler);
   }
 
-  public static void doInlineTest(final JavaCodeInsightTestFixture fixture, final String testFile, boolean withCaret,
+  public static void doInlineTest(final JavaCodeInsightTestFixture fixture,
+                                  final String testFile,
+                                  boolean withCaret,
                                   InlineHandler inlineHandler) {
     final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
