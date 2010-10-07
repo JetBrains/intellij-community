@@ -52,7 +52,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     if (vcsHistoryProvider == null) return false;
     if (selectedFiles[0].isDirectory() && (! vcsHistoryProvider.supportsHistoryForDirectories())) return false;
     final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(someVFile);
-    return fileStatus != FileStatus.ADDED && fileStatus != FileStatus.UNKNOWN;
+    return fileStatus != FileStatus.ADDED && fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.IGNORED;
   }
 
   protected static FilePath[] getSelectedFiles(VcsContext context) {

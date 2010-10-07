@@ -89,4 +89,20 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testMoveBraceOnNextLineForAnnotatedMethod() throws Exception {
+    // Inspired by IDEA-59336
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+
+    doClassTest(
+      "@Override\n" +
+      "public int hashCode() {\n" +
+      "}",
+      "@Override\n" +
+      "public int hashCode() \n" +
+      "{\n" +
+      "}"
+    );
+  }
 }

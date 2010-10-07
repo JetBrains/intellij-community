@@ -79,11 +79,4 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return GroovyPsiManager.getInstance(getProject()).getType(this, METHOD_CALL_TYPES_CALCULATOR);
   }
 
-  @Override
-  public boolean isCommandExpression() {
-    final GrExpression expression = getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression) || ((GrReferenceExpression)expression).getQualifier() == null) return false;
-
-    return ((GrReferenceExpression)expression).getDotToken() == null;
-  }
 }

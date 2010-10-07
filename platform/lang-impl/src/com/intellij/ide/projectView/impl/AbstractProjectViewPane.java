@@ -47,7 +47,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
@@ -496,8 +495,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           return getPSIElement(getElement(node));
         }
       }, myTree, myProject, FLAVORS[0]));
-
-      myTree.enableDnd(this);
     }
   }
 

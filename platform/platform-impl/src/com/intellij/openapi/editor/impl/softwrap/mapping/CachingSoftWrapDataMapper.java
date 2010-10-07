@@ -343,6 +343,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     Document document = myEditor.getDocument();
     if (context.offset >= document.getTextLength() - 1) {
       cacheEntry.setLineEndPosition(context);
+      return;
     }
 
     if (context.offset < 0 || (context.offset > 0 && context.offset < document.getTextLength()

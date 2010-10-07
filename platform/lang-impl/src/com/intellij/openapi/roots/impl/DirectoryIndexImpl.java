@@ -719,6 +719,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
               String rel = FileUtil.getRelativePath(file.getUrl(), eachRoot.getUrl(), '/');
               if (rel != null) {
                 VirtualFile f = file.findFileByRelativePath(rel);
+                LOG.assertTrue(f != null, "cannot find file.\n  root: " + eachRoot.getUrl()
+                                          + "\n  updated file: " + file.getUrl()
+                                          + "\n  relative path: " + rel);
                 fillMapWithModuleContent(f, eachModule, f);
               }
             }

@@ -114,6 +114,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     });
 
     pleaseHandleShiftTab();
+
+    setFont(UIManager.getFont("TextField.font"));
   }
 
   private void pleaseHandleShiftTab() {
@@ -397,6 +399,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
   }
 
+  public void setOneLineMode(boolean oneLineMode) {
+    myOneLineMode = oneLineMode;
+  }
+
   protected EditorEx createEditor() {
     LOG.assertTrue(myDocument != null);
 
@@ -482,22 +488,27 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   protected void updateBorder(@NotNull final EditorEx editor) {
-    if (UIUtil.isUnderAquaLookAndFeel() && editor.isOneLineMode() && (!Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor")) && SwingUtilities.getAncestorOfClass(JTable.class, this) == null)) {
+    if (editor.isOneLineMode() && (!Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor")) && SwingUtilities.getAncestorOfClass(JTable.class, this) == null)) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
-      editor.setBorder(new MacUIUtil.EditorTextFieldBorder(this));
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(Editor editor) {
-          repaint();
-        }
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        editor.setBorder(new MacUIUtil.EditorTextFieldBorder(this));
+        editor.addFocusListener(new FocusChangeListener() {
+          @Override
+          public void focusGained(Editor editor) {
+            repaint();
+          }
 
-        @Override
-        public void focusLost(Editor editor) {
-          repaint();
-        }
-      });
+          @Override
+          public void focusLost(Editor editor) {
+            repaint();
+          }
+        });
+      }
+      else if (UIUtil.isUnderAlloyLookAndFeel()) {
+        editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+      }
     }
   }
 

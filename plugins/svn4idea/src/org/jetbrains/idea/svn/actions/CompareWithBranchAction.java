@@ -91,7 +91,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
       return false;
     }
     final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED) {
+    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
       return false;
     }
     return true;

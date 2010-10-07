@@ -202,7 +202,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     if (dndAware) {
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode("")));
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        ((DnDAwareTree)tree).enableDnd(this);
         DnDManager.getInstance().registerSource(new DnDSource() {
           public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
             return getSelectedElements().length > 0;

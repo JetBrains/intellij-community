@@ -114,7 +114,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (annotationProvider == null) return false;
     final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED) {
+    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
       return false;
     }
     return hasTextEditor(file);

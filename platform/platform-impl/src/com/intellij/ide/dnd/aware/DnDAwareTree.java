@@ -16,15 +16,14 @@
 package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
-import com.intellij.ide.dnd.DnDEnabler;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -33,8 +32,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class DnDAwareTree extends Tree implements DnDAware {
-  private DnDEnabler myDnDEnabler;
-
   public DnDAwareTree() {
   }
 
@@ -46,11 +43,6 @@ public class DnDAwareTree extends Tree implements DnDAware {
     super(root);
   }
 
-  public void enableDnd(Disposable parent) {
-    myDnDEnabler = new DnDEnabler(this, parent);
-    Disposer.register(parent, myDnDEnabler);
-  }
-
   public void processMouseEvent(final MouseEvent e) {
 //todo [kirillk] to delegate this to DnDEnabler
     if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
@@ -58,7 +50,9 @@ public class DnDAwareTree extends Tree implements DnDAware {
   }
 
   public final boolean isOverSelection(final Point point) {
-    final TreePath path = getPathForLocation(point.x, point.y);
+    final TreeUI ui = getUI();
+    final TreePath path = ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection()
+                          ? getClosestPathForLocation(point.x, point.y) : getPathForLocation(point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);
   }
