@@ -286,7 +286,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public void invalidateActionsFor(DocumentReference ref) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(!isInsideCommand());
+    //LOG.assertTrue(!isInsideCommand());
     myUndoStacksHolder.invalidateActionsFor(ref);
     myRedoStacksHolder.invalidateActionsFor(ref);
   }
