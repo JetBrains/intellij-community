@@ -2731,9 +2731,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     assertReadAccess();
-    if (logicalPos.visualPositionAware) {
-      return logicalPos.toVisualPosition();
-    }
     if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
       return new VisualPosition(logicalPos.line, logicalPos.column);
     }
