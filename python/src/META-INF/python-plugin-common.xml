@@ -181,6 +181,8 @@
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
+    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
