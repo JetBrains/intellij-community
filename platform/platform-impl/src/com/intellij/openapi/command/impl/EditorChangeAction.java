@@ -32,7 +32,8 @@ class EditorChangeAction implements UndoableAction {
   private final int myOffset;
   private final CharSequence myOldString;
   private final CharSequence myNewString;
-  private final long myTimeStamp;
+  private final long myOldTimeStamp;
+  private final long myNewTimeStamp;
   private final boolean myBulkUpdate;
 
   public EditorChangeAction(DocumentEx document,
@@ -45,18 +46,21 @@ class EditorChangeAction implements UndoableAction {
     myOffset = offset;
     myOldString = oldString == null ? "" : oldString;
     myNewString = newString == null ? "" : newString;
-    myTimeStamp = oldTimeStamp;
+    myOldTimeStamp = oldTimeStamp;
+    myNewTimeStamp = document.getModificationStamp();
+
     myBulkUpdate = document.isInBulkUpdate();
   }
 
   public void undo() {
     exchangeStrings(myNewString, myOldString);
-    getDocument().setModificationStamp(myTimeStamp);
+    getDocument().setModificationStamp(myOldTimeStamp);
     refreshFileStatus();
   }
 
   public void redo() {
     exchangeStrings(myOldString, myNewString);
+    getDocument().setModificationStamp(myNewTimeStamp);
     refreshFileStatus();
   }
 
