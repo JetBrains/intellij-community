@@ -64,11 +64,11 @@ public class IntentionManagerImpl extends IntentionManager {
     final ExtensionPoint<IntentionActionBean> point = Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS);
 
     point.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
-      public void extensionAdded(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
         registerIntentionFromBean(extension);
       }
 
-      public void extensionRemoved(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
       }
     });
   }

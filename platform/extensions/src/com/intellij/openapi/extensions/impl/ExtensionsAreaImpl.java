@@ -250,7 +250,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
       @SuppressWarnings({"unchecked"})
-      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
         for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
@@ -263,7 +263,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         myLogger.warn("Failed to find EP availability listener: " + epListenerExtension.getListenerClass());
       }
 
-      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         try {
           String epName = epListenerExtension.getExtensionPointName();

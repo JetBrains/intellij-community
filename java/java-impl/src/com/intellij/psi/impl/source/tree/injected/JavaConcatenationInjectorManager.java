@@ -47,11 +47,11 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
   public JavaConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
     final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
     concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
-      public void extensionAdded(ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         registerConcatenationInjector(injector);
       }
 
-      public void extensionRemoved(ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         unregisterConcatenationInjector(injector);
       }
     });

@@ -23,9 +23,8 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +48,11 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     mySharedProviderList = new ArrayList<FileEditorProvider>();
 
     Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
-      public void extensionAdded(final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
         registerProvider(extension);
       }
 
-      public void extensionRemoved(final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
         unregisterProvider(extension);
       }
     });

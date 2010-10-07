@@ -111,11 +111,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   
   static {
     LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
-      public void extensionAdded(Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
         cachedAnnotators.clear();
       }
 
-      public void extensionRemoved(Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
         cachedAnnotators.clear();
       }
     });

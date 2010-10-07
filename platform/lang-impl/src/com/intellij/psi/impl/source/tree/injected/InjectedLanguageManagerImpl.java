@@ -66,20 +66,20 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
     multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
-      public void extensionAdded(MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         registerMultiHostInjector(injector);
       }
 
-      public void extensionRemoved(MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         unregisterMultiHostInjector(injector);
       }
     });
     final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
-      public void extensionAdded(LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
       }
 
-      public void extensionRemoved(LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
       }
     };

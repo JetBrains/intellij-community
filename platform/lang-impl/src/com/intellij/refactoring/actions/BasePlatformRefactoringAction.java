@@ -48,11 +48,11 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   public BasePlatformRefactoringAction() {
     LanguageRefactoringSupport.INSTANCE.addListener(new ExtensionPointListener<RefactoringSupportProvider>() {
-      public void extensionAdded(RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
         myHidden = null;
       }
 
-      public void extensionRemoved(RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
         myHidden = null;
       }
     });
