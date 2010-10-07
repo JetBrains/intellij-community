@@ -1,0 +1,5 @@
+public class X {
+  void f() {
+    double d = 1234.56789;
+  }
+}
