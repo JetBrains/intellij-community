@@ -284,6 +284,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCurrentMerger.addAction(action);
   }
 
+  public void invalidateActionsFor(DocumentReference ref) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(!isInsideCommand());
+    myUndoStacksHolder.invalidateActionsFor(ref);
+    myRedoStacksHolder.invalidateActionsFor(ref);
+  }
+
   public void undo(@Nullable FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isUndoAvailable(editor));
@@ -352,7 +359,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private boolean isUndoOrRedoAvailable(Collection<DocumentReference> refs, boolean isUndo) {
     if (isUndo && myMerger.isUndoAvailable(refs)) return true;
     UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
-    return stackHolder.hasActions(refs);
+    return stackHolder.canBeUndoneOrRedone(refs);
   }
 
   private static Collection<DocumentReference> getDocRefs(FileEditor editor) {
