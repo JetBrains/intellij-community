@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
@@ -69,7 +70,6 @@ public class PsiImplUtil {
   }
 
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr, boolean removeUnnecessaryParentheses) {
-    ASTNode oldNode = oldExpr.getNode();
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
@@ -96,27 +96,62 @@ public class PsiImplUtil {
       }
     }
     else if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
-      GrExpression parentExpr = (GrExpression)oldParent;
-      int parentPriorityLevel = getExprPriorityLevel(parentExpr);
-      int newPriorityLevel = getExprPriorityLevel(newExpr);
-      if (parentPriorityLevel > newPriorityLevel) {
-        newExpr = factory.createParenthesizedExpr(newExpr);
-      }
-      else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
-        if (parentExpr instanceof GrBinaryExpression) {
-          GrBinaryExpression binaryExpression = (GrBinaryExpression)parentExpr;
-          if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand())) {
-            newExpr = factory.createParenthesizedExpr(newExpr);
-          }
-        }
-      }
+      GrExpression result = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
+      if (result != null) return result;
     }
 
+    ASTNode oldNode = oldExpr.getNode();
     ASTNode newNode = newExpr.copy().getNode();
     assert newNode != null && parentNode != null;
     parentNode.replaceChild(oldNode, newNode);
 
     return ((GrExpression)newNode.getPsi());
+  }
+
+  /**
+   * @return replaced exprssion or null if expression is not replaced
+   */
+  @Nullable
+  private static GrExpression addParenthesesIfNeeded(GrExpression newExpr, GrExpression oldExpr, GrExpression oldParent) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
+
+    int parentPriorityLevel = getExprPriorityLevel(oldParent);
+    int newPriorityLevel = getExprPriorityLevel(newExpr);
+
+    boolean isReplaced = false;
+
+    if (parentPriorityLevel > newPriorityLevel) {
+      newExpr = factory.createParenthesizedExpr(newExpr);
+      isReplaced = true;
+    }
+    else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
+      if (oldParent instanceof GrBinaryExpression) {
+        GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
+        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand())) {
+          newExpr = factory.createParenthesizedExpr(newExpr);
+          isReplaced = true;
+        }
+      }
+    }
+    if (isReplaced) {
+      newExpr = (GrExpression)oldExpr.replace(newExpr);
+      final GrCommandArgumentList commandArgList =
+        PsiTreeUtil.getParentOfType(oldParent, GrCommandArgumentList.class, true, GrCodeBlock.class, GrParenthesizedExpression.class);
+      if (commandArgList == null) return newExpr;
+      final PsiElement[] args = commandArgList.getAllArguments();
+
+      if (PsiTreeUtil.isAncestor(args[0], newExpr, true)) {
+        final PsiElement parent = commandArgList.getParent();
+        LOG.assertTrue(parent instanceof GrApplicationStatement);
+
+        return (GrExpression)parent.replace(factory.createExpressionFromText(
+          ((GrApplicationStatement)parent).getInvokedExpression().getText() + "(" + commandArgList.getText() + ")"));
+
+      } else {
+        return newExpr;
+      }
+    }
+    return null;
   }
 
   private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {

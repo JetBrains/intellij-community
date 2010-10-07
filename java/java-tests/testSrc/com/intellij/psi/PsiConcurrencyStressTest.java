@@ -3,10 +3,12 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -16,10 +18,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.indexing.StorageException;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class PsiConcurrencyStressTest extends PsiTestCase {
 
@@ -47,9 +49,10 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
   }
 
   private PsiJavaFile myFile;
+  private volatile boolean writeActionInProgress;
   public void testStress() throws Exception {
     int numOfThreads = 10;
-    final int readIterations = 50000;
+    final int readIterations = 100;
     final int writeIterations = 30;
 
     synchronized (this) {
@@ -71,12 +74,8 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
-                try {
-                  readStep(random);
-                }
-                catch (StorageException e) {
-                  LOG.error(e);
-                }
+                assertFalse(writeActionInProgress);
+                readStep(random);
               }
             });
           }
@@ -93,15 +92,17 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
       new WriteCommandAction(myProject, myFile) {
         @Override
         protected void run(final Result result) throws Throwable {
+          writeActionInProgress = true;
           documentManager.commitAllDocuments();
           writeStep(random);
           documentManager.commitAllDocuments();
           assertEquals(document.getText(), myFile.getText());
+          writeActionInProgress = false;
         }
       }.execute();
     }
 
-    reads.await();
+    reads.await(5, TimeUnit.MINUTES);
   }
 
   private static void mark(final String s) {
@@ -132,62 +133,46 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     }
   }
 
-  private void readStep(final Random random) throws StorageException {
+  private void readStep(final Random random) {
     PsiClass aClass = getPsiClass();
-    switch (random.nextInt(5)) {
-      case 0 :
+    switch (random.nextInt(4)) {
+      case 0:
         mark("v");
-        aClass.getContainingFile().accept(new PsiRecursiveElementVisitor() {}); break;
+        aClass.getContainingFile().accept(new PsiRecursiveElementVisitor() {
+        });
+        break;
 
-      case 1 :
+      case 1:
         mark("m");
-        aClass.getMethods();
+        for (int offset=0; offset<myFile.getTextLength();offset++) {
+          myFile.findElementAt(offset);
+        }
         break;
 
-        //case 2 : {
-      //  mark("h");
-      //  psiFile.accept(new PsiRecursiveElementVisitor() {
-      //    @Override public void visitElement(final PsiElement element) {
-      //      super.visitElement(element);
-      //
-      //      final HighlightInfoHolder infoHolder = new HighlightInfoHolder(psiFile, HighlightInfoFilter.EMPTY_ARRAY);
-      //      infoHolder.setWritable(true);
-      //      new HighlightVisitorImpl(getPsiManager()).visit(element, infoHolder);
-      //    }
-      //  });
-      //  break;
-      //}
+      case 2:
+        mark("h");
+        aClass.accept(new PsiRecursiveElementVisitor() {
+          @Override
+          public void visitElement(final PsiElement element) {
+            super.visitElement(element);
 
-      case 3 :
+            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
+            new HighlightVisitorImpl(getProject()).visit(element, infoHolder);
+          }
+        });
+        break;
+
+      case 3:
         mark("u");
-        //FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+        for (PsiMethod method : aClass.getMethods()) {
+          method.getName();
+        }
         break;
-      case 4 :
-        mark("\n");
-        break;
-
     }
   }
 
   @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
-    final Exception[] e = new Exception[1];
-    Runnable runnable1 = new Runnable() {
-      @Override
-      public void run() {
-        runnable.run();
-      }
-    };
-
-    if (myRunCommandForTest) {
-      CommandProcessor.getInstance().executeCommand(myProject, runnable1, "", null);
-    }
-    else {
-      runnable1.run();
-    }
-
-    if (e[0] != null) {
-      throw e[0];
-    }
+    runnable.run();
   }
 }

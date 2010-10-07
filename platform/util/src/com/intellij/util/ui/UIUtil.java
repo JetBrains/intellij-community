@@ -570,6 +570,11 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderAlloyLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("Alloy");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Nimbus");
   }

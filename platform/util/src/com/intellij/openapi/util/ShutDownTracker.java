@@ -77,14 +77,15 @@ public class ShutDownTracker implements Runnable {
         LOG.error(e);
       }
     }
-    
-    
-    for (Thread thread = myShutdownThreads.removeLast(); thread != null; thread = myShutdownThreads.removeLast()) {
-      thread.start();
-      try {
-        thread.join();
-      }
-      catch (InterruptedException ignored) {
+
+    if (!myShutdownThreads.isEmpty()) {
+      for (Thread thread = myShutdownThreads.removeLast(); thread != null; thread = myShutdownThreads.removeLast()) {
+        thread.start();
+        try {
+          thread.join();
+        }
+        catch (InterruptedException ignored) {
+        }
       }
     }
   }

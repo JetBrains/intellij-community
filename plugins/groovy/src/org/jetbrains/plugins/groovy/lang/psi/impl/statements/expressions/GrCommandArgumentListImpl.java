@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 
 /**
@@ -39,9 +38,4 @@ public class GrCommandArgumentListImpl extends GrArgumentListImpl implements GrC
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitCommandArguments(this);
   }
-
-  public GrExpression[] getArguments() {
-    return findChildrenByClass(GrExpression.class);
-  }
-
 }

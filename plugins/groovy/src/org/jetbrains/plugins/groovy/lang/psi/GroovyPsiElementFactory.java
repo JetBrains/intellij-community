@@ -177,4 +177,6 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrCatchClause createCatchClause(PsiClassType type, String parameterName);
 
   public abstract GrArgumentList createArgumentList();
+
+  public abstract GrArgumentList createArgumentListFromText(String argListText);
 }

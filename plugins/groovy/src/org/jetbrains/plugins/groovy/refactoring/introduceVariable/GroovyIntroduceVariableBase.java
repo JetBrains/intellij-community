@@ -125,14 +125,22 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
-    GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
-    while (expression != null) {
-      if (!expressions.contains(expression) && !(expression instanceof GrParenthesizedExpression) && !(expression instanceof GrSuperReferenceExpression) && expression.getType() != PsiType.VOID) {
-        if (!(expression instanceof GrReferenceExpression && (expression.getParent() instanceof GrMethodCallExpression ||((GrReferenceExpression)expression).resolve() instanceof PsiClass))&& !(expression instanceof GrAssignmentExpression)) {
-          expressions.add(expression);
-        }
+
+    for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
+         expression != null;
+         expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
+      if (expressions.contains(expression) || expression instanceof GrParenthesizedExpression) continue;
+      if (expression instanceof GrSuperReferenceExpression || expression.getType() == PsiType.VOID) continue;
+
+      if (expression instanceof GrApplicationStatement) continue;
+      if (expression instanceof GrReferenceExpression &&
+          (expression.getParent() instanceof GrMethodCall && ((GrMethodCall)expression.getParent()).isCommandExpression() ||
+           ((GrReferenceExpression)expression).resolve() instanceof PsiClass)) {
+        continue;
       }
-      expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class);
+      if (expression instanceof GrAssignmentExpression) continue;
+
+      expressions.add(expression);
     }
     return expressions;
   }
@@ -166,6 +174,14 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (selectedExpr == null || (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrStringInjection)) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+      showErrorMessage(project, editor, message);
+      return false;
+    }
+
+    if (selectedExpr instanceof GrReferenceExpression &&
+        selectedExpr.getParent() instanceof GrMethodCall &&
+        ((GrMethodCall)selectedExpr.getParent()).isCommandExpression()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.in.command.expression"));
       showErrorMessage(project, editor, message);
       return false;
     }

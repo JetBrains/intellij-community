@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -69,7 +70,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
 
   /* ---------------- Public operations -------------- */
 
-  public StripedLockConcurrentHashMap(TObjectHashingStrategy<K> hashingStrategy) {
+  public StripedLockConcurrentHashMap(@Nullable TObjectHashingStrategy<K> hashingStrategy) {
     this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 
@@ -90,7 +91,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
     this(initialCapacity, loadFactor, null);
   }
 
-  public StripedLockConcurrentHashMap(int initialCapacity, float loadFactor, TObjectHashingStrategy<K> hashingStrategy) {
+  public StripedLockConcurrentHashMap(int initialCapacity, float loadFactor, @Nullable TObjectHashingStrategy<K> hashingStrategy) {
     super(getInitCap(initialCapacity, loadFactor), loadFactor, hashingStrategy);
   }
 
@@ -138,7 +139,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @param t the map
    */
-  public StripedLockConcurrentHashMap(Map<? extends K, ? extends V> t) {
+  public StripedLockConcurrentHashMap(@NotNull Map<? extends K, ? extends V> t) {
     this(Math.max((int)(t.size() / DEFAULT_LOAD_FACTOR) + 1, 11), DEFAULT_LOAD_FACTOR);
     putAll(t);
   }
@@ -166,7 +167,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
-  public V get(Object key) {
+  public V get(@NotNull Object key) {
     K kKey = (K)key;
     int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
     return get(kKey, hash);
@@ -182,7 +183,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
-  public boolean containsKey(Object key) {
+  public boolean containsKey(@NotNull Object key) {
     K kKey = (K)key;
     int hash = myHashingStrategy.computeHashCode(kKey); // throws NullPointerException if key null
     return containsKey(kKey, hash);
@@ -203,7 +204,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *         <tt>false</tt> otherwise.
    * @throws NullPointerException if the value is <tt>null</tt>.
    */
-  public boolean contains(Object value) {
+  public boolean contains(@NotNull Object value) {
     return containsValue(value);
   }
 
@@ -262,7 +263,10 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    */
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     for (Entry<? extends K, ? extends V> e : t.entrySet()) {
-      put(e.getKey(), e.getValue());
+      V value = e.getValue();
+      if (value != null) {  // null is possible if the entry has just been removed
+        put(e.getKey(), value);
+      }
     }
   }
 
@@ -507,20 +511,24 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+    @NotNull
     public K next() {
       return nextEntry().key;
     }
 
+    @NotNull
     public K nextElement() {
       return nextEntry().key;
     }
   }
 
   final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+    @NotNull
     public V next() {
       return nextEntry().value;
     }
 
+    @NotNull
     public V nextElement() {
       return nextEntry().value;
     }
@@ -534,11 +542,13 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * itself acts as a forwarding pseudo-entry.
    */
   final class EntryIterator extends HashIterator implements Entry<K, V>, Iterator<Entry<K, V>> {
+    @NotNull
     public Entry<K, V> next() {
       nextEntry();
       return this;
     }
 
+    @NotNull
     public K getKey() {
       if (lastReturned == null) {
         throw new IllegalStateException("Entry was removed");
@@ -546,6 +556,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return lastReturned.key;
     }
 
+    @Nullable("null means the entry has just been removed")
     public V getValue() {
       if (lastReturned == null) {
         throw new IllegalStateException("Entry was removed");
@@ -553,7 +564,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return get(lastReturned.key);
     }
 
-    public V setValue(V value) {
+    public V setValue(@NotNull V value) {
       if (lastReturned == null) {
         throw new IllegalStateException("Entry was removed");
       }
@@ -571,7 +582,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       Entry e = (Entry)o;
       K o1 = getKey();
       K o2 = (K)e.getKey();
-      return (o1 == null ? o2 == null : myHashingStrategy.equals(o1, o2)) && eq(getValue(), e.getValue());
+      return myHashingStrategy.equals(o1, o2) && getValue().equals(e.getValue());
     }
 
     public int hashCode() {
@@ -582,8 +593,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
 
       Object k = getKey();
       Object v = getValue();
-      return (k == null ? 0 : k.hashCode()) ^
-             (v == null ? 0 : v.hashCode());
+      return k.hashCode() ^ v.hashCode();
     }
 
     public String toString() {
@@ -591,15 +601,8 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       if (lastReturned == null) {
         return super.toString();
       }
-      else {
-        return getKey() + "=" + getValue();
-      }
+      return getKey() + "=" + getValue();
     }
-
-    boolean eq(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
   }
 
   final class KeySet extends AbstractSet<K> {
@@ -728,23 +731,25 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * is made accessible.
    */
   final class SimpleEntry implements Entry<K, V> {
-    K key;
+    final K key;
     V value;
 
-    public SimpleEntry(Entry<K, V> e) {
+    public SimpleEntry(@NotNull Entry<K, V> e) {
       key = e.getKey();
       value = e.getValue();
     }
 
+    @NotNull
     public K getKey() {
       return key;
     }
 
+    @NotNull
     public V getValue() {
       return value;
     }
 
-    public V setValue(V value) {
+    public V setValue(@NotNull V value) {
       V oldValue = this.value;
       this.value = value;
       return oldValue;
@@ -756,20 +761,15 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       }
       Entry e = (Entry)o;
       K o2 = (K)e.getKey();
-      return (key == null ? o2 == null : myHashingStrategy.equals(key, o2)) && eq(value, e.getValue());
+      return myHashingStrategy.equals(key, o2) && value.equals(e.getValue());
     }
 
     public int hashCode() {
-      return (key == null ? 0 : key.hashCode()) ^
-             (value == null ? 0 : value.hashCode());
+      return key.hashCode() ^ value.hashCode();
     }
 
     public String toString() {
       return key + "=" + value;
-    }
-
-    boolean eq(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
     }
   }
 
@@ -790,7 +790,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return h;
     }
 
-    public boolean equals(final K o1, final K o2) {
+    public boolean equals(@NotNull K o1, @NotNull K o2) {
       return o1.equals(o2);
     }
   }
@@ -964,9 +964,7 @@ class _CHMSegment<K, V> {
       HashEntry[] tab = table;
       int len = tab.length;
       for (int i = 0; i < len; i++) {
-        for (HashEntry<K, V> e = tab[i];
-             e != null;
-             e = e.next) {
+        for (HashEntry<K, V> e = tab[i]; e != null; e = e.next) {
           V v = e.value;
           if (v == null) // recheck
           {
@@ -1124,7 +1122,7 @@ class _CHMSegment<K, V> {
   /*
    * Remove; match on key only if value null, else match both.
    */
-  V remove(K key, int hash, Object value) {
+  V remove(@NotNull K key, int hash, @Nullable("null means don't care") Object value) {
     try {
       lock();
       int c = count - 1;
@@ -1188,9 +1186,9 @@ class _CHMSegment<K, V> {
      * an unsynchronized access method.
      */
     static final class HashEntry<K, V> {
-      final K key;
+      @NotNull final K key;
       final int hash;
-      volatile V value;
+      @NotNull volatile V value;
       final HashEntry<K, V> next;
 
       HashEntry(@NotNull K key, int hash, HashEntry<K, V> next, @NotNull V value) {

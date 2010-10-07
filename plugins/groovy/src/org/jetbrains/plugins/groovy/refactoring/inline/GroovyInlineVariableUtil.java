@@ -27,21 +27,23 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
@@ -59,15 +61,15 @@ public class GroovyInlineVariableUtil {
   /**
    * Creates new inliner for local variable occurences
    */
-  static InlineHandler.Inliner createInlinerForLocalVariable(final GrVariable variable) {
+  static InlineHandler.Inliner createInlinerForVariable(final GrVariable variable) {
     return new InlineHandler.Inliner() {
 
       @Nullable
       public MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
         MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-        GrExpression expr = (GrExpression) reference.getElement();
+        GrExpression expr = (GrExpression)reference.getElement();
         if (expr.getParent() instanceof GrAssignmentExpression) {
-          GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
+          GrAssignmentExpression parent = (GrAssignmentExpression)expr.getParent();
           if (expr.equals(parent.getLValue())) {
             conflicts.putValue(expr, GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
           }
@@ -101,7 +103,7 @@ public class GroovyInlineVariableUtil {
    * Returns Settings object for referenced definition in case of local variable
    */
   @Nullable
-  static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
+  static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
     final String localName = variable.getName();
     final Project project = variable.getProject();
     final Collection<PsiReference> refs = ReferencesSearch.search(variable).findAll();
@@ -122,35 +124,69 @@ public class GroovyInlineVariableUtil {
       return null;
     }
 
-    return inlineDialogResult(localName, project, refs);
+    return inlineDialogResult(localName, project, refs, false, false);
   }
 
   /**
    * Shows dialog with question to inline
    */
   @Nullable
-  private static InlineHandler.Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
+  private static InlineHandler.Settings inlineDialogResult(String localName,
+                                                           Project project,
+                                                           Collection<PsiReference> refs,
+                                                           boolean forField,
+                                                           final boolean inlineOnlyOneReference) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
-      final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-          REFACTORING_NAME,
-          question,
-          HelpID.INLINE_VARIABLE,
-          "OptionPane.questionIcon",
-          true,
-          project);
+      final String question =
+        GroovyRefactoringBundle.message(forField ? "inline.field.prompt.0.1" : "inline.local.variable.prompt.0.1", localName, refs.size());
+      RefactoringMessageDialog dialog =
+        new RefactoringMessageDialog(REFACTORING_NAME, question, forField ? HelpID.INLINE_FIELD : HelpID.INLINE_VARIABLE,
+                                     "OptionPane.questionIcon", true, project);
       dialog.show();
       if (!dialog.isOK()) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        WindowManager.getInstance().getStatusBar(project)
+          .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return null;
       }
     }
 
     return new InlineHandler.Settings() {
       public boolean isOnlyOneReferenceToInline() {
-        return false;
+        return inlineOnlyOneReference;
       }
     };
+  }
+
+  @Nullable
+  static InlineHandler.Settings inlineFieldSettings(final GrField field, Editor editor) {
+    final String localName = field.getName();
+    final Project project = field.getProject();
+
+    if (!field.hasModifierProperty(GrModifier.FINAL)) {
+      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      return null;
+    }
+
+    if (field.getInitializerGroovy() == null) {
+      String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.field");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      return null;
+    }
+
+    final Collection<PsiReference> refs = ReferencesSearch.search(field).findAll();
+    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
+    for (PsiReference ref : refs) {
+      exprs.add(ref.getElement());
+    }
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(new PsiElement[exprs.size()]));
+    if (refs.isEmpty()) {
+      String message = GroovyRefactoringBundle.message("field.is.never.used.0", field.getName());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      return null;
+    }
+
+    return inlineDialogResult(localName, project, refs, true, false);
   }
 }

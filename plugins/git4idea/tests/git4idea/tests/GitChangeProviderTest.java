@@ -18,25 +18,19 @@ package git4idea.tests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsAppendableDirtyScope;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeProvider;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +47,6 @@ import static org.testng.Assert.assertTrue;
  * 1. Modifies files on disk (creates, edits, deletes, etc.)
  * 2. Manually adds them to a dirty scope (better to use VcsDirtyScopeManagerImpl, but it's too asynchronous - couldn't overcome this for now.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
- * TODO: change VirtualFile to FilePath or path declared by String - and add tests on move etc. Otherwise VirtualFile is not fuctional for move and harder to test deletes.
- * TODO: there is almost nothing special about git. Expand to all version controls. But beware that tests should be modified on VCs which track directories.
  * @author Kirill Likhodedov
  */
 public class GitChangeProviderTest extends GitTestCase {
@@ -125,20 +117,115 @@ public class GitChangeProviderTest extends GitTestCase {
   }
 
   /**
+   * "modify-modify" merge conflict.
+   * 1. Create a file and commit it.
+   * 2. Create new branch and switch to it.
+   * 3. Edit the file in that branch and commit.
+   * 4. Switch to master, conflictly edit the file and commit.
+   * 5. Merge the branch on master.
+   * Merge conflict "modify-modify" happens.
+   */
+  @Test
+  public void testConflictMM() throws Exception {
+    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY);
+    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  /**
+   * Modify-Delete conflict.
+   */
+  @Test
+  public void testConflictMD() throws Exception {
+    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE);
+    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  /**
+   * Delete-Modify conflict.
+   */
+  @Test
+  public void testConflictDM() throws Exception {
+    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY);
+    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  /**
+   * Create a file with conflicting content.
+   */
+  @Test
+  public void testConflictCC() throws Exception {
+    modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
+    VirtualFile zfile = myRepo.getDir().findChild("z.txt");
+    assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  @Test
+  public void testConflictRD() throws Exception {
+    modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
+    VirtualFile newfile = myRepo.getDir().findChild("a.txt_master_new"); // renamed in master
+    assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  @Test
+  public void testConflictDR() throws Exception {
+    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
+    VirtualFile newFile = myRepo.getDir().findChild("a.txt_feature_new"); // deleted in master, renamed in feature
+    assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
+  }
+
+  private void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws IOException {
+    myRepo.createBranch("feature");
+    performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
+    myRepo.commit();
+    myRepo.checkout("master");
+    performActionOnFileAndRecordToIndex(filename, "master", masterAction);
+    myRepo.commit();
+    myRepo.merge("feature");
+    myRepo.refresh();
+  }
+
+  private enum FileAction {
+    CREATE, MODIFY, DELETE, RENAME
+  }
+
+  private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws IOException {
+    VirtualFile file = myRepo.getDir().findChild(filename);
+    switch (action) {
+      case CREATE:
+        createFileInCommand(filename, "initial content in branch " + branchName);
+        myRepo.add(filename);
+        break;
+      case MODIFY:
+        editFileInCommand(file, "new content in branch " + branchName);
+        myRepo.add(filename);
+        break;
+      case DELETE:
+        myRepo.rm(filename);
+        break;
+      case RENAME:
+        String name = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
+        myRepo.mv(filename, name);
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
    * Pass null in the fileStatuses array to indicate that proper file has not changed.
    */
   private void assertChanges(VirtualFile[] virtualFiles, FileStatus[] fileStatuses) throws VcsException {
-    Map<VirtualFile, Change> result = getChanges(virtualFiles);
+    Map<FilePath, Change> result = getChanges(virtualFiles);
     for (int i = 0; i < virtualFiles.length; i++) {
-      VirtualFile vf = virtualFiles[i];
+      FilePath fp = new FilePathImpl(virtualFiles[i]);
       FileStatus status = fileStatuses[i];
       if (status == null) {
-        assertFalse(result.containsKey(vf), "File [" + vf + " shouldn't be in the change list, but it was.");
+        assertFalse(result.containsKey(fp), "File [" + fp + " shouldn't be in the change list, but it was.");
         continue;
       }
-      assertTrue(result.containsKey(vf), "File [" + vf + "] didn't change. Changes: " + result);
-      assertEquals(result.get(vf).getFileStatus(), status, "File statuses don't match for file [" + vf + "]");
+      assertTrue(result.containsKey(fp), "File [" + fp + "] didn't change. Changes: " + result);
+      assertEquals(result.get(fp).getFileStatus(), status, "File statuses don't match for file [" + fp + "]");
     }
   }
 
@@ -150,11 +237,15 @@ public class GitChangeProviderTest extends GitTestCase {
    * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
    * Assumes that only one change for a file happened.
    */
-  private Map<VirtualFile, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
+  private Map<FilePath, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
+    final List<FilePath> changedPaths = ObjectsConvertor.vf2fp(Arrays.asList(changedFiles));
+
     // populate dirty scope
-    for (VirtualFile vf : changedFiles) {
-      myDirtyScope.addDirtyFile(new FilePathImpl(vf));
-    }
+    //for (FilePath path : changedPaths) {
+    //  myDirtyScope.addDirtyFile(path);
+    //}
+    VcsDirtyScopeManagerImpl.getInstance(myProject).markEverythingDirty();
+    myDirtyScope.addDirtyDirRecursively(new FilePathImpl(myRepo.getDir()));
 
     // get changes
     MockChangelistBuilder builder = new MockChangelistBuilder();
@@ -162,19 +253,22 @@ public class GitChangeProviderTest extends GitTestCase {
     List<Change> changes = builder.getChanges();
 
     // get changes for files
-    Map<VirtualFile, Change> result = new HashMap<VirtualFile, Change>();
+    final Map<FilePath, Change> result = new HashMap<FilePath, Change>();
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
+      FilePath filePath = null;
       if (file == null) { // if a file was deleted, just find the reference in the original list of files and use it. 
         String path = change.getBeforeRevision().getFile().getPath();
-        for (VirtualFile vf : changedFiles) {
-          if (vf.getPath().equals(path)) {
-            file = vf;
+        for (FilePath fp : changedPaths) {
+          if (fp.getPath().equals(path)) {
+            filePath = fp;
             break;
           }
         }
+      } else {
+        filePath = new FilePathImpl(file);
       }
-      result.put(file, change);
+      result.put(filePath, change);
     }
     return result;
   }

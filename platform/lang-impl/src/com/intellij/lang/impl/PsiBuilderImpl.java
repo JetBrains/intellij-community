@@ -980,8 +980,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private void bind(final StartMarker rootMarker, final CompositeElement rootNode) {
     final Stack<StartMarker> markers = new Stack<StartMarker>();
     final Stack<CompositeElement> nodes = new Stack<CompositeElement>();
-    markers.push(rootMarker);
-    nodes.push(rootNode);
     StartMarker curMarker = rootMarker;
     CompositeElement curNode = rootNode;
 

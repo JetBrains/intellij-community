@@ -112,7 +112,7 @@ public class GitChangeUtils {
                                   GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   String s,
-                                  List<Change> changes,
+                                  Collection<Change> changes,
                                   final Set<String> ignoreNames) throws VcsException {
     StringScanner sc = new StringScanner(s);
     parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
@@ -160,7 +160,7 @@ public class GitChangeUtils {
                                   GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   StringScanner s,
-                                  List<Change> changes,
+                                  Collection<Change> changes,
                                   final Set<String> ignoreNames) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
@@ -227,7 +227,7 @@ public class GitChangeUtils {
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
     handler.endOptions();
     handler.setNoSSH(true);
-    handler.setSilent(true);
+    //handler.setSilent(true);
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
