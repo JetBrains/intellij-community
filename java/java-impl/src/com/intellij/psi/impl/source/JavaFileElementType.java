@@ -51,10 +51,12 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     super("java.FILE", StdLanguages.JAVA);
   }
 
+  @Override
   public StubBuilder getBuilder() {
     return new JavaFileStubBuilder();
   }
 
+  @Override
   public int getStubVersion() {
     return STUB_VERSION;
   }
@@ -65,6 +67,7 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }
 
+  @Override
   public ASTNode parseContents(final ASTNode chameleon) {
     if (JavaParserDefinition.USE_NEW_PARSER) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
@@ -84,22 +87,26 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
   }
 
+  @Override
   public String getExternalId() {
     return "java.FILE";
   }
 
+  @Override
   public void serialize(final PsiJavaFileStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
     dataStream.writeName(stub.getPackageName());
   }
 
+  @Override
   public PsiJavaFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     StringRef packName = dataStream.readName();
     return new PsiJavaFileStubImpl(packName, compiled);
   }
 
+  @Override
   public void indexStub(final PsiJavaFileStub stub, final IndexSink sink) {
   }
 }
