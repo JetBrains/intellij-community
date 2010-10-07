@@ -49,7 +49,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private final Map<StubSerializer<? extends StubElement>, Integer> mySerializerToId = new HashMap<StubSerializer<? extends StubElement>, Integer>();
   private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
-  private final File myFile = new File(PathManager.getSystemPath() + "/index/rep.names");
+  private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
   private boolean mySerializersLoaded = false;
 
   public SerializationManagerImpl() {
