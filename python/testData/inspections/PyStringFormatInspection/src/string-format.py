@@ -79,3 +79,6 @@ def bar():
 "%s" % {'a': 1, 'b': 2} # ok, no names in template and arg counts don't match
 "%s" % object() # ok, str() works
 "foo" % {'bar':1, 'baz':2} # ok: empty template that could use names
+
+a = ('a', 1) if 1 else ('b', 2)
+"%s is %d" % a # ok, must infer unified tuple type

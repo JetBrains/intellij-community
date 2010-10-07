@@ -8,9 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +79,18 @@ public class PyStringFormatInspection extends PyInspection {
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
             assert rightExpression != null;
-            checkExpressionType(rightExpression, myFormatSpec.get("1"), problemTarget);
+            PyType right_type = myTypeEvalContext.getType(rightExpression);
+            if (right_type instanceof PySubscriptableType) {
+              PySubscriptableType tuple_type = (PySubscriptableType)right_type;
+              for (int i=0; i <= tuple_type.getElementCount(); i += 1) {
+                PyType a_type = tuple_type.getElementType(i);
+                if (a_type != null) {
+                  checkTypeCompatible(problemTarget, a_type.getName(), myFormatSpec.get(String.valueOf(i+1)));
+                }
+                return tuple_type.getElementCount();
+              }
+            }
+            else checkExpressionType(rightExpression, myFormatSpec.get("1"), problemTarget);
           }
           return 1;
         }

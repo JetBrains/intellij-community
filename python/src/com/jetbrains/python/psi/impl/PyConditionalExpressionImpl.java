@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyConditionalExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return null;
+    return PyUnionType.union(context.getType(getTruePart()), context.getType(getFalsePart()));
   }
 
   @Override
