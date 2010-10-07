@@ -48,6 +48,7 @@ class InitialInfoBuilder {
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
+  private Block myLastBlock;
   private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
@@ -184,6 +185,9 @@ class InitialInfoBuilder {
       if (previous != null) {
         myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(previous, block);
       }
+      else if (myLastBlock != null) {
+        myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(myLastBlock, block);
+      }
 
       boolean childBlockIsRightBlock = false;
 
@@ -263,6 +267,7 @@ class InitialInfoBuilder {
       myResult.put(info, rootBlock);
       if (parent != null) myResult.put(parent, parentBlock);
     }
+    myLastBlock = rootBlock;
     return info;
   }
 

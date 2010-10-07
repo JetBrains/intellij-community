@@ -823,19 +823,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                              int braceStyle,
                                              TextRange dependantRange,
                                              boolean keepOneLine,
-                                             boolean useParentBlockAsDependencyAllTheTime) {
+                                             boolean useParentBlockAsDependencyAllTheTime)
+  {
+    int space = spaceBeforeLbrace ? 1 : 0;
     if (dependantRange != null && braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
-      int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, dependantRange, false);
     }
     else if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
-      int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, null, false);
+    }
+    else if (braceStyle == CodeStyleSettings.NEXT_LINE && !mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) {
+      return Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (keepOneLine) {
       TextRange dependencyRangeToUse = dependantRange == null || useParentBlockAsDependencyAllTheTime
                                        ? myParent.getTextRange() : dependantRange;
-      int space = spaceBeforeLbrace ? 1 : 0;
+
       return Spacing.createDependentLFSpacing(
         space, space, dependencyRangeToUse, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE
       );
