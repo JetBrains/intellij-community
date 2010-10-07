@@ -180,4 +180,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setFinalRunnable(@Nullable Runnable runnable);
 
   void moveToFitScreen();
+
+  Point getLocationOnScreen();
 }

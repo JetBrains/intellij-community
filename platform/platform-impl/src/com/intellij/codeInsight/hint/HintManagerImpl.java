@@ -210,51 +210,25 @@ public class HintManagerImpl extends HintManager implements Disposable {
       ((ScrollAwareHint)hint.getComponent()).editorScrolled();
     }
 
-    if (!hint.isVisible()) {
-      return;
-    }
+    if (!hint.isVisible()) return;
 
     Editor editor = e.getEditor();
     if (!editor.getComponent().isShowing() || editor.isOneLineMode()) return;
     Rectangle newRectangle = e.getOldRectangle();
     Rectangle oldRectangle = e.getNewRectangle();
-    Rectangle bounds = hint.getBounds();
-    Point location;
 
-    final Window window = SwingUtilities.getWindowAncestor(hint.getComponent());
-    final boolean realPopup = window != null && window != SwingUtilities.getWindowAncestor(editor.getComponent());
-    if (realPopup) {
-      location = window.getLocationOnScreen();
-      SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
-    } else {
-      location = SwingUtilities.convertPoint(
-        editor.getComponent().getRootPane().getLayeredPane(),
-        bounds.getLocation(),
-        editor.getContentComponent()
-      );
-    }
-
+    Point location = hint.getLocationOn(editor.getContentComponent());
+    Dimension size = hint.getSize();
 
     int xOffset = location.x - oldRectangle.x;
     int yOffset = location.y - oldRectangle.y;
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
-    Rectangle newBounds = new Rectangle(location.x, location.y, bounds.width, bounds.height);
+    Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
 
-    final boolean valid = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
-    if (valid) {
-      if (!realPopup) {
-        location = SwingUtilities.convertPoint(
-          editor.getContentComponent(),
-          location,
-          editor.getComponent().getRootPane().getLayeredPane()
-        );
-        hint.updateBounds(location.x, location.y);
-      } else {
-        SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
-        window.setLocation(location);
-      }
-
+    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
+    if (okToUpdateBounds) {
+      hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }
     else {
       hint.hide();
