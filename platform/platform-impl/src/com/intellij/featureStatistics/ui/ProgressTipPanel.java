@@ -70,6 +70,10 @@ public class ProgressTipPanel {
     myBrowser.setBackground(Color.white);
     myScrollPane.setPreferredSize(new Dimension(600, 200));
     myBrowser.setEditable(false);
+    if (UIUtil.isUnderGTKLookAndFeel()){
+      // Fixes background problem
+      myBrowser.setEnabled(true);
+    }
     myPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     myLabel.setIcon(IconLoader.getIcon("/general/tip.png"));
     Font font = myLabel.getFont();
