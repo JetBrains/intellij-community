@@ -959,9 +959,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         }
       }
 
+      ASTNode dependencyEndAnchor = mySettings.METHOD_BRACE_STYLE == CodeStyleSettings.NEXT_LINE ? myChild2 : myChild1;
+      int dependencyEnd = dependencyEndAnchor.getTextRange().getEndOffset();
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
-                                      new TextRange(dependencyStart, myChild1.getTextRange().getEndOffset()),
-                                      mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE, useParentBlockAsDependencyAllTheTime);
+                                      new TextRange(dependencyStart, dependencyEnd), mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE,
+                                      useParentBlockAsDependencyAllTheTime);
     }
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
@@ -970,10 +972,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
              && (myRole2 == ChildRole.MODIFIER_LIST || myRole2 == ChildRole.TYPE_REFERENCE)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
-    else if (myRole2 == ChildRole.DEFAULT_KEYWORD) {
-      createSpaceInCode(true);
-    }
-    else if (myRole2 == ChildRole.ANNOTATION_DEFAULT_VALUE) {
+    else if (myRole2 == ChildRole.DEFAULT_KEYWORD || myRole2 == ChildRole.ANNOTATION_DEFAULT_VALUE) {
       createSpaceInCode(true);
     }
     else if (myChild2.getElementType() == JavaTokenType.SEMICOLON) {
