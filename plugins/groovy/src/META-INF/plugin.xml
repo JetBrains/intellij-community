@@ -534,7 +534,6 @@
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
             icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
     </action>
 
   </actions>
