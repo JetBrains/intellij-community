@@ -66,7 +66,7 @@ abstract class UndoRedo {
   }
 
   boolean hasMoreActions() {
-    return getStackHolder().hasActions(getDecRefs());
+    return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }
 
   private Set<DocumentReference> getDecRefs() {
