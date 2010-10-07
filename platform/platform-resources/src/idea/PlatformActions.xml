@@ -295,7 +295,7 @@
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
       </group>
 
-      <group id="OtherMenu" class="com.intellij.ide.actions.OtherGroup"/>
+      <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
     <group id="MainToolBar" configurable="true">
