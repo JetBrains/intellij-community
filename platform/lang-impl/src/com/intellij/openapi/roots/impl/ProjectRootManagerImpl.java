@@ -612,7 +612,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void addRootsToWatch() {
-    final Set<String> rootPaths = getAllRoots();
+    final Set<String> rootPaths = getAllRoots(false);
     if (rootPaths == null) return;
 
     final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
@@ -623,7 +623,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   @Nullable
-  private Set<String> getAllRoots() {
+  private Set<String> getAllRoots(boolean includeSourceRoots) {
     if (myProject.isDefault()) return null;
 
     final Set<String> rootPaths = new HashSet<String>();
@@ -632,6 +632,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
       rootPaths.addAll(getRootsToTrack(contentRootUrls));
+      if (includeSourceRoots) {
+        final String[] sourceRootUrls = moduleRootManager.getSourceRootUrls();
+        rootPaths.addAll(getRootsToTrack(sourceRootUrls));
+      }
       rootPaths.add(module.getModuleFilePath());
     }
 
@@ -759,7 +763,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private boolean affectsRoots(VirtualFilePointer[] pointers) {
-    Set<String> roots = getAllRoots();
+    Set<String> roots = getAllRoots(true);
     if (roots == null) return false;
 
     for (VirtualFilePointer pointer : pointers) {
