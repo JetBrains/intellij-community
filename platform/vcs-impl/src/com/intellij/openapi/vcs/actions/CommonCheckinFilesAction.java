@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -31,10 +29,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
-  protected String getActionName(VcsContext dataContext) {
-    FilePath[] roots = getRoots(dataContext);
+  protected String getActionName(final VcsContext dataContext) {
+    final FilePath[] roots = getRoots(dataContext);
     if (roots == null || roots.length == 0) return getCheckinActionName(dataContext);
-    FilePath first = roots[0];
+    final FilePath first = roots[0];
     if (roots.length == 1) {
       if (first.isDirectory()) {
         return VcsBundle.message("action.name.checkin.directory", getCheckinActionName(dataContext));
@@ -57,8 +55,8 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
-    FilePath[] roots = getRoots(context);
-    for(FilePath root: roots) {
+    final FilePath[] roots = getRoots(context);
+    for(final FilePath root: roots) {
       final VirtualFile file = root.getVirtualFile();
       if (file == null) continue;
       final Ref<Change> change = new Ref<Change>();
@@ -73,8 +71,8 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
           }
         };
         FileIndexImplUtil.iterateRecursively(file, filter, new ContentIterator() {
-          public boolean processFile(VirtualFile fileOrDir) {
-            Change c = changeListManager.getChange(fileOrDir);
+          public boolean processFile(final VirtualFile fileOrDir) {
+            final Change c = changeListManager.getChange(fileOrDir);
             if (c != null) {
               change.set(c);
               return false;
@@ -91,11 +89,11 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     return changeListManager.getDefaultChangeList();
   }
 
-  private String getCheckinActionName(VcsContext dataContext) {
-    Project project = dataContext.getProject();
+  private String getCheckinActionName(final VcsContext dataContext) {
+    final Project project = dataContext.getProject();
     if (project == null) return VcsBundle.message("vcs.command.name.checkin");
 
-    AbstractVcs vcs = getCommonVcsFor(getRoots(dataContext), project);
+    final AbstractVcs vcs = getCommonVcsFor(getRoots(dataContext), project);
     if (vcs == null) {
       return VcsBundle.message("vcs.command.name.checkin");
     }
@@ -109,11 +107,22 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   }
 
   @Override
-  protected boolean approximatelyHasRoots(VcsContext dataContext) {
-    return dataContext.getSelectedFilePaths().length > 0;
+  protected boolean approximatelyHasRoots(final VcsContext dataContext) {
+    final FilePath[] paths = dataContext.getSelectedFilePaths();
+    if (paths.length == 0) return false;
+    final FileStatusManager fsm = FileStatusManager.getInstance(dataContext.getProject());
+    boolean somethingToCommit = false;
+    for (final FilePath path : paths) {
+      if (path.getVirtualFile() == null) continue;
+      final FileStatus status = fsm.getStatus(path.getVirtualFile());
+      if (FileStatus.UNKNOWN == status || FileStatus.IGNORED == status) continue;
+      somethingToCommit = true;
+      break;
+    }
+    return somethingToCommit;
   }
 
-  protected FilePath[] getRoots(VcsContext context) {
+  protected FilePath[] getRoots(final VcsContext context) {
     return context.getSelectedFilePaths();
   }
 
