@@ -188,31 +188,32 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                             final int offset2,
                             final CompletionContext context,
                             final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
-    final Ref<Pair<CompletionContext, PsiElement>> ref = Ref.create(null);
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ref.set(insertDummyIdentifier(context, patcher, context.file, context.editor));
-          }
-        });
-      }
-    });
-
-    final PsiElement insertedElement = ref.get().getSecond();
-    final CompletionContext newContext = ref.get().getFirst();
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-
-    PsiFile originalFile = context.file;
-
-    final CompletionParameters parameters = new CompletionParameters(insertedElement, originalFile, myCompletionType, newContext.getStartOffset(), invocationCount);
+    final CompletionParameters parameters = createCompletionParameters(context, patcher, invocationCount);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, context.getOffsetMap());
 
+    final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator);
+
+    if (!invokedExplicitly) {
+      indicator.notifyBackgrounded();
+      return;
+    }
+
+    if (freezeSemaphore.waitFor(2000)) {
+      final LookupElement[] allItems = data.get();
+      if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
+        completionFinished(offset1, offset2, indicator, allItems);
+        return;
+      }
+    }
+
+    indicator.notifyBackgrounded();
+    indicator.showLookup();
+  }
+
+  private AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
@@ -245,22 +246,28 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     startSemaphore.waitFor();
+    return data;
+  }
 
-    if (!invokedExplicitly) {
-      indicator.notifyBackgrounded();
-      return;
-    }
-
-    if (freezeSemaphore.waitFor(2000)) {
-      final LookupElement[] allItems = data.get();
-      if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
-        completionFinished(offset1, offset2, indicator, allItems);
-        return;
+  private CompletionParameters createCompletionParameters(final CompletionContext context, final FileCopyPatcher patcher, int invocationCount) {
+    final Ref<Pair<CompletionContext, PsiElement>> ref = Ref.create(null);
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ref.set(insertDummyIdentifier(context, patcher, context.file, context.editor));
+          }
+        });
       }
-    }
+    });
 
-    indicator.notifyBackgrounded();
-    indicator.showLookup();
+    final PsiElement insertedElement = ref.get().getSecond();
+    final CompletionContext newContext = ref.get().getFirst();
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
+
+    return new CompletionParameters(insertedElement, newContext.file, myCompletionType, newContext.getStartOffset(), invocationCount);
   }
 
   private AutoCompletionDecision shouldAutoComplete(
