@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
@@ -7,6 +8,21 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * @author yole
  */
 public class PyCopyPasteTest extends PyLightFixtureTestCase {
+  private boolean myOldEnabled;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myOldEnabled = CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE;
+    CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
+    super.tearDown();
+  }
+
   public void testIndent1() {
     doTest();
   }

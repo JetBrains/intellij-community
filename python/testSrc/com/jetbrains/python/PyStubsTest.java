@@ -234,6 +234,13 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testDynamicDunderAll() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final List<String> all = file.getDunderAll();
+    assertNull(all);
+    assertNotParsed(file);
+  }
+
   public void testSlots() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);

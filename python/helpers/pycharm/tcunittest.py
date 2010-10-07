@@ -20,7 +20,10 @@ class TeamcityTestResult(TestResult):
         return ''.join(traceback.format_exception(exctype, value, tb))
     
     def getTestName(self, test):
-        return test._testMethodName
+        if hasattr(test, '_testMethodName'):
+            return test._testMethodName
+        else:
+            return str(test)
 
     def getTestId(self, test):
         return test.id

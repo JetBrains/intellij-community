@@ -45,6 +45,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
   private volatile Boolean myAbsoluteImportEnabled;
+  private List<String> myDunderAll;
+  private boolean myDunderAllCalculated;
 
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
@@ -352,32 +354,72 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (stubElement instanceof PyFileStub) {
       return ((PyFileStub) stubElement).getDunderAll();
     }
-    return calculateDunderAll();
+    if (!myDunderAllCalculated) {
+      myDunderAll = calculateDunderAll();
+      myDunderAllCalculated = true;
+    }
+    return myDunderAll;
   }
 
   @Nullable
   public List<String> calculateDunderAll() {
-    final List<PyTargetExpression> attrs = getTopLevelAttributes();
-    return getStringListFromTargetExpression(PyNames.ALL, attrs);
+    final DunderAllBuilder builder = new DunderAllBuilder();
+    accept(builder);
+    return builder.result();
+  }
+
+  private static class DunderAllBuilder extends PyRecursiveElementVisitor {
+    private List<String> myResult = null;
+    private boolean myDynamic = false;
+
+    @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      if (PyNames.ALL.equals(node.getName())) {
+        myResult = getStringListFromTargetExpression(node);
+      }
+    }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      final PyExpression callee = node.getCallee();
+      if (callee instanceof PyQualifiedExpression) {
+        final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+        if (qualifier != null && PyNames.ALL.equals(qualifier.getText())) {
+          // TODO handle append and extend with constant arguments here
+          myDynamic = true;
+        }
+      }
+    }
+
+    @Nullable
+    List<String> result() {
+      return myDynamic ? null : myResult;
+    }
   }
 
   @Nullable
   public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
-        final PyExpression value = attr.findAssignedValue();
-        if (value instanceof PySequenceExpression) {
-          final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-          List<String> result = new ArrayList<String>(elements.length);
-          for (PyExpression element : elements) {
-            if (!(element instanceof PyStringLiteralExpression)) {
-              return null;
-            }
-            result.add(((PyStringLiteralExpression) element).getStringValue());
-          }
-          return result;
-        }
+        return getStringListFromTargetExpression(attr);
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
+    final PyExpression value = attr.findAssignedValue();
+    if (value instanceof PySequenceExpression) {
+      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
+      List<String> result = new ArrayList<String>(elements.length);
+      for (PyExpression element : elements) {
+        if (!(element instanceof PyStringLiteralExpression)) {
+          return null;
+        }
+        result.add(((PyStringLiteralExpression) element).getStringValue());
+      }
+      return result;
     }
     return null;
   }
@@ -430,6 +472,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       myScopeRef.clear();
     }
     myAbsoluteImportEnabled = null;
+    myDunderAllCalculated = false;
   }
 
   private SoftReference<ControlFlow> myControlFlowRef;

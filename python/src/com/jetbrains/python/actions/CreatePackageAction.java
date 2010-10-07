@@ -3,10 +3,14 @@ package com.jetbrains.python.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -19,6 +23,8 @@ import com.jetbrains.python.PyNames;
  * @author yole
  */
 public class CreatePackageAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.actions.CreatePackageAction");
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
@@ -50,8 +56,20 @@ public class CreatePackageAction extends DumbAwareAction {
   }
 
   private static void createInitPy(PsiDirectory directory) {
-    final PsiFile file = PsiFileFactory.getInstance(directory.getProject()).createFileFromText(PyNames.INIT_DOT_PY, "");
-    directory.add(file);
+    final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+    final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+    if (template != null) {
+      try {
+        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      final PsiFile file = PsiFileFactory.getInstance(directory.getProject()).createFileFromText(PyNames.INIT_DOT_PY, "");
+      directory.add(file);
+    }
   }
 
   @Override

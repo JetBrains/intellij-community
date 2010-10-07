@@ -32,6 +32,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.sdk.JythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +85,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
       return;
     }
-    final ArrayList<String> args = new ArrayList<String>(
-      Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
+    final ArrayList<String> args = new ArrayList<String>();
+    args.add(sdk.getHomePath());
+    final String versionString = sdk.getVersionString();
+    if (versionString == null || !versionString.toLowerCase().contains("jython")){
+      args.add("-u");
+    }
+    args.add(PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py"));
     for (int port : ports) {
       args.add(String.valueOf(port));
     }

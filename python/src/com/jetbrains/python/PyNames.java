@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -39,30 +40,27 @@ public class PyNames {
   @NonNls public static final String SLOTS = "__slots__";
   @NonNls public static final String DEBUG = "__debug__";
 
-  @NonNls private static final Set<String> _UnderscoredAttributes = new HashSet<String>();
-  static {
-    _UnderscoredAttributes.add("__all__");
-    _UnderscoredAttributes.add("__author__");
-    _UnderscoredAttributes.add("__bases__");
-    _UnderscoredAttributes.add("__dict__");
-    _UnderscoredAttributes.add("__doc__");
-    _UnderscoredAttributes.add("__docformat__");
-    _UnderscoredAttributes.add("__file__");
-    _UnderscoredAttributes.add("__members__");
-    _UnderscoredAttributes.add("__metaclass__");
-    _UnderscoredAttributes.add("__mod__");
-    _UnderscoredAttributes.add("__mro__");
-    _UnderscoredAttributes.add("__name__");
-    _UnderscoredAttributes.add("__path__");
-    _UnderscoredAttributes.add("__self__");
-    _UnderscoredAttributes.add("__slots__");
-    _UnderscoredAttributes.add("__version__");
-  }
-
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static Set<String> UnderscoredAttributes = Collections.unmodifiableSet(_UnderscoredAttributes);
+  public static ImmutableSet<String> UnderscoredAttributes = ImmutableSet.of(
+    "__all__",
+    "__author__",
+    "__bases__",
+    "__dict__",
+    "__doc__",
+    "__docformat__",
+    "__file__",
+    "__members__",
+    "__metaclass__",
+    "__mod__",
+    "__mro__",
+    "__name__",
+    "__path__",
+    "__self__",
+    "__slots__",
+    "__version__"
+  );
 
   public static class BuiltinDescription {
     private final String mySignature;
@@ -182,45 +180,42 @@ public class PyNames {
   // canonical names, not forced by interpreter
   public static final String CANONICAL_SELF = "self";
   
-  @NonNls private static final Set<String> _Keywords = new HashSet<String>();
-  static {
-    _Keywords.add("and");
-    _Keywords.add("del");
-    _Keywords.add("from");
-    _Keywords.add("not");
-    _Keywords.add("while");
-    _Keywords.add("as");
-    _Keywords.add("elif");
-    _Keywords.add("global");
-    _Keywords.add("or");
-    _Keywords.add("with");
-    _Keywords.add("assert");
-    _Keywords.add("else");
-    _Keywords.add("if");
-    _Keywords.add("pass");
-    _Keywords.add("yield");
-    _Keywords.add("break");
-    _Keywords.add("except");
-    _Keywords.add("import");
-    _Keywords.add("print");
-    _Keywords.add("class");
-    _Keywords.add("exec");
-    _Keywords.add("in");
-    _Keywords.add("raise");
-    _Keywords.add("continue");
-    _Keywords.add("finally");
-    _Keywords.add("is");
-    _Keywords.add("return");
-    _Keywords.add("def");
-    _Keywords.add("for");
-    _Keywords.add("lambda");
-    _Keywords.add("try");
-  }
-
   /**
    * Contains keywords as of CPython 2.5.
    */
-  public static Set<String> Keywords = Collections.unmodifiableSet(_Keywords);
+  public static ImmutableSet<String> Keywords = ImmutableSet.of(
+    "and",
+    "del",
+    "from",
+    "not",
+    "while",
+    "as",
+    "elif",
+    "global",
+    "or",
+    "with",
+    "assert",
+    "else",
+    "if",
+    "pass",
+    "yield",
+    "break",
+    "except",
+    "import",
+    "print",
+    "class",
+    "exec",
+    "in",
+    "raise",
+    "continue",
+    "finally",
+    "is",
+    "return",
+    "def",
+    "for",
+    "lambda",
+    "try"
+  );
 
   /**
    * TODO: dependency on language level.
