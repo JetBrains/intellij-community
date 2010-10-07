@@ -191,8 +191,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
       final ASTNode dot = findChildByRole(ChildRole.DOT);
-      super.deleteChildInternal(child);
-      deleteChildInternal(dot);
+      /*super.deleteChildInternal(child);
+      deleteChildInternal(dot);*/
+      deleteChildRange(child.getPsi(), dot.getPsi());
     }
     else {
       super.deleteChildInternal(child);

@@ -33,14 +33,13 @@ import javax.swing.*;
 public class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
   private LangScriptingContextProvider myProvider;
-  private ModifiableRootModel myRootModel;
+  private ScriptingLibraryManager myLibManager;
 
-  public LangScriptingContextConfigurable(ModifiableRootModel rootModel, LangScriptingContextProvider provider) {
-    LibraryTable libTable = rootModel != null ?
-                            rootModel.getModuleLibraryTable() : null;
+  public LangScriptingContextConfigurable(ScriptingLibraryManager libManager, LangScriptingContextProvider provider) {
+    LibraryTable libTable = libManager.getLibraryTable();
     myPanel = new ScriptingLibrariesPanel(libTable);
     myProvider = provider;
-    myRootModel = rootModel;
+    myLibManager = libManager;
   }
 
   @Nls
@@ -71,19 +70,19 @@ public class LangScriptingContextConfigurable implements Configurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myRootModel != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myRootModel.commit();
-        }
-      });
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myLibManager.commitModel();
+        myPanel.resetTable(myLibManager.getLibraryTable());
+      }
+    });
   }
 
   @Override
   public void reset() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    myLibManager.resetModel();
+    myPanel.resetTable(myLibManager.getLibraryTable());
   }
 
   @Override

@@ -19,7 +19,6 @@ package com.intellij.openapi.util.io;
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
@@ -429,14 +428,14 @@ public class FileUtil {
       public void run() {
         final Thread currentThread = Thread.currentThread();
         currentThread.setPriority(Thread.MIN_PRIORITY);
-        ShutDownTracker.getInstance().registerStopperThread(currentThread);
+        //ShutDownTracker.getInstance().registerStopperThread(currentThread);
         try {
           for (File tempFile : tempFiles) {
             delete(tempFile);
           }
         }
         finally {
-          ShutDownTracker.getInstance().unregisterStopperThread(currentThread);
+          //ShutDownTracker.getInstance().unregisterStopperThread(currentThread);
           currentThread.setPriority(Thread.NORM_PRIORITY);
         }
       }

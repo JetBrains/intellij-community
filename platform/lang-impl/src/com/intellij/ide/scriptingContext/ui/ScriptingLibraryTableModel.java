@@ -36,6 +36,10 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     myLibTable = libTable;
   }
 
+  public void resetTable(LibraryTable libTable) {
+    myLibTable = libTable;
+  }
+
   @Override
   public int getRowCount() {
     if (myLibTable != null) {

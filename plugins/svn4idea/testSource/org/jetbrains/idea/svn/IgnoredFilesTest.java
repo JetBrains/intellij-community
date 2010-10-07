@@ -4,16 +4,22 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 
@@ -46,7 +52,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
     myVcs = SvnVcs.getInstance(myProject);
     myVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMapping("", myVcs.getName());
+    myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
 
     ((ProjectComponent) myChangeListManager).projectOpened();
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
@@ -72,7 +78,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
   }
 
   // they all blink now
-  /*
+
   @Test
   public void testFileIsIgnored() throws Exception {
     final String filePath1 = myClientRoot.getPath() + "/a";
@@ -97,8 +103,8 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
 
   @Test
   public void testDirIsIgnored() throws Exception {
-    final String dirPath1 = myClientRoot.getPath() + "/a";
-    final File dir = new File(dirPath1);
+    //final String dirPath1 = myClientRoot.getPath() + "/a";
+    final File dir = new File(myClientRoot, "a");
     dir.mkdir();
     final File innerDir = new File(dir, "innerDir");
     innerDir.mkdir();
@@ -111,7 +117,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
     final VirtualFile vf1 = myLocalFileSystem.refreshAndFindFileByIoFile(file1);
     final VirtualFile vf2 = myLocalFileSystem.refreshAndFindFileByIoFile(file2);
 
-    final IgnoredFileBean ignoredFileBean = IgnoredBeanFactory.ignoreUnderDirectory(dirPath1, myProject);
+    final IgnoredFileBean ignoredFileBean = IgnoredBeanFactory.ignoreUnderDirectory(FileUtil.toSystemIndependentName(dir.getPath()), myProject);
     myChangeListManager.addFilesToIgnore(ignoredFileBean);
 
     dirty();
@@ -124,7 +130,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
   @Test
   public void testPatternIsIgnored() throws Exception {
     final String dirPath1 = myClientRoot.getPath() + "/a";
-    final File dir = new File(dirPath1);
+    final File dir = new File(myClientRoot, "a");
     dir.mkdir();
     final File innerDir = new File(dir, "innerDir");
     innerDir.mkdir();
@@ -155,5 +161,5 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
     Assert.assertNotNull(vf);
     Assert.assertTrue(myChangeListManager.isIgnoredFile(vf));
     Assert.assertEquals(FileStatus.IGNORED, myChangeListManager.getStatus(vf));
-  }     */
+  }
 }

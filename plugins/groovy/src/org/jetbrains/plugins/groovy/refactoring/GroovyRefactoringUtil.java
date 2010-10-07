@@ -239,8 +239,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean isLocalVariable(GrVariable variable) {
-    return !(variable instanceof GrField ||
-        variable instanceof GrParameter);
+    return !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
 

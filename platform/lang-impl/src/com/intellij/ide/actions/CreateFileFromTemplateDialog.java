@@ -16,26 +16,17 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.util.Map;
 
 /**
  * @author peter
@@ -49,7 +40,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   private ElementCreator myCreator;
 
-  private CreateFileFromTemplateDialog(@NotNull Project project) {
+  protected CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
 
     myKindLabel.setLabelFor(myKindCombo);
@@ -58,8 +49,16 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     init();
   }
 
+  protected JTextField getNameField() {
+    return myNameField;
+  }
+
+  protected TemplateKindCombo getKindCombo() {
+    return myKindCombo;
+  }
+
   private String getEnteredName() {
-    return myNameField.getText();
+    return getNameField().getText();
   }
 
   @Override
@@ -77,57 +76,72 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
+    return getNameField();
   }
 
-  public static <T extends PsiElement> Builder createDialog(@NotNull final Project project) {
+  public static Builder createDialog(@NotNull final Project project) {
     final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
+    return new BuilderImpl(dialog, project);
+  }
 
-    return new Builder() {
+  protected static class BuilderImpl implements Builder {
 
-      @Override
-      public Builder setTitle(String title) {
-        dialog.setTitle(title);
-        return this;
-      }
+    private final CreateFileFromTemplateDialog myDialog;
+    private final Project myProject;
 
-      public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
-        dialog.myKindCombo.addItem(name, icon, templateName);
-        return this;
-      }
+    public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
+      myDialog = dialog;
+      myProject = project;
+    }
 
-      public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
-                                           @NotNull final FileCreator<T> creator) {
-        final Ref<T> created = Ref.create(null);
-        dialog.myKindCombo.setSelectedName(selectedTemplateName);
-        dialog.myCreator = new ElementCreator(project, errorTitle) {
-          @Override
-          protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
-            creator.checkBeforeCreate(newName, dialog.myKindCombo.getSelectedName());
-          }
+    @Override
+    public Builder setTitle(String title) {
+      myDialog.setTitle(title);
+      return this;
+    }
 
-          @Override
-          protected PsiElement[] create(String newName) throws Exception {
-            final T element = creator.createFile(dialog.getEnteredName(), dialog.myKindCombo.getSelectedName());
-            created.set(element);
-            if (element != null) {
-              return new PsiElement[]{element};
-            }
-            return PsiElement.EMPTY_ARRAY;
-          }
+    public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
+      myDialog.getKindCombo().addItem(name, icon, templateName);
+      return this;
+    }
 
-          @Override
-          protected String getActionName(String newName) {
-            return creator.getActionName(newName, dialog.myKindCombo.getSelectedName());
-          }
-        };
-        dialog.show();
-        if (dialog.getExitCode() == OK_EXIT_CODE) {
-          return created.get();
+    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
+                                         @NotNull final FileCreator<T> creator) {
+      final Ref<T> created = Ref.create(null);
+      myDialog.getKindCombo().setSelectedName(selectedTemplateName);
+      myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
+        @Override
+        protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
+          creator.checkBeforeCreate(newName, myDialog.getKindCombo().getSelectedName());
         }
-        return null;
+
+        @Override
+        protected PsiElement[] create(String newName) throws Exception {
+          final T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
+          created.set(element);
+          if (element != null) {
+            return new PsiElement[]{element};
+          }
+          return PsiElement.EMPTY_ARRAY;
+        }
+
+        @Override
+        protected String getActionName(String newName) {
+          return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
+        }
+      };
+      myDialog.show();
+      if (myDialog.getExitCode() == OK_EXIT_CODE) {
+        return created.get();
       }
-    };
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Map<String,String> getCustomProperties() {
+      return null;
+    }
   }
 
   public interface Builder {
@@ -135,6 +149,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
+    @Nullable
+    Map<String,String> getCustomProperties();
   }
 
   public interface FileCreator<T> {

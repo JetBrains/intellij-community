@@ -617,4 +617,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrArgumentList createArgumentList() {
     return ((GrCall)createExpressionFromText("foo()")).getArgumentList();
   }
+
+  public GrArgumentList createArgumentListFromText(String argListText) {
+    try {
+      return ((GrCall)createExpressionFromText("foo " + argListText)).getArgumentList();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.debug(argListText);
+      throw e;
+    }
+  }
 }

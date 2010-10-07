@@ -76,8 +76,10 @@ class CacheUpdateRunner {
 
         public void consume(VirtualFile virtualFile) {
           indicator.checkCanceled();
-          processed.add(virtualFile);
-          indicator.setFraction(processed.size() / total);
+          synchronized (processed) {
+            processed.add(virtualFile);
+            indicator.setFraction(processed.size() / total);
+          }
           if (virtualFile.isValid()) {
             indicator.setText2(virtualFile.getPresentableUrl());
           }

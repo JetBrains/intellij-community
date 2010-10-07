@@ -222,7 +222,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     Point location;
 
     final Window window = SwingUtilities.getWindowAncestor(hint.getComponent());
-    final boolean realPopup = window != SwingUtilities.getWindowAncestor(editor.getComponent());
+    final boolean realPopup = window != null && window != SwingUtilities.getWindowAncestor(editor.getComponent());
     if (realPopup) {
       location = window.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());

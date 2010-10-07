@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiField;
+    return element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage());
   }
 
   public void inlineElement(Project project, Editor editor, PsiElement element) {

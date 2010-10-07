@@ -26,6 +26,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -42,8 +43,12 @@ public class GroovyInlineHandler implements InlineHandler {
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
-    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
-      return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor, invokedOnReference);
+    if (element instanceof GrVariable) {
+      if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
+        return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable)element, editor);
+      } else if (element instanceof GrField) {
+        return GroovyInlineVariableUtil.inlineFieldSettings((GrField)element, editor);
+      }
     } else if (element instanceof GrMethod) {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor, invokedOnReference);
     } else {
@@ -81,9 +86,13 @@ public class GroovyInlineHandler implements InlineHandler {
 
   @Nullable
   public Inliner createInliner(PsiElement element, Settings settings) {
-    if (element instanceof GrVariable &&
-        GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
-      return GroovyInlineVariableUtil.createInlinerForLocalVariable(((GrVariable) element));
+    if (element instanceof GrVariable) {
+      if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
+        return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
+      }
+      else if (element instanceof GrField) {
+        return GroovyInlineVariableUtil.createInlinerForVariable(((GrVariable)element));
+      }
     }
     if (element instanceof GrMethod) {
       return new GroovyMethodInliner((GrMethod) element);

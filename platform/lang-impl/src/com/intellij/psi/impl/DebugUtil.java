@@ -32,11 +32,15 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
@@ -134,7 +138,7 @@ public class DebugUtil {
   public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
                                          @NotNull final String source,
                                          final boolean skipWhitespaces) {
-    StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder();
     lightTreeToBuffer(tree, source, buffer, tree.getRoot(), 0, skipWhitespaces, 0);
     return buffer.toString();
   }
@@ -168,7 +172,7 @@ public class DebugUtil {
       final String text = source.substring(chameleonShift + root.getStartOffset(), chameleonShift + root.getEndOffset());
       buffer.append("('").append(fixWhiteSpaces(text)).append("')");
     }
-    buffer.append("\n");
+    buffer.append('\n');
 
     if (composite) {
       if (numKids == 0) {
@@ -181,6 +185,26 @@ public class DebugUtil {
           lightTreeToBuffer(tree, source, buffer, kids.get()[i], indent + 2, skipWhiteSpaces, chameleonShift + shift);
         }
       }
+    }
+  }
+
+  public static String stubTreeToString(final StubElement root) {
+    final StringBuilder builder = new StringBuilder();
+    stubTreeToBuffer(root, builder, 0);
+    return builder.toString();
+  }
+
+  public static void stubTreeToBuffer(final StubElement node, final StringBuilder buffer, final int indent) {
+    StringUtil.repeatSymbol(buffer, ' ', indent);
+    final IStubElementType stubType = node.getStubType();
+    if (stubType != null) {
+      buffer.append(stubType).append(':');
+    }
+    buffer.append(node).append('\n');
+
+    final List<StubElement> children = node.getChildrenStubs();
+    for (final StubElement child : children) {
+      stubTreeToBuffer(child, buffer, indent + 2);
     }
   }
 
