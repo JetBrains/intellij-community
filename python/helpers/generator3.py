@@ -840,7 +840,7 @@ class ModuleRedeclarator(object):
                         return mname + inner_name
         return None
 
-    def fmtValue(self, p_value, indent, prefix="", postfix="", as_name=None):
+    def fmtValue(self, p_value, indent, prefix="", postfix="", as_name=None, seen_values=None):
         """
         Formats and outputs value (it occupies and entire line).
         @param p_value the value.
@@ -848,7 +848,9 @@ class ModuleRedeclarator(object):
         @param prefix text to print before the value
         @param postfix text to print after the value
         @param as_name hints which name are we trying to print; helps with circular refs.
+        @param seen_values a list of keys we've seen if we're processing a dict
         """
+        SELF_VALUE = "<value is a self-reference, replaced by this string>"
         if isinstance(p_value, SIMPLEST_TYPES):
             self.out(prefix + reliable_repr(p_value) + postfix, indent)
         else:
@@ -860,6 +862,8 @@ class ModuleRedeclarator(object):
                 self.out(prefix + imported_name + postfix, indent)
             else:
                 if isinstance(p_value, (list, tuple)):
+                    if not seen_values:
+                        seen_values = [p_value]
                     if len(p_value) == 0:
                         self.out(prefix + repr(p_value) + postfix, indent)
                     else:
@@ -869,21 +873,31 @@ class ModuleRedeclarator(object):
                             lpar, rpar = "(", ")"
                         self.out(prefix + lpar, indent)
                         for v in p_value:
-                            self.fmtValue(v, indent + 1, postfix=",")
+                            if v in seen_values:
+                                v = SELF_VALUE
+                            else:
+                                seen_values.append(v)
+                            self.fmtValue(v, indent + 1, postfix=",", seen_values=seen_values)
                         self.out(rpar + postfix, indent)
                 elif isinstance(p_value, dict):
                     if len(p_value) == 0:
                         self.out(prefix + repr(p_value) + postfix, indent)
                     else:
+                        if not seen_values:
+                          seen_values = [p_value]
                         self.out(prefix + "{", indent)
                         for k in p_value:
                             v = p_value[k]
+                            if v in seen_values:
+                                v = SELF_VALUE
+                            else:
+                                seen_values.append(v)
                             if isinstance(k, SIMPLEST_TYPES):
-                                self.fmtValue(v, indent + 1, prefix=repr(k) + ": ", postfix=",")
+                                self.fmtValue(v, indent + 1, prefix=repr(k) + ": ", postfix=",", seen_values=seen_values)
                             else:
                             # both key and value need fancy formatting
-                                self.fmtValue(k, indent + 1, postfix=": ")
-                                self.fmtValue(v, indent + 2)
+                                self.fmtValue(k, indent + 1, postfix=": ", seen_values=seen_values)
+                                self.fmtValue(v, indent + 2, seen_values=seen_values)
                                 self.out(",", indent + 1)
                         self.out("}" + postfix, indent)
                 else: # something else, maybe representable

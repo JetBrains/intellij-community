@@ -257,7 +257,51 @@ class TestSpecialCases(unittest.TestCase):
     self._testBuiltinFuncName("filter", "(function_or_none, sequence)")
     
 
-    
+class TestDataOutput(unittest.TestCase):
+  "Tests for sanity of output of data members"
+
+  def setUp(self):
+    from StringIO import StringIO
+    self.out = StringIO()
+    self.m = ModuleRedeclarator(None, self.out, 4)
+
+  def checkFmtValue(self, data, expected):
+    self.out.seek(0)
+    self.out.truncate()
+    self.m.fmtValue(data, 0)
+    self.out.seek(0)
+    result = "".join(self.out.readlines()).strip()
+    self.assertEquals(expected, result)
+
+  def testRecursiveDict(self):
+    data = {'a': 1}
+    data['b'] = data
+    expected = "\n".join((
+      "{",
+      "    'a': 1,",
+      "    'b': '<value is a self-reference, replaced by this string>',",
+      "}"
+    ))
+    self.checkFmtValue(data, expected)
+
+  def testRecursiveList(self):
+      data = [1]
+      data.append(data)
+      data.append(2)
+      data.append([10, data, 20])
+      expected = "\n".join((
+        "[",
+        "    1,",
+        "    '<value is a self-reference, replaced by this string>',",
+        "    2,",
+        "    [",
+        "        10,",
+        "        '<value is a self-reference, replaced by this string>',",
+        "        20,",
+        "    ],",
+        "]"
+      ))
+      self.checkFmtValue(data, expected)
 
 ###
 if __name__ == '__main__':
