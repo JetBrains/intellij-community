@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,6 +61,14 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
         context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
       }
       else {
+        final PsiNewExpression newExpression =
+          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiNewExpression.class, false);
+        if (newExpression != null) {
+          final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+          if (classReference != null) {
+            CodeStyleManager.getInstance(context.getProject()).reformat(classReference);
+          }
+        }
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
       }
     }

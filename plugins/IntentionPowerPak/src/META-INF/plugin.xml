@@ -21,6 +21,16 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertToEngineeringNotationIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertToPlainIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.siyeh.ipp.integer.ConvertIntegerToOctalIntention</className>
       <categoryKey>intention.category.numbers</categoryKey>
     </intentionAction>

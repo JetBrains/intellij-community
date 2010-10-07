@@ -23,14 +23,12 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.InputMethodListener;
 import java.awt.event.KeyEvent;
@@ -53,6 +51,7 @@ public abstract class EditChangelistPanel {
   public EditChangelistPanel(@Nullable final ChangeListEditHandler handler) {
     myHandler = handler;
 
+    myDescriptionTextArea.setOneLineMode(false);
     myNameTextField.addKeyListener(new KeyListener() {
       public void keyTyped(final KeyEvent e) {
         onEditName(EditChangelistPanel.this.myHandler);

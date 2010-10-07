@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -115,6 +116,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
                                       final int caretColumn,
                                       final Ref<Boolean> indented,
                                       final IndentTransferableData value) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
+      return;
+    }
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null || !acceptFileType(psiFile.getFileType())) {

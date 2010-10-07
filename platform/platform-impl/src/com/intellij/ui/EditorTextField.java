@@ -399,6 +399,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
   }
 
+  public void setOneLineMode(boolean oneLineMode) {
+    myOneLineMode = oneLineMode;
+  }
+
   protected EditorEx createEditor() {
     LOG.assertTrue(myDocument != null);
 
