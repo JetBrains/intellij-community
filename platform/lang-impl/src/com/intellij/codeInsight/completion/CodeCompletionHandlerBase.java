@@ -48,6 +48,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,7 +91,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public final void invoke(final Project project, final Editor editor) {
     invoke(project, editor, PsiUtilBase.getPsiFileInEditor(editor, project));
   }
-  
+
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Please don't invoke completion inside write action";
@@ -115,7 +116,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    
+
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
       if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
@@ -143,48 +144,65 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
 
-    final CompletionInitializationContext initializationContext = new WriteCommandAction<CompletionInitializationContext>(project) {
-      protected void run(Result<CompletionInitializationContext> result) throws Throwable {
-        CommandProcessor.getInstance().setCurrentCommandGroupId(null);
+    final CompletionInitializationContext[] initializationContext = {null};
 
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-        EditorUtil.fillVirtualSpaceUntilCaret(editor);
-        documentManager.commitAllDocuments();
-        final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, psiFile, myCompletionType);
-        result.setResult(initializationContext);
+    Runnable initCmd = new Runnable() {
+      @Override
+      public void run() {
 
-        for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
-          if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
-            continue;
+        Runnable runnable = new Runnable() {
+          public void run() {
+            final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+
+            EditorUtil.fillVirtualSpaceUntilCaret(editor);
+            documentManager.commitAllDocuments();
+            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType);
+            for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
+              if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
+                continue;
+              }
+
+              contributor.beforeCompletion(initializationContext[0]);
+              assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
+            }
           }
-
-          contributor.beforeCompletion(initializationContext);
-          assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
-        }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
       }
-    }.execute().getResultObject();
+    };
+    if (!focusLookup) {
+      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+    } else {
+      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
+    }
 
+    final int offset1 = initializationContext[0].getStartOffset();
+    final int offset2 = initializationContext[0].getSelectionEndOffset();
+    final CompletionContext context = new CompletionContext(project, editor, psiFile, initializationContext[0].getOffsetMap());
 
-    final int offset1 = initializationContext.getStartOffset();
-    final int offset2 = initializationContext.getSelectionEndOffset();
-    final CompletionContext context = new CompletionContext(project, editor, psiFile, initializationContext.getOffsetMap());
-
-    doComplete(offset1, offset2, context, initializationContext.getFileCopyPatcher(), editor, time);
+    doComplete(offset1, offset2, context, initializationContext[0].getFileCopyPatcher(), editor, time);
   }
 
   protected void doComplete(final int offset1,
                             final int offset2,
                             final CompletionContext context,
                             final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
-    final Pair<CompletionContext, PsiElement> insertedInfo = new WriteCommandAction<Pair<CompletionContext, PsiElement>>(context.project) {
-      protected void run(Result<Pair<CompletionContext, PsiElement>> result) throws Throwable {
-        result.setResult(insertDummyIdentifier(context, patcher, context.file, context.editor));
+    final Ref<Pair<CompletionContext, PsiElement>> ref = Ref.create(null);
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ref.set(insertDummyIdentifier(context, patcher, context.file, context.editor));
+          }
+        });
       }
-    }.execute().getResultObject();
+    });
 
-    final PsiElement insertedElement = insertedInfo.getSecond();
-    final CompletionContext newContext = insertedInfo.getFirst();
+    final PsiElement insertedElement = ref.get().getSecond();
+    final CompletionContext newContext = ref.get().getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
     PsiFile originalFile = context.file;
@@ -365,9 +383,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     context.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     final int idEnd = context.getIdentifierEndOffset();
     final int identifierEndOffset =
-        CompletionUtil.isOverwrite(item, completionChar) && context.getSelectionEndOffset() == idEnd ?
-        caretOffset :
-        Math.max(caretOffset, idEnd);
+      CompletionUtil.isOverwrite(item, completionChar) && context.getSelectionEndOffset() == idEnd ?
+      caretOffset :
+      Math.max(caretOffset, idEnd);
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
     lookupItemSelected(context, item, completionChar, items);
   }
@@ -589,7 +607,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       case SMART:
         return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
       case BASIC:
-        default:
+      default:
         return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
     }
   }
