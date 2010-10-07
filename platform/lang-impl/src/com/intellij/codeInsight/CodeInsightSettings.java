@@ -113,6 +113,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int INDENT_EACH_LINE = 3;
   public static final int REFORMAT_BLOCK = 4;
 
+  public boolean INDENT_TO_CARET_ON_PASTE = false;
+
   public int ADD_IMPORTS_ON_PASTE = ASK; // YES, NO or ASK
   public static final int YES = 1;
   public static final int NO = 2;
