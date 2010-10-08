@@ -301,7 +301,8 @@ public class FormatterImpl extends FormatterEx
     final int defaultOffset = offset - whiteSpace.getLength() + newWS.length();
 
     if (wsContainsCaret) {
-      final int ws = whiteSpace.getStartOffset() + CharArrayUtil.shiftForward(newWS, lineStartOffset - whiteSpace.getStartOffset(), " \t");
+      final int ws = whiteSpace.getStartOffset()
+                     + CharArrayUtil.shiftForward(newWS, Math.max(0, lineStartOffset - whiteSpace.getStartOffset()), " \t");
       return Math.max(defaultOffset, ws);
     } else {
       return defaultOffset;
