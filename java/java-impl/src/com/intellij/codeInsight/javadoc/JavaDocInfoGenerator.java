@@ -339,8 +339,6 @@ public class JavaDocInfoGenerator {
 
   @Nullable
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInHierarchy(PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
-    final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(psiClass, locator);
-    if (inClassComment != null) return inClassComment;
     for (final PsiClass superClass : psiClass.getSupers()) {
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superClass, locator);
       if (pair != null) return pair;
