@@ -22,6 +22,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
@@ -61,9 +62,13 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,6 +88,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private String mySubId;
   @NonNls private static final String ELEMENT_SUBPANE = "subPane";
   @NonNls private static final String ATTRIBUTE_SUBID = "subId";
+
+  private DnDTarget myDropTarget;
+  private DnDSource myDragSource;
+  private DnDManager myDndManager;
 
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
@@ -148,6 +157,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public void dispose() {
+    if (myDndManager != null) {
+      if (myDropTarget != null) {
+        myDndManager.unregisterTarget(myDropTarget, myTree);
+        myDropTarget = null;
+      }
+      if (myDragSource != null) {
+        myDndManager.unregisterSource(myDragSource, myTree);
+        myDragSource = null;
+      }
+      myDndManager = null;
+    }
     setTreeBuilder(null);
     myTree = null;
     myTreeStructure = null;
@@ -465,36 +485,50 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   // Drag'n'Drop stuff
 
-  public static final DataFlavor[] FLAVORS;
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
-  private final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
 
-  static {
-    DataFlavor[] flavors;
+
+
+  @Nullable
+  public static PsiElement[] getTransferedPsiElements(Transferable transferable) {
     try {
-      final Class aClass = MyTransferable.class;
-      flavors = new DataFlavor[]{new DataFlavor(
-                      DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(),
-                      FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,
-                      aClass.getClassLoader()
-                    )};
+      final Object transferData = transferable.getTransferData(DnDEventImpl.ourDataFlavor);
+      if (transferData instanceof TransferableWrapper) {
+        return ((TransferableWrapper)transferData).getPsiElements();
+      }
+      return null;
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);  // should not happen
-      flavors = new DataFlavor[0];
+    catch (Exception e) {
+      return null;
     }
-    FLAVORS = flavors;
+  }
+
+   @Nullable
+  public static TreeNode[] getTransferedTreeNodes(Transferable transferable) {
+    try {
+      final Object transferData = transferable.getTransferData(DnDEventImpl.ourDataFlavor);
+      if (transferData instanceof TransferableWrapper) {
+        return ((TransferableWrapper)transferData).getTreeNodes();
+      }
+      return null;
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
-      new DropTarget(myTree, new MoveDropTargetListener(new PsiRetriever() {
-        @Nullable
-        public PsiElement getPsiElement(@Nullable final TreeNode node) {
+      myDropTarget = new ProjectViewDropTarget(myTree, new PsiRetriever(){
+        @Override
+        public PsiElement getPsiElement(@Nullable TreeNode node) {
           return getPSIElement(getElement(node));
         }
-      }, myTree, myProject, FLAVORS[0]));
+      }, myProject);
+      myDragSource = new MyDragSource();
+      myDndManager = DnDManager.getInstance();
+      myDndManager.registerSource(myDragSource, myTree);
+      myDndManager.registerTarget(myDropTarget, myTree);
     }
   }
 
@@ -507,99 +541,67 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     myTreeBuilder = treeBuilder;
   }
 
-  private static class MyTransferable implements Transferable {
-    private final Object myTransferable;
-
-    public MyTransferable(Object transferable) {
-      myTransferable = transferable;
-    }
-
-    public DataFlavor[] getTransferDataFlavors() {
-      DataFlavor[] flavors = new DataFlavor[2];
-      flavors [0] = FLAVORS [0];
-      flavors [1] = DataFlavor.javaFileListFlavor;
-      return flavors;
-    }
-
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-      DataFlavor[] flavors = getTransferDataFlavors();
-      return ArrayUtil.find(flavors, flavor) != -1;
-    }
-
-    public Object getTransferData(DataFlavor flavor) {
-      if (flavor == DataFlavor.javaFileListFlavor) {
-        TransferableWrapper wrapper = (TransferableWrapper) myTransferable;
-        return PsiCopyPasteManager.asFileList(wrapper.getPsiElements());
-      }
-      return myTransferable;
-    }
-  }
-
-  public interface TransferableWrapper {
+  public interface TransferableWrapper extends DnDEventImpl.FileFlavorProvider{
     TreeNode[] getTreeNodes();
     @Nullable PsiElement[] getPsiElements();
   }
 
-  private class MyDragGestureListener implements DragGestureListener {
-    public void dragGestureRecognized(DragGestureEvent dge) {
-      if ((dge.getDragAction() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return;
-      DataContext dataContext = DataManager.getInstance().getDataContext();
-      ProjectView projectView = ProjectViewImpl.DATA_KEY.getData(dataContext);
-      if (projectView == null) return;
-
-      final AbstractProjectViewPane currentPane = projectView.getCurrentProjectViewPane();
-      final TreeNode[] nodes = currentPane.getSelectedTreeNodes();
-      if (nodes != null) {
-        final Object[] elements = currentPane.getSelectedElements();
-        final PsiElement[] psiElements = currentPane.getSelectedPSIElements();
-        try {
-          Object transferableWrapper = new TransferableWrapper() {
-            public TreeNode[] getTreeNodes() {
-              return nodes;
-            }
-            public PsiElement[] getPsiElements() {
-              return psiElements;
-            }
-          };
-
-          //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          if ((psiElements != null && psiElements.length > 0) || canDragElements(elements, dataContext, dge.getDragAction())) {
-            dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
-          }
-        }
-        catch (InvalidDnDOperationException idoe) {
-          // ignore
-        }
-      }
+  private class MyDragSource implements DnDSource {
+    @Override
+    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
+      final Object[] elements = getSelectedElements();
+      final PsiElement[] psiElements = getSelectedPSIElements();
+      DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      return (psiElements.length > 0) || canDragElements(elements, dataContext, action.getActionId());
     }
 
-    private boolean canDragElements(Object[] elements, DataContext dataContext, int dragAction) {
-      for (Object element : elements) {
-        if (element instanceof Module) {
-          return true;
+    @Override
+    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      final PsiElement[] psiElements = getSelectedPSIElements();
+      final TreeNode[] nodes = getSelectedTreeNodes();
+      return new DnDDragStartBean(new TransferableWrapper(){
+
+        @Override
+        public List<File> asFileList() {
+          return PsiCopyPasteManager.asFileList(psiElements);
         }
-      }
-      if (dragAction == DnDConstants.ACTION_MOVE) {
-        return MoveHandler.canMove(dataContext);
-      }
-      return false;
+
+        @Override
+        public TreeNode[] getTreeNodes() {
+          return nodes;
+        }
+
+        @Override
+        public PsiElement[] getPsiElements() {
+          return psiElements;
+        }
+      });
+    }
+
+    @Override
+    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+      return null;
+    }
+
+    @Override
+    public void dragDropEnd() {
+    }
+
+    @Override
+    public void dropActionChanged(int gestureModifiers) {
     }
   }
 
-  private static class MyDragSourceListener implements DragSourceListener {
-
-    public void dragEnter(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);
+  private static boolean canDragElements(Object[] elements, DataContext dataContext, int dragAction) {
+    for (Object element : elements) {
+      if (element instanceof Module) {
+        return true;
+      }
     }
-
-    public void dragOver(DragSourceDragEvent dsde) {}
-
-    public void dropActionChanged(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);
+    if (dragAction == DnDConstants.ACTION_MOVE) {
+      return MoveHandler.canMove(dataContext);
     }
-
-    public void dragDropEnd(DragSourceDropEvent dsde) { }
-
-    public void dragExit(DragSourceEvent dse) { }
+    return false;
   }
 }
