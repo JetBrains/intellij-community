@@ -608,17 +608,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private TrafficTooltipRenderer myTrafficTooltipRenderer;
     private void showTrafficLightTooltip(MouseEvent e) {
-      //final String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
-      //if (tooltipMessage == null) return;
       if (myTrafficTooltipRenderer == null) {
         myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(new Runnable() {
           @Override
           public void run() {
             myTrafficTooltipRenderer = null;
           }
-        });
+        }, myEditor);
       }
-      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
+      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false).setPreferredPosition(Balloon.Position.atLeft));
     }
 
     private void repaintTrafficTooltip() {
@@ -655,6 +653,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       scrollbar.addMouseListener(handler);
       myErrorStripeButton.addMouseListener(myHandler);
     }
+
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {
@@ -737,7 +736,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public TrafficTooltipRenderer createTrafficTooltipRenderer(final Runnable onHide) {
+    public TrafficTooltipRenderer createTrafficTooltipRenderer(final Runnable onHide, Editor editor) {
       return new TrafficTooltipRenderer() {
         @Override
         public void repaintTooltipWindow() {

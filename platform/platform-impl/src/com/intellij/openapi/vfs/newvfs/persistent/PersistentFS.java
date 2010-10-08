@@ -170,7 +170,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         childrenIds[i] = currentIds[idx];
       }
       else {
-        int childId = FSRecords.createRecord(false);
+        int childId = FSRecords.createRecord();
         copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(file, name), delegate);
         childrenIds[i] = childId;
       }
@@ -247,15 +247,21 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
 
     String name = file.getName();
+
+    if (name.length() > 0 && namesEqual(delegate, name, FSRecords.getName(id))) return; // TODO: Handle root attributes change.
+
     if (name.length() == 0) {            // TODO: hack
       if (areChildrenLoaded(id)) return;
     }
 
-    boolean isDirectory = delegate.isDirectory(file);
-    int flags = (isDirectory ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY);
+    myRecords.setParent(id, parentId);
+    myRecords.setName(id, name);
 
-    myRecords.saveRecord(id, parentId, name, delegate.getTimeStamp(file), flags, isDirectory ? -1L : delegate.getLength(file));
-    //
+    myRecords.setTimestamp(id, delegate.getTimeStamp(file));
+    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY), true);
+
+    myRecords.setLength(id, -1L);
+
     // TODO!!!: More attributes?
   }
 
@@ -324,7 +330,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     VirtualFile fake = new FakeVirtualFile(parent, childName);
     if (delegate.exists(fake)) {
-      int child = FSRecords.createRecord(false);
+      int child = FSRecords.createRecord();
       copyRecordFromDelegateFS(child, parentId, fake, delegate);
       myRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
@@ -639,11 +645,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           }
           if (!fs.exists(root)) return null;
 
-          String name = root.getName();
-
-          if (name.length() == 0 || !namesEqual(fs, name, FSRecords.getName(rootId))) {
-            copyRecordFromDelegateFS(rootId, 0, root, fs);
-          }
+          copyRecordFromDelegateFS(rootId, 0, root, fs);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -808,7 +810,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     VirtualFile fakeFile = new FakeVirtualFile(parent, name);
     if (delegate.exists(fakeFile)) {
       final int parentId = getFileId(parent);
-      int childId = FSRecords.createRecord(false);
+      int childId = FSRecords.createRecord();
       copyRecordFromDelegateFS(childId, parentId, fakeFile, delegate);
 
       appendIdToParentList(parentId, childId);

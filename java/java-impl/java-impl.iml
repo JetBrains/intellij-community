@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jcip" level="project" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
   <component name="copyright">
     <Base>
