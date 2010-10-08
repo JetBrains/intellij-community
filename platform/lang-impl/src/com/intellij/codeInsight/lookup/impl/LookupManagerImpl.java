@@ -44,9 +44,8 @@ import java.beans.PropertyChangeSupport;
 
 public class LookupManagerImpl extends LookupManager {
   private final Project myProject;
-
-  protected LookupImpl myActiveLookup = null;
-  protected Editor myActiveLookupEditor = null;
+  private LookupImpl myActiveLookup = null;
+  private Editor myActiveLookupEditor = null;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   public LookupManagerImpl(Project project, MessageBus bus) {
