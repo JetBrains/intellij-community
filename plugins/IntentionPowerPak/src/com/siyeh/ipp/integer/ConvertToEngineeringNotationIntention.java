@@ -28,21 +28,35 @@ import java.text.DecimalFormat;
  * @author Konstantin Bulenkov
  */
 public class ConvertToEngineeringNotationIntention extends Intention {
-  private static final DecimalFormat FORMAT = new DecimalFormat("0.00000000000000E00");
-  private static final ConvertToEngineeringNotationPredicate PREDICATE = new ConvertToEngineeringNotationPredicate();
 
-  @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    String text = FORMAT.format(Double.parseDouble(element.getText())).replace(',', '.');
-    while (text.contains("0E") && !text.contains(".0E")) {
-      text = text.replace("0E", "E");
+    private static final DecimalFormat FORMAT =
+            new DecimalFormat("0.00000000000000E00");
+    private static final ConvertToEngineeringNotationPredicate PREDICATE =
+            new ConvertToEngineeringNotationPredicate();
+
+    @Override
+    protected void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException {
+        final String elementText = element.getText();
+        if (elementText.length() == 0) {
+            return;
+        }
+        final int lastIndex = elementText.length() - 1;
+        final char lastChar = elementText.charAt(lastIndex);
+        String text = FORMAT.format(Double.parseDouble(elementText)).replace(',', '.');
+        while (text.contains("0E") && !text.contains(".0E")) {
+            text = text.replace("0E", "E");
+        }
+        if (lastChar == 'f' || lastChar == 'F') {
+            replaceExpression(text + lastChar, (PsiExpression)element);
+        } else {
+            replaceExpression(text, (PsiExpression)element);
+        }
     }
-    replaceExpression(text, (PsiExpression)element);
-  }
 
-  @NotNull
-  @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return PREDICATE;
-  }
+    @NotNull
+    @Override
+    protected PsiElementPredicate getElementPredicate() {
+        return PREDICATE;
+    }
 }

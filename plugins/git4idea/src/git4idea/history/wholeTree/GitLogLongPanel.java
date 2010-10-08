@@ -196,6 +196,11 @@ public class GitLogLongPanel {
     new MyDialog(project, gitLogLongPanel).show();
   }
 
+  public static void showDialog(final Project project, final VirtualFile root) {
+    final GitLogLongPanel gitLogLongPanel = new GitLogLongPanel(project, Collections.singletonList(root));
+    new MyDialog(project, gitLogLongPanel).show();
+  }
+
   public UIRefresh getUIRefresh() {
     return myUIRefresh;
   }
@@ -291,8 +296,8 @@ public class GitLogLongPanel {
       myTimer = new Timer(100, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          //final boolean shouldPing = (System.currentTimeMillis() - myRefreshMark) > 700;
-          final boolean shouldPing = false;
+          final boolean shouldPing = (System.currentTimeMillis() - myRefreshMark) > 300;
+          //final boolean shouldPing = false;
           if (((mySpeedometer.getSpeed() < 0.1) && mySpeedometer.hasData()) || shouldPing) {
             myRefreshMark = System.currentTimeMillis();
             mySpeedometer.clear();

@@ -98,13 +98,13 @@ public class MoveClassesOrPackagesImpl {
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
-        if (!checkNesting(project, aPackage, targetElement)) return null;
+        if (!checkNesting(project, aPackage, targetElement, true)) return null;
         if (!checkMovePackage(project, aPackage)) return null;
         element = aPackage;
       }
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
-        if (!checkNesting(project, psiPackage, targetElement)) return null;
+        if (!checkNesting(project, psiPackage, targetElement, true)) return null;
         if (!checkMovePackage(project, psiPackage)) return null;
       }
       else if (element instanceof PsiClass) {
@@ -166,16 +166,18 @@ public class MoveClassesOrPackagesImpl {
     return true;
   }
 
-  private static boolean checkNesting(final Project project, final PsiPackage srcPackage, final PsiElement targetElement) {
+  static boolean checkNesting(final Project project, final PsiPackage srcPackage, final PsiElement targetElement, boolean showError) {
     final PsiPackage targetPackage = targetElement instanceof PsiPackage
                                      ? (PsiPackage)targetElement
                                      : targetElement instanceof PsiDirectory ? JavaDirectoryService.getInstance()
                                        .getPackage((PsiDirectory)targetElement) : null;
     for (PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage()) {
       if (curPackage.equals(srcPackage)) {
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
-                                               RefactoringBundle.message("cannot.move.package.into.itself"),
-                                               HelpID.getMoveHelpID(srcPackage), project);
+        if (showError) {
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
+                                                 RefactoringBundle.message("cannot.move.package.into.itself"),
+                                                 HelpID.getMoveHelpID(srcPackage), project);
+        }
         return false;
       }
     }

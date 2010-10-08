@@ -19,6 +19,7 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
@@ -54,6 +55,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
@@ -215,6 +217,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
               public PsiElement[] getPsiElements() {
                 return getSelectedElements();
+              }
+
+              @Override
+              public List<File> asFileList() {
+                return PsiCopyPasteManager.asFileList(getPsiElements());
               }
             });
           }

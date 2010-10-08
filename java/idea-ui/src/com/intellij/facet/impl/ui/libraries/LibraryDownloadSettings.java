@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDesc
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +30,6 @@ import java.util.List;
  * @author nik
  */
 public class LibraryDownloadSettings {
-  @NonNls private static final String DEFAULT_LIB_FOLDER = "lib";
   private final LibraryDownloadDescription myDescription;
   private String myDirectoryForDownloadedLibrariesPath;
   private String myLibraryName;
@@ -42,7 +40,7 @@ public class LibraryDownloadSettings {
 
   public LibraryDownloadSettings(LibraryDownloadDescription description, String baseDirectoryForDownloadedFiles) {
     myDescription = description;
-    myDirectoryForDownloadedLibrariesPath = baseDirectoryForDownloadedFiles + "/" + DEFAULT_LIB_FOLDER;
+    myDirectoryForDownloadedLibrariesPath = baseDirectoryForDownloadedFiles + "/lib";
     myLibraryName = description.getDefaultLibraryName();
     mySelectedDownloads = description.getDownloads();
   }

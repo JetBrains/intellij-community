@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.awt.RelativeRectangle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,116 +41,92 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.*;
+import java.awt.dnd.DnDConstants;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
- * @author vladk
- */
-class MoveDropTargetListener implements DropTargetListener {
-  final private DataFlavor dataFlavor;
-  final private Project myProject;
-  final private JTree myTree;
-  final private PsiRetriever myPsiRetriever;
+* User: anna
+* Date: 10/7/10
+*/
+class ProjectViewDropTarget implements DnDNativeTarget {
 
-  public interface ModifierSource {
-    int getModifiers();
-  }
+  private JTree myTree;
+  private final PsiRetriever myPsiRetriever;
+  private final Project myProject;
 
-  public MoveDropTargetListener(final PsiRetriever psiRetriever, final JTree tree, final Project project, final DataFlavor flavor) {
+  ProjectViewDropTarget(JTree tree, PsiRetriever psiRetriever, Project project) {
+    myTree = tree;
     myPsiRetriever = psiRetriever;
     myProject = project;
-    myTree = tree;
-    dataFlavor = flavor;
   }
 
-  public void dragEnter(DropTargetDragEvent dtde) {
-    final DropHandler dropHandler = getDropHandler(dtde.getDropAction());
-    final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
-    if (sourceNodes != null && dropHandler.isValidSource(sourceNodes)) {
-      dtde.acceptDrag(dtde.getDropAction());
+  @Override
+  public boolean update(DnDEvent aEvent) {
+    final Object attached = aEvent.getAttachedObject();
+    aEvent.setDropPossible(false, "");
+    final int dropAction = aEvent.getAction().getActionId();
+    final DropHandler dropHandler = getDropHandler(dropAction);
+    final TreeNode[] sourceNodes = getSourceNodes(attached);
+    final Point point = aEvent.getPoint();
+    final TreeNode targetNode = getTargetNode(point);
+
+    if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0 ) {
+      return false;
     }
-    else if (dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-      dtde.acceptDrag(dtde.getDropAction());
+    else if (sourceNodes == null && !aEvent.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+      return false;
     }
-    else {
-      dtde.rejectDrag();
+    else if (sourceNodes != null && !dropHandler.isValidSource(sourceNodes, targetNode)) {
+      return false;
     }
+    final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
+    aEvent.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE );
+    aEvent.setDropPossible(true, null);
+    return false;
   }
 
-  public void dragOver(DropTargetDragEvent dtde) {
-    final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
-    final TreeNode targetNode = getTargetNode(dtde.getLocation());
-    final int dropAction = dtde.getDropAction();
-    if (sourceNodes != null && targetNode != null && canDrop(sourceNodes, targetNode, dropAction)) {
-      dtde.acceptDrag(dropAction);
-    }
-    else if (targetNode != null && dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-      dtde.acceptDrag(dropAction);
-    }
-    else {
-      dtde.rejectDrag();
-    }
-  }
-
-  public void dropActionChanged(DropTargetDragEvent dtde) {
-  }
-
-  public void dragExit(DropTargetEvent dte) {
-  }
-
-  public void drop(DropTargetDropEvent dtde) {
-    final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
-    final TreeNode targetNode = getTargetNode(dtde.getLocation());
-    final int dropAction = dtde.getDropAction();
-    if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
-      dtde.rejectDrop();
-    }
-    else if (sourceNodes == null) {
-      if (dtde.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        dtde.acceptDrop(dropAction);
-        List<File> fileList;
+  @Override
+  public void drop(DnDEvent aEvent) {
+    Object attached = aEvent.getAttachedObject();
+    final TreeNode[] sourceNodes = getSourceNodes(attached);
+    final TreeNode targetNode = getTargetNode(aEvent.getPoint());
+    assert targetNode != null;
+    final int dropAction = aEvent.getAction().getActionId();
+    if (sourceNodes == null) {
+      if (aEvent.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+        Object fileList;
         try {
-          fileList = (List<File>)dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+          fileList = ((EventInfo)attached).getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
         }
         catch (Exception e) {
-          dtde.rejectDrop();
           return;
         }
-        getDropHandler(dropAction).doDropFiles(fileList, targetNode);
-      }
-      else {
-        dtde.rejectDrop();
+        if (fileList instanceof List) {
+          getDropHandler(dropAction).doDropFiles((List<File>)fileList, targetNode);
+        }
       }
     }
-    else if (!doDrop(sourceNodes, targetNode, dropAction, dtde)) {
-      dtde.rejectDrop();
+    else {
+      doDrop(sourceNodes, targetNode, dropAction);
     }
+  }
+
+  @Override
+  public void cleanUpOnLeave() {
+  }
+
+  @Override
+  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
   }
 
   @Nullable
-  private TreeNode[] getSourceNodes(final Transferable transferable) {
-    if (!transferable.isDataFlavorSupported(dataFlavor)) {
-      return null;
+  private static TreeNode[] getSourceNodes(final Object transferData) {
+    if (transferData instanceof AbstractProjectViewPSIPane.TransferableWrapper) {
+      return ((AbstractProjectViewPSIPane.TransferableWrapper)transferData).getTreeNodes();
     }
-    try {
-      Object transferData = transferable.getTransferData(dataFlavor);
-      if (transferData instanceof AbstractProjectViewPSIPane.TransferableWrapper) {
-        return ((AbstractProjectViewPSIPane.TransferableWrapper)transferData).getTreeNodes();
-      }
-      return null;
-    }
-    catch (UnsupportedFlavorException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return null;
   }
 
   @Nullable
@@ -157,22 +135,14 @@ class MoveDropTargetListener implements DropTargetListener {
     return path == null ? null : (TreeNode)path.getLastPathComponent();
   }
 
-  private boolean canDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode, final int dropAction) {
-    return doDrop(sourceNodes, targetNode, dropAction, null);
-  }
-
   private boolean doDrop(@NotNull final TreeNode[] sourceNodes,
                          @NotNull final TreeNode targetNode,
-                         final int dropAction,
-                         @Nullable final DropTargetDropEvent dtde) {
+                         final int dropAction) {
     TreeNode validTargetNode = getValidTargetNode(sourceNodes, targetNode, dropAction);
     if (validTargetNode != null) {
       final TreeNode[] filteredSourceNodes = removeRedundantSourceNodes(sourceNodes, validTargetNode, dropAction);
       if (filteredSourceNodes.length != 0) {
-        if (dtde != null) {
-          dtde.dropComplete(true);
-          getDropHandler(dropAction).doDrop(filteredSourceNodes, validTargetNode);
-        }
+        getDropHandler(dropAction).doDrop(filteredSourceNodes, validTargetNode);
         return true;
       }
     }
@@ -209,7 +179,7 @@ class MoveDropTargetListener implements DropTargetListener {
   }
 
   private interface DropHandler {
-    boolean isValidSource(@NotNull TreeNode[] sourceNodes);
+    boolean isValidSource(@NotNull TreeNode[] sourceNodes, TreeNode targetNode);
 
     boolean isValidTarget(@NotNull TreeNode[] sourceNodes, @NotNull TreeNode targetNode);
 
@@ -224,8 +194,8 @@ class MoveDropTargetListener implements DropTargetListener {
 
   public abstract class MoveCopyDropHandler implements DropHandler {
 
-    public boolean isValidSource(@NotNull final TreeNode[] sourceNodes) {
-      return canDrop(sourceNodes, null);
+    public boolean isValidSource(@NotNull final TreeNode[] sourceNodes, TreeNode targetNode) {
+      return canDrop(sourceNodes, targetNode);
     }
 
     public boolean isValidTarget(@NotNull final TreeNode[] sourceNodes, final @NotNull TreeNode targetNode) {
@@ -234,10 +204,10 @@ class MoveDropTargetListener implements DropTargetListener {
 
     protected abstract boolean canDrop(@NotNull TreeNode[] sourceNodes, @Nullable TreeNode targetNode);
 
-    @Nullable
     protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
       return myPsiRetriever.getPsiElement(treeNode);
     }
+
 
     @NotNull protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
       List<PsiElement> psiElements = new ArrayList<PsiElement>(nodes.length);
@@ -307,7 +277,7 @@ class MoveDropTargetListener implements DropTargetListener {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      getActionHandler(dataContext).invoke(myProject, sourceElements, new DataContext() {
+      getActionHandler().invoke(myProject, sourceElements, new DataContext() {
         @Nullable
         public Object getData(@NonNls String dataId) {
           if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
@@ -320,7 +290,7 @@ class MoveDropTargetListener implements DropTargetListener {
       });
     }
 
-    private RefactoringActionHandler getActionHandler(final DataContext dataContext) {
+    private RefactoringActionHandler getActionHandler() {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
