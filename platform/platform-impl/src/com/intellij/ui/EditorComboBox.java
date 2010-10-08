@@ -256,10 +256,14 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   private void setEditor() {
-    myEditorField = new ComboboxEditorTextField(myDocument, myProject, myFileType, myIsViewer);
+    myEditorField = createEditorTextField(myDocument, myProject, myFileType, myIsViewer);
     final ComboBoxEditor editor = new MyEditor();
     setEditor(editor);
     setRenderer(new EditorComboBoxRenderer(editor));
+  }
+
+  protected ComboboxEditorTextField createEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
+    return new ComboboxEditorTextField(document, project, fileType, isViewer);
   }
 
   public void removeNotify() {
