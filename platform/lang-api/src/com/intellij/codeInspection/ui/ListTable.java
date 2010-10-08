@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -30,7 +30,20 @@ public class ListTable extends JBTable {
         setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         setRowSelectionAllowed(true);
         setDragEnabled(false);
-        getTableHeader().setReorderingAllowed(false);
+        final JTableHeader header = getTableHeader();
+        header.setReorderingAllowed(false);
+        final TableCellRenderer delegate = header.getDefaultRenderer();
+        final TableCellRenderer newRenderer = new TableCellRenderer() {
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                final Component component = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                // to display the table header in disabled state when the table is disabled.
+                component.setEnabled(table.isEnabled());
+                return component;
+            }
+        };
+        header.setDefaultRenderer(newRenderer);
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
