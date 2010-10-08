@@ -232,7 +232,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     // Fix GTK backround
     if (UIUtil.isUnderGTKLookAndFeel()){
       final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-      setBackground(background);
+      UIUtil.changeBackGround(this, background);
     }
 
     if (!selected) return result;

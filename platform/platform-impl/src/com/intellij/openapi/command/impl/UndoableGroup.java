@@ -51,7 +51,7 @@ class UndoableGroup {
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
 
-  private boolean myValid = true;
+  private boolean myValid;
 
   public UndoableGroup(String commandName,
                        boolean isGlobal,
@@ -61,7 +61,8 @@ class UndoableGroup {
                        List<UndoableAction> actions,
                        int commandTimestamp,
                        UndoConfirmationPolicy confirmationPolicy,
-                       boolean transparent) {
+                       boolean transparent,
+                       boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
     myCommandTimestamp = commandTimestamp;
@@ -71,6 +72,7 @@ class UndoableGroup {
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
+    myValid = valid;
   }
 
   public boolean isGlobal() {

@@ -1382,6 +1382,16 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Avoid blinking while changing background
+   */
+  public static void changeBackGround(final JComponent component, final Color background) {
+    final Color oldBackGround = component.getBackground();
+    if (background == null || !background.equals(oldBackGround)){
+      component.setBackground(background);
+    }
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 

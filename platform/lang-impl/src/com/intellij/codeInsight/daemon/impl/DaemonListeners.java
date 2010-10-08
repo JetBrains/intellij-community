@@ -188,7 +188,6 @@ class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
       public void enteredDumbMode() {
         stopDaemon(true);
       }
@@ -312,7 +311,7 @@ class DaemonListeners implements Disposable {
     if (vcsIsThinking) return Result.UNCHANGED; // do not modify file which is in the process of updating
 
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
-
+    if (status == FileStatus.UNKNOWN) return Result.NOT_SURE;
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
   }
 

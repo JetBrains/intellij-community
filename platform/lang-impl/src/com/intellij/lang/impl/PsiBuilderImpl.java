@@ -402,7 +402,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private static class Token extends Node {
+  private static abstract class Token extends Node {
     public PsiBuilderImpl myBuilder;
     public IElementType myTokenType;
     public int myTokenStart;
@@ -459,6 +459,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType getTokenType() {
       return myTokenType;
     }
+  }
+
+  private static class TokenNode extends Token implements LighterASTTokenNode {
   }
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
@@ -1169,7 +1172,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           }
 
           public Token create() {
-            return new Token();
+            return new TokenNode();
           }
         });
         myLazyPool = new LimitedPool<LazyParseableToken>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
@@ -1229,7 +1232,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       ProductionMarker prevChild = null;
       int lexIndex = marker.myLexemeIndex;
       while (child != null) {
-        lexIndex = insertLeafs(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
+        lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
 
         if (child instanceof StartMarker && ((StartMarker)child).myDoneMarker.myCollapse) {
           final int start = marker.myBuilder.myLexStarts[child.myLexemeIndex];
@@ -1251,7 +1254,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
         child = child.next;
       }
-      insertLeafs(lexIndex, marker.myDoneMarker.myLexemeIndex, into, marker.myBuilder);
+
+      insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, into, marker.myBuilder);
 
       return count;
     }
@@ -1269,7 +1273,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    private int insertLeafs(int curToken, int lastIdx, Ref<LighterASTNode[]> into, PsiBuilderImpl builder) {
+    private int insertLeaves(int curToken, int lastIdx, Ref<LighterASTNode[]> into, PsiBuilderImpl builder) {
       lastIdx = Math.min(lastIdx, builder.myLexemeCount);
       while (curToken < lastIdx) {
         final int start = builder.myLexStarts[curToken];
@@ -1284,7 +1288,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     private void insertLeaf(Ref<LighterASTNode[]> into, int start, int end, IElementType type, PsiBuilderImpl builder) {
-      Token lexeme;
+      final Token lexeme;
       if (type instanceof ILightLazyParseableElementType) {
         lexeme = myLazyPool.alloc();
         ((LazyParseableToken)lexeme).myParent = this;

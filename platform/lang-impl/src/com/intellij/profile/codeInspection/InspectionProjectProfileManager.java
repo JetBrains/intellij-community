@@ -60,7 +60,6 @@ import java.util.Set;
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
   private final Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
   private final SeverityRegistrar mySeverityRegistrar;
-  private StatusBarEx myStatusBar;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
   public InspectionProjectProfileManager(final Project project, InspectionProfileManager inspectionProfileManager, DependencyValidationManager holder) {
@@ -147,9 +146,9 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void projectOpened() {
-    myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
-    myStatusBar.addWidget(myTogglePopupHintsPanel, myProject);
+    statusBar.addWidget(myTogglePopupHintsPanel, myProject);
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         final Set<Profile> profiles = new HashSet<Profile>();

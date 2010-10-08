@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -177,7 +178,16 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiElement lastElement = file.findElementAt(offset - 1);
     final JavaAwareCompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<JavaAwareCompletionData>() {
       public JavaAwareCompletionData compute() {
-        return getCompletionDataByElementInner(lastElement);
+        if (lastElement != null) {
+          if (!lastElement.isValid()) {
+            throw new ProcessCanceledException();
+          }
+          if (PsiUtil.isLanguageLevel5OrHigher(lastElement)) {
+            return ourJava15CompletionData;
+          }
+        }
+
+        return ourJavaCompletionData;
       }
     });
 
@@ -349,10 +359,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         }));
       }
     }
-  }
-
-  private static JavaAwareCompletionData getCompletionDataByElementInner(PsiElement element) {
-    return element != null && PsiUtil.isLanguageLevel5OrHigher(element) ? ourJava15CompletionData : ourJavaCompletionData;
   }
 
 

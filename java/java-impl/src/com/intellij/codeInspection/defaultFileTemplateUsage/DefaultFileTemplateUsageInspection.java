@@ -15,14 +15,17 @@
  */
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,31 +122,62 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return new InspectionOptions(this).getComponent();
   }
 
-  public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final LocalQuickFix replaceTemplateFix) {
-    return new LocalQuickFix() {
-      @NotNull
-      public String getName() {
-        return InspectionsBundle.message("default.file.template.edit.template");
-      }
+  public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final Runnable replaceTemplateFix) {
+    return new MyLocalQuickFix(templateToEdit, replaceTemplateFix);
+  }
 
-      @NotNull
-      public String getFamilyName() {
-        return getName();
-      }
+  private static class MyLocalQuickFix implements LocalQuickFix, IntentionAction {
+    private final FileTemplate myTemplateToEdit;
+    private final Runnable myReplaceTemplateFix;
 
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            configurable.setTemplate(templateToEdit, null);
-          }
-        });
-        boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-        if (ok) {
-          replaceTemplateFix.applyFix(project, descriptor);
-          FileTemplateManager.getInstance().saveAll();
+    public MyLocalQuickFix(FileTemplate templateToEdit, Runnable replaceTemplateFix) {
+      myTemplateToEdit = templateToEdit;
+      myReplaceTemplateFix = replaceTemplateFix;
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("default.file.template.edit.template");
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      invoke(project, null, null);
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getName();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          configurable.setTemplate(myTemplateToEdit, null);
         }
+      });
+      boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+      if (ok) {
+        myReplaceTemplateFix.run();
+        FileTemplateManager.getInstance().saveAll();
       }
-    };
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -124,6 +125,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @NotNull
   private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    if (((LibraryEx)library).isDisposed()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
     return context != null ? context.getLibraryFiles(library, OrderRootType.CLASSES) : library.getFiles(OrderRootType.CLASSES);
   }
 

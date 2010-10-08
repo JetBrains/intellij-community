@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.extensions;
+package com.intellij.lang;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public interface ExtensionPointListener<T> {
-  void extensionAdded(@NotNull T extension, @Nullable final PluginDescriptor pluginDescriptor);
-  void extensionRemoved(@NotNull T extension, @Nullable final PluginDescriptor pluginDescriptor);
+public interface LighterASTTokenNode extends LighterASTNode {
+  /**
+   * <b>Note</b>: a text returned may be linked back to file content text and therefore should be internalized
+   * through {@linkplain com.intellij.util.CharTable} if referenced as is.
+   * @return text of a token
+   */
+  CharSequence getText();
 }

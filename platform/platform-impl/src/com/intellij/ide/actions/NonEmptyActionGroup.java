@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
-public class OtherGroup extends DefaultActionGroup implements DumbAware {
-  public OtherGroup() {
+public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware {
+  public NonEmptyActionGroup() {
     super();
   }
 

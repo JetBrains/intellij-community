@@ -18,7 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -136,26 +136,18 @@ public class DebugUtil {
   }
 
   public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
-                                         @NotNull final String source,
                                          final boolean skipWhitespaces) {
     final StringBuilder buffer = new StringBuilder();
-    lightTreeToBuffer(tree, source, buffer, tree.getRoot(), 0, skipWhitespaces, 0);
+    lightTreeToBuffer(tree, tree.getRoot(), buffer, 0, skipWhitespaces);
     return buffer.toString();
   }
 
-  public static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
-                                       @NotNull final String source,
-                                       @NotNull final StringBuilder buffer,
-                                       @NotNull final LighterASTNode root,
-                                       final int indent,
-                                       final boolean skipWhiteSpaces,
-                                       final int chameleonShift) {
-    final IElementType tokenType = root.getTokenType();
+  public static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree, @NotNull final LighterASTNode node,
+                                       @NotNull final StringBuilder buffer, final int indent, final boolean skipWhiteSpaces) {
+    final IElementType tokenType = node.getTokenType();
     if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
 
-    final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
-    final int numKids = tree.getChildren(tree.prepareForGetChildren(root), kids);
-    final boolean composite = numKids > 0 || root.getStartOffset() == root.getEndOffset();
+    final boolean isLeaf = (node instanceof LighterASTTokenNode);
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     if (tokenType == TokenType.ERROR_ELEMENT) {
@@ -165,24 +157,25 @@ public class DebugUtil {
       buffer.append("PsiWhiteSpace");
     }
     else {
-      buffer.append(composite ? "Element" : "PsiElement").append('(').append(tokenType).append(')');
+      buffer.append(isLeaf ? "PsiElement" : "Element").append('(').append(tokenType).append(')');
     }
 
-    if (!composite) {
-      final String text = source.substring(chameleonShift + root.getStartOffset(), chameleonShift + root.getEndOffset());
+    if (isLeaf) {
+      final String text = ((LighterASTTokenNode)node).getText().toString();
       buffer.append("('").append(fixWhiteSpaces(text)).append("')");
     }
     buffer.append('\n');
 
-    if (composite) {
+    if (!isLeaf) {
+      final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
+      final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
       if (numKids == 0) {
         StringUtil.repeatSymbol(buffer, ' ', indent + 2);
         buffer.append("<empty list>\n");
       }
       else {
-        final int shift = root instanceof LighterLazyParseableNode ? root.getStartOffset() : 0;
         for (int i = 0; i < numKids; i++) {
-          lightTreeToBuffer(tree, source, buffer, kids.get()[i], indent + 2, skipWhiteSpaces, chameleonShift + shift);
+          lightTreeToBuffer(tree, kids.get()[i], buffer, indent + 2, skipWhiteSpaces);
         }
       }
     }

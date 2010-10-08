@@ -539,7 +539,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintIconRow(int line, ArrayList<GutterIconRenderer> row, final Graphics g) {
     processIconsRow(line, row, new LineGutterIconRendererProcessor() {
       public void process(int x, int y, GutterIconRenderer renderer) {
-        renderer.getIcon().paintIcon(EditorGutterComponentImpl.this, g, x, y);
+        Icon icon = renderer.getIcon();
+        icon.paintIcon(EditorGutterComponentImpl.this, g, x, y);
       }
     });
   }
