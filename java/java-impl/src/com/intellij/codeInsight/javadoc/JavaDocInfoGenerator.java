@@ -329,9 +329,15 @@ public class JavaDocInfoGenerator {
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
       final DocTagLocator<PsiDocTag> locator = parameterLocator("<" + typeParameter.getName() + ">");
-      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
-      if (pair != null) {
-        result.add(pair);
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(aClass, locator);
+      if (inClassComment != null) {
+        result.add(inClassComment);
+      }
+      else {
+        final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
+        if (pair != null) {
+          result.add(pair);
+        }
       }
     }
     generateTypeParametersSection(buffer, result);
