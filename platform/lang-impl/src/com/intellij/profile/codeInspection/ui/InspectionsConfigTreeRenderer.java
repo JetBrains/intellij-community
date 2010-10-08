@@ -49,7 +49,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     Object object = node.getUserObject();
 
     final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-    setBackground(background);
+    UIUtil.changeBackGround(this, background);
     Color foreground =
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
 
