@@ -96,14 +96,16 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     final int dropAction = aEvent.getAction().getActionId();
     if (sourceNodes == null) {
       if (aEvent.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        List<File> fileList;
+        Object fileList;
         try {
-          fileList = (List<File>)aEvent.getTransferData(DataFlavor.javaFileListFlavor);
+          fileList = ((EventInfo)attached).getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
         }
         catch (Exception e) {
           return;
         }
-        getDropHandler(dropAction).doDropFiles(fileList, targetNode);
+        if (fileList instanceof List) {
+          getDropHandler(dropAction).doDropFiles((List<File>)fileList, targetNode);
+        }
       }
     }
     else {
