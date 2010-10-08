@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,12 +78,14 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                 return;
             }
             final PsiElement parent = getParent(expression.getParent());
-            if (parent instanceof PsiThrowStatement) {
-                return;
-            } else if (parent instanceof PsiReturnStatement) {
+            if (parent instanceof PsiThrowStatement ||
+                    parent instanceof PsiReturnStatement) {
                 return;
             }
-            if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) != null) return;
+            if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) !=
+                    null) {
+                return;
+            }
             final PsiElement typedParent =
                     PsiTreeUtil.getParentOfType(expression,
                             PsiAssignmentExpression.class,
@@ -125,12 +127,14 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                     while (usageParent instanceof PsiParenthesizedExpression) {
                         usageParent = usageParent.getParent();
                     }
-                    if (usageParent instanceof PsiThrowStatement) {
-                        return;
-                    } else if (usageParent instanceof PsiReturnStatement) {
+                    if (usageParent instanceof PsiThrowStatement ||
+                            usageParent instanceof PsiReturnStatement) {
                         return;
                     }
-                    if (PsiTreeUtil.getParentOfType(usageParent, PsiCallExpression.class) != null) return;
+                    if (PsiTreeUtil.getParentOfType(usageParent,
+                            PsiCallExpression.class) != null) {
+                        return;
+                    }
                 }
             }
             registerError(expression, expression);
