@@ -15,10 +15,22 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 public class EditLibraryDialog extends DialogWrapper {
   private JPanel contentPane;
@@ -26,9 +38,37 @@ public class EditLibraryDialog extends DialogWrapper {
   private JPanel myFilesPanel;
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
+  private JBTable myFileTable;
+  private Project myProject;
+  private FileTableModel myFileTableModel;
+  private VirtualFile mySelectedFile;
+  private LangScriptingContextProvider myProvider;
 
-  public EditLibraryDialog() {
+  public EditLibraryDialog(LangScriptingContextProvider provider, Project project) {
     super(true);
+    myProvider = provider;
+    myAddFileButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        addFiles();
+      }
+    });
+    myFileTableModel = new FileTableModel();
+    myFileTable.setModel(myFileTableModel);
+    myRemoveFileButton.setEnabled(false);
+    myRemoveFileButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        removeSelected();
+      }
+    });
+    myProject = project;
+    myFileTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        updateSelection();
+      }
+    });
     init();
   }
 
@@ -39,5 +79,87 @@ public class EditLibraryDialog extends DialogWrapper {
 
   public String getLibName() {
     return myLibName.getText();
+  }
+
+  private void addFiles() {
+    FileChooserDescriptor chooserDescriptor = new LibFileChooserDescriptor();
+    VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
+    if (files.length == 1 && files[0] != null) {
+      myFileTableModel.addFile(files[0]);
+    }
+  }
+
+  private class LibFileChooserDescriptor extends FileChooserDescriptor {
+    public LibFileChooserDescriptor() {
+      super (true, false, false, true, false, false);
+      setTitle("Select library file"); // TODO: Add a resources string
+    }
+
+    @Override
+    public boolean isFileSelectable(VirtualFile file) {
+      if (!myProvider.acceptsExtension(file.getExtension())) return false;
+      return super.isFileSelectable(file);
+    }
+
+    @Override
+    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+      if (!file.isDirectory() && !myProvider.acceptsExtension(file.getExtension())) return false;
+      return super.isFileVisible(file, showHiddenFiles);
+    }
+  }
+
+  private static class FileTableModel extends AbstractTableModel {
+
+    private ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+
+    public void addFile(VirtualFile file) {
+      files.add(file);
+      fireTableDataChanged();
+    }
+
+    @Override
+    public int getRowCount() {
+      return files.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+      return 1;
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      if (columnIndex == 0) {
+        return files.get(rowIndex);
+      }
+      return null;
+    }
+
+    @Nullable
+    public VirtualFile getFileAt(int row) {
+      if (row < 0 || row >= files.size()) return null;
+      return files.get(row);
+    }
+
+    public void removeFile(VirtualFile file) {
+      if (files.remove(file)) {
+        fireTableDataChanged();
+      }
+    }
+  }
+
+  private void updateSelection() {
+    int selectedRow = myFileTable.getSelectedRow();
+    if (selectedRow >= 0) {
+      mySelectedFile = myFileTableModel.getFileAt(selectedRow);
+    }
+    else {
+      mySelectedFile = null;
+    }
+    myRemoveFileButton.setEnabled(mySelectedFile != null);
+  }
+
+  private void removeSelected() {
+     myFileTableModel.removeFile(mySelectedFile);
   }
 }

@@ -74,4 +74,8 @@ public class ScriptingLibraryManager {
     }
     return null;
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

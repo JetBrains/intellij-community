@@ -31,6 +31,8 @@ public abstract class LangScriptingContextProvider {
   @NotNull
   public abstract Language getLanguage();
 
+  public abstract boolean acceptsExtension(String fileExt);
+
   @NotNull
   public static LangScriptingContextProvider[] getProviders() {
     return Extensions.getExtensions(EP_NAME);

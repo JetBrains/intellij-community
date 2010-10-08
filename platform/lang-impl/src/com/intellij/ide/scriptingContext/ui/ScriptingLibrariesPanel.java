@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.table.JBTable;
 
@@ -36,8 +38,11 @@ public class ScriptingLibrariesPanel {
   private JBTable myLibraryTable;
   private ScriptingLibraryTableModel myLibTableModel;
   private String mySelectedLibName;
+  private Project myProject;
+  private LangScriptingContextProvider myProvider;
 
-  public ScriptingLibrariesPanel(LibraryTable libTable) {
+  public ScriptingLibrariesPanel(LangScriptingContextProvider provider, Project project, LibraryTable libTable) {
+    myProvider = provider;
     myLibTableModel = new ScriptingLibraryTableModel(libTable);
     myLibraryTable.setModel(myLibTableModel);
     myAddLibraryButton.addActionListener(new ActionListener(){
@@ -60,6 +65,7 @@ public class ScriptingLibrariesPanel {
     myRemoveLibraryButton.setEnabled(false);
     myEditLibraryButton.setEnabled(false);
     myLibraryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myProject = project;
     myLibraryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -73,7 +79,7 @@ public class ScriptingLibrariesPanel {
   }
 
   private void addLibrary() {
-    EditLibraryDialog editLibDialog = new EditLibraryDialog();
+    EditLibraryDialog editLibDialog = new EditLibraryDialog(myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
       myLibTableModel.createLibrary(editLibDialog.getLibName());
