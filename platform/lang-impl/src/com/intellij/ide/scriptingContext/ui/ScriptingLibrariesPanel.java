@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -33,7 +35,7 @@ public class ScriptingLibrariesPanel {
   private JPanel myScriptingLibrariesPanel;
   private JBTable myLibraryTable;
   private ScriptingLibraryTableModel myLibTableModel;
-  private boolean myModified;
+  private String mySelectedLibName;
 
   public ScriptingLibrariesPanel(LibraryTable libTable) {
     myLibTableModel = new ScriptingLibraryTableModel(libTable);
@@ -44,12 +46,26 @@ public class ScriptingLibrariesPanel {
         addLibrary();
       }
     });
+    myRemoveLibraryButton.addActionListener(new ActionListener(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (mySelectedLibName != null) {
+          myLibTableModel.removeLibrary(mySelectedLibName);
+        }
+      }
+    });
     if (libTable == null) {
       myAddLibraryButton.setEnabled(false);
     }
     myRemoveLibraryButton.setEnabled(false);
     myEditLibraryButton.setEnabled(false);
-    myModified = false;
+    myLibraryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myLibraryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        onSelectionChange();
+      }
+    });
   }
 
   public JPanel getPanel() {
@@ -60,24 +76,29 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog();
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      createLibrary(editLibDialog.getLibName());
-      myModified = true;
+      myLibTableModel.createLibrary(editLibDialog.getLibName());
     }
   }
 
-  private void createLibrary(String name) {
-    myLibTableModel.getLibraryTable().createLibrary(name);
-    myLibraryTable.repaint();
-  }
-
   public boolean isModified() {
-    return myModified;
+    return myLibTableModel.isChanged();
   }
 
   public void resetTable(LibraryTable libTable) {
     myLibTableModel.resetTable(libTable);
-    myModified = false;
-    myLibraryTable.repaint();
+  }
+
+  private void onSelectionChange() {
+    int selectedRow = myLibraryTable.getSelectedRow();
+    if (selectedRow >= 0) {
+      mySelectedLibName = myLibTableModel.getLibNameAt(selectedRow);
+      myEditLibraryButton.setEnabled(true);
+      myRemoveLibraryButton.setEnabled(true);
+    }
+    else {
+      myEditLibraryButton.setEnabled(false);
+      myRemoveLibraryButton.setEnabled(false);
+    }
   }
 
 }
