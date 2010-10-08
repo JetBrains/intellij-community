@@ -1585,7 +1585,8 @@ public class JavaDocInfoGenerator {
                                                                            final PsiClass aSuper,
                                                                            final DocTagLocator<T> loc) {
     if (aSuper != null) {
-      final PsiMethod overriden = aSuper.findMethodBySignature(method, false);
+
+      final PsiMethod overriden =  findMethodInSuperClass(method, aSuper);
 
       if (overriden != null) {
         T tag = loc.find(getDocComment(overriden));
@@ -1607,6 +1608,18 @@ public class JavaDocInfoGenerator {
     }
 
     return null;
+  }
+
+  @Nullable
+  private <T> PsiMethod findMethodInSuperClass(PsiMethod method, PsiClass aSuper) {
+    PsiMethod overriden = null;
+    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      overriden = aSuper.findMethodBySignature(superMethod, false);
+      if (overriden != null) {
+        return overriden;
+      }
+    }
+    return overriden;
   }
 
   @Nullable private <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,
