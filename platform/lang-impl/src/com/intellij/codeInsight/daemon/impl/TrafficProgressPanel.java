@@ -21,15 +21,13 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.AwtVisitor;
@@ -59,12 +57,19 @@ public class TrafficProgressPanel extends JPanel {
   private HintHint myHintHint;
 
   public TrafficProgressPanel(TrafficLightRenderer trafficLightRenderer, Editor editor, HintHint hintHint) {
-    super(new VerticalFlowLayout());
     myHintHint = hintHint;
     myTrafficLightRenderer = trafficLightRenderer;
 
 
-    add(statusLabel);
+    setLayout(new BorderLayout());
+
+    VerticalBox center = new VerticalBox();
+    add(center, BorderLayout.NORTH);
+
+    center.add(statusLabel);
+    center.add(new Separator());
+    center.add(Box.createVerticalStrut(6));
+
     TrafficLightRenderer.DaemonCodeAnalyzerStatus fakeStatusLargeEnough = new TrafficLightRenderer.DaemonCodeAnalyzerStatus();
     fakeStatusLargeEnough.errorCount = new int[]{1,1,1,1};
     Project project = trafficLightRenderer.getProject();
@@ -88,14 +93,10 @@ public class TrafficProgressPanel extends JPanel {
       JLabel label = pair.second;
       label.setText(MAX_TEXT);
     }
-    add(passStatuses);
+    center.add(passStatuses);
 
-    add(new Separator());
-
-    add(statistics);
+    add(statistics, BorderLayout.SOUTH);
     updatePanel(fakeStatusLargeEnough);
-
-    statistics.setBorder(new LineBorder(Color.red));
 
     hintHint.initStyle(this, true);
   }
@@ -124,24 +125,33 @@ public class TrafficProgressPanel extends JPanel {
 
   private void rebuildPassesPanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
     passStatuses.removeAll();
-    passStatuses.setLayout(new GridLayoutManager(Math.max(status.passStati.size(),1), 3));
+    passStatuses.setLayout(new GridBagLayout());
     passes.clear();
-    GridConstraints constraints = new GridConstraints();
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridy = 0;
+    c.fill = GridBagConstraints.HORIZONTAL;
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
-      JLabel label = new JLabel(pass.getPresentableName() + ":");
+      JLabel label = new JLabel(pass.getPresentableName() + ": ");
+      label.setHorizontalTextPosition(JLabel.RIGHT);
 
       JProgressBar progressBar = new JProgressBar(0, MAX);
       progressBar.putClientProperty("JComponent.sizeVariant", "mini");
       JLabel percLabel = new JLabel();
       passes.put(pass, Pair.create(progressBar, percLabel));
       myProgressToText.put(progressBar, percLabel);
-      constraints.setColumn(0); passStatuses.add(label, constraints);
-      constraints.setColumn(1); passStatuses.add(progressBar, constraints);
-      constraints.setColumn(2); passStatuses.add(percLabel, constraints);
-      constraints.setRow(constraints.getRow()+1);
+      c.gridx = 0;
+      passStatuses.add(label, c);
+      c.gridx = 1;
+      passStatuses.add(progressBar, c);
+      c.gridx = 2;
+      c.weightx = 1;
+      passStatuses.add(percLabel, c);
+
+      c.gridy++;
     }
 
     myHintHint.initStyle(passStatuses, true);
+    statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
   }
 
   public void updatePanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
