@@ -350,7 +350,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     @NotNull
     public TextChunk[] getText() {
       if (isValid()) {
-        // the check below makes sence only for valid PsiElement
+        // the check below makes sense only for valid PsiElement
         final long currentModificationStamp = getCurrentModificationStamp();
         if (currentModificationStamp != myModificationStamp) {
           initChunks();
