@@ -180,7 +180,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (UIUtil.isUnderGTKLookAndFeel()){
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        setBackground(background);
+        UIUtil.changeBackGround(this, background);
       }
 
       IgnoredFileBean bean = (IgnoredFileBean) value;
