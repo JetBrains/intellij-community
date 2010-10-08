@@ -134,6 +134,9 @@ class CacheUpdateRunner {
     final boolean[] isFinished = new boolean[1];
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
+      if (threadsCount == -1) {
+        threadsCount = Math.min(Runtime.getRuntime().availableProcessors(), 2);
+      }
       if (threadsCount == 1) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
