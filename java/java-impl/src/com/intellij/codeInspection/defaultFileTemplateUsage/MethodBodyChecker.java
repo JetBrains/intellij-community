@@ -23,6 +23,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -168,31 +169,40 @@ public class MethodBodyChecker {
       return null;
     }
 
-    final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiType returnType = method.getReturnType();
-        if (method.isConstructor() || returnType == null) return;
-        PsiCodeBlock body = method.getBody();
-        if (body == null) return;
-        if (!CodeInsightUtil.preparePsiElementsForWrite(body)) return;
-        PsiClass aClass = method.getContainingClass();
-        if (aClass == null) return;
-        List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
-        try {
-          PsiMethod templateMethod = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createMethod("x", returnType);
-          setupMethodBody(superSignatures, templateMethod, aClass, false);
-          final PsiCodeBlock templateBody = templateMethod.getBody();
-          if (templateBody == null) return;
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            PsiType returnType = method.getReturnType();
+            if (method.isConstructor() || returnType == null) return;
+            PsiCodeBlock body = method.getBody();
+            if (body == null) return;
+            if (!CodeInsightUtil.preparePsiElementsForWrite(body)) return;
+            PsiClass aClass = method.getContainingClass();
+            if (aClass == null) return;
+            List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+            try {
+              PsiMethod templateMethod = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createMethod("x", returnType);
+              setupMethodBody(superSignatures, templateMethod, aClass, false);
+              final PsiCodeBlock templateBody = templateMethod.getBody();
+              if (templateBody == null) return;
 
-          PsiElement newBody = body.replace(templateBody);
-          CodeStyleManager.getInstance(project).reformat(newBody);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+              PsiElement newBody = body.replace(templateBody);
+              CodeStyleManager.getInstance(aClass.getManager()).reformat(newBody);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
       }
     };
-    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceWithFileTemplateFix);
+    final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
+      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+        runnable.run();
+      }
+    };
+    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, runnable);
     if (template != null && template.isDefault()) {
       return new LocalQuickFix[]{editFileTemplateFix};
     }

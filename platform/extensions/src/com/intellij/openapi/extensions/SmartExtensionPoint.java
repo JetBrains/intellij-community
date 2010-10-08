@@ -74,7 +74,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
     }
   }
 
-  public final void extensionAdded(final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+  public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
     dropCache();
   }
 
@@ -88,7 +88,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
     }
   }
 
-  public final void extensionRemoved(final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+  public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
     dropCache();
   }
 

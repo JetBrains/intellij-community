@@ -3,10 +3,10 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
-import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -55,7 +55,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
-
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

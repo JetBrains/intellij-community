@@ -20,6 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -113,26 +114,35 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private static LocalQuickFix[] createQuickFix(final PsiCatchSection section) {
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final PsiParameter parameter = section.getParameter();
+            if (parameter == null) return;
+            PsiCodeBlock catchBlock = section.getCatchBlock();
+            if (catchBlock == null) return;
+            PsiType type = parameter.getType();
+            if (!(type instanceof PsiClassType)) return;
+            final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
+            try {
+              PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
+              section.replace(sectionTemplate);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+    };
+
     ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiParameter parameter = section.getParameter();
-        if (parameter == null) return;
-        PsiCodeBlock catchBlock = section.getCatchBlock();
-        if (catchBlock == null) return;
-        PsiType type = parameter.getType();
-        if (!(type instanceof PsiClassType)) return;
-        final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
-        try {
-          PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
-          section.replace(sectionTemplate);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        runnable.run();
       }
-
     };
-    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceWithFileTemplateFix);
+    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, runnable);
     if (template.isDefault()) {
       return new LocalQuickFix[]{editFileTemplateFix};
     }

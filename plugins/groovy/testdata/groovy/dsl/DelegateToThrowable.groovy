@@ -1,1 +1,3 @@
-"".init<caret>
+def foo() {
+  "".init<caret>
+}

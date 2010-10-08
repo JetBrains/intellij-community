@@ -631,7 +631,7 @@ class TemplateListPanel extends JPanel {
         // Fix GTK backround
         if (UIUtil.isUnderGTKLookAndFeel()){
           final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          setBackground(background);
+          UIUtil.changeBackGround(this, background);
         }
 
         if (value instanceof TemplateImpl) {

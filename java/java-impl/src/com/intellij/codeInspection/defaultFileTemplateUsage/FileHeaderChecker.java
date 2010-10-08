@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -82,61 +83,70 @@ public class FileHeaderChecker {
     return null;
   }
 
+  private static Properties computeProperties(final Matcher matcher, final TIntObjectHashMap<String> offsetToProperty) {
+    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
+    int[] offsets = offsetToProperty.keys();
+    Arrays.sort(offsets);
+
+    for (int i = 0; i < offsets.length; i++) {
+      final int offset = offsets[i];
+      String propName = offsetToProperty.get(offset);
+      int groupNum = i + 2; // first group is whole doc comment
+      String propValue = matcher.group(groupNum);
+      properties.put(propName, propValue);
+    }
+    return properties;
+  }
+
   private static LocalQuickFix[] createQuickFix(final PsiDocComment element,
                                               final Matcher matcher,
                                               final TIntObjectHashMap<String> offsetToProperty) {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
-    final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        if (!element.isValid()) return;
-        if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
-        String newText;
-        try {
-          newText = template.getText(computeProperties(matcher, offsetToProperty));
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return;
-        }
-        try {
-          int offset = element.getTextRange().getStartOffset();
-          PsiFile psiFile = element.getContainingFile();
-          if (psiFile == null) return;
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          Document document = documentManager.getDocument(psiFile);
-          if (document == null) return;
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            if (!element.isValid()) return;
+            if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
+            String newText;
+            try {
+              newText = template.getText(computeProperties(matcher, offsetToProperty));
+            }
+            catch (IOException e) {
+              LOG.error(e);
+              return;
+            }
+            try {
+              int offset = element.getTextRange().getStartOffset();
+              PsiFile psiFile = element.getContainingFile();
+              if (psiFile == null) return;
+              PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
+              Document document = documentManager.getDocument(psiFile);
+              if (document == null) return;
 
-          element.delete();
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          documentManager.commitDocument(document);
+              element.delete();
+              documentManager.doPostponedOperationsAndUnblockDocument(document);
+              documentManager.commitDocument(document);
 
-          document.insertString(offset, newText);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        catch (IllegalStateException e) {
-          LOG.error("Cannot create doc comment from text: '"+newText+"'",e);
-        }
-      }
-
-      private Properties computeProperties(final Matcher matcher, final TIntObjectHashMap<String> offsetToProperty) {
-        Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
-        int[] offsets = offsetToProperty.keys();
-        Arrays.sort(offsets);
-
-        for (int i = 0; i < offsets.length; i++) {
-          final int offset = offsets[i];
-          String propName = offsetToProperty.get(offset);
-          int groupNum = i + 2; // first group is whole doc comment
-          String propValue = matcher.group(groupNum);
-          properties.put(propName, propValue);
-        }
-
-        return properties;
+              document.insertString(offset, newText);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+            catch (IllegalStateException e) {
+              LOG.error("Cannot create doc comment from text: '" + newText + "'", e);
+            }
+          }
+        });
       }
     };
-    final LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceTemplateFix);
+
+    final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
+      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+        runnable.run();
+      }
+    };
+    final LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, runnable);
     if (template.isDefault()) {
       return new LocalQuickFix[]{editFileTemplateFix};
     }

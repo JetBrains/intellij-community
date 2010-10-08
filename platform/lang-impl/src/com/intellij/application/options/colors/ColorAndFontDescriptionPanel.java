@@ -67,6 +67,15 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     add(settingsPanel, BorderLayout.CENTER);
     setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
+
+    myEffectsCombo.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        if (value == null) value = "Invalid";
+        return super.getListCellRendererComponent(list, value, index, isSelected,
+                                                  cellHasFocus);
+      }
+    });
   }
 
   private JPanel createSettingsPanel() {
@@ -366,7 +375,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         myEffectsCombo.setSelectedItem(BOLD_DOTTED_LINE_EFFECT);
       }
       else {
-        LOG.assertTrue(false);
+        myEffectsCombo.setSelectedItem(null);
       }
       updatingEffects = false;
     }

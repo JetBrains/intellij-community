@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -87,11 +88,11 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
       myExtensionsLoaded = true;
       final ExtensionPoint<FacetType> extensionPoint = Extensions.getArea(null).getExtensionPoint(FacetType.EP_NAME);
       extensionPoint.addExtensionPointListener(new ExtensionPointListener<FacetType>() {
-        public void extensionAdded(final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
           registerFacetType(extension);
         }
 
-        public void extensionRemoved(final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
           unregisterFacetType(extension);
         }
       });

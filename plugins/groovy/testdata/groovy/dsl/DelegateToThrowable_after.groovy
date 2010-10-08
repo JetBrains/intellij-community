@@ -1,1 +1,3 @@
-"".initCause(<caret>)
+def foo() {
+  "".initCause(<caret>)
+}
