@@ -230,11 +230,14 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       final Set<PsiFile> fileSet = new HashSet<PsiFile>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          ContainerUtil
-            .addAll(fileSet, manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true));
+          PsiFile[] filesWithWord = manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+          ContainerUtil.addAll(fileSet, filesWithWord);
           for (int i = 1; i < words.size(); i++) {
-            fileSet.retainAll(
-              Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+            ProgressManager.checkCanceled();
+            String word = words.get(i);
+            PsiFile[] filesWithThisWord = manager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+            fileSet.retainAll(Arrays.asList(filesWithThisWord));
+            if (fileSet.isEmpty()) break;
           }
         }
       });
