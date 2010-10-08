@@ -198,7 +198,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
                 return createVariable(variableName, expression, context);
             }
             final PsiElement target = referenceElement.resolve();
-            if (target instanceof PsiLocalVariable) {
+            if (target instanceof PsiVariable) {
                 // maybe should not do this for local variables outside of
                 // anonymous classes
                 return variableName;

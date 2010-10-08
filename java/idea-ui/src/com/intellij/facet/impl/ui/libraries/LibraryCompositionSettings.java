@@ -108,9 +108,8 @@ public class LibraryCompositionSettings implements Disposable {
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myNewLibraryEditor != null) {
-      VirtualFile[] roots = myNewLibraryEditor.getFiles(OrderRootType.CLASSES);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
-                                                     myNewLibraryEditor.getName(), getLibraryLevel(), roots, VirtualFile.EMPTY_ARRAY);
+                                                     myNewLibraryEditor, getLibraryLevel());
     }
     return null;
   }

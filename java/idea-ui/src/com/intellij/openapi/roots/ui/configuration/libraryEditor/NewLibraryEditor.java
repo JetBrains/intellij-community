@@ -126,6 +126,10 @@ public class NewLibraryEditor implements LibraryEditor {
 
   public void apply(@NotNull Library.ModifiableModel model) {
     model.setName(myLibraryName);
+    applyRoots(model);
+  }
+
+  public void applyRoots(Library.ModifiableModel model) {
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
         model.addRoot(pointer.getUrl(), type);
@@ -133,6 +137,17 @@ public class NewLibraryEditor implements LibraryEditor {
     }
     for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {
       model.addJarDirectory(entry.getKey(), entry.getValue());
+    }
+  }
+
+  public void copyRoots(ExistingLibraryEditor editor) {
+    for (OrderRootType type : myRoots.keySet()) {
+      for (LightFilePointer pointer : myRoots.get(type)) {
+        editor.addRoot(pointer.getUrl(), type);
+      }
+    }
+    for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {
+      editor.addJarDirectory(entry.getKey(), entry.getValue());
     }
   }
 }

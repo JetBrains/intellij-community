@@ -22,24 +22,43 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class ConvertToPlainIntention extends Intention {
-  private static final ConvertToPlainPredicate PREDICATE = new ConvertToPlainPredicate();
 
-  @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    try {
-      replaceExpression(Double.toString(Double.parseDouble(element.getText())), (PsiExpression)element);
-    }
-    catch (Exception e) {//
-    }
-  }
+    private static final ConvertToPlainPredicate PREDICATE =
+            new ConvertToPlainPredicate();
 
-  @NotNull
-  @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return PREDICATE;
-  }
+    @Override
+    protected void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException {
+        try {
+            final String elementText = element.getText();
+            if (elementText.length() == 0) {
+                return;
+            }
+            final int lastIndex = elementText.length() - 1;
+            final char lastChar = elementText.charAt(lastIndex);
+            if (lastChar == 'f' || lastChar == 'F') {
+                final BigDecimal bigDecimal =
+                        new BigDecimal(elementText.substring(0, lastIndex));
+                replaceExpression(bigDecimal.toPlainString() + lastChar,
+                        (PsiExpression) element);
+            } else {
+                final BigDecimal bigDecimal = new BigDecimal(elementText);
+                replaceExpression(bigDecimal.toPlainString(),
+                        (PsiExpression) element);
+            }
+        } catch (Exception e) {//
+        }
+    }
+
+    @NotNull
+    @Override
+    protected PsiElementPredicate getElementPredicate() {
+        return PREDICATE;
+    }
 }
