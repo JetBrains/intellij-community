@@ -35,6 +35,7 @@ public class CommandMerger {
   private boolean myForcedGlobal = false;
   private boolean myTransparent = false;
   private String myCommandName = null;
+  private boolean myValid = true;
   private List<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
   private Set<DocumentReference> myAffectedDocuments = new THashSet<DocumentReference>();
   private EditorAndState myStateBefore;
@@ -102,6 +103,7 @@ public class CommandMerger {
         myTransparent = nextCommandToMerge.myTransparent;
       }
     }
+    myValid &= nextCommandToMerge.myValid;
     myForcedGlobal |= nextCommandToMerge.myForcedGlobal;
     myCurrentActions.addAll(nextCommandToMerge.myCurrentActions);
     myAffectedDocuments.addAll(nextCommandToMerge.myAffectedDocuments);
@@ -129,7 +131,8 @@ public class CommandMerger {
                                                                     myCurrentActions,
                                                                     myManager.nextCommandTimestamp(),
                                                                     myUndoConfirmationPolicy,
-                                                                    isTransparent()));
+                                                                    isTransparent(),
+                                                                    myValid));
     }
 
     reset();
@@ -142,6 +145,7 @@ public class CommandMerger {
     myForcedGlobal = false;
     myTransparent = false;
     myCommandName = null;
+    myValid = true;
     myStateAfter = null;
     myStateBefore = null;
     myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -243,5 +247,11 @@ public class CommandMerger {
 
   public void setAfterState(EditorAndState state) {
     myStateAfter = state;
+  }
+
+  public void invalidateActionsFor(DocumentReference ref) {
+    if (myAffectedDocuments.contains(ref)) {
+      myValid = false;
+    }
   }
 }

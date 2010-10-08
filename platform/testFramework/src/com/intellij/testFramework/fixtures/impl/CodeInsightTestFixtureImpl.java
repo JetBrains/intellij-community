@@ -20,7 +20,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -865,10 +864,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
 
           @Override
-          protected void completionFinished(final int offset1, final int offset2, final CompletionContext context, final CompletionProgressIndicator indicator,
+          protected void completionFinished(final int offset1, final int offset2, final CompletionProgressIndicator indicator,
                                             final LookupElement[] items) {
             myEmptyLookup = items.length == 0;
-            super.completionFinished(offset1, offset2, context, indicator, items);
+            super.completionFinished(offset1, offset2, indicator, items);
           }
         };
         Editor editor = getCompletionEditor();

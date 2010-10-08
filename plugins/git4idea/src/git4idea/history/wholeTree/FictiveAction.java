@@ -18,7 +18,6 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.vcs.BigArray;
 
 /**
  * @author irengrig
@@ -30,27 +29,6 @@ public class FictiveAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final BigArray<VisibleLine> ba = new BigArray<VisibleLine>(4);
-    for (int i = 0; i < 100; i++) {
-      ba.add(new MyLine("Test" + i));
-    }
     GitLogLongPanel.showDialog(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
-  }
-
-  private static class MyLine implements VisibleLine {
-    private final String myLine;
-
-    public MyLine(String line) {
-      myLine = line;
-    }
-
-    @Override
-    public Object getData() {
-      return myLine;
-    }
-    @Override
-    public boolean isDecoration() {
-      return false;
-    }
   }
 }

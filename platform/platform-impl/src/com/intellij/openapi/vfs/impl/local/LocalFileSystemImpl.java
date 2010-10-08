@@ -21,8 +21,10 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -50,6 +52,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private WatchRequest[] myCachedNormalizedRequests = null;
 
   private final FileWatcher myWatcher;
+
+  private final LocalFileSystemBase myNativeFileSystem;
 
   private static class WatchRequestImpl implements WatchRequest {
     public final String myRootPath;
@@ -116,6 +120,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     myWatcher = FileWatcher.getInstance();
     if (myWatcher.isOperational()) {
       new StoreRefreshStatusThread().start();
+    }
+    if (SystemInfo.isWindows &&
+        Win32LocalFileSystem.isAvailable() &&
+        Registry.is("filesystem.useNative")) {
+      myNativeFileSystem = null; //Win32LocalFileSystem.getWin32Instance();
+    }
+    else {
+      myNativeFileSystem = null;
     }
   }
 
@@ -439,4 +451,28 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  public boolean exists(final VirtualFile fileOrDirectory) {
+    if (myNativeFileSystem == null) return super.exists(fileOrDirectory);
+    else return myNativeFileSystem.exists(fileOrDirectory);
+  }
+
+  public long getTimeStamp(final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.getTimeStamp(file);
+    else return myNativeFileSystem.getTimeStamp(file);
+  }
+
+  public boolean isDirectory(final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.isDirectory(file);
+    else return myNativeFileSystem.isDirectory(file);
+  }
+
+  public boolean isWritable(final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.isWritable(file);
+    else return myNativeFileSystem.isWritable(file);
+  }
+
+  public String[] list(final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.list(file);
+    else return myNativeFileSystem.list(file);
+  }
 }

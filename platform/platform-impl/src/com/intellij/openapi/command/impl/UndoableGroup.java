@@ -51,6 +51,8 @@ class UndoableGroup {
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
 
+  private boolean myValid;
+
   public UndoableGroup(String commandName,
                        boolean isGlobal,
                        Project project,
@@ -59,7 +61,8 @@ class UndoableGroup {
                        List<UndoableAction> actions,
                        int commandTimestamp,
                        UndoConfirmationPolicy confirmationPolicy,
-                       boolean transparent) {
+                       boolean transparent,
+                       boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
     myCommandTimestamp = commandTimestamp;
@@ -69,6 +72,7 @@ class UndoableGroup {
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
+    myValid = valid;
   }
 
   public boolean isGlobal() {
@@ -206,6 +210,16 @@ class UndoableGroup {
     if (myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) return true;
     if (myConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) return false;
     return myGlobal;
+  }
+
+  public void invalidateActionsFor(DocumentReference ref) {
+    if (getAffectedDocuments().contains(ref)) {
+      myValid = false;
+    }
+  }
+
+  public boolean isValid() {
+    return myValid;
   }
 
   public String toString() {

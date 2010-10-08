@@ -1046,6 +1046,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);
+        m_inspectionClasses.add(ExpectedExceptionNeverThrownInspection.class);
         m_inspectionClasses.add(ParameterizedParametersStaticCollectionInspection.class);
         m_inspectionClasses.add(ConstantJUnitAssertArgumentInspection.class);
         m_inspectionClasses.add(JUnit4AnnotatedMethodInJUnit3TestCaseInspection.class);
@@ -1070,6 +1071,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
     }
 
+    @Override
     public void disposeComponent() {
     }
 

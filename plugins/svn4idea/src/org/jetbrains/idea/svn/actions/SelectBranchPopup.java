@@ -240,7 +240,7 @@ public class SelectBranchPopup {
       final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
         .setTitle(SVNPathUtil.tail(selectedValue))
         .setResizable(true)
-        .setDimensionServiceKey("Svn.CompareWithBranchPopup")
+        //.setDimensionServiceKey("Svn.CompareWithBranchPopup")
         .setItemChoosenCallback(new Runnable() {
           public void run() {
             if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {

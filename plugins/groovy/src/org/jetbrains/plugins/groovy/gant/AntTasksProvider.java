@@ -111,7 +111,7 @@ public class AntTasksProvider {
           for (VirtualFile jar : jars) {
             urls.add(VfsUtil.convertToURL(PathUtil.getLocalFile(jar).getUrl()));
           }
-          final ClassLoader loader = new UrlClassLoader(urls, null);
+          final ClassLoader loader = new UrlClassLoader(urls, null, false, false, true);
           final ReflectedProject antProject = ReflectedProject.getProject(loader);
 
           final Map<String, Class> result = new HashMap<String, Class>();

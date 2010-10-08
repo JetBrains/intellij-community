@@ -17,6 +17,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 /**
@@ -101,12 +102,12 @@ public class ExtensionPointImplTest extends TestCase {
     final boolean removed[] = new boolean[1];
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
       @Override
-      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
       @Override
-      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     });
@@ -128,12 +129,12 @@ public class ExtensionPointImplTest extends TestCase {
     assertFalse(added[0]);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
       @Override
-      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
       @Override
-      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
       }
     });
     assertTrue(added[0]);

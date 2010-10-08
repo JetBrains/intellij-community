@@ -366,7 +366,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public void processVariants(PsiScopeProcessor processor) {
     OrFilter filter = new OrFilter();
     filter.addFilter(ElementClassFilter.CLASS);
-    filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+    if (isQualified()) {
+      filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+    }
     filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
     filter.addFilter(ElementClassFilter.VARIABLE);
 

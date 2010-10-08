@@ -186,6 +186,9 @@ public class CompileDriver {
     if (validateCompilerConfiguration(scope, false)) {
       startup(scope, false, false, callback, null, true, false);
     }
+    else {
+      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+    }
   }
 
   public boolean isUpToDate(CompileScope scope) {
@@ -246,6 +249,9 @@ public class CompileDriver {
     }
     if (validateCompilerConfiguration(scope, false)) {
       startup(scope, false, true, callback, null, true, trackDependencies);
+    }
+    else {
+      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
     }
   }
 
@@ -326,6 +332,9 @@ public class CompileDriver {
                          final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope, true)) {
       startup(compileScope, true, false, callback, message, checkCachesVersion, false);
+    }
+    else {
+      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
     }
   }
 

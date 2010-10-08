@@ -17,11 +17,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.update.ComparableObject;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class IdeTooltip {
+public class IdeTooltip extends ComparableObject.Impl {
 
   private Component myComponent;
   private Point myPoint;
@@ -34,7 +35,8 @@ public class IdeTooltip {
   private boolean myToCenterIfSmall = true;
   private boolean myHighlighter;
 
-  public IdeTooltip(Component component, Point point, JComponent tipComponent) {
+  public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
+    super(identity);
     myComponent = component;
     myPoint = point;
     myTipComponent = tipComponent;

@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -35,10 +36,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
@@ -427,7 +425,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", "--pretty=format:%x03%H%x00%ct%x00", "--encoding=UTF-8");
+    h.addParameters("--pretty=format:%x03%H%x00%ct%x00", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
@@ -566,39 +564,51 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", "--pretty=format:%x01%h%x00%ct%x00%p", "--encoding=UTF-8");
+    h.addParameters("--pretty=format:%x01%h%x00%ct%x00%p", "--encoding=UTF-8");
 
     h.endOptions();
     h.addRelativePaths(path);
-    String output = h.run();
-    final List<CommitHashPlusParents> rc = new ArrayList<CommitHashPlusParents>();
-    StringTokenizer tk = new StringTokenizer(output, "\u0001", false);
 
-    while (tk.hasMoreTokens()) {
-      final String line = tk.nextToken();
-      final String[] subLines = line.split("\n");
-      final StringTokenizer tk2 = new StringTokenizer(subLines[0], "\u0000", false);
+    h.addLineListener(new GitLineHandlerListener() {
+      @Override
+      public void onLineAvailable(final String line, final Key outputType) {
+        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+          if (line.startsWith("\u0001")) {
+            final StringTokenizer tk2 = new StringTokenizer(line.substring(1), "\u0000", false);
 
-      final String hash = tk2.nextToken();
-      final long time;
-      if (tk2.hasMoreTokens()) {
-        final String dateString = tk2.nextToken();
-        time = Long.parseLong(dateString.trim());
-      } else {
-        time = 0;
+            final String hash = tk2.nextToken();
+            final long time;
+            if (tk2.hasMoreTokens()) {
+              final String dateString = tk2.nextToken();
+              time = Long.parseLong(dateString.trim());
+            } else {
+              time = 0;
+            }
+            final String[] parents;
+            if (tk2.hasMoreTokens()) {
+              parents = tk2.nextToken().split(" ");
+            } else {
+              parents = ArrayUtil.EMPTY_STRING_ARRAY;
+            }
+            consumer.consume(new CommitHashPlusParents(hash, parents, time));     // todo stop listen to output
+          }
+        }
       }
-      final String[] parents;
-      if (tk2.hasMoreTokens()) {
-        parents = tk2.nextToken().split(" ");
-      } else {
-        parents = ArrayUtil.EMPTY_STRING_ARRAY;
+
+      @Override
+      public void processTerminated(int exitCode) {
       }
-      consumer.consume(new CommitHashPlusParents(hash, parents, time));
-    }
+
+      @Override
+      public void startFailed(Throwable exception) {
+        // todo
+      }
+    });
+    h.start();
   }
 
   @Nullable

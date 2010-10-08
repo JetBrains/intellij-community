@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +39,9 @@ public class ExceptionUtils{
     }
 
     @NotNull public static Set<PsiType> calculateExceptionsThrown(
-            @NotNull PsiElement statement){
+            @NotNull PsiElement element){
         final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor();
-        statement.accept(visitor);
+        element.accept(visitor);
         return visitor.getExceptionsThrown();
     }
 
@@ -195,8 +196,9 @@ public class ExceptionUtils{
                 return;
             }
             final PsiReferenceList throwsList = method.getThrowsList();
-            final PsiManager psiManager = expression.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final Project project = expression.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiJavaCodeReferenceElement[] list =
                     throwsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : list){
@@ -210,15 +212,17 @@ public class ExceptionUtils{
             }
         }
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiMethod method = expression.resolveMethod();
             if(method == null){
                 return;
             }
             final PsiReferenceList throwsList = method.getThrowsList();
-            final PsiManager psiManager = expression.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final Project project = expression.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiJavaCodeReferenceElement[] list =
                     throwsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : list){

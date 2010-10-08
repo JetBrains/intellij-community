@@ -38,7 +38,7 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
   }
 
   @Nullable
-  public String [] getIgnoreAnnotations() {
+  public String[] getIgnoreAnnotations() {
     return null;
   }
 

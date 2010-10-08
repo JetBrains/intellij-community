@@ -33,6 +33,23 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEmpty(myItems);
   }
 
+  public void testNoPackagesInExpressionCodeFragment() throws Throwable {
+    final String text = "jav<caret>";
+    PsiFile file = getJavaFacade().getElementFactory().createExpressionCodeFragment(text, null, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    complete();
+    myFixture.checkResult(text);
+    assertEmpty(myItems);
+  }
+
+  public void testSubPackagesInExpressionCodeFragment() throws Throwable {
+    PsiFile file = getJavaFacade().getElementFactory().createExpressionCodeFragment("java.la<caret>", null, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    complete();
+    myFixture.checkResult("java.lang.<caret>");
+    assertNull(myItems);
+  }
+
   private JavaPsiFacade getJavaFacade() {
     return JavaPsiFacade.getInstance(getProject());
   }

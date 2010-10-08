@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -72,27 +73,21 @@ public class LibrariesContainerFactory {
   }
 
   public static Library createLibrary(@Nullable LibrariesContainer container1, @NotNull LibrariesContainer container2,
-                               @NotNull @NonNls final String name, @NotNull final LibrariesContainer.LibraryLevel level,
-                               @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
+                               @NotNull @NonNls final NewLibraryEditor editor, @NotNull final LibrariesContainer.LibraryLevel level) {
     if (container1 != null && container1.canCreateLibrary(level)) {
-      return container1.createLibrary(name, level, classRoots, sourceRoots);
+      return container1.createLibrary(editor, level);
     }
     else {
-      return container2.createLibrary(name, level, classRoots, sourceRoots);
+      return container2.createLibrary(editor, level);
     }
   }
 
   @NotNull
-  public static Library createLibraryInTable(final @NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
+  private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
-    Library library = modifiableModel.createLibrary(getUniqueLibraryName(name, modifiableModel));
+    Library library = modifiableModel.createLibrary(getUniqueLibraryName(editor.getName(), modifiableModel));
     final Library.ModifiableModel model = library.getModifiableModel();
-    for (VirtualFile root : roots) {
-      model.addRoot(root, OrderRootType.CLASSES);
-    }
-    for (VirtualFile root : sources) {
-      model.addRoot(root, OrderRootType.SOURCES);
-    }
+    editor.applyRoots(model);
     model.commit();
     modifiableModel.commit();
     return library;
@@ -110,6 +105,22 @@ public class LibrariesContainerFactory {
 
   private abstract static class LibrariesContainerBase implements LibrariesContainer {
     private UniqueNameGenerator myNameGenerator;
+
+    @Override
+    public Library createLibrary(@NotNull @NonNls String name,
+                                 @NotNull LibraryLevel level,
+                                 @NotNull VirtualFile[] classRoots,
+                                 @NotNull VirtualFile[] sourceRoots) {
+      NewLibraryEditor editor = new NewLibraryEditor();
+      editor.setName(name);
+      for (VirtualFile classRoot : classRoots) {
+        editor.addRoot(classRoot, OrderRootType.CLASSES);
+      }
+      for (VirtualFile sourceRoot : sourceRoots) {
+        editor.addRoot(sourceRoot, OrderRootType.SOURCES);
+      }
+      return createLibrary(editor, level);
+    }
 
     @NotNull
     public Library[] getAllLibraries() {
@@ -204,10 +215,11 @@ public class LibrariesContainerFactory {
       return level == LibraryLevel.GLOBAL || myProject != null;
     }
 
-    public Library createLibrary(@NotNull @NonNls final String name, @NotNull final LibraryLevel level,
-                                 @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
+    @Override
+    public Library createLibrary(@NotNull NewLibraryEditor libraryEditor,
+                                 @NotNull LibraryLevel level) {
       if (level == LibraryLevel.MODULE && myRootModel != null) {
-        return createLibraryInTable(name, classRoots, sourceRoots, myRootModel.getModuleLibraryTable());
+        return createLibraryInTable(libraryEditor, myRootModel.getModuleLibraryTable());
       }
 
       LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
@@ -221,7 +233,7 @@ public class LibrariesContainerFactory {
       else {
         return null;
       }
-      return createLibraryInTable(name, classRoots, sourceRoots, table);
+      return createLibraryInTable(libraryEditor, table);
     }
 
     @Override
@@ -239,22 +251,18 @@ public class LibrariesContainerFactory {
       myContext = context;
     }
 
-    public Library createLibrary(@NotNull @NonNls final String name, @NotNull final LibraryLevel level,
-                                 @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
+    @Override
+    public Library createLibrary(@NotNull NewLibraryEditor libraryEditor,
+                                 @NotNull LibraryLevel level) {
       LibraryTableModifiableModelProvider provider = getProvider(level);
       if (provider == null) {
         LOG.error("cannot create module library in this context");
       }
 
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
-      Library library = model.createLibrary(getUniqueLibraryName(name, model));
-      LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
-      for (VirtualFile root : classRoots) {
-        libraryEditor.addRoot(root, OrderRootType.CLASSES);
-      }
-      for (VirtualFile source : sourceRoots) {
-        libraryEditor.addRoot(source, OrderRootType.SOURCES);
-      }
+      Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model));
+      ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
+      libraryEditor.copyRoots(createdLibraryEditor);
       return library;
     }
 

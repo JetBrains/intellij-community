@@ -18,8 +18,9 @@ package com.intellij.ide;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -47,8 +48,10 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (classes.length != 1) return;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+
+    new WriteCommandAction(project, "Paste class '" + classes[0].getName() + "'") {
+      @Override
+      protected void run(Result result) throws Throwable {
         PsiFile file;
         try {
           file = targetDir.createFile(classes[0].getName() + ".java");
@@ -64,7 +67,7 @@ public class JavaFilePasteProvider implements PasteProvider {
         }
         new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
       }
-    });
+    }.execute();
   }
 
   private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {

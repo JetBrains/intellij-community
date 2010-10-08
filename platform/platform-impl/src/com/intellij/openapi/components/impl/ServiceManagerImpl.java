@@ -56,7 +56,7 @@ public class ServiceManagerImpl implements BaseComponent {
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
-      public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
           ComponentAdapter oldAdapter =
             picoContainer.unregisterComponent(descriptor.getInterface());// Allow to re-define service implementations in plugins.
@@ -68,7 +68,7 @@ public class ServiceManagerImpl implements BaseComponent {
         picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
       }
 
-      public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
         picoContainer.unregisterComponent(extension.getInterface());
       }
     };

@@ -589,7 +589,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
           }
         }
-        catch (InvalidDataException e) {
+        catch (InvalidDataException ignored) {
         }
 
         final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
@@ -827,7 +827,7 @@ public class BreakpointManager implements JDOMExternalizable {
   //interaction with RequestManagerImpl
   public void disableBreakpoints(final DebugProcessImpl debugProcess) {
     final List<Breakpoint> breakpoints = getBreakpoints();
-    if (breakpoints.size() > 0) {
+    if (!breakpoints.isEmpty()) {
       final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
       for (Breakpoint breakpoint : breakpoints) {
         breakpoint.markVerified(requestManager.isVerified(breakpoint));
@@ -843,7 +843,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   public void enableBreakpoints(final DebugProcessImpl debugProcess) {
     final List<Breakpoint> breakpoints = getBreakpoints();
-    if (breakpoints.size() > 0) {
+    if (!breakpoints.isEmpty()) {
       for (Breakpoint breakpoint : breakpoints) {
         breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);

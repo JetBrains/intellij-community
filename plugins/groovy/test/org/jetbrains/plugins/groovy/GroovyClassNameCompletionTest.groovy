@@ -115,13 +115,17 @@ class Foo {
   static def abcmethod1(int a) {}
   static def abcmethod2(int a) {}
 }""")
-    myFixture.configureByText("a.groovy", "abcme<caret>")
+    myFixture.configureByText("a.groovy", """def foo() {
+  abcme<caret>
+}""")
     def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
     ((StaticallyImportable) item).shouldBeImported = true
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcmethod1
 
-abcmethod1(<caret>)"""
+def foo() {
+  abcmethod1 <caret>
+}"""
 
   }
 
@@ -130,11 +134,15 @@ abcmethod1(<caret>)"""
 class Foo {
   static def abcmethod(int a) {}
 }""")
-    myFixture.configureByText("a.groovy", "abcme<caret>")
+    myFixture.configureByText("a.groovy", """def foo() {
+  abcme<caret>
+}""")
     myFixture.complete(CompletionType.CLASS_NAME)
     myFixture.checkResult """import foo.Foo
 
-Foo.abcmethod(<caret>)"""
+def foo() {
+  Foo.abcmethod <caret>
+}"""
 
   }
 

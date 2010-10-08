@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,7 +32,9 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +75,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private IdeTooltip myCurrentTooltip;
   private Runnable myShowRequest;
-
+  private IdeTooltip myQueuedTooltip;
 
 
   public IdeTooltipManager(JBPopupFactory popupFactory) {
@@ -151,7 +154,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter) {
-    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null) {
+    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null, new Object()) {
       @Override
       protected boolean beforeShow() {
         myCurrentEvent = me;
@@ -179,6 +182,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     hideCurrent(null);
 
     myQueuedComponent = tooltip.getComponent();
+    myQueuedTooltip = tooltip;
 
     myShowRequest = new Runnable() {
       @Override
@@ -265,6 +269,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myCurrentTooltip = tooltip;
     myShowRequest = null;
     myQueuedComponent = null;
+    myQueuedTooltip = null;
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(new Runnable() {
@@ -328,6 +333,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private boolean hideCurrent(@Nullable MouseEvent me) {
     myShowRequest = null;
     myQueuedComponent = null;
+    myQueuedTooltip = null;
 
     if (myCurrentTooltip == null) return true;
 
@@ -378,6 +384,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myCurrentTipUi = null;
     myCurrentComponent = null;
     myQueuedComponent = null;
+    myQueuedTooltip = null;
     myCurrentEvent = null;
     myCurrentTipIsCentered = false;
     myX = -1;
@@ -537,5 +544,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   @Override
   public String getComponentName() {
     return "IDE Tooltip Manager";
+  }
+
+  public boolean isQueuedToShow(IdeTooltip tooltip) {
+    return Comparing.equal(myQueuedTooltip, tooltip);
   }
 }

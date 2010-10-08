@@ -26,12 +26,19 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +56,7 @@ import java.util.List;
  * Date: 17-Feb-2006
  */
 public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
-  private static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
+  private static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new THashSet<String>(Arrays.asList(
     "javax.annotation.Resource",
     "javax.ejb.EJB",
     "javax.xml.ws.WebServiceRef",
@@ -69,6 +76,28 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
   public JDOMExternalizableStringList INJECTION_ANNOS = new JDOMExternalizableStringList();
+
+  static {
+    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+      @Override
+      public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        extensionRemoved(extension, pluginDescriptor);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        ANNOTATIONS = null;
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (ApplicationManager.getApplication().isDisposed()) return;
+            InspectionProfileManager.getInstance().fireProfileChanged(null);
+          }
+        });
+      }
+    });
+  }
 
   @NotNull
   public String getGroupDisplayName() {
@@ -113,7 +142,6 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     private JPanel myPanel;
 
     public OptionsPanel() {
-
       myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
       myCheckClassesCheckBox.setSelected(CLASS);
       myCheckFieldsCheckBox.setSelected(FIELD);
@@ -169,8 +197,9 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     List<String> annotations = ANNOTATIONS;
     if (annotations == null) {
       annotations = new ArrayList<String>();
-      for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
-        final String[] ignoredAnnotations = ((EntryPoint)extension).getIgnoreAnnotations();
+      EntryPoint[] extensions = Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
+      for (EntryPoint extension : extensions) {
+        final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
           ContainerUtil.addAll(annotations, ignoredAnnotations);
         }

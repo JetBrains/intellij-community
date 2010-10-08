@@ -235,9 +235,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     final JButton addButton = new JButton(ProjectBundle.message("button.add"));
     final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
-    myEditButton = new JButton(ProjectBundle.message("button.edit"));
-    final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
-    final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
+    myEditButton = new JButton(ProjectBundle.message("module.classpath.button.edit"));
+    final JButton upButton = new JButton(ProjectBundle.message("module.classpath.button.move.up"));
+    final JButton downButton = new JButton(ProjectBundle.message("module.classpath.button.move.down"));
     final JButton analyzeButton = isAnalyzeShown ? new JButton(ProjectBundle.message("classpath.panel.analyze")) : null;
 
     final JPanel panel = new JPanel(new GridBagLayout());
