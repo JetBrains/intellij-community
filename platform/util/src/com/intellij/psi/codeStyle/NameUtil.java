@@ -159,7 +159,7 @@ public class NameUtil {
             buffer.append(Character.toLowerCase(c));
           }
           if (!firstIdentifierLetter) {
-            buffer.append("|[A-Za-z\\s0-9\\$]*[_-][");
+            buffer.append("|[A-Za-z\\s0-9\\$]*[_-]+[");
             buffer.append(c);
             buffer.append(Character.toLowerCase(c));
             buffer.append("]");
@@ -172,7 +172,7 @@ public class NameUtil {
           buffer.append(Character.toUpperCase(c));
           buffer.append(']');
           if (lowerCaseWords) {
-            buffer.append("([a-z\\s0-9\\$]*[-_])?");
+            buffer.append("([a-z\\s0-9\\$]*[-_]+)?");
           }
         }
         else {
@@ -195,7 +195,7 @@ public class NameUtil {
         firstIdentifierLetter = true;
       }
       else if (c == ' ') {
-        buffer.append("([a-z\\s0-9\\$_-]*[\\ _-])+");
+        buffer.append("([a-z\\s0-9\\$_-]*[\\ _-]+)+");
         firstIdentifierLetter = true;
       }
       else {
