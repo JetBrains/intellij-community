@@ -1032,13 +1032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int offsetToVisualLine(int offset) {
-    int line = calcLogicalLineNumber(offset);
-    return logicalToVisualLine(line);
-  }
-
-  private int logicalToVisualLine(int line) {
-    assertReadAccess();
-    return logicalToVisualPosition(new LogicalPosition(line, 0)).line;
+    return logicalToVisualPosition(offsetToLogicalPosition(offset)).line;
   }
 
   @NotNull
@@ -4213,6 +4207,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyMouseAdapter extends MouseAdapter {
+
+    private boolean mySelectionTweaked;
+
     public void mousePressed(MouseEvent e) {
       requestFocus();
       runMousePressedCommand(e);
@@ -4242,6 +4239,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
     private void runMousePressedCommand(final MouseEvent e) {
+      mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
@@ -4281,6 +4279,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMouseReleasedCommand(final MouseEvent e) {
+      if (!mySelectionTweaked) {
+        tweakSelectionIfNecessary(e);
+      }
+      if (e.isConsumed()) {
+        return;
+      }
+
       myScrollingTimer.stop();
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
@@ -4361,7 +4366,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (e.getSource() == myGutterComponent) {
         if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          myGutterComponent.mousePressed(e);
+          if (tweakSelectionIfNecessary(e)) {
+            mySelectionTweaked = true;
+          }
+          else {
+            myGutterComponent.mousePressed(e);
+          }
           if (e.isConsumed()) return;
         }
         x = 0;
@@ -4439,6 +4449,79 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
     }
+  }
+
+  /**
+   * Allows to answer if given event should tweak editor selection.
+   *
+   * @param e   event for occurred mouse action
+   * @return    <code>true</code> if action that produces given event will trigger editor selection change; <code>false</code> otherwise
+   */
+  private boolean tweakSelectionEvent(@NotNull MouseEvent e) {
+    return getSelectionModel().hasSelection() && e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown();
+  }
+
+  /**
+   * Checks if editor selection should be changed because of click at the given point at gutter and proceeds if necessary.
+   * <p/>
+   * The main idea is that selection can be changed during left mouse clicks with hold <code>Shift</code> button and we want
+   * to distinguish that situation from <code>'close line numbers gutter'</code> action (activated by <code>'Shift+click'</code>
+   * on gutter area).
+   *
+   * @param e   event for mouse click on gutter area
+   * @return    <code>true</code> if editor's selection is changed because of the click; <code>false</code> otherwise
+   */
+  private boolean tweakSelectionIfNecessary(@NotNull MouseEvent e) {
+    if (!tweakSelectionEvent(e)) {
+      return false;
+    }
+
+    int startSelectionOffset = getSelectionModel().getSelectionStart();
+    int startVisLine = offsetToVisualLine(startSelectionOffset);
+
+    int endSelectionOffset = getSelectionModel().getSelectionEnd();
+    int endVisLine = offsetToVisualLine(endSelectionOffset - 1);
+
+    int clickVisLine = xyToVisualPosition(e.getPoint()).line;
+
+    if (clickVisLine < startVisLine) {
+      // Expand selection at backward direction.
+      int startOffset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(clickVisLine, 0)));
+      getSelectionModel().setSelection(startOffset, endSelectionOffset);
+      getCaretModel().moveToOffset(startOffset);
+    }
+    else if (clickVisLine > endVisLine) {
+      // Expand selection at forward direction.
+      int endLineOffset = EditorUtil.getVisualLineEndOffset(this, clickVisLine);
+      getSelectionModel().setSelection(getSelectionModel().getSelectionStart(), endLineOffset);
+      getCaretModel().moveToOffset(endLineOffset, true);
+    }
+    else if (startVisLine == endVisLine) {
+      // Remove selection
+      getSelectionModel().removeSelection();
+    }
+    else {
+      // Reduce selection in backward direction.
+      if (getSelectionModel().getLeadSelectionOffset() == endSelectionOffset) {
+        if (clickVisLine == startVisLine) {
+          clickVisLine++;
+        }
+        int startOffset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(clickVisLine, 0)));
+        getSelectionModel().setSelection(startOffset, endSelectionOffset);
+        getCaretModel().moveToOffset(startOffset);
+      }
+      else {
+        // Reduce selection is forward direction.
+        if (clickVisLine == endVisLine) {
+          clickVisLine--;
+        }
+        int endLineOffset = EditorUtil.getVisualLineEndOffset(this, clickVisLine);
+        getSelectionModel().setSelection(startSelectionOffset, endLineOffset);
+        getCaretModel().moveToOffset(endLineOffset);
+      }
+    }
+    e.consume();
+    return true;
   }
 
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);

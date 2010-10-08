@@ -128,6 +128,12 @@ public class EditorUtil {
     return resVisEnd.column;
   }
 
+  public static int getVisualLineEndOffset(@NotNull Editor editor, int line) {
+    VisualPosition endLineVisualPosition = new VisualPosition(line, getLastVisualLineColumnNumber(editor, line));
+    LogicalPosition endLineLogicalPosition = editor.visualToLogicalPosition(endLineVisualPosition);
+    return editor.logicalPositionToOffset(endLineLogicalPosition);
+  }
+
   public static float calcVerticalScrollProportion(Editor editor) {
     Rectangle viewArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
     if (viewArea.height == 0) {
