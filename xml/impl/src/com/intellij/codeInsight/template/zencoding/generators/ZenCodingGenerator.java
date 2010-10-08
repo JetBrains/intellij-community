@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.zencoding.generators;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.zencoding.ZenCodingTemplate;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
@@ -38,8 +37,6 @@ public abstract class ZenCodingGenerator {
   private static final ExtensionPointName<ZenCodingGenerator> EP_NAME =
     new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
 
-  private static final TemplateContextType[] EMPTY_CONTEXT_TYPE_ARRAY = new TemplateContextType[0];
-
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
   @Nullable
@@ -55,10 +52,6 @@ public abstract class ZenCodingGenerator {
   }
 
   public abstract boolean isAppliedByDefault(@NotNull PsiElement context);
-
-  public TemplateContextType[] getContextTypes() {
-    return EMPTY_CONTEXT_TYPE_ARRAY;
-  }
 
   public static List<ZenCodingGenerator> getInstances() {
     List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
