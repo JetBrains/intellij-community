@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +27,7 @@ import java.beans.PropertyChangeListener;
 
 public abstract class LookupManager {
   public static LookupManager getInstance(Project project){
-    return project.getComponent(LookupManager.class);
+    return ServiceManager.getService(project, LookupManager.class);
   }
 
   @Nullable
@@ -55,7 +56,7 @@ public abstract class LookupManager {
   public abstract void addPropertyChangeListener(PropertyChangeListener listener);
   public abstract void removePropertyChangeListener(PropertyChangeListener listener);
 
-  public abstract boolean isDisposed();
+  //public abstract boolean isDisposed();
 
   public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, final String prefix, LookupArranger arranger);
 

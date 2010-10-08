@@ -75,6 +75,9 @@
   <projectService serviceInterface="com.intellij.pom.references.PomService"
                   serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
+  <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
+                  serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
+
   <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                       serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 

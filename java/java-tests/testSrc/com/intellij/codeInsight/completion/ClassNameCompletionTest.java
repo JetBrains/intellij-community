@@ -4,7 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -229,8 +229,8 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
     handler.invoke(myProject, myEditor, myFile);
     final LookupManager instance = LookupManager.getInstance(myProject);
-    if(instance instanceof TestLookupManager){
-      final TestLookupManager testLookupManager = ((TestLookupManager)instance);
+    if(instance instanceof LookupManagerImpl){
+      final LookupManagerImpl testLookupManager = ((LookupManagerImpl)instance);
       if(testLookupManager.getActiveLookup() != null)
         testLookupManager.forceSelection(Lookup.NORMAL_SELECT_CHAR, 0);
     }

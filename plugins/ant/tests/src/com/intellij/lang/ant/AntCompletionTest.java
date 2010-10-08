@@ -20,7 +20,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataFile;
@@ -197,7 +197,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   private static void select(char completionChar, LookupElement item) {
-    ((TestLookupManager)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
+    ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
   private static LookupElement getSelected() {
