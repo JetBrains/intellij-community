@@ -24,7 +24,6 @@ import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
@@ -63,12 +62,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -581,7 +578,25 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     @Override
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;
+      final TreePath[] paths = getSelectionPaths();
+      if (paths == null) return null;
+
+      final int count = paths.length;
+
+      final JLabel label = new JLabel(String.format("%s item%s", count, count == 1 ? "" : "s"));
+      label.setOpaque(true);
+      label.setForeground(myTree.getForeground());
+      label.setBackground(myTree.getBackground());
+      label.setFont(myTree.getFont());
+      label.setSize(label.getPreferredSize());
+      final BufferedImage image = new BufferedImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+      Graphics2D g2 = (Graphics2D)image.getGraphics();
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+      label.paint(g2);
+      g2.dispose();
+
+      return new Pair<Image, Point>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
     }
 
     @Override
