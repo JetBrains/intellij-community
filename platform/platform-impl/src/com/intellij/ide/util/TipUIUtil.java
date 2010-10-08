@@ -61,7 +61,8 @@ public class TipUIUtil {
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
-      browser.read(new StringReader(text.toString()), null);
+      String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
+      browser.read(new StringReader(replaced), null);
       final Document document = browser.getDocument();
       if (document instanceof HTMLDocument) {
         ((HTMLDocument)document).setBase(url);
