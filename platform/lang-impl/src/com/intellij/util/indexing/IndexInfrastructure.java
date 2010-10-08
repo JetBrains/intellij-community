@@ -77,19 +77,23 @@ public class IndexInfrastructure {
       os.writeInt(VERSION);
     }
     finally {
-      ourIndexIdToCreationStamp.clear();
+      synchronized (ourIndexIdToCreationStamp) {
+        ourIndexIdToCreationStamp.clear();
+      }
       os.close();
       file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 1000));
     }
   }
 
   public static long getIndexCreationStamp(ID<?, ?> indexName) {
-    long stamp = ourIndexIdToCreationStamp.get(indexName);
-    if (stamp <= 0) {
-      stamp = getVersionFile(indexName).lastModified();
-      ourIndexIdToCreationStamp.put(indexName, stamp);
+    synchronized (ourIndexIdToCreationStamp) {
+      long stamp = ourIndexIdToCreationStamp.get(indexName);
+      if (stamp <= 0) {
+        stamp = getVersionFile(indexName).lastModified();
+        ourIndexIdToCreationStamp.put(indexName, stamp);
+      }
+      return stamp;
     }
-    return stamp;
   }
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
