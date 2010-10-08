@@ -363,6 +363,7 @@
         id="Devmode.DumpPsi"
         class="com.jetbrains.python.devmode.DumpPsiToClipboardAction"
         text="Dump PSI to clipboard"
+        internal="true"
         >
       <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Macros"/>
     </action>
