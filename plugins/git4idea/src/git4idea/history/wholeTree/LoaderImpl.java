@@ -269,7 +269,7 @@ public class LoaderImpl implements Loader {
     @Override
     public void consume(List<CommitHashPlusParents> commitHashPlusParentses) {
       synchronized (myLock) {
-        if (myId != myLoadId) throw new MyStopListenToOutputException();
+        if (myId != myLoadId) throw new MyStopListenToOutputException();    // TODO TODO TODO
       }
       for (CommitHashPlusParents item : commitHashPlusParentses) {
         myConsumer.consume(item);

@@ -18,17 +18,24 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author irengrig
  */
-public class FictiveAction extends AnAction {
-  public FictiveAction() {
-    super("New Git Log");
+public class SelectRepositoryAndShowLogAction extends AnAction {
+  public SelectRepositoryAndShowLogAction() {
+    super("Select and browse git repo");
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    GitLogLongPanel.showDialog(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, false));
+    if (virtualFiles == null || virtualFiles.length == 0) return;
+    GitLogLongPanel.showDialog(project, virtualFiles[0]);
   }
 }
