@@ -127,7 +127,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
 
       if (hintHint.isAwtTooltip()) {
-        IdeTooltip tooltip = new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent) {
+        IdeTooltip tooltip = new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent, hintHint, myComponent) {
           @Override
           protected boolean canAutohideOn(TooltipEvent event) {
             if (event.getInputEvent() instanceof MouseEvent) {
@@ -147,7 +147,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           public boolean canBeDismissedOnTimeout() {
             return false;
           }
-        }.setToCenterIfSmall(false).setPreferredPosition(hintHint.getPreferredPosition()).setHighlighterType(hintHint.isHightlighterType());
+        }.setToCenterIfSmall(hintHint.isMayCenterTooltip()).setPreferredPosition(hintHint.getPreferredPosition()).setHighlighterType(hintHint.isHightlighterType());
 
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
@@ -351,5 +351,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public boolean canControlAutoHide() {
     return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing() ;
+  }
+
+  public IdeTooltip getCurrentIdeTooltip() {
+    return myCurrentIdeTooltip;
   }
 }

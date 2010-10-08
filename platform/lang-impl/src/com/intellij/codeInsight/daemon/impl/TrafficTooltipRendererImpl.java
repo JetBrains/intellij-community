@@ -24,18 +24,20 @@ import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ui.update.ComparableObject;
 
 import java.awt.*;
 
 /**
  * User: cdr
  */
-public class TrafficTooltipRendererImpl implements TrafficTooltipRenderer {
+public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements TrafficTooltipRenderer {
   private TrafficProgressPanel myPanel;
   private final Runnable onHide;
   private TrafficLightRenderer myTrafficLightRenderer;
 
-  public TrafficTooltipRendererImpl(Runnable onHide) {
+  public TrafficTooltipRendererImpl(Runnable onHide, Editor editor) {
+    super(editor);
     this.onHide = onHide;
   }
 
@@ -68,10 +70,5 @@ public class TrafficTooltipRendererImpl implements TrafficTooltipRenderer {
                                HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     repaintTooltipWindow();
     return hint;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj.getClass() == getClass() && myTrafficLightRenderer == ((TrafficTooltipRendererImpl)obj).myTrafficLightRenderer;
   }
 }

@@ -36,6 +36,7 @@ public class HintHint {
   private boolean myContentActive = true;
 
   private boolean myQuickHint = false;
+  private boolean myMayCenterTooltip = false;
 
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
@@ -53,6 +54,15 @@ public class HintHint {
   public HintHint setAwtTooltip(boolean awtTooltip) {
     myAwtTooltip = awtTooltip;
     return this;
+  }
+
+  public HintHint setMayCenterPosition(boolean mayCenter) {
+    myMayCenterTooltip = mayCenter;
+    return this;
+  }
+
+  public boolean isMayCenterTooltip() {
+    return myMayCenterTooltip;
   }
 
   public HintHint setPreferredPosition(Balloon.Position position) {
