@@ -2,11 +2,16 @@ package com.intellij.appengine.enhancement;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NonNls;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author nik
@@ -33,6 +38,7 @@ public class EnhancerProcessHandler extends OSProcessHandler {
   }
 
   private class EnhancerOutputParser {
+    @NonNls private static final String PLEASE_SEE_THE_LOGS_PREFIX = "Please see the logs [";
     private StringBuilder myBuffer = new StringBuilder();
     private final boolean myErrorStream;
 
@@ -64,9 +70,33 @@ public class EnhancerProcessHandler extends OSProcessHandler {
         return;
       }
 
-      if (line.startsWith("DataNucleus Enhancer completed")) {
+      if (line.startsWith("Encountered a problem: ")) {
+        myContext.addMessage(CompilerMessageCategory.ERROR, line, null, -1, -1);
+      }
+      else if (line.startsWith(PLEASE_SEE_THE_LOGS_PREFIX)) {
+        if (!showLogFileContent(line)) {
+          myContext.addMessage(CompilerMessageCategory.ERROR, line, null, -1, -1);
+        }
+      }
+      else if (line.startsWith("DataNucleus Enhancer completed")) {
         myContext.addMessage(CompilerMessageCategory.INFORMATION, line, null, -1, -1);
       }
+    }
+
+    private boolean showLogFileContent(String line) {
+      final int i = line.lastIndexOf(']');
+      if (i != -1) {
+        File logFile = new File(line.substring(PLEASE_SEE_THE_LOGS_PREFIX.length(), i));
+        if (logFile.exists()) {
+          try {
+            myContext.addMessage(CompilerMessageCategory.ERROR, new String(FileUtil.loadFileText(logFile)), null, -1, -1);
+            return true;
+          }
+          catch (IOException ignored) {
+          }
+        }
+      }
+      return false;
     }
   }
 }

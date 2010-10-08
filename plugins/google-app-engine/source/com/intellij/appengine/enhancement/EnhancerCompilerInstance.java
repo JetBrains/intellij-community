@@ -12,6 +12,8 @@ import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -119,7 +121,7 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
         }
 
         if (!toEnhance.isEmpty()) {
-          if (runEnhancer(target.getFacet(), toEnhance, myContext)) {
+          if (runEnhancer(target.getFacet(), toEnhance)) {
             for (ClassFileItem item : toEnhance) {
               consumer.addProcessedItem(item);
             }
@@ -130,7 +132,7 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
 
   }
 
-  private static boolean runEnhancer(final AppEngineFacet facet, final Collection<ClassFileItem> items, final CompileContext context) {
+  private boolean runEnhancer(final AppEngineFacet facet, final Collection<ClassFileItem> items) {
     try {
       final AppEngineSdk sdk = facet.getSdk();
       if (!sdk.isValid()) {
@@ -140,7 +142,7 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
       final JavaParameters javaParameters = new JavaParameters();
       new ReadAction() {
         protected void run(final Result result) throws Throwable {
-          context.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
+          myContext.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
           javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
 
           final PathsList classPath = javaParameters.getClassPath();
@@ -180,18 +182,27 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
         LOG.debug("starting enhancer: " + commandLine.getCommandLineString());
       }
       final Process process = commandLine.createProcess();
-      EnhancerProcessHandler handler = new EnhancerProcessHandler(process, commandLine.getCommandLineString(), context);
+      EnhancerProcessHandler handler = new EnhancerProcessHandler(process, commandLine.getCommandLineString(), myContext);
       handler.startNotify();
+      handler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          final int exitCode = event.getExitCode();
+          if (exitCode != 0) {
+            myContext.addMessage(CompilerMessageCategory.ERROR, "Enhancement process terminated with exit code " + exitCode, null, -1, -1);
+          }
+        }
+      });
       handler.waitFor();
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
-      context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      myContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
       LOG.info(e);
     }
-    return context.getMessageCount(CompilerMessageCategory.ERROR) == 0;
+    return myContext.getMessageCount(CompilerMessageCategory.ERROR) == 0;
   }
 
   private static void removeAsmJarFromClasspath(PathsList classPath) {
