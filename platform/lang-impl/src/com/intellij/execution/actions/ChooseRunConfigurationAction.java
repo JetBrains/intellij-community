@@ -18,6 +18,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
@@ -452,14 +453,16 @@ public class ChooseRunConfigurationAction extends AnAction {
       final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
       final ConfigurationType[] factories = manager.getConfigurationFactories();
       for (final ConfigurationType factory : factories) {
-        final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(factory);
-        for (final RunnerAndConfigurationSettings configuration : configurations) {
-          final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
-          if (configuration == selectedConfiguration) {
-            wrapped.setMnemonic(1);
-          }
+        if (!(factory instanceof UnknownConfigurationType)) {
+          final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(factory);
+          for (final RunnerAndConfigurationSettings configuration : configurations) {
+            final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+            if (configuration == selectedConfiguration) {
+              wrapped.setMnemonic(1);
+            }
 
-          wrappedExisting.put(configuration, wrapped);
+            wrappedExisting.put(configuration, wrapped);
+          }
         }
       }
 
