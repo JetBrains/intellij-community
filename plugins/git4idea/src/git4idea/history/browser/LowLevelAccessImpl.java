@@ -74,7 +74,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return GitHistoryUtils.onlyHashesHistory(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
   }
 
-  public void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
+  public Runnable loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                                     final Consumer<CommitHashPlusParents> consumer) throws VcsException {
     final List<String> parameters = new LinkedList<String>();
     for (ChangesFilter.Filter filter : filters) {
@@ -89,7 +89,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("--all");
     }
 
-    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, parameters.toArray(new String[parameters.size()]));
+    return GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, parameters.toArray(new String[parameters.size()]));
   }
 
   @Override
@@ -113,7 +113,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   // todo starting points can be branches, any referencies
-  public List<CommitHashPlusParents> loadSkeleton(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters)
+  /*public List<CommitHashPlusParents> loadSkeleton(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters)
     throws VcsException {
     final List<String> parameters = new LinkedList<String>();
     for (ChangesFilter.Filter filter : filters) {
@@ -129,7 +129,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     return GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
-  }
+  }*/
 
   public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
