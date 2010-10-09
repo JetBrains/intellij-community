@@ -146,6 +146,10 @@ public class EditLibraryDialog extends DialogWrapper {
         fireTableDataChanged();
       }
     }
+
+    public VirtualFile[] getFiles() {
+      return files.toArray(new VirtualFile[files.size()]);
+    }
   }
 
   private void updateSelection() {
@@ -161,5 +165,9 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private void removeSelected() {
      myFileTableModel.removeFile(mySelectedFile);
+  }
+
+  public VirtualFile[] getFiles() {
+    return myFileTableModel.getFiles();
   }
 }

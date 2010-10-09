@@ -82,7 +82,7 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog(myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      myLibTableModel.createLibrary(editLibDialog.getLibName());
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
     }
   }
 

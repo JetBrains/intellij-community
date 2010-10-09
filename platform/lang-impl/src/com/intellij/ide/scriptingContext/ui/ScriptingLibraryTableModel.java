@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
@@ -29,10 +32,12 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
   private static final int LIB_NAME_COL = 0;
 
   private LibraryTable myLibTable;
+  private LibraryTable.ModifiableModel myLibTableModel;
   private boolean myTableChanged;
 
   public ScriptingLibraryTableModel(LibraryTable libTable) {
     myLibTable = libTable;
+    myLibTableModel = libTable.getModifiableModel();
     myTableChanged = false;
   }
 
@@ -71,8 +76,14 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     return "?";
   }
 
-  public void createLibrary(String name) {
-    myLibTable.createLibrary(name);
+  public void createLibrary(String name, VirtualFile[] files) {
+    Library lib = myLibTable.createLibrary(name);
+    Library.ModifiableModel libModel = lib.getModifiableModel();
+    for (VirtualFile file : files) {
+      libModel.addRoot(file, OrderRootType.CLASSES);
+    }
+    libModel.commit();
+    myLibTableModel.commit();
     fireLibTableChanged();
   }
 
