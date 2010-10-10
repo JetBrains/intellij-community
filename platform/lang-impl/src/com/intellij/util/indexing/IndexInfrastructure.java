@@ -94,7 +94,7 @@ public class IndexInfrastructure {
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
     try {
-      final DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
+      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
       try {
         final int savedIndexVersion = in.readInt();
         final int commonVersion = in.readInt();
