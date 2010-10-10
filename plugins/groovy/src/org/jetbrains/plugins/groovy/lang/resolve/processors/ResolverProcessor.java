@@ -64,13 +64,17 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
+    if (element instanceof PsiLocalVariable) {
+      return true; // the debugger creates a Java codeblock context and our expressions to evaluate resolve there
+    }
+
     if (myResolveTargetKinds.contains(getResolveKind(element))) {
-      PsiNamedElement namedElement = (PsiNamedElement) element;
+      PsiNamedElement namedElement = (PsiNamedElement)element;
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
-        substitutor = substitutor.putAll((PsiClass) namedElement, myTypeArguments);
+        substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
       }
 
       if (namedElement instanceof PsiClass) {
