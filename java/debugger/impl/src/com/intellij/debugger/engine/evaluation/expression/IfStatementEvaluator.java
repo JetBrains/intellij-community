@@ -33,7 +33,7 @@ public class IfStatementEvaluator implements Evaluator {
   public IfStatementEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
     myConditionEvaluator = new DisableGC(conditionEvaluator);
     myThenEvaluator = new DisableGC(thenEvaluator);
-    myElseEvaluator = new DisableGC(elseEvaluator);
+    myElseEvaluator = elseEvaluator == null ? null : new DisableGC(elseEvaluator);
   }
 
   public Modifier getModifier() {
