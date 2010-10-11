@@ -155,6 +155,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       public void commandStarted(CommandEvent event) {
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
+        if (event.getDocument() != null) addAffectedDocuments(event.getDocument());
       }
 
       public void commandFinished(CommandEvent event) {
@@ -257,10 +258,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
-  public void markCurrentCommandAsGlobal() {
-    myCurrentMerger.markAsGlobal();
-  }
-
   @Override
   public void nonundoableActionPerformed(final DocumentReference ref, final boolean isGlobal) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -282,6 +279,34 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
 
     myCurrentMerger.addAction(action);
+  }
+
+  public void markCurrentCommandAsGlobal() {
+    myCurrentMerger.markAsGlobal();
+  }
+
+  public void addAffectedDocuments(Document... docs) {
+    if (!isInsideCommand()) {
+      LOG.error("Must be called inside command");
+      return;
+    }
+    List<DocumentReference> refs = new ArrayList<DocumentReference>(docs.length);
+    for (Document each : docs) {
+      refs.add(DocumentReferenceManager.getInstance().create(each));
+    }
+    myCurrentMerger.addAdditionalAffectedDocuments(refs);
+  }
+
+  public void addAffectedFiles(VirtualFile... files) {
+    if (!isInsideCommand()) {
+      LOG.error("Must be called inside command");
+      return;
+    }
+    List<DocumentReference> refs = new ArrayList<DocumentReference>(files.length);
+    for (VirtualFile each : files) {
+      refs.add(DocumentReferenceManager.getInstance().create(each));
+    }
+    myCurrentMerger.addAdditionalAffectedDocuments(refs);
   }
 
   public void invalidateActionsFor(DocumentReference ref) {

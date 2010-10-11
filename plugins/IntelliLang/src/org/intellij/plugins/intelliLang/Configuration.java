@@ -22,10 +22,13 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -59,7 +62,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -529,21 +531,13 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
                                 final List<? extends PsiElement> psiElementsToRemove,
                                 final PairProcessor<T, T> actualProcessor) {
-    final UndoableAction action = new UndoableAction() {
+    final UndoableAction action = new GlobalUndoableAction() {
       public void undo() {
         actualProcessor.process(remove, add);
       }
 
       public void redo() {
         actualProcessor.process(add, remove);
-      }
-
-      public DocumentReference[] getAffectedDocuments() {
-        return DocumentReference.EMPTY_ARRAY;
-      }
-
-      public boolean isGlobal() {
-        return true;
       }
     };
     final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, new NullableFunction<PsiElement, PsiFile>() {
