@@ -299,6 +299,19 @@ public class ResolveImportUtil {
     return visitor.results;
   }
 
+  @NotNull
+  public static List<PsiElement> resolveModulesInRoots(@NotNull Module module, @NotNull PyQualifiedName moduleQualifiedName) {
+    PythonPathCache cache = PythonModulePathCache.getInstance(module);
+    final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
+    if (cachedResults != null) {
+      return cachedResults;
+    }
+    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null);
+    visitRoots(module, visitor);
+    cache.put(moduleQualifiedName, visitor.results);
+    return visitor.results;
+  }
+
   // TODO: rewrite using resolveImportReference
 
   /**
@@ -478,22 +491,22 @@ public class ResolveImportUtil {
   }
 
   static class ResolveInRootVisitor implements RootVisitor {
-    final PsiFile foothold_file;
+    final PsiFile myFootholdFile;
     final @NotNull PyQualifiedName qualifiedName;
     final @NotNull PsiManager psiManager;
     final List<PsiElement> results = new ArrayList<PsiElement>();
 
-    public ResolveInRootVisitor(@NotNull PyQualifiedName qName, @NotNull PsiManager psiManager, PsiFile foothold_file) {
+    public ResolveInRootVisitor(@NotNull PyQualifiedName qName, @NotNull PsiManager psiManager, @Nullable PsiFile foothold_file) {
       this.qualifiedName = qName;
       this.psiManager = psiManager;
-      this.foothold_file = foothold_file;
+      myFootholdFile = foothold_file;
     }
 
     public boolean visitRoot(final VirtualFile root) {
       if (!root.isValid()) {
         return true;
       }
-      PsiElement module = resolveInRoot(root, qualifiedName, psiManager, foothold_file);
+      PsiElement module = resolveInRoot(root, qualifiedName, psiManager, myFootholdFile);
       if (module != null) {
         results.add(module);
       }
@@ -502,7 +515,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInRoot(VirtualFile root, PyQualifiedName qualifiedName, PsiManager psiManager, PsiFile foothold_file) {
+  private static PsiElement resolveInRoot(VirtualFile root, PyQualifiedName qualifiedName, PsiManager psiManager, @Nullable PsiFile foothold_file) {
     PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
     for (String component : qualifiedName.getComponents()) {
       if (component == null) {
@@ -530,7 +543,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
-                                        final PsiFile containingFile, @Nullable VirtualFile root, boolean fileOnly) {
+                                        @Nullable final PsiFile containingFile, @Nullable VirtualFile root, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PsiElement possible_ret = null;
@@ -569,7 +582,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInDirectory(final String referencedName, final PsiFile containingFile,
+  private static PsiElement resolveInDirectory(final String referencedName, @Nullable final PsiFile containingFile,
                                                final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly) {
     if (referencedName == null) return null;
     final PsiElement module = findModuleInDir(dir, referencedName);
