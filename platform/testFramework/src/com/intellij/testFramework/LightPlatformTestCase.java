@@ -588,18 +588,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return createPseudoPhysicalFile(fileName, text);
   }
 
-  protected static PsiFile createLightFile(String fileName, String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
-      fileName), text, LocalTimeCounter.currentTime(), false);
+  protected static PsiFile createLightFile(@NonNls String fileName, String text) throws IncorrectOperationException {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
   }
 
   protected static PsiFile createPseudoPhysicalFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
 
   /**
-   * Convinient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
+   * Convenient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */
