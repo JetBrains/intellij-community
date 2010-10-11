@@ -207,7 +207,7 @@ public class Browser extends JPanel {
               else if (ref.startsWith("invoke:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
                 getTool().getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber]
-                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView, null);
+                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView);
               }
               else if (ref.startsWith("invokelocal:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
