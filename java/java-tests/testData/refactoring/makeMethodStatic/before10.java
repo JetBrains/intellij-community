@@ -8,6 +8,6 @@ public class Foo {
 class Bar {
     public Foo myFoo;    
     int a(int b) {
-        return myFoo.method(b*2);
+        return myFoo.method(b * 2);
     }
 }
