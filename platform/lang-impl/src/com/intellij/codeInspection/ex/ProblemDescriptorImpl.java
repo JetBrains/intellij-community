@@ -137,7 +137,6 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     if (document == null) return -1;
     TextRange textRange = getTextRange();
     if (textRange == null) return -1;
-    textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
     return document.getLineNumber(textRange.getStartOffset()) + 1;
   }
 
@@ -155,13 +154,6 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public TextAttributesKey getEnforcedTextAttributes() {
     return myEnforcedTextAttributes;
-  }
-
-  public TextRange getTextRangeForNavigation() {
-    TextRange textRange = getTextRange();
-    if (textRange == null) return null;
-    PsiElement element = getPsiElement();
-    return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
   }
 
   public TextRange getTextRange() {
