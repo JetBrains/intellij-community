@@ -702,43 +702,38 @@ public class GitUtil {
   }
 
   /**
-   * The get the possible base for the path. It tries to find the parent for the provided path, if it fails, it looks for the path without last member.
+   * The get the possible base for the path. It tries to find the parent for the provided path.
    *
    * @param file the file to get base for
    * @param path the path to to check
    * @return the file base
    */
   @Nullable
-  public static VirtualFile getPossibleBase(VirtualFile file, String... path) {
-    return getPossibleBase(file, path.length, path);
-  }
+  public static VirtualFile getPossibleBase(final VirtualFile file, final String... path) {
+    if (file == null || path.length == 0) return null;
 
-  /**
-   * The get the possible base for the path. It tries to find the parent for the provided path, if it fails, it looks for the path without last member.
-   *
-   * @param file the file to get base for
-   * @param n    the length of the path to check
-   * @param path the path to to check
-   * @return the file base
-   */
-  @Nullable
-  private static VirtualFile getPossibleBase(VirtualFile file, int n, String... path) {
-    if (file == null || n <= 0 || n > path.length) {
-      return null;
-    }
-    int i = 1;
-    VirtualFile c = file;
-    for (; c != null && i < n; i++, c = c.getParent()) {
-      if (!path[n - i].equals(c.getName())) {
-        break;
+    VirtualFile current = file;
+    final List<VirtualFile> backTrace = new LinkedList<VirtualFile>();
+    int idx = path.length - 1;
+    while (current != null) {
+      if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {
+        if (idx == 0) {
+          return current;
+        }
+        -- idx;
+      } else if (idx != path.length - 1) {
+        int diff = path.length - 1 - idx - 1;
+        for (int i = 0; i < diff; i++) {
+          current = backTrace.remove(backTrace.size() - 1);
+        }
+        idx = path.length - 1;
+        continue;
       }
+      backTrace.add(current);
+      current = current.getParent();
     }
-    if (i == n && c != null) {
-      // all components matched
-      return c.getParent();
-    }
-    // try shorter paths paths
-    return getPossibleBase(file, n - 1, path);
+
+    return null;
   }
 
   public static void getLocalCommittedChanges(final Project project,
