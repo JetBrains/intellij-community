@@ -1,6 +1,7 @@
 package org.jetbrains.javafx.testUtils;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,6 +13,6 @@ public class JavaFxTestUtil {
   }
 
   public static String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/JavaFX/testData/";
+    return PluginPathManager.getPluginHomePath("JavaFX") + "/testData/";
   }
 }
