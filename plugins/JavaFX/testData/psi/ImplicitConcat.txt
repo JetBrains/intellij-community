@@ -1,0 +1,27 @@
+JavFxFile:ImplicitConcat.fx
+  JavaFxVariableDeclaration
+    JavaFxModifierList
+      <empty list>
+    PsiElement(JavaFx:var)('var')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:EQ)('=')
+    PsiWhiteSpace(' ')
+    JavaFxStringExpression
+      PsiElement(JavaFx:LOCALIZATION_PREFIX)('##[text]')
+      JavaFxStringCompoundElement
+        PsiElement(JavaFx:STRING_LITERAL)('"Hello world"')
+      PsiWhiteSpace(' ')
+      JavaFxStringCompoundElement
+        PsiElement(JavaFx:STRING_LITERAL)('' and some other text'')
+      PsiWhiteSpace('\n')
+      JavaFxStringCompoundElement
+        PsiElement(JavaFx:STRING_LITERAL)('" and more "')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace(' ')
+      JavaFxStringCompoundElement
+        PsiElement(JavaFx:STRING_LITERAL)(''other text\n'')

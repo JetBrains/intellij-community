@@ -1,0 +1,79 @@
+JavFxFile:FunctionExpression.fx
+  JavaFxVariableDeclaration
+    JavaFxModifierList
+      <empty list>
+    PsiElement(JavaFx:def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:IDENTIFIER)('f')
+    PsiElement(JavaFx:COLON)(':')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionTypeElement
+      PsiElement(JavaFx:function)('function')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxParameter
+            PsiElement(JavaFx:IDENTIFIER)('a')
+            PsiElement(JavaFx:COLON)(':')
+            PsiWhiteSpace(' ')
+            JavaFxTypeElement
+              JavaFxReferenceElement
+                PsiElement(JavaFx:IDENTIFIER)('Integer')
+          PsiElement(JavaFx:COMMA)(',')
+          PsiWhiteSpace(' ')
+          JavaFxParameter
+            PsiElement(JavaFx:COLON)(':')
+            JavaFxTypeElement
+              JavaFxReferenceElement
+                PsiElement(JavaFx:IDENTIFIER)('String')
+          PsiElement(JavaFx:RPAREN)(')')
+        PsiElement(JavaFx:COLON)(':')
+        PsiWhiteSpace(' ')
+        JavaFxTypeElement
+          JavaFxReferenceElement
+            PsiElement(JavaFx:IDENTIFIER)('Duration')
+          PsiElement(JavaFx:LBRACK)('[')
+          PsiElement(JavaFx:RBRACK)(']')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:EQ)('=')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionExpression
+      PsiElement(JavaFx:function)('function')
+      PsiWhiteSpace(' ')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxParameter
+            PsiElement(JavaFx:IDENTIFIER)('a')
+            PsiElement(JavaFx:COLON)(':')
+            PsiWhiteSpace(' ')
+            JavaFxTypeElement
+              JavaFxReferenceElement
+                PsiElement(JavaFx:IDENTIFIER)('Integer')
+          PsiElement(JavaFx:COMMA)(',')
+          PsiWhiteSpace(' ')
+          JavaFxParameter
+            PsiElement(JavaFx:IDENTIFIER)('b')
+            PsiElement(JavaFx:COLON)(':')
+            PsiWhiteSpace(' ')
+            JavaFxTypeElement
+              JavaFxReferenceElement
+                PsiElement(JavaFx:IDENTIFIER)('String')
+          PsiElement(JavaFx:RPAREN)(')')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        JavaFxReturnExpression
+          PsiElement(JavaFx:return)('return')
+          PsiWhiteSpace(' ')
+          JavaFxSequenceLiteral
+            PsiElement(JavaFx:LBRACK)('[')
+            JavaFxLiteralExpression
+              PsiElement(JavaFx:DURATION_LITERAL)('1.2h')
+            PsiElement(JavaFx:RBRACK)(']')
+        PsiElement(JavaFx:SEMICOLON)(';')
+        PsiWhiteSpace('\n')
+        PsiElement(JavaFx:RBRACE)('}')

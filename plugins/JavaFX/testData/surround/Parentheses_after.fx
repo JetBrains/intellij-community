@@ -1,0 +1,1 @@
+var a = (if (x > 3) 35 else 47)<caret>

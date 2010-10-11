@@ -1,0 +1,3 @@
+Stage {
+  title: bar<caret>,
+}

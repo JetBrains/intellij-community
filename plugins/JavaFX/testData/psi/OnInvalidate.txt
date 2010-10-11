@@ -1,0 +1,34 @@
+JavFxFile:OnInvalidate.fx
+  JavaFxVariableDeclaration
+    JavaFxModifierList
+      <empty list>
+    PsiElement(JavaFx:var)('var')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:EQ)('=')
+    PsiWhiteSpace(' ')
+    JavaFxLiteralExpression
+      PsiElement(JavaFx:INTEGER_LITERAL)('3')
+    PsiWhiteSpace(' ')
+    JavaFxOnInvalidateClause
+      PsiElement(JavaFx:on)('on')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:invalidate)('invalidate')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        JavaFxCallExpression
+          JavaFxReferenceExpression
+            PsiElement(JavaFx:IDENTIFIER)('print')
+          JavaFxExpressionList
+            PsiElement(JavaFx:LPAREN)('(')
+            JavaFxStringExpression
+              JavaFxStringCompoundElement
+                PsiElement(JavaFx:STRING_LITERAL)('"invalidate"')
+            PsiElement(JavaFx:RPAREN)(')')
+        PsiWhiteSpace('\n')
+        PsiElement(JavaFx:RBRACE)('}')
