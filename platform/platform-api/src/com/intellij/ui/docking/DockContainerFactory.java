@@ -15,17 +15,8 @@
  */
 package com.intellij.ui.docking;
 
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
+public interface DockContainerFactory {
 
-import javax.swing.*;
+  DockContainer createContainer();
 
-public interface DockContainer {
-
-  RelativeRectangle getAcceptArea();
-  boolean canAccept(DockableContent content);
-
-  JComponent getComponent();
-
-  void add(DockableContent content, RelativePoint dropTarget);
 }

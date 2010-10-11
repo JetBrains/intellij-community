@@ -473,7 +473,7 @@ public final class EditorsSplitters extends JPanel {
     return getCurrentWindow();
   }
 
-  private void createCurrentWindow() {
+  public void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
     setCurrentWindow(new EditorWindow(this));
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);

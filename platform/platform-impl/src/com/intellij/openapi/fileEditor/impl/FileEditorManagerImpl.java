@@ -463,7 +463,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return openFileImpl2(getSplitters().getOrCreateCurrentWindow(file), file, focusEditor);
   }
 
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
+  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
                                                                   @NotNull final VirtualFile file,
                                                                   final boolean focusEditor) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();

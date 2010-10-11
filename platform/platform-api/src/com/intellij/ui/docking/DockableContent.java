@@ -20,4 +20,8 @@ import java.awt.*;
 public interface DockableContent {
 
   Image getPreviewImage();
+
+  DockContainerFactory getContainerFactory();
+
+  Dimension getPreferredSize();
 }

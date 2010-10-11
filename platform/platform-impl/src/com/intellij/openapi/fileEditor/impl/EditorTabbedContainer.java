@@ -38,9 +38,9 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.docking.DragSession;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.docking.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
@@ -490,15 +490,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
       final Image img = myTabs.getComponentImage(info);
 
-      VirtualFile file = (VirtualFile)info.getObject();
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
+      myFile = (VirtualFile)info.getObject();
+      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
 
-      mySession = getDockManager().createDragSession(mouseEvent, new DockableContent() {
-        @Override
-        public Image getPreviewImage() {
-          return img;
-        }
-      });
+      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile));
     }
 
     private DockManager getDockManager() {
@@ -517,5 +512,68 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       myFile = null;
       mySession = null;
     }
+
+    private class DockableEditor implements DockableContent {
+      private final Image myImg;
+
+      public DockableEditor(Image img, VirtualFile file) {
+        myImg = img;
+        myFile = file;
+      }
+
+      @Override
+      public Image getPreviewImage() {
+        return myImg;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(myImg.getWidth(null), myImg.getHeight(null));
+      }
+
+      @Override
+      public DockContainerFactory getContainerFactory() {
+        return new MyFactory();
+      }
+
+      public VirtualFile getFile() {
+        return myFile;
+      }
+    }
   }
+
+  private class MyFactory implements DockContainerFactory, DockContainer {
+
+    private EditorsSplitters mySplitters;
+
+    @Override
+    public DockContainer createContainer() {
+      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject));
+      mySplitters.createCurrentWindow();
+      return this;
+    }
+
+    @Override
+    public RelativeRectangle getAcceptArea() {
+      return new RelativeRectangle(mySplitters);
+    }
+
+    @Override
+    public boolean canAccept(DockableContent content) {
+      return content instanceof MyDragOutDelegate.DockableEditor;
+    }
+
+    @Override
+    public void add(DockableContent content, RelativePoint dropTarget) {
+      VirtualFile file = ((MyDragOutDelegate.DockableEditor)content).getFile();
+      EditorWindow currentWindow = mySplitters.getCurrentWindow();
+      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(currentWindow, file, true);
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return mySplitters;
+    }
+  }
+
 }

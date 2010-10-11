@@ -17,9 +17,10 @@ package com.intellij.ui.docking.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -59,13 +60,13 @@ public class DockManagerImpl extends DockManager {
 
   @Override
   public DragSession createDragSession(MouseEvent mouseEvent, DockableContent content) {
-    cancelCurrentDragSession();
+    stopCurrentDragSession();
     myCurrentDragSession = new MyDragSession(mouseEvent, content);
     return myCurrentDragSession;
   }
 
 
-  private void cancelCurrentDragSession() {
+  private void stopCurrentDragSession() {
     if (myCurrentDragSession != null) {
       myCurrentDragSession.cancel();
       myCurrentDragSession = null;
@@ -98,9 +99,11 @@ public class DockManagerImpl extends DockManager {
 
     private JWindow myWindow;
     private Image myThumbnail;
+    private DockableContent myContent;
 
     private MyDragSession(MouseEvent me, DockableContent content) {
       myWindow = new JWindow();
+      myContent = content;
 
       Image previewImage = content.getPreviewImage();
 
@@ -149,12 +152,56 @@ public class DockManagerImpl extends DockManager {
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
         setLocationFrom(e);
       } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-        cancelCurrentDragSession();
+        createNewDockContainerFor(myContent, e);
+        stopCurrentDragSession();
       }
     }
 
     public void cancel() {
       myWindow.dispose();
+    }
+  }
+
+  private void createNewDockContainerFor(DockableContent content, MouseEvent event) {
+    DockContainer container = content.getContainerFactory().createContainer();
+    register(container, null);
+    DockWindow window = new DockWindow(myProject, container);
+    window.show();
+
+    Dimension size = content.getPreferredSize();
+    Point showPoint = event.getPoint();
+    SwingUtilities.convertPointToScreen(showPoint, event.getComponent());
+    showPoint.x -= size.width / 2;
+    showPoint.y += size.width / 2;
+
+    window.setLocation(showPoint);
+
+    window.show();
+
+    window.setSize(size.width, size.height);
+    container.add(content, new RelativePoint(event));
+  }
+
+  private class DockWindow extends DialogWrapper {
+
+    private DockContainer myContainer;
+
+    private DockWindow(Project project, DockContainer container) {
+      super(project);
+      myContainer = container;
+      setModal(false);
+      setUndecorated(false);
+      init();
+    }
+
+    @Override
+    protected Action[] createActions() {
+      return new Action[0];
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return myContainer.getComponent();
     }
   }
 }
