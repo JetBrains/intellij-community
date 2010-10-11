@@ -26,6 +26,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -192,4 +193,9 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     public boolean isDeprecated() {
         return false;
     }
+
+  @Override
+  public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
+
+  }
 }
