@@ -74,6 +74,6 @@ public class GrLightField extends GrLightVariable implements PsiField {
 
   @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
-
+    throw new IncorrectOperationException();
   }
 }

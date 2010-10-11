@@ -196,6 +196,6 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
 
   @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
-
+    throw new IncorrectOperationException();
   }
 }
