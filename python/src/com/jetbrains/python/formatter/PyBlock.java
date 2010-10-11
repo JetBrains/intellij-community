@@ -46,7 +46,8 @@ public class PyBlock implements ASTBlock {
                                                                       PyElementTypes.PARAMETER_LIST,
                                                                       PyElementTypes.TUPLE_EXPRESSION,
                                                                       PyElementTypes.PARENTHESIZED_EXPRESSION,
-                                                                      PyElementTypes.SLICE_EXPRESSION);
+                                                                      PyElementTypes.SLICE_EXPRESSION,
+                                                                      PyElementTypes.SUBSCRIPTION_EXPRESSION);
 
   private static final TokenSet ourBrackets = TokenSet.create(PyTokenTypes.LPAR, PyTokenTypes.RPAR,
                                                               PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
