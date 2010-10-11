@@ -33,13 +33,4 @@ public class ExtractClassAction extends BasePlatformRefactoringAction {
   public boolean isAvailableInEditorOnly(){
       return false;
   }
-
-  public boolean isEnabledOnElements(PsiElement[] elements) {
-    if (elements.length > 0) {
-      final Language language = elements[0].getLanguage();
-      final RefactoringActionHandler handler = getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language));
-      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
-    }
-    return false;
-  }
 }

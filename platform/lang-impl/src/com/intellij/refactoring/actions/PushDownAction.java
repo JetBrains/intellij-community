@@ -35,15 +35,6 @@ public class PushDownAction extends BasePlatformRefactoringAction {
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
-    if (elements.length > 0) {
-      final Language language = elements[0].getLanguage();
-      final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(language).getPushDownHandler();
-      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
-    }
-    return false;
-  }
-
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getPushDownHandler();

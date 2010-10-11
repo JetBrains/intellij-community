@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,6 +119,16 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected boolean isAvailableForLanguage(final Language language) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
+  }
+
+  @Override
+  protected boolean isEnabledOnElements(PsiElement[] elements) {
+    if (elements.length > 0) {
+      Language language = elements[0].getLanguage();
+      RefactoringActionHandler handler = getHandler(language, elements[0]);
+      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
+    }
+    return false;
   }
 
   @Nullable
