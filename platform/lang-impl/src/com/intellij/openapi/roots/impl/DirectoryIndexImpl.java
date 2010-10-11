@@ -203,6 +203,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     for (Module module : modules) {
       initModuleContents(module, reverseAllSets, progress);
+    }
+    // Important! Because module's contents may overlap,
+    // first modules should be marked and only after that sources markup
+    // should be added. (src markup depends on module markup)
+    for (Module module : modules) {
       initModuleSources(module, reverseAllSets, progress);
       initLibrarySources(module, progress);
       initLibraryClasses(module, progress);
