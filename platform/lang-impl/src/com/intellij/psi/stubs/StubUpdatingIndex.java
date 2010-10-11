@@ -63,7 +63,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       int len = in.readInt();
       byte[] result = new byte[len];
       in.readFully(result);
-      return new SerializedStubTree(result, null);
+      return new SerializedStubTree(result);
     }
   };
 
@@ -118,7 +118,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.toByteArray(), rootStub));
+            result.put(key, new SerializedStubTree(bytes.toByteArray()));
           }
         });
 
