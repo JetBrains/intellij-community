@@ -94,7 +94,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public void doTextTest(final Action action, final String text, String textAfter) throws IncorrectOperationException {
-    final PsiFile file = createPseudoPhysicalFile("A.java", text);
+    final PsiFile file = createFile("A.java", text);
 
     if (myLineRange != null) {
       final DocumentImpl document = new DocumentImpl(text);

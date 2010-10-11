@@ -132,7 +132,12 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
             final PsiElementFactory factory = getFactory();
             final PsiJavaFile psiFile;
             try {
-              psiFile = (PsiJavaFile)createPseudoPhysicalFile("aaa.java", "class A {/**\n" + " * Javadoc\n" + " * @param p1\n" + " * @param p3\n" + " */\n" + "void m();}");
+              psiFile = (PsiJavaFile)createFile("aaa.java", "class A {/**\n" +
+                                                            " * Javadoc\n" +
+                                                            " * @param p1\n" +
+                                                            " * @param p3\n" +
+                                                            " */\n" +
+                                                            "void m();}");
             final PsiClass psiClass = psiFile.getClasses()[0];
             final PsiMethod method = psiClass.getMethods()[0];
             PsiDocComment docComment = method.getDocComment();
