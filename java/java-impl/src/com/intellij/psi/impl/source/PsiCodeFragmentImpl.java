@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -237,24 +235,19 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     //}
   }
 
-  private static class ImportClassUndoableAction implements UndoableAction {
+  private static class ImportClassUndoableAction extends BasicUndoableAction {
     private final String myClassName;
     private final String myQName;
     private final LinkedHashMap<String, String> myPseudoImports;
-    private final DocumentReference[] myReferences;
 
     public ImportClassUndoableAction(final String className,
                                      final String qName,
                                      final Document document,
                                      final LinkedHashMap<String, String> pseudoImportsMap) {
+      super(document);
       myClassName = className;
       myQName = qName;
       myPseudoImports = pseudoImportsMap;
-      myReferences = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
-    }
-
-    public boolean isGlobal() {
-      return false;
     }
 
     public void undo() {
@@ -263,10 +256,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
     public void redo() {
       myPseudoImports.put(myClassName, myQName);
-    }
-
-    public DocumentReference[] getAffectedDocuments() {
-      return myReferences;
     }
   }
 

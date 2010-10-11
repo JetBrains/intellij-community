@@ -17,6 +17,7 @@ package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.table.JBTable;
 
@@ -59,6 +60,12 @@ public class ScriptingLibrariesPanel {
         }
       }
     });
+    myEditLibraryButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        editLibrary(mySelectedLibName);
+      }
+    });
     if (libTable == null) {
       myAddLibraryButton.setEnabled(false);
     }
@@ -79,7 +86,7 @@ public class ScriptingLibrariesPanel {
   }
 
   private void addLibrary() {
-    EditLibraryDialog editLibDialog = new EditLibraryDialog(myProvider, myProject);
+    EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
       myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
@@ -104,6 +111,19 @@ public class ScriptingLibrariesPanel {
     else {
       myEditLibraryButton.setEnabled(false);
       myRemoveLibraryButton.setEnabled(false);
+    }
+  }
+
+  private void editLibrary(String libName) {
+    if (libName == null) return;
+    Library lib = myLibTableModel.getLibrary(libName);
+    if (lib != null) {
+      EditLibraryDialog editLibDialog = new EditLibraryDialog("Edit Library", myProvider, myProject, lib);
+      editLibDialog.show();
+      if (editLibDialog.isOK()) {
+        myLibTableModel.removeLibrary(lib.getName());
+        myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
+      }
     }
   }
 

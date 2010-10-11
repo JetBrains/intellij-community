@@ -29,18 +29,8 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     myNameIdentifier = new GrLightIdentifier(myManager, name);
   }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor) visitor).visitImplicitVariable(this);
-    }
-  }
-
   public String toString() {
     return "Specific implicit variable: " + getName();
-  }
-
-  public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
   }
 
   @Override

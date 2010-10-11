@@ -46,7 +46,7 @@ public class GenericCompilerPersistentData {
       return;
     }
 
-    DataInputStream input = new DataInputStream(new FileInputStream(myFile));
+    DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
     try {
       final int dataVersion = input.readInt();
       if (dataVersion != VERSION) {
@@ -80,7 +80,7 @@ public class GenericCompilerPersistentData {
   }
 
   public void save() throws IOException {
-    final DataOutputStream output = new DataOutputStream(new FileOutputStream(myFile));
+    final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)));
     try {
       output.writeInt(VERSION);
       output.writeInt(myCompilerVersion);

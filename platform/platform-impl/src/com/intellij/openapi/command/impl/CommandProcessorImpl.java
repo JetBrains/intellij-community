@@ -26,8 +26,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
@@ -69,27 +71,31 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   private int myUndoTransparentCount = 0;
 
-  public void executeCommand(Runnable runnable, String name, Object groupId) {
+  public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(null, runnable, name, groupId);
   }
 
-  public void executeCommand(Project project, Runnable runnable, String name, Object groupId) {
+  public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT);
   }
 
-  public void executeCommand(Project project,
-                             final Runnable command,
-                             final String name,
-                             final Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy) {
-    executeCommand(project, command, name, groupId, undoConfirmationPolicy, null);
+  public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId, Document document) {
+    executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT, document);
   }
 
   public void executeCommand(Project project,
-                             final Runnable command,
+                             @NotNull final Runnable command,
                              final String name,
                              final Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
+    executeCommand(project, command, name, groupId, confirmationPolicy, null);
+  }
+
+  public void executeCommand(Project project,
+                             @NotNull final Runnable command,
+                             final String name,
+                             final Object groupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
                              Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return;
@@ -104,7 +110,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
     Throwable throwable = null;
     try {
-      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy, document);
+      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, confirmationPolicy, document);
       fireCommandStarted();
       command.run();
     }
@@ -263,11 +269,11 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     return myCurrentCommand != null ? myCurrentCommand.myProject : null;
   }
 
-  public void addCommandListener(CommandListener listener) {
+  public void addCommandListener(@NotNull CommandListener listener) {
     myListeners.add(listener);
   }
 
-  public void addCommandListener(final CommandListener listener, Disposable parentDisposable) {
+  public void addCommandListener(@NotNull final CommandListener listener, @NotNull Disposable parentDisposable) {
     addCommandListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -276,11 +282,11 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     });
   }
 
-  public void removeCommandListener(CommandListener listener) {
+  public void removeCommandListener(@NotNull CommandListener listener) {
     myListeners.remove(listener);
   }
 
-  public void runUndoTransparentAction(Runnable action) {
+  public void runUndoTransparentAction(@NotNull Runnable action) {
     if (myUndoTransparentCount++ == 0) fireUndoTransparentStarted();
     try {
       action.run();
@@ -295,8 +301,21 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   public void markCurrentCommandAsGlobal(Project project) {
-    UndoManager manager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
-    ((UndoManagerImpl)manager).markCurrentCommandAsGlobal();
+    getUndoManager(project).markCurrentCommandAsGlobal();
+  }
+
+  private UndoManagerImpl getUndoManager(Project project) {
+    return (UndoManagerImpl)(project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance());
+  }
+
+  @Override
+  public void addAffectedDocuments(Project project, @NotNull Document... docs) {
+    getUndoManager(project).addAffectedDocuments(docs);
+  }
+
+  @Override
+  public void addAffectedFiles(Project project, @NotNull VirtualFile... files) {
+    getUndoManager(project).addAffectedFiles(files);
   }
 
   private void fireCommandStarted() {

@@ -102,13 +102,13 @@ public class PatternPackageSet implements PatternBasedPackageSet {
   private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (fileIndex.isInLibrarySource(virtualFile)) {
-      return fileIndex.getPackageNameByDirectory(virtualFile.getParent()) + "." + virtualFile.getNameWithoutExtension();
+      return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(virtualFile.getParent()), virtualFile.getNameWithoutExtension());
     }
 
-    if (file instanceof PsiJavaFile) return ((PsiJavaFile)file).getPackageName() + "." + virtualFile.getNameWithoutExtension();
+    if (file instanceof PsiJavaFile) return StringUtil.getQualifiedName(((PsiJavaFile)file).getPackageName(), virtualFile.getNameWithoutExtension());
     PsiDirectory dir = file.getContainingDirectory();
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-    return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + virtualFile.getNameWithoutExtension();
+    return aPackage == null ? file.getName() : StringUtil.getQualifiedName(aPackage.getQualifiedName(), virtualFile.getNameWithoutExtension());
   }
 
   public PackageSet createCopy() {

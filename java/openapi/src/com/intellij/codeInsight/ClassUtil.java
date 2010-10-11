@@ -89,6 +89,7 @@ public class ClassUtil {
 
   private static boolean add(PsiMethod method, Set<PsiMethod> alreadyImplemented) {
     boolean already = alreadyImplemented.add(method);
+    if (!already) return already;
 
     for (PsiMethod superSig : method.findSuperMethods()) {
       already &= add(superSig, alreadyImplemented);

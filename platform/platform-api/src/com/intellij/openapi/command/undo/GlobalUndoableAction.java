@@ -16,15 +16,27 @@
 
 package com.intellij.openapi.command.undo;
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class NonDocumentUndoableAction implements UndoableAction {
-  public DocumentReference[] getAffectedDocuments() {
-    return null;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+public abstract class GlobalUndoableAction extends BasicUndoableAction {
+  public GlobalUndoableAction() {
   }
 
-  public final boolean isGlobal() {
+  public GlobalUndoableAction(DocumentReference... refs) {
+    super(refs);
+  }
+
+  public GlobalUndoableAction(@NotNull Document... docs) {
+    super(docs);
+  }
+
+  public GlobalUndoableAction(@NotNull VirtualFile... files) {
+    super(files);
+  }
+
+  public boolean isGlobal() {
     return true;
   }
 }
