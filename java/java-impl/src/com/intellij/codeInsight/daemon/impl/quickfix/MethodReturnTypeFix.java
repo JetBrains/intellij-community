@@ -18,8 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,18 +26,22 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -49,22 +52,22 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class MethodReturnBooleanFix implements IntentionAction {
+public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
 
   private final PsiMethod myMethod;
   private final PsiType myReturnType;
+  private final boolean myFixWholeHierarchy;
 
-  public MethodReturnBooleanFix(final PsiMethod method, final PsiType returnType) {
+  public MethodReturnTypeFix(final PsiMethod method, final PsiType returnType, boolean fixWholeHierarchy) {
     myMethod = method;
     myReturnType = returnType;
+    myFixWholeHierarchy = fixWholeHierarchy;
   }
 
   @NotNull
-  public String getText() {
-    return QuickFixBundle.message("fix.return.type.text",
-                                  myMethod.getName(),
-                                  myReturnType.getCanonicalText());
+  public String getName() {
+    return QuickFixBundle.message("fix.return.type.text", myMethod.getName(), myReturnType.getCanonicalText());
   }
 
   @NotNull
@@ -87,26 +90,39 @@ public class MethodReturnBooleanFix implements IntentionAction {
     return true;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  @Override
+  public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
+    if (myFixWholeHierarchy) {
+      final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
+      final PsiType superReturnType = superMethod == null ? null : superMethod.getReturnType();
+      if (superReturnType != null &&
+          !Comparing.equal(myReturnType, superReturnType) &&
+          !changeClassTypeArgument(project, superReturnType, superMethod.getContainingClass(), editor)) {
+        return;
+      }
+    }
 
     final List<PsiMethod> affectedMethods = changeReturnType(myMethod, myReturnType);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final SourceMethodSelector returnSelector = new SourceMethodSelector(myMethod);
-    final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType, returnSelector);
+    if (!PsiType.VOID.equals(myReturnType)) {
+      final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType, returnSelector);
 
-    for (PsiMethod method : affectedMethods) {
-      adder.addReturnForMethod(file, method);
+      for (PsiMethod affectedMethod : affectedMethods) {
+        adder.addReturnForMethod(file, affectedMethod);
+      }
     }
 
     final PsiReturnStatement latestReturn = returnSelector.getReturnStatement();
     if (latestReturn != null) {
-      selectReturnValueInEditor(latestReturn, getEditorForMethod(project, editor, latestReturn.getContainingFile()));
+      Editor editorForMethod = getEditorForMethod(project, editor, latestReturn.getContainingFile());
+      selectReturnValueInEditor(latestReturn, editorForMethod);
     }
   }
 
-  private static class SourceMethodSelector implements GeneratedReturnSelector {
+  private static class SourceMethodSelector {
     private final PsiMethod mySourceMethod;
     private PsiReturnStatement myReturnStatement;
 
@@ -115,7 +131,7 @@ public class MethodReturnBooleanFix implements IntentionAction {
     }
 
     public void accept(final PsiReturnStatement statement, final PsiMethod method) {
-      if ((mySourceMethod.equals(method)) && (statement != null)) {
+      if (mySourceMethod.equals(method) && statement != null) {
         myReturnStatement = statement;
       }
     }
@@ -125,22 +141,14 @@ public class MethodReturnBooleanFix implements IntentionAction {
     }
   }
 
-  /**
-   * selects which of generated / corrected return statements to be selected in editor after operation
-   * only latest return statements inside methods are passed
-   */
-  private interface GeneratedReturnSelector {
-    void accept(final PsiReturnStatement statement, final PsiMethod method);
-  }
-
   // to clearly separate data
   private static class ReturnStatementAdder {
     private final PsiElementFactory factory;
     private final PsiType myTargetType;
-    private final GeneratedReturnSelector mySelector;
+    private final SourceMethodSelector mySelector;
 
     private ReturnStatementAdder(@NotNull final PsiElementFactory factory, @NotNull final PsiType targetType,
-                                 @NotNull final GeneratedReturnSelector selector) {
+                                 @NotNull final SourceMethodSelector selector) {
       this.factory = factory;
       myTargetType = targetType;
       mySelector = selector;
@@ -148,7 +156,7 @@ public class MethodReturnBooleanFix implements IntentionAction {
 
     public void addReturnForMethod(final PsiFile file, final PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
-      if ((modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) || (method.getBody() == null)) {
+      if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT) || method.getBody() == null) {
         return;
       }
 
@@ -156,14 +164,16 @@ public class MethodReturnBooleanFix implements IntentionAction {
         final ConvertReturnStatementsVisitor visitor = new ConvertReturnStatementsVisitor(factory, method, myTargetType);
 
         final ControlFlow controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
-        if (ControlFlowUtil.checkReturns(controlFlow, visitor)) {
+        PsiReturnStatement returnStatement;
+        if (ControlFlowUtil.processReturns(controlFlow, visitor)) {
           // extra return statement not needed
           // get latest modified return statement and select...
-          mySelector.accept(visitor.getLatestReturn(), method);
-          return;
+          returnStatement = visitor.getLatestReturn();
         }
-
-        mySelector.accept(visitor.createReturnInLastStatement(), method);
+        else {
+          returnStatement = visitor.createReturnInLastStatement();
+        }
+        mySelector.accept(returnStatement, method);
       }
       catch (AnalysisCanceledException e) {
         LOG.error(e);
@@ -180,38 +190,29 @@ public class MethodReturnBooleanFix implements IntentionAction {
   }
 
   private Editor getEditorForMethod(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myMethod.getContainingFile() != file) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, myMethod.getContainingFile().getVirtualFile());
+    PsiFile containingFile = myMethod.getContainingFile();
+    if (containingFile != file) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile());
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     }
     return editor;
   }
 
   @Nullable
-  private static PsiMethod[] getChangeRoots(final PsiMethod method) {
+  private PsiMethod[] getChangeRoots(final PsiMethod method) {
+    if (!myFixWholeHierarchy) return new PsiMethod[]{method};
+
     final PsiMethod[] methods = method.findDeepestSuperMethods();
 
     if (methods.length > 0) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return methods;
-      }
-      final String methodName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE |
-              PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.TYPE_AFTER, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER);
-      final int result = Messages.showYesNoCancelDialog(QuickFixBundle.message("quickfix.retun.type.void.to.boolean.inherited.warning.text",
-              method.getContainingClass().getName() + "." + methodName),
-              QuickFixBundle.message("quickfix.retun.type.void.to.boolean.inherited.warning.title"), Messages.getQuestionIcon());
-      if (2 == result) {
-        // cancel
-        return null;
-      } else if (0 == result) {
-        return methods;
-      }
+      return methods;
     }
     // no - only base
     return new PsiMethod[] {method};
   }
 
-  private static List<PsiMethod> changeReturnType(final PsiMethod method, final PsiType returnType) {
+  @NotNull
+  private List<PsiMethod> changeReturnType(final PsiMethod method, final PsiType returnType) {
     final PsiMethod[] methods = getChangeRoots(method);
     if (methods == null) {
       // canceled
@@ -295,12 +296,81 @@ public class MethodReturnBooleanFix implements IntentionAction {
     }
   }
 
-  private static void selectReturnValueInEditor(final PsiReturnStatement returnStatement, final Editor editor) {
+  static void selectReturnValueInEditor(final PsiReturnStatement returnStatement, final Editor editor) {
     TextRange range = returnStatement.getReturnValue().getTextRange();
     int offset = range.getStartOffset();
 
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().setSelection(range.getEndOffset(), range.getStartOffset());
+  }
+
+  private boolean changeClassTypeArgument(Project project, PsiType superReturnType, PsiClass superClass, Editor editor) {
+    if (superClass == null || !superClass.hasTypeParameters()) return true;
+    final PsiClass superReturnTypeClass = PsiUtil.resolveClassInType(superReturnType);
+    if (superReturnTypeClass == null || !(superReturnTypeClass instanceof PsiTypeParameter || superReturnTypeClass.hasTypeParameters())) return true;
+
+    final PsiClass derivedClass = myMethod.getContainingClass();
+    if (derivedClass == null) return true;
+
+    final PsiReferenceParameterList referenceParameterList = findTypeArgumentsList(superClass, derivedClass);
+    if (referenceParameterList == null) return true;
+
+    final PsiElement resolve = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();
+    if (!(resolve instanceof PsiClass)) return true;
+    final PsiClass baseClass = (PsiClass)resolve;
+
+    PsiType returnType = myReturnType;
+    if (returnType instanceof PsiPrimitiveType) {
+      returnType = ((PsiPrimitiveType)returnType).getBoxedType(derivedClass);
+    }
+
+    final PsiSubstitutor superClassSubstitutor =
+      TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
+    final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(baseClass.getTypeParameters(),
+                                                                           new PsiType[]{superReturnTypeInBaseClassType},
+                                                                           new PsiType[]{returnType},
+                                                                           PsiUtil.getLanguageLevel(superClass));
+
+    final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
+    rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, psiSubstitutor));
+    rules.setBoundScope(new LocalSearchScope(derivedClass));
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, referenceParameterList);
+
+    return false;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList findTypeArgumentsList(final PsiClass superClass, final PsiClass derivedClass) {
+    PsiReferenceParameterList referenceParameterList = null;
+    if (derivedClass instanceof PsiAnonymousClass) {
+      referenceParameterList = ((PsiAnonymousClass)derivedClass).getBaseClassReference().getParameterList();
+    } else {
+      final PsiReferenceList implementsList = derivedClass.getImplementsList();
+      if (implementsList != null) {
+        referenceParameterList = extractReferenceParameterList(superClass, implementsList);
+      }
+      if (referenceParameterList == null) {
+        final PsiReferenceList extendsList = derivedClass.getExtendsList();
+        if (extendsList != null) {
+          referenceParameterList = extractReferenceParameterList(superClass, extendsList);
+        }
+      }
+    }
+    return referenceParameterList;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList extractReferenceParameterList(final PsiClass superClass,
+                                                                         final PsiReferenceList extendsList) {
+    for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
+      final PsiElement element = referenceElement.resolve();
+      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, superClass, true)) {
+        return referenceElement.getParameterList();
+      }
+    }
+    return null;
   }
 }

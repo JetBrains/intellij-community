@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -69,11 +67,7 @@ public class AddReturnFix implements IntentionAction {
       PsiCodeBlock body = myMethod.getBody();
       returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
-      TextRange range = returnStatement.getReturnValue().getTextRange();
-      int offset = range.getStartOffset();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().setSelection(range.getEndOffset(), range.getStartOffset());
+      MethodReturnTypeFix.selectReturnValueInEditor(returnStatement, editor);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -85,28 +79,28 @@ public class AddReturnFix implements IntentionAction {
     // first try to find suitable local variable
     PsiVariable[] variables = getDeclaredVariables(myMethod);
     for (PsiVariable variable : variables) {
-      if (variable.getType() != null
-          && type.equals(variable.getType())) {
+      PsiType varType = variable.getType();
+      if (varType.equals(type)) {
         return variable.getName();
       }
     }
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
-  private PsiVariable[] getDeclaredVariables(PsiMethod method) {
-    List variables = new ArrayList();
+  private static PsiVariable[] getDeclaredVariables(PsiMethod method) {
+    List<PsiVariable> variables = new ArrayList<PsiVariable>();
     PsiStatement[] statements = method.getBody().getStatements();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiDeclarationStatement) {
         PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();
         for (PsiElement declaredElement : declaredElements) {
-          if (declaredElement instanceof PsiLocalVariable) variables.add(declaredElement);
+          if (declaredElement instanceof PsiLocalVariable) variables.add((PsiVariable)declaredElement);
         }
       }
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     ContainerUtil.addAll(variables, parameters);
-    return (PsiVariable[])variables.toArray(new PsiVariable[variables.size()]);
+    return variables.toArray(new PsiVariable[variables.size()]);
   }
 
   public boolean startInWriteAction() {

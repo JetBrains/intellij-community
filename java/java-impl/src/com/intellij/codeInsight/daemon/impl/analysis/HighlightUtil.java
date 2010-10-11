@@ -52,6 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -607,12 +608,14 @@ public class HighlightUtil {
 
   @NotNull
   public static String formatClass(@NotNull PsiClass aClass, boolean fqn) {
-    return PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtil.SHOW_FQ_NAME : 0));
+    return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
   }
 
   @NotNull
   public static String formatMethod(@NotNull PsiMethod method) {
-    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                      PsiFormatUtilBase.SHOW_TYPE);
   }
 
   @NotNull
@@ -825,7 +828,8 @@ public class HighlightUtil {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) expr;
           final PsiMethod method = methodCall.resolveMethod();
           if (method != null && PsiType.VOID.equals(method.getReturnType())) {
-            QuickFixAction.registerQuickFixAction(info, new MethodReturnBooleanFix(method, PsiType.BOOLEAN));
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true);
+            QuickFixAction.registerQuickFixAction(info, fix);
           }
         }
         return info;
@@ -1363,7 +1367,7 @@ public class HighlightUtil {
       if (resolved instanceof PsiField) {
         PsiField referencedField = (PsiField)resolved;
         if (referencedField.hasModifierProperty(PsiModifier.STATIC)) return null;
-        resolvedName = PsiFormatUtil.formatVariable(referencedField, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+        resolvedName = PsiFormatUtil.formatVariable(referencedField, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
         referencedClass = referencedField.getContainingClass();
       }
       else if (resolved instanceof PsiMethod) {
@@ -1393,7 +1397,8 @@ public class HighlightUtil {
           resolvedName = PsiKeyword.THIS;
         }
         else {
-          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                                  PsiFormatUtilBase.SHOW_NAME, 0);
           if (referencedClass == null) referencedClass = method.getContainingClass();
         }
       }
@@ -1402,7 +1407,7 @@ public class HighlightUtil {
         if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
         referencedClass = aClass.getContainingClass();
         if (referencedClass == null) return null;
-        resolvedName = PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME);
+        resolvedName = PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME);
       }
       else {
         return null;
@@ -1415,7 +1420,7 @@ public class HighlightUtil {
       if (thisExpression.getQualifier() != null) {
         resolvedName = referencedClass == null
                        ? null
-                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME) + ".this";
+                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME) + ".this";
       }
       else {
         resolvedName = "this";
@@ -1598,7 +1603,8 @@ public class HighlightUtil {
       if (upCatchClass == null) continue;
       if (InheritanceUtil.isInheritorOrSelf(catchClass, upCatchClass, true)) {
         String description = JavaErrorMessages
-          .message("exception.already.caught", PsiFormatUtil.formatClass(catchClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME));
+          .message("exception.already.caught", PsiFormatUtil.formatClass(catchClass, PsiFormatUtilBase.SHOW_NAME |
+                                                                                     PsiFormatUtilBase.SHOW_FQ_NAME));
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
         QuickFixAction.registerQuickFixAction(highlightInfo, new MoveCatchUpFix(catchSection, section));
         QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteCatchFix((PsiParameter)catchParameter));
@@ -1725,8 +1731,8 @@ public class HighlightUtil {
 
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
-    @NonNls String requredRow = "";
-    @NonNls String foundRow = "";
+    @Language("HTML") @NonNls String requredRow = "";
+    @Language("HTML") @NonNls String foundRow = "";
     for (int i = 0; i < typeParamColumns; i++) {
       PsiTypeParameter lTypeParameter = i >= lTypeParams.length ? null : lTypeParams[i];
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];

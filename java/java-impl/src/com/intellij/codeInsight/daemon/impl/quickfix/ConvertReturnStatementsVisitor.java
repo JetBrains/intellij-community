@@ -26,7 +26,6 @@ import java.util.List;
 public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   private final PsiElementFactory myFactory;
   private final PsiMethod myMethod;
-  private final PsiType myTargetType;
   private final DeclarationSearcher mySearcher;
   private PsiReturnStatement myLatestReturn;
   private final String myDefaultValue;
@@ -34,9 +33,8 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   public ConvertReturnStatementsVisitor(final PsiElementFactory factory, final PsiMethod method, final PsiType targetType) {
     myFactory = factory;
     myMethod = method;
-    myTargetType = targetType;
-    mySearcher = new DeclarationSearcher(myMethod, myTargetType);
-    myDefaultValue = PsiTypesUtil.getDefaultValueOfType(myTargetType);
+    mySearcher = new DeclarationSearcher(myMethod, targetType);
+    myDefaultValue = PsiTypesUtil.getDefaultValueOfType(targetType);
   }
 
   public void visit(final List<PsiReturnStatement> returnStatements) throws IncorrectOperationException {
@@ -52,7 +50,7 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
 
   private String generateValue(final PsiElement stopElement) {
     final PsiVariable variable = mySearcher.getDeclaration(stopElement);
-    return (variable != null) ? variable.getName() : myDefaultValue;
+    return variable != null ? variable.getName() : myDefaultValue;
   }
 
   public PsiReturnStatement createReturnInLastStatement() throws IncorrectOperationException {
