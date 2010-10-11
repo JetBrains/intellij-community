@@ -17,7 +17,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -103,16 +102,6 @@ public class ProgramRunnerUtil {
     }
 
     return configurationIcon;
-  }
-
-  public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings) {
-    try {
-      settings.checkSettings();
-      return getConfigurationIcon(project, settings, false);
-    }
-    catch (RuntimeConfigurationException ex) {
-      return getConfigurationIcon(project, settings, true);
-    }
   }
 
   public static String shortenName(final String name, final int toBeAdded) {
