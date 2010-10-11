@@ -159,6 +159,7 @@ public class JavaCoverageEngine extends CoverageEngine {
             if (aborted || errors != 0) return;
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
+                if (project.isDisposed()) return;
                 CoverageDataManager.getInstance(project).chooseSuite(suite);
               }
             });
