@@ -512,12 +512,23 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
   private static void handleReformatMarkers(final FileViewProvider key, final TreeSet<PostprocessFormattingTask> rangesToProcess) {
     final Document document = key.getDocument();
+    if (document == null) {
+      return;
+    }
     for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
       fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
         protected void visitNode(TreeElement element) {
           if (CodeEditUtil.isMarkedToReformatBefore(element)) {
             CodeEditUtil.markToReformatBefore(element, false);
-            rangesToProcess.add(new ReformatWithHeadingWhitespaceTask(document.createRangeMarker(element.getStartOffset(), element.getStartOffset())));
+            rangesToProcess.add(new ReformatWithHeadingWhitespaceTask(
+              document.createRangeMarker(element.getStartOffset(), element.getStartOffset()))
+            );
+          }
+          else if (CodeEditUtil.isMarkedToReformat(element)) {
+            CodeEditUtil.markToReformat(element, false);
+            rangesToProcess.add(new ReformatWithHeadingWhitespaceTask(
+              document.createRangeMarker(element.getStartOffset(), element.getStartOffset() + element.getTextLength()))
+            );
           }
           super.visitNode(element);
         }

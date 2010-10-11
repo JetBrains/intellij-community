@@ -39,7 +39,15 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
+  public void testAlignedMultilineParameters() throws Exception {
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest("void test123(int i, int j)", "test123asd");
+  }
 
+  private void doTest(final String methodSignature, final String newName) throws Exception {
+    doTest(getTestName(false), methodSignature, newName);
+  }
 
   private void doTest(final String className, final String methodSignature, final String newName) throws Exception {
     doTest(new PerformAction() {

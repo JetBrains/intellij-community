@@ -230,6 +230,24 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testMethodParametersAlignmentAfterMethodNameChange() throws Exception {
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest(null, "test123asd", null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testMethodParametersAlignmentAfterMethodVisibilityChange() throws Exception {
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest("protected", null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testMethodParametersAlignmentAfterMethodReturnTypeChange() throws Exception {
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
@@ -268,7 +286,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
   }
 
   private static class SimpleParameterGen implements GenParams {
-    private final ParameterInfoImpl[] myInfos;
+    private ParameterInfoImpl[] myInfos;
+
+    private SimpleParameterGen() {
+    }
 
     private SimpleParameterGen(ParameterInfoImpl[] infos) {
       myInfos = infos;
@@ -276,6 +297,12 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
 
     @Override
     public ParameterInfoImpl[] genParams(PsiMethod method) {
+      if (myInfos == null) {
+        myInfos = new ParameterInfoImpl[method.getParameterList().getParametersCount()];
+        for (int i = 0; i < myInfos.length; i++) {
+          myInfos[i] = new ParameterInfoImpl(i);
+        }
+      }
       for (ParameterInfoImpl info : myInfos) {
         info.updateFromMethod(method);
       }
