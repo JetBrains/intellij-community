@@ -164,6 +164,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     setUpProject();
     storeSettings();
     ourTestCase = this;
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
 
   public Project getProject() {
