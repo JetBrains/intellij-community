@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,11 +24,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -65,7 +69,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       }
       final MyJavaChangeInfo fromMethod = new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName());
       if (changeInfo == null) { //before replacement
-        fromMethod.setSuperMethod(method.findDeepestSuperMethod());
+        final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
+        if (deepestSuperMethod != null) {
+          if (!deepestSuperMethod.getManager().isInProject(deepestSuperMethod)) return null;
+        }
+        fromMethod.setSuperMethod(deepestSuperMethod);
         return fromMethod;
       } else {
         final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
@@ -313,7 +321,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     element = element.getParent();
     if (element instanceof PsiMethod) {
       final PsiCodeBlock body = ((PsiMethod)element).getBody();
-      return new TextRange(element.getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
+      return new TextRange(((PsiMethod)element).getModifierList().getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
     }
     return null;
   }

@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.*;
  */
 public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
   public JavaTestFixtureFactoryImpl() {
-    IdeaTestFixtureFactoryImpl.getFixtureFactory().registerFixtureBuilder(JavaModuleFixtureBuilder.class, MyJavaModuleFixtureBuilderImpl.class);
+    IdeaTestFixtureFactory.getFixtureFactory().registerFixtureBuilder(JavaModuleFixtureBuilder.class, MyJavaModuleFixtureBuilderImpl.class);
   }
 
   @Override

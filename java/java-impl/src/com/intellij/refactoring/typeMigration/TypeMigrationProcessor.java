@@ -43,7 +43,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final Editor editor,
                                                   final TypeMigrationRules rules,
                                                   final PsiElement root) {
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules){
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
       @Override
       public void performRefactoring(final UsageInfo[] usages) {
         super.performRefactoring(usages);
@@ -54,9 +54,11 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
               final PsiElement element = usage.getElement();
               if (element instanceof PsiMethod) {
                 result.add(((PsiMethod)element).getReturnTypeElement());
-              } else if (element instanceof PsiVariable) {
+              }
+              else if (element instanceof PsiVariable) {
                 result.add(((PsiVariable)element).getTypeElement());
-              } else if (element != null) {
+              }
+              else if (element != null) {
                 result.add(element);
               }
             }
@@ -102,13 +104,17 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     String text;
     if (myRoot[0] instanceof PsiField) {
       text = "field \'" + ((PsiField)myRoot[0]).getName() + "\'";
-    } else if (myRoot[0] instanceof PsiParameter) {
+    }
+    else if (myRoot[0] instanceof PsiParameter) {
       text = "parameter \'" + ((PsiParameter)myRoot[0]).getName() + "\'";
-    } else if (myRoot[0] instanceof PsiLocalVariable) {
+    }
+    else if (myRoot[0] instanceof PsiLocalVariable) {
       text = "variable \'" + ((PsiLocalVariable)myRoot[0]).getName() + "\'";
-    } else if (myRoot[0] instanceof PsiMethod) {
+    }
+    else if (myRoot[0] instanceof PsiMethod) {
       text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
-    } else {
+    }
+    else {
       text = myRoot.toString();
     }
     Content content =  UsageViewManager.getInstance(myProject)

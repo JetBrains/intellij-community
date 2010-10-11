@@ -329,9 +329,15 @@ public class JavaDocInfoGenerator {
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
       final DocTagLocator<PsiDocTag> locator = parameterLocator("<" + typeParameter.getName() + ">");
-      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
-      if (pair != null) {
-        result.add(pair);
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(aClass, locator);
+      if (inClassComment != null) {
+        result.add(inClassComment);
+      }
+      else {
+        final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
+        if (pair != null) {
+          result.add(pair);
+        }
       }
     }
     generateTypeParametersSection(buffer, result);
@@ -339,8 +345,6 @@ public class JavaDocInfoGenerator {
 
   @Nullable
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInHierarchy(PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
-    final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(psiClass, locator);
-    if (inClassComment != null) return inClassComment;
     for (final PsiClass superClass : psiClass.getSupers()) {
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superClass, locator);
       if (pair != null) return pair;
@@ -1587,7 +1591,8 @@ public class JavaDocInfoGenerator {
                                                                            final PsiClass aSuper,
                                                                            final DocTagLocator<T> loc) {
     if (aSuper != null) {
-      final PsiMethod overriden = aSuper.findMethodBySignature(method, false);
+
+      final PsiMethod overriden =  findMethodInSuperClass(method, aSuper);
 
       if (overriden != null) {
         T tag = loc.find(getDocComment(overriden));
@@ -1609,6 +1614,18 @@ public class JavaDocInfoGenerator {
     }
 
     return null;
+  }
+
+  @Nullable
+  private <T> PsiMethod findMethodInSuperClass(PsiMethod method, PsiClass aSuper) {
+    PsiMethod overriden = null;
+    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      overriden = aSuper.findMethodBySignature(superMethod, false);
+      if (overriden != null) {
+        return overriden;
+      }
+    }
+    return overriden;
   }
 
   @Nullable private <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,

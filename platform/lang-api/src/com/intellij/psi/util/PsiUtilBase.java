@@ -595,7 +595,7 @@ public class PsiUtilBase {
   /**
    * Tries to find editor for the given element.
    * <p/>
-   * There are at least to approaches to achieve the target. Current method is intended to encapsulate both of them::
+   * There are at least two approaches to achieve the target. Current method is intended to encapsulate both of them:
    * <pre>
    * <ul>
    *   <li>target editor works with a real file that remains at file system;</li>

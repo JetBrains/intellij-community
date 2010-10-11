@@ -23,9 +23,7 @@ public class FindUsagesUtil {
   private FindUsagesUtil() {
   }
 
-  public static boolean isSearchForTextOccurencesAvailable(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
-    if (isSingleFile) return false;
-
-    return handler != null && handler.isSearchForTextOccurencesAvailable(element, isSingleFile);
+  public static boolean isSearchForTextOccurrencesAvailable(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
+    return !isSingleFile && handler != null && handler.isSearchForTextOccurencesAvailable(element, isSingleFile);
   }
 }

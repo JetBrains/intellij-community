@@ -169,9 +169,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_WITHIN_BRACKETS = true;
     doMethodTest(
       "int[] i = new int[1]\n" +
-      "i[0] = 1;",
+      "i[0] = 1;\n" +
+      "int[] i2 = new int[]{1}",
       "int[] i = new int[ 1 ]\n" +
-      "i[ 0 ] = 1;"
+      "i[ 0 ] = 1;\n" +
+      "int[] i2 = new int[]{1}"
     );
   }
 }

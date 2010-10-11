@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,7 +60,7 @@ public class EclipseClasspathReader {
   private ContentEntry myContentEntry;
 
   public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots) {
-    myRootPath = rootPath;
+    myRootPath = FileUtil.toSystemIndependentName(rootPath);
     myProject = project;
     myCurrentRoots = currentRoots;
   }

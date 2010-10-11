@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 
@@ -27,7 +28,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
   private String oldText;
 
   public ComboBoxFieldPanel() {
-    super(new JComboBox());
+    super(new ComboBox());
     myComboBox = (JComboBox) getComponent();
   }
   public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener) {

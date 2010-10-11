@@ -19,8 +19,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author sergey.evdokimov
@@ -68,5 +70,10 @@ public class GrLightField extends GrLightVariable implements PsiField {
   @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
+  }
+
+  @Override
+  public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
   }
 }

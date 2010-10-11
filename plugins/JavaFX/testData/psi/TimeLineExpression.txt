@@ -1,0 +1,57 @@
+JavFxFile:TimeLineExpression.fx
+  JavaFxTimelineExpression
+    PsiElement(JavaFx:at)('at')
+    PsiElement(JavaFx:LPAREN)('(')
+    PsiElement(JavaFx:DURATION_LITERAL)('0s')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LBRACE)('{')
+    PsiWhiteSpace(' ')
+    JavaFxAssignmentExpression
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('ang')
+      PsiElement(JavaFx:EQGT)('=>')
+      PsiWhiteSpace(' ')
+      JavaFxUnaryExpression
+        PsiElement(JavaFx:MINUS)('-')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:NUMBER_LITERAL)('10.0')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:tween)('tween')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('Interpolator')
+        PsiElement(JavaFx:DOT)('.')
+        PsiElement(JavaFx:IDENTIFIER)('EASEBOTH')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:RBRACE)('}')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxTimelineExpression
+    PsiElement(JavaFx:at)('at')
+    PsiElement(JavaFx:LPAREN)('(')
+    PsiElement(JavaFx:DURATION_LITERAL)('1s')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LBRACE)('{')
+    PsiWhiteSpace(' ')
+    JavaFxAssignmentExpression
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('ang')
+      PsiElement(JavaFx:EQGT)('=>')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:NUMBER_LITERAL)('10.0')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:tween)('tween')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('Interpolator')
+        PsiElement(JavaFx:DOT)('.')
+        PsiElement(JavaFx:IDENTIFIER)('EASEBOTH')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:RBRACE)('}')
+  PsiElement(JavaFx:SEMICOLON)(';')

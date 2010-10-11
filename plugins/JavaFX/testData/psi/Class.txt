@@ -1,0 +1,130 @@
+JavFxFile:Class.fx
+  JavaFxClassDefinition
+    JavaFxModifierList
+      PsiElement(JavaFx:public)('public')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:IDENTIFIER)('B')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceList
+      PsiElement(JavaFx:extends)('extends')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('A')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LBRACE)('{')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxInitBlock
+      PsiElement(JavaFx:init)('init')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:RBRACE)('}')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxPostinitBlock
+      PsiElement(JavaFx:postinit)('postinit')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:RBRACE)('}')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxVariableDeclaration
+      JavaFxModifierList
+        <empty list>
+      PsiElement(JavaFx:var)('var')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxVariableDeclaration
+      JavaFxModifierList
+        <empty list>
+      PsiElement(JavaFx:def)('def')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:EQ)('=')
+      PsiWhiteSpace(' ')
+      JavaFxBinaryExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:LT)('<')
+        PsiWhiteSpace(' ')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('3')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionDefinition
+      JavaFxModifierList
+        <empty list>
+      PsiElement(JavaFx:function)('function')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('c')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          PsiElement(JavaFx:RPAREN)(')')
+        PsiElement(JavaFx:COLON)(':')
+        PsiWhiteSpace(' ')
+        JavaFxTypeElement
+          JavaFxReferenceElement
+            PsiElement(JavaFx:IDENTIFIER)('Void')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:RBRACE)('}')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxVariableDeclaration
+      JavaFxModifierList
+        PsiElement(JavaFx:override)('override')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:var)('var')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('m')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionDefinition
+      JavaFxModifierList
+        PsiElement(JavaFx:override)('override')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:function)('function')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('bar')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          PsiElement(JavaFx:RPAREN)(')')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:RBRACE)('}')
+    PsiWhiteSpace('\n')
+    PsiElement(JavaFx:RBRACE)('}')

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -64,13 +65,17 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
+    if (element instanceof PsiLocalVariableImpl) { //todo a better hack
+      return true; // the debugger creates a Java codeblock context and our expressions to evaluate resolve there
+    }
+
     if (myResolveTargetKinds.contains(getResolveKind(element))) {
-      PsiNamedElement namedElement = (PsiNamedElement) element;
+      PsiNamedElement namedElement = (PsiNamedElement)element;
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
-        substitutor = substitutor.putAll((PsiClass) namedElement, myTypeArguments);
+        substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
       }
 
       if (namedElement instanceof PsiClass) {

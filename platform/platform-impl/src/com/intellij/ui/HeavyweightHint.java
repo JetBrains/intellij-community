@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public class HeavyweightHint implements Hint {
   }
 
   @Override
-  public void updateBounds() {
+  public void pack() {
     updateBounds(-1, -1, false);
   }
 
@@ -110,6 +111,13 @@ public class HeavyweightHint implements Hint {
         myWindow.setLocation(locationOnScreen.x + x, locationOnScreen.y + y);
       }
       myWindow.setSize(getPreferredSize());
+    }
+  }
+
+  @Override
+  public void setLocation(RelativePoint point) {
+    if (myWindow != null) {
+      myWindow.setLocation(point.getScreenPoint().x, point.getScreenPoint().y);
     }
   }
 

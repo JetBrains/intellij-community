@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -306,6 +307,10 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       catch (IncorrectOperationException e) {
         return true;
       }
+    }
+    if (target instanceof PsiDirectory && source instanceof PsiDirectory) {
+      final PsiPackage aPackage = JavaDirectoryServiceImpl.getInstance().getPackage((PsiDirectory)source);
+      if (aPackage != null && !MoveClassesOrPackagesImpl.checkNesting(target.getProject(), aPackage, target, false)) return true;
     }
     return super.isMoveRedundant(source, target);
   }

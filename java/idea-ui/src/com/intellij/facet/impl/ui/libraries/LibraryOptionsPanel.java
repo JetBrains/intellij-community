@@ -45,7 +45,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -260,7 +259,7 @@ public class LibraryOptionsPanel {
     final String basePath = mySettings.getBaseDirectoryPath();
     String path;
     if (!StringUtil.isEmpty(basePath) && FileUtil.startsWith(downloadPath, basePath)) {
-      path = FileUtil.getRelativePath(basePath, downloadPath, File.separatorChar);
+      path = FileUtil.getRelativePath(basePath, downloadPath, '/');
     }
     else {
       path = PathUtil.getFileName(downloadPath);

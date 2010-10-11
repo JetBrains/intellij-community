@@ -37,6 +37,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 public class CodeEditUtil {
   private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("GENERATED_FLAG");
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENT_INFO");
+  private static final Key<Boolean> REFORMAT_BEFORE_KEY = new Key<Boolean>("REFORMAT_BEFORE_KEY");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT_KEY");
 
   public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
@@ -128,7 +130,11 @@ public class CodeEditUtil {
 
   public static void saveWhitespacesInfo(final ASTNode first) {
     if(first == null || isNodeGenerated(first) || getOldIndentation(first) >= 0) return;
-    final PsiFile containingFile = first.getPsi().getContainingFile();
+    PsiElement psiElement = first.getPsi();
+    if (psiElement == null) {
+      return;
+    }
+    final PsiFile containingFile = psiElement.getContainingFile();
     final Helper helper = HelperFactory.createHelper(containingFile.getFileType(), containingFile.getProject());
     setOldIndentation((TreeElement)first, helper.getIndent(first));
   }
@@ -155,7 +161,7 @@ public class CodeEditUtil {
     final ASTNode nextLeaf = TreeUtil.nextLeaf(first);
     parent.removeRange(first, last.getTreeNext());
     ASTNode nextLeafToAdjust = nextLeaf;
-    if (nextLeafToAdjust != null && nextLeafToAdjust.getTreeParent() == null) {
+    if (nextLeafToAdjust != null && prevLeaf != null && nextLeafToAdjust.getTreeParent() == null) {
       //next element has invalidated
       nextLeafToAdjust = prevLeaf.getTreeNext();
     }
@@ -231,6 +237,7 @@ public class CodeEditUtil {
     return null;
   }
 
+  @Nullable
   private static ASTNode makePlaceHolderBetweenTokens(ASTNode left, final ASTNode right, boolean forceReformat, final boolean normalizeTailingWhitespace) {
     if(right == null) return left;
 
@@ -315,10 +322,10 @@ public class CodeEditUtil {
 
   public static void markToReformatBefore(final ASTNode right, boolean value) {
     if (value) {
-      right.putCopyableUserData(REFORMAT_KEY, true);
+      right.putCopyableUserData(REFORMAT_BEFORE_KEY, true);
     }
     else {
-      right.putCopyableUserData(REFORMAT_KEY, null);
+      right.putCopyableUserData(REFORMAT_BEFORE_KEY, null);
     }
   }
 
@@ -329,6 +336,7 @@ public class CodeEditUtil {
     return result;
   }
 
+  @Nullable
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
     final FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(file);
     if (modelBuilder == null) {
@@ -398,10 +406,31 @@ public class CodeEditUtil {
   }
 
   public static boolean isMarkedToReformatBefore(final TreeElement element) {
-    return element.getCopyableUserData(REFORMAT_KEY) != null;
+    return element.getCopyableUserData(REFORMAT_BEFORE_KEY) != null;
   }
 
+  @Nullable
   public static PsiElement createLineFeed(final PsiManager manager) {
     return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager).getPsi();
+  }
+
+  /**
+   * Allows to answer if given node is configured to be reformatted.
+   *
+   * @param node    node to check
+   * @return        <code>true</code> if given node is configured to be reformatted; <code>false</code> otherwise
+   */
+  public static boolean isMarkedToReformat(final ASTNode node) {
+    return node.getCopyableUserData(REFORMAT_KEY) != null;
+  }
+
+  /**
+   * Allows to define if given element should be reformatted later.
+   *
+   * @param node      target element which <code>'reformat'</code> status should be changed
+   * @param value     <code>true</code> if the element should be reformatted; <code>false</code> otherwise
+   */
+  public static void markToReformat(final ASTNode node, boolean value) {
+    node.putCopyableUserData(REFORMAT_KEY, value ? true : null);
   }
 }

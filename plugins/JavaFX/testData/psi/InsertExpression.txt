@@ -1,0 +1,56 @@
+JavFxFile:InsertExpression.fx
+  JavaFxInsertExpression
+    PsiElement(JavaFx:insert)('insert')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('i')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:into)('into')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('a')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxInsertExpression
+    PsiElement(JavaFx:insert)('insert')
+    PsiWhiteSpace(' ')
+    JavaFxBinaryExpression
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('i')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:MINUS)('-')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('1')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:before)('before')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiElement(JavaFx:LBRACK)('[')
+    JavaFxLiteralExpression
+      PsiElement(JavaFx:INTEGER_LITERAL)('1')
+    PsiElement(JavaFx:RBRACK)(']')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxInsertExpression
+    PsiElement(JavaFx:insert)('insert')
+    PsiWhiteSpace(' ')
+    JavaFxBinaryExpression
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('i')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:MINUS)('-')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('1')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:after)('after')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiElement(JavaFx:LBRACK)('[')
+    JavaFxLiteralExpression
+      PsiElement(JavaFx:INTEGER_LITERAL)('2')
+    PsiElement(JavaFx:RBRACK)(']')
+  PsiElement(JavaFx:SEMICOLON)(';')

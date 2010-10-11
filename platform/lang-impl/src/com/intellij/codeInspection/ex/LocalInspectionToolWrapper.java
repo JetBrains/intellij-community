@@ -101,6 +101,9 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       final PsiNamedElement problemElement =  myTool.getProblemElement(elt);
 
       RefElement refElement = refManager.getReference(problemElement);
+      if (refElement == null && problemElement != null) {  // no need to loose collected results
+        refElement = GlobalInspectionUtil.retrieveRefElement(elt, getContext());
+      }
       List<ProblemDescriptor> elementProblems = problems.get(refElement);
       if (elementProblems == null) {
         elementProblems = new ArrayList<ProblemDescriptor>();

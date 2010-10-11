@@ -1,0 +1,1 @@
+var a = (25 as <caret>)

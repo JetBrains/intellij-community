@@ -17,20 +17,24 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDEventImpl");
 
-  private static DataFlavor ourDataFlavor;
+  public static DataFlavor ourDataFlavor;
   private DnDTarget myDelegatedTarget;
 
   static {
@@ -93,15 +97,22 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   public DataFlavor[] getTransferDataFlavors() {
-    return new DataFlavor[]{ourDataFlavor};
-  }
-
-  public boolean isDataFlavorSupported(DataFlavor flavor) {
-    return flavor.equals(ourDataFlavor);
+    return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor};
   }
 
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+    if (flavor == DataFlavor.javaFileListFlavor) {
+      if (myAttachedObject instanceof FileFlavorProvider) {
+        return ((FileFlavorProvider)myAttachedObject).asFileList();
+      }
+    }
     return getAttachedObject();
+  }
+
+
+  public boolean isDataFlavorSupported(DataFlavor flavor) {
+    DataFlavor[] flavors = getTransferDataFlavors();
+    return ArrayUtil.find(flavors, flavor) != -1;
   }
 
   public boolean isDropPossible() {
@@ -284,5 +295,9 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     myDropHandler = null;
     myHandlerComponent = null;
     myManager = null;
+  }
+
+  public interface FileFlavorProvider {
+    java.util.List<File> asFileList();
   }
 }

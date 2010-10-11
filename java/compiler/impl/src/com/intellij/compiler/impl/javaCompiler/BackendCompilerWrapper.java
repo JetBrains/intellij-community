@@ -520,29 +520,25 @@ public class BackendCompilerWrapper {
     final List<File> toRefresh = new ArrayList<File>();
     final Map<String, Collection<TranslatingCompiler.OutputItem>> results = new HashMap<String, Collection<TranslatingCompiler.OutputItem>>();
     try {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final FileTypeManager typeManager = FileTypeManager.getInstance();
-          final String outputDirPath = outputDir.replace(File.separatorChar, '/');
-          try {
-            for (final Module module : chunk.getModules()) {
-              for (final VirtualFile root : chunk.getSourceRoots(module)) {
-                final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" + packagePrefix + "\"");
-                }
-                buildOutputItemsList(outputDirPath, module, root, typeManager, root, packagePrefix, toRefresh, results);
-              }
-            }
-          }
-          catch (CacheCorruptedException e) {
-            myCompileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
+      final FileTypeManager typeManager = FileTypeManager.getInstance();
+      final String outputDirPath = outputDir.replace(File.separatorChar, '/');
+      try {
+        for (final Module module : chunk.getModules()) {
+          for (final VirtualFile root : chunk.getSourceRoots(module)) {
+            final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
             if (LOG.isDebugEnabled()) {
-              LOG.debug(e);
+              LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" + packagePrefix + "\"");
             }
+            buildOutputItemsList(outputDirPath, module, root, typeManager, root, packagePrefix, toRefresh, results);
           }
         }
-      });
+      }
+      catch (CacheCorruptedException e) {
+        myCompileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(e);
+        }
+      }
     }
     finally {
       CompilerUtil.refreshIOFiles(toRefresh);
@@ -617,11 +613,11 @@ public class BackendCompilerWrapper {
     paths.add(new CompiledClass(classQName, relativePathToSource, pathToClass));
   }
 
-  private void updateOutputItemsList(final String outputDir, VirtualFile srcFile,
+  private void updateOutputItemsList(final String outputDir, final VirtualFile srcFile,
                                      VirtualFile sourceRoot,
                                      final String packagePrefix, final List<File> filesToRefresh,
                                      Map<String, Collection<TranslatingCompiler.OutputItem>> results,
-                                     GlobalSearchScope srcRootScope) throws CacheCorruptedException {
+                                     final GlobalSearchScope srcRootScope) throws CacheCorruptedException {
     final Cache newCache = myCompileContext.getDependencyCache().getNewClassesCache();
     final Set<CompiledClass> paths = myFileNameToSourceMap.get(srcFile.getName());
     if (paths == null || paths.isEmpty()) {
@@ -638,19 +634,24 @@ public class BackendCompilerWrapper {
       if (!pathsEquals) {
         final String qName = myCompileContext.getDependencyCache().resolve(cc.qName);
         if (qName != null) {
-          final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
-          PsiClass psiClass = facade.findClass(qName, srcRootScope);
-          if (psiClass == null) {
-            final int dollarIndex = qName.indexOf("$");
-            if (dollarIndex >= 0) {
-              final String topLevelClassName = qName.substring(0, dollarIndex);
-              psiClass = facade.findClass(topLevelClassName, srcRootScope);
+          pathsEquals = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            public Boolean compute() {
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+              PsiClass psiClass = facade.findClass(qName, srcRootScope);
+              if (psiClass == null) {
+                final int dollarIndex = qName.indexOf("$");
+                if (dollarIndex >= 0) {
+                  final String topLevelClassName = qName.substring(0, dollarIndex);
+                  psiClass = facade.findClass(topLevelClassName, srcRootScope);
+                }
+              }
+              if (psiClass != null) {
+                final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+                return vFile != null && vFile.equals(srcFile);
+              }
+              return false;
             }
-          }
-          if (psiClass != null) {
-            final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-            pathsEquals = vFile != null && vFile.equals(srcFile);
-          }
+          });
         }
       }
       

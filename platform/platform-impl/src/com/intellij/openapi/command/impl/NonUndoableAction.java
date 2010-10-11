@@ -20,7 +20,7 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 
-public class NonUndoableAction implements UndoableAction {
+class NonUndoableAction implements UndoableAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.undo.NonUndoableAction");
 
   private final DocumentReference[] myRefs;

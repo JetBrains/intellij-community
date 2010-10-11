@@ -1,0 +1,119 @@
+<!--
+  ~ Copyright 2000-2010 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin version="2">
+  <name>JavaFx Support</name>
+  <description><![CDATA[
+    Supports development of JavaFX applications with IntelliJ IDEA
+    <p>Features:
+      <ul>
+        <li>Syntax highlighting (with basic errors highlighting)
+        <li>Compilation
+        <li>Run (desktop only)
+        <li>Structure view
+        <li>Brace and quote matching
+        <li>Code folding
+        <li>Keyword completion
+        <li>Go To Class/Symbol
+        <li>Go To definition
+        <li>Surround with expression
+      </ul>
+    </p>
+  ]]></description>
+  <change-notes>
+    Go to definition, Surround with expression
+  </change-notes>
+  <version>0.4</version>
+  <vendor>JetBrains</vendor>
+  <idea-version since-build="96.1190"/>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.javafx.sdk.JavaFxSdkListener</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.javafx.build.JavaFxCompilerLoader</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.javafx.lang.psi.JavaFxPsiManager</interface-class>
+      <implementation-class>org.jetbrains.javafx.lang.psi.impl.JavaFxPsiManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <module-components>
+    <component>
+      <implementation-class>org.jetbrains.javafx.facet.JavaFxFacetListener</implementation-class>
+    </component>
+  </module-components>
+
+  <actions>
+    <action id="JavaFX.NewJavaFxScript" class="org.jetbrains.javafx.actions.NewJavaFxScriptAction"
+            text="JavaFX Script" description="Create new JavaFX script">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="org.jetbrains.javafx.JavaFxFileTypeFactory"/>
+
+    <syntaxHighlighter key="JavaFx" implementationClass="org.jetbrains.javafx.editor.JavaFxHighlighter"/>
+    <lang.braceMatcher language="JavaFx" implementationClass="org.jetbrains.javafx.editor.JavaFxBraceMatcher"/>
+    <quoteHandler fileType="JavaFx" className="org.jetbrains.javafx.codeInsight.editorActions.JavaFxQuoteHandler"/>
+    <lang.parserDefinition language="JavaFx" implementationClass="org.jetbrains.javafx.lang.parser.JavaFxParserDefinition"/>
+    <lang.foldingBuilder language="JavaFx" implementationClass="org.jetbrains.javafx.editor.JavaFxFoldingBuilder"/>
+    <lang.commenter language="JavaFx" implementationClass="org.jetbrains.javafx.editor.JavaFxCommenter"/>
+    <lang.psiStructureViewFactory language="JavaFx"
+                                  implementationClass="org.jetbrains.javafx.structure.JavaFxStructureViewFactory"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.javafx.codeInsight.navigation.JavaFxGotoBreakContinueHandler" order="FIRST"/>
+    <gotoClassContributor implementation="org.jetbrains.javafx.gotoByName.JavaFxGotoClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.javafx.gotoByName.JavaFxGotoSymbolContributor"/>
+    <completion.contributor language="JavaFx"
+                            implementationClass="org.jetbrains.javafx.codeInsight.completion.JavaFxKeywordCompletionContributor"/>
+    <lang.elementManipulator forClass="org.jetbrains.javafx.lang.psi.JavaFxReferenceElement"
+                             implementationClass="org.jetbrains.javafx.lang.psi.impl.resolve.JavaFxReferenceElementManipulator"/>
+    <lang.surroundDescriptor language="JavaFx"
+                             implementationClass="org.jetbrains.javafx.refactoring.surround.JavaFxExpressionSurroundDescriptor"/>
+
+
+    <frameworkSupport implementation="org.jetbrains.javafx.JavaFxSupportProvider"/>
+    <sdkType implementation="org.jetbrains.javafx.sdk.JavaFxSdkType"/>
+    <facetType implementation="org.jetbrains.javafx.facet.JavaFxFacetType"/>
+
+    <!--Compile/Run-->
+    <configurationType implementation="org.jetbrains.javafx.run.JavaFxRunConfigurationType"/>
+    <programRunner implementation="org.jetbrains.javafx.run.JavaFxProgramRunner"/>
+    <configurationProducer implementation="org.jetbrains.javafx.run.JavaFxRunConfigurationProducer"/>
+
+    <!--Stubs-->
+    <stubElementTypeHolder class="org.jetbrains.javafx.lang.parser.JavaFxElementTypes"/>
+
+    <stubIndex implementation="org.jetbrains.javafx.lang.psi.impl.stubs.index.JavaFxClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.javafx.lang.psi.impl.stubs.index.JavaFxFunctionNameIndex"/>
+    <stubIndex implementation="org.jetbrains.javafx.lang.psi.impl.stubs.index.JavaFxVariableNameIndex"/>
+    <stubIndex implementation="org.jetbrains.javafx.lang.psi.impl.stubs.index.JavaFxQualifiedNameIndex"/>
+
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
+    <annotator language="JavaFx" implementationClass="org.jetbrains.javafx.lang.validation.JavaFxAnnotator"/>
+
+    <!--Templates-->
+    <internalFileTemplate name="JavaFX Class"/>
+    <internalFileTemplate name="JavaFX File"/>
+    <internalFileTemplate name="JavaFX Stage"/>
+  </extensions>
+</idea-plugin>

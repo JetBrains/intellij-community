@@ -174,7 +174,7 @@ public abstract class QuickFixManager <T extends JComponent>{
         Rectangle hintRect = new Rectangle(rc.x - myIcon.getIconWidth() - 4, rc.y, myIcon.getIconWidth() + 4, myIcon.getIconHeight() + 4);
         LOG.debug("hintRect=" + hintRect);
         if (getHintClipRect(viewPort).contains(hintRect)) {
-          myHint.updateBounds();
+          myHint.pack();
         }
         else {
           myHint.hide();

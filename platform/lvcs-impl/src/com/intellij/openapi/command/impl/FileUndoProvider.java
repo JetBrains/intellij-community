@@ -172,13 +172,12 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     return (UndoManagerImpl)UndoManager.getGlobalInstance();
   }
 
-  private class MyUndoableAction implements UndoableAction {
-    private final DocumentReference[] myReferences;
+  private class MyUndoableAction extends GlobalUndoableAction {
     private ChangeRange myActionChangeRange;
     private ChangeRange myUndoChangeRange;
 
     public MyUndoableAction(DocumentReference r) {
-      myReferences = new DocumentReference[]{r};
+      super(r);
       myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChange);
     }
 
@@ -200,14 +199,6 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
         LOG.warn(e);
         throw new UnexpectedUndoException(e.getMessage());
       }
-    }
-
-    public DocumentReference[] getAffectedDocuments() {
-      return myReferences;
-    }
-
-    public boolean isGlobal() {
-      return true;
     }
   }
 }

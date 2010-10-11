@@ -1,0 +1,84 @@
+JavFxFile:ForExpression.fx
+  JavaFxForExpression
+    PsiElement(JavaFx:for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LPAREN)('(')
+    JavaFxInClause
+      JavaFxParameter
+        PsiElement(JavaFx:IDENTIFIER)('length')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:in)('in')
+      PsiWhiteSpace(' ')
+      JavaFxRangeExpression
+        PsiElement(JavaFx:LBRACK)('[')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('3')
+        PsiElement(JavaFx:RANGE)('..')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('6')
+        PsiElement(JavaFx:RBRACK)(']')
+    PsiElement(JavaFx:COMMA)(',')
+    PsiWhiteSpace(' ')
+    JavaFxInClause
+      JavaFxParameter
+        PsiElement(JavaFx:IDENTIFIER)('word')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:in)('in')
+      PsiWhiteSpace(' ')
+      JavaFxSequenceLiteral
+        PsiElement(JavaFx:LBRACK)('[')
+        JavaFxStringExpression
+          JavaFxStringCompoundElement
+            PsiElement(JavaFx:STRING_LITERAL)(''moose'')
+        PsiElement(JavaFx:COMMA)(',')
+        PsiWhiteSpace(' ')
+        JavaFxStringExpression
+          JavaFxStringCompoundElement
+            PsiElement(JavaFx:STRING_LITERAL)(''wolf'')
+        PsiElement(JavaFx:COMMA)(',')
+        PsiWhiteSpace(' ')
+        JavaFxStringExpression
+          JavaFxStringCompoundElement
+            PsiElement(JavaFx:STRING_LITERAL)(''turkey'')
+        PsiElement(JavaFx:COMMA)(',')
+        PsiWhiteSpace(' ')
+        JavaFxStringExpression
+          JavaFxStringCompoundElement
+            PsiElement(JavaFx:STRING_LITERAL)(''bee'')
+        PsiElement(JavaFx:RBRACK)(']')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:where)('where')
+      PsiWhiteSpace(' ')
+      JavaFxBinaryExpression
+        JavaFxCallExpression
+          JavaFxReferenceExpression
+            JavaFxReferenceExpression
+              PsiElement(JavaFx:IDENTIFIER)('word')
+            PsiElement(JavaFx:DOT)('.')
+            PsiElement(JavaFx:IDENTIFIER)('length')
+          JavaFxExpressionList
+            PsiElement(JavaFx:LPAREN)('(')
+            PsiElement(JavaFx:RPAREN)(')')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:GTEQ)('>=')
+        PsiWhiteSpace(' ')
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('length')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    JavaFxBlockExpression
+      PsiElement(JavaFx:LBRACE)('{')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      JavaFxCallExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('foo')
+        JavaFxExpressionList
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxReferenceExpression
+            PsiElement(JavaFx:IDENTIFIER)('word')
+          PsiElement(JavaFx:RPAREN)(')')
+      PsiElement(JavaFx:SEMICOLON)(';')
+      PsiWhiteSpace('\n')
+      PsiElement(JavaFx:RBRACE)('}')

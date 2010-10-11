@@ -21,7 +21,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -51,10 +55,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   private JPanel myPropertiesFilesEncodingCombo;
   private Charset mySelectedCharsetForPropertiesFiles;
   private JComboBox myIdeEncodingsCombo;
+  private JLabel myTitleLabel;
   private ChooseFileEncodingAction myAction;
 
   public FileEncodingConfigurable(Project project) {
     myProject = project;
+    myTitleLabel.setText(myTitleLabel.getText().replace("$productName", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Nls

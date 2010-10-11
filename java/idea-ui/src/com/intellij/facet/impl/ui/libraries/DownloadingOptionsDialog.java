@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
@@ -68,7 +69,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myCopyDownloadedFilesToLabel.setLabelFor(myDirectoryField);
-    myDirectoryField.setText(settings.getDirectoryForDownloadedLibrariesPath());
+    myDirectoryField.setText(FileUtil.toSystemDependentName(settings.getDirectoryForDownloadedLibrariesPath()));
 
     myDownloadSourcesCheckBox.setSelected(settings.isDownloadSources());
     myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavadocs());
@@ -92,7 +93,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   protected void doOKAction() {
     mySettings.setLibraryName(myNameAndLevelPanel.getLibraryName());
     mySettings.setLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
-    mySettings.setDirectoryForDownloadedLibrariesPath(myDirectoryField.getText());
+    mySettings.setDirectoryForDownloadedLibrariesPath(FileUtil.toSystemIndependentName(myDirectoryField.getText()));
 
     List<LibraryDownloadInfo> selected = new ArrayList<LibraryDownloadInfo>();
     List<LibraryDownloadInfo> downloads = myDownloadDescription.getDownloads();

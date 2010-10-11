@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -33,6 +34,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import gnu.trove.THashSet;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -97,8 +99,9 @@ class ChangeCollector {
     updateIndex();
     myHeadRevision = GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD");
     final Collection<FilePath> dirtyPaths = getDirtyPaths();
-    collectWorkingTreeChanges(dirtyPaths);
+    // ! order of collecting is important, because changes may intersect
     collectIndexChanges(dirtyPaths);
+    collectWorkingTreeChanges(dirtyPaths);
     myIsFailed = false;
   }
 
@@ -203,7 +206,7 @@ class ChangeCollector {
     try {
       String output = handler.run();
       // unmerged files may appear both in the index and the working tree => ignoring them here as we've already collected them from the working tree.
-      GitChangeUtils.parseChanges(myProject, myVcsRoot, null, myHeadRevision, output, myChanges, myUnmergedNames);
+      GitChangeUtils.parseChanges(myProject, myVcsRoot, null, myHeadRevision, output, myChanges, null);
     }
     catch (VcsException ex) {
       if (!GitChangeUtils.isHeadMissing(ex)) {
@@ -232,13 +235,16 @@ class ChangeCollector {
   /**
    * Collects changes between the index and the working tree, including unversioned files.
    * 'git ls-files -douvm --exclude-standard' is used for that.
+   * Doesn't collect changes which already have been collected by collectIndexChanges().
+   * For example, if a file was added and modified, it is collected from index (where it has the status of CREATED), but not from
+   * the working tree (where it is MODIFIED).
    */
   private void collectWorkingTreeChanges(Collection<FilePath> dirtyPaths) throws VcsException {
     if (dirtyPaths == null || dirtyPaths.isEmpty()) {
       return;
     }
     // prepare handler
-    final String[] parameters = {"-v", "--unmerged", "--others", "--deleted", "--modified", "--exclude-standard"};
+    final String[] parameters = {"-v", "--unmerged", "--others", "--deleted", "--modified", "--exclude-standard", "--full-name"};
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters(parameters);
     handler.setSilent(true);
@@ -259,7 +265,9 @@ class ChangeCollector {
   }
 
   /**
-   * Parses the output of the 'ls-files' command and fills myUnversioned, myUnmergedNames and myChanges sets.
+   * Parses the output of the 'ls-files' command and fills myUnversioned and myChanges sets.
+   * Doesn't record files which are already in myChanges.
+   * Doesn't take care of unmerged files, because they are handled by collectIndexChanges.
    */
   private void parseLsFiles(String list) throws VcsException {
     final Set<String> removed = new HashSet<String>();
@@ -269,6 +277,7 @@ class ChangeCollector {
     // removed and unmerged files are also marked as changed in the 'ls-files' output
     // (so they are represented twice or even more times there).
     // we are going to collect them all and then exclude merged and removed files from the list of changed files.
+    // although we won't collect unmerged files as changed, we need to collect them here to exclude them from the list of changed files.
     for (StringScanner sc = new StringScanner(list); sc.hasMoreData(); ) {
       if (sc.isEol()) {
         sc.nextLine();
@@ -294,29 +303,77 @@ class ChangeCollector {
         } else if ('M' == status) {
           unmerged.add(filePath);
         } else {
-          LOG.info("Unsupported type of the file status returned by git ls-file: [" + status + "]. Line: " + sc.line());
+          LOG.info("Unexpected type of the file status returned by git ls-file: [" + status + "]. Line: " + sc.line());
         }
       }
     }
 
-    // remove duplicates from changes, which are already handled by removed and unmerged.
-    // Then create Change objects and fill myChanges array.
+    // removed and unmerged files are also marked as changed (in ls-files output), so remove them from that list
+    changed.removeAll(removed);
+    changed.removeAll(unmerged);
 
+    // -- Precedence comparison between index and working tree changes --
+    // Deletion on disk take the most precedence: if the file is deleted, we show it as deleted even if it was somehow modified in the index
+    // Any other modifications in the working tree (actually it means editing the file since unversioned files are handled separately)
+    // are less important than changes in the index:
+    // if a file was modified in the index and in the working tree, we don't care: it's modified.
+    // if a file was added and modified, then it's important that it's added.
+    // if a file was renamed (in index) and then modified, its status is moved - it's more important.
+
+    // 1. we collect changed paths to use further when deciding whether to add a modified file to myChanges.
+    // 2. we also remove from myChanges any changes that happened with file which was then removed on disk.
+    // 3. and we also take care of situation when a file was added to git and then removed from disk -
+    //    although the file is new in index and deleted in the working tree, we don't show it as if there were no index at all.
+    //    TODO: this solution is far from the best: the file remains in the index, but we don't show it.
+
+    final Set<String> changedPaths = new HashSet<String>(myChanges.size());
+    for (Iterator<Change> it = myChanges.iterator(); it.hasNext(); ) {
+      boolean alreadyRemoved = false;
+      final Change c = it.next();
+      final ContentRevision before = c.getBeforeRevision();
+      final ContentRevision after = c.getAfterRevision();
+      if (after != null) {
+        String path = after.getFile().getPath();
+        if (path != null) {
+          path = GitUtil.relativePath(VfsUtil.virtualToIoFile(myVcsRoot), new File(path));
+          if (removed.contains(path)) {
+            it.remove();
+            alreadyRemoved = true;
+            // additional condition for newly created files: if a file was added to git and then removed from disk, don't show it
+            if (before == null) {
+              removed.remove(path);
+            }
+          } else {
+            changedPaths.add(path);
+          }
+        }
+      }
+      // if 'after' is null, the file was deleted by git rm command, so its status already is deleted and the file won't be shown in the
+      // output of ls-files command
+
+      if (before != null) {
+        String path = before.getFile().getPath();
+        if (path != null) {
+          path = GitUtil.relativePath(VfsUtil.virtualToIoFile(myVcsRoot), new File(path));
+          if (removed.contains(path)) {
+            if (!alreadyRemoved) { it.remove(); } // don't remove twice 
+          } else {
+            changedPaths.add(path);
+          }
+        }
+      }
+    }
+
+    // these files are removed from disk but not from git.
     for (String removedPath : removed) {
-      changed.remove(removedPath);
       ContentRevision before = GitContentRevision.createRevision(myVcsRoot, removedPath, myHeadRevision, myProject, true, true);
       myChanges.add(new Change(before, null, FileStatus.DELETED));
     }
 
-    for (String unmergedPath : unmerged) {
-      changed.remove(unmergedPath);
-      myUnmergedNames.add(unmergedPath);
-      ContentRevision before = GitContentRevision.createRevision(myVcsRoot, unmergedPath, new GitRevisionNumber("orig_head"), myProject, false, true);
-      ContentRevision after = GitContentRevision.createRevision(myVcsRoot, unmergedPath, null, myProject, false, false);
-      myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
-    }
-
+    // these files are changed in working tree. Index change has precedence over working tree modification:
+    // so if the file was already handled by diff-index, we don't add it again from working tree status.
     for (String changedPath : changed) {
+      if (changedPaths.contains(changedPath)) { continue; }
       ContentRevision before = GitContentRevision.createRevision(myVcsRoot, changedPath, myHeadRevision, myProject, false, true);
       ContentRevision after = GitContentRevision.createRevision(myVcsRoot, changedPath, null, myProject, false, false);
       myChanges.add(new Change(before, after, FileStatus.MODIFIED));

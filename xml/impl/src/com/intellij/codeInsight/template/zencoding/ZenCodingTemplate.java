@@ -453,7 +453,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (surroundedText == null) {
       if (node instanceof TemplateNode) {
         if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) &&
-            callback.findApplicableTemplates(key, defaultGenerator.getContextTypes()).size() > 1) {
+            callback.findApplicableTemplates(key).size() > 1) {
           callback.startTemplate();
           return;
         }

@@ -15,10 +15,15 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -33,9 +38,12 @@ public class ScriptingLibrariesPanel {
   private JPanel myScriptingLibrariesPanel;
   private JBTable myLibraryTable;
   private ScriptingLibraryTableModel myLibTableModel;
-  private boolean myModified;
+  private String mySelectedLibName;
+  private Project myProject;
+  private LangScriptingContextProvider myProvider;
 
-  public ScriptingLibrariesPanel(LibraryTable libTable) {
+  public ScriptingLibrariesPanel(LangScriptingContextProvider provider, Project project, LibraryTable libTable) {
+    myProvider = provider;
     myLibTableModel = new ScriptingLibraryTableModel(libTable);
     myLibraryTable.setModel(myLibTableModel);
     myAddLibraryButton.addActionListener(new ActionListener(){
@@ -44,12 +52,33 @@ public class ScriptingLibrariesPanel {
         addLibrary();
       }
     });
+    myRemoveLibraryButton.addActionListener(new ActionListener(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (mySelectedLibName != null) {
+          myLibTableModel.removeLibrary(mySelectedLibName);
+        }
+      }
+    });
+    myEditLibraryButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        editLibrary(mySelectedLibName);
+      }
+    });
     if (libTable == null) {
       myAddLibraryButton.setEnabled(false);
     }
     myRemoveLibraryButton.setEnabled(false);
     myEditLibraryButton.setEnabled(false);
-    myModified = false;
+    myLibraryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myProject = project;
+    myLibraryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        onSelectionChange();
+      }
+    });
   }
 
   public JPanel getPanel() {
@@ -57,27 +86,45 @@ public class ScriptingLibrariesPanel {
   }
 
   private void addLibrary() {
-    EditLibraryDialog editLibDialog = new EditLibraryDialog();
+    EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      createLibrary(editLibDialog.getLibName());
-      myModified = true;
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
     }
   }
 
-  private void createLibrary(String name) {
-    myLibTableModel.getLibraryTable().createLibrary(name);
-    myLibraryTable.repaint();
-  }
-
   public boolean isModified() {
-    return myModified;
+    return myLibTableModel.isChanged();
   }
 
   public void resetTable(LibraryTable libTable) {
     myLibTableModel.resetTable(libTable);
-    myModified = false;
-    myLibraryTable.repaint();
+  }
+
+  private void onSelectionChange() {
+    int selectedRow = myLibraryTable.getSelectedRow();
+    if (selectedRow >= 0) {
+      mySelectedLibName = myLibTableModel.getLibNameAt(selectedRow);
+      myEditLibraryButton.setEnabled(true);
+      myRemoveLibraryButton.setEnabled(true);
+    }
+    else {
+      myEditLibraryButton.setEnabled(false);
+      myRemoveLibraryButton.setEnabled(false);
+    }
+  }
+
+  private void editLibrary(String libName) {
+    if (libName == null) return;
+    Library lib = myLibTableModel.getLibrary(libName);
+    if (lib != null) {
+      EditLibraryDialog editLibDialog = new EditLibraryDialog("Edit Library", myProvider, myProject, lib);
+      editLibDialog.show();
+      if (editLibDialog.isOK()) {
+        myLibTableModel.removeLibrary(lib.getName());
+        myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
+      }
+    }
   }
 
 }

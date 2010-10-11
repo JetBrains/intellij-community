@@ -602,7 +602,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final PsiClass parentClass = method.getContainingClass();
 
       if (parentClass != null) {
-        MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, searchScope, !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
+        MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, searchScope, options instanceof JavaMethodFindUsagesOptions ? !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages : true, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           public boolean processInReadAction(final PsiReference ref) {
             return addResult(result, ref, options);
           }

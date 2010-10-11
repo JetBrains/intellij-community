@@ -1,0 +1,91 @@
+JavFxFile:OnReplace.fx
+  JavaFxVariableDeclaration
+    JavaFxModifierList
+      <empty list>
+    PsiElement(JavaFx:var)('var')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:IDENTIFIER)('seq')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:EQ)('=')
+    PsiWhiteSpace(' ')
+    JavaFxSequenceLiteral
+      PsiElement(JavaFx:LBRACK)('[')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''A'')
+      PsiElement(JavaFx:COMMA)(',')
+      PsiWhiteSpace(' ')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''B'')
+      PsiElement(JavaFx:COMMA)(',')
+      PsiWhiteSpace(' ')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''C'')
+      PsiElement(JavaFx:COMMA)(',')
+      PsiWhiteSpace(' ')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''D'')
+      PsiElement(JavaFx:COMMA)(',')
+      PsiWhiteSpace(' ')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''E'')
+      PsiElement(JavaFx:COMMA)(',')
+      PsiWhiteSpace(' ')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)(''F'')
+      PsiElement(JavaFx:RBRACK)(']')
+    PsiWhiteSpace(' ')
+    JavaFxOnReplaceClause
+      PsiElement(JavaFx:on)('on')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:replace)('replace')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('oldValue')
+      PsiElement(JavaFx:LBRACK)('[')
+      PsiElement(JavaFx:IDENTIFIER)('firstIdx')
+      PsiElement(JavaFx:RANGE)('..')
+      PsiElement(JavaFx:IDENTIFIER)('lastIdx')
+      PsiElement(JavaFx:RBRACK)(']')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:EQ)('=')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('newElements')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        JavaFxCallExpression
+          JavaFxReferenceExpression
+            PsiElement(JavaFx:IDENTIFIER)('println')
+          JavaFxExpressionList
+            PsiElement(JavaFx:LPAREN)('(')
+            JavaFxStringExpression
+              JavaFxStringCompoundElement
+                PsiElement(JavaFx:LBRACE_STRING_LITERAL)('"replaced {')
+                JavaFxReferenceExpression
+                  PsiElement(JavaFx:IDENTIFIER)('oldValue')
+                PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('}[{')
+                JavaFxReferenceExpression
+                  PsiElement(JavaFx:IDENTIFIER)('firstIdx')
+                PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('}..{')
+                JavaFxReferenceExpression
+                  PsiElement(JavaFx:IDENTIFIER)('lastIdx')
+                PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('}] by {')
+                JavaFxReferenceExpression
+                  PsiElement(JavaFx:IDENTIFIER)('newElements')
+                PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('} yielding {')
+                JavaFxReferenceExpression
+                  PsiElement(JavaFx:IDENTIFIER)('seq')
+                PsiElement(JavaFx:RBRACE_STRING_LITERAL)('}"')
+            PsiElement(JavaFx:RPAREN)(')')
+        PsiWhiteSpace('\n')
+        PsiElement(JavaFx:RBRACE)('}')

@@ -395,9 +395,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     String message = validateAndCommitData();
     if (message != null) {
       if (message != EXIT_SILENTLY) {
-        CommonRefactoringUtil
-          .showErrorMessage(RefactoringBundle.message("changeSignature.refactoring.name"), message, "refactoring.changeSignature",
-                            myProject);
+        CommonRefactoringUtil.showErrorMessage(getTitle(), message, getHelpId(), myProject);
       }
       return;
     }

@@ -1,0 +1,37 @@
+JavFxFile:Imports.fx
+  JavaFxPackageDefinition
+    PsiElement(JavaFx:package)('package')
+    PsiWhiteSpace(' ')
+    JavaFxReferenceElement
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('org')
+      PsiElement(JavaFx:DOT)('.')
+      PsiElement(JavaFx:IDENTIFIER)('jetbrains')
+    PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  JavaFxImportList
+    JavaFxImportStatement
+      PsiElement(JavaFx:import)('import')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceElement
+        JavaFxReferenceElement
+          PsiElement(JavaFx:IDENTIFIER)('java')
+        PsiElement(JavaFx:DOT)('.')
+        PsiElement(JavaFx:IDENTIFIER)('lang')
+      PsiElement(JavaFx:DOT)('.')
+      PsiElement(JavaFx:MULT)('*')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    JavaFxImportStatement
+      PsiElement(JavaFx:import)('import')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceElement
+        JavaFxReferenceElement
+          JavaFxReferenceElement
+            PsiElement(JavaFx:IDENTIFIER)('java')
+          PsiElement(JavaFx:DOT)('.')
+          PsiElement(JavaFx:IDENTIFIER)('util')
+        PsiElement(JavaFx:DOT)('.')
+        PsiElement(JavaFx:IDENTIFIER)('list')
+    PsiElement(JavaFx:SEMICOLON)(';')

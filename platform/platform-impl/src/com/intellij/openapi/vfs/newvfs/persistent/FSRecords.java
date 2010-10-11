@@ -795,7 +795,6 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        incModCount(id);
         Bits.putInt(myRecordBuffer, PARENT_OFFSET, parent);
         Bits.putInt(myRecordBuffer, NAME_OFFSET, getNames().enumerate(name));
         Bits.putInt(myRecordBuffer, FLAGS_OFFSET, flags);
@@ -804,6 +803,7 @@ public class FSRecords implements Disposable, Forceable {
 
         getRecords().put(getOffset(id, PARENT_OFFSET), myRecordBuffer, 0, RECORD_SIZE);
 
+        incModCount(id);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);

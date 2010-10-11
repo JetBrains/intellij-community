@@ -26,7 +26,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -57,7 +56,13 @@ public class TooltipController {
                                      final boolean alignToRight,
                                      @NotNull final TooltipGroup group, final HintHint hintHint) {
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
-      myCurrentTooltipObject = null;
+      if (myCurrentTooltip != null) {
+        if (!IdeTooltipManager.getInstance().isQueuedToShow(myCurrentTooltip.getCurrentIdeTooltip())) {
+          myCurrentTooltipObject = null;
+        }
+      } else {
+        myCurrentTooltipObject = null;
+      }
     }
 
     if (Comparing.equal(tooltipObject, myCurrentTooltipObject)) {

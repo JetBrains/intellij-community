@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +42,16 @@ public interface Hint {
 
   void removeHintListener(HintListener listener);
 
-  void updateBounds();
+  void pack();
 
+  void setLocation(RelativePoint point);
+
+  /**
+   * Pack and set location
+   * @param x
+   * @param y
+   * @deprecated use {@link Hint#setLocation(com.intellij.ui.awt.RelativePoint)} ()}
+   */
   void updateBounds(int x, int y);
+
 }
