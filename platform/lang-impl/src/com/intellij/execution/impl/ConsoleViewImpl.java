@@ -543,9 +543,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     if (myEditor.getSettings().isForceScrollToEnd() || isAtEndOfDocument) {
-      myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-      myEditor.getSelectionModel().removeSelection();
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      scrollToTheEnd();
     }
   }
 
@@ -1461,6 +1459,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
       }
+
+      @Override
+      public void setSelected(final AnActionEvent e, final boolean state) {
+        super.setSelected(e, state);
+        // Scroll to the end
+        if (state) {
+          scrollToTheEnd();
+        }
+      }
     };
 
     //Initializing custom actions
@@ -1473,6 +1480,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       consoleActions[i + 4] = customActions.get(i);
     }
     return consoleActions;
+  }
+
+  private void scrollToTheEnd() {
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+    myEditor.getSelectionModel().removeSelection();
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public void setEditorEnabled(boolean enabled) {
