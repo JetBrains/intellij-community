@@ -6,7 +6,7 @@ public class Test {
     }
 
     void foo() {
-        List<String> array = getArray ();
+        List<String> array = getArray();
         Collections.checkedList(array, String.class);
     }
 

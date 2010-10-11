@@ -1,7 +1,7 @@
 Types:
 PsiLocalVariable:array : java.util.List<java.lang.String>
 PsiMethod:getArray : java.util.List<java.lang.String>
-PsiMethodCallExpression:getArray () : java.util.List<java.lang.String>
+PsiMethodCallExpression:getArray() : java.util.List<java.lang.String>
 PsiReferenceExpression:array : java.util.List<java.lang.String>
 
 Conversions:

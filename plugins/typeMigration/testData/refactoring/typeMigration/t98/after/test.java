@@ -6,7 +6,7 @@ public class Test {
     }
 
     void foo(String param) {
-        List<String> array = getArray ();
+        List<String> array = getArray();
         for (int i = 0; i < array.size(); i++) {
            System.out.println(array.get(i));
            String str = array.get(i);

@@ -6,7 +6,7 @@ public class Test {
     }
 
     void foo() {
-        String[] array = getArray ();
+        String[] array = getArray();
         Arrays.sort(array);
     }
 

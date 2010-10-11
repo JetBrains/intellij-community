@@ -6,7 +6,7 @@ public class Test {
     }
 
     void foo() {
-        List<String> array = getArray ();
+        List<String> array = getArray();
         Collections.sort(array, new Comparator<String>() {
             public int compare(String s1, String s2) {
                 return 0;
