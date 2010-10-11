@@ -68,6 +68,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
+  private TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
+
   EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement) {
     myWindow = window;
     myProject = project;
@@ -267,7 +269,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
-      .setTabColor(calcTabColor(myProject, file));
+      .setTabColor(calcTabColor(myProject, file))
+      .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -472,6 +475,24 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     public boolean isCycleRoot() {
       return false;
+    }
+  }
+
+  private class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+    @Override
+    public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+      Image img = myTabs.getComponentImage(info);
+
+      VirtualFile file = (VirtualFile)info.getObject();
+      FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
+    }
+
+    @Override
+    public void processDragOut(MouseEvent event, TabInfo source) {
+    }
+
+    @Override
+    public void dragOutFinished(MouseEvent event, TabInfo source) {
     }
   }
 }

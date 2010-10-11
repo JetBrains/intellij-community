@@ -66,6 +66,11 @@ public class SingleRowLayout extends TabLayout {
     return getStrategy().createShapeTransform(labelRec);
   }
 
+  @Override
+  public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+    return getStrategy().isDragOut(tabLabel, deltaX, deltaY);
+  }
+
   public SingleRowLayout(final JBTabsImpl tabs) {
     myTabs = tabs;
     myTop = new SingleRowLayoutStrategy.Top(this);

@@ -157,6 +157,11 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.ui.docking.DockManager</interface-class>
+      <implementation-class>com.intellij.ui.docking.impl.DockManagerImpl</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
       <skipForDummyProject/>
       <skipForDefaultProject/>

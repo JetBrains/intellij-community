@@ -60,6 +60,10 @@ public class Registry  {
     return get(key).asInteger();
   }
 
+  public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+    return get(key).asDouble();
+  }
+
   public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
     return get(key).asString();
   }

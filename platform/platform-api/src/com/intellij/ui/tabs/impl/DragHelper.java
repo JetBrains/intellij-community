@@ -42,6 +42,26 @@ class DragHelper extends MouseDragHelper {
     myTabs = tabs;
   }
 
+
+  @Override
+  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+    if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
+
+    TabLabel label = myTabs.myInfo2Label.get(myDragSource);
+
+    return myTabs.getEffectiveLayout().isDragOut(label, dragToScreenPoint.x - startScreenPoint.x, dragToScreenPoint.y - startScreenPoint.y);
+  }
+
+  @Override
+  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+    TabInfo.DragOutDelegate delegate = myDragSource.getDragOutDelegate();
+    if (justStarted) {
+      delegate.dragOutStarted(event, myDragSource);
+    } else {
+      delegate.processDragOut(event, myDragSource);
+    }
+  }
+
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
     if (!myTabs.isTabDraggingEnabled()) return;
 

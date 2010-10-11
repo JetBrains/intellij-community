@@ -116,4 +116,6 @@ public interface JBTabs extends SwitchProvider {
   boolean isDisposed();
 
   JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate);
+
+  Image getComponentImage(TabInfo info);
 }

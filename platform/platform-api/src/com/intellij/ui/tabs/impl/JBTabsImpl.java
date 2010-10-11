@@ -297,6 +297,11 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  @Override
+  public Image getComponentImage(TabInfo info) {
+    return new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB);
+  }
+
   public void dispose() {
     myDisposed = true;
     mySelectedInfo = null;
@@ -2593,7 +2598,7 @@ public class JBTabsImpl extends JComponent
     return !myHorizontalSide;
   }
 
-  private TabLayout getEffectiveLayout() {
+  public TabLayout getEffectiveLayout() {
     if (myLayout == myTableLayout && getTabsPosition() == JBTabsPosition.top) return myTableLayout;
     return mySingleRowLayout;
   }
