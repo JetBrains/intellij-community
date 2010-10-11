@@ -72,10 +72,6 @@
     <patternset id="sources.pt">
         <exclude name="**/.svn/**"/>
     </patternset>
-    <patternset id="testsources.pt">
-        <exclude name="**/data/**"/>
-        <exclude name="**/.svn/**"/>
-    </patternset>
     <patternset id="resources.pt">
         <include name="**/?*.properties"/>
         <include name="**/?*.template"/>
@@ -89,6 +85,7 @@
         <include name="**/?*.dtd"/>
         <include name="**/?*.tld"/>
         <include name="**/?*.py"/>
+        <include name="**/?*.ft"/>
     </patternset>
 
 
