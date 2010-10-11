@@ -15,5 +15,9 @@
  */
 package com.intellij.ui.docking;
 
+import java.awt.*;
+
 public interface DockableContent {
+
+  Image getPreviewImage();
 }

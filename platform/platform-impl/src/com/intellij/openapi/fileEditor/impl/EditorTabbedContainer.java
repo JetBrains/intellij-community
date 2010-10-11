@@ -38,6 +38,9 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
+import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
@@ -479,20 +482,40 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   private class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+
+    private VirtualFile myFile;
+    private DragSession mySession;
+
     @Override
     public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
-      Image img = myTabs.getComponentImage(info);
+      final Image img = myTabs.getComponentImage(info);
 
       VirtualFile file = (VirtualFile)info.getObject();
       FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
+
+      mySession = getDockManager().createDragSession(mouseEvent, new DockableContent() {
+        @Override
+        public Image getPreviewImage() {
+          return img;
+        }
+      });
+    }
+
+    private DockManager getDockManager() {
+      return DockManager.getInstance(myProject);
     }
 
     @Override
     public void processDragOut(MouseEvent event, TabInfo source) {
+      mySession.process(event);
     }
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
+      mySession.process(event);
+
+      myFile = null;
+      mySession = null;
     }
   }
 }

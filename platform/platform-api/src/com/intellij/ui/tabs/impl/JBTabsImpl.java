@@ -299,7 +299,17 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Image getComponentImage(TabInfo info) {
-    return new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB);
+    JComponent cmp = info.getComponent();
+
+    BufferedImage img;
+    if (cmp.isShowing()) {
+      img = new BufferedImage(cmp.getWidth(), cmp.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = img.createGraphics();
+      cmp.paint(g);
+    } else {
+      img = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
+    }
+    return img;
   }
 
   public void dispose() {

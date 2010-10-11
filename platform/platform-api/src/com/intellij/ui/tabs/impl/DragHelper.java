@@ -37,6 +37,8 @@ class DragHelper extends MouseDragHelper {
   Measurer myHorizontal = new Measurer.Width();
   Measurer myVertical = new Measurer.Height();
 
+  private TabInfo myDragOutSource;
+
   public DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
     myTabs = tabs;
@@ -54,12 +56,19 @@ class DragHelper extends MouseDragHelper {
 
   @Override
   protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
-    TabInfo.DragOutDelegate delegate = myDragSource.getDragOutDelegate();
+    TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
-      delegate.dragOutStarted(event, myDragSource);
+      delegate.dragOutStarted(event, myDragOutSource);
     } else {
-      delegate.processDragOut(event, myDragSource);
+      delegate.processDragOut(event, myDragOutSource);
     }
+  }
+
+  @Override
+  protected void processDragOutFinish(MouseEvent event) {
+    super.processDragOutFinish(event);
+
+    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragSource);
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
@@ -224,11 +233,19 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragFinish(MouseEvent even) {
+  protected void processDragFinish(MouseEvent event, boolean willDragOutStart) {
+    super.processDragFinish(event, willDragOutStart);
+
+    if (willDragOutStart) {
+      myDragOutSource = myDragSource;
+    }
+
     myDragSource = null;
     myDragRec = null;
 
     myTabs.resetTabsCache();
     myTabs.relayout(true, false);
+
+    myTabs.revalidate();
   }
 }

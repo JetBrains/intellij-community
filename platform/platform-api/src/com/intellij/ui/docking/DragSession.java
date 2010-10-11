@@ -15,20 +15,10 @@
  */
 package com.intellij.ui.docking;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-
 import java.awt.event.MouseEvent;
 
-public abstract class DockManager implements ProjectComponent {
+public interface DragSession {
 
-  public abstract void register(DockContainer container, @Nullable Disposable parent);
+  void process(MouseEvent e);
 
-  public static DockManager getInstance(Project project) {
-    return project.getComponent(DockManager.class);
-  }
-
-  public abstract DragSession createDragSession(MouseEvent mouseEvent, DockableContent content);
 }
