@@ -31,7 +31,7 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class FileColorsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
+public class FileColorsConfigurable implements SearchableConfigurable {
   private final Project myProject;
   private FileColorsConfigurablePanel myPanel;
 
