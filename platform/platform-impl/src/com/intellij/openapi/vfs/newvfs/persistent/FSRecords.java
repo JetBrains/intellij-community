@@ -28,7 +28,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.io.*;
+import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingStorage;
@@ -69,8 +71,6 @@ public class FSRecords implements Disposable, Forceable {
 
   private static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
 
-  private final byte[] myRecordBuffer = new byte[RECORD_SIZE];
-
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private static final int HEADER_VERSION_OFFSET = 0;
@@ -98,20 +98,20 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private static class DbConnection {
-
     private static int refCount = 0;
     private static final Object LOCK = new Object();
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
-    private static PersistentStringEnumerator myNames;
 
+    private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
-    private static boolean myDirty = false;
 
+    private static boolean myDirty = false;
     private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
+
     public static DbConnection connect() {
       synchronized (LOCK) {
         if (refCount == 0) {
@@ -334,13 +334,13 @@ public class FSRecords implements Disposable, Forceable {
       return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty();
     }
 
+
     private static int getVersion() throws IOException {
       final int recordsVersion = myRecords.getInt(HEADER_VERSION_OFFSET);
       if (myAttributes.getVersion() != recordsVersion || myContents.getVersion() != recordsVersion) return -1;
 
       return recordsVersion;
     }
-
 
     public static long getTimestamp() {
       return myRecords.getLong(HEADER_TIMESTAMP_OFFSET);
@@ -434,8 +434,8 @@ public class FSRecords implements Disposable, Forceable {
     public static void addFreeRecord(final int id) {
       myFreeRecords.add(id);
     }
-
   }
+
   public FSRecords() {
   }
 
@@ -465,7 +465,7 @@ public class FSRecords implements Disposable, Forceable {
     return DbConnection.getNames();
   }
 
-  public static int createRecord(boolean clean) {
+  public static int createRecord() {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
@@ -475,16 +475,12 @@ public class FSRecords implements Disposable, Forceable {
           final int filelength = (int)getRecords().length();
           LOG.assertTrue(filelength % RECORD_SIZE == 0);
           int newrecord = filelength / RECORD_SIZE;
-          if (clean) {
-            DbConnection.cleanRecord(newrecord);
-            assert filelength + RECORD_SIZE == getRecords().length();
-          }
+          DbConnection.cleanRecord(newrecord);
+          assert filelength + RECORD_SIZE == getRecords().length();
           return newrecord;
         }
         else {
-          if (clean) {
-            DbConnection.cleanRecord(free);
-          }
+          DbConnection.cleanRecord(free);
           return free;
         }
       }
@@ -618,7 +614,7 @@ public class FSRecords implements Disposable, Forceable {
       final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
       int id;
       try {
-        id = createRecord(true);
+        id = createRecord();
         output.writeInt(names.length + 1);
         for (int i = 0; i < names.length; i++) {
           output.writeInt(names[i]);
@@ -780,30 +776,6 @@ public class FSRecords implements Disposable, Forceable {
         DbConnection.markDirty();
         incModCount(id);
         putRecordInt(id, PARENT_OFFSET, parent);
-      }
-      catch (Throwable e) {
-        throw DbConnection.handleError(e);
-      }
-    }
-  }
-
-  public void saveRecord(int id, int parent, String name, long timeStamp, int flags, long length) {
-    if (id == parent) {
-      LOG.error("Cyclic parent/child relations");
-      return;
-    }
-    synchronized (lock) {
-      try {
-        DbConnection.markDirty();
-        Bits.putInt(myRecordBuffer, PARENT_OFFSET, parent);
-        Bits.putInt(myRecordBuffer, NAME_OFFSET, getNames().enumerate(name));
-        Bits.putInt(myRecordBuffer, FLAGS_OFFSET, flags);
-        Bits.putLong(myRecordBuffer, TIMESTAMP_OFFSET, timeStamp);
-        Bits.putLong(myRecordBuffer, LENGTH_OFFSET, length);
-
-        getRecords().put(getOffset(id, PARENT_OFFSET), myRecordBuffer, 0, RECORD_SIZE);
-
-        incModCount(id);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
