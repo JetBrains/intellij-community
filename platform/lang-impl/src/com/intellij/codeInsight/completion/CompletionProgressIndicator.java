@@ -421,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         if (!isBackgrounded()) return;
 
-        if (hideAutopopupIfMeaningless(myLookup)) {
+        if (hideAutopopupIfMeaningless()) {
           return;
         }
 
@@ -441,12 +441,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   }
 
-  public static boolean hideAutopopupIfMeaningless(LookupImpl lookup) {
-    if (!lookup.isFocused() && !lookup.isCalculating()) {
-      lookup.refreshUi();
-      final List<LookupElement> items = lookup.getItems();
-      if (items.size() == 0 || items.size() == 1 && (items.get(0).getPrefixMatcher().getPrefix() + lookup.getAdditionalPrefix()).equals(items.get(0).getLookupString())) {
-        lookup.hideLookup(false);
+  public boolean hideAutopopupIfMeaningless() {
+    if (!myLookup.isFocused() && !myLookup.isCalculating()) {
+      myLookup.refreshUi();
+      final List<LookupElement> items = myLookup.getItems();
+      if (items.size() == 0 || items.size() == 1 && (items.get(0).getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(items.get(0).getLookupString())) {
+        myLookup.hideLookup(false);
         assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
         return true;
       }
