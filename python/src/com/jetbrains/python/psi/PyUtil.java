@@ -74,9 +74,6 @@ public class PyUtil {
       }
       seeker = seeker.getPrevSibling();
     }
-    if (seeker instanceof PyExpressionStatement && seeker.getFirstChild() instanceof PyStringLiteralExpression) {
-      comments.add(seeker);
-    }
     return comments;
   }
 
