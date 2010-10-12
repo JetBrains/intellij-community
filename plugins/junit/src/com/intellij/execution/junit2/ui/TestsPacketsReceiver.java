@@ -169,7 +169,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
       if (stateChanger instanceof RunningStateSetter) {
         myCurrentTests.add(testProxy);
       }
-      else if (stateChanger instanceof TestCompleter) {
+      else {
         myCurrentTests.remove(testProxy);
       }
     }
