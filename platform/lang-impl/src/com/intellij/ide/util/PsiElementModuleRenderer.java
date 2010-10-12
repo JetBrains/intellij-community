@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
@@ -91,8 +92,10 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
                     break;
                   }
                 }
+
+                myText = myText.substring(myText.lastIndexOf(File.separatorChar) + 1);
                 VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
-                if (jar != null) {
+                if (jar != null && !myText.equals(jar.getName())) {
                   myText += " (" + jar.getName() + ")";
                 }
               } /*else {
