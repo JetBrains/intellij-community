@@ -41,10 +41,6 @@ public class ChangeList {
     myStorage = storage;
   }
 
-  public synchronized void flush() {
-    myStorage.flush();
-  }
-
   public synchronized void close() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       LocalHistoryLog.LOG.assertTrue(myCurrentChangeSet == null || myCurrentChangeSet.isEmpty(),

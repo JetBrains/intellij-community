@@ -16,13 +16,11 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.*;
 import com.intellij.history.core.*;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
@@ -33,15 +31,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LocalHistoryImpl extends LocalHistory implements ApplicationComponent {
@@ -53,7 +48,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private Runnable myShutdownTask;
-  private ScheduledFuture<?> myAutoSaveFuture;
 
   public static LocalHistoryImpl getInstanceImpl() {
     return (LocalHistoryImpl)getInstance();
@@ -70,7 +64,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
 
     initHistory();
-    startAutoSave();
     isInitialized.set(true);
   }
 
@@ -87,28 +80,21 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     VirtualFileManager fm = VirtualFileManagerEx.getInstance();
     fm.addVirtualFileListener(myEventDispatcher);
     fm.addVirtualFileManagerListener(myEventDispatcher);
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        validateStorage();
-      }
-    });
   }
 
-  private void validateStorage() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalHistoryLog.LOG.info("Checking local history storage...");
-      try {
-        myVcs.getChangeListInTests().getChangesInTests();
-        LocalHistoryLog.LOG.info("Local history storage seems to be ok");
-      }
-      catch (Exception e) {
-        LocalHistoryLog.LOG.error(e);
-      }
-    }
-  }
-
+  //private void validateStorage() {
+  //  if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+  //    LocalHistoryLog.LOG.info("Checking local history storage...");
+  //    try {
+  //      myVcs.getChangeListInTests().getChangesInTests();
+  //      LocalHistoryLog.LOG.info("Local history storage seems to be ok");
+  //    }
+  //    catch (Exception e) {
+  //      LocalHistoryLog.LOG.error(e);
+  //    }
+  //  }
+  //}
+  //
   public File getStorageDir() {
     return new File(getSystemPath(), "LocalHistory");
   }
@@ -117,19 +103,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return PathManager.getSystemPath();
   }
 
-  private void startAutoSave() {
-    if (ApplicationManagerEx.getApplication().isHeadlessEnvironment()) return;
-    myAutoSaveFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
-      public void run() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning()) myChangeList.flush();
-      }
-    }, 15000, 15000, TimeUnit.MILLISECONDS);
-  }
-
   public void disposeComponent() {
     if (!isInitialized.getAndSet(false)) return;
-
-    if (myAutoSaveFuture != null) myAutoSaveFuture.cancel(false);
 
     int period = Registry.intValue("localHistory.daysToKeep") * 1000 * 60 * 60 * 24;
 
@@ -139,7 +114,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
     myChangeList.purgeObsolete(period);
-    validateStorage();
     myChangeList.close();
     LocalHistoryLog.LOG.info("Local history storage successfully closed.");
 

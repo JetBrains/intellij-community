@@ -123,6 +123,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       finally {
         out.close();
       }
+      myStorage.force();
     }
     catch (IOException e) {
       throw handleError(e);
@@ -138,6 +139,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
         eachBlockId = myStorage.getPrevRecord(eachBlockId);
         myStorage.deleteRecord(toDelete);
       }
+      myStorage.force();
     }
     catch (IOException e) {
       throw handleError(e);
@@ -165,9 +167,5 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
 
     return 0;
-  }
-
-  public synchronized void flush() {
-    myStorage.flushSome();
   }
 }
