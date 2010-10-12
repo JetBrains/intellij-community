@@ -420,6 +420,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (restart) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
+    myUpdateByTimerEnabled = restart;
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
