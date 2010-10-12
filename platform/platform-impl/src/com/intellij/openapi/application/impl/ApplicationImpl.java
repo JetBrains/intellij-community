@@ -686,25 +686,24 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void runReadAction(@NotNull final Runnable action) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
-    boolean mustAcquire = !isReadAccessAllowed();
+    if (isReadAccessAllowed()) {
+      action.run();
+      return;
+    }
 
-    if (mustAcquire) {
-      LOG.assertTrue(myTestModeFlag || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
-      try {
-        myActionsLock.readLock().acquire();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
-      }
+    LOG.assertTrue(myTestModeFlag || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
+    try {
+      myActionsLock.readLock().acquire();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeInterruptedException(e);
     }
 
     try {
       action.run();
     }
     finally {
-      if (mustAcquire) {
-        myActionsLock.readLock().release();
-      }
+      myActionsLock.readLock().release();
     }
   }
 
