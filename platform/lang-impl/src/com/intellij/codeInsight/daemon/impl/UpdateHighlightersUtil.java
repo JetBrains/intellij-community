@@ -168,7 +168,7 @@ public class UpdateHighlightersUtil {
                                                          @NotNull final HighlightInfo info,
                                                          final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (info.isFileLevelAnnotation) return;
+    if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
 
     MarkupModel markup = document.getMarkupModel(project);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {

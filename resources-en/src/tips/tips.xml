@@ -103,4 +103,7 @@
   <tip file="Spellchecker.html"/>
   <tip file="SpellcheckerDictionaries.html"/>
   <tip file="VcsQuickList.html"/>
+  <tip file="Switcher.html"/>
+  <tip file="DragToOpen.html"/>
+  <tip file="EnterDirectoryInGotoFile.html"/>
 </tips>

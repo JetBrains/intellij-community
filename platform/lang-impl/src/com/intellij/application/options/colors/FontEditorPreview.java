@@ -48,7 +48,13 @@ public class FontEditorPreview implements PreviewPanel{
 
   public static String getIDEDemoText() {
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
-    String language = name.contains("RubyMine") ? "Ruby" : "Java";   // HACK
+    String language = "Java";   // HACK
+    if (name.contains("RubyMine")) {
+      language = "Ruby";
+    }
+    else if (name.contains("PyCharm")) {
+      language = "Python";
+    }
     return
       name + " is a full-featured " + language + " IDE\n" +
       "with a high level of usability and outstanding\n" +
