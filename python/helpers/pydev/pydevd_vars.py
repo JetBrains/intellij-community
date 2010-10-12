@@ -325,6 +325,11 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         del attrList[0] # globals are special, and they get a single dummy unused attribute
     else:
         var = frame.f_locals
+        type, _typeName, resolver = getType(var)
+        try:
+          resolver.resolve(var, attrs[0])
+        except:
+          var = frame.f_globals
 
     for k in attrList:
         type, _typeName, resolver = getType(var)
