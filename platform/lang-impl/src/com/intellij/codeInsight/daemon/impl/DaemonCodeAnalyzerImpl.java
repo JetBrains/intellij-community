@@ -279,10 +279,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   void reloadScopes() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+    final DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(myProject);
     addScopesToList(scopeList, NamedScopeManager.getInstance(myProject));
-    addScopesToList(scopeList, DependencyValidationManager.getInstance(myProject));
+    addScopesToList(scopeList, dependencyValidationManager);
     myScopes.clear();
     myScopes.addAll(scopeList);
+    dependencyValidationManager.reloadRules();
   }
 
   private static void addScopesToList(final List<Pair<NamedScope, NamedScopesHolder>> scopeList, final NamedScopesHolder holder) {

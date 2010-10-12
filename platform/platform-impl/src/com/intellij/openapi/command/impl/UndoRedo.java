@@ -89,27 +89,27 @@ abstract class UndoRedo {
 
   protected abstract void setBeforeState(EditorAndState state);
 
-  public void execute(boolean drop) {
+  public boolean execute(boolean drop) {
     if (!myUndoableGroup.isUndoable()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
-      return;
+      return false;
     }
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
-      return;
+      return false;
     }
 
 
     if (myUndoableGroup.shouldAskConfirmation()) {
-      if (!askUser()) return;
+      if (!askUser()) return false;
     }
     else {
       if (restore(getBeforeState())) {
         setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
-        return;
+        return true;
       }
     }
 
@@ -120,11 +120,13 @@ abstract class UndoRedo {
 
       if (project == null) {
         VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(files);
-        return;
+        return false;
       }
 
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
-      if (operationStatus.hasReadonlyFiles()) return;
+      if (operationStatus.hasReadonlyFiles()) {
+        return false;
+      }
     }
 
     Collection<Document> readOnlyDocuments = collectReadOnlyDocuments();
@@ -132,7 +134,7 @@ abstract class UndoRedo {
       for (Document document : readOnlyDocuments) {
         document.fireReadOnlyModificationAttempt();
       }
-      return;
+      return false;
     }
 
     getStackHolder().removeFromStacks(myUndoableGroup);
@@ -143,6 +145,8 @@ abstract class UndoRedo {
     performAction();
 
     restore(getAfterState());
+
+    return true;
   }
 
   private Collection<Document> collectReadOnlyDocuments() {

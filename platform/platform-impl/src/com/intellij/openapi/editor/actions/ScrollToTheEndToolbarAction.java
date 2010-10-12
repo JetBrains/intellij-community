@@ -16,42 +16,22 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
  */
-public class ToggleAutoScrollToTheEndToolbarAction extends ToggleAction {
-
-  public ToggleAutoScrollToTheEndToolbarAction() {
+public abstract class ScrollToTheEndToolbarAction extends AnAction {
+  public ScrollToTheEndToolbarAction() {
     super();
-    final String message = ActionsBundle.message("action.EditorConsoleAutoScrollToTheEnd.text");
+    final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");
     getTemplatePresentation().setDescription(message);
     getTemplatePresentation().setText(message);
     getTemplatePresentation().setIcon(IconLoader.getIcon("/runConfigurations/scroll_down.png"));
   }
 
   @Override
-  public boolean isSelected(final AnActionEvent e) {
-    final Editor editor = getEditor(e);
-    return editor != null && editor.getSettings().isForceScrollToEnd();
-  }
-
-  @Nullable
-  protected Editor getEditor(final AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR);
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    final Editor editor = getEditor(e);
-    if (editor != null) {
-      editor.getSettings().setForceScrollToEnd(state);
-    }
-  }
+  public abstract void actionPerformed(AnActionEvent e);
 }

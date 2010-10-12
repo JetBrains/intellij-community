@@ -109,4 +109,5 @@
   <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
 
   <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
+  <extensionPoint name="statistics.usagesCollector" interface="com.intellij.statistic.UsagesCollector"/>
 </extensionPoints>

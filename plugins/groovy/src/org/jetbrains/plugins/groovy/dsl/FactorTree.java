@@ -22,7 +22,7 @@ public class FactorTree {
       switch (factor) {
         case placeElement: key = descriptor.getPlace(); break;
         //case placeFile: key = descriptor.getPlaceFile(); break;
-        case qualifierType: key = descriptor.getPsiType().getCanonicalText(); break;
+        case qualifierType: key = descriptor.getTypeText(); break;
         default: throw new IllegalStateException("Unknown variant: "+ factor);
       }
       Map next = (Map)current.get(key);

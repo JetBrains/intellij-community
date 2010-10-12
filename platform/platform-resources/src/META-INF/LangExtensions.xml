@@ -585,4 +585,6 @@
   <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="before hide-hints"/>
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
+
+  <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
 </extensions>

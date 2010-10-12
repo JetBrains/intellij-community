@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
@@ -100,8 +101,9 @@ public class GrTupleType extends GrLiteralClassType {
         PsiType componentType = myComponentTypes[i];
         PsiType otherComponent = otherComponents[i];
         if (otherComponent == null) {
-          if (componentType != null && !componentType.equalsToText("java.lang.Object")) return false;
-        } else if (componentType != null && !componentType.isAssignableFrom(otherComponent)) return false;
+          if (componentType != null && !TypesUtil.typeEqualsToText(componentType, "java.lang.Object")) return false;
+        }
+        else if (componentType != null && !componentType.isAssignableFrom(otherComponent)) return false;
       }
       return true;
     }

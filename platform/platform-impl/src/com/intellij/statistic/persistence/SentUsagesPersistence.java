@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.statistic.persistence;
 
-/**
- * @author ven
- */
-public interface GrVariableBase extends PsiVariable, GroovyPsiElement {
-  @Nullable
-  PsiType getTypeGroovy();
+import com.intellij.statistic.beans.PatchedUsage;
+import com.intellij.statistic.beans.UsageDescriptor;
+import org.jetbrains.annotations.NotNull;
 
-  @Nullable
-  PsiType getDeclaredType();
+import java.util.Set;
+
+public abstract class SentUsagesPersistence {
+
+  public abstract void persistPatch(@NotNull Set<PatchedUsage> patchedDescriptors);
+
+  @NotNull
+  public abstract Set<UsageDescriptor> getSentUsages();
 }

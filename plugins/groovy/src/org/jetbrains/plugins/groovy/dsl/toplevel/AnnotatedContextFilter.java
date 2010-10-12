@@ -29,11 +29,13 @@ public class AnnotatedContextFilter implements ContextFilter {
   public static boolean hasAnnotatedContext(@NotNull PsiElement context, String annoQName) {
     PsiElement current = context;
     while (current != null) {
-      if (current instanceof PsiModifierListOwner && !(current instanceof GrVariableDeclaration) && hasAnnotation(((PsiModifierListOwner)current).getModifierList(), annoQName)) {
-        return true;
+      if (current instanceof PsiModifierListOwner) {
+        if (!(current instanceof GrVariableDeclaration) &&
+            hasAnnotation(((PsiModifierListOwner)current).getModifierList(), annoQName)) {
+          return true;
+        }
       }
-
-      if (current instanceof PsiFile) {
+      else if (current instanceof PsiFile) {
         if (current instanceof GroovyFile) {
           final GrPackageDefinition packageDefinition = ((GroovyFile)current).getPackageDefinition();
           if (packageDefinition != null && hasAnnotation(packageDefinition.getAnnotationList(), annoQName)) {

@@ -34,7 +34,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.actions.ToggleAutoScrollToTheEndToolbarAction;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -542,7 +542,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
     }
 
-    if (myEditor.getSettings().isForceScrollToEnd() || isAtEndOfDocument) {
+    if (isAtEndOfDocument) {
       scrollToTheEnd();
     }
   }
@@ -1455,19 +1455,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
       }
     };
-    final AnAction autoScrollToTheEndAction = new ToggleAutoScrollToTheEndToolbarAction() {
+    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
       @Override
-      protected Editor getEditor(AnActionEvent e) {
-        return myEditor;
-      }
-
-      @Override
-      public void setSelected(final AnActionEvent e, final boolean state) {
-        super.setSelected(e, state);
-        // Scroll to the end
-        if (state) {
-          scrollToTheEnd();
-        }
+      public void actionPerformed(final AnActionEvent e) {
+        scrollToTheEnd();
       }
     };
 
