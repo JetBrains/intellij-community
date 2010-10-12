@@ -81,7 +81,7 @@ public class TypesUtil {
       return type;
     }
 
-    if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
+    if (typeEqualsToText(rType, GrStringUtil.GROOVY_LANG_GSTRING)) {
       PsiType gstringType = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
         .createTypeByFQClassName(GrStringUtil.GROOVY_LANG_GSTRING, binaryExpression.getResolveScope());
       return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{gstringType});
@@ -273,7 +273,7 @@ public class TypesUtil {
       if (isNumericType(lType)) {
         return isNumericType(rType) || rType.equals(PsiType.NULL);
       }
-      else if (lType.equalsToText(JAVA_LANG_STRING)) {
+      else if (typeEqualsToText(lType, JAVA_LANG_STRING)) {
         return true;
       }
     }
@@ -315,7 +315,7 @@ public class TypesUtil {
       }
     }
 
-    if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
+    if (typeEqualsToText(rType, GrStringUtil.GROOVY_LANG_GSTRING)) {
       final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
       if (javaLangString != null &&
           isAssignable(lType, JavaPsiFacade.getElementFactory(manager.getProject()).createType(javaLangString), manager, scope)) {
@@ -325,9 +325,9 @@ public class TypesUtil {
 
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
-      if (lType.equalsToText(JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
+      if (typeEqualsToText(lType, JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
-      if (rType.equalsToText(JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
+      if (typeEqualsToText(rType, JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
     }
     else {
       rType = boxPrimitiveType(rType, manager, scope);
@@ -493,4 +493,8 @@ public class TypesUtil {
     return type;
   }
 
+
+  public static boolean typeEqualsToText(@NotNull PsiType type, @NotNull String text) {
+    return text.endsWith(type.getPresentableText()) && text.equals(type.getCanonicalText());
+  }
 }

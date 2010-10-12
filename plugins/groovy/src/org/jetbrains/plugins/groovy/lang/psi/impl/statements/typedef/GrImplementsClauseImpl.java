@@ -17,21 +17,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrImplementsClauseImpl extends GroovyBaseElementImpl<GrReferenceListStub>
-    implements GrImplementsClause, StubBasedPsiElement<GrReferenceListStub> {
+public class GrImplementsClauseImpl extends GrReferenceListImpl implements GrImplementsClause {
 
   public GrImplementsClauseImpl(@NotNull ASTNode node) {
     super(node);
@@ -47,9 +43,5 @@ public class GrImplementsClauseImpl extends GroovyBaseElementImpl<GrReferenceLis
 
   public String toString() {
     return "Implements clause";
-  }
-
-  public GrCodeReferenceElement[] getReferenceElements() {
-    return findChildrenByClass(GrCodeReferenceElement.class);
   }
 }

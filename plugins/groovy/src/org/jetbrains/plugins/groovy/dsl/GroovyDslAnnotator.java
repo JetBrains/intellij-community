@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,12 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GroovyDslAnnotator implements Annotator {
 
-  public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof GroovyFile) {
-      final GroovyFile file = (GroovyFile)psiElement;
-      final VirtualFile vfile = file.getVirtualFile();
+      final VirtualFile vfile = ((GroovyFile)psiElement).getVirtualFile();
       if (vfile != null && "gdsl".equals(vfile.getExtension()) && !GroovyDslFileIndex.isActivated(vfile)) {
-        final Annotation annotation = holder.createWarningAnnotation(file, "DSL descriptor file has been changed and isn't currently executed. Click to activate it back.");
+        final Annotation annotation = holder.createWarningAnnotation(psiElement, "DSL descriptor file has been changed and isn't currently executed. Click to activate it back.");
         annotation.setFileLevelAnnotation(true);
         annotation.registerFix(new IntentionAction() {
           @NotNull
