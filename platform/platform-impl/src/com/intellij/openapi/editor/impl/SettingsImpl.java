@@ -47,7 +47,6 @@ public class SettingsImpl implements EditorSettings {
   private int     myLineCursorWidth               = 2;
   private boolean myLineMarkerAreaShown           = true;
   private boolean myAllowSingleLogicalLineFolding = false;
-  private boolean myForceScrollToEnd              = true;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;
@@ -428,16 +427,6 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setAllowSingleLogicalLineFolding(boolean allow) {
     myAllowSingleLogicalLineFolding = allow;
-  }
-
-  @Override
-  public boolean isForceScrollToEnd() {
-    return myForceScrollToEnd;
-  }
-
-  @Override
-  public void setForceScrollToEnd(final boolean value) {
-    myForceScrollToEnd = value;
   }
 
   private void fireEditorRefresh() {
