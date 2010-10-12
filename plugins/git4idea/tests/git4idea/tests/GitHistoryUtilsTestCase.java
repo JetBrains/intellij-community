@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -209,7 +210,10 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
 
   @Test
   public void testHashesWithParents() throws Exception {
-    List<CommitHashPlusParents> hashesWithParents = GitHistoryUtils.hashesWithParents(myProject, bfilePath);
+    final CollectConsumer<CommitHashPlusParents> consumer = new CollectConsumer<CommitHashPlusParents>();
+    GitHistoryUtils.hashesWithParents(myProject, bfilePath, consumer);
+    final List<CommitHashPlusParents> hashesWithParents = (List<CommitHashPlusParents>) consumer.getResult();
+    
     assertEquals(hashesWithParents.size(), myRevisionsAfterRename.size());
     for (Iterator hit = hashesWithParents.iterator(), myIt = myRevisionsAfterRename.iterator(); hit.hasNext(); ) {
       CommitHashPlusParents chpp = (CommitHashPlusParents)hit.next();
@@ -222,7 +226,7 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
   private static void assertEqualRevisions(GitFileRevision actual, GitTestRevision expected) throws IOException {
     assertEquals(((GitRevisionNumber) actual.getRevisionNumber()).getRev(), expected.myHash);
     assertEquals(((GitRevisionNumber) actual.getRevisionNumber()).getTimestamp(), expected.myDate);
-    // TODO: whitespaces problem is known, remove replace(...) when it's fixed
+    // TODO: whitespaces problem is known, remove convertWhitespaces... when it's fixed
     assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(actual.getCommitMessage()), convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage));
     assertEquals(actual.getAuthor(), expected.myAuthor);
     assertEquals(actual.getBranchName(), expected.myBranchName);
