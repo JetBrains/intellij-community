@@ -137,6 +137,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     if (document == null) return -1;
     TextRange textRange = getTextRange();
     if (textRange == null) return -1;
+    textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
     return document.getLineNumber(textRange.getStartOffset()) + 1;
   }
 
