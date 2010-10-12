@@ -411,7 +411,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    if (project != null) {
+      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    }
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
 
