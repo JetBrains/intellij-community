@@ -182,7 +182,6 @@ abstract class UndoRedo {
   }
 
   private boolean askUser() {
-    if (myUndoableGroup.getAffectedDocuments().size() < 2) return true;
     String actionText = getActionName(myUndoableGroup.getCommandName());
 
     if (actionText.length() > 80) {
