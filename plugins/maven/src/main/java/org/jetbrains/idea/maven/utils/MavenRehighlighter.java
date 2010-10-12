@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -128,16 +127,13 @@ public class MavenRehighlighter extends SimpleProjectComponent {
       if (psi == null) return;
       if (!MavenDomUtil.isMavenFile(psi)) return;
 
-      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      daemon.getFileStatusMap().markFileScopeDirtyDefensively(psi);
-      daemon.stopProcess(true);
+      DaemonCodeAnalyzer daemon = DaemonCodeAnalyzer.getInstance(myProject);
+      daemon.restart(psi);
     }
 
     @Override
     public boolean canEat(Update update) {
-      if (myMavenProject == null) return true;
-      if (myMavenProject == ((MyUpdate)update).myMavenProject) return true;
-      return false;
+      return myMavenProject == null || myMavenProject == ((MyUpdate)update).myMavenProject;
     }
   }
 }

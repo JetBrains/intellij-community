@@ -312,7 +312,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
-    stopProcess(true);
+    stopProcess(value);
   }
 
   public boolean isUpdateByTimerEnabled() {
@@ -370,6 +370,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(true);
   }
 
+  @Override
+  public void restart(@NotNull PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+    if (document == null) return;
+    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
+    stopProcess(true);
+  }
+
   public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
@@ -409,7 +417,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
 
-  public synchronized void stopProcess(boolean toRestartAlarm) {
+  synchronized void stopProcess(boolean toRestartAlarm) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
     cancelUpdateProgress(toRestartAlarm, "by Stop process");
