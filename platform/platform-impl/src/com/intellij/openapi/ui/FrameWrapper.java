@@ -261,6 +261,14 @@ public class FrameWrapper implements Disposable {
     }
   }
 
+  public void setLocation(Point location) {
+    getFrame().setLocation(location);
+  }
+
+  public void setSize(Dimension size) {
+    getFrame().setSize(size);
+  }
+
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectClosing(Project project) {
       if (project == myProject) {

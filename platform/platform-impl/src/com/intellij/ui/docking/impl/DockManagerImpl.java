@@ -18,6 +18,7 @@ package com.intellij.ui.docking.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
@@ -178,30 +179,18 @@ public class DockManagerImpl extends DockManager {
 
     window.show();
 
-    window.setSize(size.width, size.height);
+    window.setSize(size);
     container.add(content, new RelativePoint(event));
   }
 
-  private class DockWindow extends DialogWrapper {
+  private class DockWindow extends FrameWrapper {
 
     private DockContainer myContainer;
 
     private DockWindow(Project project, DockContainer container) {
-      super(project);
       myContainer = container;
-      setModal(false);
-      setUndecorated(false);
-      init();
-    }
-
-    @Override
-    protected Action[] createActions() {
-      return new Action[0];
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      return myContainer.getComponent();
+      setProject(project);
+      setComponent(myContainer.getComponent());
     }
   }
 }
