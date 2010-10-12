@@ -159,7 +159,9 @@ public class MoveHandler implements RefactoringActionHandler {
   public static boolean isValidTarget(final PsiElement psiElement, PsiElement[] elements) {
     if (psiElement != null) {
       for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
-        if (delegate.isValidTarget(psiElement, elements)) return true;
+        if (delegate.isValidTarget(psiElement, elements)){
+          return true;
+        }
       }
     }
 
