@@ -39,7 +39,7 @@ public class LogicallyLockedHolder implements FileHolder {
     myMap.put(file, lock);
   }
 
-  public void cleanAndAdjustScope(VcsAppendableDirtyScope scope) {
+  public void cleanAndAdjustScope(VcsModifiableDirtyScope scope) {
     VirtualFileHolder.cleanScope(myProject, myMap.keySet(), scope);
   }
 

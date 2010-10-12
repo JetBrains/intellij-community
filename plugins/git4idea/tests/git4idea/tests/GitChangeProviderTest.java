@@ -35,12 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.FileStatus.ADDED;
-import static com.intellij.openapi.vcs.FileStatus.MODIFIED;
-import static com.intellij.openapi.vcs.FileStatus.DELETED;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static com.intellij.openapi.vcs.FileStatus.*;
+import static org.testng.Assert.*;
 
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
@@ -52,7 +48,7 @@ import static org.testng.Assert.assertTrue;
 public class GitChangeProviderTest extends GitTestCase {
 
   private GitChangeProvider myChangeProvider;
-  private VcsAppendableDirtyScope myDirtyScope;
+  private VcsModifiableDirtyScope myDirtyScope;
   private Map<String, VirtualFile> myFiles;
   private VirtualFile afile;
 

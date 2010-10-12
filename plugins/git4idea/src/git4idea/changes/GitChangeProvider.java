@@ -58,7 +58,7 @@ public class GitChangeProvider implements ChangeProvider {
       final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
       set.removeAll(dirtyScope.getAffectedContentRoots());
       for (VirtualFile file : set) {
-        ((VcsAppendableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
+        ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
       }
     }
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);

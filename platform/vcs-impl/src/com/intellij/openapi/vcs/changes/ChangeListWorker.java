@@ -356,7 +356,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   // called NOT under ChangeListManagerImpl lock
-  public void notifyStartProcessingChanges(final VcsAppendableDirtyScope scope) {
+  public void notifyStartProcessingChanges(final VcsModifiableDirtyScope scope) {
     final Collection<Change> oldChanges = new ArrayList<Change>();
     for (LocalChangeList list : myMap.values()) {
       final Collection<Change> affectedChanges = ((LocalChangeListImpl)list).startProcessingChanges(myProject, scope);
@@ -374,7 +374,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder.cleanAndAdjustScope(scope);
   }
 
-  private void correctScopeForMoves(final VcsAppendableDirtyScope scope, final Collection<Change> changes) {
+  private void correctScopeForMoves(final VcsModifiableDirtyScope scope, final Collection<Change> changes) {
     if (scope == null) return;
     for (Change change : changes) {
       if (change.isMoved() || change.isRenamed()) {

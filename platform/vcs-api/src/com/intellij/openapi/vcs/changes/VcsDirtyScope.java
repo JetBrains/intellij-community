@@ -92,6 +92,8 @@ public abstract class VcsDirtyScope {
    */
   public abstract void iterate(Processor<FilePath> iterator);
 
+  public abstract boolean isEmpty();
+
   /**
    * Check if the path belongs to the dirty scope.
    *

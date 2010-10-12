@@ -17,8 +17,13 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class VcsAppendableDirtyScope extends VcsDirtyScope {
+public abstract class VcsModifiableDirtyScope extends VcsDirtyScope {
   public abstract void addDirtyFile(final FilePath newcomer);
   public abstract void addDirtyDirRecursively(final FilePath newcomer);
+  @Nullable
+  public VcsDirtyScopeModifier getModifier() {
+    return null;
+  }
 }

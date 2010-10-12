@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.VcsAppendableDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -407,7 +407,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   // for VCSes, that tracks their dirty scopes themselves - for instance, P4
-  public VcsAppendableDirtyScope adjustDirtyScope(final VcsAppendableDirtyScope scope) {
+  public VcsModifiableDirtyScope adjustDirtyScope(final VcsModifiableDirtyScope scope) {
     return scope;
   }
 

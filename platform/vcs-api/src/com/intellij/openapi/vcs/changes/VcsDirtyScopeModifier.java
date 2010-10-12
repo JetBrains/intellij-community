@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-interface FileHolder {
-  void cleanAll();
-  void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
-  FileHolder copy();
-  HolderType getType();
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
-  static enum HolderType {
-    DELETED,
-    UNVERSIONED,
-    SWITCHED,
-    MODIFIED_WITHOUT_EDITING,
-    IGNORED,
-    LOCKED,
-    LOGICALLY_LOCKED,
-    ROOT_SWITCH
-  }
+import java.util.Collection;
+import java.util.Iterator;
+
+/**
+ * @author irengrig
+ */
+public interface VcsDirtyScopeModifier {
+  Iterator<FilePath> getDirtyFilesIterator();
+  Collection<VirtualFile> getAffectedVcsRoots();
+  @Nullable
+  Iterator<FilePath> getDirtyDirectoriesIterator(VirtualFile root);
+  void recheckDirtyDirKeys();
 }
