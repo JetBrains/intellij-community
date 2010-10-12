@@ -428,7 +428,7 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
             #default way (only works for changing it in the topmost frame)
             result = eval(expression, frame.f_globals, frame.f_locals)
             exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
-            return result;
+            return result
 
 
     except Exception:
