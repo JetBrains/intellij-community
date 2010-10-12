@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredComponent;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -20,6 +21,9 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
       return element.getName() + ((PyFunction)element).getParameterList().getText();
+    }
+    if (element instanceof PyClass && PyNames.FAKE_OLD_BASE.equals(element.getName())) {
+      return "<old-style class>";
     }
     return element.getName();
   }

@@ -169,24 +169,29 @@ public class PyOverrideImplementUtil {
     }, ArrayUtil.EMPTY_STRING_ARRAY);
     int startIndex = 0;
 
-    if (baseFunction.getReturnType() != PyNoneType.INSTANCE) {
-      statementBody.append("return ");
-    }
-    if (baseClass.isNewStyleClass()) {
-      statementBody.append(PyNames.SUPER);
-      statementBody.append("(");
-      final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
-      if (!langLevel.isPy3K()) {
-        statementBody.append(pyClass.getName()).append(", ").append(PyUtil.getFirstParameterName(baseFunction));
-      }
-      statementBody.append(").").append(baseFunction.getName()).append("(");
-      startIndex = 1;
+    if (PyNames.FAKE_OLD_BASE.equals(baseFunction.getContainingClass().getName())) {
+      statementBody.append("pass");
     }
     else {
-      statementBody.append(baseClass.getName()).append(".").append(baseFunction.getName()).append("(");
+      if (baseFunction.getReturnType() != PyNoneType.INSTANCE) {
+        statementBody.append("return ");
+      }
+      if (baseClass.isNewStyleClass()) {
+        statementBody.append(PyNames.SUPER);
+        statementBody.append("(");
+        final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
+        if (!langLevel.isPy3K()) {
+          statementBody.append(pyClass.getName()).append(", ").append(PyUtil.getFirstParameterName(baseFunction));
+        }
+        statementBody.append(").").append(baseFunction.getName()).append("(");
+        startIndex = 1;
+      }
+      else {
+        statementBody.append(baseClass.getName()).append(".").append(baseFunction.getName()).append("(");
+      }
+      statementBody.append(StringUtil.join(paramTexts, startIndex, paramTexts.length, ", "));
+      statementBody.append(")");
     }
-    statementBody.append(StringUtil.join(paramTexts, startIndex, paramTexts.length, ", "));
-    statementBody.append(")");
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
