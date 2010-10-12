@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -68,8 +67,6 @@ public class TypedHandler implements TypedActionHandler {
     }, "", editor.getDocument());
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CompletionAutoPopupHandler.ourLastOffset = editor.getCaretModel().getOffset() - 1;
       CompletionProgressIndicator.hideAutopopupIfMeaningless(lookup);
       return;
     }
