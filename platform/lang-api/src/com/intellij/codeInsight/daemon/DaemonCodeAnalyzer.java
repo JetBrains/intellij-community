@@ -30,6 +30,7 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
 
   public abstract void settingsChanged();
 
+  @Deprecated
   public abstract void updateVisibleHighlighters(Editor editor);
 
   public abstract void setUpdateByTimerEnabled(boolean value);
@@ -43,9 +44,10 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public abstract boolean isAutohintsAvailable(PsiFile file);
 
   /**
-   * Force restart
+   * Force rehighlighting for all files
    */ 
   public abstract void restart();
+  public abstract void restart(@NotNull PsiFile file);
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 }
