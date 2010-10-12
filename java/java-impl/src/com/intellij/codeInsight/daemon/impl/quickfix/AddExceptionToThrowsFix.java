@@ -71,12 +71,18 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     if (hasSuperMethodsWithoutExceptions && superMethods.length > 0) {
       int result = Messages.showYesNoCancelDialog(
         QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.text", targetMethod.getName()),
-        QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.title"),
+        QuickFixBundle.message("method.is.inherited.warning.title"),
         Messages.getQuestionIcon());
 
-      if (result == 0) processSuperMethods = true;
-      else if (result == 1) processSuperMethods = false;
-      else return;
+      if (result == 0) {
+        processSuperMethods = true;
+      }
+      else if (result == 1) {
+        processSuperMethods = false;
+      }
+      else {
+        return;
+      }
     }
     else {
       processSuperMethods = false;

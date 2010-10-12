@@ -120,7 +120,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       }
     });
 
-    final Set<String> rootsToRefresh = new HashSet<String>();
+    final List<File> filesToRefresh = new ArrayList<File>();
     // do actual copy outside of read action to reduce the time the application is locked on it
     while (!copyCommands.isEmpty()) {
       final CopyCommand command = copyCommands.removeFirst();
@@ -130,8 +130,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       //context.getProgressIndicator().setFraction((idx++) * 1.0 / total);
       context.getProgressIndicator().setText2("Copying " + command.getFromPath() + "...");
       try {
-        rootsToRefresh.add(command.getOutputPath());
-        final MyOutputItem outputItem = command.copy();
+        final MyOutputItem outputItem = command.copy(filesToRefresh);
         addToMap(processed, command.getOutputPath(), outputItem);
       }
       catch (IOException e) {
@@ -143,13 +142,9 @@ public class ResourceCompiler implements TranslatingCompiler {
       }
     }
 
-    if (!rootsToRefresh.isEmpty()) {
-      final List<File> dirs = new ArrayList<File>();
-      for (String path : rootsToRefresh) {
-        dirs.add(new File(path));
-      }
-      CompilerUtil.refreshIODirectories(dirs);
-      rootsToRefresh.clear();
+    if (!filesToRefresh.isEmpty()) {
+      CompilerUtil.refreshIOFiles(filesToRefresh);
+      filesToRefresh.clear();
     }
 
     for (Iterator<Map.Entry<String, Collection<OutputItem>>> it = processed.entrySet().iterator(); it.hasNext();) {
@@ -182,12 +177,13 @@ public class ResourceCompiler implements TranslatingCompiler {
       mySourceFile = sourceFile;
     }
 
-    public MyOutputItem copy() throws IOException {
+    public MyOutputItem copy(List<File> filesToRefresh) throws IOException {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Copying " + myFromPath + " to " + myToPath);
       }
       final File targetFile = new File(myToPath);
       FileUtil.copyContent(new File(myFromPath), targetFile);
+      filesToRefresh.add(targetFile);
       return new MyOutputItem(myToPath, mySourceFile);
     }
 

@@ -1,0 +1,75 @@
+JavFxFile:ObjectLiteral.fx
+  JavaFxObjectLiteral
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('Stage')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LBRACE)('{')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxObjectLiteralInit
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('width')
+      PsiElement(JavaFx:COLON)(':')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('400')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxObjectLiteralInit
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('height')
+      PsiElement(JavaFx:COLON)(':')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('400')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxVariableDeclaration
+      JavaFxModifierList
+        <empty list>
+      PsiElement(JavaFx:var)('var')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('x')
+      PsiElement(JavaFx:COLON)(':')
+      PsiWhiteSpace(' ')
+      JavaFxTypeElement
+        JavaFxReferenceElement
+          PsiElement(JavaFx:IDENTIFIER)('Integer')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:EQ)('=')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('200')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionDefinition
+      JavaFxModifierList
+        PsiElement(JavaFx:public)('public')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:function)('function')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:IDENTIFIER)('y')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          PsiElement(JavaFx:RPAREN)(')')
+        PsiElement(JavaFx:COLON)(':')
+        PsiWhiteSpace(' ')
+        JavaFxTypeElement
+          JavaFxReferenceElement
+            PsiElement(JavaFx:IDENTIFIER)('Integer')
+      PsiWhiteSpace(' ')
+      JavaFxBlockExpression
+        PsiElement(JavaFx:LBRACE)('{')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('200')
+        PsiElement(JavaFx:RBRACE)('}')
+    PsiElement(JavaFx:SEMICOLON)(';')
+    PsiWhiteSpace('\n')
+    PsiElement(JavaFx:RBRACE)('}')

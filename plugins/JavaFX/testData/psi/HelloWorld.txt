@@ -1,0 +1,11 @@
+JavFxFile:HelloWorld.fx
+  JavaFxCallExpression
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('print')
+    JavaFxExpressionList
+      PsiElement(JavaFx:LPAREN)('(')
+      JavaFxStringExpression
+        JavaFxStringCompoundElement
+          PsiElement(JavaFx:STRING_LITERAL)('"Hello world!"')
+      PsiElement(JavaFx:RPAREN)(')')
+  PsiElement(JavaFx:SEMICOLON)(';')

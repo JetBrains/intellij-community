@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -155,6 +156,9 @@ public class ResolveUtil {
     return true;
   }
 
+  private static final Key<PsiType> COMPARABLE = Key.create(CommonClassNames.JAVA_LANG_COMPARABLE);
+  private static final Key<PsiType> SERIALIZABLE = Key.create(CommonClassNames.JAVA_IO_SERIALIZABLE);
+
   private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
     String qName = rawCanonicalText(type);
 
@@ -168,11 +172,22 @@ public class ResolveUtil {
     }
 
     if (type instanceof PsiArrayType && superTypes.length == 0) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited, project);
-      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited, project);
+      PsiType comparable = createTypeFromText(project, COMPARABLE, CommonClassNames.JAVA_LANG_COMPARABLE);
+      PsiType serializable = createTypeFromText(project, SERIALIZABLE, CommonClassNames.JAVA_IO_SERIALIZABLE);
+      collectSuperTypes(comparable, visited, project);
+      collectSuperTypes(serializable, visited, project);
     }
 
+  }
+
+  public static PsiType createTypeFromText(Project project, Key<PsiType> key, String text) {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiType type = project.getUserData(key);
+    if (type == null) {
+      type = factory.createTypeFromText(text, null);
+      project.putUserData(key, type);
+    }
+    return type;
   }
 
   public static Map<String, PsiType> getAllSuperTypes(PsiType base, final Project project) {
@@ -187,7 +202,10 @@ public class ResolveUtil {
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);
     //noinspection ConstantConditions
-    String key = cls instanceof PsiTypeParameter ? cls.getName() + cls.getSuperClass().getName() : rawCanonicalText(base);
+    String key = cls instanceof PsiTypeParameter
+                 ? cls.getName() + cls.getSuperClass().getName()
+                 : TypeConversionUtil.erasure(base).getCanonicalText();
+    if (key == null) key = "";
     Map<String, PsiType> result = cache.get(key);
     if (result == null) {
       result = new HashMap<String, PsiType>();

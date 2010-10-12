@@ -31,6 +31,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
@@ -624,6 +625,25 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public boolean isQualified() {
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+
+    // We want to reformat method call arguments on method name change because there is a possible situation that they are aligned
+    // and method change breaks the alignment.
+    // Example:
+    //     test(1,
+    //          2);
+    // Suppose we're renaming the method to test123. We get the following if parameter list is not reformatted:
+    //     test123(1,
+    //          2);
+    PsiElement methodCallCandidate = getParent();
+    if (methodCallCandidate instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodCallCandidate;
+      CodeEditUtil.markToReformat(methodCallExpression.getArgumentList().getNode(), true);
+    }
   }
 
   private String getCachedTextSkipWhiteSpaceAndComments() {

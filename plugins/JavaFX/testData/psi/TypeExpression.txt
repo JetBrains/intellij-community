@@ -1,0 +1,58 @@
+JavFxFile:TypeExpression.fx
+  JavaFxTypeExpression
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:as)('as')
+    PsiWhiteSpace(' ')
+    JavaFxTypeElement
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('Integer')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxTypeExpression
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:instanceof)('instanceof')
+    PsiWhiteSpace(' ')
+    JavaFxTypeElement
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('Duration')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxTypeExpression
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:as)('as')
+    PsiWhiteSpace(' ')
+    JavaFxFunctionTypeElement
+      PsiElement(JavaFx:function)('function')
+      JavaFxSignature
+        JavaFxParameterList
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxParameter
+            PsiElement(JavaFx:COLON)(':')
+            JavaFxTypeElement
+              JavaFxReferenceElement
+                PsiElement(JavaFx:IDENTIFIER)('Integer')
+          PsiElement(JavaFx:RPAREN)(')')
+        PsiElement(JavaFx:COLON)(':')
+        JavaFxTypeElement
+          JavaFxReferenceElement
+            PsiElement(JavaFx:IDENTIFIER)('Void')
+  PsiElement(JavaFx:SEMICOLON)(';')
+  PsiWhiteSpace('\n')
+  JavaFxTypeExpression
+    JavaFxReferenceExpression
+      PsiElement(JavaFx:IDENTIFIER)('d')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:instanceof)('instanceof')
+    PsiWhiteSpace(' ')
+    JavaFxTypeElement
+      JavaFxReferenceElement
+        PsiElement(JavaFx:IDENTIFIER)('Node')
+      PsiElement(JavaFx:LBRACK)('[')
+      PsiElement(JavaFx:RBRACK)(']')
+  PsiElement(JavaFx:SEMICOLON)(';')

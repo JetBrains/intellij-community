@@ -321,7 +321,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     element = element.getParent();
     if (element instanceof PsiMethod) {
       final PsiCodeBlock body = ((PsiMethod)element).getBody();
-      return new TextRange(element.getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
+      return new TextRange(((PsiMethod)element).getModifierList().getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
     }
     return null;
   }

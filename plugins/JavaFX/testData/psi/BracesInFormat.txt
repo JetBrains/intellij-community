@@ -1,0 +1,161 @@
+JavFxFile:BracesInFormat.fx
+  JavaFxIfExpression
+    PsiElement(JavaFx:if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LPAREN)('(')
+    JavaFxBinaryExpression
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('type')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:EQEQ)('==')
+      PsiWhiteSpace(' ')
+      JavaFxReferenceExpression
+        PsiElement(JavaFx:IDENTIFIER)('ENEMY_HOME')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    JavaFxBlockExpression
+      PsiElement(JavaFx:LBRACE)('{')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      JavaFxCallExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('println')
+        JavaFxExpressionList
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxStringExpression
+            JavaFxStringCompoundElement
+              PsiElement(JavaFx:LBRACE_STRING_LITERAL)('"Invalid level data. Level = {')
+              JavaFxReferenceExpression
+                PsiElement(JavaFx:IDENTIFIER)('level')
+              PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('}, x = {')
+              JavaFxReferenceExpression
+                PsiElement(JavaFx:IDENTIFIER)('x')
+              PsiElement(JavaFx:LBRACE_RBRACE_STRING_LITERAL)('}, y = {')
+              JavaFxReferenceExpression
+                PsiElement(JavaFx:IDENTIFIER)('y')
+              PsiElement(JavaFx:RBRACE_STRING_LITERAL)('}"')
+          PsiElement(JavaFx:RPAREN)(')')
+      PsiElement(JavaFx:SEMICOLON)(';')
+      PsiWhiteSpace('\n')
+      PsiElement(JavaFx:RBRACE)('}')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  JavaFxForExpression
+    PsiElement(JavaFx:for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LPAREN)('(')
+    JavaFxInClause
+      JavaFxParameter
+        PsiElement(JavaFx:IDENTIFIER)('i')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:in)('in')
+      PsiWhiteSpace(' ')
+      JavaFxRangeExpression
+        PsiElement(JavaFx:LBRACK)('[')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('0')
+        PsiElement(JavaFx:RANGE)('..')
+        JavaFxLiteralExpression
+          PsiElement(JavaFx:INTEGER_LITERAL)('3')
+        PsiElement(JavaFx:RBRACK)(']')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    JavaFxBlockExpression
+      PsiElement(JavaFx:LBRACE)('{')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      JavaFxIfExpression
+        PsiElement(JavaFx:if)('if')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:LPAREN)('(')
+        JavaFxBinaryExpression
+          JavaFxReferenceExpression
+            PsiElement(JavaFx:IDENTIFIER)('neighbourX')
+          PsiWhiteSpace(' ')
+          PsiElement(JavaFx:LT)('<')
+          PsiWhiteSpace(' ')
+          JavaFxLiteralExpression
+            PsiElement(JavaFx:INTEGER_LITERAL)('0')
+        PsiElement(JavaFx:RPAREN)(')')
+        PsiWhiteSpace(' ')
+        JavaFxBlockExpression
+          PsiElement(JavaFx:LBRACE)('{')
+          PsiWhiteSpace('\n')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          JavaFxAssignmentExpression
+            JavaFxReferenceExpression
+              PsiElement(JavaFx:IDENTIFIER)('neighbourX')
+            PsiWhiteSpace(' ')
+            PsiElement(JavaFx:EQ)('=')
+            PsiWhiteSpace(' ')
+            JavaFxBinaryExpression
+              JavaFxReferenceExpression
+                PsiElement(JavaFx:IDENTIFIER)('WIDTH')
+              PsiWhiteSpace(' ')
+              PsiElement(JavaFx:MINUS)('-')
+              PsiWhiteSpace(' ')
+              JavaFxLiteralExpression
+                PsiElement(JavaFx:INTEGER_LITERAL)('1')
+          PsiWhiteSpace('\n')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiWhiteSpace(' ')
+          PsiElement(JavaFx:RBRACE)('}')
+        PsiWhiteSpace(' ')
+        PsiElement(JavaFx:else)('else')
+        PsiWhiteSpace(' ')
+        JavaFxIfExpression
+          PsiElement(JavaFx:if)('if')
+          PsiWhiteSpace(' ')
+          PsiElement(JavaFx:LPAREN)('(')
+          JavaFxBinaryExpression
+            JavaFxReferenceExpression
+              PsiElement(JavaFx:IDENTIFIER)('neighbourX')
+            PsiWhiteSpace(' ')
+            PsiElement(JavaFx:GTEQ)('>=')
+            PsiWhiteSpace(' ')
+            JavaFxReferenceExpression
+              PsiElement(JavaFx:IDENTIFIER)('WIDTH')
+          PsiElement(JavaFx:RPAREN)(')')
+          PsiWhiteSpace(' ')
+          JavaFxBlockExpression
+            PsiElement(JavaFx:LBRACE)('{')
+            PsiWhiteSpace('\n')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            JavaFxAssignmentExpression
+              JavaFxReferenceExpression
+                PsiElement(JavaFx:IDENTIFIER)('neighbourX')
+              PsiWhiteSpace(' ')
+              PsiElement(JavaFx:EQ)('=')
+              PsiWhiteSpace(' ')
+              JavaFxLiteralExpression
+                PsiElement(JavaFx:INTEGER_LITERAL)('0')
+            PsiWhiteSpace('\n')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiWhiteSpace(' ')
+            PsiElement(JavaFx:RBRACE)('}')
+      PsiWhiteSpace('\n')
+      PsiElement(JavaFx:RBRACE)('}')

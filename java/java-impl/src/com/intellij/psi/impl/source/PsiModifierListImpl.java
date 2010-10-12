@@ -24,6 +24,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -189,6 +190,14 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     checkSetModifierProperty(name, value);
+
+    // There is a possible case that parameters list occupies more than one line and its elements are aligned. Modifiers list change
+    // changes horizontal position of parameters list start, hence, we need to reformat them in order to preserve alignment.
+    PsiElement methodCandidate = getParent();
+    if (methodCandidate instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)methodCandidate;
+      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
+    }
 
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 

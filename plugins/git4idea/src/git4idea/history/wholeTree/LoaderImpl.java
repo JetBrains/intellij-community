@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CompoundNumber;
@@ -160,10 +161,11 @@ public class LoaderImpl implements Loader {
           myTreeComposite.clearMembers();
 
           final List<LoaderBase> endOfTheList = new LinkedList<LoaderBase>();
+          final Consumer<CommitHashPlusParents> consumer = createCommitsHolderConsumer(drawHierarchy);
+          final RefreshingCommitsPackConsumer listConsumer = new RefreshingCommitsPackConsumer(current, consumer);
+
           for (VirtualFile vf : myRootsList) {
             final LowLevelAccess access = myAccesses.get(vf);
-            final Consumer<CommitHashPlusParents> consumer = createCommitsHolderConsumer(drawHierarchy);
-            final Consumer<List<CommitHashPlusParents>> listConsumer = new RefreshingCommitsPackConsumer(current, consumer);
 
             final BufferedListConsumer<CommitHashPlusParents> bufferedListConsumer =
               new BufferedListConsumer<CommitHashPlusParents>(15, listConsumer, 400);
@@ -182,10 +184,12 @@ public class LoaderImpl implements Loader {
               if (loadFull) {
                 final LoaderBase loaderBase = new LoaderBase(access, bufferedListConsumer, filters,
                   ourTestCount, loadFull, startingPoints, myLinesCache, ourSlowPreloadCount);
+                listConsumer.setInterruptRunnable(loaderBase.getStopper());
                 loaderBase.execute();
                 endOfTheList.add(new LoaderBase(access, bufferedListConsumer, filters, ourSlowPreloadCount, false, startingPoints, myLinesCache, -1));
               } else {
                 final LoaderBase loaderBase = new LoaderBase(access, bufferedListConsumer, filters, ourTestCount, loadFull, startingPoints, myLinesCache, -1);
+                listConsumer.setInterruptRunnable(loaderBase.getStopper());
                 loaderBase.execute();
               }
             }
@@ -195,6 +199,7 @@ public class LoaderImpl implements Loader {
       public void run(@NotNull ProgressIndicator indicator) {
         for (LoaderBase loaderBase : endOfTheList) {
           try {
+            listConsumer.setInterruptRunnable(loaderBase.getStopper());
             loaderBase.execute();
           }
           catch (VcsException e) {
@@ -239,10 +244,25 @@ public class LoaderImpl implements Loader {
     private Application myApplication;
     private final Runnable myRefreshRunnable;
     private final Condition myRefreshCondition;
+    private Runnable myInterruptRunnable;
+
+    public void setInterruptRunnable(final Runnable interruptRunnable) {
+      final Boolean[] interruptedNotified = new Boolean[1];
+      myInterruptRunnable = new Runnable() {
+        @Override
+        public void run() {
+          if (! Boolean.TRUE.equals(interruptedNotified[0])) {
+            interruptRunnable.run();
+          }
+          interruptedNotified[0] = true;
+        }
+      };
+    }
 
     public RefreshingCommitsPackConsumer(int id, Consumer<CommitHashPlusParents> consumer) {
       myId = id;
       myConsumer = consumer;
+      myInterruptRunnable = EmptyRunnable.getInstance();
       myApplication = ApplicationManager.getApplication();
       myRefreshRunnable = new Runnable() {
         @Override
@@ -268,16 +288,25 @@ public class LoaderImpl implements Loader {
 
     @Override
     public void consume(List<CommitHashPlusParents> commitHashPlusParentses) {
+      boolean toInterrupt = false;
       synchronized (myLock) {
-        if (myId != myLoadId) throw new MyStopListenToOutputException();    // TODO TODO TODO
+        toInterrupt = myId != myLoadId;
+      }
+      if (toInterrupt) {
+        myInterruptRunnable.run();
+        return;
       }
       for (CommitHashPlusParents item : commitHashPlusParentses) {
         myConsumer.consume(item);
       }
       synchronized (myLock) {
-        if (myId != myLoadId) throw new MyStopListenToOutputException();
-        myApplication.invokeLater(myRefreshRunnable, myModalityState, myRefreshCondition);
-        //myApplication.invokeLater(myRefreshRunnable, myModalityState);
+        toInterrupt = myId != myLoadId;
+        if (! toInterrupt) {
+          myApplication.invokeLater(myRefreshRunnable, myModalityState, myRefreshCondition);
+        }
+      }
+      if (toInterrupt) {
+        myInterruptRunnable.run();
       }
     }
   }
@@ -291,6 +320,7 @@ public class LoaderImpl implements Loader {
     private final int myMaxCount;
     private final Collection<ChangesFilter.Filter> myFilters;
     private final int myIgnoreFirst;
+    private Runnable myStopper;
 
     public LoaderBase(LowLevelAccess access,
                        BufferedListConsumer<CommitHashPlusParents> consumer,
@@ -305,20 +335,24 @@ public class LoaderImpl implements Loader {
       myStartingPoints = startingPoints;
       myLinesCache = linesCache;
       myMaxCount = maxCount;
+      myStopper = EmptyRunnable.getInstance();
     }
 
     public void execute() throws VcsException {
       final MyConsumer consumer = new MyConsumer(myConsumer, 0);
 
       if (myLoadFullData) {
-        // todo
         LOG.info("FULL " + myMaxCount);
         FullDataLoader.load(myLinesCache, myAccess, myStartingPoints, myFilters, myConsumer.asConsumer(), myMaxCount);
       } else {
         LOG.info("SKELETON " + myMaxCount);
-        myAccess.loadHashesWithParents(myStartingPoints, myFilters, consumer);
+        myStopper = myAccess.loadHashesWithParents(myStartingPoints, myFilters, consumer);
       }
       myConsumer.flush();
+    }
+
+    public Runnable getStopper() {
+      return myStopper;
     }
 
     private static class MyConsumer implements Consumer<CommitHashPlusParents> {

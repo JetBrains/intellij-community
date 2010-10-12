@@ -163,6 +163,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     myRules.add(rule);
   }
 
+  @Override
+  public void reloadRules() {
+    final Element element = new Element("rules_2_reload");
+    writeRules(element);
+    readRules(element);
+  }
+
   private void appendUnnamedScope(final NamedScope fromScope) {
     if (getScope(fromScope.getName()) == null) {
       final PackageSet packageSet = fromScope.getValue();
@@ -213,6 +220,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       }
     }
 
+    readRules(element);
+  }
+
+  private void readRules(Element element) {
     myRules.clear();
     List rules = element.getChildren(DENY_RULE_KEY);
     for (Object rule1 : rules) {
@@ -240,13 +251,17 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       element.addContent(unnamedElement);
     }
 
+    writeRules(element);
+    return element;
+  }
+
+  private void writeRules(Element element) {
     for (DependencyRule rule : myRules) {
       Element ruleElement = writeRule(rule);
       if (ruleElement != null) {
         element.addContent(ruleElement);
       }
     }
-    return element;
   }
 
   @Nullable

@@ -112,6 +112,11 @@
       <interface-class>com.intellij.notification.NotificationsManager</interface-class>
       <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

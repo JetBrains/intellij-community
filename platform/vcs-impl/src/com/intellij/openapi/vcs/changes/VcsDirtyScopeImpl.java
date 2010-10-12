@@ -29,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -36,18 +37,50 @@ import java.util.*;
  * @author max
  * @author yole
  */
-public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
+public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<VirtualFile, THashSet<FilePath>>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
+  private VcsDirtyScopeModifier myVcsDirtyScopeModifier;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
     myProject = project;
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
+      @Override
+      public Collection<VirtualFile> getAffectedVcsRoots() {
+        return Collections.unmodifiableCollection(myDirtyDirectoriesRecursively.keySet());
+      }
+
+      @Override
+      public Iterator<FilePath> getDirtyFilesIterator() {
+        return myDirtyFiles.iterator();
+      }
+
+      @Nullable
+      @Override
+      public Iterator<FilePath> getDirtyDirectoriesIterator(final VirtualFile root) {
+        final THashSet<FilePath> filePaths = myDirtyDirectoriesRecursively.get(root);
+        if (filePaths != null) {
+          return filePaths.iterator();
+        }
+        return null;
+      }
+
+      @Override
+      public void recheckDirtyDirKeys() {
+        for (Iterator<THashSet<FilePath>> iterator = myDirtyDirectoriesRecursively.values().iterator(); iterator.hasNext();) {
+          final THashSet<FilePath> next = iterator.next();
+          if (next.isEmpty()) {
+            iterator.remove();
+          }
+        }
+      }
+    };
   }
 
   public Collection<VirtualFile> getAffectedContentRoots() {
@@ -237,6 +270,11 @@ public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
     }
   }
 
+  @Override
+  public boolean isEmpty() {
+    return myDirtyDirectoriesRecursively.isEmpty() && myDirtyFiles.isEmpty();
+  }
+
   public boolean belongsTo(final FilePath path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
@@ -305,5 +343,10 @@ public class VcsDirtyScopeImpl extends VcsAppendableDirtyScope {
     }
     result.append("]");
     return result.toString();
+  }
+
+  @Override
+  public VcsDirtyScopeModifier getModifier() {
+    return myVcsDirtyScopeModifier;
   }
 }

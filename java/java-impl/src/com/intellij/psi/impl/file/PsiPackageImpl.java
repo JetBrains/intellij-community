@@ -23,9 +23,8 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -169,21 +168,13 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     final String oldQualifedName = myQualifiedName;
     final boolean anyChanged = changePackagePrefixes(oldQualifedName, newQualifiedName);
     if (anyChanged) {
-      UndoManager.getInstance(myManager.getProject()).undoableActionPerformed(new UndoableAction() {
+      UndoManager.getInstance(myManager.getProject()).undoableActionPerformed(new GlobalUndoableAction() {
         public void undo() {
           changePackagePrefixes(newQualifiedName, oldQualifedName);
         }
 
         public void redo() {
           changePackagePrefixes(oldQualifedName, newQualifiedName);
-        }
-
-        public DocumentReference[] getAffectedDocuments() {
-          return DocumentReference.EMPTY_ARRAY;
-        }
-
-        public boolean isGlobal() {
-          return true;
         }
       });
     }

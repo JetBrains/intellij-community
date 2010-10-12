@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -39,7 +40,9 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiScopeProcessor processor,
                                      GroovyPsiElement place,
                                      ResolveState state) {
-    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place.getProject())) {
+//    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place.getProject())) {
+    if (InheritanceUtil.isInheritor(qualifierType, "groovy.util.AntBuilder")) {
+
       processAntTasks(processor, place, state);
       return;
     }

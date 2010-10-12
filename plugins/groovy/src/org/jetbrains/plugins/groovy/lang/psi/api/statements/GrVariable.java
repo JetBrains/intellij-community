@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public interface GrVariable extends GrVariableBase, GrNamedElement {
+public interface GrVariable extends PsiVariable, GrNamedElement {
   GrVariable[] EMPTY_ARRAY = new GrVariable[0];
 
   @Nullable
@@ -37,4 +38,10 @@ public interface GrVariable extends GrVariableBase, GrNamedElement {
 
   @Nullable
   GrTypeElement getTypeElementGroovy();
+
+  @Nullable
+  PsiType getTypeGroovy();
+
+  @Nullable
+  PsiType getDeclaredType();
 }

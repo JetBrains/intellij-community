@@ -35,6 +35,6 @@ public interface UndoableAction {
 
   /**
    * Global actions are those, that can be undone not only from the document of the file, but also from the project tree view.
-   * */
+   */
   boolean isGlobal();
 }

@@ -1286,24 +1286,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (!checkReadonlyUsages()) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (myCannotMakeString != null && myChangesDetected) {
+        String title = UsageViewBundle.message("changes.detected.error.title");
         if (canPerformReRun() && allTargetsAreValid()) {
-          int answer = Messages.showYesNoDialog(
-            myProject,
-            myCannotMakeString + "\n" + UsageViewBundle.message("dialog.rerun.search"),
-            UsageViewBundle.message("error.common.title"),
-            Messages.getErrorIcon()
-          );
+          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("usage.view.cancel.button")};
+          String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
+          int answer = Messages.showDialog(myProject, message, title, options, 0, Messages.getErrorIcon());
           if (answer == 0) {
             refreshUsages();
           }
         }
         else {
-          Messages.showMessageDialog(
-            myProject,
-            myCannotMakeString,
-            UsageViewBundle.message("error.common.title"),
-            Messages.getErrorIcon()
-          );
+          Messages.showMessageDialog(myProject, myCannotMakeString, title, Messages.getErrorIcon());
           //todo[myakovlev] request focus to tree
           //myUsageView.getTree().requestFocus();
         }
@@ -1313,15 +1306,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       close();
 
       CommandProcessor.getInstance().executeCommand(
-          myProject, new Runnable() {
+        myProject, new Runnable() {
           public void run() {
             myProcessRunnable.run();
           }
         },
-          myCommandName,
-          null
+        myCommandName,
+        null
       );
-
     }
   }
 

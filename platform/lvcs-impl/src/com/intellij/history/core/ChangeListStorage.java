@@ -31,6 +31,4 @@ public interface ChangeListStorage {
   void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
 
   void writeNextSet(ChangeSet changeSet);
-
-  void flush();
 }

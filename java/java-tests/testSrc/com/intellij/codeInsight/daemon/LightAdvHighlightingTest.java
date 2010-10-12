@@ -302,4 +302,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
     field.getInitializer().getType(); // SOE
   }
+
+  public void testSOEForCyclicInheritance() throws IOException {
+    configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
+
+    doHighlighting();
+  }
 }

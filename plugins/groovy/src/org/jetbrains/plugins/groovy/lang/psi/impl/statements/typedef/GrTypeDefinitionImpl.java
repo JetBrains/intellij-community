@@ -106,15 +106,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       return stub.getQualifiedName();
     }
 
-    final PsiClass containingClass = getContainingClass();
-    if (containingClass != null) {
-      return containingClass.getQualifiedName() + "." + getName();
-    }
-
     PsiElement parent = getParent();
     if (parent instanceof GroovyFile) {
       String packageName = ((GroovyFile)parent).getPackageName();
       return packageName.length() > 0 ? packageName + "." + getName() : getName();
+    }
+
+    final PsiClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      return containingClass.getQualifiedName() + "." + getName();
     }
 
     return null;

@@ -48,11 +48,23 @@ public class FontEditorPreview implements PreviewPanel{
 
   public static String getIDEDemoText() {
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
-    String language = name.contains("RubyMine") ? "Ruby" : "Java";   // HACK
+    String language = getLanguage(name); // HACK
     return
       name + " is a full-featured " + language + " IDE\n" +
       "with a high level of usability and outstanding\n" +
       "advanced code editing and refactoring support.\n";
+  }
+
+  private static String getLanguage(String name) {
+    if (name.contains("RubyMine")) {
+      return "Ruby";
+    }
+
+    if (name.contains("PyCharm")) {
+      return "Python";
+    }
+
+    return "Java";
   }
 
   static void installTrafficLights(EditorEx editor) {

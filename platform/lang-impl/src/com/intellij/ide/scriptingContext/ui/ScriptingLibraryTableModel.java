@@ -15,11 +15,12 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
-import com.intellij.ide.scriptingContext.ScriptingLibraryManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -31,13 +32,19 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
   private static final int LIB_NAME_COL = 0;
 
   private LibraryTable myLibTable;
+  private LibraryTable.ModifiableModel myLibTableModel;
+  private boolean myTableChanged;
 
   public ScriptingLibraryTableModel(LibraryTable libTable) {
     myLibTable = libTable;
+    myLibTableModel = libTable.getModifiableModel();
+    myTableChanged = false;
   }
 
   public void resetTable(LibraryTable libTable) {
     myLibTable = libTable;
+    myTableChanged = false;
+    fireTableDataChanged();
   }
 
   @Override
@@ -69,8 +76,44 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     return "?";
   }
 
-  public LibraryTable getLibraryTable() {
-    return myLibTable;
+  public void createLibrary(String name, VirtualFile[] files) {
+    Library lib = myLibTable.createLibrary(name);
+    Library.ModifiableModel libModel = lib.getModifiableModel();
+    for (VirtualFile file : files) {
+      libModel.addRoot(file, OrderRootType.CLASSES);
+    }
+    libModel.commit();
+    myLibTableModel.commit();
+    fireLibTableChanged();
+  }
+
+  @Nullable
+  public Library getLibrary(String name) {
+    return myLibTable == null ? null : myLibTable.getLibraryByName(name);
+  }
+
+  public void removeLibrary(String name) {
+    Library libToRemove = myLibTable.getLibraryByName(name);
+    if (libToRemove != null) {
+      myLibTable.removeLibrary(libToRemove);
+      fireLibTableChanged();
+    }
+  }
+
+  public void fireLibTableChanged() {
+    myTableChanged = true;
+    fireTableDataChanged();
+  }
+
+  @Nullable
+  public String getLibNameAt(int row) {
+    Library[] libs = myLibTable.getLibraries();
+    if (row < 0 || row > libs.length - 1) return null;
+    return libs[row].getName();
+  }
+
+  public boolean isChanged() {
+    return myTableChanged;
   }
 
 }

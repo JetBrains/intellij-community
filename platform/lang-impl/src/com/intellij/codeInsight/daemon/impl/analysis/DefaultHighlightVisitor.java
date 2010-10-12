@@ -125,14 +125,13 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
+    annotationHolder.setSession(holder.getAnnotationSession());
 
     if (!JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
         if (dumb && !DumbService.isDumbAware(annotator)) {
           return true;
         }
-
-        annotationHolder.setSession(holder.getAnnotationSession());
 
         annotator.annotate(element, annotationHolder);
         return true;
@@ -145,6 +144,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
           holder.add(HighlightInfo.fromAnnotation(annotation));
         }
         annotationHolder.clear();
+        annotationHolder.setSession(null);
       }
     }
   }

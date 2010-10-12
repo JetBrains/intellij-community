@@ -11,6 +11,6 @@ public class Test {
 class X {
    public int n(int a) {
        final Test t = new Test();
-       return (new Test()).m(a, a*2, t, t.method(a*2));
+       return (new Test()).m(a, a * 2, t, t.method(a * 2));
    }
 }

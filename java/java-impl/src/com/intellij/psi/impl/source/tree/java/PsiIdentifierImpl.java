@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {
@@ -37,6 +39,27 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    PsiElement result = super.replace(newElement);
+
+    // We want to reformat method parameters on method name change as well because there is a possible situation that they are aligned
+    // and method name change breaks the alignment.
+    // Example:
+    //     public void test(int i,
+    //                      int j) {}
+    // Suppose we're renaming the method to test123. We get the following if parameter list is not reformatted:
+    //     public void test123(int i,
+    //                     int j) {}
+    PsiElement methodCandidate = result.getParent();
+    if (methodCandidate instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)methodCandidate;
+      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
+    }
+
+    return result;
   }
 
   public String toString(){

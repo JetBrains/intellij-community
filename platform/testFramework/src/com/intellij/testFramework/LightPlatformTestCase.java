@@ -411,6 +411,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+    if (project != null) {
+      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    }
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
 
@@ -582,21 +585,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @throws com.intellij.util.IncorrectOperationException
    */
   protected static PsiFile createFile(@NonNls String fileName, String text) throws IncorrectOperationException {
-    return createPseudoPhysicalFile(fileName, text);
-  }
-
-  protected static PsiFile createLightFile(String fileName, String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
-      fileName), text, LocalTimeCounter.currentTime(), false);
-  }
-
-  protected static PsiFile createPseudoPhysicalFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
+  }
+
+  protected static PsiFile createLightFile(@NonNls String fileName, String text) throws IncorrectOperationException {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
   }
 
   /**
-   * Convinient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
+   * Convenient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */

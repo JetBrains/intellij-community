@@ -1,0 +1,33 @@
+JavFxFile:IfExpression.fx
+  JavaFxIfExpression
+    PsiElement(JavaFx:if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(JavaFx:LPAREN)('(')
+    JavaFxBinaryExpression
+      JavaFxUnaryExpression
+        PsiElement(JavaFx:sizeof)('sizeof')
+        PsiWhiteSpace(' ')
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(JavaFx:GT)('>')
+      PsiWhiteSpace(' ')
+      JavaFxLiteralExpression
+        PsiElement(JavaFx:INTEGER_LITERAL)('10')
+    PsiElement(JavaFx:RPAREN)(')')
+    PsiWhiteSpace(' ')
+    JavaFxBlockExpression
+      PsiElement(JavaFx:LBRACE)('{')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      JavaFxCallExpression
+        JavaFxReferenceExpression
+          PsiElement(JavaFx:IDENTIFIER)('foo')
+        JavaFxExpressionList
+          PsiElement(JavaFx:LPAREN)('(')
+          PsiElement(JavaFx:RPAREN)(')')
+      PsiElement(JavaFx:SEMICOLON)(';')
+      PsiWhiteSpace('\n')
+      PsiElement(JavaFx:RBRACE)('}')

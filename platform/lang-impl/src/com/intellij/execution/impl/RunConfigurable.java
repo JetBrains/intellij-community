@@ -140,7 +140,7 @@ class RunConfigurable extends BaseConfigurable {
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
-              setIcon(ProgramRunnerUtil.getConfigurationIcon(getProject(), settings));
+              setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
               configuration = settings.getConfiguration();
               name = configuration.getName();
             }
@@ -230,6 +230,7 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.removeAll();
     mySelectedConfigurable = userObject;
     myRightPanel.add(mySelectedConfigurable.createComponent(), BorderLayout.CENTER);
+    RunManagerEx.getInstanceEx(myProject).invalidateConfigurationIcon(mySelectedConfigurable.getSettings());
     setupDialogBounds();
   }
 

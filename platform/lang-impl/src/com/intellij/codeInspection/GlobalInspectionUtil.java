@@ -29,7 +29,7 @@ import com.intellij.psi.PsiFile;
 public class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
 
-  static RefElement retrieveRefElement(PsiElement element, GlobalInspectionContext globalContext) {
+  public static RefElement retrieveRefElement(PsiElement element, GlobalInspectionContext globalContext) {
     PsiFile elementFile = element.getContainingFile();
     RefElement refElement = globalContext.getRefManager().getReference(elementFile);
     if (refElement == null) {

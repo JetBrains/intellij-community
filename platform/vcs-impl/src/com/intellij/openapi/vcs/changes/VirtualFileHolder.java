@@ -48,7 +48,7 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   // returns number of removed directories
-  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsAppendableDirtyScope scope) {
+  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsModifiableDirtyScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       public Integer compute() {
         int result = 0;
@@ -99,7 +99,7 @@ public class VirtualFileHolder implements FileHolder {
     });
   }
 
-  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
     myNumDirs -= cleanScope(myProject, myFiles, scope);
   }
 

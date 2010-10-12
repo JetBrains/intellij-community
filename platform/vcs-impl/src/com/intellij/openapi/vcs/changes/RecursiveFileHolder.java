@@ -43,7 +43,7 @@ public class RecursiveFileHolder<T> implements FileHolder {
     myMap.clear();
   }
 
-  public void cleanAndAdjustScope(final VcsAppendableDirtyScope scope) {
+  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action

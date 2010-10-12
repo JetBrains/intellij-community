@@ -22,13 +22,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +112,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       repaintIconAlarm.addRequest(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          Editor editor = getEditorForFile(myFile);
+          Editor editor = PsiUtilBase.findEditor(myFile);
           if (editor == null || editor.isDisposed()) return;
           EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
           markup.repaintTrafficLightIcon();
@@ -124,22 +121,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
-  private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) {
-      PsiFile originalFile = psiFile.getOriginalFile();
-      virtualFile = originalFile.getVirtualFile();
-      if (virtualFile == null) return null;
-    }
-    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        return ((TextEditor)editor).getEditor();
-      }
-    }
-    return null;
-  }
-  
   public static class EmptyPass extends TextEditorHighlightingPass {
     public EmptyPass(final Project project, @Nullable final Document document) {
       super(project, document, false);

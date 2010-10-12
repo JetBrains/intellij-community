@@ -171,11 +171,4 @@ public class ChangeListTest extends ChangeListTestCase {
     assertEquals(ChangeSet.class, cc.get(0).getClass());
     assertEquals(array(c1, c2), cc.get(0).getChanges());
   }
-
-  @Test
-  public void testSavingDuringChangeSet() throws Exception {
-    facade.beginChangeSet();
-    facade.getChangeListInTests().flush();
-    facade.endChangeSet(null); // should not throw exception.
-  }
 }

@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -47,17 +48,17 @@ public class TestIntegrationUtils {
 
   public enum MethodKind {
     SET_UP("setUp") {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getSetUpMethodFileTemplateDescriptor();
       }
     },
     TEAR_DOWN("tearDown") {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
       }
     },
     TEST("test") {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTestMethodFileTemplateDescriptor();
       }
     };
@@ -71,15 +72,16 @@ public class TestIntegrationUtils {
       return myDefaultName;
     }
 
-    public abstract FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework);
+    public abstract FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework);
   }
 
-  public static boolean isTest(PsiElement element) {
+  public static boolean isTest(@NotNull PsiElement element) {
     PsiClass klass = findOuterClass(element);
     return klass != null && TestUtil.isTestClass(klass);
   }
 
-  public static PsiClass findOuterClass(PsiElement element) {
+  @Nullable
+  public static PsiClass findOuterClass(@NotNull PsiElement element) {
     PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (result == null) {
        final PsiFile containingFile = element.getContainingFile();

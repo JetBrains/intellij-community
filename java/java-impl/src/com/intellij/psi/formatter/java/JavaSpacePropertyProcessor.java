@@ -185,7 +185,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
-    else if (myRole1 == ChildRole.LBRACKET || myRole2 == ChildRole.RBRACKET) {
+    // We don't want to insert space between brackets in case of expression like 'new int[] {1}', hence, we check that exactly
+    // one of the children is bracket.
+    else if (myRole1 == ChildRole.LBRACKET ^ myRole2 == ChildRole.RBRACKET) {
       createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
     }
   }

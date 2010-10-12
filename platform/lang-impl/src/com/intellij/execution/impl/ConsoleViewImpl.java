@@ -34,7 +34,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.actions.ToggleAutoScrollToTheEndToolbarAction;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -542,10 +542,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
     }
 
-    if (myEditor.getSettings().isForceScrollToEnd() || isAtEndOfDocument) {
-      myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-      myEditor.getSelectionModel().removeSelection();
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (isAtEndOfDocument) {
+      scrollToTheEnd();
     }
   }
 
@@ -1457,10 +1455,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
       }
     };
-    final AnAction autoScrollToTheEndAction = new ToggleAutoScrollToTheEndToolbarAction() {
+    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
       @Override
-      protected Editor getEditor(AnActionEvent e) {
-        return myEditor;
+      public void actionPerformed(final AnActionEvent e) {
+        scrollToTheEnd();
       }
     };
 
@@ -1474,6 +1472,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       consoleActions[i + 4] = customActions.get(i);
     }
     return consoleActions;
+  }
+
+  private void scrollToTheEnd() {
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+    myEditor.getSelectionModel().removeSelection();
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public void setEditorEnabled(boolean enabled) {

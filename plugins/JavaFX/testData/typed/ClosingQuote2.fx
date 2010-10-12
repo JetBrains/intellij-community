@@ -1,0 +1,1 @@
+var a = "unterminated string<caret>

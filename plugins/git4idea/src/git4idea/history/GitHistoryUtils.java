@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.StringTokenizer;
@@ -554,17 +553,17 @@ public class GitHistoryUtils {
     return rc;
   }
 
-  public static List<CommitHashPlusParents> hashesWithParents(Project project, FilePath path, final String... parameters) throws VcsException {
+  /*public static List<CommitHashPlusParents> hashesWithParents(Project project, FilePath path, final String... parameters) throws VcsException {
     final CollectConsumer<CommitHashPlusParents> consumer = new CollectConsumer<CommitHashPlusParents>();
     hashesWithParents(project, path, consumer, parameters);
     return (List<CommitHashPlusParents>) consumer.getResult();
-  }
+  } */
 
-  public static void hashesWithParents(Project project, FilePath path, final Consumer<CommitHashPlusParents> consumer, final String... parameters) throws VcsException {
+  public static Runnable hashesWithParents(Project project, FilePath path, final Consumer<CommitHashPlusParents> consumer, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
@@ -609,6 +608,13 @@ public class GitHistoryUtils {
       }
     });
     h.start();
+
+    return new Runnable() {
+      @Override
+      public void run() {
+        h.cancel();
+      }
+    };
   }
 
   @Nullable

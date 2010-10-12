@@ -660,37 +660,41 @@ public class Messages {
     }
 
     protected static JTextPane createMessageComponent(final String message) {
-      JLabel label = new JLabel();
       final JTextPane messageComponent = new JTextPane();
-      messageComponent.setFont(label.getFont());
-      if (BasicHTML.isHTMLString(message)) {
-        final HTMLEditorKit editorKit = new HTMLEditorKit();
-        editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(label.getFont(), label.getForeground()));
-        messageComponent.setEditorKit(editorKit);
-        messageComponent.setContentType("text/html");
-        messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
-      }
-      messageComponent.setText(message);
-      messageComponent.setEditable(false);
-      if (messageComponent.getCaret() != null) {
-        messageComponent.setCaretPosition(0);
-      }
-
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
-        messageComponent.setOpaque(false);
-        messageComponent.setBackground(new Color(0, 0, 0, 0));
-      } else {
-        messageComponent.setBackground(UIUtil.getOptionPaneBackground());
-      }
-
-      messageComponent.setForeground(label.getForeground());
-      return messageComponent;
+      return configureMessagePaneUi(messageComponent, message);
     }
 
     @Override
     protected void doHelpAction() {
       // do nothing
     }
+  }
+
+  public static JTextPane configureMessagePaneUi(JTextPane messageComponent, String message) {
+    messageComponent.setFont(UIUtil.getLabelFont());
+    if (BasicHTML.isHTMLString(message)) {
+      final HTMLEditorKit editorKit = new HTMLEditorKit();
+      editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(UIUtil.getLabelFont(), UIUtil.getLabelForeground()));
+      messageComponent.setEditorKit(editorKit);
+      messageComponent.setContentType("text/html");
+      messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
+    }
+    messageComponent.setText(message);
+    messageComponent.setEditable(false);
+    if (messageComponent.getCaret() != null) {
+      messageComponent.setCaretPosition(0);
+    }
+
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
+      messageComponent.setOpaque(false);
+      messageComponent.setBackground(new Color(0, 0, 0, 0));
+    }
+    else {
+      messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+    }
+
+    messageComponent.setForeground(UIUtil.getLabelForeground());
+    return messageComponent;
   }
 
   protected static class TwoStepConfirmationDialog extends MessageDialog {

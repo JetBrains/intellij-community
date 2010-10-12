@@ -644,7 +644,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (virtualFile != null) {
       int startOffset = psiElement.getTextOffset();
       if (descriptor instanceof ProblemDescriptorImpl) {
-        final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRangeForNavigation();
+        final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
         if (textRange != null) {
           if (virtualFile instanceof VirtualFileWindow) {
             virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();

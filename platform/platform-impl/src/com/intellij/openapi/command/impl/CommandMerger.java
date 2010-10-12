@@ -16,8 +16,10 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +39,8 @@ public class CommandMerger {
   private String myCommandName = null;
   private boolean myValid = true;
   private List<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
-  private Set<DocumentReference> myAffectedDocuments = new THashSet<DocumentReference>();
+  private Set<DocumentReference> myAllAffectedDocuments = new THashSet<DocumentReference>();
+  private Set<DocumentReference> myAdditionalAffectedDocuments = new THashSet<DocumentReference>();
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -59,7 +62,7 @@ public class CommandMerger {
     myCurrentActions.add(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {
-      Collections.addAll(myAffectedDocuments, refs);
+      Collections.addAll(myAllAffectedDocuments, refs);
     }
     myForcedGlobal |= action.isGlobal();
   }
@@ -82,7 +85,7 @@ public class CommandMerger {
 
   private boolean shouldMerge(Object groupId, CommandMerger nextCommandToMerge) {
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
-      return !hasActions() || !nextCommandToMerge.hasActions() || myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
+      return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
     return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, myLastGroupId);
   }
@@ -94,11 +97,12 @@ public class CommandMerger {
   private void merge(CommandMerger nextCommandToMerge) {
     setBeforeState(nextCommandToMerge.myStateBefore);
     myStateAfter = nextCommandToMerge.myStateAfter;
-    if(myTransparent) { // todo write test
+    if (myTransparent) { // todo write test
       if (nextCommandToMerge.hasActions()) {
         myTransparent &= nextCommandToMerge.myTransparent;
       }
-    } else {
+    }
+    else {
       if (!hasActions()) {
         myTransparent = nextCommandToMerge.myTransparent;
       }
@@ -106,7 +110,8 @@ public class CommandMerger {
     myValid &= nextCommandToMerge.myValid;
     myForcedGlobal |= nextCommandToMerge.myForcedGlobal;
     myCurrentActions.addAll(nextCommandToMerge.myCurrentActions);
-    myAffectedDocuments.addAll(nextCommandToMerge.myAffectedDocuments);
+    myAllAffectedDocuments.addAll(nextCommandToMerge.myAllAffectedDocuments);
+    myAdditionalAffectedDocuments.addAll(nextCommandToMerge.myAdditionalAffectedDocuments);
     mergeUndoConfirmationPolicy(nextCommandToMerge.getUndoConfirmationPolicy());
   }
 
@@ -123,6 +128,19 @@ public class CommandMerger {
 
   public void flushCurrentCommand() {
     if (hasActions()) {
+      if (!myAdditionalAffectedDocuments.isEmpty()) {
+        DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(new DocumentReference[myAdditionalAffectedDocuments.size()]);
+        myCurrentActions.add(new BasicUndoableAction(refs) {
+          @Override
+          public void undo() throws UnexpectedUndoException {
+          }
+
+          @Override
+          public void redo() throws UnexpectedUndoException {
+          }
+        });
+      }
+
       myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
                                                                     isGlobal(),
                                                                     myManager.getProject(),
@@ -140,7 +158,8 @@ public class CommandMerger {
 
   private void reset() {
     myCurrentActions = new ArrayList<UndoableAction>();
-    myAffectedDocuments = new THashSet<DocumentReference>();
+    myAllAffectedDocuments = new THashSet<DocumentReference>();
+    myAdditionalAffectedDocuments = new THashSet<DocumentReference>();
     myLastGroupId = null;
     myForcedGlobal = false;
     myTransparent = false;
@@ -152,7 +171,7 @@ public class CommandMerger {
   }
 
   private void clearRedoStacks(CommandMerger nextMerger) {
-    myManager.getRedoStacksHolder().clearStacks(isGlobal(), nextMerger.myAffectedDocuments);
+    myManager.getRedoStacksHolder().clearStacks(isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
@@ -169,7 +188,7 @@ public class CommandMerger {
 
   private boolean affectsMultiplePhysicalDocs() {
     int count = 0;
-    for (DocumentReference each : myAffectedDocuments) {
+    for (DocumentReference each : myAllAffectedDocuments) {
       VirtualFile file = each.getFile();
       if (file instanceof LightVirtualFile) continue;
       if (++count > 1) return true;
@@ -186,12 +205,12 @@ public class CommandMerger {
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
       if (!undoRedo.isTransparent()) break;
-      undoRedo.execute(true);
+      if (!undoRedo.execute(true)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
-      undoRedo.execute(false);
+      if (!undoRedo.execute(false)) return;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }
@@ -211,13 +230,10 @@ public class CommandMerger {
     return !myCurrentActions.isEmpty();
   }
 
-  public Collection<DocumentReference> getAffectedDocuments() {
-    return myAffectedDocuments;
-  }
-
   public boolean isUndoAvailable(Collection<DocumentReference> refs) {
     if (hasNonUndoableActions()) return false;
     if (refs.isEmpty()) return isGlobal() && hasActions();
+
     for (DocumentReference each : refs) {
       if (hasChangesOf(each)) return true;
     }
@@ -236,7 +252,7 @@ public class CommandMerger {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs == null || ArrayUtil.contains(ref, refs)) return true;
     }
-    return false;
+    return hasActions() && myAdditionalAffectedDocuments.contains(ref);
   }
 
   public void setBeforeState(EditorAndState state) {
@@ -249,8 +265,13 @@ public class CommandMerger {
     myStateAfter = state;
   }
 
+  public void addAdditionalAffectedDocuments(Collection<DocumentReference> refs) {
+    myAllAffectedDocuments.addAll(refs);
+    myAdditionalAffectedDocuments.addAll(refs);
+  }
+
   public void invalidateActionsFor(DocumentReference ref) {
-    if (myAffectedDocuments.contains(ref)) {
+    if (myAllAffectedDocuments.contains(ref)) {
       myValid = false;
     }
   }

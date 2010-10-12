@@ -37,7 +37,7 @@ public class LangScriptingContextConfigurable implements Configurable {
 
   public LangScriptingContextConfigurable(ScriptingLibraryManager libManager, LangScriptingContextProvider provider) {
     LibraryTable libTable = libManager.getLibraryTable();
-    myPanel = new ScriptingLibrariesPanel(libTable);
+    myPanel = new ScriptingLibrariesPanel(provider, libManager.getProject(), libTable);
     myProvider = provider;
     myLibManager = libManager;
   }

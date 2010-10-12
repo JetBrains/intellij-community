@@ -93,6 +93,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
    * {@inheritDoc}
    */
   public RepositoryLocation getLocationFor(FilePath root) {
+    // TODO !!! consider some caching for the case when we do not have tracked remote branch
+    // TODO - in this case returned NULL is NOT cached (in ProjectKeyComponent)
     VirtualFile gitRoot = GitUtil.getGitRootOrNull(root);
     if (gitRoot == null) {
       return null;

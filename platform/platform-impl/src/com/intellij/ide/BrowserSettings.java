@@ -76,8 +76,10 @@ public class BrowserSettings implements Configurable, SearchableConfigurable {
   }
 
   public void disposeUIResources() {
-    mySettingsPanel.disposeUIResources();
-    mySettingsPanel = null;
+    if (mySettingsPanel != null) {
+      mySettingsPanel.disposeUIResources();
+      mySettingsPanel = null;
+    }
   }
 
 }

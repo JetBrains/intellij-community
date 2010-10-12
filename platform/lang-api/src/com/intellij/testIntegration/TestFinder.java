@@ -27,12 +27,12 @@ public interface TestFinder {
   ExtensionPointName<TestFinder> EP_NAME = ExtensionPointName.create("com.intellij.testFinder");
 
   @Nullable
-  PsiElement findSourceElement(PsiElement from);
+  PsiElement findSourceElement(@NotNull PsiElement from);
 
   @NotNull
-  Collection<PsiElement> findTestsForClass(PsiElement element);
+  Collection<PsiElement> findTestsForClass(@NotNull PsiElement element);
   @NotNull
-  Collection<PsiElement> findClassesForTest(PsiElement element);
+  Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 
-  boolean isTest(PsiElement element);
+  boolean isTest(@NotNull PsiElement element);
 }

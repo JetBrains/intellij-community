@@ -50,8 +50,4 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
   public void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void flush() {
-  }
 }

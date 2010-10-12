@@ -375,7 +375,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public Icon getIcon() {
-          return ProgramRunnerUtil.getConfigurationIcon(project, getValue());
+          return RunManagerEx.getInstanceEx(project).getConfigurationIcon(getValue());
         }
 
         @Override
@@ -563,7 +563,7 @@ public class ChooseRunConfigurationAction extends AnAction {
             final ItemWrapper wrapper = new ItemWrapper(configuration) {
               @Override
               public Icon getIcon() {
-                return IconLoader.getTransparentIcon(ProgramRunnerUtil.getConfigurationIcon(project, configuration), 0.3f);
+                return RunManagerEx.getInstanceEx(project).getConfigurationIcon(configuration);
               }
 
               @Override

@@ -68,7 +68,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
     final Map<String, Set<RefEntity>> contents = tool.getContent();
     final Set<RefModule> moduleProblems = tool.getModuleProblems();
-    if (moduleProblems != null) {
+    if (moduleProblems != null && !moduleProblems.isEmpty()) {
       Set<RefEntity> entities = contents.get("");
       if (entities == null) {
         entities = new HashSet<RefEntity>();

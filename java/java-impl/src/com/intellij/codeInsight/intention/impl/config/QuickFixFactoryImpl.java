@@ -45,7 +45,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   public IntentionAction createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy) {
-    return new MethodReturnFix(method, toReturn, fixWholeHierarchy);
+    return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy);
   }
 
   public IntentionAction createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
