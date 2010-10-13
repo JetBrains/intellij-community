@@ -20,7 +20,6 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -81,9 +80,8 @@ public class EditorFoldingInfo {
   public static void resetInfo(final Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info != null) {
-      final DocumentEx document = (DocumentEx)editor.getDocument();
       for(FoldRegion region:info.myFoldRegionToSmartPointerMap.keySet()) {
-        document.removeRangeMarker((RangeMarkerEx)region);
+        ((RangeMarkerEx)region).dispose();
       }
     }
     editor.putUserData(KEY, null);

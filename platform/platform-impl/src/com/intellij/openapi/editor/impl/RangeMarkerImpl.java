@@ -74,6 +74,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return myId;
   }
 
+  @Override
+  public void dispose() {
+    myDocument.removeRangeMarker(this);
+  }
+
   public int getStartOffset() {
     return myStart + (myNode == null ? 0 : myNode.computeDeltaUpToRoot());
   }

@@ -73,7 +73,7 @@ public class TemplateSegments {
 
   public void replaceSegmentAt(int index, int start, int end) {
     RangeMarker rangeMarker = mySegments.get(index);
-    ((DocumentEx)rangeMarker.getDocument()).removeRangeMarker((RangeMarkerEx)rangeMarker);
+    ((RangeMarkerEx)rangeMarker).dispose();
     Document doc = myEditor.getDocument();
     rangeMarker = doc.createRangeMarker(start, end);
     rangeMarker.setGreedyToLeft(true);

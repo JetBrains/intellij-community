@@ -79,15 +79,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }
-        releaseBulkCaretMarker((DocumentEx)doc);
+        releaseBulkCaretMarker();
       }
     };
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, bulkUpdateListener);
   }
 
-  private void releaseBulkCaretMarker(DocumentEx doc) {
+  private void releaseBulkCaretMarker() {
     if (savedBeforeBulkCaretMarker != null) {
-      doc.removeRangeMarker((RangeMarkerEx)savedBeforeBulkCaretMarker);
+      ((RangeMarkerEx)savedBeforeBulkCaretMarker).dispose();
       savedBeforeBulkCaretMarker = null;
     }
   }
@@ -560,7 +560,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void dispose() {
-    releaseBulkCaretMarker((DocumentEx)myEditor.getDocument());
+    releaseBulkCaretMarker();
   }
 
   /**
