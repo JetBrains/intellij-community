@@ -51,7 +51,7 @@ public abstract class StaticMemberProcessor {
     };
 
     final PrefixMatcher matcher = resultSet.getPrefixMatcher();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
     final String[] methodNames = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       public String[] compute() {
