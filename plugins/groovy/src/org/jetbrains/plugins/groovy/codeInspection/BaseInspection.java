@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -90,10 +91,10 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
-    if (!(psiFile instanceof GroovyFile)) {
+    if (!(psiFile instanceof GroovyFileBase)) {
       return super.checkFile(psiFile, inspectionManager, isOnTheFly);
     }
-    final GroovyFile groovyFile = (GroovyFile) psiFile;
+    final GroovyFileBase groovyFile = (GroovyFileBase) psiFile;
 
     final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, isOnTheFly);
     final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, isOnTheFly);
