@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -88,24 +88,21 @@ public class FileInfoManager implements Disposable {
   @Nullable
   public static Object getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
     if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
-      final LookupItem result = new LookupItem(psiElement, encoded);
-      result.setIcon(icon);
-      return result;
+      return LookupElementBuilder.create(psiElement, encoded).setIcon(icon);
     }
 
     return getFileInfoManager()._getLookupItem((PsiFile)psiElement, encoded, icon);
   }
 
   public Object _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
-    final LookupItem result = new LookupItem(file, name);
-    result.setIcon(icon);
+    LookupElementBuilder builder = LookupElementBuilder.create(file, name).setIcon(icon);
 
     final String info = _getInfo(file);
     if (info != null) {
-      result.setTailText(String.format(" (%s)", info), true);
+      return builder.setTailText(String.format(" (%s)", info), true);
     }
 
-    return result;
+    return builder;
   }
 
   public void dispose() {
