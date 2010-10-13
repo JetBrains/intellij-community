@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
@@ -43,9 +44,13 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
   }
 
   public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull final String runtimeName, final Project project) {
-    PsiFile[] files = FilenameIndex.getFilesByName(project, runtimeName + "." + GantScriptType.DEFAULT_EXTENSION,
-                                                   GlobalSearchScope.allScope(project));
-    if (files.length == 1) return files[0];
+    try {
+      PsiFile[] files = FilenameIndex.getFilesByName(project, runtimeName + "." + GantScriptType.DEFAULT_EXTENSION,
+                                                     GlobalSearchScope.allScope(project));
+      if (files.length == 1) return files[0];
+    }
+    catch (ProcessCanceledException ignored) {
+    }
     return null;
   }
 }
