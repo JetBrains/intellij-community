@@ -478,7 +478,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (orderEntry instanceof ModuleOrderEntry) {
         final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
         if (depModule != null) {
-          VirtualFile[] importedClassRoots = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
+          VirtualFile[] importedClassRoots =
+            OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
           for (VirtualFile importedClassRoot : importedClassRoots) {
             addEntryToMap(importedClassRoot, orderEntry, depEntries);
           }
@@ -724,10 +725,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
               String rel = FileUtil.getRelativePath(file.getUrl(), eachRoot.getUrl(), '/');
               if (rel != null) {
                 VirtualFile f = file.findFileByRelativePath(rel);
-                LOG.assertTrue(f != null, "cannot find file.\n  root: " + eachRoot.getUrl()
-                                          + "\n  updated file: " + file.getUrl()
-                                          + "\n  relative path: " + rel);
-                fillMapWithModuleContent(f, eachModule, f);
+                if (f != null) {
+                  fillMapWithModuleContent(f, eachModule, f);
+                }
               }
             }
           }
