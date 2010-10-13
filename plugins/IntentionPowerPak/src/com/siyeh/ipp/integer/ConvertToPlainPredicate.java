@@ -25,18 +25,17 @@ import com.siyeh.ipp.base.PsiElementPredicate;
  */
 public class ConvertToPlainPredicate implements PsiElementPredicate {
 
-  public boolean satisfiedBy(PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression expression = (PsiLiteralExpression)element;
-      final PsiType type = expression.getType();
-
-      if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
-        final String text = expression.getText();
-        if (text != null) {
-          return text.contains("e") || text.contains("E");
+    public boolean satisfiedBy(PsiElement element) {
+        if (!(element instanceof PsiLiteralExpression)) {
+            return false;
         }
-      }
+        final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+        final PsiType type = expression.getType();
+
+        if (!PsiType.DOUBLE.equals(type) && !PsiType.FLOAT.equals(type)) {
+            return false;
+        }
+        final String text = expression.getText();
+        return text != null && (text.contains("e") || text.contains("E"));
     }
-    return false;
-  }
 }

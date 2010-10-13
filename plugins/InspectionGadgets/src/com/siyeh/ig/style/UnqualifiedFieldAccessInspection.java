@@ -56,7 +56,6 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
     private static class UnqualifiedFieldAccessFix
             extends InspectionGadgetsFix {
 
-        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(

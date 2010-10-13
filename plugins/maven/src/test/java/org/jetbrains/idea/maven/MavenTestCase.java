@@ -288,8 +288,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return module;
   }
 
-  protected void createProjectPom(String xml) throws IOException {
-    myProjectPom = createPomFile(myProjectRoot, xml);
+  protected VirtualFile createProjectPom(String xml) throws IOException {
+    return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
   protected VirtualFile createModulePom(String relativePath, String xml) throws IOException {

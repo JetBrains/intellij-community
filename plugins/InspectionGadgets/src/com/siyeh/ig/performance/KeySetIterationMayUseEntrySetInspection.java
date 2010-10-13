@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,11 +162,18 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiParameter newParameter = factory.createParameter(
                     variableName, parameterType);
+            if (parameter.hasModifierProperty(PsiModifier.FINAL)) {
+                final PsiModifierList modifierList =
+                        newParameter.getModifierList();
+                if (modifierList != null) {
+                    modifierList.setModifierProperty(PsiModifier.FINAL, true);
+                }
+            }
             parameter.replace(newParameter);
         }
 
         private static void replaceParameterAccess(PsiParameter parameter,
-                                                   String variableName,
+                                                   @NonNls String variableName,
                                                    PsiElement map,
                                                    PsiElement context) {
             final ParameterAccessCollector collector =
@@ -261,7 +268,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                         (PsiMethodCallExpression) grandParent;
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
-                final String methodName =
+                @NonNls final String methodName =
                         methodExpression.getReferenceName();
                 if (!"get".equals(methodName)) {
                     return false;
@@ -345,7 +352,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     (PsiMethodCallExpression) iteratedExpression;
             final PsiReferenceExpression methodExpression =
                     methodCallExpression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if (!"keySet".equals(methodName)) {
                 return false;
             }
@@ -405,9 +413,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiAssignmentExpression) {
                 final PsiElement target = expression.resolve();
-                if (key.equals(target)) {
-                    assigned = true;
-                } else if (map.equals(target)) {
+                if (key.equals(target) || map.equals(target)) {
                     assigned = true;
                 }
             } else if (!(parent instanceof PsiReferenceExpression)) {
@@ -425,7 +431,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
             if (!map.equals(target)) {
                 return;
             }
-            final String methodName =
+            @NonNls final String methodName =
                     methodExpression.getReferenceName();
             if (!"get".equals(methodName)) {
                 return;
