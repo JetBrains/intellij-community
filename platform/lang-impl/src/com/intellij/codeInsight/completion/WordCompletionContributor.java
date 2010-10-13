@@ -105,11 +105,28 @@ public class WordCompletionContributor extends CompletionContributor implements 
     while (textContainer != null) {
       final IElementType elementType = textContainer.getElementType();
       if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) ||
-          (elementType == PlainTextTokenTypes.PLAIN_TEXT && parameters.getOriginalFile().getViewProvider().getVirtualFile().isInLocalFileSystem())) {
+          isPlainText(parameters, elementType)) {
         return true;
       }
       textContainer = textContainer.getTreeParent();
     }
     return false;
+  }
+
+  private static boolean isPlainText(CompletionParameters parameters, IElementType elementType) {
+    if (elementType != PlainTextTokenTypes.PLAIN_TEXT) {
+      return false;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+
+    final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+    if (completion == null || !completion.isAutopopupCompletion()) {
+      return true;
+    }
+
+    return parameters.getOriginalFile().getViewProvider().getVirtualFile().isInLocalFileSystem();
   }
 }
