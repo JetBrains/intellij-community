@@ -201,7 +201,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    final boolean checkAccess = parameters.getInvocationCount() == 1;
+    final boolean checkAccess = parameters.getInvocationCount() <= 1;
 
     LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet result) {

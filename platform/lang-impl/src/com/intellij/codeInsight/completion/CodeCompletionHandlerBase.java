@@ -98,7 +98,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     try {
-      invokeCompletion(project, editor, psiFile, 1);
+      invokeCompletion(project, editor, psiFile, focusLookup ? 1 : 0);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");

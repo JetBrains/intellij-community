@@ -64,6 +64,12 @@ public class CompletionParameters {
     return myOffset;
   }
 
+  /**
+   * @return
+   * 0 for autopopup
+   * 1 for explicitly invoked completion
+   * >1 for next completion invocations when one lookup is already active
+   */
   public int getInvocationCount() {
     return myInvocationCount;
   }
