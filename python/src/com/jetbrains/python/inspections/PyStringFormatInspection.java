@@ -87,8 +87,8 @@ public class PyStringFormatInspection extends PyInspection {
                 if (a_type != null) {
                   checkTypeCompatible(problemTarget, a_type.getName(), myFormatSpec.get(String.valueOf(i+1)));
                 }
-                return tuple_type.getElementCount();
               }
+              return tuple_type.getElementCount();
             }
             else checkExpressionType(rightExpression, myFormatSpec.get("1"), problemTarget);
           }
@@ -175,7 +175,7 @@ public class PyStringFormatInspection extends PyInspection {
           }
           for (String key : myUsedMappingKeys.keySet()) {
             if (!myUsedMappingKeys.get(key).booleanValue()) {
-              registerProblem(rightExpression, PyBundle.message("INSP.key.$0.has.no.arg", key));
+              registerProblem(problemTarget, PyBundle.message("INSP.key.$0.has.no.arg", key));
               break;
             }
           }
