@@ -28,11 +28,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ControlledCycle;
+import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import git4idea.GitVcs;
 import git4idea.history.browser.ChangesFilter;
@@ -55,7 +55,7 @@ public class GitUsersComponent {
   private static final Logger LOG = Logger.getInstance("#git4idea.history.GitUsersComponent");
 
   private final Object myLock;
-  private PersistentHashMap<String, UsersData> myState;
+  private SmallMapSerializer<String, UsersData> myState;
   private final Map<VirtualFile, Pair<String, LowLevelAccess>> myAccessMap;
 
   // activate-deactivate
@@ -101,14 +101,8 @@ public class GitUsersComponent {
   public List<String> getUsersList(final VirtualFile root) {
     final Pair<String, LowLevelAccess> pair = myAccessMap.get(root);
     if (pair == null) return null;
-    try {
-      final UsersData usersData = myState.get(pair.getFirst());
-      return usersData == null ? null : new ArrayList<String>(usersData.getUsers());
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return null;
-    }
+    final UsersData usersData = myState.get(pair.getFirst());
+    return usersData == null ? null : new ArrayList<String>(usersData.getUsers());
   }
 
   // singleton update process, only roots can change outside
@@ -116,36 +110,31 @@ public class GitUsersComponent {
     public boolean call(final AtomicSectionsAware atomicSectionsAware) {
       atomicSectionsAware.checkShouldExit();
       if (myIsActive) {
-        try {
-          final HashMap<VirtualFile, Pair<String, LowLevelAccess>> copy;
-          synchronized (myLock) {
-            copy = new HashMap<VirtualFile, Pair<String, LowLevelAccess>>(myAccessMap);
-          }
+        final HashMap<VirtualFile, Pair<String, LowLevelAccess>> copy;
+        synchronized (myLock) {
+          copy = new HashMap<VirtualFile, Pair<String, LowLevelAccess>>(myAccessMap);
+        }
 
-          final Map<String, UsersData> toUpdate = new HashMap<String, UsersData>();
-          for (Pair<String, LowLevelAccess> pair : copy.values()) {
-            atomicSectionsAware.checkShouldExit();
+        final Map<String, UsersData> toUpdate = new HashMap<String, UsersData>();
+        for (Pair<String, LowLevelAccess> pair : copy.values()) {
+          atomicSectionsAware.checkShouldExit();
 
-            final String key = pair.getFirst();
-            UsersData data = myState.get(key);
-            if (data == null) {
-              data = new UsersData();
-              data.forceUpdate();
-            }
-            if (data.load(pair.getSecond(), atomicSectionsAware)) {
-              toUpdate.put(key, data);
-            }
+          final String key = pair.getFirst();
+          UsersData data = myState.get(key);
+          if (data == null) {
+            data = new UsersData();
+            data.forceUpdate();
           }
-
-          for (Map.Entry<String, UsersData> entry : toUpdate.entrySet()) {
-            myState.put(entry.getKey(), entry.getValue());
-          }
-          if (! toUpdate.isEmpty()) {
-            myState.force();
+          if (data.load(pair.getSecond(), atomicSectionsAware)) {
+            toUpdate.put(key, data);
           }
         }
-        catch (IOException e) {
-          LOG.info(e);
+
+        for (Map.Entry<String, UsersData> entry : toUpdate.entrySet()) {
+          myState.put(entry.getKey(), entry.getValue());
+        }
+        if (! toUpdate.isEmpty()) {
+          myState.force();
         }
       }
       return myIsActive;
@@ -154,12 +143,7 @@ public class GitUsersComponent {
 
   public void activate() {
     myVcs = (GitVcs) myManager.findVcsByName(GitVcs.getKey().getName());
-    try {
-      myState = new PersistentHashMap<String, UsersData>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
-    }
-    catch (IOException e) {
-      myState = null;
-    }
+    myState = new SmallMapSerializer<String, UsersData>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
 
     myIsActive = true;
     myManager.addVcsListener(myVcsListener);
@@ -167,12 +151,7 @@ public class GitUsersComponent {
   }
 
   public void deactivate() {
-    if (myState != null) try {
-      myState.close();
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+    myState.force();
     myState = null;
 
     synchronized (myLock) {
