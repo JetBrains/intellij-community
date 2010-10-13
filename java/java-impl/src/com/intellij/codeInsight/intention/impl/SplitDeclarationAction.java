@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
-    int offset = editor.getCaretModel().getOffset();
-    if (!(element instanceof PsiJavaToken)) return false;
     if (element instanceof PsiCompiledElement) return false;
     if (!element.getManager().isInProject(element)) return false;
 
@@ -71,28 +69,17 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   private boolean isAvaliableOnDeclarationStatement(PsiDeclarationStatement decl, PsiElement element) {
     PsiElement[] declaredElements = decl.getDeclaredElements();
+    if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
     if (declaredElements.length == 1) {
-      if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
       PsiLocalVariable var = (PsiLocalVariable) declaredElements[0];
       if (var.getInitializer() == null) return false;
-      PsiTypeElement type = var.getTypeElement();
-      if (PsiTreeUtil.isAncestor(type, element, false) ||
-          element.getParent() == var && ((PsiJavaToken)element).getTokenType() != JavaTokenType.SEMICOLON) {
-        setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
-        return true;
-      }
+      setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
+      return true;
     } else if (declaredElements.length > 1) {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
-      for (PsiElement declaredElement : declaredElements) {
-        if (!(declaredElement instanceof PsiLocalVariable)) return false;
-        PsiLocalVariable var = (PsiLocalVariable)declaredElement;
-        PsiTypeElement type = var.getTypeElement();
-        if (PsiTreeUtil.isAncestor(type, element, false) || element == var.getNameIdentifier()) {
-          setText(CodeInsightBundle.message("intention.split.declaration.text"));
-          return true;
-        }
-      }
+      setText(CodeInsightBundle.message("intention.split.declaration.text"));
+      return true;
     }
 
     return false;
