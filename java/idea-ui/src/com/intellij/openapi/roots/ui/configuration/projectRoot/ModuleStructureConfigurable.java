@@ -417,6 +417,22 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
+  public void removeLibraryOrderEntry(final Module module, final Library library) {
+    final ModuleEditor moduleEditor = myContext.myModulesConfigurator.getModuleEditor(module);
+    LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
+    final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
+    final OrderEntry[] entries = modelProxy.getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
+        modelProxy.removeOrderEntry(entry);
+        break;
+      }
+    }
+
+    myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
+    myTree.repaint();
+  }
+
   public void addLibraryOrderEntry(final Module module, final Library library) {
     Component parent = WindowManager.getInstance().suggestParentWindow(module.getProject());
 

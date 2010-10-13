@@ -403,7 +403,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         if (removeFacet((Facet)editableObject).isEmpty()) return false;
       }
       else if (editableObject instanceof Library) {
-        removeLibrary((Library)editableObject);
+        if (!removeLibrary((Library)editableObject)) return false;
       }
       else if (editableObject instanceof Artifact) {
         removeArtifact((Artifact)editableObject);
@@ -416,8 +416,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
 
-  protected void removeLibrary(Library library) {
-
+  protected boolean removeLibrary(Library library) {
+    return false;
   }
 
   protected void removeFacetNodes(@NotNull List<Facet> facets) {
