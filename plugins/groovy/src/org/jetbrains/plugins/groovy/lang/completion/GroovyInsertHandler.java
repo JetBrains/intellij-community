@@ -48,6 +48,7 @@ import java.util.Arrays;
  * @author ven
  */
 public class GroovyInsertHandler implements InsertHandler<LookupElement> {
+  public static final GroovyInsertHandler INSTANCE = new GroovyInsertHandler();
   private static final String CLOSURE_CLASS = "groovy.lang.Closure";
 
   public void handleInsert(InsertionContext context, LookupElement item) {

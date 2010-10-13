@@ -280,7 +280,7 @@ public class GroovyCompletionUtil {
 
   public static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
     builder = builder.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
-      .setInsertHandler(new GroovyInsertHandler());
+      .setInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
     builder = setTypeText(element, builder, substitutor);
     return builder;

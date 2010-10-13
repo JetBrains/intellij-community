@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDoc
  * @author ilyas
  */
 public class GroovyInsertHandlerAdapter implements InsertHandler {
-  private final GroovyInsertHandler myGroovyInsertHandler = new GroovyInsertHandler();
   private final GroovyDocMethodHandler myGroovyDocMethodHandler = new GroovyDocMethodHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
@@ -34,6 +33,6 @@ public class GroovyInsertHandlerAdapter implements InsertHandler {
       return;
     }
 
-    myGroovyInsertHandler.handleInsert(context, item);
+    GroovyInsertHandler.INSTANCE.handleInsert(context, item);
   }
 }

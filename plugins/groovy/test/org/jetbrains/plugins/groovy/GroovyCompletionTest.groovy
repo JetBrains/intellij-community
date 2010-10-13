@@ -370,6 +370,20 @@ class A {
     doVariantableTest("foo1", "foo2")
   }
 
+  public void testGrvy945() {
+    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """class MyCategory {
+  static def plus(MyCategory t, MyCat<caret>) {
+  }
+}""")
+    LookupElement[] lookupElements = myFixture.completeBasic()
+    assertNull(lookupElements)
+
+    assertEquals """class MyCategory {
+  static def plus(MyCategory t, MyCategory) {
+  }
+}""", getFileText(file)
+  }
+
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text
   }
