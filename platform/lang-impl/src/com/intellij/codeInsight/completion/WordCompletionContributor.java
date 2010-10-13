@@ -104,7 +104,8 @@ public class WordCompletionContributor extends CompletionContributor implements 
     ASTNode textContainer = element != null ? element.getNode() : null;
     while (textContainer != null) {
       final IElementType elementType = textContainer.getElementType();
-      if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
+      if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) ||
+          (elementType == PlainTextTokenTypes.PLAIN_TEXT && parameters.getOriginalFile().getViewProvider().getVirtualFile().isInLocalFileSystem())) {
         return true;
       }
       textContainer = textContainer.getTreeParent();
