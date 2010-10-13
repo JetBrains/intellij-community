@@ -23,6 +23,8 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -116,5 +118,13 @@ public class SmallMapSerializer<K,V> implements Forceable {
     public int hashCode() {
       return myDescriptor.getHashCode(myKey);
     }
+  }
+
+  public Collection<K> keySet() {
+    final ArrayList<K> result = new ArrayList<K>(myMap.size());
+    for (KeyWrapper<K> keyWrapper : myMap.keySet()) {
+      result.add(keyWrapper.myKey);
+    }
+    return result;
   }
 }
