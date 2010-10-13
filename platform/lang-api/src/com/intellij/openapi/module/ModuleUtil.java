@@ -25,9 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
@@ -108,25 +108,11 @@ public class ModuleUtil {
     if (!element.isValid()) return null;
 
     Project project = element.getProject();
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final ProjectFileIndex fileIndex = projectRootManager == null ? null : projectRootManager.getFileIndex();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-
-    /*
-     TODO[max]: Remove. This code seem to be unused and incorrect at the same time. At least module for PsiDirectory is being found using totally different way, which honors libraries
-    if (element instanceof PsiPackage) {
-      for (PsiDirectory directory : ((PsiPackage)element).getDirectories()) {
-        final Module module = fileIndex.getModuleForFile(directory.getVirtualFile());
-        if (module != null) {
-          return module;
-        }
-      }
-      return null;
-    }
-    */
-
-    if (element instanceof PsiDirectory) {
-      final VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
+    if (element instanceof PsiFileSystemItem) {
+      final VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
+      if (vFile == null) return element.getUserData(KEY_MODULE);
       if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
         final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
@@ -161,7 +147,7 @@ public class ModuleUtil {
       }
 
       final VirtualFile virtualFile = originalFile.getVirtualFile();
-      if (fileIndex != null && virtualFile != null) {
+      if (virtualFile != null) {
         return fileIndex.getModuleForFile(virtualFile);
       }
     }
