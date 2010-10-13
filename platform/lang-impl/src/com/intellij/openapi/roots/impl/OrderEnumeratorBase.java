@@ -169,38 +169,40 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   public int getFlags() {
     int flags = 0;
-    if (myProductionOnly)           flags |= 1;
+    if (myProductionOnly) flags |= 1;
     flags <<= 1;
-    if (myCompileOnly)              flags |= 1;
+    if (myCompileOnly) flags |= 1;
     flags <<= 1;
-    if (myRuntimeOnly)              flags |= 1;
+    if (myRuntimeOnly) flags |= 1;
     flags <<= 1;
-    if (myWithoutJdk)               flags |= 1;
+    if (myWithoutJdk) flags |= 1;
     flags <<= 1;
-    if (myWithoutLibraries)         flags |= 1;
+    if (myWithoutLibraries) flags |= 1;
     flags <<= 1;
-    if (myWithoutDepModules)        flags |= 1;
+    if (myWithoutDepModules) flags |= 1;
     flags <<= 1;
     if (myWithoutThisModuleContent) flags |= 1;
     flags <<= 1;
-    if (myRecursively)              flags |= 1;
+    if (myRecursively) flags |= 1;
     flags <<= 1;
-    if (myRecursivelyExportedOnly)  flags |= 1;
+    if (myRecursivelyExportedOnly) flags |= 1;
     flags <<= 1;
-    if (myExportedOnly)             flags |= 1;
+    if (myExportedOnly) flags |= 1;
     return flags;
   }
 
   protected void processEntries(final ModuleRootModel rootModel,
-                              Processor<OrderEntry> processor,
-                              Set<Module> processed, boolean firstLevel) {
+                                Processor<OrderEntry> processor,
+                                Set<Module> processed, boolean firstLevel) {
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (myWithoutJdk && entry instanceof JdkOrderEntry
           || myWithoutLibraries && entry instanceof LibraryOrderEntry
           || (myWithoutDepModules && !myRecursively) && entry instanceof ModuleOrderEntry
-          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
+          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) {
+        continue;
+      }
 
       boolean exported = !(entry instanceof JdkOrderEntry);
       if (entry instanceof ExportableOrderEntry) {
@@ -210,8 +212,10 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
         if (myProductionOnly) {
           if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
-            || myCompileOnly && !scope.isForProductionCompile()
-            || myRuntimeOnly && !scope.isForProductionRuntime()) continue;
+              || myCompileOnly && !scope.isForProductionCompile()
+              || myRuntimeOnly && !scope.isForProductionRuntime()) {
+            continue;
+          }
         }
         exported = exportableEntry.isExported();
       }
@@ -248,9 +252,6 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
       }
     }
   }
-
-  @Override
-  public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
   @Override
   public void forEachLibrary(@NotNull final Processor<Library> processor) {
@@ -304,6 +305,26 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
       }
     }
     return false;
+  }
+
+  void addAdditionalRoots(Module forModule, Collection<VirtualFile> result) {
+    if (myCustomHandlers != null) {
+      final List<String> urls = new ArrayList<String>();
+      for (OrderEnumerationHandler handler : myCustomHandlers) {
+        handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
+      }
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+      }
+    }
+  }
+
+  void addAdditionalRootsUrls(Module forModule, Collection<String> result) {
+    if (myCustomHandlers != null) {
+      for (OrderEnumerationHandler handler : myCustomHandlers) {
+        handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, result);
+      }
+    }
   }
 
   public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {

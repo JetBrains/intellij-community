@@ -29,7 +29,6 @@ public abstract class OrderEnumerationHandler {
   public static final ExtensionPointName<OrderEnumerationHandler> EP_NAME = ExtensionPointName.create("com.intellij.orderEnumerationHandler");
 
   public abstract boolean isApplicable(@NotNull Project project);
-
   public abstract boolean isApplicable(@NotNull Module module);
 
   public boolean shouldProcessRecursively(@NotNull ModuleOrderEntry dependency) {
@@ -39,7 +38,15 @@ public abstract class OrderEnumerationHandler {
   public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
                                  boolean productionOnly,
                                  boolean runtimeOnly,
-                                 boolean compileOnly, @NotNull Collection<String> urls) {
+                                 boolean compileOnly,
+                                 @NotNull Collection<String> urls) {
     return false;
+  }
+
+  public void addAdditionalRoots(@NotNull Module forModule,
+                                 boolean productionOnly,
+                                 boolean runtimeOnly,
+                                 boolean compileOnly,
+                                 @NotNull Collection<String> urls) {
   }
 }
