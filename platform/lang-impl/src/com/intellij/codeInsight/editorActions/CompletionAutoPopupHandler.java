@@ -56,7 +56,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     if (myAutopopupShown && LookupManager.getActiveLookup(editor) == null) {
       myGuard = true;
       try {
-        EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(c));
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(c), true);
       }
       finally {
         myGuard = false;

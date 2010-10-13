@@ -57,7 +57,7 @@ public class TypedHandler implements TypedActionHandler {
       lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
       Document document = editor.getDocument();
       long modificationStamp = document.getModificationStamp();
-      EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
+      EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
