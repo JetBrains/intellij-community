@@ -600,6 +600,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public synchronized void hideLastIntentionHint() {
     if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
       myLastIntentionHint.hide();
+      myLastIntentionHint = null;
     }
   }
 
