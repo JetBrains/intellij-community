@@ -1,3 +1,0 @@
-Stage {
-  title: bar(),
-}

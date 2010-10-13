@@ -1,1 +1,0 @@
-var a = <selection>if (x > 3) 35 else 47</selection>
