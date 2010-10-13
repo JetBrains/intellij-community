@@ -50,6 +50,8 @@ public class ResponseProcessor<R extends AbstractResponse> {
             }
           }
         }
+        catch (InterruptedException ignored) {
+        }
         catch (IOException e) {
           LOG.info(e);
         }

@@ -15,10 +15,11 @@
  */
 package com.intellij.util.io.socketConnection;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * @author nik
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public interface SocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends Disposable {
   ConnectionStatus getStatus();
 
-  void open() throws ExecutionException;
+  void open() throws IOException;
 
   void addListener(@NotNull SocketConnectionListener listener, @Nullable Disposable parentDisposable);
 
@@ -41,4 +42,7 @@ public interface SocketConnection<Request extends AbstractRequest, Response exte
   <R extends Response> void registerHandler(@NotNull Class<R> responseClass, @NotNull AbstractResponseHandler<R> handler);
 
   void close();
+
+  void sendRequest(@NotNull Request request, @Nullable AbstractResponseToRequestHandler<? extends Response> handler,
+                   int timeout, @NotNull Runnable onTimeout);
 }

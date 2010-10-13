@@ -15,7 +15,6 @@
  */
 package com.intellij.util.io.socketConnection.impl;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +59,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     myResponseProcessor = new ResponseProcessor<Response>(this);
   }
 
-  public void open() throws ExecutionException {
+  public void open() throws IOException {
     myServerSocket = createSocket();
     myPort = myServerSocket.getLocalPort();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -78,17 +77,19 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
   }
 
   @NotNull
-  private ServerSocket createSocket() throws ExecutionException {
+  private ServerSocket createSocket() throws IOException {
+    IOException exc = null;
     for (int i = 0; i < myPortsAttemptsNumber; i++) {
       int port = myInitialPort + i;
       try {
         return new ServerSocket(port);
       }
       catch (IOException e) {
+        exc = e;
         LOG.info(e);
       }
     }
-    throw new ExecutionException("Cannot create socket");
+    throw exc;
   }
 
   @Override
@@ -109,10 +110,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     }
   }
 
-  public void registerHandler(@NotNull Request request, AbstractResponseToRequestHandler<? extends Response> handler, boolean removeWhenProcessed) {
-    myResponseProcessor.registerHandler(request.getId(), handler);
-  }
-
+  @Override
   public void sendRequest(@NotNull Request request, @Nullable AbstractResponseToRequestHandler<? extends Response> handler,
                           int timeout, @NotNull Runnable onTimeout) {
     myTimeouts.put(request.getId(), new TimeoutInfo(timeout, onTimeout));
