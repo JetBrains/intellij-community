@@ -22,6 +22,7 @@ import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Comparator;
@@ -42,6 +43,7 @@ public class ArrayUtil {
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
+  public static final File[] EMPTY_FILE_ARRAY = new File[0];
 
   @NotNull
   public static byte[] realloc (@NotNull byte [] array, final int newSize) {
