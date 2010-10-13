@@ -22,13 +22,12 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.TestLookupManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
+ /**
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -64,11 +63,8 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
     handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
     final LookupManager instance = LookupManager.getInstance(myFixture.getProject());
-    if(instance instanceof TestLookupManager){
-      final TestLookupManager testLookupManager = ((TestLookupManager)instance);
-      if(testLookupManager.getActiveLookup() != null)
-        testLookupManager.forceSelection(Lookup.NORMAL_SELECT_CHAR, 1);
-    }
+    if(instance.getActiveLookup() != null)
+      instance.forceSelection(Lookup.NORMAL_SELECT_CHAR, 1);
   }
 
   private void addClassToProject(@Nullable String packageName, @NotNull String name) throws IOException {

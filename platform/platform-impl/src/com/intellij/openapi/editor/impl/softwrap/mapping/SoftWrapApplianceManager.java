@@ -513,6 +513,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     if (myOffset2widthInPixels.anchor <= 0) {
       myOffset2widthInPixels.anchor = context.offset;
     }
+    if (context.offset - myOffset2widthInPixels.anchor >= myOffset2widthInPixels.data.length) {
+      int[] newData = new int[myOffset2widthInPixels.data.length * 2];
+      System.arraycopy(myOffset2widthInPixels.data, 0, newData, 0, myOffset2widthInPixels.data.length);
+      myOffset2widthInPixels.data = newData;
+    }
     myOffset2widthInPixels.data[context.offset - myOffset2widthInPixels.anchor] = context.symbolWidthInPixels;
     myOffset2widthInPixels.end++;
     context.offset++;

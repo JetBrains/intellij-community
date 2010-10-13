@@ -43,13 +43,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</headless-implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
     </component>

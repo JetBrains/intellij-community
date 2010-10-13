@@ -1,10 +1,12 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,8 +27,12 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
   }
 
   public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider) {
+    return getRootsToIndex(provider, null);
+  }
+
+  public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider, @Nullable Project project) {
     if (provider instanceof IndexableSetContributor) {
-      return ((IndexableSetContributor)provider).getAdditionalRootsToIndex();
+      return ((IndexableSetContributor)provider).getAdditionalRootsToIndex(project);
     }
 
     final HashSet<VirtualFile> result = new HashSet<VirtualFile>();
@@ -37,6 +43,9 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
     return result;
   }
 
+  public Set<VirtualFile> getAdditionalRootsToIndex(@Nullable Project project) {
+    return getAdditionalRootsToIndex();
+  }
 
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();
 }

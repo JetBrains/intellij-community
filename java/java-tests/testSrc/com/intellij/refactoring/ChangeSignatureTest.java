@@ -116,6 +116,13 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testParamJavadoc() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(1, "z", PsiType.INT),
+      new ParameterInfoImpl(0, "y", PsiType.INT)
+    }, false);
+  }
+
   public void testSuperCallFromOtherMethod() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(-1, "nnn", PsiType.INT, "-222"),

@@ -471,7 +471,6 @@ public class TemplateState implements Disposable {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
-    if (lookupManager.isDisposed()) return;
 
     final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
     toProcessTab = false;

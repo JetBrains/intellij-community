@@ -1070,12 +1070,12 @@ public class RefactoringUtil {
         newTags.add(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createParamTag(parameter.getName(), ""));
       }
     }
-    PsiDocTag anchor = paramTags.length > 0 ? paramTags[paramTags.length - 1] : null;
-    for (PsiDocTag psiDocTag : newTags) {
-      anchor = (PsiDocTag)docComment.addAfter(psiDocTag, anchor);
-    }
+    PsiElement anchor = paramTags.length > 0 ? paramTags[0].getPrevSibling() : null;
     for (PsiDocTag paramTag : paramTags) {
       paramTag.delete();
+    }
+    for (PsiDocTag psiDocTag : newTags) {
+      anchor = docComment.addAfter(psiDocTag, anchor);
     }
   }
 

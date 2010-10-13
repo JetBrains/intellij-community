@@ -19,15 +19,13 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -54,23 +52,18 @@ public class TypedHandler implements TypedActionHandler {
     final LookupElement currentItem = lookup.getCurrentItem();
     final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
 
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
-      public void run() {
-        EditorModificationUtil.deleteSelectedText(editor);
-        if (result == CharFilter.Result.ADD_TO_PREFIX) {
-          lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
-          Document document = editor.getDocument();
-          long modificationStamp = document.getModificationStamp();
-          EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
-          AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
-        }
-      }
-    }, "", editor.getDocument());
+    EditorModificationUtil.deleteSelectedText(editor);
+    if (result == CharFilter.Result.ADD_TO_PREFIX) {
+      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
+      Document document = editor.getDocument();
+      long modificationStamp = document.getModificationStamp();
+      EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
-    if (result == CharFilter.Result.ADD_TO_PREFIX){
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CompletionAutoPopupHandler.ourLastOffset = editor.getCaretModel().getOffset() - 1;
-      CompletionProgressIndicator.hideAutopopupIfMeaningless(lookup);
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      if (completion != null) {
+        completion.hideAutopopupIfMeaningless();
+      }
       return;
     }
 

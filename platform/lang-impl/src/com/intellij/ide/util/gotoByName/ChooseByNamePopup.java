@@ -42,7 +42,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
 
-  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
+  protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
                             final PsiElement context, @Nullable final String predefinedText) {
     super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
     if (oldPopup == null && predefinedText != null) {

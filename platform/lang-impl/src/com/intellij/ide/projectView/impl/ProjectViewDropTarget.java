@@ -90,11 +90,26 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
       if (redundant) return false;
+    } else {
+      final PsiFileSystemItem[] psiFiles = getPsiFiles(attached);
+      if (psiFiles == null) return false;
+      if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
     }
     final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
     aEvent.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE );
     aEvent.setDropPossible(true, null);
     return false;
+  }
+
+  private PsiFileSystemItem[] getPsiFiles(Object attached) {
+    Object fileList;
+    try {
+      fileList = ((EventInfo)attached).getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+    }
+    catch (Exception e) {
+      return null;
+    }
+    return getPsiFiles((List<File>)fileList);
   }
 
   @Override
@@ -202,6 +217,10 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     void doDropFiles(List<File> fileList, TreeNode targetNode);
   }
 
+  protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
+    return myPsiRetriever.getPsiElement(treeNode);
+  }
+
   public abstract class MoveCopyDropHandler implements DropHandler {
 
     public boolean isValidSource(@NotNull final TreeNode[] sourceNodes, TreeNode targetNode) {
@@ -214,9 +233,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     protected abstract boolean canDrop(@NotNull TreeNode[] sourceNodes, @Nullable TreeNode targetNode);
 
-    protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
-      return myPsiRetriever.getPsiElement(treeNode);
-    }
+
 
 
     @NotNull protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
@@ -239,21 +256,22 @@ class ProjectViewDropTarget implements DnDNativeTarget {
              targetElement.getProject() == sourceElements[0].getProject();
     }
 
-    protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
-      List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
-      for (File file : fileList) {
-        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-        if (vFile != null) {
-          final PsiFileSystemItem psiFile = vFile.isDirectory()
-                                            ? PsiManager.getInstance(myProject).findDirectory(vFile)
-                                            : PsiManager.getInstance(myProject).findFile(vFile);
-          if (psiFile != null) {
-            sourceFiles.add(psiFile);
-          }
+  }
+
+  protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
+    List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
+    for (File file : fileList) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      if (vFile != null) {
+        final PsiFileSystemItem psiFile = vFile.isDirectory()
+                                          ? PsiManager.getInstance(myProject).findDirectory(vFile)
+                                          : PsiManager.getInstance(myProject).findFile(vFile);
+        if (psiFile != null) {
+          sourceFiles.add(psiFile);
         }
       }
-      return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
     }
+    return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {

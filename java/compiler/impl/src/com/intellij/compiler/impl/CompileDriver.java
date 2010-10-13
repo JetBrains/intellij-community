@@ -68,6 +68,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -93,8 +94,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -656,24 +655,16 @@ public class CompileDriver {
         myInitialRefreshPerformed = true;
         final long refreshStart = System.currentTimeMillis();
 
-        // need this to make sure the VFS is built
-        //final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
+        //need this to make sure the VFS is built
+        final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
 
         final VirtualFile[] all = context.getAllOutputDirectories();
 
         final ProgressIndicator progressIndicator = context.getProgressIndicator();
 
         final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
-        final CountDownLatch latch = new CountDownLatch(totalCount);
-        final Runnable decCount = new Runnable() {
-          public void run() {
-            latch.countDown();
-            progressIndicator.setFraction(((double)(totalCount - latch.getCount())) / totalCount);
-          }
-        };
         progressIndicator.pushState();
         progressIndicator.setText("Inspecting output directories...");
-        final boolean asyncMode = !ApplicationManager.getApplication().isDispatchThread(); // must not lock awt thread with latch.await()
         try {
           for (VirtualFile output : all) {
             if (output.isValid()) {
@@ -695,30 +686,19 @@ public class CompileDriver {
                 return ExitStatus.ERRORS;
               }
             }
-            output.refresh(asyncMode, true, decCount);
-            //outputsToRefresh.add(output);
+            outputsToRefresh.add(output);
           }
           for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
             final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
             walkChildren(generated.getFirst(), context);
-            //outputsToRefresh.add(generated.getFirst());
-            generated.getFirst().refresh(asyncMode, true, decCount);
+            outputsToRefresh.add(generated.getFirst());
             walkChildren(generated.getSecond(), context);
-            //outputsToRefresh.add(generated.getSecond());
-            generated.getSecond().refresh(asyncMode, true, decCount);
+            outputsToRefresh.add(generated.getSecond());
           }
 
-          //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
-          try {
-            while (latch.getCount() > 0) {
-              latch.await(500, TimeUnit.MILLISECONDS); // wait until all threads are refreshed
-              if (progressIndicator.isCanceled()) {
-                return ExitStatus.CANCELLED;
-              }
-            }
-          }
-          catch (InterruptedException e) {
-            LOG.info(e);
+          RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+          if (progressIndicator.isCanceled()) {
+            return ExitStatus.CANCELLED;
           }
         }
         finally {

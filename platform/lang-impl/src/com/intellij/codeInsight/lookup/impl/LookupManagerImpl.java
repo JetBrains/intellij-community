@@ -25,7 +25,6 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
@@ -38,18 +37,16 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-public class LookupManagerImpl extends LookupManager implements ProjectComponent {
+public class LookupManagerImpl extends LookupManager {
   private final Project myProject;
-
-  protected LookupImpl myActiveLookup = null;
-  protected Editor myActiveLookupEditor = null;
+  private LookupImpl myActiveLookup = null;
+  private Editor myActiveLookupEditor = null;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-
-  private boolean myIsDisposed;
 
   public LookupManagerImpl(Project project, MessageBus bus) {
     myProject = project;
@@ -77,20 +74,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       }
     });
 
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "LookupManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
 
     final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorReleased(EditorFactoryEvent event) {
@@ -105,10 +88,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
       }
     });
-  }
-
-  public void projectClosed() {
-    myIsDisposed = true;
   }
 
   public Lookup showLookup(final Editor editor,
@@ -215,8 +194,26 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  public boolean isDisposed() {
-    return myIsDisposed;
+
+  @TestOnly
+  public void forceSelection(char completion, int index){
+    if(myActiveLookup == null) throw new RuntimeException("There are no items in this lookup");
+    final LookupElement lookupItem = myActiveLookup.getItems().get(index);
+    myActiveLookup.setCurrentItem(lookupItem);
+    myActiveLookup.finishLookup(completion);
   }
 
+  @TestOnly
+  public void forceSelection(char completion, LookupElement item){
+    myActiveLookup.setCurrentItem(item);
+    myActiveLookup.finishLookup(completion);
+  }
+
+  @TestOnly
+  public void clearLookup() {
+    if (myActiveLookup != null) {
+      myActiveLookup.hide();
+      myActiveLookup = null;
+    }
+  }
 }
