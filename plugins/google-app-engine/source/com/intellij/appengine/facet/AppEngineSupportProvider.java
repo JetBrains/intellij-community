@@ -129,6 +129,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
     if (persistenceApi != null) {
       facetConfiguration.setRunEnhancerOnMake(true);
+      facetConfiguration.setPersistenceApi(persistenceApi);
       facetConfiguration.getFilesToEnhance().addAll(AppEngineUtil.getDefaultSourceRootsToEnhance(rootModel));
       try {
         final VirtualFile[] sourceRoots = rootModel.getSourceRoots();
