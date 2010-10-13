@@ -38,11 +38,16 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +62,7 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
@@ -87,6 +93,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldEnd;
   private boolean myBackgrounded = true;
   private OffsetMap myOffsetMap;
+  private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap) {
@@ -560,7 +567,34 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return !myLookup.isFocused();
   }
 
+  @NotNull
   public Project getProject() {
-    return myEditor.getProject();
+    return ObjectUtils.assertNotNull(myEditor.getProject());
+  }
+
+  public void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition) {
+    if (isAutopopupCompletion()) {
+      myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
+    }
+  }
+
+  public void prefixUpdated() {
+    final CharSequence text = myEditor.getDocument().getCharsSequence();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
+      final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
+      if (pair.second.accepts(newPrefix)) {
+        restartCompletion();
+        return;
+      }
+    }
+
+    hideAutopopupIfMeaningless();
+  }
+
+  public void restartCompletion() {
+    closeAndFinish();
+
+    myHandler.invokeCompletion(getProject(), myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, getProject()), myParameters.getInvocationCount());
   }
 }

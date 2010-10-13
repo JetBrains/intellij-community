@@ -62,7 +62,7 @@ public class TypedHandler implements TypedActionHandler {
 
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
       if (completion != null) {
-        completion.hideAutopopupIfMeaningless();
+        completion.prefixUpdated();
       }
       return;
     }

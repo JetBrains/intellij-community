@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Consumer;
@@ -126,6 +127,14 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     public CompletionResultSet caseInsensitive() {
       return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
+    }
+
+    @Override
+    public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
+      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
+      if (indicator != null) {
+        indicator.addWatchedPrefix(myTextBeforePosition.length() - getPrefixMatcher().getPrefix().length(), prefixCondition);
+      }
     }
   }
 

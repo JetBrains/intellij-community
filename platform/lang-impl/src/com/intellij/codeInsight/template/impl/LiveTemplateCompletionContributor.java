@@ -41,8 +41,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final String prefix = result.getPrefixMatcher().getPrefix();
         for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
           final String key = template.getKey();
-          if (prefix.equals(key)) {
-            if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
+          if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
+            if (prefix.equals(key)) {
               result.addElement(LookupElementBuilder.create(key).setTypeText(template.getDescription()).setInsertHandler(new InsertHandler<LookupElement>() {
                 @Override
                 public void handleInsert(InsertionContext context, LookupElement item) {
@@ -51,6 +51,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
                   TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
                 }
               }));
+            } else {
+              result.restartCompletionOnPrefixChange(key);
             }
           }
         }
