@@ -121,7 +121,8 @@ public final class CompressedDictionary implements Dictionary {
     }
     try {
       UnitBitSet bs = encoder.encode(word, false);
-      if (bs == null) return false;
+      if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS) return true;
+      if (bs == null) return false; // fail faster w/o search
       byte[] compressed = UnitBitSet.getBytes(bs);
       int index = -1;
       for (int i = 0; i < lengths.length; i++) {
