@@ -27,7 +27,7 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 
 public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
@@ -323,6 +321,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void setSelectedConfiguration(final RunnerAndConfigurationSettings configuration) {
     mySelectedConfiguration = configuration;
     if (configuration != null) invalidateConfigurationIcon(configuration);
+    fireRunConfigurationSelected();
   }
 
   public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Executor executor) {
@@ -469,8 +468,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
 
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
-
     fireBeforeRunTasksUpdated();
+    fireRunConfigurationSelected();
   }
 
   public void readContext(Element parentNode) throws InvalidDataException {
@@ -489,6 +488,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         mySelectedConfiguration = null;
       }
     }
+    fireRunConfigurationSelected();
   }
 
   private void clear() {
@@ -517,10 +517,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       setBeforeRunTasks(settings.getConfiguration(), map);
     }
     else {
-      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
-        mySelectedConfiguration = settings;
-      }
       addConfiguration(settings, isShared, map);
+      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
+        setSelectedConfiguration(settings);
+      }
     }
     return settings;
   }
@@ -821,6 +821,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     for (RunnerAndConfigurationSettings settings : removed) {
       myDispatcher.getMulticaster().runConfigurationRemoved(settings);
     }
+  }
+
+  private void fireRunConfigurationSelected() {
+    myDispatcher.getMulticaster().runConfigurationSelected();
   }
 
   @Override
