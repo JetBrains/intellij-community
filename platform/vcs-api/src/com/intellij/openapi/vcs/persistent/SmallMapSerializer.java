@@ -57,6 +57,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
         final V value = myValueExternalizer.read(dis);
         myMap.put(keyWrapper, value);
       }
+    } catch (FileNotFoundException ignore) {
     } catch (IOException e) {
       LOG.error(e);
     }
