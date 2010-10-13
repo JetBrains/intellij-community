@@ -426,13 +426,20 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   public Component add(final Component comp) {
     final Component result = super.add(comp);
     activateIfNeeded();
-    return result; 
+
+    revalidate();
+    repaint();
+
+    return result;
   }
 
   @Override
   public void remove(final Component comp) {
     super.remove(comp);
     deactivateIfNeeded();
+
+    revalidate();
+    repaint();
   }
 
   public boolean isInModalContext() {
