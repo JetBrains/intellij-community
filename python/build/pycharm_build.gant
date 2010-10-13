@@ -486,9 +486,14 @@ def layoutMac(Map args, String target) {
   layout(target) {
     dir("bin") {
       fileset(dir: "$home/community/bin/mac")
-      fileset(dir: "$home/community/bin/nix")
+      fileset(dir: "$home/community/bin/nix") {
+        exclude(name: "idea.sh")
+      }
       fileset(dir: "$home/bin") {
         include(name: "*.jnilib")
+      }
+      fileset(dir: "$home/python/build") {
+        include(name: "pycharm.sh")
       }
     }
     dir("lib") {
