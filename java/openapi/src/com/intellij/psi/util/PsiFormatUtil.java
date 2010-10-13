@@ -347,6 +347,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     type = substitutor.substitute(type);
     if ((options & SHOW_RAW_TYPE) != 0) {
       type = TypeConversionUtil.erasure(type);
+    } else if ((options & SHOW_RAW_NON_TOP_TYPE) != 0) {
+      if (!(PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter)) {
+        type = TypeConversionUtil.erasure(type);
+      }
     }
     return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() : type.getInternalCanonicalText();
   }

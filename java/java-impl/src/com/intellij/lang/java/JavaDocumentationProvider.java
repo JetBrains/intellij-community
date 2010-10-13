@@ -627,8 +627,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         if (classUrls != null) {
           urls = new ArrayList<String>();
           String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_TYPE,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_TYPE, 999);
+                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
+                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE, 999);
           for (String classUrl : classUrls) {
             urls.add(classUrl + "#" + signature);
           }
