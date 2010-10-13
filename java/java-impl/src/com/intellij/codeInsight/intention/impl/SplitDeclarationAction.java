@@ -69,6 +69,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   private boolean isAvaliableOnDeclarationStatement(PsiDeclarationStatement decl, PsiElement element) {
     PsiElement[] declaredElements = decl.getDeclaredElements();
+    if (declaredElements.length == 0) return false;
     if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
     if (declaredElements.length == 1) {
       PsiLocalVariable var = (PsiLocalVariable) declaredElements[0];
