@@ -527,7 +527,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
       if (!myPointersToUdate.isEmpty()) {
         VirtualFilePointer[] arr = myPointersToUdate.toArray(new VirtualFilePointer[myPointersToUdate.size()]);
-        myBus.syncPublisher(VirtualFilePointerListener.TOPIC).beforeValidityChanged(arr);
+        myBus.syncPublisher(VirtualFilePointerListener.TOPIC).validityChanged(arr);
       }
 
       myUrlsToUpdate = null;
