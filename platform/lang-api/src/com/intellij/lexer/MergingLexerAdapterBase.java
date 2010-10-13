@@ -67,14 +67,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
       myState = orig.getState();
       if (myTokenType == null) return;
       orig.advance();
-      if (myMergeFunction.startMerge(myTokenType)){
-        myTokenType = myMergeFunction.getMergedTokenType(myTokenType);
-        while(true){
-          IElementType tokenType = orig.getTokenType();
-          if (!myMergeFunction.mergeWith(tokenType)) break;
-          orig.advance();
-        }
-      }
+      myTokenType = myMergeFunction.merge(myTokenType, orig);
     }
   }
 
@@ -130,8 +123,6 @@ public class MergingLexerAdapterBase extends DelegateLexer {
   }
 
   protected interface MergeFunction {
-    boolean startMerge(IElementType type);
-    boolean mergeWith(IElementType type);
-    IElementType getMergedTokenType(IElementType type);
+    IElementType merge(IElementType type, Lexer originalLexer);
   }
 }

@@ -21,23 +21,17 @@ import com.intellij.psi.tree.TokenSet;
 public class MergingLexerAdapter extends MergingLexerAdapterBase {
   public MergingLexerAdapter(final Lexer original, final TokenSet tokensToMerge){
     super(original, new MergeFunction() {
-      private IElementType currentTokenType;
       @Override
-      public boolean startMerge(final IElementType type) {
-        if (tokensToMerge.contains(type)){
-          currentTokenType = type;
-          return true;
+      public IElementType merge(final IElementType type, final Lexer originalLexer) {
+        if (!tokensToMerge.contains(type)){
+          return type;
         }
-        return false;
-      }
 
-      @Override
-      public boolean mergeWith(final IElementType type) {
-        return currentTokenType == type;
-      }
-
-      @Override
-      public IElementType getMergedTokenType(final IElementType type) {
+        while(true){
+          final IElementType tokenType = originalLexer.getTokenType();
+          if (tokenType != type) break;
+          originalLexer.advance();
+        }
         return type;
       }
     });
