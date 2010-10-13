@@ -144,8 +144,8 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
           holder.add(HighlightInfo.fromAnnotation(annotation));
         }
         annotationHolder.clear();
-        annotationHolder.setSession(null);
       }
+      annotationHolder.setSession(null);
     }
   }
 
