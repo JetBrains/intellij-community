@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -60,45 +59,30 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
             parent = concatenationExpression.getParent();
         }
         final StringBuilder text = new StringBuilder();
-        buildContatenationText(concatenationExpression, text);
-        final String string = text.toString();
-        final String unescapedString =
-                StringUtil.unescapeStringCharacters(string);
-        final Transferable contents = new StringSelection(unescapedString);
+        buildConcatenationText(concatenationExpression, text);
+        final Transferable contents = new StringSelection(text.toString());
         CopyPasteManager.getInstance().setContents(contents);
     }
 
-    private static void buildContatenationText(PsiExpression expression,
+    private static void buildConcatenationText(PsiExpression expression,
                                                StringBuilder out) {
-        if (expression instanceof PsiLiteralExpression) {
-            final String text = expression.getText();
-            final PsiType type = expression.getType();
-            if (type != null && (type.equalsToText("java.lang.String")
-                    || type.equalsToText("char"))) {
-                final int textLength = text.length();
-                if (textLength > 2) {
-                    out.append(text.substring(1, textLength - 1));
-                }
-            } else {
-                out.append(text);
-            }
-        } else if (expression instanceof PsiBinaryExpression) {
+        if (expression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
-            final Object result =
-                    ExpressionUtils.computeConstantExpression(expression);
-            if (result != null) {
-                out.append(result.toString());
-            } else {
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                buildContatenationText(lhs, out);
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs != null) {
-                    buildContatenationText(rhs, out);
-                }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            buildConcatenationText(lhs, out);
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs != null) {
+                buildConcatenationText(rhs, out);
             }
         } else {
-            out.append('?');
+            final Object value =
+                    ExpressionUtils.computeConstantExpression(expression);
+            if (value == null) {
+                out.append('?');
+            } else {
+                out.append(value.toString());
+            }
         }
     }
 }
