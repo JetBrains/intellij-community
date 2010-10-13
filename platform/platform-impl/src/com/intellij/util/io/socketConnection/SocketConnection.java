@@ -45,4 +45,6 @@ public interface SocketConnection<Request extends AbstractRequest, Response exte
 
   void sendRequest(@NotNull Request request, @Nullable AbstractResponseToRequestHandler<? extends Response> handler,
                    int timeout, @NotNull Runnable onTimeout);
+
+  boolean isStopping();
 }

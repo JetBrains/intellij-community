@@ -40,21 +40,21 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
   private final Object myLock = new Object();
   private int myPort = -1;
   private ConnectionStatus myStatus = ConnectionStatus.NOT_CONNECTED;
-  private boolean myStopped;
+  private boolean myStopping;
   private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
   private ServerSocket myServerSocket;
   private String myStatusMessage;
   private Thread myProcessingThread;
-  private final int myInitialPort;
-  private final int myPortsAttemptsNumber;
+  private final int myDefaultPort;
+  private final int myConnectionAttempts;
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
   private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
   private final ResponseProcessor<Response> myResponseProcessor;
 
-  public SocketConnectionImpl(int initialPort, int portsAttemptsNumber, @NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
-    myInitialPort = initialPort;
-    myPortsAttemptsNumber = portsAttemptsNumber;
+  public SocketConnectionImpl(int defaultPort, int connectionAttempts, @NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
+    myDefaultPort = defaultPort;
+    myConnectionAttempts = connectionAttempts;
     myExternalizerFactory = factory;
     myResponseProcessor = new ResponseProcessor<Response>(this);
   }
@@ -79,8 +79,8 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
   @NotNull
   private ServerSocket createSocket() throws IOException {
     IOException exc = null;
-    for (int i = 0; i < myPortsAttemptsNumber; i++) {
-      int port = myInitialPort + i;
+    for (int i = 0; i < myConnectionAttempts; i++) {
+      int port = myDefaultPort + i;
       try {
         return new ServerSocket(port);
       }
@@ -149,8 +149,8 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
   @Override
   public void close() {
     synchronized (myLock) {
-      if (myStopped) return;
-      myStopped = true;
+      if (myStopping) return;
+      myStopping = true;
     }
     LOG.debug("closing connection");
     if (myProcessingThread != null) {
@@ -160,15 +160,16 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     Disposer.dispose(this);
   }
 
-  public boolean isStopped() {
+  @Override
+  public boolean isStopping() {
     synchronized (myLock) {
-      return myStopped;
+      return myStopping;
     }
   }
 
   private void processRequests(RequestWriter<Request> writer) throws IOException {
     try {
-      while (!isStopped()) {
+      while (!isStopping()) {
         final Request request = myRequests.take();
         LOG.debug("sending request: " + request);
         final TimeoutInfo timeoutInfo = myTimeouts.remove(request.getId());
