@@ -43,7 +43,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
           final String key = template.getKey();
           if (prefix.equals(key)) {
             if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
-              result.addElement(LookupElementBuilder.create(key).setInsertHandler(new InsertHandler<LookupElement>() {
+              result.addElement(LookupElementBuilder.create(key).setTypeText(template.getDescription()).setInsertHandler(new InsertHandler<LookupElement>() {
                 @Override
                 public void handleInsert(InsertionContext context, LookupElement item) {
                   context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
