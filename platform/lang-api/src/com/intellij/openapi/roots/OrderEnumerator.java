@@ -28,39 +28,43 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
  * and source roots.<p>
- *
+ * <p/>
  * Use {@link #orderEntries(com.intellij.openapi.module.Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
  * and use {@link #orderEntries(com.intellij.openapi.project.Project)} to process dependencies of all modules in a project.<p>
- *
+ * <p/>
  * Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.
  *
- * @since 10.0
- *
- *
  * @author nik
+ * @since 10.0
  */
 public abstract class OrderEnumerator {
   /**
    * Skip test dependencies
+   *
    * @return this instance
    */
   public abstract OrderEnumerator productionOnly();
 
   /**
    * Skip runtime-only dependencies
+   *
    * @return this instance
    */
   public abstract OrderEnumerator compileOnly();
 
   /**
    * Skip compile-only dependencies
+   *
    * @return this instance
    */
   public abstract OrderEnumerator runtimeOnly();
 
   public abstract OrderEnumerator withoutSdk();
+
   public abstract OrderEnumerator withoutLibraries();
+
   public abstract OrderEnumerator withoutDepModules();
+
   public abstract OrderEnumerator withoutModuleSourceEntries();
 
   public OrderEnumerator librariesOnly() {
@@ -81,18 +85,21 @@ public abstract class OrderEnumerator {
 
   /**
    * Recursively process modules on which the module depends
+   *
    * @return this instance
    */
   public abstract OrderEnumerator recursively();
 
   /**
-   * Skip not exported dependencies. If this method is called after {@link #recursively()} direct non-exported dependencies won't be skipped 
+   * Skip not exported dependencies. If this method is called after {@link #recursively()} direct non-exported dependencies won't be skipped
+   *
    * @return this instance
    */
   public abstract OrderEnumerator exportedOnly();
 
   /**
    * Process only entries which satisfies the specified condition
+   *
    * @param condition filtering condition
    * @return this instance
    */
@@ -100,6 +107,7 @@ public abstract class OrderEnumerator {
 
   /**
    * Use <code>provider.getRootModel()</code> to process module dependencies
+   *
    * @param provider provider
    * @return this instance
    */
@@ -116,7 +124,6 @@ public abstract class OrderEnumerator {
   public abstract OrderRootsEnumerator sources();
 
   /**
-   *
    * @param rootType root type
    * @return {@link OrderRootsEnumerator} instance for processing roots of the specified type
    */
@@ -151,7 +158,15 @@ public abstract class OrderEnumerator {
   }
 
   /**
+   * Runs processor on each module that this enumerator was created on
+   *
+   * @param processor processor
+   */
+  public abstract void forEachModule(@NotNull Processor<Module> processor);
+
+  /**
    * Runs <code>processor.process()</code> for each entry processed by this enumerator.
+   *
    * @param processor processor
    */
   public abstract void forEach(@NotNull Processor<OrderEntry> processor);
@@ -170,6 +185,7 @@ public abstract class OrderEnumerator {
 
   /**
    * Creates new enumerator instance to process dependencies of <code>module</code>
+   *
    * @param module module
    * @return new enumerator instance
    */
@@ -181,6 +197,7 @@ public abstract class OrderEnumerator {
   /**
    * Creates new enumerator instance to process dependencies of all modules in <code>project</code>. Only first level dependencies of
    * modules are processed so {@link #recursively()} option is ignored and {@link #withoutDepModules()} option is forced
+   *
    * @param project project
    * @return new enumerator instance
    */

@@ -116,6 +116,13 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         return true;
       }
     });
+    myOrderEnumerator.forEachModule(new Processor<Module>() {
+      @Override
+      public boolean process(Module module) {
+        myOrderEnumerator.addAdditionalRoots(module, result);
+        return true;
+      }
+    });
     return result;
   }
 
@@ -140,6 +147,13 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         else {
           Collections.addAll(result, orderEntry.getUrls(myRootType));
         }
+        return true;
+      }
+    });
+    myOrderEnumerator.forEachModule(new Processor<Module>() {
+      @Override
+      public boolean process(Module module) {
+        myOrderEnumerator.addAdditionalRootsUrls(module, result);
         return true;
       }
     });
