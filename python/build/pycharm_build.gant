@@ -139,7 +139,7 @@ target('default': "Build artifacts") {
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
   setProperty("isEap", isEap())
 
-  if (isEap) {
+  if (isEap()) {
     setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
@@ -350,7 +350,7 @@ def buildTarGz() {
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
-    tarfileset(dir: "$paths.distUnix/bin", filemode: "755", prefix: "$tarRoot/bin") {
+    tarfileset(dir: "$home/python/build", filemode: "755", prefix: "$paths.distUnix/bin") {
       include(name: "pycharm.sh")
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
@@ -557,11 +557,11 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$target/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
 }
 
 def layoutUnix(String target) {
-  ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
+  ant.copy(file: "$home/pycharm/build/pycharm.sh", todir: "$target/bin")
   ant.replace(file: "$target/bin/pycharm.sh") {
     replacefilter(token: "@@isEap@@", value: isEap())
   }
