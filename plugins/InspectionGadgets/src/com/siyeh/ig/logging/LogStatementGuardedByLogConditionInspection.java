@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jdom.Element;
@@ -51,6 +52,7 @@ public class LogStatementGuardedByLogConditionInspection
     @SuppressWarnings({"PublicField"})
     public String loggerClassName = "java.util.logging.Logger";
     @SuppressWarnings({"PublicField"})
+    @NonNls
     public String loggerMethodAndconditionMethodNames =
             "fine,isLoggable(java.util.logging.Level.FINE)," +
                     "finer,isLoggable(java.util.logging.Level.FINER)," +
@@ -63,12 +65,14 @@ public class LogStatementGuardedByLogConditionInspection
                 logConditionMethodNameList);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "log.statement.guarded.by.log.condition.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -80,6 +84,7 @@ public class LogStatementGuardedByLogConditionInspection
         return new Form().getContentPanel();
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new LogStatementGuardedByLogConditionFix();
@@ -88,12 +93,14 @@ public class LogStatementGuardedByLogConditionInspection
     private class LogStatementGuardedByLogConditionFix
             extends InspectionGadgetsFix {
 
+        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "log.statement.guarded.by.log.condition.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -137,6 +144,7 @@ public class LogStatementGuardedByLogConditionInspection
             if (qualifier == null) {
                 return;
             }
+            @NonNls
             final StringBuilder ifStatementText = new StringBuilder("if (");
             ifStatementText.append(qualifier.getText());
             ifStatementText.append('.');
@@ -202,6 +210,7 @@ public class LogStatementGuardedByLogConditionInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new LogStatementGuardedByLogConditionVisitor();
     }
@@ -209,6 +218,7 @@ public class LogStatementGuardedByLogConditionInspection
     private class LogStatementGuardedByLogConditionVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -273,12 +283,14 @@ public class LogStatementGuardedByLogConditionInspection
 
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException {
         super.readSettings(element);
         parseString(loggerMethodAndconditionMethodNames, logMethodNameList,
                 logConditionMethodNameList);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException {
         loggerMethodAndconditionMethodNames = formatString(logMethodNameList,
                 logConditionMethodNameList);

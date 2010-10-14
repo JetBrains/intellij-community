@@ -17,7 +17,6 @@ package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
@@ -76,7 +75,6 @@ public class UiUtils {
         }
 
         public void actionPerformed(AnActionEvent e) {
-            final DataManager dataManager = DataManager.getInstance();
             final DataContext dataContext = e.getDataContext();
             final Project project = DataKeys.PROJECT.getData(dataContext);
             if (project == null) {
