@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
@@ -33,6 +34,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final TipComponent myTipComponent;
 
+  private boolean isEnabled = true;
   private Hint myHint;
 
   private KeyType myKey;
@@ -130,29 +132,19 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     );
   }
 
-  private class TipComponent extends JComponent {
-    public Dimension getMaximumSize() {
-      return getPreferredSize();
-    }
+  @Override
+  public void setEnabled(boolean enabled) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
-    }
-
-    public Dimension getPreferredSize() {
-      return new Dimension(myImage.getWidth(), myImage.getHeight());
-    }
-
-    public void paint(Graphics g) {
-      g.drawImage(myImage, 0, 0, null);
-    }
+    isEnabled = enabled;
+    if (!isEnabled) hideHint();
   }
-
-  protected abstract KeyType getCellKeyForPoint(Point point);
 
   @NotNull
   @Override
   public Collection<KeyType> getExpandedItems() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
   }
 
@@ -176,6 +168,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(KeyType selected, boolean processIfUnfocused) {
+    if (!isEnabled) return;
+
     if (selected == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
       hideHint();
       return;
@@ -310,4 +304,24 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
+
+  protected abstract KeyType getCellKeyForPoint(Point point);
+
+  private class TipComponent extends JComponent {
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
+
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+
+    public Dimension getPreferredSize() {
+      return new Dimension(myImage.getWidth(), myImage.getHeight());
+    }
+
+    public void paint(Graphics g) {
+      g.drawImage(myImage, 0, 0, null);
+    }
+  }
 }
