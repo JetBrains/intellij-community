@@ -241,6 +241,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
           myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
           return true;
         }
+      } else {
+        getModelProvider().getModifiableModel().removeLibrary(library);
+        myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+        return true;
       }
     }
 
