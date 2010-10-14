@@ -453,6 +453,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
+        if (!settings.isOK()) return;
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
