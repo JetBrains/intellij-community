@@ -116,7 +116,8 @@ public class JavaSdkImpl extends JavaSdk {
         try {
           final Process exec = Runtime.getRuntime().exec("/usr/libexec/java_home");
           input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
-          return input.readLine();
+          final String path = input.readLine();
+          if (new File(path).exists()) return path;
         }
         catch (IOException e) {
           // nothing
