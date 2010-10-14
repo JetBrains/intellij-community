@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -36,6 +37,8 @@ public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
   void addNewPackagingElement(@NotNull PackagingElementType<?> type);
 
   void removeSelectedElements();
+
+  void removePackagingElement(@NotNull String pathToParent, @NotNull PackagingElement<?> element);
 
   LayoutTreeComponent getLayoutTreeComponent();
 
