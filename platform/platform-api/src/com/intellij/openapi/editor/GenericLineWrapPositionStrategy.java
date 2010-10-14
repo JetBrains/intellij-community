@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
-import gnu.trove.*;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -75,7 +75,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
             }
           }
           if (target <= maxPreferredOffsetToUse) {
-            offset2Weight.put(target, rule.weight);
+            myOffset2weight.store(target, rule.weight);
           }
         }
 
