@@ -2,12 +2,11 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
+import com.intellij.refactoring.introduceVariable.OccurrencesChooser;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
@@ -36,9 +35,14 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
 
 
   @Override
-  protected IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr, final PsiElement[] occurrences,
-                                                  boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
-                                                  TypeSelectorManagerImpl typeSelectorManager, InputValidator validator) {
+  public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                               PsiExpression expr, final PsiExpression[] occurrences,
+                                               TypeSelectorManagerImpl typeSelectorManager,
+                                               final boolean declareFinalIfAll,
+                                               boolean anyAssignmentLHS,
+                                               InputValidator validator,
+                                               final OccurrencesChooser.ReplaceChoice replaceChoice) {
+    final PsiType type = typeSelectorManager.getDefaultType();
     Assert.assertTrue(type.getCanonicalText(), type.equalsToText(myExpectedTypeCanonicalName));
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
@@ -83,11 +87,6 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   @Override
   protected void showErrorMessage(Project project, Editor editor, String message) {
     throw new RuntimeException("Error message:" + message);
-  }
-
-  @Override
-  protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {
-
   }
 
   @Override

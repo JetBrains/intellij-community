@@ -11,6 +11,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
+import com.intellij.refactoring.introduceVariable.OccurrencesChooser;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
@@ -225,17 +226,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B"){
       @Override
-      protected IntroduceVariableSettings getSettings(Project project,
-                                                      Editor editor,
-                                                      PsiExpression expr,
-                                                      PsiElement[] occurrences,
-                                                      boolean anyAssignmentLHS,
-                                                      boolean declareFinalIfAll,
-                                                      PsiType type,
-                                                      TypeSelectorManagerImpl typeSelectorManager,
-                                                      InputValidator validator) {
+      public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                                   PsiExpression expr, PsiExpression[] occurrences,
+                                                   TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll,
+                                                   boolean anyAssignmentLHS,
+                                                   InputValidator validator,
+                                                   final OccurrencesChooser.ReplaceChoice replaceChoice) {
+        final PsiType type = typeSelectorManager.getDefaultType();
         Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
-        return super.getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll, type, typeSelectorManager, validator);
+        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
+                                 validator, replaceChoice);
       }
     });
   }
