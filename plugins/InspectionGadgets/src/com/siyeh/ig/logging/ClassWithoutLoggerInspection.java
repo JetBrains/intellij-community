@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,107 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClassWithoutLoggerInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    public String loggerClassName = "java.util.logging.Logger";
+    @NonNls
+    public String loggerNamesString = "java.util.logging.Logger" + ',' +
+            "org.slf4j.Logger" + ',' +
+            "org.apache.commons.logging.Log" + ',' +
+            "org.apache.log4j.Logger";
+    private final List<String> loggerNames = new ArrayList();
 
     /** @noinspection PublicField*/
     public boolean ignoreSuperLoggers = false;
 
+    public ClassWithoutLoggerInspection() {
+        parseString(loggerNamesString, loggerNames);
+    }
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("no.logger.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message("no.logger.problem.descriptor");
     }
 
-    public JComponent createOptionsPanel() {
-        final Form form = new Form();
-        return form.getContentPanel();
+    @Override
+    public void readSettings(Element element) throws InvalidDataException {
+        super.readSettings(element);
+        parseString(loggerNamesString, loggerNames);
     }
 
+    @Override
+    public void writeSettings(Element element) throws WriteExternalException {
+        loggerNamesString = formatString(loggerNames);
+        super.writeSettings(element);
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+
+        final ListTable table =
+                new ListTable(new ListWrappingTableModel(loggerNames,
+                        InspectionGadgetsBundle.message("logger.class.names")));
+        final JScrollPane scrollPane =
+                ScrollPaneFactory.createScrollPane(table);
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
+                        InspectionGadgetsBundle.message("choose.logger.class"));
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        final CheckBox checkBox = new CheckBox(
+                InspectionGadgetsBundle.message("super.class.logger.option"),
+                this, "ignoreSuperLoggers");
+        constraints.gridy = 2;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+        return panel;
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutLoggerVisitor();
     }
@@ -88,52 +151,10 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
             registerClassError(aClass);
         }
 
-        private boolean isLogger(PsiField field) {
-            final PsiType type = field.getType();
+        private boolean isLogger(PsiVariable variable) {
+            final PsiType type = variable.getType();
             final String text = type.getCanonicalText();
-            return text.equals(loggerClassName);
-        }
-    }
-
-    private class Form {
-
-        private JPanel contentPanel;
-        private JTextField loggerClassNameTextField;
-        private JCheckBox ignoreCheckBox;
-
-        Form() {
-            super();
-            loggerClassNameTextField.setText(loggerClassName);
-            loggerClassNameTextField.setInputVerifier(new RegExInputVerifier());
-            final DocumentListener listener = new DocumentListener() {
-
-                public void changedUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void insertUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void removeUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                private void textChanged() {
-                    loggerClassName =  loggerClassNameTextField.getText();
-                }
-            };
-            final Document document = loggerClassNameTextField.getDocument();
-            document.addDocumentListener(listener);
-            ignoreCheckBox.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent e) {
-                    ignoreSuperLoggers = ignoreCheckBox.isSelected();
-                }
-            });
-        }
-
-        public JPanel getContentPanel() {
-            return contentPanel;
+            return loggerNames.contains(text);
         }
     }
 }

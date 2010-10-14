@@ -43,7 +43,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
             "org.slf4j.Logger" + ',' +
             "org.apache.commons.logging.Log" + ',' +
             "org.apache.log4j.Logger";
-    final List<String> loggerNames = new ArrayList();
+    private final List<String> loggerNames = new ArrayList();
 
     public ClassWithMultipleLoggersInspection() {
         parseString(loggerNamesString, loggerNames);
@@ -70,7 +70,6 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
     @Override
     public void writeSettings(Element element) throws WriteExternalException {
-        new Throwable().printStackTrace();
         loggerNamesString = formatString(loggerNames);
         super.writeSettings(element);
     }
@@ -80,8 +79,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
         final JComponent panel = new JPanel(new GridBagLayout());
 
         final ListTable table =
-                new ListTable(new ListWrappingTableModel(
-                        new ArrayList(loggerNames),
+                new ListTable(new ListWrappingTableModel(loggerNames,
                         InspectionGadgetsBundle.message("logger.class.names")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
