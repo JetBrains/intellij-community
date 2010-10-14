@@ -111,8 +111,14 @@ public class ModuleUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     if (element instanceof PsiFileSystemItem) {
-      final VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
-      if (vFile == null) return element.getUserData(KEY_MODULE);
+      VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
+      if (vFile == null) {
+        PsiFile containingFile = element.getContainingFile();
+        vFile = containingFile == null ? null : containingFile.getOriginalFile().getVirtualFile();
+        if (vFile == null) {
+          return element.getUserData(KEY_MODULE);
+        }
+      }
       if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
         final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
