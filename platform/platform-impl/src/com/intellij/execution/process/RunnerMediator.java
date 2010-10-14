@@ -28,7 +28,7 @@ public class RunnerMediator {
 
   public static String getRunnerPath() {
     if (File.separatorChar == '\\') {
-      return "runnerw.exe";
+      return RunnerMediatorManager.getInstance().getRunnerPath();
     }
     else {
       throw new IllegalStateException("There is no need of runner under unix based OS");
