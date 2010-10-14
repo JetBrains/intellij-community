@@ -557,7 +557,7 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/idea.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
 }
 
 def layoutUnix(String target) {
