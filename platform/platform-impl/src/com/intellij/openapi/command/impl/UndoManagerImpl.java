@@ -292,6 +292,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
     List<DocumentReference> refs = new ArrayList<DocumentReference>(docs.length);
     for (Document each : docs) {
+      // is document's file still valid
+      VirtualFile file = FileDocumentManager.getInstance().getFile(each);
+      if (file != null && !file.isValid()) continue;
+
       refs.add(DocumentReferenceManager.getInstance().create(each));
     }
     myCurrentMerger.addAdditionalAffectedDocuments(refs);
