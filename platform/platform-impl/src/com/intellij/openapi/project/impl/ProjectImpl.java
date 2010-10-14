@@ -27,6 +27,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
@@ -211,7 +212,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    return getName() + Integer.toHexString(str.hashCode());
+    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED? "" : getName();
+    return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Nullable
