@@ -21,10 +21,7 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.TableCell;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
