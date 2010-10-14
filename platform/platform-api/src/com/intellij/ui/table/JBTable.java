@@ -227,6 +227,40 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return false;
   }
 
+  @Override
+  public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+    final Component result = super.prepareRenderer(renderer, row, column);
+    final boolean selected = myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column));
+    // Fix GTK backround
+    if (UIUtil.isUnderGTKLookAndFeel()){
+      final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+      setBackground(background);
+    }
+
+    if (!selected) return result;
+
+    return new JComponent() {
+      {
+        add(result);
+        setOpaque(false);
+        setLayout(new AbstractLayoutManager() {
+          @Override
+          public Dimension preferredLayoutSize(Container parent) {
+            return result.getPreferredSize();
+          }
+
+          @Override
+          public void layoutContainer(Container parent) {
+            Dimension size = parent.getSize();
+            Insets i = parent.getInsets();
+            Dimension pref = result.getPreferredSize();
+            result.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
+          }
+        });
+      }
+    };
+  }
+
   private final class MyCellEditorRemover implements PropertyChangeListener {
     private final KeyboardFocusManager myFocusManager;
 
