@@ -9,7 +9,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
-      <skipForDummyProject/>
     </component>
   </application-components>
 
@@ -18,7 +17,6 @@
     <component>
       <interface-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManager</interface-class>
       <implementation-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
@@ -36,7 +34,6 @@
     <component>
       <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

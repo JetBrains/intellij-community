@@ -45,12 +45,10 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

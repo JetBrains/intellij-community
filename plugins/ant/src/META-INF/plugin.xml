@@ -71,7 +71,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

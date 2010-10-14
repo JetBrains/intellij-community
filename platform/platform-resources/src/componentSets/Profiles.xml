@@ -2,7 +2,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 </components>
