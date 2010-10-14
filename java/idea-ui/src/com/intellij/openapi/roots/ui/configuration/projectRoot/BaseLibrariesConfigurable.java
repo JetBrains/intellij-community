@@ -233,7 +233,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
             if (usage instanceof UsageInModuleClasspath) {
               rootConfigurable.removeLibraryOrderEntry(((ModuleProjectStructureElement)usage.getContainingElement()).getModule(), library);
             } else if (usage instanceof UsageInArtifact) {
-              // TODO[nik] implement me
+              ((UsageInArtifact)usage).removeElement();
             }
           }
 
