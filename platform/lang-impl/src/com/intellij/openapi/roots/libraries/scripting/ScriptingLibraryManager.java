@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.scriptingContext;
+package com.intellij.openapi.roots.libraries.scripting;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

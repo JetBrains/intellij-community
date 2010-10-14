@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.scriptingContext;
+package com.intellij.openapi.roots.libraries.scripting;
 
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -25,7 +26,6 @@ import com.intellij.util.indexing.IndexableSetContributor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -38,6 +38,12 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
     final Set<VirtualFile> predefinedFiles = getPredefinedFilesToIndex();
     final THashSet<VirtualFile> filesToIndex = new THashSet<VirtualFile>();
     filesToIndex.addAll(predefinedFiles);
+    filesToIndex.addAll(getLibraryFiles(project));
+    return filesToIndex;
+  }
+
+  public Set<VirtualFile> getLibraryFiles(Project project) {
+     final THashSet<VirtualFile> libFiles = new THashSet<VirtualFile>();
     if (project != null) {
       ScriptingLibraryManager manager = new ScriptingLibraryManager(project);
       LibraryTable libTable = manager.getLibraryTable();
@@ -45,13 +51,13 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
         for (Library lib : libTable.getLibraries()) {
           for (VirtualFile libFile : lib.getFiles(OrderRootType.CLASSES)) {
             libFile.putUserData(getIndexKey(), "");
-            filesToIndex.add(libFile);
+            libFiles.add(libFile);
           }
         }
       }
       manager.disposeModel();
     }
-    return filesToIndex;
+    return libFiles;
   }
 
   @Override
