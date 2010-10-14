@@ -45,7 +45,9 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
 
   public void run() {
     if (myClasses.length == 1) {
-      selected(myClasses[0]);
+      //TODO: cdr this place should produce at least warning
+      // selected(myClasses[0]);
+      selected((T[])ArrayUtil.toObjectArray(myClasses[0].getClass(), myClasses[0]));
     }
     else if (myClasses.length > 0) {
       PsiElementListCellRenderer<T> renderer = createRenderer();
