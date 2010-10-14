@@ -24,7 +24,6 @@
     <component>
       <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
   </project-components>
 
