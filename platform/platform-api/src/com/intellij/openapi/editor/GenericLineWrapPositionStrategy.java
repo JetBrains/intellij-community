@@ -75,7 +75,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
             }
           }
           if (target <= maxPreferredOffsetToUse) {
-            myOffset2weight.store(target, rule.weight);
+            offset2Weight.put(target, rule.weight);
           }
         }
 
