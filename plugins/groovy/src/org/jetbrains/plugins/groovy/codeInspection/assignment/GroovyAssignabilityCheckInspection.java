@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -24,24 +25,32 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -68,7 +77,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
-    return GroovyBundle.message("cannot.assign", args);
+    return (String)args[0];
   }
 
   @Override
@@ -82,7 +91,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiType rType = expression.getType();
       if (rType == null || rType == PsiType.VOID) return;
       if (!TypesUtil.isAssignable(expectedType, rType, element)) {
-        registerError(element, rType.getPresentableText(), expectedType.getPresentableText());
+        registerError(element, GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText()));
       }
     }
 
@@ -192,6 +201,171 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       checkAssignability(varType, initializer, initializer);
     }
+
+    @Override
+    public void visitNewExpression(GrNewExpression newExpression) {
+      super.visitNewExpression(newExpression);
+      if (newExpression.getArrayCount() > 0) return;
+
+      GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+      if (refElement == null) return;
+      final PsiElement element = refElement.resolve();
+      if (element instanceof PsiClass) {
+        PsiClass clazz = (PsiClass)element;
+        if (clazz.hasModifierProperty(GrModifier.ABSTRACT)) {
+          return;
+        }
+      }
+
+      final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
+      final PsiElement constructor = constructorResolveResult.getElement();
+      if (constructor != null) {
+        final GrArgumentList argList = newExpression.getArgumentList();
+        if (argList == null ||
+            argList.getExpressionArguments().length != 0 ||
+            ((PsiMethod)constructor).getParameterList().getParametersCount() != 0) {
+          checkMethodApplicability(constructorResolveResult, refElement);
+        }
+      }
+    }
+
+    @Override
+    public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+      super.visitConstructorInvocation(invocation);
+      final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+      if (resolveResult.getElement() != null) {
+        checkMethodApplicability(resolveResult, invocation);
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      super.visitReferenceExpression(referenceExpression);
+      GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
+      GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
+
+      PsiElement resolved = resolveResult.getElement();
+      final PsiElement parent = referenceExpression.getParent();
+      if (resolved == null) {
+        GrExpression qualifier = referenceExpression.getQualifierExpression();
+        if (qualifier == null && GroovyAnnotator.isDeclarationAssignment(referenceExpression)) return;
+      }
+
+      if (parent instanceof GrCall) {
+        if (resolved == null && results.length > 0) {
+          resolved = results[0].getElement();
+          resolveResult = results[0];
+        }
+        if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
+          checkMethodApplicability(resolveResult, referenceExpression);
+        }
+        else {
+          checkClosureApplicability(resolveResult, referenceExpression.getType(), referenceExpression);
+        }
+      }
+    }
+
+    private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,
+                                                  PsiMethod method, PsiType[] argumentTypes) {
+      PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
+      if (elementToHighlight == null) {
+        elementToHighlight = place;
+      }
+
+      final String typesString = buildArgTypesList(argumentTypes);
+      String message;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+          .createType(containingClass, methodResolveResult.getSubstitutor());
+        message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
+      }
+      else {
+        message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
+      }
+
+      registerError(elementToHighlight, message);
+    }
+
+    private void checkClosureApplicability(GroovyResolveResult resolveResult,
+                                           PsiType type,
+                                           GroovyPsiElement place) {
+      final PsiElement element = resolveResult.getElement();
+      if (!(element instanceof GrVariable)) return;
+      if (!(type instanceof GrClosureType)) return;
+      final GrVariable variable = (GrVariable)element;
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
+      if (argumentTypes == null) return;
+
+      if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return;
+
+      final String typesString = buildArgTypesList(argumentTypes);
+      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+      PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
+      if (elementToHighlight == null) elementToHighlight = place;
+      registerError(elementToHighlight, message);
+    }
+
+    private static String buildArgTypesList(PsiType[] argTypes) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("(");
+      for (int i = 0; i < argTypes.length; i++) {
+        if (i > 0) {
+          builder.append(", ");
+        }
+        PsiType argType = argTypes[i];
+        builder.append(argType != null ? argType.getInternalCanonicalText() : "?");
+      }
+      builder.append(")");
+      return builder.toString();
+    }
+
+    private void checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place) {
+      final PsiElement element = methodResolveResult.getElement();
+      if (!(element instanceof PsiMethod)) return;
+
+      final PsiMethod method = (PsiMethod)element;
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
+      if ("call".equals(method.getName()) && place instanceof GrReferenceExpression) {
+        final GrExpression qualifierExpression = ((GrReferenceExpression)place).getQualifierExpression();
+        if (qualifierExpression != null) {
+          final PsiType type = qualifierExpression.getType();
+          if (type instanceof GrClosureType) {
+            if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) {
+              highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+              return;
+            }
+          }
+        }
+      }
+      if (argumentTypes != null &&
+          !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
+                                ResolveUtil.isInUseScope(methodResolveResult), place)) {
+
+        //check for implicit use of property getter which returns closure
+        if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+          if (method instanceof GrMethod || method instanceof GrAccessorMethod) {
+            final PsiType returnType = PsiUtil.getSmartReturnType(method);
+            if (returnType instanceof GrClosureType) {
+              if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), place)) {
+                return;
+              }
+            }
+          }
+
+          PsiType returnType = method.getReturnType();
+          if (returnType != null) {
+            final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
+              .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
+            if (TypesUtil.isAssignable(closureType, returnType, place)) {
+              return;
+            }
+          }
+        }
+
+        highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+      }
+    }
   }
 
   private static boolean isListAssignment(GrExpression lValue) {
@@ -209,6 +383,4 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
     return false;
   }
-
-
 }

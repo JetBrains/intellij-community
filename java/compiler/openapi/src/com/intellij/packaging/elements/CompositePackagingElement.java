@@ -127,4 +127,14 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   public void removeAllChildren() {
     myChildren.clear();
   }
+
+  @Nullable
+  public CompositePackagingElement<?> findCompositeChild(@NotNull String name) {
+    for (PackagingElement<?> child : myChildren) {
+      if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement)child).getName())) {
+        return (CompositePackagingElement)child;
+      }
+    }
+    return null;
+  }
 }

@@ -361,11 +361,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           builder.setInsertHandler(GroovyInsertHandler.INSTANCE);
           result.addElement(builder);
         }
-
-        final String s = result.getPrefixMatcher().getPrefix();
-        if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
-
-        runRemainingContributors(parameters, result);
       }
     });
 
@@ -383,7 +378,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final String s = result.getPrefixMatcher().getPrefix();
         if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
 
-        runRemainingContributors(parameters, result);
+        result.runRemainingContributors(
+          new CompletionParameters(parameters.getPosition(), parameters.getOriginalFile(), CompletionType.CLASS_NAME,
+                                   parameters.getOffset(),
+                                   parameters.getInvocationCount()), new Consumer<LookupElement>() {
+            @Override
+            public void consume(LookupElement lookupElement) {
+              result.addElement(lookupElement);
+            }
+          });
       }
     });
     extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
@@ -400,17 +403,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
         completeStaticMembers(position).processStaticMethodsGlobally(result);
       }
     });
-  }
-
-  private static void runRemainingContributors(CompletionParameters parameters, final CompletionResultSet result) {
-    result.runRemainingContributors(
-      new CompletionParameters(parameters.getPosition(), parameters.getOriginalFile(), CompletionType.CLASS_NAME, parameters.getOffset(),
-                               parameters.getInvocationCount()), new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement lookupElement) {
-          result.addElement(lookupElement);
-        }
-      });
   }
 
   private static StaticMemberProcessor completeStaticMembers(PsiElement position) {

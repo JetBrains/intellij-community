@@ -279,7 +279,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (isHeadless()) {
       String headlessImplClass = config.headlessImplementationClass;
       if (headlessImplClass != null) {
-        if (headlessImplClass.trim().length() == 0) return;
+        if (headlessImplClass.trim().length() == 0) {
+          return;
+        }
         config.implementationClass = headlessImplClass;
       }
     }

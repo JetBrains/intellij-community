@@ -176,7 +176,7 @@ public abstract class AbstractLayoutCodeProcessor {
         }
       }
     };
-    runLayoutCodeProcess(readAction, writeAction);
+    runLayoutCodeProcess(readAction, writeAction, false );
   }
 
   private boolean checkFileWritable(final PsiFile file){
@@ -252,7 +252,7 @@ public abstract class AbstractLayoutCodeProcessor {
             resultRunnable[0].run();
           }
         }
-      }
+      }, files.length > 1
     );
   }
 
@@ -326,7 +326,7 @@ public abstract class AbstractLayoutCodeProcessor {
           resultRunnable[0].run();
         }
       }
-    });
+    }, array.size() > 1);
   }
 
   private static boolean isFormatable(PsiFile file) {
@@ -348,7 +348,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction) {
+  private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction, final boolean globalAction) {
     final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
     progressWindow.setTitle(myCommandName);
     progressWindow.setText(myProgressText);
@@ -380,7 +380,7 @@ public abstract class AbstractLayoutCodeProcessor {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
-                CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+                if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
                 ApplicationManager.getApplication().runWriteAction(writeAction);
 
                 if (myPostRunnable != null) {

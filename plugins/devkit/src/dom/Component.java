@@ -58,11 +58,6 @@ public interface Component extends DomElement {
   }
 
   interface Project extends Component {
-
-    @NotNull
-    @SubTag(value = "skipForDummyProject", indicator = true)
-    GenericDomValue<Boolean> getSkipForDummyProject();
-
     @NotNull
     @SubTag(value = "skipForDefaultProject", indicator = true)
     GenericDomValue<Boolean> getSkipForDefaultProject();

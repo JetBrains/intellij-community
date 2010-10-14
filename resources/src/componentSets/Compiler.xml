@@ -13,11 +13,9 @@
     <component>
       <interface-class>com.intellij.compiler.CompilerConfiguration</interface-class>
       <implementation-class>com.intellij.compiler.CompilerConfigurationImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

@@ -25,7 +25,9 @@ public abstract class DocumentReferenceManager {
     return ApplicationManager.getApplication().getComponent(DocumentReferenceManager.class);
   }
 
+  @NotNull
   public abstract DocumentReference create(@NotNull Document document);
 
+  @NotNull
   public abstract DocumentReference create(@NotNull VirtualFile file);
 }

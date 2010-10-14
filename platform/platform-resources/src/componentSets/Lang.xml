@@ -39,7 +39,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
@@ -74,7 +73,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
@@ -82,7 +80,6 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
 
     <component>
@@ -104,11 +101,9 @@
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
@@ -185,18 +180,15 @@
     <component>
       <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</interface-class>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>

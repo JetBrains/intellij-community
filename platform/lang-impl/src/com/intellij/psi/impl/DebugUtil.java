@@ -392,4 +392,13 @@ public class DebugUtil {
     }
     trackInvalidation(element.getParent());
   }
+
+  public static void sleep(long millis) {
+    try {
+      Thread.sleep(millis);
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+  }
 }

@@ -100,6 +100,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   public void disposeComponent() {
   }
 
+  @NotNull
   @Override
   public DocumentReference create(@NotNull Document document) {
     assertInDispatchThread();
@@ -130,6 +131,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     return result;
   }
 
+  @NotNull
   @Override
   public DocumentReference create(@NotNull VirtualFile file) {
     assertInDispatchThread();

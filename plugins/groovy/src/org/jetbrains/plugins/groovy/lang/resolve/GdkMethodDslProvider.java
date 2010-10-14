@@ -109,8 +109,8 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
           for (PsiMethod m : categoryClass.getMethods()) {
             final PsiParameter[] params = m.getParameterList().getParameters();
             if (params.length == 0) continue;
-            final PsiType parameterType = TypesUtil.boxPrimitiveType(params[0].getType(), manager, scope);
-            PsiType targetType = TypeConversionUtil.erasure(parameterType);
+            final PsiType parameterType = params[0].getType();
+            PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
             map.putValue(targetType.getCanonicalText(), converter.fun(m));
           }
           return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));

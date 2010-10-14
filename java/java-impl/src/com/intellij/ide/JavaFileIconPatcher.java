@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -57,7 +58,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
     }
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile instanceof PsiClassOwner) {
+    if (psiFile instanceof PsiClassOwner && psiFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
       PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
       if (classes.length > 0) {
         // prefer icon of the class named after file

@@ -17,9 +17,16 @@ package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -29,14 +36,96 @@ public class UiUtils {
 
     private UiUtils() {}
 
-    public static ActionToolbar createAddRemoveToolbar(ListTable table1) {
-        final AnAction addAction = new AddAction(table1);
-        final AnAction removeAction = new RemoveAction(table1);
+    public static ActionToolbar createAddRemoveToolbar(ListTable table) {
+        final AnAction addAction = new AddAction(table);
+        final AnAction removeAction = new RemoveAction(table);
         final ActionGroup group =
                 new DefaultActionGroup(addAction, removeAction);
         final ActionManager actionManager = ActionManager.getInstance();
         return actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
                 group, true);
+    }
+
+    public static ActionToolbar createAddRemoveTreeClassChooserToolbar(
+            ListTable table, String chooserTitle,
+            @NonNls String... ancestorClasses) {
+        final AnAction addAction = new TreeClassChooserAction(table,
+                chooserTitle, ancestorClasses);
+        final AnAction removeAction = new RemoveAction(table);
+        final ActionGroup group =
+                new DefaultActionGroup(addAction, removeAction);
+        final ActionManager actionManager = ActionManager.getInstance();
+        return actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
+                group, true);
+    }
+
+    private static class TreeClassChooserAction extends AnAction {
+
+        private final ListTable table;
+        private final String chooserTitle;
+        private final String[] ancestorClasses;
+
+        public TreeClassChooserAction(ListTable table, String chooserTitle,
+                                      @NonNls String... ancestorClasses) {
+            super(InspectionGadgetsBundle.message("button.add"), "",
+                    Icons.ADD_ICON);
+            this.table = table;
+            this.chooserTitle = chooserTitle;
+            this.ancestorClasses = ancestorClasses;
+        }
+
+        public void actionPerformed(AnActionEvent e) {
+            final DataContext dataContext = e.getDataContext();
+            final Project project = DataKeys.PROJECT.getData(dataContext);
+            if (project == null) {
+                return;
+            }
+            final TreeClassChooserFactory chooserFactory =
+                    TreeClassChooserFactory.getInstance(project);
+            final TreeClassChooser.ClassFilter filter;
+            if (ancestorClasses.length == 0) {
+                filter = TreeClassChooser.ClassFilter.ALL;
+            } else {
+                filter = new TreeClassChooser.ClassFilter() {
+                    public boolean isAccepted(PsiClass aClass) {
+                        for (String ancestorClass : ancestorClasses) {
+                            if (ClassUtils.isSubclass(aClass, ancestorClass)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                };
+            }
+            final TreeClassChooser classChooser =
+                    chooserFactory.createWithInnerClassesScopeChooser(chooserTitle,
+                            GlobalSearchScope.allScope(project), filter, null);
+            classChooser.showDialog();
+            final PsiClass selectedClass = classChooser.getSelectedClass();
+            if (selectedClass == null) {
+                return;
+            }
+            final String qualifiedName = selectedClass.getQualifiedName();
+            final ListWrappingTableModel tableModel = table.getModel();
+            final int index = tableModel.indexOf(qualifiedName, 0);
+            final int rowIndex;
+            if (index < 0) {
+                tableModel.addRow(qualifiedName);
+                rowIndex = tableModel.getRowCount() - 1;
+            } else {
+                rowIndex = index;
+            }
+            final ListSelectionModel selectionModel =
+                    table.getSelectionModel();
+            selectionModel.setSelectionInterval(rowIndex, rowIndex);
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    final Rectangle rectangle =
+                            table.getCellRect(rowIndex, 0, true);
+                    table.scrollRectToVisible(rectangle);
+                }
+            });
+        }
     }
 
     private static class AddAction extends AnAction {
