@@ -606,8 +606,8 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
     File iof2 = new File(myDir, "foo/bar2");
     iof1.mkdirs();
     iof2.mkdirs();
-    VirtualFile f1 = LocalFileSystem.getInstance().findFileByIoFile(iof1);
-    VirtualFile f2 = LocalFileSystem.getInstance().findFileByIoFile(iof2);
+    VirtualFile f1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof1);
+    VirtualFile f2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof2);
 
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
