@@ -90,6 +90,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public void disposeComponent() {
+    myRecords.dispose();
   }
 
   @NonNls
