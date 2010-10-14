@@ -1,6 +1,5 @@
 package com.intellij.util.io.socketConnection.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -14,7 +13,9 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -29,8 +30,8 @@ public class ResponseProcessor<R extends AbstractResponse> {
   private Thread myThread;
   private final Alarm myTimeoutAlarm;
 
-  public ResponseProcessor(Disposable parentDisposable) {
-    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parentDisposable);
+  public ResponseProcessor(SocketConnection<?, R> connection) {
+    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, connection);
   }
 
   public void startReading(final ResponseReader<R> reader) {
