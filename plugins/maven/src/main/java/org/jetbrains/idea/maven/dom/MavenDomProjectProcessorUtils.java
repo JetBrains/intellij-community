@@ -111,6 +111,20 @@ public class MavenDomProjectProcessorUtils {
   public static XmlTag searchProperty(@NotNull final String propertyName,
                                       @NotNull MavenDomProjectModel projectDom,
                                       @NotNull final Project project) {
+    return doSearchPropertyInProfile(propertyName, projectDom, null, project);
+  }
+
+  @Nullable
+  public static XmlTag searchPropertyInProfile(@NotNull final String propertyName,
+                                               @NotNull MavenDomProfile profileDom) {
+    return doSearchPropertyInProfile(propertyName, null, profileDom, null);
+  }
+
+  @Nullable
+  private static XmlTag doSearchPropertyInProfile(@NotNull final String propertyName,
+                                                  @Nullable MavenDomProjectModel projectDom,
+                                                  @Nullable MavenDomProfile profileDom,
+                                                  @Nullable final Project project) {
     final XmlTag[] property = new XmlTag[]{null};
 
     Processor<MavenDomProperties> searchProcessor = new Processor<MavenDomProperties>() {
@@ -128,7 +142,11 @@ public class MavenDomProjectProcessorUtils {
       }
     };
 
-    processProperties(projectDom, searchProcessor, project);
+    if (projectDom != null) {
+      processProperties(projectDom, searchProcessor, project);
+    } else {
+      processPropertiesInProfile(profileDom, searchProcessor);
+    }
 
     return property[0];
   }
@@ -328,6 +346,16 @@ public class MavenDomProjectProcessorUtils {
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction);
   }
 
+  public static boolean processPropertiesInProfile(@NotNull MavenDomProfile profileDom,
+                                                   @NotNull final Processor<MavenDomProperties> processor) {
+    return processProfile(profileDom, processor, new Function<MavenDomProfile, MavenDomProperties>() {
+      @Override
+      public MavenDomProperties fun(MavenDomProfile mavenDomProfile) {
+        return mavenDomProfile.getProperties();
+      }
+    });
+  }
+
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
                                     @NotNull final Processor<T> processor,
                                     @NotNull final Project project,
@@ -431,10 +459,16 @@ public class MavenDomProjectProcessorUtils {
       if (idTag == null) continue;
       if (activePropfiles != null && !activePropfiles.contains(idTag.getValue().getText())) continue;
 
-      T t = f.fun(each);
-      if (t != null && processor.process(t)) return true;
+      if (processProfile(each, processor, f)) return true;
     }
     return false;
+  }
+
+  private static <T> boolean processProfile(MavenDomProfile profileDom,
+                                            Processor<T> processor,
+                                            Function<MavenDomProfile, T> f) {
+    T t = f.fun(profileDom);
+    return t != null && processor.process(t);
   }
 
   public abstract static class DomParentProjectFileProcessor<T> extends MavenParentProjectFileProcessor<T> {
@@ -466,5 +500,4 @@ public class MavenDomProjectProcessorUtils {
       return process(myManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
   }
-
 }
