@@ -139,7 +139,7 @@ target('default': "Build artifacts") {
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
   setProperty("isEap", isEap())
 
-  if (isEap()) {
+  if (isEap) {
     setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
