@@ -341,6 +341,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     if (hasItems) {
+      if (!isFocused()) {
+        ListScrollingUtil.selectItem(myList, 0);
+        return;
+      }
+
       if (oldSelected != null) {
         if (hasExactPrefixes || !ListScrollingUtil.selectItem(myList, oldSelected)) {
           selectMostPreferableItem();
