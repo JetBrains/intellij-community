@@ -131,7 +131,7 @@ public class EditorWindow {
     editorManager.runChange(new Runnable() {
       public void run() {
         try {
-          final List<EditorWithProviderComposite> editors = editorManager.getEditorComposites(file);
+          final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
           if (editors.isEmpty()) return;
           final EditorWithProviderComposite editor = findFileComposite(file);
 
@@ -170,6 +170,8 @@ public class EditorWindow {
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
           afterPublisher.fileClosed(editorManager, file);
+
+          myOwner.afterFileClosed(file);
         }
       }
     });
@@ -299,6 +301,10 @@ public class EditorWindow {
       final Color color = EditorTabbedContainer.calcTabColor(getManager().getProject(), file);
       setBackgroundColorAt(index, color);
     }
+  }
+
+  public EditorsSplitters getOwner() {
+    return myOwner;
   }
 
   protected static class TComp extends JPanel implements DataProvider{

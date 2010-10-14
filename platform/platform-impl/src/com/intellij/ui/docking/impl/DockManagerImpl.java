@@ -17,8 +17,9 @@ package com.intellij.ui.docking.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
@@ -33,7 +34,10 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,6 +47,13 @@ public class DockManagerImpl extends DockManager {
 
   private Set<DockContainer> myContainers = new HashSet<DockContainer>();
   private MyDragSession myCurrentDragSession;
+
+  private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
+    @Override
+    protected boolean isReady() {
+      return myCurrentDragSession == null;
+    }
+  };
 
   public DockManagerImpl(Project project) {
     myProject = project;
@@ -60,6 +71,11 @@ public class DockManagerImpl extends DockManager {
   }
 
   @Override
+  public Set<DockContainer> getContainers() {
+    return Collections.unmodifiableSet(myContainers);
+  }
+
+  @Override
   public DragSession createDragSession(MouseEvent mouseEvent, DockableContent content) {
     stopCurrentDragSession();
     myCurrentDragSession = new MyDragSession(mouseEvent, content);
@@ -71,7 +87,12 @@ public class DockManagerImpl extends DockManager {
     if (myCurrentDragSession != null) {
       myCurrentDragSession.cancel();
       myCurrentDragSession = null;
+      myBusyObject.onReady();
     }
+  }
+
+  private ActionCallback getReady() {
+    return myBusyObject.getReady(this);
   }
 
   @Override
@@ -116,7 +137,8 @@ public class DockManagerImpl extends DockManager {
       double ratio;
       if (width > height) {
         ratio = requiredSize / width;
-      } else {
+      }
+      else {
         ratio = requiredSize / height;
       }
 
@@ -152,7 +174,8 @@ public class DockManagerImpl extends DockManager {
     public void process(MouseEvent e) {
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
         setLocationFrom(e);
-      } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      }
+      else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         createNewDockContainerFor(myContent, e);
         stopCurrentDragSession();
       }
@@ -191,6 +214,34 @@ public class DockManagerImpl extends DockManager {
       myContainer = container;
       setProject(project);
       setComponent(myContainer.getComponent());
+      myContainer.addListener(new DockContainer.Listener.Adapter() {
+        @Override
+        public void contentRemoved(Object key) {
+          if (myContainer.isEmpty()) {
+            WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
+            WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 1f);
+
+            getReady().doWhenDone(new Runnable() {
+              @Override
+              public void run() {
+                close();
+              }
+            });
+          }
+        }
+      }, this);
+    }
+
+    @Override
+    protected JFrame createJFrame() {
+      JFrame frame = super.createJFrame();
+      frame.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent e) {
+          myContainer.closeAll();
+        }
+      });
+      return frame;
     }
   }
 }

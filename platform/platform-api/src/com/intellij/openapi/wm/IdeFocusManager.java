@@ -131,8 +131,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return fm;
   }
 
-  public Component getFocusOwner() {
-    return isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-  }
+  public abstract Component getFocusOwner();
 
+  public abstract void runOnOwnContext(DataContext context, Runnable runnable);
 }

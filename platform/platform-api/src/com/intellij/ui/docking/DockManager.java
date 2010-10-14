@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 public abstract class DockManager implements ProjectComponent {
 
@@ -31,4 +32,6 @@ public abstract class DockManager implements ProjectComponent {
   }
 
   public abstract DragSession createDragSession(MouseEvent mouseEvent, DockableContent content);
+
+  public abstract Set<DockContainer> getContainers();
 }

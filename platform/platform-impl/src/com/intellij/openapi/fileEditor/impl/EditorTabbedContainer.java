@@ -38,8 +38,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -396,14 +394,20 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     TabInfo selected = myTabs.getSelectedInfo();
     if (selected == null) return;
 
-    VirtualFile file = (VirtualFile)selected.getObject();
+    final VirtualFile file = (VirtualFile)selected.getObject();
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
-    EditorWindow wnd = mgr.getCurrentWindow();
-    if (wnd != null) {
-      if (wnd.findFileComposite(file) != null) {
-        mgr.closeFile(file, wnd);
+
+    AsyncResult<EditorWindow> window = mgr.getActiveWindow();
+    window.doWhenDone(new AsyncResult.Handler<EditorWindow>() {
+      @Override
+      public void run(EditorWindow wnd) {
+        if (wnd != null) {
+          if (wnd.findFileComposite(file) != null) {
+            mgr.closeFile(file, wnd);
+          }
+        }
       }
-    }
+    });
   }
 
   private class TabMouseListener extends MouseAdapter {
@@ -481,7 +485,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     }
   }
 
-  private class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+  class MyDragOutDelegate implements TabInfo.DragOutDelegate {
 
     private VirtualFile myFile;
     private DragSession mySession;
@@ -491,9 +495,9 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       final Image img = myTabs.getComponentImage(info);
 
       myFile = (VirtualFile)info.getObject();
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
-
       mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile));
+
+      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
     }
 
     private DockManager getDockManager() {
@@ -513,12 +517,20 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       mySession = null;
     }
 
-    private class DockableEditor implements DockableContent {
-      private final Image myImg;
+    class DockableEditor implements DockableContent<VirtualFile> {
+      final Image myImg;
+      private DockableEditorTabbedContainer myContainer;
+
 
       public DockableEditor(Image img, VirtualFile file) {
         myImg = img;
         myFile = file;
+        myContainer = new DockableEditorTabbedContainer(myProject);
+      }
+
+      @Override
+      public VirtualFile getKey() {
+        return myFile;
       }
 
       @Override
@@ -533,46 +545,17 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
       @Override
       public DockContainerFactory getContainerFactory() {
-        return new MyFactory();
+        return myContainer;
+      }
+
+      @Override
+      public void close() {
+        myContainer.close(myFile);
       }
 
       public VirtualFile getFile() {
         return myFile;
       }
-    }
-  }
-
-  private class MyFactory implements DockContainerFactory, DockContainer {
-
-    private EditorsSplitters mySplitters;
-
-    @Override
-    public DockContainer createContainer() {
-      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject));
-      mySplitters.createCurrentWindow();
-      return this;
-    }
-
-    @Override
-    public RelativeRectangle getAcceptArea() {
-      return new RelativeRectangle(mySplitters);
-    }
-
-    @Override
-    public boolean canAccept(DockableContent content) {
-      return content instanceof MyDragOutDelegate.DockableEditor;
-    }
-
-    @Override
-    public void add(DockableContent content, RelativePoint dropTarget) {
-      VirtualFile file = ((MyDragOutDelegate.DockableEditor)content).getFile();
-      EditorWindow currentWindow = mySplitters.getCurrentWindow();
-      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(currentWindow, file, true);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return mySplitters;
     }
   }
 

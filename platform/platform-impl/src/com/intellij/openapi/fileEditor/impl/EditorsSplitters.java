@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -50,7 +51,7 @@ import java.util.List;
 /**
  * Author: msk
  */
-public final class EditorsSplitters extends JPanel {
+public class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private EditorWindow myCurrentWindow;
   private VirtualFile myCurrentFile;
@@ -428,6 +429,12 @@ public final class EditorsSplitters extends JPanel {
       return 1;
     }
     return 0;
+  }
+
+  protected void afterFileClosed(VirtualFile file) {
+  }
+
+  protected void afterFileOpen(VirtualFile file) {
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {

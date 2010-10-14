@@ -20,11 +20,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.Icons;
@@ -207,19 +210,24 @@ public class ActionMenuItem extends JMenuItem {
     }
 
     public void actionPerformed(final ActionEvent e) {
-      AnActionEvent event = new AnActionEvent(
-        new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-        myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
-      if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
-        ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-        actionManager.fireBeforeActionPerformed(myAction, myContext, event);
-        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
-        if (component != null && !isInTree(component)) {
-          return;
+      IdeFocusManager.findInstanceByContext(myContext).runOnOwnContext(myContext, new Runnable() {
+        @Override
+        public void run() {
+          AnActionEvent event = new AnActionEvent(
+            new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
+            myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
+          if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
+            ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+            actionManager.fireBeforeActionPerformed(myAction, myContext, event);
+            Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
+            if (component != null && !isInTree(component)) {
+              return;
+            }
+            myAction.actionPerformed(event);
+            actionManager.queueActionPerformedEvent(myAction, myContext, event);
+          }
         }
-        myAction.actionPerformed(event);
-        actionManager.queueActionPerformedEvent(myAction, myContext, event);
-      }
+      });
     }
   }
 

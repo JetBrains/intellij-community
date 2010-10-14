@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.docking;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 
@@ -28,4 +29,25 @@ public interface DockContainer {
   JComponent getComponent();
 
   void add(DockableContent content, RelativePoint dropTarget);
+
+  void closeAll();
+
+  void addListener(Listener listener, Disposable parent);
+
+  boolean isEmpty();
+
+  interface Listener {
+    void contentAdded(Object key);
+    void contentRemoved(Object key);
+    
+    class Adapter implements Listener {
+      @Override
+      public void contentAdded(Object key) {
+      }
+
+      @Override
+      public void contentRemoved(Object key) {
+      }
+    }
+  }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,6 +69,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    * @return current window in splitters
    */
   public abstract EditorWindow getCurrentWindow();
+
+  public abstract AsyncResult<EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 

@@ -17,11 +17,15 @@ package com.intellij.ui.docking;
 
 import java.awt.*;
 
-public interface DockableContent {
+public interface DockableContent<T> {
+
+  T getKey();
 
   Image getPreviewImage();
 
   DockContainerFactory getContainerFactory();
 
   Dimension getPreferredSize();
+
+  void close();
 }
