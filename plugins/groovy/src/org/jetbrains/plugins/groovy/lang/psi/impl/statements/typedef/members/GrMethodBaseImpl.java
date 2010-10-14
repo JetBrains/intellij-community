@@ -27,10 +27,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -73,7 +71,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -98,7 +96,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(TokenSets.PROPERTY_NAMES);
+    return findNotNullChildByType(TokenSets.PROPERTY_NAMES);
   }
 
   @Nullable
@@ -195,7 +193,6 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
   };
 
-  private ThreadLocal<Boolean> myTakingReturnTypeFromSupers = new ThreadLocal<Boolean>();
   @Nullable
   public PsiType getReturnType() {
     if (isConstructor()) {
@@ -207,45 +204,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       return element.getType();
     }
 
-    if (myTakingReturnTypeFromSupers.get() == Boolean.TRUE) {
-      return PsiType.getJavaLangObject(getManager(), getResolveScope());
-    }
-
-    myTakingReturnTypeFromSupers.set(Boolean.TRUE);
-
-    try {
-      final PsiMethod[] superMethods = findSuperMethods();
-      if (superMethods.length == 0) {
-        return PsiType.getJavaLangObject(getManager(), getResolveScope());
-      }
-
-      PsiType best = null;
-      for (PsiMethod method : superMethods) {
-        PsiType type = method.getReturnType();
-        final PsiClass superClass = method.getContainingClass();
-        if (type != null && superClass != null && InheritanceUtil.isInheritorOrSelf(getContainingClass(), superClass, true)) {
-          type = TypeConversionUtil.getSuperClassSubstitutor(superClass, getContainingClass(), PsiSubstitutor.EMPTY).substitute(type);
-          if (type != null) {
-            if (!(type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeVariable ||
-                  type instanceof PsiWildcardType ||
-                  type instanceof PsiCapturedWildcardType)) {
-              if (best == null || best.isAssignableFrom(type)) {
-                best = type;
-              }
-            }
-          }
-        }
-      }
-
-      if (best == null) {
-        return PsiType.getJavaLangObject(getManager(), getResolveScope());
-      }
-
-      return best;
-    }
-    finally {
-      myTakingReturnTypeFromSupers.set(null);
-    }
+    return PsiType.getJavaLangObject(getManager(), getResolveScope());
   }
 
   @Nullable
