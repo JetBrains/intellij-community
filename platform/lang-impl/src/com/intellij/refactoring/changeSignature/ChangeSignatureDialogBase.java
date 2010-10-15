@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -172,9 +173,14 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             myParameterPropagationTreeToReuse = chooser.get().getTree();
           }
         };
-        chooser.set(
-          createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
+        try {
+          chooser.set(
+            createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
                               callback));
+        } catch (ProcessCanceledException ex) {
+          // user cancelled initial callers search, don't show dialog
+          return;
+        }
         chooser.get().show();
       }
     });
