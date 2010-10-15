@@ -122,7 +122,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myOffsetMap = offsetMap;
     myLookup = lookup;
 
-    myLookup.setArranger(new CompletionLookupArranger(parameters));
+    myLookup.initLookup(new CompletionLookupArranger(parameters));
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -596,7 +596,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void restartCompletion() {
-    closeAndFinish(true); //todo false
+    closeAndFinish(false);
 
     myHandler.invokeCompletion(getProject(), myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, getProject()), myParameters.getInvocationCount());
   }
