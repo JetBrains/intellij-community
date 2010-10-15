@@ -94,6 +94,24 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private boolean myBackgrounded = true;
   private OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
+  private final LookupAdapter myLookupListener = new LookupAdapter() {
+    public void itemSelected(LookupEvent event) {
+      finishCompletionProcess();
+
+      LookupElement item = event.getItem();
+      if (item == null) return;
+
+      setMergeCommand();
+
+      myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET, myEditor.getCaretModel().getOffset() - item.getLookupString().length());
+      CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), CompletionProgressIndicator.this, myLookup.getItems());
+    }
+
+
+    public void lookupCanceled(final LookupEvent event) {
+      finishCompletionProcess();
+    }
+  };
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
@@ -106,24 +124,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
 
-    myLookup.addLookupListener(new LookupAdapter() {
-      public void itemSelected(LookupEvent event) {
-        lookupClosed();
-
-        LookupElement item = event.getItem();
-        if (item == null) return;
-
-        setMergeCommand();
-
-        myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET, myEditor.getCaretModel().getOffset() - item.getLookupString().length());
-        CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), CompletionProgressIndicator.this, myLookup.getItems());
-      }
-
-
-      public void lookupCanceled(final LookupEvent event) {
-        lookupClosed();
-      }
-    });
+    myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
@@ -362,14 +363,23 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.queue(myUpdate);
   }
 
-  public void closeAndFinish() {
+  public void closeAndFinish(boolean hideLookup) {
     if (myHint != null) {
       myHint.hide();
     }
-    LookupManager.getInstance(getProject()).hideActiveLookup();
+
+    if (LookupManager.getActiveLookup(myEditor) == myLookup) {
+      myLookup.removeLookupListener(myLookupListener);
+      finishCompletionProcess();
+
+      if (hideLookup) {
+        LookupManager.getInstance(getProject()).hideActiveLookup();
+      }
+    }
+
   }
 
-  private void lookupClosed() {
+  private void finishCompletionProcess() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         cancel();
@@ -388,7 +398,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public static void cleanupForNextTest() {
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.lookupClosed();
+      currentCompletion.finishCompletionProcess();
     }
   }
 
@@ -586,7 +596,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void restartCompletion() {
-    closeAndFinish();
+    closeAndFinish(true); //todo false
 
     myHandler.invokeCompletion(getProject(), myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, getProject()), myParameters.getInvocationCount());
   }

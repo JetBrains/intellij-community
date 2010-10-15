@@ -133,7 +133,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           }.execute();
         }
       }
-      indicator.closeAndFinish();
+      indicator.closeAndFinish(true); //todo false
     }
 
     if (time != 1) {
@@ -356,7 +356,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     } else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      indicator.closeAndFinish();
+      indicator.closeAndFinish(true);
       indicator.rememberDocumentState();
       indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);

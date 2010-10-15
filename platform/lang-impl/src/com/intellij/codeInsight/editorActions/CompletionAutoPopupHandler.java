@@ -188,7 +188,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     myAutopopupShown = false;
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.closeAndFinish();
+      currentCompletion.closeAndFinish(true);
     }
     return true;
   }
