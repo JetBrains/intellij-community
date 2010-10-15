@@ -334,6 +334,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return LayeredLexerEditorHighlighter.this.getDocument();
     }
 
+    public void resetCachedTextAttributes() {
+      // after color scheme was changed we need to reset cached attributes
+      myAttributesMap.clear();
+    }
+
     public void updateMapping(final int tokenIndex, final MappedRange oldMapping) {
       CharSequence tokenText = getTokenText(tokenIndex);
 
@@ -415,6 +420,18 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     return mapper;
+  }
+
+  @Override
+  public void setColorScheme(EditorColorsScheme scheme) {
+    super.setColorScheme(scheme);
+
+    for (MappedRange mapping : mySegments.myRanges) {
+      final Mapper mapper = mapping == null ? null : mapping.mapper;
+      if (mapper != null) {
+        mapper.resetCachedTextAttributes();
+      }
+    }
   }
 
   private class LayeredHighlighterIterator implements HighlighterIterator {
