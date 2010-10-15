@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
@@ -82,15 +83,22 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     */
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
-        LOG.info("VFS dispose started");
-        myRecords.dispose();
-        LOG.info("VFS dispose completed");
+        performShutdown();
       }
     });
   }
 
   public void disposeComponent() {
-    myRecords.dispose();
+    performShutdown();
+  }
+
+  private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(Boolean.FALSE);
+  private void performShutdown() {
+    if (!myShutdownPerformed.getAndSet(Boolean.TRUE)) {
+      LOG.info("VFS dispose started");
+      myRecords.dispose();
+      LOG.info("VFS dispose completed");
+    }
   }
 
   @NonNls
