@@ -96,22 +96,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
-                                     final OffsetMap offsetMap) {
+                                     final OffsetMap offsetMap, LookupImpl lookup) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
+    myLookup = lookup;
 
-    myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", new CompletionLookupArranger(parameters));
-    if (editor.isOneLineMode()) {
-      myLookup.setForceShowAsPopup(true);
-      myLookup.setCancelOnClickOutside(true);
-      myLookup.setCancelOnOtherWindowOpen(true);
-      myLookup.setResizable(false);
-      myLookup.setForceLightweightPopup(false);
-    }
-    myLookup.setFocused(handler.focusLookup);
+    myLookup.setArranger(new CompletionLookupArranger(parameters));
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {

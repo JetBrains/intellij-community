@@ -80,7 +80,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private RangeMarker myInitialSelection;
   private long myShownStamp = -1;
   private String myInitialPrefix;
-  private final LookupArranger myArranger;
+  private LookupArranger myArranger;
   private final ArrayList<LookupElement> myItems;
   @Nullable private List<LookupElement> mySortedItems;
 
@@ -197,6 +197,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       addItem(item);
     }
     updateList();
+  }
+
+  public void setArranger(LookupArranger arranger) {
+    myArranger = arranger;
   }
 
   public void addItem(LookupElement item) {
