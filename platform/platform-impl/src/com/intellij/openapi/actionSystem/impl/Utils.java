@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -90,7 +89,8 @@ public class Utils{
                                        ArrayList<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
-                                       String place, ActionManager actionManager, boolean transparrentOnly){
+                                       String place, ActionManager actionManager,
+                                       boolean transparentOnly) {
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(
       null,
@@ -102,10 +102,10 @@ public class Utils{
     );
     if (!doUpdate(group, e, presentation)) return;
 
-    if(!presentation.isVisible()){ // don't process invisible groups
+    if (!presentation.isVisible()) { // don't process invisible groups
       return;
     }
-    AnAction[] children=group.getChildren(e);
+    AnAction[] children = group.getChildren(e);
     for (int i = 0; i < children.length; i++) {
       AnAction child = children[i];
       if (child == null) {
@@ -118,7 +118,7 @@ public class Utils{
       AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0);
       e1.setInjectedContext(child.isInInjectedContext());
 
-      if ((transparrentOnly && child.isTransparentUpdate()) || !transparrentOnly) {
+      if ((transparentOnly && child.isTransparentUpdate()) || !transparentOnly) {
         if (!doUpdate(child, e1, presentation)) continue;
       }
 

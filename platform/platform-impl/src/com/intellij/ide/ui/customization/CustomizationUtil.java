@@ -17,6 +17,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupHandler;
@@ -36,7 +37,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,6 +44,11 @@ import java.util.List;
  * Date: Mar 30, 2005
  */
 public class CustomizationUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizationUtil");
+
+  private CustomizationUtil() {
+  }
+
   public static ActionGroup correctActionGroup(final ActionGroup group, final CustomActionsSchema schema, final String defaultGroupName) {
     if (!schema.isCorrectActionGroup(group)){
        return group;
@@ -66,46 +71,49 @@ public class CustomizationUtil {
   private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
-    final ArrayList<AnAction> reordableChildren = new ArrayList<AnAction>();
-    ContainerUtil.addAll(reordableChildren, group.getChildren(e));
+    final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
+    ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
     final List<ActionUrl> actions = schema.getActions();
-    for (Iterator<ActionUrl> iterator = actions.iterator(); iterator.hasNext();) {
-      ActionUrl actionUrl = iterator.next();
+    for (ActionUrl actionUrl : actions) {
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||
            actionUrl.getParentGroup().equals(actionManager.getId(group)))) {
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {
-            if (reordableChildren.size() > actionUrl.getAbsolutePosition()) {
-              reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
+            if (componentAction == group) {
+              LOG.error("Attempt to add group to itself; group ID=" + actionManager.getId(group));
+              continue;
+            }
+            if (reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
+              reorderedChildren.add(actionUrl.getAbsolutePosition(), componentAction);
             }
             else {
-              reordableChildren.add(componentAction);
+              reorderedChildren.add(componentAction);
             }
           }
-          else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() > actionUrl.getAbsolutePosition()) {
-            final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
+          else if (actionUrl.getActionType() == ActionUrl.DELETED && reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
+            final AnAction anAction = reorderedChildren.get(actionUrl.getAbsolutePosition());
             if (anAction.getTemplatePresentation().getText() == null
                 ? (componentAction.getTemplatePresentation().getText() != null &&
                    componentAction.getTemplatePresentation().getText().length() > 0)
                 : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
               continue;
             }
-            reordableChildren.remove(actionUrl.getAbsolutePosition());
+            reorderedChildren.remove(actionUrl.getAbsolutePosition());
           }
         }
       }
     }
-    for (int i = 0; i < reordableChildren.size(); i++) {
-      if (reordableChildren.get(i) instanceof ActionGroup) {
-        final ActionGroup groupToCorrect = (ActionGroup)reordableChildren.get(i);
+    for (int i = 0; i < reorderedChildren.size(); i++) {
+      if (reorderedChildren.get(i) instanceof ActionGroup) {
+        final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
         final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "");
-        reordableChildren.set(i, correctedAction);
+        reorderedChildren.set(i, correctedAction);
       }
     }
 
-    return reordableChildren.toArray(new AnAction[reordableChildren.size()]);
+    return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
   }
 
   private static class CachedAction extends ActionGroup {
@@ -122,6 +130,7 @@ public class CustomizationUtil {
       myForceUpdate = true;
     }
 
+    @NotNull
     public AnAction[] getChildren(@Nullable final AnActionEvent e) {
       if (myForceUpdate){
         myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
@@ -150,7 +159,7 @@ public class CustomizationUtil {
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
-    schema.fillActionGroups(root);
+    CustomActionsSchema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
@@ -241,6 +250,7 @@ public class CustomizationUtil {
     return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot(), tree);
   }
 
+  @Nullable
   private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root, JTree tree) {
     if (!(root instanceof DefaultMutableTreeNode)) return null;
 
