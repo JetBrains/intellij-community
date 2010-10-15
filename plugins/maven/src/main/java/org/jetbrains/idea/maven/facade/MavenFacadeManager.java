@@ -358,7 +358,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeLogger extends RemoteObject implements MavenFacadeLogger {
+  private static class RemoteMavenFacadeLogger extends MavenRemoteObject implements MavenFacadeLogger {
     public void info(Throwable e) {
       MavenLog.LOG.info(e);
     }
@@ -376,7 +376,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeDownloadListener extends RemoteObject implements MavenFacadeDownloadListener {
+  private static class RemoteMavenFacadeDownloadListener extends MavenRemoteObject implements MavenFacadeDownloadListener {
     private final List<MavenFacadeDownloadListener> myListeners = ContainerUtil.createEmptyCOWList();
 
     public void artifactDownloaded(File file, String relativePath) throws RemoteException {
@@ -386,7 +386,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeProgressIndicator extends RemoteObject implements MavenFacadeProgressIndicator {
+  private static class RemoteMavenFacadeProgressIndicator extends MavenRemoteObject implements MavenFacadeProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
     public RemoteMavenFacadeProgressIndicator(MavenProgressIndicator process) {
@@ -414,7 +414,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeConsole extends RemoteObject implements MavenFacadeConsole {
+  private static class RemoteMavenFacadeConsole extends MavenRemoteObject implements MavenFacadeConsole {
     private final MavenConsole myConsole;
 
     public RemoteMavenFacadeConsole(MavenConsole console) {

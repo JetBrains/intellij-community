@@ -24,7 +24,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
-import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -68,7 +67,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.rmi.server.RemoteObject;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -76,9 +74,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.jetbrains.idea.maven.facade.RemoteObject.wrapException;
-
-public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacadeEmbedder {
+public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenFacadeEmbedder {
   private final MavenEmbedder myImpl;
   private final MavenFacadeConsoleWrapper myConsoleWrapper;
   private volatile MavenFacadeProgressIndicatorWrapper myCurrentIndicatorWrapper;
@@ -229,7 +225,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
 
     }
     return Collections.emptyList();
@@ -530,7 +526,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       catch (TimeoutException ignore) {
       }
       catch (ExecutionException e) {
-        throw new RuntimeException(wrapException(e.getCause()));
+        throw rethrowException(e);
       }
       catch (InterruptedException e) {
         throw new MavenFacadeProcessCanceledException();
@@ -549,7 +545,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
 
   private RuntimeException getRethrowable(Throwable throwable) {
     if (throwable instanceof InvocationTargetException) throwable = throwable.getCause();
-    return new RuntimeException(wrapException(throwable));
+    return rethrowException(throwable);
   }
 
   private static void setupContainer(PlexusContainer c) {
@@ -589,7 +585,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       setConsoleAndLogger(logger, process);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -612,7 +608,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       ((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -621,7 +617,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       myImpl.release();
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -662,7 +658,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 }

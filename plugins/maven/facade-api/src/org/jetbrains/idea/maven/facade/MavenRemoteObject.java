@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import com.intellij.execution.rmi.RemoteServer;
+import com.intellij.execution.rmi.RemoteObject;
 
-public class RemoteMavenServer extends RemoteServer {
-  public static void main(String[] args) throws Exception {
-    start(new MavenFacadeImpl());
+public class MavenRemoteObject extends RemoteObject{
+  @Override
+  protected boolean isKnownException(Throwable ex) {
+    return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());
   }
 }
