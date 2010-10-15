@@ -154,6 +154,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           changeBean.reinit();
         } else if (!info.equals(changeBean.getInitialChangeInfo())) {
           changeBean.setCurrentInfo(info);
+        } else {
+          changeBean.setCurrentInfo(null);
         }
       }
     }
