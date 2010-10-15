@@ -64,7 +64,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(2);
-  private static final TextAttributes HIGHLIGHT_PREVIEW_ATTRIBUTES = new TextAttributes(null, Color.RED, null, EffectType.BOXED, Font.PLAIN);
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
@@ -515,6 +514,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       }
       int offsetToScroll = -1;
       CharSequence text = myEditor.getDocument().getCharsSequence();
+      TextAttributes attributes = myEditor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       for (TextRange range : myPreviewRangesToHighlight) {
         if (scrollToChange) {
           boolean rangeVisible = isWithinBounds(myEditor.offsetToVisualPosition(range.getStartOffset()), visualStart, visualEnd)
@@ -531,8 +531,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
             }
           }
         }
+
         markupModel.addRangeHighlighter(
-          range.getStartOffset(), range.getEndOffset(), HighlighterLayer.SELECTION, HIGHLIGHT_PREVIEW_ATTRIBUTES,
+          range.getStartOffset(), range.getEndOffset(), HighlighterLayer.SELECTION, attributes,
           HighlighterTargetArea.EXACT_RANGE
         );
       }
