@@ -126,7 +126,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b", "--encoding=UTF-8");
+                    "--pretty=tformat:%x03%x01%x03%H%x03%ct%x03%an%x20%x3C%ae%x3E%x03%cn%x20%x3C%ce%x3E%x03%x02%x03%s%x03%b", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
 
@@ -182,10 +182,10 @@ public class GitHistoryUtils {
   }
 
   private static class MyTokenAccumulator {
-    // %x00%x02%x00%s%x00%x02%x01%b%x00%x01%x00
-    private final static String ourCommentStartMark = "\u0000\u0002\u0000";
-    private final static String ourCommentEndMark = "\u0000\u0002\u0001";
-    private final static String ourLineEndMark = "\u0000\u0001\u0000";
+    // %x03%x02%x03%s%x03%x02%x01%b%x03%x01%x03
+    private final static String ourCommentStartMark = "\u0003\u0002\u0003";
+    private final static String ourCommentEndMark = "\u0003\u0002\u0001";
+    private final static String ourLineEndMark = "\u0003\u0001\u0003";
 
     private final StringBuilder myBuffer;
     private final int myMax;
@@ -224,14 +224,14 @@ public class GitHistoryUtils {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
 
       final String start = line.substring(0, commentStartIdx);
-      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0000", false);
+      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0003", false);
       final List<String> result = new ArrayList<String>();
       while (tk.hasMoreElements()) {
         final String token = tk.nextToken();
         result.add(token);
       }
 
-      final String part = line.substring(commentStartIdx + 3).replace('\u0002', '\n').replace('\u0000', '\n').trim();
+      final String part = line.substring(commentStartIdx + 3).replace('\u0002', '\n').replace('\u0003', '\n').trim();
       // take last line
       final int commentEndIdx = part.lastIndexOf('\n');
       //plus comment
@@ -258,18 +258,18 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00", "--encoding=UTF-8");
+                    "--pretty=format:%H%x03%ct%x03%an%x20%x3C%ae%x3E%x03%cn%x20%x3C%ce%x3E%x03%s%n%n%b%x03", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
     List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
-    StringTokenizer tk = new StringTokenizer(output, "\u0000\n", false);
+    StringTokenizer tk = new StringTokenizer(output, "\u0003\n", false);
     String prefix = root.getPath() + "/";
     while (tk.hasMoreTokens()) {
-      final GitRevisionNumber revision = new GitRevisionNumber(tk.nextToken("\u0000\n"), GitUtil.parseTimestamp(tk.nextToken("\u0000")));
-      final String author = GitUtil.adjustAuthorName(tk.nextToken("\u0000"), tk.nextToken("\u0000"));
-      final String message = tk.nextToken("\u0000").trim();
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0000\n")), false);
+      final GitRevisionNumber revision = new GitRevisionNumber(tk.nextToken("\u0003\n"), GitUtil.parseTimestamp(tk.nextToken("\u0003")));
+      final String author = GitUtil.adjustAuthorName(tk.nextToken("\u0003"), tk.nextToken("\u0003"));
+      final String message = tk.nextToken("\u0003").trim();
+      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0003\n")), false);
       rc.add(new GitFileRevision(project, revisionPath, revision, author, message, null));
     }
     return rc;
