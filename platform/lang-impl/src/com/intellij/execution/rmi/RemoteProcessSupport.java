@@ -54,6 +54,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public void stopAll() {
+    stopAll(false);
+  }
+
+  public void stopAll(boolean wait) {
     final ArrayList<ProcessHandler> allHandlers = new ArrayList<ProcessHandler>();
     synchronized (myProcMap) {
       for (Object o : myProcMap.values()) {
@@ -64,6 +68,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     for (ProcessHandler handler : allHandlers) {
       handler.destroyProcess();
+      if (wait) handler.waitFor();
     }
   }
 

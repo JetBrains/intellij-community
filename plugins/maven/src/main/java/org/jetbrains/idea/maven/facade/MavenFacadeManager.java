@@ -51,6 +51,7 @@ import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -101,10 +102,15 @@ public class MavenFacadeManager {
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
-        mySupport.stopAll();
-        disposeFacade();
+        shutdown(false);
       }
     });
+  }
+
+  @TestOnly
+  synchronized void shutdown(boolean wait) {
+    mySupport.stopAll(wait);
+    disposeFacade();
   }
 
   private void disposeFacade() {
@@ -133,7 +139,8 @@ public class MavenFacadeManager {
     }
   }
 
-  private synchronized MavenFacade getFacade() {
+  @TestOnly
+  synchronized MavenFacade getFacade() {
     if (myFacade != null) {
       try {
         myFacade.ping();

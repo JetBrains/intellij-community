@@ -240,15 +240,11 @@ public class ParametersList implements Cloneable{
       // ApplicationManager.getApplication() will return null if executed in ParameterListTest
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
-        application.runReadAction(new Runnable() {
-          public void run() {
-            final PathMacros pathMacros = PathMacros.getInstance();
-            final Set<String> names = pathMacros.getAllMacroNames();
-              for (String name : names) {
-                  myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
-              }
-          }
-        });
+        final PathMacros pathMacros = PathMacros.getInstance();
+        final Set<String> names = pathMacros.getAllMacroNames();
+        for (String name : names) {
+            myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+        }
         final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
         for (String name : env.keySet()) {
           final String key = "${" + name + "}";

@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
-  private final Map<String,String> myLegacyMacros = new HashMap<String,String>();
-  private final Map<String,String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new HashMap<String, String>();
   private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createEmptyCOWList();
 
@@ -64,17 +65,18 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   @NonNls
   public static final String USER_HOME_MACRO_NAME = "USER_HOME";
 
-  private static final Set<String> ourSystemMacroNames = new HashSet<String>();
+  private static final Set<String> SYSTEM_MACROS = new HashSet<String>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
 
   static {
-    ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
-    ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
-    ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
-    ourSystemMacroNames.add(USER_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(APPLICATION_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(PROJECT_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(MODULE_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
   }
 
   private static final Set<String> ourToolsMacros = new HashSet<String>();
+
   static {
     ourToolsMacros.addAll(Arrays.asList(
       "ClasspathEntry",
@@ -132,7 +134,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return "PathMacrosImpl";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
   }
@@ -144,7 +147,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public Set<String> getUserMacroNames() {
     myLock.readLock().lock();
     try {
-      return myMacros.keySet();
+      return new THashSet<String>(myMacros.keySet()); // keyset should not escape the lock
     }
     finally {
       myLock.readLock().unlock();
@@ -156,13 +159,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public Set<String> getSystemMacroNames() {
-    try {
-      myLock.readLock().lock();
-      return ourSystemMacroNames;
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
+      return SYSTEM_MACROS;
   }
 
   @Override
@@ -218,7 +215,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public Collection<String> getLegacyMacroNames() {
     try {
       myLock.readLock().lock();
-      return myLegacyMacros.keySet();
+      return new THashSet<String>(myLegacyMacros.keySet()); // keyset should not escape the lock
     }
     finally {
       myLock.readLock().unlock();
@@ -260,44 +257,58 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final List children = element.getChildren(MACRO_ELEMENT);
-    for (Object aChildren : children) {
-      Element macro = (Element)aChildren;
-      final String name = macro.getAttributeValue(NAME_ATTR);
-      final String value = macro.getAttributeValue(VALUE_ATTR);
-      if (name == null || value == null) {
-        throw new InvalidDataException();
+    try {
+      myLock.writeLock().lock();
+
+      final List children = element.getChildren(MACRO_ELEMENT);
+      for (Object aChildren : children) {
+        Element macro = (Element)aChildren;
+        final String name = macro.getAttributeValue(NAME_ATTR);
+        final String value = macro.getAttributeValue(VALUE_ATTR);
+        if (name == null || value == null) {
+          throw new InvalidDataException();
+        }
+
+        myMacros.put(name, value);
       }
 
-      myMacros.put(name, value);
+      final List ignoredChildren = element.getChildren(IGNORED_MACRO_ELEMENT);
+      for (final Object child : ignoredChildren) {
+        final Element macroElement = (Element)child;
+        final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
+        if (ignoredName != null && ignoredName.length() > 0 && !myIgnoredMacros.contains(ignoredName)) {
+          myIgnoredMacros.add(ignoredName);
+        }
+      }
     }
-
-    final List ignoredChildren = element.getChildren(IGNORED_MACRO_ELEMENT);
-    for (final Object child : ignoredChildren) {
-      final Element macroElement = (Element)child;
-      final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
-      if (ignoredName != null && ignoredName.length() > 0 && !myIgnoredMacros.contains(ignoredName)) {
-        myIgnoredMacros.add(ignoredName);
-      }
+    finally {
+      myLock.writeLock().unlock();
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Set<Map.Entry<String,String>> entries = myMacros.entrySet();
-    for (Map.Entry<String, String> entry : entries) {
-      final String value = entry.getValue();
-      if (value != null && value.trim().length() > 0) {
-        final Element macro = new Element(MACRO_ELEMENT);
-        macro.setAttribute(NAME_ATTR, entry.getKey());
-        macro.setAttribute(VALUE_ATTR, value);
-        element.addContent(macro);
+    try {
+      myLock.writeLock().lock();
+
+      final Set<Map.Entry<String, String>> entries = myMacros.entrySet();
+      for (Map.Entry<String, String> entry : entries) {
+        final String value = entry.getValue();
+        if (value != null && value.trim().length() > 0) {
+          final Element macro = new Element(MACRO_ELEMENT);
+          macro.setAttribute(NAME_ATTR, entry.getKey());
+          macro.setAttribute(VALUE_ATTR, value);
+          element.addContent(macro);
+        }
+      }
+
+      for (final String macro : myIgnoredMacros) {
+        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
+        macroElement.setAttribute(NAME_ATTR, macro);
+        element.addContent(macroElement);
       }
     }
-
-    for (final String macro : myIgnoredMacros) {
-      final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
-      macroElement.setAttribute(NAME_ATTR, macro);
-      element.addContent(macroElement);
+    finally {
+      myLock.writeLock().unlock();
     }
   }
 
@@ -325,5 +336,4 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myLock.readLock().unlock();
     }
   }
-
 }
