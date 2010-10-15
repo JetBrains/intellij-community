@@ -17,6 +17,8 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -115,6 +117,16 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
+    if (myManager.getSelectedConfiguration() == null) {
+      final RunConfiguration[] allConfigurations = myManager.getAllConfigurations();
+      for (final RunConfiguration configuration : allConfigurations) {
+        final RunnerAndConfigurationSettings settings = myManager.getSettings(allConfigurations[0]);
+        if (!(configuration instanceof UnknownRunConfiguration)) {
+          myManager.setSelectedConfiguration(settings);
+          break;
+        }
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
