@@ -83,7 +83,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     final Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
     if (!compilerConfiguration.isAnnotationProcessorsEnabled() ||
-        compilerConfiguration.getAnnotationProcessorsMap().isEmpty() ||
+        (!compilerConfiguration.isObtainProcessorsFromClasspath() && compilerConfiguration.getAnnotationProcessorsMap().isEmpty()) ||
         module != null && StringUtil.isEmpty(compilerConfiguration.getAnotationProcessedModules().get(module))) {
       presentation.setEnabled(false);
       return;

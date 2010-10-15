@@ -92,7 +92,7 @@ public class BackendCompilerWrapper {
   private final Set<VirtualFile> myProcessedPackageInfos = new HashSet<VirtualFile>();
   private final CompileStatistics myStatistics;
   private volatile String myModuleName = null;
-  
+  private boolean myForceCompileTestsSeparately = false;
 
   public BackendCompilerWrapper(Chunk<Module> chunk, @NotNull final Project project,
                                 @NotNull List<VirtualFile> filesToCompile,
@@ -155,6 +155,14 @@ public class BackendCompilerWrapper {
         mySink.add(null, outputs, VirtualFile.EMPTY_ARRAY);
       }
     }
+  }
+
+  public boolean isForceCompileTestsSeparately() {
+    return myForceCompileTestsSeparately;
+  }
+
+  public void setForceCompileTestsSeparately(boolean forceCompileTestsSeparately) {
+    myForceCompileTestsSeparately = forceCompileTestsSeparately;
   }
 
   private Map<Module, List<VirtualFile>> buildModuleToFilesMap(final List<VirtualFile> filesToCompile) {
@@ -257,6 +265,9 @@ public class BackendCompilerWrapper {
 
 
   private boolean shouldCompileTestsSeparately(Module module) {
+    if (myForceCompileTestsSeparately) {
+      return true;
+    }
     final String moduleTestOutputDirectory = getTestsOutputDir(module);
     if (moduleTestOutputDirectory == null) {
       return false;

@@ -387,7 +387,13 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add("-sourcepath");
       // this way we tell the compiler that the sourcepath is "empty". However, javac thinks that sourcepath is 'new File("")'
       // this may cause problems if we have java code in IDEA working directory
-      commandLine.add("\"\"");
+      if (isAnnotationProcessingMode) {
+        final int currentSourcesMode = chunk.getSourcesFilter();
+        commandLine.add(chunk.getSourcePath(currentSourcesMode == ModuleChunk.TEST_SOURCES? ModuleChunk.ALL_SOURCES : currentSourcesMode));
+      }
+      else {
+        commandLine.add("\"\"");
+      }
     }
 
     if (isAnnotationProcessingMode) {

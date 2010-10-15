@@ -74,6 +74,10 @@ public class ModuleChunk extends Chunk<Module> {
     mySourcesFilter = filter;
   }
 
+  public int getSourcesFilter() {
+    return mySourcesFilter;
+  }
+
   public void substituteWithTransformedVersion(Module module, int fileIndex, VirtualFile transformedFile) {
     final List<VirtualFile> moduleFiles = getFilesToCompile(module);
     final VirtualFile currentFile = moduleFiles.get(fileIndex);
@@ -139,9 +143,13 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public VirtualFile[] getSourceRoots() {
+    return getSourceRoots(mySourcesFilter);
+  }
+
+  private VirtualFile[] getSourceRoots(final int sourcesFilter) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
-        return filterRoots(getAllSourceRoots(), getNodes().iterator().next().getProject());
+        return filterRoots(getAllSourceRoots(), getNodes().iterator().next().getProject(), sourcesFilter);
       }
     });
   }
@@ -152,23 +160,23 @@ public class ModuleChunk extends Chunk<Module> {
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
-        return filterRoots(myContext.getSourceRoots(module), module.getProject());
+        return filterRoots(myContext.getSourceRoots(module), module.getProject(), mySourcesFilter);
       }
     });
   }
 
-  private VirtualFile[] filterRoots(VirtualFile[] roots, Project project) {
+  private VirtualFile[] filterRoots(VirtualFile[] roots, Project project, final int sourcesFilter) {
     final List<VirtualFile> filteredRoots = new ArrayList<VirtualFile>(roots.length);
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     for (final VirtualFile root : roots) {
-      if (mySourcesFilter != ALL_SOURCES) {
+      if (sourcesFilter != ALL_SOURCES) {
         if (myContext.isInTestSourceContent(root)) {
-          if ((mySourcesFilter & TEST_SOURCES) == 0) {
+          if ((sourcesFilter & TEST_SOURCES) == 0) {
             continue;
           }
         }
         else {
-          if ((mySourcesFilter & SOURCES) == 0) {
+          if ((sourcesFilter & SOURCES) == 0) {
             continue;
           }
         }
@@ -271,10 +279,14 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public String getSourcePath() {
+    return getSourcePath(mySourcesFilter);
+  }
+
+  public String getSourcePath(final int sourcesFilter) {
     if (getModuleCount() == 0) {
       return "";
     }
-    final VirtualFile[] filteredRoots = getSourceRoots();
+    final VirtualFile[] filteredRoots = getSourceRoots(sourcesFilter);
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
