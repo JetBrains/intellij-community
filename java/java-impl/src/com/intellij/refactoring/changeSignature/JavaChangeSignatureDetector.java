@@ -323,14 +323,15 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean isToHighlight(PsiElement element) {
+  public boolean isToHighlight(PsiElement element, ChangeInfo changeInfo) {
     element = element.getParent();
+    LOG.assertTrue(changeInfo instanceof JavaChangeInfo);
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       SearchScope useScope = method.getUseScope();
       if (useScope instanceof GlobalSearchScope) {
         final PsiSearchHelper.SearchCostResult cheapEnough = element.getManager().getSearchHelper()
-          .isCheapEnoughToSearch(method.getName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
+          .isCheapEnoughToSearch(((JavaChangeInfo)changeInfo).getOldName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
       }
     }

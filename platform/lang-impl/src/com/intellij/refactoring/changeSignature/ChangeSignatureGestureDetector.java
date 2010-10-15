@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -71,8 +72,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public boolean containsChangeSignatureChange(@NotNull PsiFile file) {
+    return getChangeInfo(file) != null;
+  }
+
+  @Nullable
+  public ChangeInfo getChangeInfo(@NotNull PsiFile file) {
     final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
-    return adapter != null && adapter.getCurrentInfo() != null;
+    return adapter != null ? adapter.getCurrentInfo() : null;
   }
 
   public void changeSignature(PsiFile file) {
