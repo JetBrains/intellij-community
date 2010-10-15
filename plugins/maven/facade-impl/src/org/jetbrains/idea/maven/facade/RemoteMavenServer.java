@@ -15,45 +15,10 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.ExportException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.Random;
+import com.intellij.execution.rmi.RemoteServer;
 
-/**
- * @author Gregory.Shrago
- */
-public class RemoteMavenServer {
+public class RemoteMavenServer extends RemoteServer {
   public static void main(String[] args) throws Exception {
-    Registry registry;
-    int port = 0;
-    for (Random random = new Random(); ;) {
-      port = random.nextInt(0xffff);
-      if (port < 4000) continue;
-      try {
-        registry = LocateRegistry.createRegistry(port);
-        break;
-      }
-      catch (ExportException ex) {
-        // try next port
-      }
-    }
-    try {
-      final MavenFacade mavenFacade = new MavenFacadeImpl();
-      final MavenFacade stub = (MavenFacade)UnicastRemoteObject.exportObject(mavenFacade, 0);
-      final String name = "Maven" + Integer.toHexString(stub.hashCode());
-      registry.bind(name, stub);
-      System.out.println("Port/ID:" + port + "/" + name);
-      final Object lock = new Object();
-      synchronized (lock) {
-        lock.wait();
-      }
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-      System.exit(1);
-    }
+    start(new MavenFacadeImpl());
   }
-
 }

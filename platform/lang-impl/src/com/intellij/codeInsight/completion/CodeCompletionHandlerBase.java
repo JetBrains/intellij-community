@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
@@ -76,7 +77,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
-  final boolean focusLookup;
+  private final boolean myFocusLookup;
 
   public CodeCompletionHandlerBase(final CompletionType completionType) {
     this(completionType, true, true);
@@ -85,7 +86,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean focusLookup) {
     myCompletionType = completionType;
     this.invokedExplicitly = invokedExplicitly;
-    this.focusLookup = focusLookup;
+    this.myFocusLookup = focusLookup;
   }
 
   public final void invoke(final Project project, final Editor editor) {
@@ -98,7 +99,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     try {
-      invokeCompletion(project, editor, psiFile, focusLookup ? 1 : 0);
+      invokeCompletion(project, editor, psiFile, myFocusLookup ? 1 : 0);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
@@ -132,7 +133,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           }.execute();
         }
       }
-      indicator.closeAndFinish();
+      indicator.closeAndFinish(true); //todo false
     }
 
     if (time != 1) {
@@ -171,7 +172,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
     };
-    if (!focusLookup) {
+    if (!myFocusLookup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
@@ -184,6 +185,19 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     doComplete(offset1, offset2, context, initializationContext[0].getFileCopyPatcher(), editor, time);
   }
 
+  private LookupImpl createLookup(Editor editor) {
+    LookupImpl myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
+    if (editor.isOneLineMode()) {
+      myLookup.setForceShowAsPopup(true);
+      myLookup.setCancelOnClickOutside(true);
+      myLookup.setCancelOnOtherWindowOpen(true);
+      myLookup.setResizable(false);
+      myLookup.setForceLightweightPopup(false);
+    }
+    myLookup.setFocused(myFocusLookup);
+    return myLookup;
+  }
+
   protected void doComplete(final int offset1,
                             final int offset2,
                             final CompletionContext context,
@@ -192,7 +206,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, context.getOffsetMap());
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, context.getOffsetMap(), createLookup(editor));
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator);
 
@@ -213,7 +227,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
+  private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
+                                                                        final CompletionProgressIndicator indicator) {
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
@@ -341,7 +356,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     } else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      indicator.closeAndFinish();
+      indicator.closeAndFinish(true);
       indicator.rememberDocumentState();
       indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);

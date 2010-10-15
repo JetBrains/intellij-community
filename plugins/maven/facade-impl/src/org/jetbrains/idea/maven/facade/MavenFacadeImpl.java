@@ -19,25 +19,19 @@ import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeIndexerImpl;
-import org.jetbrains.idea.maven.facade.embedder.MavenModelConverter;
-import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
-import org.jetbrains.idea.maven.facade.nexus.Endpoint;
-import org.jetbrains.idea.maven.facade.nexus.SearchResults;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.xml.bind.JAXBException;
 import java.io.File;
-import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
+public class MavenFacadeImpl extends MavenRemoteObject implements MavenFacade {
   @Override
   public void ping() throws RemoteException {
     // no op
@@ -48,7 +42,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       MavenFacadeGlobalsManager.set(logger, downloadListener);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -59,7 +53,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return result;
     }
     catch (RemoteException e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -70,7 +64,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return result;
     }
     catch (RemoteException e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -79,7 +73,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return MavenFacadeEmbedderImpl.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -88,7 +82,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return MavenFacadeEmbedderImpl.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -100,7 +94,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return MavenFacadeEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 
@@ -122,9 +116,9 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       }
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
-    throw new RuntimeException("Unknown Repository Service. Supported Services are "+ Arrays.asList(MavenManagementService.getServices()));
+    throw new RuntimeException("Unknown Repository Service. Supported Services are " + Arrays.asList(MavenManagementService.getServices()));
   }
 
   @Nullable
@@ -147,7 +141,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       if (result != null) return result;
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
     throw new RuntimeException("Unknown Repository Service. Supported Services are " + Arrays.asList(MavenManagementService.getServices()));
   }

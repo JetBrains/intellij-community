@@ -15,11 +15,12 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.Nullable;
 
 public interface LighterLazyParseableNode extends LighterASTNode {
-  Project getProject();
+  @Nullable PsiFile getContainingFile();
   CharTable getCharTable();
   CharSequence getText();
 }

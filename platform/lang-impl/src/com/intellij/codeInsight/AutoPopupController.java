@@ -107,7 +107,7 @@ public class AutoPopupController implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.closeAndFinish();
+      currentCompletion.closeAndFinish(true);
     }
 
     myAlarm.addRequest(request, delay);

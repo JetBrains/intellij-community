@@ -44,7 +44,7 @@ import org.sonatype.nexus.index.updater.IndexUpdater;
 import java.io.File;
 import java.util.*;
 
-public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeIndexer {
+public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFacadeIndexer {
   private MavenFacadeEmbedderImpl myEmbedder;
   private final NexusIndexer myIndexer;
   private final IndexUpdater myUpdater;
@@ -263,7 +263,7 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       myEmbedder.release();
     }
     catch (Exception e) {
-      throw new RuntimeException(wrapException(e));
+      throw rethrowException(e);
     }
   }
 

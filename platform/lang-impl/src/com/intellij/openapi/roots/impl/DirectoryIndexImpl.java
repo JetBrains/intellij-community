@@ -575,7 +575,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private static boolean isIgnored(VirtualFile f) {
+  private static boolean isIgnored(@NotNull VirtualFile f) {
     return FileTypeManager.getInstance().isFileIgnored(f.getName());
   }
 

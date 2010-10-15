@@ -209,13 +209,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
-        if (isDisposed() || isDisposeInProgress()) return;
+        if (isDisposed() || isDisposeInProgress()) {
+          return;
+        }
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
               ApplicationManagerEx.setApplication(ApplicationImpl.this);
-              saveAll();
-              disposeSelf();
+              try {
+                saveAll();
+              }
+              finally {
+                disposeSelf();
+              }
             }
           });
         }
@@ -231,16 +237,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean disposeSelf() {
     myDisposeInProgress = true;
-    Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    final boolean[] canClose = {true};
-    for (final Project project : openProjects) {
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      commandProcessor.executeCommand(project, new Runnable() {
-        public void run() {
-          canClose[0] = ProjectUtil.closeProject(project);
-        }
-      }, ApplicationBundle.message("command.exit"), null);
-      if (!canClose[0]) return false;
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    final Ref<Boolean> canClose = new Ref<Boolean>(Boolean.TRUE);
+    for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
+      try {
+        commandProcessor.executeCommand(project, new Runnable() {
+          public void run() {
+            canClose.set(ProjectUtil.closeProject(project));
+          }
+        }, ApplicationBundle.message("command.exit"), null);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      if (!canClose.get()) {
+        myDisposeInProgress = false;
+        return false;
+      }
     }
     Disposer.dispose(this);
 

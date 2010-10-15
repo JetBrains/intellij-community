@@ -18,10 +18,10 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
@@ -97,8 +97,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean INSERT_BRACE_ON_ENTER = true;
   public boolean INSERT_SCRIPTLET_END_ON_ENTER = true;
   public boolean JAVADOC_STUB_ON_ENTER = true;
-
   public boolean SMART_END_ACTION = true;
+
+  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED = false;
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;

@@ -48,6 +48,36 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  public void testDoNotFailOnInvalidMirrors() throws Exception {
+    updateSettingsXmlFully("<settings>" +
+                           "<mirrors>" +
+                           "  <mirror>" +
+                           "  </mirror>" +
+                           "  <mirror>" +
+                           "    <id></id>" +
+                           "    <url></url>" +
+                           "    <mirrorOf></mirrorOf>" +
+                           "  </mirror>" +
+                           "  <mirror>" +
+                           "    <id></id>" +
+                           "    <url>foo</url>" +
+                           "    <mirrorOf>*</mirrorOf>" +
+                           "  </mirror>" +
+                           "  <mirror>" +
+                           "    <id>foo</id>" +
+                           "    <url></url>" +
+                           "    <mirrorOf>*</mirrorOf>" +
+                           "  </mirror>" +
+                           "</mirrors>" +
+                           "</settings>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertModules("project");
+  }
+
   public void testImportingAllAvailableFilesIfNotInitialized() throws Exception {
     createModule("m1");
     createModule("m2");

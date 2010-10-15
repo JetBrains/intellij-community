@@ -94,6 +94,10 @@ public class VariableInplaceRenamer {
   }
 
   public boolean performInplaceRename() {
+    return performInplaceRename(true);
+  }
+
+  public boolean performInplaceRename(boolean processTextOccurrences) {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
@@ -146,7 +150,8 @@ public class VariableInplaceRenamer {
     }
 
     String stringToSearch = myElementToRename.getName();
-    if (stringToSearch != null &&
+    if (processTextOccurrences &&
+        stringToSearch != null &&
         !TextOccurrencesUtil.processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
             public boolean process(PsiElement psiElement, TextRange textRange) {
               return false;

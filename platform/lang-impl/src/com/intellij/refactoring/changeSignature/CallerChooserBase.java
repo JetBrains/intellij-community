@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -63,6 +64,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private TreeSelectionListener myTreeSelectionListener;
   private Editor myCallerEditor;
   private Editor myCalleeEditor;
+  private boolean myInitDone;
 
   protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
 
@@ -76,6 +78,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     myCallback = callback;
     setTitle(title);
     init();
+    myInitDone = true;
   }
 
   public Tree getTree() {
@@ -208,7 +211,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private Tree createTree() {
     final Runnable cancelCallback = new Runnable() {
       public void run() {
-        close(CANCEL_EXIT_CODE);
+        if (myInitDone) {
+          close(CANCEL_EXIT_CODE);
+        }
+        else {
+          throw new ProcessCanceledException();
+        }
       }
     };
     final CheckedTreeNode root = createTreeNode(null, new HashSet<M>(), cancelCallback);

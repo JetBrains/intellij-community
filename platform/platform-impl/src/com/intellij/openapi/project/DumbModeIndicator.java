@@ -16,6 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ public class DumbModeIndicator extends AbstractProjectComponent {
         myAlarm.cancelAllRequests();
         if (myHandler != null) myHandler.hide();
         myHandler = null;
+        FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
       }
     });
   }

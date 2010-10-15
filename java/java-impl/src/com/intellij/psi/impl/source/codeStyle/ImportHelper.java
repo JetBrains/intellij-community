@@ -32,7 +32,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -768,6 +767,13 @@ public class ImportHelper{
           unresolvedNames.put(ref.getReferenceName(), pair);
         }
       }
+    }
+
+    // do not optimize unresolved imports for things like JSP (IDEA-41814)
+    if (file.getViewProvider().getLanguages().size() > 1 && file.getViewProvider().getBaseLanguage() != StdLanguages.JAVA) {
+      namesToImport.addAll(unresolvedOnDemand);
+      namesToImport.addAll(unresolvedNames.values());
+      return;
     }
 
     final boolean[] hasResolveProblem = {false};

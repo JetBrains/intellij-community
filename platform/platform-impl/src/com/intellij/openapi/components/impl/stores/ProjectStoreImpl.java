@@ -517,6 +517,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
           List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
 
+          if (((ProjectImpl)myProject).isToSaveProjectName()) {
+            final VirtualFile baseDir = getProjectBaseDir();
+            if (baseDir != null && baseDir.isValid()) {
+              filesToSave.add(FileSystem.FILE_SYSTEM
+                                .createFile(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ".name").getPath()));
+            }
+          }
+
           for (IFile file : filesToSave) {
             final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
 

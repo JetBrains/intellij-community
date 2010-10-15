@@ -16,11 +16,11 @@
 package org.jetbrains.idea.maven.facade.embedder;
 
 import org.jetbrains.idea.maven.facade.MavenFacadeLogger;
-import org.jetbrains.idea.maven.facade.RemoteObject;
+import org.jetbrains.idea.maven.facade.MavenRemoteObject;
 
 import java.rmi.RemoteException;
 
-public class MavenFacadeLoggerWrapper {
+public class MavenFacadeLoggerWrapper extends MavenRemoteObject {
   MavenFacadeLogger myWrappee;
 
   public MavenFacadeLoggerWrapper(MavenFacadeLogger wrappee) {
@@ -29,7 +29,7 @@ public class MavenFacadeLoggerWrapper {
 
   public void info(Throwable e)  {
     try {
-      myWrappee.info(RemoteObject.wrapException(e));
+      myWrappee.info(wrapException(e));
     }
     catch (RemoteException e1) {
       throw new RuntimeException(e1);
@@ -38,7 +38,7 @@ public class MavenFacadeLoggerWrapper {
 
   public void warn(Throwable e)  {
     try {
-      myWrappee.warn(RemoteObject.wrapException(e));
+      myWrappee.warn(wrapException(e));
     }
     catch (RemoteException e1) {
       throw new RuntimeException(e1);
@@ -47,7 +47,7 @@ public class MavenFacadeLoggerWrapper {
 
   public void error(Throwable e) {
     try {
-      myWrappee.error(RemoteObject.wrapException(e));
+      myWrappee.error(wrapException(e));
     }
     catch (RemoteException e1) {
       throw new RuntimeException(e1);

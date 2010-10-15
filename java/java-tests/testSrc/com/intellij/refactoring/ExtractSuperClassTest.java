@@ -41,6 +41,10 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("x", PsiField.class));
   }
 
+   public void testMethodTypeParameter() throws Exception {
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("m", PsiMethod.class));
+  }
+
   public void testConflictUsingPrivateMethod() throws Exception {
     doTest("Test", "TestSubclass",
            new String[] {"Method <b><code>Test.foo()</code></b> is private and will not be accessible from method <b><code>x()</code></b>."},

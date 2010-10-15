@@ -258,28 +258,38 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }
 
+  public boolean isToSaveProjectName() {
+    if (!isDefault()) {
+      final IProjectStore stateStore = getStateStore();
+      if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+        final VirtualFile baseDir = stateStore.getProjectBaseDir();
+        if (baseDir != null && baseDir.isValid()) {
+          return myOldName != null && !myOldName.equals(getName());
+        }
+      }
+    }
+
+    return false;
+  }
+
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
     if (mySavingInProgress.compareAndSet(false, true)) {
       try {
-        if (!isDefault()) {
+        if (isToSaveProjectName()) {
           final IProjectStore stateStore = getStateStore();
-          if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-            final VirtualFile baseDir = stateStore.getProjectBaseDir();
-            if (baseDir != null && baseDir.isValid()) {
-              if (myOldName != null && !myOldName.equals(getName())) {
-                final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
-                if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-                  final File nameFile = new File(ideaDir.getPath(), ".name");
-                  try {
-                    FileUtil.writeToFile(nameFile, new String(getName()).getBytes(), false);
-                    myOldName = null;
-                  }
-                  catch (IOException e) {
-                    LOG.info("Unable to store project name to: " + nameFile.getPath());
-                  }
-                }
+          final VirtualFile baseDir = stateStore.getProjectBaseDir();
+          if (baseDir != null && baseDir.isValid()) {
+            final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+              final File nameFile = new File(ideaDir.getPath(), ".name");
+              try {
+                FileUtil.writeToFile(nameFile, new String(getName()).getBytes(), false);
+                myOldName = null;
+              }
+              catch (IOException e) {
+                LOG.info("Unable to store project name to: " + nameFile.getPath());
               }
             }
           }

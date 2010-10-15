@@ -65,7 +65,7 @@ public class MavenIndicesManager {
 
   private volatile File myTestIndicesDir;
 
-  private volatile MavenIndexerWrapper myIndexer = MavenFacadeManager.getInstance().createIndexer();
+  private volatile MavenIndexerWrapper myIndexer;
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();

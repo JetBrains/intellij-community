@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
@@ -30,6 +31,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -162,27 +164,34 @@ public class ExtractSuperClassUtil {
     for (final MemberInfo info : selectedMembers) {
       movedElements.add(info.getMember());
     }
-    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(
-      movedElements.toArray(new PsiElement[movedElements.size()]));
+    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(null, new Condition<PsiTypeParameter>() {
+      @Override
+      public boolean value(PsiTypeParameter parameter) {
+        return findTypeParameterInDerived(derivedClass, parameter.getName()) != null;
+      }
+    },  movedElements.toArray(new PsiElement[movedElements.size()]));
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;
     final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
     for (final PsiTypeParameter parameter : newList.getTypeParameters()) {
-      substitutionMap.put(parameter, factory.createType(findTypeParameterInDerived(derivedClass, parameter.getName())));
+      final PsiTypeParameter parameterInDerived = findTypeParameterInDerived(derivedClass, parameter.getName());
+      if (parameterInDerived != null) {
+        substitutionMap.put(parameter, factory.createType(parameterInDerived));
+      }
     }
 
     final PsiClassType type = factory.createType(superClass, factory.createSubstitutor(substitutionMap));
     return factory.createReferenceElementByType(type);
   }
 
+  @Nullable
   public static PsiTypeParameter findTypeParameterInDerived(final PsiClass aClass, final String name) {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
       if (name.equals(typeParameter.getName())) return typeParameter;
     }
 
-    LOG.error("Cannot find type parameter");
     return null;
   }
 }

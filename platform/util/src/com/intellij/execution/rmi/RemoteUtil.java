@@ -14,13 +14,14 @@ import java.rmi.Remote;
 import java.util.Map;
 
 /**
-   * @author Gregory.Shrago
-   */
-  public class RemoteUtil {
-    RemoteUtil() {
-    }
+ * @author Gregory.Shrago
+ */
+public class RemoteUtil {
+  RemoteUtil() {
+  }
 
-    private static final ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>> ourRemoteToLocalMap = new ConcurrentFactoryMap<Pair<Class<?>,Class<?>>, Map<Method, Method>>() {
+  private static final ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    new ConcurrentFactoryMap<Pair<Class<?>, Class<?>>, Map<Method, Method>>() {
       @Override
       protected Map<Method, Method> create(Pair<Class<?>, Class<?>> key) {
         final THashMap<Method, Method> map = new THashMap<Method, Method>();
@@ -46,42 +47,42 @@ import java.util.Map;
       }
     };
 
-    public static <T> T castToLocal(final Object remote, final Class<T> jdbcClass) {
-      final ClassLoader loader = jdbcClass.getClassLoader();
-      Object proxy = Proxy.newProxyInstance(loader, new Class[]{jdbcClass}, new InvocationHandler() {
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-          if (method.getDeclaringClass() == Object.class) {
-            return method.invoke(remote, args);
+  public static <T> T castToLocal(final Object remote, final Class<T> jdbcClass) {
+    final ClassLoader loader = jdbcClass.getClassLoader();
+    Object proxy = Proxy.newProxyInstance(loader, new Class[]{jdbcClass}, new InvocationHandler() {
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.getDeclaringClass() == Object.class) {
+          return method.invoke(remote, args);
+        }
+        else {
+          Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(remote.getClass(), jdbcClass)).get(method);
+          if (m == null) throw new NoSuchMethodError(method.getName() + " in " + remote.getClass());
+          try {
+            Object result = m.invoke(remote, args);
+            if (result instanceof Remote) {
+              return castToLocal(result, tryFixReturnType(result, method.getReturnType(), loader));
+            }
+            return result;
           }
-          else {
-            Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(remote.getClass(), jdbcClass)).get(method);
-            if (m == null) throw new NoSuchMethodError(method.getName() + " in " + remote.getClass());
-            try {
-              Object result = m.invoke(remote, args);
-              if (result instanceof Remote) {
-                return castToLocal(result, tryFixReturnType(result, method.getReturnType(), loader));
-              }
-              return result;
-            }
-            catch (InvocationTargetException e) {
-              Throwable cause = e;
-              for (; cause.getCause() != null; cause = cause.getCause());
-              if (cause instanceof RuntimeException) throw cause;
-              if (cause instanceof Error) throw cause;
-              if (ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) throw cause;
-              throw new RuntimeException(cause);
-            }
-            catch (RuntimeException e) {
-              throw e;
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
+          catch (InvocationTargetException e) {
+            Throwable cause = e;
+            for (; cause.getCause() != null; cause = cause.getCause()) ;
+            if (cause instanceof RuntimeException) throw cause;
+            if (cause instanceof Error) throw cause;
+            if (ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) throw cause;
+            throw new RuntimeException(cause);
+          }
+          catch (RuntimeException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
           }
         }
-      });
-      return (T)proxy;
-    }
+      }
+    });
+    return (T)proxy;
+  }
 
   private static Class<?> tryFixReturnType(Object result, Class<?> returnType, ClassLoader loader) throws Exception {
     if (returnType.isInterface()) return returnType;
@@ -113,7 +114,9 @@ import java.util.Map;
                   Throwable cause = e;
                   while (cause.getCause() != null) cause = cause.getCause();
                   if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-                  if (cause instanceof Exception && ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) throw (Exception)cause;
+                  if (cause instanceof Exception && ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) {
+                    throw (Exception)cause;
+                  }
                   throw new RuntimeException(cause);
                 }
                 catch (RuntimeException e) {
@@ -131,7 +134,8 @@ import java.util.Map;
     }, classLoader);
   }
 
-  public static <T> T executeWithClassLoader(final ThrowableComputable<T, Exception> action, final ClassLoader classLoader) throws Exception {
+  public static <T> T executeWithClassLoader(final ThrowableComputable<T, Exception> action, final ClassLoader classLoader)
+    throws Exception {
     final Thread thread = Thread.currentThread();
     final ClassLoader prev = thread.getContextClassLoader();
     try {

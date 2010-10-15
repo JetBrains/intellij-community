@@ -58,7 +58,6 @@ public class IntroducePropertyDialog extends DialogWrapper {
   public IntroducePropertyDialog(@NotNull Project project,
                                  @NotNull XmlElement context,
                                  @NotNull MavenDomProjectModel mavenDomProjectModel,
-                                 IntroduceVariableHandler.Validator validator,
                                  @NotNull String selectedString) {
     super(project, true);
     myProject = project;

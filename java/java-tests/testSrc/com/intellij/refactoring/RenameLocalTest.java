@@ -73,7 +73,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
     ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(getFile().getLanguage());
     assertNotNull(resolveSnapshotProvider);
-    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope);
+    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope.getBody());
     assertNotNull(snapshot);
 
     final int offset = element.getTextOffset();

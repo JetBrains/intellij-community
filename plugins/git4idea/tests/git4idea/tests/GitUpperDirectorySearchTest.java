@@ -16,6 +16,7 @@
 package git4idea.tests;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -54,9 +55,11 @@ public class GitUpperDirectorySearchTest {
   public void testDirFinding() {
     final String dirName = "somedir";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), dirName);
-    file.mkdir();
+    FileUtil.delete(file);
+    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
     final File childDir = new File(file, "and/a/path/to");
-    childDir.mkdirs();
+    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
+
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(childDir);
 
@@ -71,11 +74,12 @@ public class GitUpperDirectorySearchTest {
   public void testLongPattern() throws Exception {
     final String dirName = SystemInfo.isFileSystemCaseSensitive ? "somedir/long/path" : "somEdir/lonG/path";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), "somedir");
-    file.mkdir();
-    final File childDir = new File(file, "long/path\\and/a/path/to");
-    childDir.mkdirs();
+    FileUtil.delete(file);
+    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
+    final File childDir = new File(file, "long/path/and/a/path/to");
+    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
     final File a = new File(childDir, "a.txt");
-    a.createNewFile();
+    Assert.assertTrue(a.createNewFile(), "can't create: " + a.getAbsolutePath());
 
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(a);
@@ -91,11 +95,12 @@ public class GitUpperDirectorySearchTest {
   public void testLongRepeatedPattern() throws Exception {
     final String dirName = SystemInfo.isFileSystemCaseSensitive ? "somedir/long/path" : "somEdir/lonG/path";
     final File file = new File(myProjectFixture.getProject().getBaseDir().getPath(), "somedir");
-    file.mkdir();
-    final File childDir = new File(file, "long/path\\and/a/path/path/path/to/long/path");
-    childDir.mkdirs();
+    FileUtil.delete(file);
+    Assert.assertTrue(file.mkdir(), "can't create: " + file.getAbsolutePath());
+    final File childDir = new File(file, "long/path/and/a/path/path/path/to/long/path");
+    Assert.assertTrue(childDir.mkdirs(), "can't create: " + childDir.getAbsolutePath());
     final File a = new File(childDir, "a.txt");
-    a.createNewFile();
+    Assert.assertTrue(a.createNewFile(), "can't create: " + a.getAbsolutePath());
 
     final VirtualFile dir = myLocalFileSystem.refreshAndFindFileByIoFile(file);
     final VirtualFile childFile = myLocalFileSystem.refreshAndFindFileByIoFile(a);
