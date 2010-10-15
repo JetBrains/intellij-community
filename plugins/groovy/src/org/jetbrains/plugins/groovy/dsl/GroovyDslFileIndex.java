@@ -241,7 +241,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         }
 
         try {
-          while (count > 0) {
+          while (count > 0 && !stopGdsl) {
             ProgressManager.checkCanceled();
             final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
             if (pair != null) {
