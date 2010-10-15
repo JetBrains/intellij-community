@@ -18,10 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
@@ -172,8 +169,8 @@ class RunConfigurable extends BaseConfigurable {
     // add defaults
     final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode("Defaults");
     final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
-    for (ConfigurationType type : configurationTypes) {
-      defaults.add(new DefaultMutableTreeNode(type));
+    for (final ConfigurationType type : configurationTypes) {
+      if (!(type instanceof UnknownConfigurationType)) defaults.add(new DefaultMutableTreeNode(type));
     }
     if (defaults.getChildCount() > 0) myRoot.add(defaults);
 
