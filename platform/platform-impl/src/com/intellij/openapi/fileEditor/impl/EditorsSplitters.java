@@ -331,7 +331,7 @@ public final class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
-  void updateFileIcon(@NotNull final VirtualFile file) {
+  public void updateFileIcon(@NotNull final VirtualFile file) {
     updateFileIconLater(file);
   }
 
