@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package com.intellij.openapi.vcs;
 
 public abstract class ThreadLocalDefendedInvoker<T> {
   protected final ThreadLocal<Boolean> myThreadLocal;

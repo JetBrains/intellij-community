@@ -26,7 +26,7 @@ import javax.swing.*;
 public class SelectFilteringAction extends LabeledComboBoxAction {
   private final Project myProject;
   private final CommittedChangesTreeBrowser myBrowser;
-  private String myPreviousSelection;
+  private CommittedChangesFilterKey myPreviousSelection;
 
   public SelectFilteringAction(final Project project, final CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
@@ -42,16 +42,20 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
       new StructureFilteringStrategy(myProject)
     });
     final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    boolean addNameFilter = false;
     for(AbstractVcs vcs: vcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider != null) {
-        model.addElement(new ColumnFilteringStrategy(ChangeListColumn.NAME, provider.getClass()));
+        addNameFilter = true;
         for(ChangeListColumn column: provider.getColumns()) {
           if (ChangeListColumn.isCustom(column)) {
             model.addElement(new ColumnFilteringStrategy(column, provider.getClass()));
           }
         }
       }
+    }
+    if (addNameFilter) {
+      model.addElement(new ColumnFilteringStrategy(ChangeListColumn.NAME, CommittedChangesProvider.class));
     }
     return model;
   }
@@ -61,9 +65,10 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
     if (myPreviousSelection != null) {
         myBrowser.removeFilteringStrategy(myPreviousSelection);
     }
+    final ChangeListFilteringStrategy strategy = (ChangeListFilteringStrategy)selection;
     if (!ChangeListFilteringStrategy.NONE.equals(selection)) {
-      myBrowser.setFilteringStrategy(selection.toString(), (ChangeListFilteringStrategy) selection);
+      myBrowser.setFilteringStrategy(strategy);
     }
-    myPreviousSelection = selection.toString();
+    myPreviousSelection = strategy.getKey();
   }
 }

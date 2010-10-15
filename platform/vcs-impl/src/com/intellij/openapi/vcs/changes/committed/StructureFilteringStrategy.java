@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -38,6 +39,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -54,6 +56,11 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myProject = project;
   }
 
+  @Override
+  public CommittedChangesFilterKey getKey() {
+    return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.STRUCTURE);
+  }
+
   public String toString() {
     return VcsBundle.message("filter.structure.name");
   }
@@ -67,6 +74,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   public void setFilterBase(List<CommittedChangeList> changeLists) {
+    // todo cycle here
     if (myUI == null) {
       myUI = new MyUI();
     }
@@ -129,9 +137,17 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myStructureTree.setShowsRootHandles(true);
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(final TreeSelectionEvent e) {
+          final List<FilePath> filePaths = new ArrayList<FilePath>(mySelection);
+
           mySelection.clear();
-          ChangesBrowserNode node = (ChangesBrowserNode) e.getPath().getLastPathComponent();
-          Collections.addAll(mySelection, node.getFilePathsUnder());
+          final TreePath[] selectionPaths = myStructureTree.getSelectionPaths();
+          if (selectionPaths != null) {
+            for (TreePath selectionPath : selectionPaths) {
+              Collections.addAll(mySelection, ((ChangesBrowserNode) selectionPath.getLastPathComponent()).getFilePathsUnder());
+            }
+          }
+
+          if (Comparing.haveEqualElements(filePaths, mySelection)) return;
 
           for(ChangeListener listener: myListeners) {
             listener.stateChanged(new ChangeEvent(this));

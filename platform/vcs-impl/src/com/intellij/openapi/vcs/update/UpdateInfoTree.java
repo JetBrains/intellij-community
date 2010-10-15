@@ -332,7 +332,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
           myLoadingChangeListsLabel = null;
         }
         myCommittedChangeLists = receivedChanges;
-        myTreeBrowser.setItems(myCommittedChangeLists, false, CommittedChangesBrowserUseCase.UPDATE);
+        myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
         myTreeBrowser.getEmptyText().clear();
         if (hasEmptyCaches) {
           myTreeBrowser.getEmptyText().appendText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);

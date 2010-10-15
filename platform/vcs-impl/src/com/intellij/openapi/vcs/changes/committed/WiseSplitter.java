@@ -35,7 +35,7 @@ public class WiseSplitter implements Disposable {
   private final Runnable myRefresher;
   private final Splitter myParentSplitter;
   private final ThreeComponentsSplitter myInnerSplitter;
-  private final Map<String, Integer> myInnerSplitterContents;
+  private final Map<CommittedChangesFilterKey, Integer> myInnerSplitterContents;
 
   public WiseSplitter(final Runnable refresher, final Splitter parentSplitter) {
     myRefresher = refresher;
@@ -44,7 +44,7 @@ public class WiseSplitter implements Disposable {
     myInnerSplitter = new ThreeComponentsSplitter(false);
     Disposer.register(this, myInnerSplitter);
     myInnerSplitter.setHonorComponentsMinimumSize(true);
-    myInnerSplitterContents = new HashMap<String, Integer>();
+    myInnerSplitterContents = new HashMap<CommittedChangesFilterKey, Integer>();
     updateBorders();
   }
 
@@ -52,7 +52,7 @@ public class WiseSplitter implements Disposable {
     return myInnerSplitterContents.size() <= 3;
   }
 
-  public void add(final String key, final JComponent comp) {
+  public void add(final CommittedChangesFilterKey key, final JComponent comp) {
     final int idx = myInnerSplitterContents.size();
     myInnerSplitterContents.put(key, idx);
     if (idx == 0) {
@@ -93,13 +93,13 @@ public class WiseSplitter implements Disposable {
     if (c instanceof JScrollPane) c.setBorder(leftMost ? LEFT_BORDER : MIDDLE_BORDER);
   }
 
-  public void remove(final String key) {
+  public void remove(final CommittedChangesFilterKey key) {
     final Integer idx = myInnerSplitterContents.remove(key);
     if (idx == null) {
       return;
     }
-    final Map<String, Integer> tmp = new HashMap<String, Integer>();
-    for (Map.Entry<String, Integer> entry : myInnerSplitterContents.entrySet()) {
+    final Map<CommittedChangesFilterKey, Integer> tmp = new HashMap<CommittedChangesFilterKey, Integer>();
+    for (Map.Entry<CommittedChangesFilterKey, Integer> entry : myInnerSplitterContents.entrySet()) {
       if (entry.getValue() < idx) {
         tmp.put(entry.getKey(), entry.getValue());
       } else {

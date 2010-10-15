@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,23 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-public interface DecoratorManager {
-  void install(final CommittedChangeListDecorator decorator);
-  void remove(final CommittedChangeListDecorator decorator);
-  void repaintTree();
-  void reportLoadedLists(final CommittedChangeListsListener listener);
-  void removeFilteringStrategy(final CommittedChangesFilterKey key);
-  boolean setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy);
+/**
+ * @author irengrig
+ */
+public enum CommittedChangesFilterPriority {
+  TEXT(0),
+  STRUCTURE(1),
+  USER(2),
+  MERGE(3),
+  NONE(4);
+
+  private final int myPriority;
+
+  private CommittedChangesFilterPriority(final int priority) {
+    myPriority = priority;
+  }
+
+  public int getPriority() {
+    return myPriority;
+  }
 }
