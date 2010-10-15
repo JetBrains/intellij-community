@@ -44,18 +44,16 @@
   </extensions>
 
   <actions>
+    <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction">
+      <add-to-group group-id="Vcs.Import"/>
+    </action>
 
-    <group id="CvsFileGroup">
-      <separator/>
-      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
-      <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction"/>
-      <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction"
-        />
-      <separator/>
-    </group>
+    <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction">
+      <add-to-group group-id="Vcs.Browse"/>
+    </action>
 
     <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
-      <add-to-group group-id="VcsGroups" anchor="last"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
       <separator/>
       <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
       <action id="ConfigureCvsRoots" class="com.intellij.cvsSupport2.actions.ConfigureCvsRootsAction"/>

@@ -24,13 +24,10 @@
   </extensions>
 
   <actions>
-    <group id="MercurialFileGroup">
-      <separator/>
-      <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository"/>
-      <separator/>
-      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
-    </group>
-    
+    <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository">
+      <add-to-group group-id="Vcs.Import"/>
+    </action>
+
     <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <reference ref="CheckinFiles"/>
       <reference ref="ChangesView.AddUnversioned"/>
@@ -56,7 +53,7 @@
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
-      <add-to-group group-id="VcsGroups" anchor="last"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
   </actions>

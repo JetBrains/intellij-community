@@ -22,18 +22,19 @@
 
   <actions>
 
-    <group id="SubversionFileGroup">
-      <separator/>
-      <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction"/>
-      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"/>
-      <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject"/>
-      <separator/>
-      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
-    </group>
+    <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">
+      <add-to-group group-id="Vcs.Import"/>
+    </action>
+    <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
+      <add-to-group group-id="Vcs.Browse"/>
+    </action>
+    <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject">
+      <add-to-group group-id="Vcs.Import"/>
+    </action>
 
     <group id="SubversionFilePopupGroup" popup="true" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
-      <add-to-group group-id="VcsGroups" anchor="last"/>      
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
 
