@@ -136,7 +136,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       indicator.closeAndFinish(false);
     }
 
-    if (time != 1) {
+    if (time > 1) {
       if (myCompletionType == CompletionType.CLASS_NAME) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
       }
@@ -191,6 +191,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null) {
       existing.markReused();
+      if (myFocusLookup) {
+        existing.setFocused(true);
+      }
       return existing;
     }
 
