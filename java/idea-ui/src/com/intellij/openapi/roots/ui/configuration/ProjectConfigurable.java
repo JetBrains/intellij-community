@@ -115,7 +115,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
       final JPanel namePanel = new JPanel(new BorderLayout());
       final JLabel label =
         new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);
-      label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
       namePanel.add(label, BorderLayout.NORTH);
 
       myProjectName = new JTextField();
@@ -123,7 +122,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
       final JPanel nameFieldPanel = new JPanel();
       nameFieldPanel.setLayout(new BoxLayout(nameFieldPanel, BoxLayout.X_AXIS));
-      nameFieldPanel.add(Box.createHorizontalStrut(10));
+      nameFieldPanel.add(Box.createHorizontalStrut(4));
       nameFieldPanel.add(myProjectName);
 
       namePanel.add(nameFieldPanel, BorderLayout.CENTER);
