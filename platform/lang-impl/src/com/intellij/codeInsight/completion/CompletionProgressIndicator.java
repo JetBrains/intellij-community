@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -598,6 +599,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void restartCompletion() {
     closeAndFinish(false);
 
-    myHandler.invokeCompletion(getProject(), myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, getProject()), myParameters.getInvocationCount());
+    final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, myLookup.isFocused());
+    final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, getProject());
+    newHandler.invokeCompletion(getProject(), myEditor, psiFileInEditor, myParameters.getInvocationCount());
   }
 }
