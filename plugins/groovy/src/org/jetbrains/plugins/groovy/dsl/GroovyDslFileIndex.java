@@ -319,7 +319,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return false;
   }
 
-  private static boolean stopGdsl = false;
+  private static volatile boolean stopGdsl = false;
 
   @Nullable
   private static GroovyDslExecutor createExecutor(String text, VirtualFile vfile, final Project project) {
