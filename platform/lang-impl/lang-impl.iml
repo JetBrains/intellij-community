@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="module" module-name="usageView" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
   </component>
 </module>
 

@@ -24,17 +24,18 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,6 +49,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,9 +57,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable {
+
+  private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(2);
+  private static final TextAttributes HIGHLIGHT_PREVIEW_ATTRIBUTES = new TextAttributes(null, Color.RED, null, EffectType.BOXED, Font.PLAIN);
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
+
+  private final DocumentChangesCollector myChangesCollector = new DocumentChangesCollector();
+  private final ChangesDiffCalculator    myDiffCalculator   = new ChangesDiffCalculator();
+  private final List<TextRange> myPreviewRangesToHighlight = new ArrayList<TextRange>();
+
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
@@ -71,6 +85,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged = false;
+  private long myEndHighlightPreviewChangesTimeMillis = -1;
+  private boolean myShowsPreviewHighlighters;
+  private boolean mySkipPreviewHighlighting;
 
   private synchronized void setSomethingChanged(final boolean b) {
     mySomethingChanged = b;
@@ -117,7 +134,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return editor;
   }
 
-  private void fillEditorSettings(final EditorSettings editorSettings) {
+  private static void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setIndentGuidesShown(false);
@@ -168,22 +185,47 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
+          List<TextChange> changesBeforeReformat = null;
+          if (!mySkipPreviewHighlighting) {
+            changesBeforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+          }
+
           //important not mark as generated not to get the classes before setting language level
           PsiFile psiFile = createFileFromText(project, myTextToReformat);
-
           prepareForReformat(psiFile);
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          Document document = null;
+          if (documentManager != null && !mySkipPreviewHighlighting) {
+            document = documentManager.getDocument(psiFile);
+            if (document != null) {
+              myChangesCollector.reset();
+              myChangesCollector.setCollectChanges(true);
+              document.addDocumentListener(myChangesCollector);
+            }
+          }
+
           apply(mySettings);
           CodeStyleSettings clone = mySettings.clone();
           clone.RIGHT_MARGIN = getAdjustedRightMargin();
-
-
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          PsiFile formatted = doReformat(project, psiFile);
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+          PsiFile formatted;
+          try {
+            formatted = doReformat(project, psiFile);
+          }
+          finally {
+            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+            myChangesCollector.setCollectChanges(false);
+            if (!mySkipPreviewHighlighting && document != null) {
+              document.removeDocumentListener(myChangesCollector);
+            }
+          }
 
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-          Document document = myEditor.getDocument();
+          document = myEditor.getDocument();
           document.replaceString(0, document.getTextLength(), formatted.getText());
+          if (document != null && changesBeforeReformat != null) {
+            highlightChanges(changesBeforeReformat);
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -192,13 +234,57 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     });
   }
 
+  /**
+   * Reformats {@link #myTextToReformat target text} with the {@link #mySettings current code style settings} and returns
+   * list of changes applied to the target text during that.
+   *
+   * @param project   project to use
+   * @return          list of changes applied to the {@link #myTextToReformat target text} during reformatting. It is sorted
+   *                  by change start offset in ascending order
+   */
+  @Nullable
+  private List<TextChange> collectChangesBeforeCurrentSettingsAppliance(Project project) {
+    PsiFile psiFile = createFileFromText(project, myTextToReformat);
+    prepareForReformat(psiFile);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    Document document;
+    if (documentManager != null) {
+      document = documentManager.getDocument(psiFile);
+      if (document != null) {
+        myChangesCollector.reset();
+        myChangesCollector.setCollectChanges(true);
+        document.addDocumentListener(myChangesCollector);
+
+        CodeStyleSettings clone = mySettings.clone();
+        clone.RIGHT_MARGIN = getAdjustedRightMargin();
+        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+        try {
+          CodeStyleManager.getInstance(project).reformat(psiFile);
+        }
+        finally {
+          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+          myChangesCollector.setCollectChanges(false);
+          document.removeDocumentListener(myChangesCollector);
+        }
+        List<TextChange> result = new ArrayList<TextChange>(myChangesCollector.getChanges());
+        myChangesCollector.reset();
+        return result;
+      }
+    }
+    return null;
+  }
+
+  public void setSkipPreviewHighlighting(boolean skipPreviewHighlighting) {
+    mySkipPreviewHighlighting = skipPreviewHighlighting;
+  }
+
   protected void prepareForReformat(PsiFile psiFile) {
   }
 
   protected PsiFile createFileFromText(Project project, String text) {
-    PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), true);
-    return psiFile;
+    return PsiFileFactory.getInstance(project).createFileFromText(
+      "a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), true
+    );
   }
 
   protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
@@ -217,6 +303,78 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     return project;
+  }
+
+  private void highlightChanges(List<TextChange> changesBeforeReformat) {
+    if (mySkipPreviewHighlighting) {
+      return;
+    }
+
+    myPreviewRangesToHighlight.clear();
+    MarkupModel markupModel = myEditor.getMarkupModel();
+    markupModel.removeAllHighlighters();
+    int textLength = myEditor.getDocument().getTextLength();
+    boolean highlightPreview = false;
+    for (TextRange range : myDiffCalculator.calculateDiff(changesBeforeReformat, myChangesCollector.getChanges())) {
+      if (range.getStartOffset() >= textLength) {
+        continue;
+      }
+      highlightPreview = true;
+      TextRange rangeToUse = calculateChangeHighlightRange(range);
+      myPreviewRangesToHighlight.add(rangeToUse);
+    }
+
+    if (highlightPreview) {
+      myEndHighlightPreviewChangesTimeMillis = System.currentTimeMillis() + TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS;
+      myShowsPreviewHighlighters = true;
+    }
+  }
+
+  /**
+   * Allows to answer if particular visual position belongs to visual rectangle identified by the given visual position of
+   * its top-left and bottom-right corners.
+   *
+   * @param targetPosition    position which belonging to target visual rectangle should be checked
+   * @param startPosition     visual position of top-left corner of the target visual rectangle
+   * @param endPosition       visual position of bottom-right corner of the target visual rectangle
+   * @return                  <code>true</code> if given visual position belongs to the target visual rectangle;
+   *                          <code>false</code> otherwise
+   */
+  private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
+    return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
+           && targetPosition.column >= startPosition.column && targetPosition.column <= endPosition.column;
+  }
+
+  /**
+   * We want to highlight document formatting changes introduced by particular formatting property value change.
+   * However, there is a possible effect that white space region is removed. We still want to highlight that, hence, it's necessary
+   * to highlight neighbour region.
+   * <p/>
+   * This method encapsulates logic of adjusting preview highlight change if necessary.
+   *
+   * @param range   initial range to highlight
+   * @return        resulting range to highlight
+   */
+  private TextRange calculateChangeHighlightRange(TextRange range) {
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    Document document = myEditor.getDocument();
+    CharSequence text = document.getCharsSequence();
+
+    if (start == end) {
+      if (end < document.getTextLength() - 1) {
+        end++;
+      }
+      else if (start > 0) {
+        start--;
+      }
+    }
+
+    if (end > 0 && end < document.getTextLength() - 1 && text.charAt(end - 1) == '\n') {
+      end++;
+    }
+
+    return new TextRange(start, end);
   }
 
   private void updatePreviewHighlighter(final EditorEx editor) {
@@ -276,8 +434,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     try {
       final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
       final InputStreamReader reader = new InputStreamReader(stream);
-      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
       final StringBuffer result;
+      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
       try {
         result = new StringBuffer();
         String line;
@@ -325,12 +483,81 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           if (isSomethingChanged()) {
             updateEditor();
           }
+          if (System.currentTimeMillis() <= myEndHighlightPreviewChangesTimeMillis && !myPreviewRangesToHighlight.isEmpty()) {
+            blinkHighlighters();
+            myUpdateAlarm.addComponentRequest(this, 500);
+          }
+          else {
+            myEditor.getMarkupModel().removeAllHighlighters();
+          }
         }
         finally {
           setSomethingChanged(false);
         }
       }
     }, 300);
+  }
+
+  private void blinkHighlighters() {
+    MarkupModel markupModel = myEditor.getMarkupModel();
+    if (myShowsPreviewHighlighters) {
+      boolean scrollToChange = true;
+      Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+      VisualPosition visualStart = myEditor.xyToVisualPosition(visibleArea.getLocation());
+      VisualPosition visualEnd = myEditor.xyToVisualPosition(new Point(visibleArea.x + visibleArea.width, visibleArea.y + visibleArea.height));
+
+      // There is a possible case that viewport is located at its most bottom position and last document symbol
+      // is located at the start of the line, hence, resulting visual end column has a small value and doesn't actually
+      // indicates target visible rectangle. Hence, we need to correct that if necessary.
+      int endColumnCandidate = visibleArea.width / EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + visualStart.column;
+      if (endColumnCandidate > visualEnd.column) {
+        visualEnd = new VisualPosition(visualEnd.line, endColumnCandidate);
+      }
+      int offsetToScroll = -1;
+      CharSequence text = myEditor.getDocument().getCharsSequence();
+      for (TextRange range : myPreviewRangesToHighlight) {
+        if (scrollToChange) {
+          boolean rangeVisible = isWithinBounds(myEditor.offsetToVisualPosition(range.getStartOffset()), visualStart, visualEnd)
+                                 || isWithinBounds(myEditor.offsetToVisualPosition(range.getEndOffset()), visualStart, visualEnd);
+          scrollToChange = !rangeVisible;
+          if (offsetToScroll < 0) {
+            if (offsetToScroll < 0) {
+              if (text.charAt(range.getStartOffset()) != '\n') {
+                offsetToScroll = range.getStartOffset();
+              }
+              else if (range.getEndOffset() > 0 && text.charAt(range.getEndOffset() - 1) != '\n') {
+                offsetToScroll = range.getEndOffset() - 1;
+              }
+            }
+          }
+        }
+        markupModel.addRangeHighlighter(
+          range.getStartOffset(), range.getEndOffset(), HighlighterLayer.SELECTION, HIGHLIGHT_PREVIEW_ATTRIBUTES,
+          HighlighterTargetArea.EXACT_RANGE
+        );
+      }
+
+      if (scrollToChange) {
+        if (offsetToScroll < 0 && !myPreviewRangesToHighlight.isEmpty()) {
+          offsetToScroll = myPreviewRangesToHighlight.get(0).getStartOffset();
+        }
+        if (offsetToScroll >= 0 && offsetToScroll < text.length() - 1 && text.charAt(offsetToScroll) != '\n') {
+          // There is a possible case that target offset is located too close to the right edge. However, our point is to show
+          // highlighted region at target offset, hence, we need to scroll to the visual symbol end. Hence, we're trying to ensure
+          // that by scrolling to the symbol's end over than its start.
+          offsetToScroll++;
+        }
+        if (offsetToScroll >= 0 && offsetToScroll < myEditor.getDocument().getTextLength()) {
+          myEditor.getScrollingModel().scrollTo(
+            myEditor.offsetToLogicalPosition(offsetToScroll), ScrollType.RELATIVE
+          );
+        }
+      }
+    }
+    else {
+      markupModel.removeAllHighlighters();
+    }
+    myShowsPreviewHighlighters = !myShowsPreviewHighlighters;
   }
 
   protected Editor getEditor() {

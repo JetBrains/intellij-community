@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TextChangeImpl implements TextChange {
 
-  private final CharSequence myText;
+  private final StringBuilder myText = new StringBuilder();
 
   private char[] myChars;
   private int    myStart;
@@ -66,7 +67,7 @@ public class TextChangeImpl implements TextChange {
       throw new IllegalArgumentException(String.format("Can't construct new %s object. Reason: given end index (%d) is less than "
                                                        + "start index (%d). Text: '%s'", getClass().getName(), end, start, text));
     }
-    myText = text;
+    myText.append(text);
     myStart = start;
     myEnd = end;
   }
@@ -163,12 +164,12 @@ public class TextChangeImpl implements TextChange {
     if (o == null || getClass() != o.getClass()) return false;
 
     TextChangeImpl that = (TextChangeImpl)o;
-    return myText.equals(that.myText) && myStart == that.myStart && myEnd == that.myEnd;
+    return myStart == that.myStart && myEnd == that.myEnd && StringUtil.equals(myText, that.myText);
   }
 
   @Override
   public int hashCode() {
-    int result = myText.hashCode();
+    int result = StringUtil.hashCode(myText);
     result = 31 * result + myStart;
     return 31 * result + myEnd;
   }
