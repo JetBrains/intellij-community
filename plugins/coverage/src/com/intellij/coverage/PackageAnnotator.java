@@ -230,7 +230,7 @@ public class PackageAnnotator {
     final ClassCoverageInfo toplevelClassCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
     final ClassData classData = projectInfo.getClassData(className);
 
-    if (classData != null) {
+    if (classData != null && classData.getLines() != null) {
       final Object[] lines = classData.getLines();
       for (Object l : lines) {
         if (l instanceof LineData) {
