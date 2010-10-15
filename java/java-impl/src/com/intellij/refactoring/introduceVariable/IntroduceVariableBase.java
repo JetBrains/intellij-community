@@ -29,6 +29,8 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -440,8 +442,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     final boolean hasWriteAccess = OccurrencesChooser.fillChoices(expr, occurrences, occurrencesMap);
 
+    final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
     final boolean isInplaceAvailableOnDataContext =
-      new VariableInplaceRenameHandler().isAvailableOnDataContext(DataManager.getInstance().getDataContext()) &&
+      supportProvider != null &&
+      editor.getSettings().isVariableInplaceRenameEnabled() &&
+      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
       !ApplicationManager.getApplication().isUnitTestMode();
     final boolean inFinalContext = occurenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager);
@@ -464,6 +470,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
               if (isInplaceAvailableOnDataContext) {
                 PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
+                  editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   new VariableInplaceRenamer(elementToRename, editor).performInplaceRename(false);
                 }
               }
