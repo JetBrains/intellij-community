@@ -425,6 +425,59 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
+  public void testResolutionToPropertyDefinedWithinProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>value</foo>" +
+                     "</properties>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "    <build>" +
+                     "      <finalName>${<caret>foo}</finalName>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    readWithProfiles("one");
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
+  }
+
+  public void testResolutionToPropertyDefinedOutsideProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <foo>value</foo>" +
+                     "</properties>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <build>" +
+                     "      <finalName>${<caret>foo}</finalName>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    readWithProfiles("one");
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.foo"));
+  }
+
   public void testResolutionWithDefaultProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

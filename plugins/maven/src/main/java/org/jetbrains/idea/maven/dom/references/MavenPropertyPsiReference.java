@@ -33,6 +33,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -87,13 +89,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   // precedence
   // 1. user/system
   // 2. settings.xml
-  // 3. profiles.xml
-  // 4. profiles in pom.xml
-  // 5. pom.xml
-  // 6. parent profiles.xml
-  // 7. profiles in parent pom.xml
-  // 8. parent pom.xml
-  // 9. model
+  // 3. current profile (if property is used inside one)
+  // 4. profiles.xml
+  // 5. profiles in pom.xml
+  // 6. pom.xml
+  // 7. parent profiles.xml
+  // 8. profiles in parent pom.xml
+  // 9. parent pom.xml
+  // 10. model
   @Nullable
   protected PsiElement doResolve() {
     if (myText.startsWith("env.")) {
@@ -110,6 +113,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     PsiElement result = resolveSystemPropety();
     if (result != null) return result;
+
+    MavenDomProfile profile = DomUtil.findDomElement(myElement, MavenDomProfile.class);
+    if (profile != null) {
+      result = MavenDomProjectProcessorUtils.searchPropertyInProfile(myText, profile);
+      if (result != null) return result;
+    }
 
     result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
     if (result != null) return result;

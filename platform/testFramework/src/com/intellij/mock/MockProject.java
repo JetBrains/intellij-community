@@ -38,6 +38,10 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   }
 
   @Override
+  public void setProjectName(String name) {
+  }
+
+  @Override
   public void checkUnknownMacros(final boolean showDialog) {
   }
 

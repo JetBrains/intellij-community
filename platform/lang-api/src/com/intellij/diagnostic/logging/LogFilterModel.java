@@ -50,7 +50,7 @@ public abstract class LogFilterModel {
             buf.append("\\").append(c);
           }
         }
-        myCustomPattern = Pattern.compile(".*" + buf + ".*");
+        myCustomPattern = Pattern.compile(".*" + buf + ".*", Pattern.DOTALL);
       }
       finally {
         StringBuilderSpinAllocator.dispose(buf);

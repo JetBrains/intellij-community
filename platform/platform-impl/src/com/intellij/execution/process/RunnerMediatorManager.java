@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.execution.process;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.ServiceManager;
 
-import java.util.Collection;
+/**
+ * @author traff
+ */
+public abstract class RunnerMediatorManager {
+  public static RunnerMediatorManager getInstance() {
+    return ServiceManager.getService(RunnerMediatorManager.class);
+  }
 
-public interface ExpandableItemsHandler<T> {
-  void setEnabled(boolean enabled);
-
-  @NotNull
-  Collection<T> getExpandedItems();
+  public abstract String getRunnerPath();
 }
