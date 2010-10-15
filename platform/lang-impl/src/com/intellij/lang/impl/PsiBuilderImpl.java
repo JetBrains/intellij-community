@@ -31,6 +31,7 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -66,6 +67,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   private Project myProject;
+  private PsiFile myFile;
 
   private int[] myLexStarts;
   private IElementType[] myLexTypes;
@@ -136,6 +138,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
     myProject = project;
+    myFile = SharedImplUtil.getContainingFile(chameleon);
 
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -158,6 +161,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
     myProject = project;
+    myFile = chameleon.getContainingFile();
 
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -194,6 +198,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @TestOnly
   public void setOriginalTree(final ASTNode originalTree) {
+    myFile = SharedImplUtil.getContainingFile(originalTree);
     myOriginalTree = originalTree;
     myCharTable = SharedImplUtil.findCharTableByTree(originalTree);
   }
@@ -474,8 +479,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myParsed = null;
     }
 
-    public Project getProject() {
-      return myBuilder.myProject;
+    public PsiFile getContainingFile() {
+      return myBuilder.myFile;
     }
 
     public CharTable getCharTable() {
