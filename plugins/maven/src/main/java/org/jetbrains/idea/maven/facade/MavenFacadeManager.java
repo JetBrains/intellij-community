@@ -108,7 +108,7 @@ public class MavenFacadeManager {
   }
 
   @TestOnly
-  synchronized void shutdown(boolean wait) {
+  public synchronized void shutdown(boolean wait) {
     mySupport.stopAll(wait);
     disposeFacade();
   }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.facade;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -125,7 +126,8 @@ public class MavenIndexerWrapper {
     }
   }
 
-  public void release() {
+  @TestOnly
+  public void releaseInTests() {
     try {
       myWrappee.release();
     }
