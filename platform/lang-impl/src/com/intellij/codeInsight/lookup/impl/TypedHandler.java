@@ -52,7 +52,11 @@ public class TypedHandler implements TypedActionHandler {
     final LookupElement currentItem = lookup.getCurrentItem();
     final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
 
-    EditorModificationUtil.deleteSelectedText(editor);
+    lookup.performGuardedChange(new Runnable() {
+      public void run() {
+        EditorModificationUtil.deleteSelectedText(editor);
+      }
+    });
     if (result == CharFilter.Result.ADD_TO_PREFIX) {
       lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
       Document document = editor.getDocument();
