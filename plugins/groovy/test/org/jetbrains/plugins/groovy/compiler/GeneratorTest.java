@@ -55,6 +55,7 @@ public void testArrayType1() throws Throwable { doTest(); }
   public void testInaccessibleConstructor() throws Throwable { doTest(); }
   public void testSynchronizedProperty() throws Throwable { doTest(); }
   public void testVarargs() throws Throwable { doTest(); }
+  public void testThrowsCheckedException() throws Throwable { doTest(); }
 
   public void testCheckedExceptionInConstructorDelegate() throws Throwable {
     myFixture.addClass("package foo;" +
