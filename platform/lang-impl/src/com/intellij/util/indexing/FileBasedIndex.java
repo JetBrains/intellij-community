@@ -1698,12 +1698,9 @@ public class FileBasedIndex implements ApplicationComponent {
         if (file instanceof VirtualFileWithId) {
           boolean oldStuff = true;
           if (!isTooLarge(file)) {
-            final Set<ID<?, ?>> ids = new HashSet<ID<?, ?>>(myIndices.keySet());
-            ids.removeAll(myNotRequiringContentIndices);
-
-            for (ID<?, ?> indexId : ids) {
+            for (ID<?, ?> indexId : myIndices.keySet()) {
               try {
-                if (shouldIndexFile(file, indexId)) {
+                if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
                   myFiles.add(file);
                   oldStuff = false;
                   break;
