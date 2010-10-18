@@ -312,7 +312,7 @@ public class CommonCodeStyleSettings {
    * int start = 1;
    * int end   = 10;
    */
-  public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
+  public boolean ALIGN_GROUP_FIELD_DECLARATIONS = true;
 
 //----------------- SPACES --------------------
 
