@@ -375,6 +375,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public static HgVcs getInstance(Project project) {
+    if (project == null || project.isDisposed()) { return null; }
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     if (vcsManager == null) { return null; }
     return (HgVcs) vcsManager.findVcsByName(VCS_NAME);
