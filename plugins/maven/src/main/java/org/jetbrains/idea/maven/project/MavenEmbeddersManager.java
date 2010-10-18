@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -92,7 +93,8 @@ public class MavenEmbeddersManager {
     }
   }
 
-  public synchronized void release() {
+  @TestOnly
+  public synchronized void releaseInTests() {
     if (!myEmbeddersInUse.isEmpty()) {
       MavenLog.LOG.warn("embedders should be release first");
     }

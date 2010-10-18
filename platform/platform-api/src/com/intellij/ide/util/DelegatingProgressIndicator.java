@@ -26,13 +26,11 @@ import com.intellij.openapi.progress.ProgressManager;
  *         Date: Jul 12, 2007
  */
 public class DelegatingProgressIndicator implements ProgressIndicator {
-
-  private static final EmptyProgressIndicator EMPTY_INDICATOR = new EmptyProgressIndicator();
   private final ProgressIndicator myIndicator;
 
   public DelegatingProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    myIndicator = indicator == null ? EMPTY_INDICATOR : indicator;
+    myIndicator = indicator == null ? new EmptyProgressIndicator() : indicator;
   }
 
   public void start() {
