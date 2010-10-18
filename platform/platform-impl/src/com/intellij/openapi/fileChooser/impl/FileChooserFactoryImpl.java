@@ -24,7 +24,6 @@ import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileChooserDialogImpl;
 
 import javax.swing.*;
@@ -35,8 +34,8 @@ import java.util.Set;
 
 public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
-    if (SystemInfo.isMac && (System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())
-      || Registry.is("ide.use.native.mac.filechooser"))) {
+    final Object macNativeFileChooser = descriptor.getUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED.getName());
+    if (SystemInfo.isMac && macNativeFileChooser instanceof Boolean && ((Boolean)macNativeFileChooser).booleanValue()) {
       return new MacFileChooserDialogImpl(descriptor, project);
     }
 
@@ -44,8 +43,8 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
-    if (SystemInfo.isMac && (System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())
-    || Registry.is("ide.use.native.mac.filechooser"))) {
+    final Object macNativeFileChooser = descriptor.getUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED.getName());
+    if (SystemInfo.isMac && macNativeFileChooser instanceof Boolean && ((Boolean)macNativeFileChooser).booleanValue()) {
       return new MacFileChooserDialogImpl(descriptor, parent);
     }
 
