@@ -56,11 +56,11 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
 
   @Override
   public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
-    PsiElement[] result = new PsiElement[sourceElements.length];
-    for(int i = 0; i < sourceElements.length; i++) {
-      result[i] = sourceElements[i] instanceof PsiClass ? sourceElements[i].getContainingFile() : sourceElements[i];
+    Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    for (PsiElement sourceElement : sourceElements) {
+      result.add(sourceElement instanceof PsiClass ? sourceElement.getContainingFile() : sourceElement);
     }
-    return result;
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   @Override
