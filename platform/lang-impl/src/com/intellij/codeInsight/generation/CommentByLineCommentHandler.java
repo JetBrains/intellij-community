@@ -149,9 +149,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      // Don't tweak caret position if we're already located on the last document line.
-      if (!hasSelection && myEditor.getCaretModel().getLogicalPosition().line < myDocument.getLineCount() - 1) {
-        myEditor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+      if (!hasSelection) {
+        // Don't tweak caret position if we're already located on the last document line.
+        if (myEditor.getCaretModel().getLogicalPosition().line < myDocument.getLineCount() - 1) {
+          myEditor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+        }
       }
       else {
         if (wholeLinesSelected) {

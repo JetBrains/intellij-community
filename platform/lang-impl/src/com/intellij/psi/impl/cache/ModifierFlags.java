@@ -20,7 +20,7 @@ package com.intellij.psi.impl.cache;
  * @author max
  */
 public interface ModifierFlags {
-// ---- Group equals to correspoding in ClsUtil's ACC_*
+// ---- The group equal to corresponding in ClsUtil.ACC_*
   int PUBLIC_MASK = 0x0001;
   int PRIVATE_MASK = 0x0002;
   int PROTECTED_MASK = 0x0004;
@@ -32,7 +32,7 @@ public interface ModifierFlags {
   int NATIVE_MASK = 0x0100;
   int INTERFACE_MASK = 0x0200;
   int ABSTRACT_MASK = 0x0400;
-// ---- End of the group equals to correspoding in ClsUtil's ACC_*
+// ---- End of the group equal to corresponding in ClsUtil.ACC_*
 
   int STRICTFP_MASK = 0x0800;
   int PACKAGE_LOCAL_MASK = 0x1000;

@@ -218,31 +218,32 @@ public class ProjectSdksModel implements SdkModel {
                                               null,
                                               type.getIconForAddAction()) {
           public void actionPerformed(AnActionEvent e) {
-            doAdd(type, parent, updateTree);
+            doAdd(type, updateTree);
           }
         };
       group.add(addAction);
     }
   }
 
-  public void doAdd(final SdkType type, JComponent parent, final Consumer<Sdk> updateTree) {
+  public void doAdd(final SdkType type, final Consumer<Sdk> updateTree) {
     myModified = true;
-    final String home = SdkConfigurationUtil.selectSdkHome(parent, type);
-    if (home == null) {
-      return;
-    }
-    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
-    final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
-    newJdk.setHomePath(home);
+    SdkConfigurationUtil.selectSdkHome(type, new Consumer<String>() {
+      @Override
+      public void consume(final String home) {
+        String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
+        final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
+        newJdk.setHomePath(home);
 
-    if (!type.setupSdkPaths(newJdk, this)) return;
+        if (!type.setupSdkPaths(newJdk, ProjectSdksModel.this)) return;
 
-    if (newJdk.getVersionString() == null) {
-       Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", home),
-                                  ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
-    }
+        if (newJdk.getVersionString() == null) {
+           Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", home),
+                                      ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+        }
 
-    doAdd(newJdk, updateTree);
+        doAdd(newJdk, updateTree);
+      }
+    });
   }
 
   public void addSdk(Sdk sdk) {

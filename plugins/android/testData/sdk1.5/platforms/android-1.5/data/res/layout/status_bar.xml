@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* apps/common/assets/default/default/skins/StatusBar.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+
+<!--    android:background="@drawable/status_bar_closed_default_background" -->
+<com.android.server.status.StatusBarView xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:background="@drawable/statusbar_background"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:descendantFocusability="afterDescendants"
+    >
+
+    <LinearLayout android:id="@+id/icons"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal">
+            
+        <com.android.server.status.IconMerger android:id="@+id/notificationIcons"
+            android:layout_width="0dip"
+            android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:layout_alignParentLeft="true"
+            android:paddingLeft="6dip"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"/>  
+            
+        <LinearLayout android:id="@+id/statusIcons"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:paddingRight="6dip"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"/>    
+    </LinearLayout>
+        
+    <LinearLayout android:id="@+id/ticker"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="6dip"
+        android:animationCache="false"
+        android:orientation="horizontal" >
+        <ImageSwitcher android:id="@+id/tickerIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_marginRight="8dip"
+            >
+            <com.android.server.status.AnimatedImageView
+                android:layout_width="25dip"
+                android:layout_height="25dip"
+                />
+            <com.android.server.status.AnimatedImageView
+                android:layout_width="25dip"
+                android:layout_height="25dip"
+                />
+        </ImageSwitcher>
+        <com.android.server.status.TickerView android:id="@+id/tickerText"
+            android:layout_width="0dip"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dip"
+            android:paddingRight="10dip">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="#ff000000" />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="#ff000000" />
+        </com.android.server.status.TickerView>
+    </LinearLayout>
+
+    <com.android.server.status.DateView android:id="@+id/date"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:singleLine="true"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center_vertical|left"
+        android:paddingLeft="6px"
+        android:paddingRight="6px"
+        android:textColor="?android:attr/textColorPrimaryInverse"
+        android:background="@drawable/statusbar_background"
+        />
+</com.android.server.status.StatusBarView>

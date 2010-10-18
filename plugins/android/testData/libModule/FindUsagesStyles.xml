@@ -1,0 +1,6 @@
+<resources>
+  <style name="Theme.MyTheme">
+    <item name="android:windowBackground">@drawable/picture1</item>
+    <item name="android:windowBackground">@string/myLibResource</item>
+  </style>
+</resources>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+
+<!-- This is the screen that shows the 9 circle unlock widget and instructs
+     the user how to unlock their device, or make an emergency call.  This
+     is the portrait layout.  -->
+
+<com.android.internal.widget.LinearLayoutWithDefaultTouchRecepient xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#A0000000"
+        >
+
+    <!-- left side: instructions and emergency call button -->
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1.0"
+            >
+
+        <!-- lock icon next to header text -->
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dip"
+                android:gravity="center"
+                >
+            <ImageView android:id="@+id/unlockLockIcon"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:layout_marginRight="3dip"
+                       android:baselineAligned="true"
+                       android:gravity="center"
+                       android:src="@android:drawable/ic_lock_idle_lock"
+                    />
+
+            <TextView android:id="@+id/headerText"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:gravity="center"
+                      android:textSize="18sp"/>
+        </LinearLayout>
+
+
+        <!-- fill space between header and button below -->
+        <View
+            android:layout_weight="1.0"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            />
+
+        <!-- footer -->
+        <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <!-- option 1: a single emergency call button -->
+            <RelativeLayout android:id="@+id/footerNormal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                >
+                <Button android:id="@+id/emergencyCallAlone"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@android:string/lockscreen_emergency_call"
+                    android:textSize="14sp"
+                    android:drawableLeft="@drawable/ic_emergency"
+                    android:drawablePadding="8dip"
+                    />
+            </RelativeLayout>
+
+            <!-- option 2: an emergency call button, and a 'forgot pattern?' button -->
+            <LinearLayout android:id="@+id/footerForgotPattern"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                >
+                <Button android:id="@+id/forgotPattern"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:visibility="invisible"
+                    />
+                <Button android:id="@+id/emergencyCallTogether"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@android:string/lockscreen_emergency_call"
+                    android:textSize="14sp"
+                    android:drawableLeft="@drawable/ic_emergency"
+                    android:drawablePadding="8dip"
+                    />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <View
+         android:background="@android:drawable/code_lock_left"
+         android:layout_width="2dip"
+         android:layout_height="fill_parent" />
+
+    <!-- right side: lock pattern -->
+    <com.android.internal.widget.LockPatternView android:id="@+id/lockPattern"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content" />
+
+</com.android.internal.widget.LinearLayoutWithDefaultTouchRecepient>

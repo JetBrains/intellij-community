@@ -132,16 +132,23 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       }
     }
 
-    if (myFilter.isClassAcceptable(element.getClass())
-        && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
-      final String name = PsiUtil.getName(element);
-      if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.value(name))) {
-        if(isAccessible(element)){
-          add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
-        }
+    if (satisfies(element, state) && isAccessible(element)) {
+      CompletionElement element1 = new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass);
+      if (myResultNames.add(element1.getUniqueId())) {
+        myResults.add(element1);
       }
     }
     return true;
+  }
+
+  public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
+    final String name = PsiUtil.getName(element);
+    if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.value(name))) {
+      if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -154,12 +161,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (!(element instanceof PsiMember)) return true;
 
     return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiMember)element, myElement, myQualifierClass);
-  }
-
-  private void add(CompletionElement element){
-    if(myResultNames.add(element.getUniqueId())){
-      myResults.add(element);
-    }
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

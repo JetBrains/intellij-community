@@ -1,0 +1,4 @@
+<resources>
+  <string name="hello">hello</string>
+  <item name="hi" type="string"/>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="p1.a">
+    <application android:icon="@drawable/icon" android:manageSpaceActivity="MyActivity">
+        <activity android:name="MyActivity" android:label="<caret>">
+        </activity>
+    </application>
+</manifest>

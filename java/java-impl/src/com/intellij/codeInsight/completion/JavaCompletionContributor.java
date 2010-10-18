@@ -97,12 +97,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
 
-    if (JavaCompletionData.DECLARATION_START.isAcceptable(position, position)) {
+    if (JavaCompletionData.DECLARATION_START.isAcceptable(position, position) ||
+        JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
-    }
-
-    if (JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(position)) {
-      return ElementClassFilter.CLASS;
     }
 
     // Completion for classes in method throws section
@@ -141,8 +138,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (psiElement().inside(PsiAnnotationParameterList.class).accepts(position)) {
-      return new OrFilter(new ClassFilter(PsiAnnotationMethod.class), ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER, new AndFilter(new ClassFilter(PsiField.class),
-                                                                                                                                                 new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
+      return new OrFilter(new ClassFilter(PsiAnnotationMethod.class),
+                          ElementClassFilter.CLASS,
+                          ElementClassFilter.PACKAGE_FILTER,
+                          new AndFilter(new ClassFilter(PsiField.class), new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
     }
 
     if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {

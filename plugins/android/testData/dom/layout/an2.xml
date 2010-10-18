@@ -1,0 +1,4 @@
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    class="com.example.android.notepad.NoteEditor$LinedEditText"
+    android:layout_marginL<caret>
+/>

@@ -888,7 +888,9 @@ public class JavaCompletionUtil {
       memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
-          set.add(memberProcessor.createLookupElement(member, psiClass, true));
+          if (processor.satisfies(member, ResolveState.initial())) {
+            set.add(memberProcessor.createLookupElement(member, psiClass, true));
+          }
         }
       });
     }

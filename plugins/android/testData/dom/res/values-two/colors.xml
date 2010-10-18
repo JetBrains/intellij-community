@@ -1,0 +1,5 @@
+<resources>
+    <color name="color1">#f00</color>
+    <color name="color2">#80f</color>
+    <drawable name="cdrawable">#f00</drawable>
+</resources>

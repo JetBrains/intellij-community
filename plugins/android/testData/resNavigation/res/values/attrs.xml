@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <declare-styleable name="Dec1">
+        <attr name="android:preferenceLayoutChild" />
+    </declare-styleable>
+    
+    <declare-styleable name="Dec2">
+        <attr name="attr2" format="string" />
+    </declare-styleable>
+</resources>
