@@ -222,7 +222,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (!editorSettings.isCaretInsideTabs() && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
       LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
       int offset = myEditor.logicalPositionToOffset(log);
-      if (offset >= document.getTextLength()) {
+      if (offset >= document.getTextLength() && myEditor.getSelectionModel().hasSelection()) {
         int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
         newColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
       }
