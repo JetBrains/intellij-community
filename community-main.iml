@@ -76,7 +76,6 @@
     <orderEntry type="module" module-name="IntelliLang-java" />
     <orderEntry type="module" module-name="IntelliLang-javaee" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
-    <orderEntry type="module" module-name="IntelliLangJava" />
   </component>
 </module>
 
