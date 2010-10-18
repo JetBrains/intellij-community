@@ -80,7 +80,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "preferences.jdks";
+    return myProjectJdk.getSdkType().getHelpTopic();
   }
 
 

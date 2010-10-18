@@ -34,6 +34,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -71,6 +72,12 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   public Icon getIcon() {
     return SDK_CLOSED;
+  }
+
+  @NotNull
+  @Override
+  public String getHelpTopic() {
+    return "reference.project.structure.sdk.idea";
   }
 
   public Icon getIconForExpandedTreeNode() {
