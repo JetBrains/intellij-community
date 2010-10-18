@@ -327,7 +327,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         var = frame.f_locals
         type, _typeName, resolver = getType(var)
         try:
-          resolver.resolve(var, attrs[0])
+          resolver.resolve(var, attrList[0])
         except:
           var = frame.f_globals
 
