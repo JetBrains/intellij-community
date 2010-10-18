@@ -401,6 +401,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (lType == null || rType == null) {
         return false;
       }
+      if (!TypeConversionUtil.isNumericType(lType) || !TypeConversionUtil.isNumericType(rType)) {
+        return false;
+      }
       if (opType == JavaTokenType.EQEQ || opType == JavaTokenType.NE) {
         if (PsiType.NULL.equals(lType) || PsiType.NULL.equals(rType)) {
           return false;
