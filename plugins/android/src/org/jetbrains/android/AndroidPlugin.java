@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public class AndroidPlugin implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.AndroidPlugin");
 
-  public AndroidPlugin(UltimateVerifier verifier) {
-    PluginVerifier.verifyUltimatePlugin(verifier);
-  }
-
   @NotNull
   public String getComponentName() {
     return "AndroidApplicationComponent";
