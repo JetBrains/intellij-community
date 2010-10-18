@@ -1,7 +1,7 @@
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.jetbrains.python.buildout.BuildoutFacetType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public class BuildoutCfgFileType extends LanguageFileType {
 
   @Nullable
   public Icon getIcon() {
-    return PlainTextFileType.INSTANCE.getIcon();
+    return BuildoutFacetType.BUILDOUT_ICON;
   }
 }
 
