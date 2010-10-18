@@ -442,7 +442,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     final boolean hasWriteAccess = OccurrencesChooser.fillChoices(expr, occurrences, occurrencesMap);
 
-    final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
     final boolean isInplaceAvailableOnDataContext =
       supportProvider != null &&
