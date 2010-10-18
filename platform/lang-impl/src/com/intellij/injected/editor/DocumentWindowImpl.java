@@ -341,7 +341,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     }
     TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     //todo persistent?
-    return myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
+    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
+    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
   @NotNull
@@ -757,7 +758,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void dispose() {
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker rangeMarker = shred.getHostRangeMarker();
-      myDelegate.removeRangeMarker((RangeMarkerEx)rangeMarker);
+      ((RangeMarkerEx)rangeMarker).dispose();
     }
   }
 

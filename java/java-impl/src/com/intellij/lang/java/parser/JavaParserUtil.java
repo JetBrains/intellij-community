@@ -20,7 +20,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -161,10 +160,12 @@ public class JavaParserUtil {
 
   @NotNull
   public static PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
-    final Project project = chameleon.getProject();
+    final PsiElement psi = chameleon.getContainingFile();
+    assert psi != null : chameleon;
+    final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();  // todo: file language level
+    final LanguageLevel level = PsiUtil.getLanguageLevel(psi);
     final Lexer lexer = JavaParserDefinition.createLexer(level);
     final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, chameleon.getTokenType().getLanguage(), chameleon.getText());
     setLanguageLevel(builder, level);

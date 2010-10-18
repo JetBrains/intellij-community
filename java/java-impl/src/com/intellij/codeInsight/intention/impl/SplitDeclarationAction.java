@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,25 +38,23 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
-    int offset = editor.getCaretModel().getOffset();
-    if (!(element instanceof PsiJavaToken)) return false;
     if (element instanceof PsiCompiledElement) return false;
     if (!element.getManager().isInProject(element)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
     if (context instanceof PsiDeclarationStatement) {
-      return isAvaliableOnDeclarationStatement((PsiDeclarationStatement)context, element);
+      return isAvailableOnDeclarationStatement((PsiDeclarationStatement)context, element);
     }
 
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (field != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) == null && isAvaliableOnField(field)) {
+    if (field != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) == null && isAvailableOnField(field)) {
       setText(CodeInsightBundle.message("intention.split.declaration.text"));
       return true;
     }
     return false;
   }
 
-  private static boolean isAvaliableOnField(PsiField field) {
+  private static boolean isAvailableOnField(PsiField field) {
     final PsiTypeElement typeElement = field.getTypeElement();
     if (typeElement == null) return false;
     if (PsiTreeUtil.getParentOfType(typeElement, PsiField.class) != field) return true;
@@ -69,30 +67,20 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
-  private boolean isAvaliableOnDeclarationStatement(PsiDeclarationStatement decl, PsiElement element) {
+  private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl, PsiElement element) {
     PsiElement[] declaredElements = decl.getDeclaredElements();
+    if (declaredElements.length == 0) return false;
+    if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
     if (declaredElements.length == 1) {
-      if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
       PsiLocalVariable var = (PsiLocalVariable) declaredElements[0];
       if (var.getInitializer() == null) return false;
-      PsiTypeElement type = var.getTypeElement();
-      if (PsiTreeUtil.isAncestor(type, element, false) ||
-          element.getParent() == var && ((PsiJavaToken)element).getTokenType() != JavaTokenType.SEMICOLON) {
-        setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
-        return true;
-      }
+      setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
+      return true;
     } else if (declaredElements.length > 1) {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
-      for (PsiElement declaredElement : declaredElements) {
-        if (!(declaredElement instanceof PsiLocalVariable)) return false;
-        PsiLocalVariable var = (PsiLocalVariable)declaredElement;
-        PsiTypeElement type = var.getTypeElement();
-        if (PsiTreeUtil.isAncestor(type, element, false) || element == var.getNameIdentifier()) {
-          setText(CodeInsightBundle.message("intention.split.declaration.text"));
-          return true;
-        }
-      }
+      setText(CodeInsightBundle.message("intention.split.declaration.text"));
+      return true;
     }
 
     return false;

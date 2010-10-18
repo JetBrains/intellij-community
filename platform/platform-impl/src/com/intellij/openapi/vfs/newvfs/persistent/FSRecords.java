@@ -20,7 +20,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -47,7 +46,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
-public class FSRecords implements Disposable, Forceable {
+public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   private static final int VERSION = 12;
@@ -295,10 +294,12 @@ public class FSRecords implements Disposable, Forceable {
     public static void force() {
       synchronized (lock) {
         try {
-          markClean();
+          if (myRecords != null) {
+            markClean();
+          }
         }
         catch (IOException e) {
-          // Ignore
+          LOG.info(e);
         }
         if (myNames != null) {
           myNames.force();

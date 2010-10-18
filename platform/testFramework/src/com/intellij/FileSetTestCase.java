@@ -146,6 +146,10 @@ public abstract class FileSetTestCase extends TestSuite {
       assertEquals(result.trim(),transformed.trim());
     }
 
+    @Override
+    protected String getTestName(final boolean lowercaseFirstLetter) {
+      return "";
+    }
 
     public String toString() {
       return myTestFile.getAbsolutePath() + " ";

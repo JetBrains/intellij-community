@@ -24,9 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
@@ -39,8 +37,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LayeredIcon;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -200,7 +198,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 
-    Editor editor = getEditor(callElement);
+    Editor editor = PsiUtilBase.findEditor(callElement);
 
     if (editor != null) {
 
@@ -218,16 +216,6 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
           }
         }
       }
-    }
-  }
-
-  @Nullable
-  private Editor getEditor(final PsiElement callElement) {
-    final FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(callElement.getContainingFile().getVirtualFile());
-    if (editor instanceof TextEditor) {
-      return ((TextEditor)editor).getEditor();
-    } else {
-      return null;
     }
   }
 

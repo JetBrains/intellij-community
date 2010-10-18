@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -144,6 +146,16 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
           myDataProviders.remove(provider);
         }
       });
+    }
+  }
+
+  public void refreshIcons() {
+    if (this instanceof FileEditorManagerImpl) {
+      final FileEditorManagerImpl mgr = (FileEditorManagerImpl)this;
+      final EditorsSplitters splitters = mgr.getSplitters();
+      for (VirtualFile file : mgr.getOpenFiles()) {
+        splitters.updateFileIcon(file);
+      }
     }
   }
 }

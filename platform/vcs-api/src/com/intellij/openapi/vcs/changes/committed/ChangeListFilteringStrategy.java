@@ -32,6 +32,7 @@ public interface ChangeListFilteringStrategy {
   void setFilterBase(List<CommittedChangeList> changeLists);
   void addChangeListener(ChangeListener listener);
   void removeChangeListener(ChangeListener listener);
+  CommittedChangesFilterKey getKey();
 
   @Nullable
   void resetFilterBase();
@@ -41,6 +42,8 @@ public interface ChangeListFilteringStrategy {
   List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists);
 
   ChangeListFilteringStrategy NONE = new ChangeListFilteringStrategy() {
+    private final CommittedChangesFilterKey myKey = new CommittedChangesFilterKey("None", CommittedChangesFilterPriority.NONE);
+
     public String toString() {
       return "None";
     }
@@ -69,6 +72,11 @@ public interface ChangeListFilteringStrategy {
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       return changeLists;
+    }
+
+    @Override
+    public CommittedChangesFilterKey getKey() {
+      return myKey;
     }
   };
 }

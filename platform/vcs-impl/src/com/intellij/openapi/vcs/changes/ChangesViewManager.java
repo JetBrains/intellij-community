@@ -29,7 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -62,7 +62,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ChangesViewManager extends AbstractProjectComponent implements JDOMExternalizable {
+public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
   public static final int UNVERSIONED_MAX_SIZE = 50;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
@@ -75,17 +75,18 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
   private boolean myDisposed = false;
 
   private final ChangeListListener myListener = new MyChangeListListener();
+  private final Project myProject;
   private final ChangesViewContentManager myContentManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
 
-  public static ChangesViewManager getInstance(Project project) {
-    return project.getComponent(ChangesViewManager.class);
+  public static ChangesViewI getInstance(Project project) {
+    return project.getComponent(ChangesViewI.class);
   }
 
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
-    super(project);
+    myProject = project;
     myContentManager = contentManager;
     myView = new ChangesListView(project);
     Disposer.register(project, myView);
@@ -191,7 +192,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     return actionToolbar.getComponent();
   }
 
-  void updateProgressText(final String text, final boolean isError) {
+  public void updateProgressText(final String text, final boolean isError) {
     if (myProgressLabel != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -202,6 +203,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     }
   }
 
+  @Override
   public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     myRepaintAlarm.cancelAllRequests();
@@ -243,6 +245,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
   }
 
+  @Override
   public void selectFile(final VirtualFile vFile) {
     if (vFile == null) return;
     Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
@@ -255,6 +258,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     }
   }
 
+  @Override
   public void refreshChangesViewNodeAsync(final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -369,5 +373,13 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
       SHOW_IGNORED_MODE = state;
       refreshView();
     }
+  }
+
+  @Override
+  public void disposeComponent() {
+  }
+
+  @Override
+  public void initComponent() {
   }
 }

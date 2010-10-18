@@ -69,14 +69,19 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
 
   public TextAttributes getDefaultAttributes() {
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
+      // E.g. if one text key reuse default attributes of some other predefined key
       myDefaultAttributes = null;
       EditorColorsManager manager = EditorColorsManager.getInstance();
 
       if (manager != null) { // Can be null in test mode
-        myDefaultAttributes = manager.getGlobalScheme().getAttributes(this);
+
+        // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
+        // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
+        // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
+        final EditorColorsScheme defaultColorScheme = manager.getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+        myDefaultAttributes = defaultColorScheme.getAttributes(this);
       }
     }
-
     return myDefaultAttributes;
   }
 

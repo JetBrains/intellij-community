@@ -30,9 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,6 +111,26 @@ public class JavaSdkImpl extends JavaSdk {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
+      if (new File("/usr/libexec/java_home").exists()) {
+        BufferedReader input = null;
+        try {
+          final Process exec = Runtime.getRuntime().exec("/usr/libexec/java_home");
+          input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
+          final String path = input.readLine();
+          if (new File(path).exists()) return path;
+        }
+        catch (IOException e) {
+          // nothing
+        } finally {
+          try {
+            if (input != null) input.close();
+          }
+          catch (IOException e) {
+            // ignore
+          }
+        }
+      }
+
       return "/System/Library/Frameworks/JavaVM.framework/Versions/";
     }
     if (SystemInfo.isLinux) {

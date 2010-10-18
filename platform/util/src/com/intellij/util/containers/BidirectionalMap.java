@@ -51,10 +51,6 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     return myValueToKeysMap.get(value);
   }
 
-  public boolean contaisValue(V value) {
-    return myValueToKeysMap.containsKey(value);
-  }
-
   public Set<K> keySet() {
     return myKeyToValueMap.keySet();
   }

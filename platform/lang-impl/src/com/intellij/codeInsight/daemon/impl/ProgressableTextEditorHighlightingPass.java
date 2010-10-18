@@ -76,7 +76,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
    */
   public double getProgress() {
     if (myProgessLimit == 0) return -1;
-    return ((double)myProgressCount.get()) / myProgessLimit;
+    return (double)myProgressCount.get() / myProgessLimit;
   }
 
   public long getProgressLimit() {
@@ -101,7 +101,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   public void advanceProgress(long delta) {
-    long l = myProgressCount.addAndGet(delta);
+    myProgressCount.addAndGet(delta);
     repaintTrafficIcon();
   }
 

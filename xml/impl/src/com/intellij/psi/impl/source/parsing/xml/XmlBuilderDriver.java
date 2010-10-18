@@ -223,6 +223,8 @@ public class XmlBuilderDriver {
       final int end = child.getEndOffset();
       final CharSequence physical = getTokenText(child);
 
+      if (XmlTokenType.COMMENTS.contains(tt)) continue;
+
       if (tt == XmlTokenType.XML_CDATA_START || tt == XmlTokenType.XML_CDATA_END) {
         builder.textElement("", physical, start, end);
       }

@@ -1,8 +1,9 @@
 <html>
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">
-This inspection reports any log statements which are not surrounded by a guard
-condition. The evaluation of the argument(s) of a log statement can be expensive.
+This inspection reports log statements with non-constant arguments which are not
+surrounded by a guard condition.
+The evaluation of the arguments of a log statement can be expensive.
 Surrounding a log statement with a guard clause prevents that cost when the logging
 is disabled for the level used by the logging statement. This is especially for the
 least serious level (trace, debug, finest) of logging statements, because those are

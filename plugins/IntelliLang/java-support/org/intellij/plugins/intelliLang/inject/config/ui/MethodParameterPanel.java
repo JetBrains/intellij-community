@@ -39,6 +39,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.Nullable;
@@ -168,19 +169,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
-  @Nullable
-  private PsiClass findClass(final PsiType type) {
-    if (type instanceof PsiClassType) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
-      return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        public PsiClass compute() {
-          return facade.findClass(type.getCanonicalText(), GlobalSearchScope.allScope(myProject));
-        }
-      });
-    }
-    return null;
-  }
-
   private void setPsiClass(String name) {
     myClassField.setText(name);
   }
@@ -194,25 +182,26 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myData.clear();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final PsiClass psiClass = findClass(getClassType());
-        if (psiClass == null) return;
-        final List<PsiMethod> methods = ContainerUtil.findAll(psiClass.getMethods(), new Condition<PsiMethod>() {
-          public boolean value(final PsiMethod method) {
+        final PsiType classType = getClassType();
+        final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
+          findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
+        if (classes.length == 0) return;
+        final THashSet<String> visitedSignatures = new THashSet<String>();
+        for (PsiClass psiClass : classes) {
+          for (PsiMethod method : psiClass.getMethods()) {
             final PsiModifierList modifiers = method.getModifierList();
-            if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-              return false;
-            }
-            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject())) return true;
+            if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
+            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject())) continue;
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            return null != ContainerUtil.find(parameters, new Condition<PsiParameter>() {
+            if (ContainerUtil.find(parameters, new Condition<PsiParameter>() {
               public boolean value(PsiParameter p) {
                 return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
               }
-            });
+            }) == null) continue;
+            final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
+            if (!visitedSignatures.add(info.getMethodSignature())) continue;
+            myData.put(method, info);
           }
-        });
-        for (PsiMethod method : methods) {
-          myData.put(method, MethodParameterInjection.createMethodInfo(method));
         }
       }
     });
@@ -271,14 +260,14 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, PsiMethod> map = new THashMap<String, PsiMethod>();
+    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<String, MethodParameterInjection.MethodInfo>();
     for (PsiMethod method : myData.keySet()) {
-      map.put(myData.get(method).getMethodSignature(), method);
+      final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
+      map.put(methodInfo.getMethodSignature(), methodInfo);
     }
     for (MethodParameterInjection.MethodInfo info : myOrigInjection.getMethodInfos()) {
-      final PsiMethod method = map.get(info.getMethodSignature());
-      if (method != null) {
-        final MethodParameterInjection.MethodInfo curInfo = myData.get(method);
+      final MethodParameterInjection.MethodInfo curInfo = map.get(info.getMethodSignature());
+      if (curInfo != null) {
         System.arraycopy(info.getParamFlags(), 0, curInfo.getParamFlags(), 0, Math.min(info.getParamFlags().length, curInfo.getParamFlags().length));
         curInfo.setReturnFlag(info.isReturnFlag());
       }
@@ -306,6 +295,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);    
   }
 
+  @Nullable
   private Boolean isNodeSelected(final DefaultMutableTreeNode o) {
     final Object userObject = o.getUserObject();
     if (userObject instanceof PsiMethod) {

@@ -70,6 +70,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForIncomplete7() { doParserTest("for() foo();"); }
   public void testForIncomplete8() { doParserTest("for(int i = 0;) foo();"); }
   public void testForIncomplete9() { doParserTest("for(int i = 0; i < 0) foo();"); }
+  public void testForEachIncomplete0() { doParserTest("for(Object  : list) ;"); }
 
   public void testIfNormalWithElse() { doParserTest("if (a){ f1(); } else{ f2(); }"); }
   public void testIfNormalNoElse() { doParserTest("if (a) f1();"); }

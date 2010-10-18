@@ -193,7 +193,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       int offset = findOffsetToInsertMethodTo(editor, file);
 
       GenerateMembersUtil.insertMembersAtOffset(file, offset, members);
-      return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(result[0]);
+      return result[0] != null ? CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(result[0]) : null;
     }
 
     private int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {

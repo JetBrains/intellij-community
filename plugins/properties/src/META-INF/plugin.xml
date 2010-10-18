@@ -61,7 +61,6 @@
     <component>
       <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
       <skipForDefaultProject/>
-      <skipForDummyProject/>
     </component>
   </project-components>
 </idea-plugin>

@@ -145,6 +145,8 @@
 
     <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
 
+    <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" />
+
     <extensionPoint name="stackFrameFilter" interface="com.intellij.execution.filters.StackFrameFilter"/>
 
     <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>
@@ -759,6 +761,8 @@
     <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
     <stackFrameFilter implementation="com.intellij.execution.filters.RmiStackFrameFilter"/>
 
+    <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
+
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
 
@@ -894,6 +898,8 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DescendantClassesEnumMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubtypesMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
+
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
 
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>

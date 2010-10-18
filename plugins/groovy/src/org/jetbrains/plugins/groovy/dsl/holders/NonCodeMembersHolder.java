@@ -55,15 +55,15 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public NonCodeMembersHolder(Set<Map> data, PsiElement place) {
     final PsiManager manager = place.getManager();
     for (Map prop : data) {
-      final PsiType type = convertToPsiType((String)prop.get("type"), place);
-      final String name = (String)prop.get("name");
+      final PsiType type = convertToPsiType(String.valueOf(prop.get("type")), place);
+      final String name = String.valueOf(prop.get("name"));
       final LightMethodBuilder method = new LightMethodBuilder(manager, name).
         addModifier(PsiModifier.PUBLIC).
         setReturnType(type);
       final Object params = prop.get("params");
       if (params instanceof Map) {
         for (Object paramName : ((Map)params).keySet()) {
-          method.addParameter(String.valueOf(paramName), convertToPsiType((String)((Map)params).get(paramName), place));
+          method.addParameter(String.valueOf(paramName), convertToPsiType(String.valueOf(((Map)params).get(paramName)), place));
         }
       }
       if (Boolean.TRUE.equals(prop.get("isStatic"))) {

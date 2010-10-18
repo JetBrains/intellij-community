@@ -47,10 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -272,6 +269,34 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (myScheme == StorageScheme.DIRECTORY_BASED) {
       final VirtualFile baseDir = getProjectBaseDir();
       assert baseDir != null : "project file: " + (getProjectFile() == null ? "[NULL]" : getProjectFile().getPath());
+
+      final VirtualFile ideaDir = baseDir.findChild(".idea");
+      if (ideaDir != null && ideaDir.isValid()) {
+        final VirtualFile nameFile = ideaDir.findChild(".name");
+        if (nameFile != null && nameFile.isValid()) {
+          BufferedReader in = null;
+          try {
+            in = new BufferedReader(new InputStreamReader(nameFile.getInputStream()));
+            final String name = in.readLine();
+            if (name != null && name.length() > 0) return name.trim();
+          }
+          catch (IOException e) {
+            // ignore
+          }
+          finally {
+            if (in != null) {
+              try {
+                in.close();
+              }
+              catch (IOException e) {
+                // ignore
+              }
+            }
+          }
+        }
+      }
+
+
       return baseDir.getName().replace(":", "");
     }
 
@@ -491,6 +516,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           }
 
           List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
+
+          if (((ProjectImpl)myProject).isToSaveProjectName()) {
+            final VirtualFile baseDir = getProjectBaseDir();
+            if (baseDir != null && baseDir.isValid()) {
+              filesToSave.add(FileSystem.FILE_SYSTEM
+                                .createFile(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ".name").getPath()));
+            }
+          }
 
           for (IFile file : filesToSave) {
             final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);

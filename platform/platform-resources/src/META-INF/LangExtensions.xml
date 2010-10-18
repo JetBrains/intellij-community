@@ -171,6 +171,9 @@
   <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                   serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
 
+  <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                  serviceImplementation="com.intellij.psi.search.ProjectScopeBuilder"/>
+
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
 
@@ -314,7 +317,6 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeMacro"/>
-  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DecapitalizeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
@@ -378,6 +380,7 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor" id="liveTemplates" order="first"/>
 
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>

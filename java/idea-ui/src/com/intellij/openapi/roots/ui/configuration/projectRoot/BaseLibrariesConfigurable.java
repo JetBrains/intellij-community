@@ -27,9 +27,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -186,13 +186,69 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   public abstract BaseLibrariesConfigurable getOppositeGroup();
 
-  protected void removeLibrary(final Library library) {
+  protected boolean removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      getModelProvider().getModifiableModel().removeLibrary(library);
-      myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
-      // TODO: myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library.getName()));
+      final Collection<ProjectStructureElementUsage> usages = myContext.getDaemonAnalyzer().getUsages(getSelectedElement());
+      if (usages.size() > 0) {
+        final List<String> modules = new ArrayList<String>();
+        final List<String> artifacts = new ArrayList<String>();
+        for (final ProjectStructureElementUsage usage : usages) {
+          if (usage instanceof UsageInModuleClasspath) {
+            modules.add(usage.getPresentableName());
+          } else if (usage instanceof UsageInArtifact) {
+            artifacts.add(usage.getPresentableName());
+          } else {
+            LOG.error("Unknown usage: " + usage.getClass().getName());
+          }
+        }
+
+        final StringBuilder sb = new StringBuilder("Library \"");
+        sb.append(library.getName()).append("\" is used in ");
+        if (modules.size() > 0) {
+          if (modules.size() == 1) {
+            sb.append("module ").append("\"").append(modules.get(0)).append("\"");
+          } else {
+            sb.append(modules.size()).append(" modules");
+          }
+        }
+
+        if (artifacts.size() > 0) {
+          sb.append(modules.size() > 0 ? " and in " : ".");
+
+          if (modules.size() == 1) {
+            sb.append("artifact ").append("\"").append(artifacts.get(0)).append("\".");
+          } else {
+            sb.append(artifacts.size()).append(" artifacts.");
+          }
+        }
+
+        sb.append("\n\nAre you sure you want to delete this library?");
+
+        if (DialogWrapper.OK_EXIT_CODE == Messages.showOkCancelDialog(myProject, sb.toString(),
+                                    "Confirm library deletion", Messages.getQuestionIcon())) {
+
+          final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
+          for (final ProjectStructureElementUsage usage : usages) {
+            if (usage instanceof UsageInModuleClasspath) {
+              rootConfigurable.removeLibraryOrderEntry(((ModuleProjectStructureElement)usage.getContainingElement()).getModule(), library);
+            } else if (usage instanceof UsageInArtifact) {
+              ((UsageInArtifact)usage).removeElement();
+            }
+          }
+
+          getModelProvider().getModifiableModel().removeLibrary(library);
+          myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+          return true;
+        }
+      } else {
+        getModelProvider().getModifiableModel().removeLibrary(library);
+        myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+        return true;
+      }
     }
+
+    return false;
   }
 
   protected

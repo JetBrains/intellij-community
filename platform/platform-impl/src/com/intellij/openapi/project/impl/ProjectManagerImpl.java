@@ -693,7 +693,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
 
-    return Messages.shpwTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project", Messages.getQuestionIcon()) == 0;
+    return Messages.showTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project",
+                                                  Messages.getQuestionIcon()) == 0;
   }
 
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {

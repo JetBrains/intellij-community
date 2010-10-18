@@ -202,7 +202,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
                                      new Consumer<List<CommittedChangeList>>() {
                                        public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                         updateFilteredModel(false, committedChangeLists);
+                                         updateFilteredModel(committedChangeLists);
                                          }
                                        },
                                      new Consumer<List<VcsException>>() {
@@ -242,24 +242,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
-  private void updateFilteredModel(final boolean keepFilter, List<CommittedChangeList> committedChangeLists) {
+  private void updateFilteredModel(List<CommittedChangeList> committedChangeLists) {
     if (committedChangeLists == null) {
       return;
     }
     myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.empty.message"));
-    if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setItems(committedChangeLists, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
-    }
-    else {
-      final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
-      List<CommittedChangeList> filteredChanges = new ArrayList<CommittedChangeList>();
-      for(CommittedChangeList changeList: committedChangeLists) {
-        if (filterHelper.filter(changeList)) {
-          filteredChanges.add(changeList);
-        }
-      }
-      myBrowser.setItems(filteredChanges, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
-    }
+    myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
   }
 
   public void setChangesFilter() {
@@ -294,6 +282,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     public MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
       myList = new ArrayList<ChangeListener>();
+    }
+
+    @Override
+    public CommittedChangesFilterKey getKey() {
+      return new CommittedChangesFilterKey("text", CommittedChangesFilterPriority.TEXT);
     }
 
     public void filter() {

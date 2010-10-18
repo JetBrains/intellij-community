@@ -125,6 +125,10 @@ public abstract class RefactoringSupportProvider {
 
   public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) { return false; }
 
+  public boolean isInplaceIntroduceAvailable(PsiElement element, PsiElement context) {
+    return false;
+  }
+
   /**
    * @return  handler for extracting [delegate] class in this language
    * @see com.intellij.refactoring.RefactoringActionHandler

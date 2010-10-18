@@ -87,8 +87,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       filter(guttersToShow, actionsFilter);
     }
 
-    private static void filter(List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                        IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
+    private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                               @NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
       for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext();) {
           HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
           if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();

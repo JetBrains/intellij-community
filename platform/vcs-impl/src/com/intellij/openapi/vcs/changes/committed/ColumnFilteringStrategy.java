@@ -81,6 +81,11 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     myProviderClass = providerClass;
   }
 
+  @Override
+  public CommittedChangesFilterKey getKey() {
+    return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.USER);
+  }
+
   public String toString() {
     return myColumn.getTitle();
   }

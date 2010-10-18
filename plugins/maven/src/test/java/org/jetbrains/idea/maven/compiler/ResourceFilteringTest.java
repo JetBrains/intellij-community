@@ -16,27 +16,16 @@
 package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -280,6 +269,30 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
     assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
     assertResult("target/classes/file.properties", "value=c:\\\\projects\\\\foo/bar");
+  }
+
+  public void testFilteringPropertiesWithEmptyValues() throws Exception {
+    createProjectSubFile("resources/file.properties", "value1=${foo}\nvalue2=${bar}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo/>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value1=\nvalue2=${bar}");
   }
 
   public void testFilterWithSeveralResourceFolders() throws Exception {

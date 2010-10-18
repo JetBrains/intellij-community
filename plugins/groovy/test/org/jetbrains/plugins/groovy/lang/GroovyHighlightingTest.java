@@ -154,7 +154,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
 
   public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
-    doTest();
+    doTest(new GroovyAssignabilityCheckInspection());
   }
 
   public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
@@ -200,9 +200,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testEachOverRange() throws Exception {doTest();}
 
-  public void testMethodCallWithDefaultParameters() throws Exception {doTest();}
-  public void testClosureWithDefaultParameters() throws Exception {doTest();}
-  public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest();}
+  public void testMethodCallWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testClosureWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testOverlyLongMethodInspection() throws Exception {
     doTest(new GroovyOverlyLongMethodInspection());
@@ -211,7 +211,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testStringAndGStringUpperBound() throws Exception {doTest();}
 
   public void testWithMethod() throws Exception {doTest();}
-  public void testByteArrayArgument() throws Exception {doTest();}
+  public void testByteArrayArgument() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
   public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection());}
@@ -267,11 +267,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSignatureIsNotApplicableToList() throws Exception {
-    doTest();
+    doTest(new GroovyAssignabilityCheckInspection());
   }
 
   public void testInheritConstructorsAnnotation() throws Exception {
-    doTest();
+    doTest(new GroovyAssignabilityCheckInspection());
   }
 
   public void testCollectionAssignments() {doTest(new GroovyAssignabilityCheckInspection()); }
@@ -279,7 +279,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testNumberDuplicatesInMaps() throws Exception {doTest();}
 
-  public void testMapNotAcceptedAsStringParameter()  {doTest();}
+  public void testMapNotAcceptedAsStringParameter()  {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testBuiltInTypeInstantiation() {doTest();}
 }

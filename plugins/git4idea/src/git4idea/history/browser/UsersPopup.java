@@ -38,7 +38,7 @@ public class UsersPopup {
     JBPopupFactory.getInstance().createListPopupBuilder(list)
             .setTitle("Select author or committer")
             .setResizable(true)
-            .setDimensionServiceKey("Git.Select user")
+            //.setDimensionServiceKey("Git.Select user")
             .setItemChoosenCallback(new Runnable() {
               public void run() {
                 if (list.getSelectedIndices().length > 0) {

@@ -75,7 +75,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -99,9 +98,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static TestCase ourTestCase = null;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
-  private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
   private EditorListenerTracker myEditorListenerTracker;
-  private String myTempDirPath;
   private ThreadTracker myThreadTracker;
 
   protected static boolean ourPlatformPrefixInitialized;
@@ -151,10 +148,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     IdeaLogger.ourErrorsOccurred = null;
 
     LOG.info(getClass().getName() + ".setUp()");
-
-    myTempDirPath = ourOriginalTempDir + "/"+getTestName(true) + "/";
-    setTmpDir(myTempDirPath);
-    new File(myTempDirPath).mkdir();
 
     initApplication();
 
@@ -348,10 +341,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           delete(fileToDelete);
         }
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
-
-        FileUtil.asyncDelete(new File(myTempDirPath));
-
-        setTmpDir(ourOriginalTempDir);
 
         if (!myAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
@@ -617,24 +606,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected PsiFile getPsiFile(final Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-  }
-
-  private static void setTmpDir(String path) {
-    System.setProperty("java.io.tmpdir", path);
-    FileUtil.resetCanonicalTempPathCache();
-
-    try {
-      Class<File> ioFile = File.class;
-      Field field = ioFile.getDeclaredField("tmpdir");
-      field.setAccessible(true);
-      field.set(ioFile, null);
-    }
-    catch (NoSuchFieldException ignore) {
-      // field was removed in JDK 1.6.0_12
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
   }
 
   public static void initPlatformLangPrefix() {

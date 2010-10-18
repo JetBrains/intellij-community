@@ -135,7 +135,7 @@ public class CacheUpdateSession {
         CacheUpdater eachUpdater = eachPair.first;
         eachUpdater.updatingDone();
         if (!eachPair.second.isEmpty()) {
-          LOG.error(CacheUpdater.class.getSimpleName() + " " + eachUpdater + " has not finished yet:\n" + eachPair.second);
+          LOG.error(CacheUpdater.class.getSimpleName() + " " + eachUpdater + " has not finished yet:\n" + new ArrayList<VirtualFile>(eachPair.second));
         }
       }
       catch (ProcessCanceledException e) {

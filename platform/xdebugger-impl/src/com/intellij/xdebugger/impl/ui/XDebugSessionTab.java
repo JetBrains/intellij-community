@@ -190,7 +190,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }, consoleContent);
     }
     session.getDebugProcess().registerAdditionalContent(myUi);
-    RunContentBuilder.addAdditionalConsoleEditorActions(myUi, myConsole, consoleContent);
+    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+    myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRunContentDescriptor;

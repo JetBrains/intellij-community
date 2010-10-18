@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -53,7 +53,6 @@ import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +78,7 @@ import java.util.Set;
  * (see {@link QuickEditEditor.MyPanel#getData(java.lang.String)}) instead of using the "tactical nuke"
  * com.intellij.openapi.fileEditor.FileEditorManager#openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor, boolean).
  */
-public class QuickEditAction implements IntentionAction {
+public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
   private String myLastLanguageName;
 

@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -66,7 +65,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private final Project myProject;
-  private final ChangesViewManager myChangesViewManager;
+  private final ChangesViewI myChangesViewManager;
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
@@ -839,11 +838,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       myModifier.moveChangesTo(list.getName(), changes);
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myChangesViewManager.refreshView();
-      }
-    });
+    myChangesViewManager.scheduleRefresh();
   }
 
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {

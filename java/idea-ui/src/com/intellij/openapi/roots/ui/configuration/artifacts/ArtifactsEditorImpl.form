@@ -81,7 +81,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="4157d" class="com.intellij.util.ui.ThreeStateCheckBox" binding="myShowContentCheckBox">
+          <component id="4157d" class="com.intellij.util.ui.ThreeStateCheckBox" binding="myShowContentCheckBox" custom-create="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -89,7 +89,7 @@
               <text value="Show content of elements"/>
             </properties>
           </component>
-          <component id="d5f3d" class="com.intellij.openapi.ui.FixedSizeButton" binding="myShowSpecificContentOptionsButton">
+          <component id="d5f3d" class="com.intellij.openapi.ui.FixedSizeButton" binding="myShowSpecificContentOptionsButton" custom-create="true">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

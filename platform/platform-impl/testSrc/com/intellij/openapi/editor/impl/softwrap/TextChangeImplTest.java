@@ -16,10 +16,12 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.util.text.StringUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Denis Zhdanov
@@ -48,7 +50,7 @@ public class TextChangeImplTest {
     int end = 10;
     String text = "test";
     TextChange textChange = new TextChangeImpl(text, start, end);
-    assertEquals(text, textChange.getText());
+    assertTrue(StringUtil.equals(text, textChange.getText()));
     assertArrayEquals(text.toCharArray(), textChange.getChars());
     assertEquals(start, textChange.getStart());
     assertEquals(end, textChange.getEnd());

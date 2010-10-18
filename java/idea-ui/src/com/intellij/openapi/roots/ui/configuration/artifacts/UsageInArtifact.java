@@ -51,6 +51,11 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
     });
   }
 
+  public void removeElement() {
+    final ArtifactEditorEx editor = (ArtifactEditorEx)myContext.getOrCreateEditor(myOriginalArtifact);
+    editor.removePackagingElement(myParentPath, myPackagingElement);
+  }
+  
   @Override
   public String getPresentableName() {
     return myOriginalArtifact.getName();

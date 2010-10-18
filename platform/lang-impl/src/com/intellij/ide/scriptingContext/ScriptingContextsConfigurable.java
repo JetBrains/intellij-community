@@ -16,11 +16,10 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.ide.scriptingContext.ui.MainScriptingContextsPanel;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;

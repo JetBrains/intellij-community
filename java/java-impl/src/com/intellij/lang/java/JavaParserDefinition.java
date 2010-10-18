@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
-  public static final boolean USE_NEW_PARSER = false;
+  public static boolean USE_NEW_PARSER = false;
 
   @NotNull
   public Lexer createLexer(final Project project) {

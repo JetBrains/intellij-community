@@ -163,7 +163,8 @@ class DaemonListeners implements Disposable {
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer, documentManager, EditorFactory.getInstance(),connection);
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, EditorFactory.getInstance(),connection,
+                                                          daemonCodeAnalyzer.getFileStatusMap());
     Disposer.register(this, changeHandler);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(changeHandler, changeHandler);
 
@@ -212,7 +213,8 @@ class DaemonListeners implements Disposable {
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        String propertyName = event.getPropertyName();
+        if (VirtualFile.PROP_NAME.equals(propertyName)) {
           myDaemonCodeAnalyzer.restart();
           PsiFile psiFile = PsiManager.getInstance(myProject).findFile(event.getFile());
           if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
@@ -220,11 +222,14 @@ class DaemonListeners implements Disposable {
             if (document != null) {
               // highlight markers no more
               //todo clear all highlights regardless the pass id
-              UpdateHighlightersUtil
-                .setHighlightersToEditor(myProject, document, 0, document.getTextLength(), Collections.<HighlightInfo>emptyList(),
-                                         Pass.UPDATE_ALL);
+              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
+                                                             Collections.<HighlightInfo>emptyList(),
+                                                             Pass.UPDATE_ALL);
             }
           }
+        }
+        if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+          stopDaemon(true);
         }
       }
     }, this);
@@ -245,7 +250,9 @@ class DaemonListeners implements Disposable {
     myModalityStateListener = new ModalityStateListener() {
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
-        stopDaemon(LaterInvocator.isInModalContext());
+        boolean inModalContext = LaterInvocator.isInModalContext();
+        stopDaemon(inModalContext);
+        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
     };
     LaterInvocator.addModalityStateListener(myModalityStateListener);

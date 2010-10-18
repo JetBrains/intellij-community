@@ -79,7 +79,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
-  private final WiseSplitter myInnerSplitter;
+  private WiseSplitter myInnerSplitter;
   private final MessageBusConnection myConnection;
   private TreeState myState;
 
@@ -95,7 +95,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setCellRenderer(new CommittedChangeListRenderer(project, myDecorators));
     TreeUtil.expandAll(myChangesTree);
 
-    myDetailsView = new RepositoryChangesBrowser(project, changeLists);
+    myDetailsView = new RepositoryChangesBrowser(project, Collections.<CommittedChangeList>emptyList());
     myDetailsView.getViewer().setScrollPaneBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -109,26 +109,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myLeftPanel = new JPanel(new BorderLayout());
 
-    final Splitter filterSplitter = new Splitter(false, 0.5f);
-
-    filterSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myChangesTree));
-    myLeftPanel.add(filterSplitter, BorderLayout.CENTER);
-    final Splitter mainSplitter = new Splitter(false, 0.7f);
-    mainSplitter.setFirstComponent(myLeftPanel);
-    mainSplitter.setSecondComponent(myDetailsView);
-
-    add(mainSplitter, BorderLayout.CENTER);
-
-    myInnerSplitter = new WiseSplitter(new Runnable() {
-      public void run() {
-        filterSplitter.doLayout();
-        updateModel();
-      }
-    }, filterSplitter);
-    Disposer.register(this, myInnerSplitter);
-
-    mySplitterProportionsData.externalizeFromDimensionService("CommittedChanges.SplitterProportions");
-    mySplitterProportionsData.restoreSplitterProportions(this);
+    initSplitters();
 
     updateBySelectionChange();
 
@@ -154,8 +135,31 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     });
   }
 
+  private void initSplitters() {
+    final Splitter filterSplitter = new Splitter(false, 0.5f);
+
+    filterSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myChangesTree));
+    myLeftPanel.add(filterSplitter, BorderLayout.CENTER);
+    final Splitter mainSplitter = new Splitter(false, 0.7f);
+    mainSplitter.setFirstComponent(myLeftPanel);
+    mainSplitter.setSecondComponent(myDetailsView);
+
+    add(mainSplitter, BorderLayout.CENTER);
+
+    myInnerSplitter = new WiseSplitter(new Runnable() {
+      public void run() {
+        filterSplitter.doLayout();
+        updateModel();
+      }
+    }, filterSplitter);
+    Disposer.register(this, myInnerSplitter);
+
+    mySplitterProportionsData.externalizeFromDimensionService("CommittedChanges.SplitterProportions");
+    mySplitterProportionsData.restoreSplitterProportions(this);
+  }
+
   public void addFilter(final ChangeListFilteringStrategy strategy) {
-    myFilteringStrategy.addStrategy("permanent", strategy);
+    myFilteringStrategy.addStrategy(strategy.getKey(), strategy);
     strategy.addChangeListener(myFilterChangeListener);
   }
 
@@ -213,12 +217,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myDetailsView.dispose();
   }
 
-  public void setItems(@NotNull List<CommittedChangeList> items, final boolean keepFilter, final CommittedChangesBrowserUseCase useCase) {
+  public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
     myDetailsView.setUseCase(useCase);
     myChangeLists = items;
-    if (!keepFilter) {
-      myFilteringStrategy.setFilterBase(items);
-    }
+    myFilteringStrategy.setFilterBase(items);
     myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
     updateModel();
   }
@@ -303,7 +305,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
-  public void removeFilteringStrategy(final String key) {
+  public void removeFilteringStrategy(final CommittedChangesFilterKey key) {
     final ChangeListFilteringStrategy strategy = myFilteringStrategy.removeStrategy(key);
     if (strategy != null) {
       strategy.removeChangeListener(myFilterChangeListener);
@@ -311,12 +313,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myInnerSplitter.remove(key);
   }
 
-  public boolean setFilteringStrategy(final String key, final ChangeListFilteringStrategy filteringStrategy) {
+  public boolean setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy) {
     if (myInnerSplitter.canAdd()) {
-      filteringStrategy.setFilterBase(myChangeLists);
       filteringStrategy.addChangeListener(myFilterChangeListener);
 
+      final CommittedChangesFilterKey key = filteringStrategy.getKey();
       myFilteringStrategy.addStrategy(key, filteringStrategy);
+      myFilteringStrategy.setFilterBase(myChangeLists);
 
       final JComponent filterUI = filteringStrategy.getFilterUI();
       if (filterUI != null) {

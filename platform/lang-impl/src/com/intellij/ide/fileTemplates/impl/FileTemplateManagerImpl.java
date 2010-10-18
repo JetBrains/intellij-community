@@ -300,7 +300,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     File templateDir = getParentDirectory(false);
     File[] files = templateDir.listFiles();
     if (files == null) {
-      files = new File[0];
+      files = ArrayUtil.EMPTY_FILE_ARRAY;
     }
 
     if (myTemplates == null) {

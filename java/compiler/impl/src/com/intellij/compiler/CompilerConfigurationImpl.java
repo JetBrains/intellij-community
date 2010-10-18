@@ -63,8 +63,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NotNull private BackendCompiler myDefaultJavaCompiler;
 
   // extensions of the files considered as resource files
-  private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>();
-  // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
+  private final List<Pattern> myRegexpResourcePatterns = new ArrayList<Pattern>();
+  // extensions of the files considered as resource files. If present, overrides patterns in old regexp format stored in myRegexpResourcePatterns
   private final List<String> myWildcardPatterns = new ArrayList<String>();
   private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
   private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
@@ -190,9 +190,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public JavacCompiler getJavacCompiler() {
-    if (JAVAC_EXTERNAL_BACKEND == null) {
-      createCompilers();
-    }
+    createCompilers();
     return JAVAC_EXTERNAL_BACKEND;
   }
 
@@ -201,6 +199,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void createCompilers() {
+    if (JAVAC_EXTERNAL_BACKEND != null) return;
+
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
 
@@ -255,6 +255,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
+    createCompilers();
     return myRegisteredCompilers;
   }
 
@@ -263,10 +264,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private String[] getRegexpPatterns() {
-    String[] patterns = ArrayUtil.newStringArray(myRegexpResourcePaterns.size());
+    String[] patterns = ArrayUtil.newStringArray(myRegexpResourcePatterns.size());
     int index = 0;
-    for (final Pattern myRegexpResourcePatern : myRegexpResourcePaterns) {
-      patterns[index++] = myRegexpResourcePatern.getPattern();
+    for (final Pattern myRegexpResourcePattern : myRegexpResourcePatterns) {
+      patterns[index++] = myRegexpResourcePattern.getPattern();
     }
     return patterns;
   }
@@ -283,7 +284,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private void addRegexpPattern(String namePattern) throws MalformedPatternException {
     Pattern pattern = compilePattern(namePattern);
     if (pattern != null) {
-      myRegexpResourcePaterns.add(pattern);
+      myRegexpResourcePatterns.add(pattern);
     }
   }
 
@@ -369,7 +370,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void removeRegexpPatterns() {
-    myRegexpResourcePaterns.clear();
+    myRegexpResourcePatterns.clear();
   }
 
   private void removeWildcardPatterns() {
@@ -650,9 +651,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public BackendCompiler getDefaultCompiler() {
-    if (JAVAC_EXTERNAL_BACKEND == null) {
-      createCompilers();
-    }
+    createCompilers();
     return myDefaultJavaCompiler;
   }
 
@@ -724,7 +723,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private boolean needPatternConversion() {
-    return !myWildcardPatternsInitialized && !myRegexpResourcePaterns.isEmpty();
+    return !myWildcardPatternsInitialized && !myRegexpResourcePatterns.isEmpty();
   }
 
   private boolean doConvertPatterns() throws MalformedPatternException {
@@ -769,5 +768,4 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     return extensionsString.toString();
   }
-
 }

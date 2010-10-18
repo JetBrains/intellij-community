@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public interface ExpandableItemsHandler<T> {
+  void setEnabled(boolean enabled);
+
   @NotNull
   Collection<T> getExpandedItems();
 }

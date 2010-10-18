@@ -38,6 +38,9 @@ public class EditSourceUtil {
       return ((PomTargetPsiElement)element).getTarget();
     }
     final PsiElement navigationElement = element.getNavigationElement();
+    if (navigationElement instanceof PomTargetPsiElement) {
+      return ((PomTargetPsiElement)navigationElement).getTarget();
+    }
     final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
     if (virtualFile == null || !virtualFile.isValid()) {

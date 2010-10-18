@@ -153,10 +153,11 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
                                                       IconLoader.getIcon("/debugger/console.png"),
                                                       console.getPreferredFocusableComponent());
 
-    addAdditionalConsoleEditorActions(ui, console, consoleContent);
+    addAdditionalConsoleEditorActions(console, consoleContent);
+    ui.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
   }
 
-  public static void addAdditionalConsoleEditorActions(final RunnerLayoutUi ui, final ExecutionConsole console, final Content consoleContent) {
+  public static void addAdditionalConsoleEditorActions(final ExecutionConsole console, final Content consoleContent) {
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (console instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)console).createConsoleActions();
@@ -166,7 +167,6 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     }
 
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
-    ui.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {

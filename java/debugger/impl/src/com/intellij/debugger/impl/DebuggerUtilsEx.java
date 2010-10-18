@@ -338,26 +338,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return eventDescriptors;
   }
 
-  private static PsiElement findExpression(PsiElement element) {
-    if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
-      return null;
-    }
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiVariable) {
-      return element;
-    }
-    if (parent instanceof PsiReferenceExpression) {
-      if (parent.getParent() instanceof PsiCallExpression) return parent.getParent();
-      return parent;
-    }
-    if (parent instanceof PsiThisExpression) {
-      return parent;
-    }
-    return null;
-  }
-
   public static TextWithImports getEditorText(final Editor editor) {
-    if(editor == null) {
+    if (editor == null) {
       return null;
     }
     final Project project = editor.getProject();
@@ -370,34 +352,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (psiFile != null) {
         PsiElement elementAtCursor = psiFile.findElementAt(offset);
         if (elementAtCursor != null) {
-          PsiElement element = findExpression(elementAtCursor);
-          if (element != null) {
-            if (element instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression reference = (PsiReferenceExpression)element;
-              if (reference.getQualifier() == null) {
-                final PsiElement resolved = reference.resolve();
-                if (resolved instanceof PsiEnumConstant) {
-                  final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
-                  final PsiClass enumClass = enumConstant.getContainingClass();
-                  if (enumClass != null) {
-                    defaultExpression = enumClass.getName() + "." + enumConstant.getName();
-                  }
-                }
-              }
-            }
-            if (defaultExpression == null) {
-              defaultExpression = element.getText();
-            }
+          final EditorTextProvider textProvider = EditorTextProvider.EP.forLanguage(elementAtCursor.getLanguage());
+          if (textProvider != null) {
+            final TextWithImports editorText = textProvider.getEditorText(elementAtCursor);
+            if (editorText != null) return editorText;
           }
         }
       }
     }
-
-    if(defaultExpression != null) {
+    else {
       return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, defaultExpression);
-    } else {
-      return null;
     }
+    return null;
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);

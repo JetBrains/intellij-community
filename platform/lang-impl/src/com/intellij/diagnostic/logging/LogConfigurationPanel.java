@@ -33,7 +33,6 @@ import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -86,9 +85,9 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ArrayList<LogFileOptions> newList = new ArrayList<LogFileOptions>(myModel.getItems());
-        final LogFileOptions selectedNameLocation = showEditorDialog("", "", false);
-        if (selectedNameLocation != null) {
-          newList.add(new LogFileOptions(selectedNameLocation.getName(), selectedNameLocation.getPathPattern(), true, true, selectedNameLocation.isShowAll()));
+        LogFileOptions newOptions = new LogFileOptions("", "", true, true, false);
+        if (showEditorDialog(newOptions)) {
+          newList.add(newOptions);
           myModel.setItems(newList);
           int index = myModel.getRowCount() - 1;
           myModel.fireTableRowsInserted(index, index);
@@ -239,18 +238,17 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   protected void disposeEditor() {
   }
 
-  @Nullable
-  private static LogFileOptions showEditorDialog(String name, String location, boolean showAll){
+  private static boolean showEditorDialog(@NotNull LogFileOptions options){
     EditLogPatternDialog dialog = new EditLogPatternDialog();
-    dialog.init(name, location, showAll);
+    dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());
     dialog.show();
     if (dialog.isOK()) {
-      location = dialog.getLogPattern();
-      name = dialog.getName();
-      showAll = dialog.isShowAllFiles();
-      return new LogFileOptions(name, location, false, false, showAll);
+      options.setName(dialog.getName());
+      options.setPathPattern(dialog.getLogPattern());
+      options.setShowAll(dialog.isShowAllFiles());
+      return true;
     }
-    return null;
+    return false;
   }
 
   private class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
@@ -290,7 +288,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
           myLog2Predefined.remove(o);
       }
         o.setName(aValue.getName());
-        o.setLast(!aValue.isShowAll());
+        o.setShowAll(aValue.isShowAll());
         o.setPathPattern(aValue.getPathPattern());
     }
     }
@@ -348,7 +346,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
-  private static class LogFileCellEditor extends AbstractTableCellEditor {
+  private class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
     private LogFileOptions myLogFileOptions;
 
@@ -359,13 +357,11 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final LogFileOptions newValue = showEditorDialog(myLogFileOptions.getName(), myLogFileOptions.getPathPattern(), myLogFileOptions.isShowAll());
-          if (newValue != null) {
-            myLogFileOptions = newValue;
-          }
+          showEditorDialog(myLogFileOptions);
           JTextField textField = getChildComponent();
           textField.setText(myLogFileOptions.getName());
           textField.requestFocus();
+          myModel.fireTableDataChanged();
         }
       });
     }

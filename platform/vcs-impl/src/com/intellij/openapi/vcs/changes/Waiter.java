@@ -77,7 +77,7 @@ public class Waiter extends Task.Modal {
     }*/
     if (myProject.isDisposed()) return;
     myRunnable.run();
-    ChangesViewManager.getInstance(myProject).refreshView();
+    ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
   public void done() {

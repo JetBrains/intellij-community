@@ -20,6 +20,6 @@ public interface DecoratorManager {
   void remove(final CommittedChangeListDecorator decorator);
   void repaintTree();
   void reportLoadedLists(final CommittedChangeListsListener listener);
-  void removeFilteringStrategy(final String key);
-  boolean setFilteringStrategy(final String key, final ChangeListFilteringStrategy filteringStrategy);
+  void removeFilteringStrategy(final CommittedChangesFilterKey key);
+  boolean setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy);
 }

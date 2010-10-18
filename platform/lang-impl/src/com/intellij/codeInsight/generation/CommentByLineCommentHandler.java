@@ -488,7 +488,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
           int start = startOffset + lineText.indexOf(suffix);
           myDocument.deleteString(start, start + suffix.length());
         }
-
       }
 
       boolean skipNewLine = false;
@@ -554,9 +553,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         endOffset = CharArrayUtil.shiftBackward(myDocument.getCharsSequence(), endOffset, " \t");
         int shiftedStartOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
         String lineSuffix = ((CommenterWithLineSuffix)commenter).getLineCommentSuffix();
-        if (!CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - lineSuffix.length(), lineSuffix) &&
-            !CharArrayUtil.regionMatches(myDocument.getCharsSequence(), shiftedStartOffset, prefix)) {
-          myDocument.insertString(endOffset, lineSuffix);
+        if (!CharArrayUtil.regionMatches(myDocument.getCharsSequence(), shiftedStartOffset, prefix)) {
+          if (!CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - lineSuffix.length(), lineSuffix)) {
+            myDocument.insertString(endOffset, lineSuffix);
+          }
           myDocument.insertString(offset, prefix);
         }
       }

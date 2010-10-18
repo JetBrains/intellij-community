@@ -435,7 +435,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     private final DecoratorManager myManager;
     private final ChangeListFilteringStrategy myStrategy;
     private boolean myIsSelected;
-    private final static String ourKey = "MERGE_PANEL";
 
     public ShowHideMergePanel(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
       myManager = manager;
@@ -458,9 +457,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     public void setSelected(final AnActionEvent e, final boolean state) {
       myIsSelected = state;
       if (state) {
-        myManager.setFilteringStrategy(ourKey, myStrategy);
+        myManager.setFilteringStrategy(myStrategy);
       } else {
-        myManager.removeFilteringStrategy(ourKey);
+        myManager.removeFilteringStrategy(myStrategy.getKey());
       }
     }
   }

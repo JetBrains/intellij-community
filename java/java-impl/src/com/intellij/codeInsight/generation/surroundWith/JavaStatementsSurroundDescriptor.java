@@ -27,27 +27,29 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
-  private static final Surrounder[] SURROUNDERS  = new Surrounder[] {
+  private static final Surrounder[] SURROUNDERS = {
     new JavaWithIfSurrounder(),
-      new JavaWithIfElseSurrounder(),
-      new JavaWithWhileSurrounder(),
-      new JavaWithDoWhileSurrounder(),
-      new JavaWithForSurrounder(),
+    new JavaWithIfElseSurrounder(),
+    new JavaWithWhileSurrounder(),
+    new JavaWithDoWhileSurrounder(),
+    new JavaWithForSurrounder(),
 
-      new JavaWithTryCatchSurrounder(),
-      new JavaWithTryFinallySurrounder(),
-      new JavaWithTryCatchFinallySurrounder(),
-      new JavaWithSynchronizedSurrounder(),
-      new JavaWithRunnableSurrounder(),
+    new JavaWithTryCatchSurrounder(),
+    new JavaWithTryFinallySurrounder(),
+    new JavaWithTryCatchFinallySurrounder(),
+    new JavaWithSynchronizedSurrounder(),
+    new JavaWithRunnableSurrounder(),
 
-      new JavaWithBlockSurrounder()
+    new JavaWithBlockSurrounder()
   };
 
-  @NotNull public Surrounder[] getSurrounders() {
+  @NotNull
+  public Surrounder[] getSurrounders() {
     return SURROUNDERS;
   }
 
-  @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  @NotNull
+  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     if (statements.length == 0) return PsiElement.EMPTY_ARRAY;
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.surroundwith.statement");

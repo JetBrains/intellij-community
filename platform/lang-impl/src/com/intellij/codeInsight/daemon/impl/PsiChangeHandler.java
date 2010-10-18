@@ -52,14 +52,16 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
   private final Project myProject;
-  private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<Document, List<Pair<PsiElement, Boolean>>>();
   private final FileStatusMap myFileStatusMap;
 
-  public PsiChangeHandler(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, final PsiDocumentManagerImpl documentManager, EditorFactory editorFactory, MessageBusConnection connection) {
+  public PsiChangeHandler(@NotNull Project project,
+                          @NotNull final PsiDocumentManagerImpl documentManager,
+                          @NotNull EditorFactory editorFactory,
+                          @NotNull MessageBusConnection connection,
+                          @NotNull FileStatusMap fileStatusMap) {
     myProject = project;
-    myDaemonCodeAnalyzer = daemonCodeAnalyzer;
-    myFileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+    myFileStatusMap = fileStatusMap;
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -142,7 +144,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       myFileStatusMap.markAllFilesDirty();
-      myDaemonCodeAnalyzer.stopProcess(true);
     }
   }
 

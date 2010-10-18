@@ -20,6 +20,10 @@ package com.intellij.execution;
  */
 public abstract class RunManagerAdapter implements RunManagerListener {
   @Override
+  public void runConfigurationSelected() {
+  }
+
+  @Override
   public void beforeRunTasksChanged() {
   }
 

@@ -299,7 +299,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   private void setAggregatorProject(VirtualFile pom) {
-    myBuilder.setAggregatorProject(myProjectsManager.findProject(pom));
+    myBuilder.setAggregatorProject(pom == null ? null : myProjectsManager.findProject(pom));
   }
 
   private void setParentProject(VirtualFile pom) {

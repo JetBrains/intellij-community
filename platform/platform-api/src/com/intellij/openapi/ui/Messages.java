@@ -219,7 +219,7 @@ public class Messages {
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
-  public static int shpwTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+  public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }

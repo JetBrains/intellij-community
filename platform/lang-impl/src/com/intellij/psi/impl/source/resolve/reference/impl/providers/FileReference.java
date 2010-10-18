@@ -51,7 +51,6 @@ import javax.swing.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -60,7 +59,41 @@ import java.util.List;
 public class FileReference implements FileReferenceOwner, PsiPolyVariantReference,
                                       QuickFixProvider<FileReference>, LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
+
   public static final FileReference[] EMPTY = new FileReference[0];
+  private static final TObjectHashingStrategy<ResolveResult> RESOLVE_RESULT_HASHING_STRATEGY = new TObjectHashingStrategy<ResolveResult>() {
+    @Override
+    public int computeHashCode(ResolveResult object) {
+      return object.hashCode();
+    }
+
+    @Override
+    public boolean equals(ResolveResult o1, ResolveResult o2) {
+      PsiFileSystemItem element1 = (PsiFileSystemItem)o1.getElement();
+      PsiFileSystemItem element2 = (PsiFileSystemItem)o2.getElement();
+      if (element1 == null || element2 == null) return Comparing.equal(element1, element2);
+      return Comparing.equal(element1.getVirtualFile(), element2.getVirtualFile());
+    }
+  };
+
+  private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
+    public int computeHashCode(final PsiElement object) {
+      if (object instanceof PsiNamedElement) {
+        final String name = ((PsiNamedElement)object).getName();
+        if (name != null) {
+          return name.hashCode();
+        }
+      }
+      return object.hashCode();
+    }
+
+    public boolean equals(final PsiElement o1, final PsiElement o2) {
+      if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
+        return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
+      }
+      return o1.equals(o2);
+    }
+  };
 
   private final int myIndex;
   private TextRange myRange;
@@ -118,7 +151,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       }
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
-    final Collection<ResolveResult> result = new HashSet<ResolveResult>(contexts.size());
+    final Collection<ResolveResult> result = new THashSet<ResolveResult>(RESOLVE_RESULT_HASHING_STRATEGY);
     for (final PsiFileSystemItem context : contexts) {
       if (context != null) {
         innerResolveInContext(referenceText, context, result, caseSensitive);
@@ -227,24 +260,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         }
       }
     }
-    final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), new TObjectHashingStrategy<PsiElement>() {
-      public int computeHashCode(final PsiElement object) {
-        if (object instanceof PsiNamedElement) {
-          final String name = ((PsiNamedElement)object).getName();
-          if (name != null) {
-            return name.hashCode();
-          }
-        }
-        return object.hashCode();
-      }
-
-      public boolean equals(final PsiElement o1, final PsiElement o2) {
-        if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
-          return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
-        }
-        return o1.equals(o2);
-      }
-    });
+    final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
     final PsiElement[] candidates = set.toArray(new PsiElement[set.size()]);
 
     final Object[] variants = new Object[candidates.length];
@@ -273,6 +289,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return FileInfoManager.getFileLookupItem(candidate);
   }
 
+  /**
+   * Converts a wrapper like WebDirectoryElement into plain PsiFile
+   */
   protected static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
     final VirtualFile file = fileSystemItem.getVirtualFile();
     if (file != null && !file.isDirectory()) {
@@ -368,7 +387,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
     PsiFile file = getElement().getContainingFile();
-    if (file.getContext() != null) file = file.getContext().getContainingFile(); // use host file!
+    PsiElement contextPsiFile = file.getContext();
+    if (contextPsiFile != null) file = contextPsiFile.getContainingFile(); // use host file!
     final VirtualFile curVFile = file.getVirtualFile();
     if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
 

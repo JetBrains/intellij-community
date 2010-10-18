@@ -4,6 +4,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,4 +93,10 @@ public abstract class CompletionResultSet {
     }
     myCompletionService.getVariantsFromContributors(parameters, myContributor, consumer);
   }
+
+  public void restartCompletionOnPrefixChange(String prefix) {
+    restartCompletionOnPrefixChange(PlatformPatterns.string().equalTo(prefix));
+  }
+
+  public abstract void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition);
 }

@@ -43,6 +43,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -247,7 +248,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final MethodParameterInjection injection = new MethodParameterInjection();
     injection.setInjectedLanguageId(languageId);
     injection.setClassName(className);
-    final MethodParameterInjection.MethodInfo info = createMethodInfo(psiMethod);
+    final MethodInfo info = createMethodInfo(psiMethod);
     if (parameterIndex < 0) {
       info.setReturnFlag(true);
     }
@@ -358,11 +359,12 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                                          final BaseInjection injection,
                                                                          final PsiMethod contextMethod,
                                                                          final boolean includeAllPlaces) {
-    final PsiClass containingClass;
+    final PsiClass[] classes;
     final String className;
     if (contextMethod != null) {
-      containingClass = contextMethod.getContainingClass();
-      className = containingClass == null ? "" : StringUtil.notNullize(containingClass.getQualifiedName());
+      final PsiClass psiClass = contextMethod.getContainingClass();
+      className = psiClass == null ? "" : StringUtil.notNullize(psiClass.getQualifiedName());
+      classes = psiClass == null? PsiClass.EMPTY_ARRAY : new PsiClass[] {psiClass};
     }
     else {
       String found = null;
@@ -381,37 +383,42 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           found = pkg.substring(1, pkg.length()-1)+"." + matcher.group(1);
         }
       }
-      containingClass = found != null && project.isInitialized()? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
-      className = StringUtil.notNullize(containingClass == null ? found : containingClass.getQualifiedName());
+      classes = found != null && project.isInitialized()? JavaPsiFacade.getInstance(project).findClasses(found, GlobalSearchScope
+        .allScope(project)) : PsiClass.EMPTY_ARRAY;
+      className = StringUtil.notNullize(classes.length == 0 ? found : classes[0].getQualifiedName());
     }
     final MethodParameterInjection result = new MethodParameterInjection();
     result.copyFrom(injection);
     result.getInjectionPlaces().clear();
     result.setClassName(className);
-    final ArrayList<MethodParameterInjection.MethodInfo> infos = new ArrayList<MethodParameterInjection.MethodInfo>();
-    if (containingClass != null) {
-      for (PsiMethod method : containingClass.getMethods()) {
-        final PsiModifierList modifiers = method.getModifierList();
-        if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
-        boolean add = false;
-        final MethodParameterInjection.MethodInfo methodInfo = createMethodInfo(method);
-        if (isInjectable(method.getReturnType(), method.getProject())) {
-          final int parameterIndex = -1;
-          final InjectionPlace place = injection.findPlaceByText(getPatternStringForJavaPlace(method, parameterIndex));
-          methodInfo.setReturnFlag(place != null && place.isEnabled() || includeAllPlaces);
-          add = true;
-        }
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          final PsiParameter p = parameters[i];
-          if (isInjectable(p.getType(), p.getProject())) {
-            final InjectionPlace place = injection.findPlaceByText(getPatternStringForJavaPlace(method, i));
-            methodInfo.getParamFlags()[i] = place != null && place.isEnabled() || includeAllPlaces;
+    final ArrayList<MethodInfo> infos = new ArrayList<MethodInfo>();
+    if (classes.length > 0) {
+      final THashSet<String> visitedSignatures = new THashSet<String>();
+      for (PsiClass psiClass : classes) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          final PsiModifierList modifiers = method.getModifierList();
+          if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
+          boolean add = false;
+          final MethodInfo methodInfo = createMethodInfo(method);
+          if (!visitedSignatures.add(methodInfo.getMethodSignature())) continue;
+          if (isInjectable(method.getReturnType(), method.getProject())) {
+            final int parameterIndex = -1;
+            final InjectionPlace place = injection.findPlaceByText(getPatternStringForJavaPlace(method, parameterIndex));
+            methodInfo.setReturnFlag(place != null && place.isEnabled() || includeAllPlaces);
             add = true;
           }
-        }
-        if (add) {
-          infos.add(methodInfo);
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          for (int i = 0; i < parameters.length; i++) {
+            final PsiParameter p = parameters[i];
+            if (isInjectable(p.getType(), p.getProject())) {
+              final InjectionPlace place = injection.findPlaceByText(getPatternStringForJavaPlace(method, i));
+              methodInfo.getParamFlags()[i] = place != null && place.isEnabled() || includeAllPlaces;
+              add = true;
+            }
+          }
+          if (add) {
+            infos.add(methodInfo);
+          }
         }
       }
     }

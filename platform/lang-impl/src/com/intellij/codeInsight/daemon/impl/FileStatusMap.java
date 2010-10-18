@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -172,7 +171,7 @@ public class FileStatusMap implements Disposable {
       else if (status.dirtyScopes.containsKey(passId)) {
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)marker);
+          ((RangeMarkerEx)marker).dispose();
           status.dirtyScopes.put(passId, null);
         }
       }
@@ -218,7 +217,7 @@ public class FileStatusMap implements Disposable {
         LOG.assertTrue(status.dirtyScopes.containsKey(passId));
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)marker);
+          ((RangeMarkerEx)marker).dispose();
         }
         marker = document.createRangeMarker(0, document.getTextLength());
         status.dirtyScopes.put(passId, marker);
@@ -270,7 +269,7 @@ public class FileStatusMap implements Disposable {
     if (union.getEndOffset() > textLength) {
       union = union.intersection(new TextRange(0, textLength));
     }
-    ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
+    ((RangeMarkerEx)old).dispose();
     return document.createRangeMarker(union);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,12 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public JComponent createOptionsPanel() {
-    myLibraryEditor = LibraryRootsComponent.createComponent(myProject, myModel.getModifiableModel().getLibraryEditor(myLibrary));
+    myLibraryEditor = LibraryRootsComponent.createComponent(myProject, new Computable<LibraryEditor>() {
+      @Override
+      public LibraryEditor compute() {
+        return myModel.getModifiableModel().getLibraryEditor(myLibrary);
+      }
+    });
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
     myLibraryEditor.addListener(new Runnable() {
       public void run() {

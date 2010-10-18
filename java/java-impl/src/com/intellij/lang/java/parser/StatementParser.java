@@ -372,7 +372,7 @@ public class StatementParser {
 
     final PsiBuilder.Marker afterParenth = builder.mark();
     final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false);
-    if (param == null || builder.getTokenType() != JavaTokenType.COLON) {
+    if (param == null || JavaParserUtil.exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
       return parseForLoopFromInitialization(builder, statement);
     }
