@@ -507,6 +507,7 @@ public class ExpectedHighlightingData {
       (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
       (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
       && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
+      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
       ;
   }
 }

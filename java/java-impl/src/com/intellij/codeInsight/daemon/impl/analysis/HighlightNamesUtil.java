@@ -56,7 +56,17 @@ public class HighlightNamesUtil {
   }
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element, final HighlightInfoType type) {
-    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type);
+    // TODO: Fetch correct colors scheme from current editor.
+    //
+    // Problem: TextEditor fields may be initialized with color scheme which differs from Editor tab one
+    // (more over by default all TextEditorFields have white background and "Default" white color scheme).
+    // Thus if "Global colors scheme" has black bg, the annotations in EditorField will look ugly, because
+    // they will be given from current "global scheme"(dark), but all other highlighting will be oriented on
+    // color scheme with white background
+
+    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type, colorsScheme);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element);
     return TextAttributes.merge(scopeAttributes, regularAttributes);
