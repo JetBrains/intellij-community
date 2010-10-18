@@ -79,15 +79,14 @@ public class GitSimpleHandler extends GitTextHandler {
    * {@inheritDoc}
    */
   protected void processTerminated(final int exitCode) {
-    if (myVcs != null) {
-      if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
-        myVcs.showMessages(myStdoutLine.toString());
-        myStdoutLine.setLength(0);
-      }
-      else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
-        myVcs.showErrorMessages(myStderrLine.toString());
-        myStderrLine.setLength(0);
-      }
+    if (myVcs == null) { return; }
+    if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
+      myVcs.showMessages(myStdoutLine.toString());
+      myStdoutLine.setLength(0);
+    }
+    else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
+      myVcs.showErrorMessages(myStderrLine.toString());
+      myStderrLine.setLength(0);
     }
   }
 
@@ -95,6 +94,7 @@ public class GitSimpleHandler extends GitTextHandler {
    * For silent handlers, print out everything
    */
   public void unsilence() {
+    if (myVcs == null) { return; }
     myVcs.showCommandLine(printableCommandLine());
     if (myStderr.length() != 0) {
       myVcs.showErrorMessages(myStderr.toString());
