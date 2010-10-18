@@ -81,6 +81,10 @@ public class UpdateHighlightersUtil {
         return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
       }
 
+      if (!Comparing.equal(o1.forcedTextAttributesKey, o2.forcedTextAttributesKey)) {
+        return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
+      }
+
       return Comparing.compare(o1.description, o2.description);
     }
   };

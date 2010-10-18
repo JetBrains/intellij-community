@@ -191,6 +191,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         public void run() {
           if (!addInjectedPsiHighlights(injectedInside, progress, Collections.synchronizedSet(result))) throw new ProcessCanceledException();
 
+          // set editor's color scheme
+          final EditorColorsScheme colorsScheme = getColorsScheme();
+          if (colorsScheme != null) {
+            for (HighlightInfo info : result) {
+              info.setCustomColorScheme(colorsScheme);
+            }
+          }
+
           if (!outside.isEmpty() || !injectedOutside.isEmpty()) {
             if (!inside.isEmpty()) { // do not apply when there were no elements to highlight
               // clear infos found in visible area to avoid applying them twice
@@ -354,7 +362,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
           else {
             HighlightInfo patched =
-              new HighlightInfo(info.forcedTextAttributes, info.type, fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
+              new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+                                fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
                                 info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
             infos.add(patched);
           }
@@ -400,7 +409,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextRange hostRange = fixedTextRange == null ? documentWindow.injectedToHost(editable) : fixedTextRange;
 
       HighlightInfo patched =
-        new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(),
+        new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+                          hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
       patched.setHint(info.hasHint());
       patched.setGutterIconRenderer(info.getGutterIconRenderer());
@@ -522,6 +532,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull final Set<HighlightInfo> gotHighlights,
                                  final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
+
+    // TODO - add color scheme to holder
     final HighlightInfoHolder holder = createInfoHolder(myFile);
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough

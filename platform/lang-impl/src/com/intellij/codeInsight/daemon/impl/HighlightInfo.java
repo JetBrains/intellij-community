@@ -65,23 +65,35 @@ public class HighlightInfo implements Segment {
   private final boolean myNeedsUpdateOnTyping;
   public JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
+  public final TextAttributesKey forcedTextAttributesKey;
+  private EditorColorsScheme myCustomColorScheme;
 
   public HighlightSeverity getSeverity() {
     return severity;
   }
 
   public TextAttributes getTextAttributes(final PsiElement element) {
-    return forcedTextAttributes == null ? getAttributesByType(element, type) : forcedTextAttributes;
+    if (forcedTextAttributes != null) {
+      return forcedTextAttributes;
+    }
+
+    final EditorColorsScheme colorsScheme = getColorsScheme();
+    if (forcedTextAttributesKey != null) {
+      return colorsScheme.getAttributes(forcedTextAttributesKey);
+    }
+
+    return getAttributesByType(element, type, colorsScheme);
   }
 
-  public static TextAttributes getAttributesByType(@Nullable final PsiElement element, @NotNull HighlightInfoType type) {
+  public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
+                                                   @NotNull HighlightInfoType type,
+                                                   final EditorColorsScheme colorsScheme) {
     final TextAttributes textAttributes = SeverityRegistrar.getInstance(element != null ? element.getProject() : null).getTextAttributesBySeverity(type.getSeverity(element));
     if (textAttributes != null) {
       return textAttributes;
     }
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey key = type.getAttributesKey();
-    return scheme.getAttributes(key);
+    return colorsScheme.getAttributes(key);
   }
 
   @Nullable
@@ -89,22 +101,39 @@ public class HighlightInfo implements Segment {
     if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
+    final EditorColorsScheme colorsScheme = getColorsScheme();
+    if (forcedTextAttributesKey != null) {
+      final Color errorStripeColor = colorsScheme.getAttributes(forcedTextAttributesKey).getErrorStripeColor();
+      // let's copy above behaviour of forcedTextAttributes stripe color, but I'm not sure that the behaviour is correct in general
+      if (errorStripeColor != null) {
+         return errorStripeColor;
+      }
+    }
+
     if (severity == HighlightSeverity.ERROR) {
-      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
+      return colorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.WARNING) {
-      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
+      return colorsScheme.getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.INFO){
-      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
+      return colorsScheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
-      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
+      return colorsScheme.getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
     }
 
-    TextAttributes attributes = getAttributesByType(element, type);
+    TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
     return attributes == null ? null : attributes.getErrorStripeColor();
 
+  }
+
+  @NotNull
+  private EditorColorsScheme getColorsScheme() {
+    if (myCustomColorScheme != null) {
+      return myCustomColorScheme;
+    }
+    return EditorColorsManager.getInstance().getGlobalScheme();
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description) {
@@ -194,7 +223,19 @@ public class HighlightInfo implements Segment {
     this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(null), false, null, false);
   }
 
-  public HighlightInfo(@Nullable TextAttributes textAttributes,
+  public HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+                       @NotNull HighlightInfoType type,
+                       int startOffset,
+                       int endOffset,
+                       @Nullable String description,
+                       @Nullable String toolTip,
+                       @NotNull HighlightSeverity severity,
+                       boolean afterEndOfLine,
+                       @Nullable Boolean needsUpdateOnTyping, boolean isFileLevelAnnotation) {
+    this(forcedTextAttributes, null, type, startOffset, endOffset, description, toolTip, severity, afterEndOfLine, needsUpdateOnTyping, isFileLevelAnnotation);
+  }
+  public HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+                       @Nullable TextAttributesKey forcedTextAttributesKey,
                        @NotNull HighlightInfoType type,
                        int startOffset,
                        int endOffset,
@@ -206,7 +247,8 @@ public class HighlightInfo implements Segment {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+description+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
-    forcedTextAttributes = textAttributes;
+    this.forcedTextAttributes = forcedTextAttributes;
+    this.forcedTextAttributesKey = forcedTextAttributesKey;
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
@@ -250,6 +292,7 @@ public class HighlightInfo implements Segment {
            Comparing.equal(info.type, type) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
+           Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
            Comparing.strEqual(info.description, description);
   }
 
@@ -262,6 +305,7 @@ public class HighlightInfo implements Segment {
            Comparing.equal(info.type, type) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
+           Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
            Comparing.strEqual(info.description, description);
   }
 
@@ -311,11 +355,10 @@ public class HighlightInfo implements Segment {
   }
 
   public static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange) {
-    TextAttributes attributes = annotation.getEnforcedTextAttributes();
-    if (attributes == null) {
-      attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
-    }
-    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation),
+    final TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
+    final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? annotation.getTextAttributes() : null;
+
+    HighlightInfo info = new HighlightInfo(forcedAttributes, forcedAttributesKey, convertType(annotation),
                                            fixedRange != null? fixedRange.getStartOffset() : annotation.getStartOffset(),
                                            fixedRange != null? fixedRange.getEndOffset() : annotation.getEndOffset(),
                                            annotation.getMessage(), annotation.getTooltip(),
@@ -372,6 +415,10 @@ public class HighlightInfo implements Segment {
   }
   public int getActualEndOffset() {
     return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
+  }
+
+  public void setCustomColorScheme(@Nullable final EditorColorsScheme customColorScheme) {
+    myCustomColorScheme = customColorScheme;
   }
 
   public static class IntentionActionDescriptor {
