@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -131,7 +132,7 @@ class CacheUpdateRunner {
     final Application application = ApplicationManager.getApplication();
     application.addApplicationListener(canceller);
 
-    final boolean[] isFinished = new boolean[1];
+    final Ref<Boolean> isFinished = new Ref<Boolean>(Boolean.FALSE);
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
       if (threadsCount == -1) {
@@ -142,13 +143,26 @@ class CacheUpdateRunner {
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
-        Job<Object> job = JobScheduler.getInstance().createJob("Indexing", Thread.NORM_PRIORITY);
+        final Job<Object> job = JobScheduler.getInstance().createJob("Indexing", Thread.NORM_PRIORITY);
+        final Ref[] finishedRefs = new Ref[threadsCount];
         for (int i = 0; i < threadsCount; i++) {
-          Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
+          final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
+          finishedRefs[i] = ref;
+          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, application);
           job.addTask(process);
         }
         try {
           job.scheduleAndWaitForResults();
+          
+          boolean allFinished = true;
+          for (Ref ref : finishedRefs) {
+            if (!(Boolean)ref.get()) {
+              allFinished = false;
+              break;
+            }
+          }
+          isFinished.set(allFinished);
+          
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
@@ -159,20 +173,20 @@ class CacheUpdateRunner {
       application.removeApplicationListener(canceller);
     }
 
-    return isFinished[0];
+    return isFinished.get();
   }
 
   private class MyRunnable implements Runnable {
     private final ProgressIndicatorBase myInnerIndicator;
     private final FileContentQueue myQueue;
-    private final boolean[] myFinished;
+    private final Ref<Boolean> myFinished;
     private final Consumer<VirtualFile> myProgressUpdater;
     private final boolean myProcessInReadAction;
     private final Application myApplication;
 
     public MyRunnable(ProgressIndicatorBase innerIndicator,
                       FileContentQueue queue,
-                      boolean[] finished,
+                      Ref<Boolean> finished,
                       Consumer<VirtualFile> progressUpdater,
                       boolean processInReadAction, Application application) {
       myInnerIndicator = innerIndicator;
@@ -190,7 +204,7 @@ class CacheUpdateRunner {
 
         final FileContent fileContent = myQueue.take();
         if (fileContent == null) {
-          myFinished[0] = true;
+          myFinished.set(Boolean.TRUE);
           return;
         }
 
