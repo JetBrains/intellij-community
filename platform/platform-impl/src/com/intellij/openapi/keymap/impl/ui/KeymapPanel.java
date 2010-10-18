@@ -747,10 +747,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     KeymapImpl newKeymap = selectedKeymap.deriveKeymap();
 
-    String newKeymapName = KeyMapBundle.message("new.keymap.name", selectedKeymap.getName());
+    String newKeymapName = KeyMapBundle.message("new.keymap.name", selectedKeymap.getPresentableName());
     if(!tryNewKeymapName(newKeymapName)) {
       for(int i=0; ; i++) {
-        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", selectedKeymap.getName(), i);
+        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", selectedKeymap.getPresentableName(), i);
         if(tryNewKeymapName(newKeymapName)) {
           break;
         }
@@ -812,10 +812,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     }
     KeymapImpl newKeymap = keymap.deriveKeymap();
 
-    String newKeymapName = KeyMapBundle.message("new.keymap.name", keymap.getName());
+    String newKeymapName = KeyMapBundle.message("new.keymap.name", keymap.getPresentableName());
     if(!tryNewKeymapName(newKeymapName)) {
       for(int i=0; ; i++) {
-        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", keymap.getName(), i);
+        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", keymap.getPresentableName(), i);
         if(tryNewKeymapName(newKeymapName)) {
           break;
         }
@@ -832,7 +832,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private boolean tryNewKeymapName(String name) {
     for(int i=0; i<myKeymapListModel.getSize(); i++) {
       Keymap k = (Keymap)myKeymapListModel.getElementAt(i);
-      if(name.equals(k.getName())) {
+      if(name.equals(k.getPresentableName())) {
         return false;
       }
     }
