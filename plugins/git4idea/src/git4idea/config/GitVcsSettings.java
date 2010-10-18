@@ -22,6 +22,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -274,7 +275,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    * @param project a context project
    * @return the git settings
    */
+  @Nullable
   public static GitVcsSettings getInstance(Project project) {
+    if (project == null || project.isDisposed()) {
+      return null;
+    }
     return ServiceManager.getService(project, GitVcsSettings.class);
   }
 

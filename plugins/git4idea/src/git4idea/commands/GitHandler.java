@@ -166,7 +166,9 @@ public abstract class GitHandler {
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
-    myCommandLine.setExePath(mySettings.getGitExecutable());
+    if (mySettings != null) {
+      myCommandLine.setExePath(mySettings.getGitExecutable());
+    }
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());

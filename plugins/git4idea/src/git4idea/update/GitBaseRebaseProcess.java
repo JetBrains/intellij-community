@@ -385,6 +385,9 @@ public abstract class GitBaseRebaseProcess {
     }
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
       GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+      if (settings == null) {
+        return false;
+      }
       boolean result = GitConvertFilesDialog.showDialogIfNeeded(myProject, settings, mySortedChanges, myExceptions);
       if (!result) {
         if (myExceptions.isEmpty()) {
