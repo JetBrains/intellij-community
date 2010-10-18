@@ -187,11 +187,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int newColumnNumber = visualCaret.column + columnShift;
     int newLineNumber = visualCaret.line + lineShift;
 
+    Document document = myEditor.getDocument();
     if (!editorSettings.isVirtualSpace() && columnShift == 0) {
       newColumnNumber = myEditor.getLastColumnNumber();
     }
     else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
-      int lastLine = myEditor.getDocument().getLineCount() - 1;
+      int lastLine = document.getLineCount() - 1;
       if (lastLine < 0) lastLine = 0;
       if (EditorModificationUtil.calcAfterLineEnd(myEditor) >= 0 &&
           newLineNumber < myEditor.logicalToVisualPosition(new LogicalPosition(lastLine, 0)).line) {
@@ -221,8 +222,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (!editorSettings.isCaretInsideTabs() && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
       LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
       int offset = myEditor.logicalPositionToOffset(log);
-      CharSequence text = myEditor.getDocument().getCharsSequence();
-      if (offset >= 0 && offset < myEditor.getDocument().getTextLength()) {
+      if (offset >= document.getTextLength()) {
+        newColumnNumber = myEditor.offsetToVisualPosition(document.getTextLength()).column;
+      }
+      CharSequence text = document.getCharsSequence();
+      if (offset >= 0 && offset < document.getTextLength()) {
         if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == myOffset)) {
           if (columnShift <= 0) {
             newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
@@ -270,8 +274,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           selectionModel.setSelection(selectionStart, 0);
         }
         else if (pos.line >= myEditor.getVisibleLineCount()) {
-          if (selectionStart < myEditor.getDocument().getTextLength()) {
-            selectionModel.setSelection(selectionStart, myEditor.getDocument().getTextLength());
+          if (selectionStart < document.getTextLength()) {
+            selectionModel.setSelection(selectionStart, document.getTextLength());
           }
         }
         else {

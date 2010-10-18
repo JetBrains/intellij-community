@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.facade.embedder;
 
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -58,6 +59,13 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
+
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      @Override
+      public void run() {
+        release();
+      }
+    });
   }
 
   public int createIndex(@NotNull String indexId,

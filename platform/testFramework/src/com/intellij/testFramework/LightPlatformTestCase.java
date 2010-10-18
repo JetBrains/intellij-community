@@ -532,7 +532,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       throw throwables[0];
     }
 
-    // just to make sure all deffered Runnable's to finish
+    // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
 
     if (IdeaLogger.ourErrorsOccurred != null) {
@@ -602,9 +602,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    assertTrue("Test name should start with 'test'", name.startsWith("test"));
+    assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
     name = name.substring("test".length());
-    if (lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
+    if (name.length() > 0 && lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;

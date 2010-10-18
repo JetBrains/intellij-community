@@ -204,15 +204,18 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void selectFirstMessage() {
     final ErrorTreeElement firstError = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.ERROR);
     if (firstError != null) {
-      selectElement(firstError);
-      if (shouldShowFirstErrorInEditor()) {
-        navigateToSource(false);
-      }
+      selectElement(firstError, new Runnable() {
+        public void run() {
+          if (shouldShowFirstErrorInEditor()) {
+            navigateToSource(false);
+          }
+        }
+      });
     }
     else {
       ErrorTreeElement firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.WARNING);
       if (firstWarning != null) {
-        selectElement(firstWarning);
+        selectElement(firstWarning, null);
       }
       else {
         TreeUtil.selectFirstNode(myTree);
@@ -220,8 +223,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private void selectElement(final ErrorTreeElement element) {
-    myBuilder.select(element, null);
+  private void selectElement(final ErrorTreeElement element, final Runnable onDone) {
+    myBuilder.select(element, onDone);
   }
 
   protected boolean shouldShowFirstErrorInEditor() {

@@ -63,7 +63,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String VERSION_ATTR = "version";
   @NonNls private static final String DEFAULT_SCHEME_ATTR = "default_scheme";
   @NonNls private static final String PARENT_SCHEME_ATTR = "parent_scheme";
-  @NonNls protected static final String DEFAULT_SCHEME_NAME = "Default";
   @NonNls private static final String OPTION_ELEMENT = "option";
   @NonNls private static final String COLORS_ELEMENT = "colors";
   @NonNls private static final String ATTRIBUTES_ELEMENT = "attributes";

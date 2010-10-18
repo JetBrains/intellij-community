@@ -40,6 +40,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
   private JCheckBox myCbCompileDependent;
   private JCheckBox myCbAssertNotNull;
   private JLabel myPatternLegendLabel;
+  private JCheckBox myCbAutoShowFirstError;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -50,6 +51,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     myCbCompileInBackground.setSelected(workspaceConfiguration.COMPILE_IN_BACKGROUND);
+    myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbCompileDependent.setSelected(workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
@@ -75,6 +77,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
+    workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.COMPILE_DEPENDENT_FILES = myCbCompileDependent.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
@@ -122,6 +125,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     boolean isModified = false;
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
+    isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbCompileDependent, workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
 
