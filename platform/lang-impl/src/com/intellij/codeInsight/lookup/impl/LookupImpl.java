@@ -74,8 +74,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Project myProject;
   private final Editor myEditor;
 
-  private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new ConcurrentHashMap<LookupElement, Collection<LookupElementAction>>();
-  private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
+  @SuppressWarnings({"unchecked"}) private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new ConcurrentHashMap<LookupElement, Collection<LookupElementAction>>(TObjectHashingStrategy.IDENTITY);
+  @SuppressWarnings({"unchecked"}) private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private long myShownStamp = -1;
@@ -85,7 +85,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   @Nullable private List<LookupElement> mySortedItems;
 
   private RangeMarker myLookupStartMarker;
-  private boolean myShouldUpdateBounds;
   private final JList myList;
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -109,7 +108,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private volatile String myAdText;
   private volatile int myLookupWidth = 50;
   private static final int LOOKUP_HEIGHT = Integer.getInteger("idea.lookup.height", 11).intValue();
-  private boolean myReused;
+  private volatile boolean myReused;
+  private volatile boolean myUpdateUIOnReuse;
   private boolean myChangeGuard;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
@@ -220,8 +220,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private void checkReused() {
     if (myReused) {
       myItems.clear();
-      myItemActions.clear();
-      myItemPresentations.clear();
+      myUpdateUIOnReuse = true;
       myPreselectedItem = null;
       myReused = false;
     }
@@ -325,6 +324,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       list.add(item);
     }
 
+    synchronized (myItems) {
+      cleanupIfReused();
+    }
+
     if (myMinPrefixLength != minPrefixLength) {
       myLookupStartMarker = null;
     }
@@ -372,6 +375,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       else {
         ListScrollingUtil.selectItem(myList, 0);
       }
+    }
+  }
+
+  private void cleanupIfReused() {
+    if (myUpdateUIOnReuse) {
+      myItemPresentations.keySet().retainAll(myItems);
+      myItemActions.keySet().retainAll(myItems);
+      myAdditionalPrefix = "";
+      myPreselectedItem = null;
+      myUpdateUIOnReuse = false;
     }
   }
 
@@ -591,7 +604,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final int start = calcLookupStart();
       myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
       myLookupStartMarker.setGreedyToLeft(true);
-      myShouldUpdateBounds = true;
     }
 
     return myLookupStartMarker.getStartOffset();
@@ -698,19 +710,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private void caretOrSelectionChanged() {
     if (!myChangeGuard) {
       hide();
-      return;
     }
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed() && !myEditor.isDisposed() && myShouldUpdateBounds) {
-          myShouldUpdateBounds = false;
-          refreshUi();
-        }
-      }
-    });
-
   }
 
   private int calcLookupStart() {
@@ -912,7 +912,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
     myAdditionalPrefix = "";
-    myAdditionalPrefix = "";
     updateList();
 
     offset += afterCaret.length();
@@ -1035,9 +1034,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void markReused() {
     myReused = true;
-    myAdditionalPrefix = "";
-    myLookupStartMarker = null;
-    myMinPrefixLength = 0;
     setAdvertisementText(null);
   }
 }
