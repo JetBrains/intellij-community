@@ -26,6 +26,7 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -119,7 +120,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }
     }
-    if (invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())) {
+    if (invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()) &&
+        LookupManager.getActiveLookup(editor) == null) {
       selectionModel.removeSelection();
     }
   }
