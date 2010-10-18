@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -115,6 +116,12 @@ public abstract class SdkType {
 
   public Icon getIcon() {
     return null;
+  }
+
+  @NotNull
+  @NonNls
+  public String getHelpTopic() {
+    return "preferences.jdks";
   }
 
   public Icon getIconForExpandedTreeNode() {
