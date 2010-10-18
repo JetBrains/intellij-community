@@ -228,7 +228,6 @@ def layoutFull(String home, String targetDirectory) {
         dir("lib") {
           jar("android.jar") {
             noResources("android")
-            module("ultimate-verifier")
           }
           resources("android")
           fileset(dir: "${home}/plugins/android/lib") {
