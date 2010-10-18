@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -99,7 +100,8 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
-                if(TestUtils.isJUnitTestMethod(method)){
+              final PsiClass containingClass = method.getContainingClass();
+              if(containingClass != null && TestUtil.isTestClass(containingClass)){
                     return;
                 }
             }
@@ -135,7 +137,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
             removeButton.setAction(new RemoveAction(table));
             ignoreTestCasesCheckBox.setAction(new ToggleAction(
                     InspectionGadgetsBundle.message(
-                            "bad.exception.declared.ignore.exceptions.declared.in.junit.test.cases.option"),
+                            "bad.exception.declared.ignore.exceptions.declared.in.tests.option"),
                     BadExceptionDeclaredInspection.this, "ignoreTestCases"));
             ignoreTestCasesCheckBox.setSelected(ignoreTestCases);
         }
