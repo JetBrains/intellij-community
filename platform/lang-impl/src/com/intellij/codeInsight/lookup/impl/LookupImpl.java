@@ -1018,4 +1018,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myAdditionalPrefix = "";
     myPreselectedItem = null;
   }
+
+  boolean isDisposed() {
+    return myDisposed;
+  }
 }
