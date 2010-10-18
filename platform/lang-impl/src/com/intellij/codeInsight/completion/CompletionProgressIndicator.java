@@ -123,7 +123,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myOffsetMap = offsetMap;
     myLookup = lookup;
 
-    myLookup.initLookup(new CompletionLookupArranger(parameters));
+    myLookup.setArranger(new CompletionLookupArranger(parameters));
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
