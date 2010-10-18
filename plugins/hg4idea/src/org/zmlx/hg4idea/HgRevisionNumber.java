@@ -18,7 +18,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.Collections;
 import java.util.List;
 
-public final class HgRevisionNumber implements VcsRevisionNumber {
+public class HgRevisionNumber implements VcsRevisionNumber {
 
   private final String revision;
   private final String changeset;
@@ -27,6 +27,19 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
   private final List<HgRevisionNumber> parents;
 
   private final boolean isWorkingVersion;
+
+  // this is needed in place of VcsRevisionNumber.NULL, because sometimes we need to return HgRevisionNumber.
+  public static final HgRevisionNumber NULL_REVISION_NUMBER = new HgRevisionNumber("", "", "", "", Collections.<HgRevisionNumber>emptyList()) {
+    @Override
+    public int compareTo(VcsRevisionNumber o) {
+      return NULL.compareTo(o);
+    }
+
+    @Override
+    public String asString() {
+      return NULL.asString();
+    }
+  };
 
   public static HgRevisionNumber getInstance(String revision, String changeset, String author, String commitMessage) {
     return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.<HgRevisionNumber>emptyList());

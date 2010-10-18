@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public class HgWorkingCopyRevisionsCommand {
     List<HgRevisionNumber> parents = parents(repo);
     if (parents.isEmpty()) {
       //this is possible when we have a freshly initialized mercurial repository
-      return null;
+      return HgRevisionNumber.NULL_REVISION_NUMBER;
     }
     else {
       return parents.get(0);
@@ -93,7 +94,7 @@ public class HgWorkingCopyRevisionsCommand {
     if(!tips.isEmpty()) {
       return tips.get(0);
     }
-    else return null;
+    else return HgRevisionNumber.NULL_REVISION_NUMBER;
   }
 
   @Nullable
@@ -103,7 +104,7 @@ public class HgWorkingCopyRevisionsCommand {
       repo, "identify", Arrays.asList("--num", "--id")
     );
     if (result == null) {
-      return null;
+      return HgRevisionNumber.NULL_REVISION_NUMBER;
     }
     final List<String> lines = result.getOutputLines();
     if (lines != null && !lines.isEmpty()) {
@@ -112,7 +113,7 @@ public class HgWorkingCopyRevisionsCommand {
         return HgRevisionNumber.getInstance(parts[1], parts[0]);
       }
     }
-    return null;
+    return HgRevisionNumber.NULL_REVISION_NUMBER;
   }
 
   /**
