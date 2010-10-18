@@ -32,7 +32,7 @@ public abstract class IdeaTestFixtureFactory {
       ourInstance = (IdeaTestFixtureFactory)aClass.newInstance();
     }
     catch (Exception e) {
-      throw new RuntimeException("Can't instnatiate factory", e);
+      throw new RuntimeException("Can't instantiate factory", e);
     }
   }
 
