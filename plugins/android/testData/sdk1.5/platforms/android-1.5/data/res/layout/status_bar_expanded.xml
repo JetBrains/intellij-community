@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* apps/common/assets/default/default/skins/StatusBar.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+
+<com.android.server.status.ExpandedView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@drawable/status_bar_background"
+    android:focusable="true"
+    android:descendantFocusability="afterDescendants">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="3dp"
+        android:paddingBottom="5dp"
+        android:paddingRight="3dp"
+        android:background="@drawable/status_bar_header_background"
+        >
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginTop="1dp"
+            android:layout_marginLeft="5dp"
+            android:layout_gravity="center_vertical"
+            android:paddingBottom="1dp"
+            android:orientation="vertical"
+            >
+                <TextView android:id="@+id/plmnLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="?android:attr/textColorSecondaryInverse"
+                    android:paddingLeft="4dp"
+                    />
+                <TextView android:id="@+id/spnLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="?android:attr/textColorSecondaryInverse"
+                    android:paddingLeft="4dp"
+                    />
+        </LinearLayout>
+        <TextView android:id="@+id/clear_all_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="1dp"
+            android:textSize="14sp"
+            android:textColor="#ff000000"
+            android:text="@string/status_bar_clear_all_button"
+            style="?android:attr/buttonStyle"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:background="@drawable/btn_default_small"
+            />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content"
+        >
+        <ScrollView
+            android:id="@+id/scroll"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fadingEdge="none"
+            >
+            <com.android.server.status.NotificationLinearLayout
+                android:id="@+id/notificationLinearLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                >
+                
+                <TextView android:id="@+id/noNotificationsTitle"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/title_bar_portrait"
+                    android:paddingLeft="5dp"
+                    android:textAppearance="@style/TextAppearance.StatusBarTitle"
+                    android:text="@string/status_bar_no_notifications_title"
+                    />
+
+                <TextView android:id="@+id/ongoingTitle"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/title_bar_portrait"
+                    android:paddingLeft="5dp"
+                    android:textAppearance="@style/TextAppearance.StatusBarTitle"
+                    android:text="@string/status_bar_ongoing_events_title"
+                    />
+                <LinearLayout android:id="@+id/ongoingItems"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    />
+
+                <TextView android:id="@+id/latestTitle"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/title_bar_portrait"
+                    android:paddingLeft="5dp"
+                    android:textAppearance="@style/TextAppearance.StatusBarTitle"
+                    android:text="@string/status_bar_latest_events_title"
+                    />
+                <LinearLayout android:id="@+id/latestItems"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    />
+            </com.android.server.status.NotificationLinearLayout>
+        </ScrollView>
+
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/title_bar_shadow"
+            android:scaleType="fitXY"
+        />
+
+    </FrameLayout>
+</com.android.server.status.ExpandedView>

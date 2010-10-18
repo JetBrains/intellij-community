@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="android" name="Android">
+      <configuration>
+        <option name="SDK_PATH" value="sdk path" />
+        <option name="RESOURCES_PATH" value="res" />
+        <option name="ASSETS_PATH" value="assets" />
+        <option name="ANDROID_TARGET_NAME" value="Android 1.5" />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/gen">
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" />
+    </content>
+    <orderEntry type="module-library">
+      <library name="Android SDK">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../android.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="file://$MODULE_DIR$/../docs/reference" />
+        </JAVADOC>
+      </library>
+    </orderEntry>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

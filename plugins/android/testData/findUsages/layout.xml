@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/picture3">
+  <EditText android:id="@+id/anchor"/>
+  <TextView android:text="@string/hello"/>
+  <TextView android:text="@string/hi"/>
+  <TextView android:layout_alignRight="@id/anchor"/>
+</LinearLayout>

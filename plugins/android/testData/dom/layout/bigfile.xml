@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:paddingLeft="4dip"
+              android:paddingRight="4dip"
+              android:paddingTop="4dip"
+    >
+
+  <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/sample_thumb_2"
+        />
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="6dip"
+        android:text="@string/incoming_message_view_message_text"
+        />
+
+  </LinearLayout>
+
+  <TextView
+      android:id="@+id/message"
+      android:layout_gravity="center_vertical"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:paddingTop="12dip"
+      android:text="@string/imcoming_message_view_message2_text"
+      />
+
+  <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      >
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+
+      <ImageView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:src="@drawable/sample_thumb_2"
+          />
+
+      <TextView
+          android:id="@+id/message"
+          android:layout_gravity="center_vertical"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:paddingLeft="6dip"
+          android:text="@string/incoming_message_view_message_text"
+          />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="12dip"
+        android:text="@string/imcoming_message_view_message2_text"
+        />
+  </LinearLayout>
+
+  <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/sample_thumb_2"
+        />
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="6dip"
+        android:text="@string/incoming_message_view_message_text"
+        />
+
+  </LinearLayout>
+
+  <TextView
+      android:id="@+id/message"
+      android:layout_gravity="center_vertical"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:paddingTop="12dip"
+      android:text="@string/imcoming_message_view_message2_text"
+      />
+
+  <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      >
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+
+      <ImageView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:src="@drawable/sample_thumb_2"
+          />
+      <LinearLayout
+          android:orientation="horizontal"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/sample_thumb_2"
+            />
+
+        <TextView
+            android:id="@+id/message"
+            android:layout_gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="6dip"
+            android:text="@string/incoming_message_view_message_text"
+            />
+
+      </LinearLayout>
+
+      <TextView
+          android:id="@+id/message"
+          android:layout_gravity="center_vertical"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:paddingTop="12dip"
+          android:text="@string/imcoming_message_view_message2_text"
+          />
+
+      <LinearLayout
+          android:orientation="horizontal"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          >
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            >
+
+          <ImageView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:src="@drawable/sample_thumb_2"
+              />
+
+          <TextView
+              android:id="@+id/message"
+              android:layout_gravity="center_vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:paddingLeft="6dip"
+              android:text="@string/incoming_message_view_message_text"
+              />
+          <LinearLayout
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/sample_thumb_2"
+                />
+
+            <TextView
+                android:id="@+id/message"
+                android:layout_gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="6dip"
+                android:text="@string/<caret>"
+                />
+
+          </LinearLayout>
+
+          <TextView
+              android:id="@+id/message"
+              android:layout_gravity="center_vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:paddingTop="12dip"
+              android:text="@string/imcoming_message_view_message2_text"
+              />
+
+          <LinearLayout
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              >
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                >
+
+              <ImageView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:src="@drawable/sample_thumb_2"
+                  />
+
+              <TextView
+                  android:id="@+id/message"
+                  android:layout_gravity="center_vertical"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:paddingLeft="6dip"
+                  android:text="@string/incoming_message_view_message_text"
+                  />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/message"
+                android:layout_gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dip"
+                android:text="@string/imcoming_message_view_message2_text"
+                />
+          </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/message"
+            android:layout_gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dip"
+            android:text="@string/imcoming_message_view_message2_text"
+            />
+      </LinearLayout>
+
+      <TextView
+          android:id="@+id/message"
+          android:layout_gravity="center_vertical"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:paddingLeft="6dip"
+          android:text="@string/incoming_message_view_message_text"
+          />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="12dip"
+        android:text="@string/imcoming_message_view_message2_text"
+        />
+  </LinearLayout>
+</LinearLayout>
+
