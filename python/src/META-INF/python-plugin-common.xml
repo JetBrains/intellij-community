@@ -274,6 +274,8 @@
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoParameterProcessor"/>
     <elementDescriptionProvider implementation="com.jetbrains.django.refactoring.DjangoElementDescriptionProvider"/>
 
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.lang.template.DjangoUrlsCompletionContributor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
