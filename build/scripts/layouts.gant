@@ -224,7 +224,7 @@ def layoutFull(String home, String targetDirectory) {
       }
 
 
-      pluginDir("android") {
+      dir("android") {
         dir("lib") {
           jar("android.jar") {
             noResources("android")
