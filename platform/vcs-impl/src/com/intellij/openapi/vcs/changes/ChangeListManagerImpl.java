@@ -389,6 +389,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }, myIgnoredIdeaLevel, gate);
 
+      // todo should also ask self flag
       myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
         @Override
         public boolean isCanceled() {
