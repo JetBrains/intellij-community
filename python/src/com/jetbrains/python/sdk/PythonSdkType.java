@@ -78,6 +78,12 @@ public class PythonSdkType extends SdkType {
     return PythonFileType.INSTANCE.getIcon();
   }
 
+  @NotNull
+  @Override
+  public String getHelpTopic() {
+    return "reference.project.structure.sdk.python";
+  }
+
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
   }
