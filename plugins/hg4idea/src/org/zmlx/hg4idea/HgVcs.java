@@ -48,6 +48,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -372,8 +373,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     VirtualFileManager.getInstance().removeVirtualFileListener(myDirStateChangeListener);
   }
 
+  @Nullable
   public static HgVcs getInstance(Project project) {
-    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager == null) { return null; }
+    return (HgVcs) vcsManager.findVcsByName(VCS_NAME);
   }
 
   private static String ourTestHgExecutablePath; // path to hg in test mode
