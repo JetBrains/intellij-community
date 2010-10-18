@@ -15,8 +15,6 @@
  */
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
-
 /**
  * @author yole
  */
@@ -29,7 +27,7 @@ public abstract class JavaTestFixtureFactory {
       ourInstance = (JavaTestFixtureFactory)aClass.newInstance();
     }
     catch (Exception e) {
-      throw new RuntimeException("Can't instnatiate factory", e);
+      throw new RuntimeException("Can't instantiate factory", e);
     }
   }
 
@@ -45,6 +43,6 @@ public abstract class JavaTestFixtureFactory {
 
   //also implicitly initializes ourInstance and registers java module fixture builder
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
-    return IdeaTestFixtureFactoryImpl.getFixtureFactory().createFixtureBuilder();
+    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
   }
 }

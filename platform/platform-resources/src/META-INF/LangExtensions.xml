@@ -75,6 +75,9 @@
   <projectService serviceInterface="com.intellij.pom.references.PomService"
                   serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
+  <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
+                  serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
+
   <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                       serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 
@@ -167,6 +170,9 @@
 
   <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                   serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
+
+  <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                  serviceImplementation="com.intellij.psi.search.ProjectScopeBuilder"/>
 
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
@@ -311,7 +317,6 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeMacro"/>
-  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DecapitalizeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
@@ -375,6 +380,7 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
+  <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor" id="liveTemplates" order="first"/>
 
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
@@ -585,4 +591,6 @@
   <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="before hide-hints"/>
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
+
+  <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
 </extensions>

@@ -1070,12 +1070,12 @@ public class RefactoringUtil {
         newTags.add(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createParamTag(parameter.getName(), ""));
       }
     }
-    PsiDocTag anchor = paramTags.length > 0 ? paramTags[paramTags.length - 1] : null;
-    for (PsiDocTag psiDocTag : newTags) {
-      anchor = (PsiDocTag)docComment.addAfter(psiDocTag, anchor);
-    }
+    PsiElement anchor = paramTags.length > 0 ? paramTags[0].getPrevSibling() : null;
     for (PsiDocTag paramTag : paramTags) {
       paramTag.delete();
+    }
+    for (PsiDocTag psiDocTag : newTags) {
+      anchor = docComment.addAfter(psiDocTag, anchor);
     }
   }
 
@@ -1196,12 +1196,20 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList, @NotNull final PsiElement... elements) {
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+                                                                                   @NotNull final PsiElement... elements) {
+    return createTypeParameterListWithUsedTypeParameters(fromList, Condition.TRUE, elements);
+  }
+
+  @Nullable
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+                                                                                   Condition<PsiTypeParameter> filter,
+                                                                                   @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
-      collectTypeParameters(used, element);  //pull up extends cls class with type params
+      collectTypeParameters(used, element, filter);  //pull up extends cls class with type params
 
     }
 
@@ -1235,6 +1243,10 @@ public class RefactoringUtil {
   }
 
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
+    collectTypeParameters(used, element, Condition.TRUE);
+  }
+  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element,
+                                           final Condition<PsiTypeParameter> filter) {
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
@@ -1242,7 +1254,7 @@ public class RefactoringUtil {
           final PsiElement resolved = reference.resolve();
           if (resolved instanceof PsiTypeParameter) {
             final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false) && filter.value(typeParameter)) {
               used.add(typeParameter);
             }
           }
@@ -1254,7 +1266,8 @@ public class RefactoringUtil {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         final PsiClass resolved = PsiUtil.resolveClassInType(type);
-        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, false)){
+        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, false) && filter.value(
+          (PsiTypeParameter)resolved)){
           used.add((PsiTypeParameter)resolved);
         }
       }

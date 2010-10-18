@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -166,8 +166,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           return;
         }
 
-        if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
-          final String name = ((GrVariableBase)resolved).getName();
+        if (resolved instanceof GrVariable && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
+          final String name = ((GrVariable)resolved).getName();
           if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
             return;
           }

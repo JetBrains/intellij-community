@@ -10,14 +10,9 @@
 
   <actions>
 
-    <group id="GitFileGroup">
-      <separator/>
-      <action id="Git.Init" class="git4idea.actions.GitInit" text="Git Init..."/>
-      />
-      <separator/>
-      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
-    </group>
-
+    <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
+      <add-to-group group-id="Vcs.Import"/>
+    </action>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="CheckinFiles"/>
@@ -65,7 +60,7 @@
       <separator/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
-      <add-to-group group-id="VcsGroups" anchor="last"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
       <!--           <add-to-group anchor="last" group-id="VcsGlobalGroup" /> -->
     </group>
   </actions>

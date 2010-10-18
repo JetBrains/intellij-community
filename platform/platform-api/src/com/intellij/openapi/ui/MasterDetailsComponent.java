@@ -678,12 +678,34 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       namedConfigurable.disposeUIResources();
     }
 
-    if (parentNode != null && idx != -1) {
-      TreeUtil
-        .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
-    }
-    else {
-      TreeUtil.selectFirstNode(myTree);
+    if (paths.length > 0) {
+      if (parentNode != null && idx != -1) {
+        DefaultMutableTreeNode toSelect = null;
+        if (idx < parentNode.getChildCount()) {
+          toSelect = (DefaultMutableTreeNode) parentNode.getChildAt(idx);
+        } else {
+          if (idx > 0 && parentNode.getChildCount() > 0) {
+            if (idx - 1 < parentNode.getChildCount()) {
+              toSelect = (DefaultMutableTreeNode) parentNode.getChildAt(idx - 1);
+            } else {
+              toSelect = (DefaultMutableTreeNode) parentNode.getFirstChild();
+            }
+          } else {
+            if (parentNode.isRoot() && myTree.isRootVisible()) {
+              toSelect = parentNode;
+            } else if (parentNode.getChildCount() > 0) {
+              toSelect = (DefaultMutableTreeNode) parentNode.getFirstChild();
+            }
+          }
+        }
+
+        if (toSelect != null) {
+          TreeUtil.selectInTree(toSelect, true, myTree);
+        }
+      }
+      else {
+        TreeUtil.selectFirstNode(myTree);
+      }
     }
   }
 

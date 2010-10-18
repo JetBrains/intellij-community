@@ -65,7 +65,7 @@ public class MavenIndicesManager {
 
   private volatile File myTestIndicesDir;
 
-  private volatile MavenIndexerWrapper myIndexer = MavenFacadeManager.getInstance().createIndexer();
+  private volatile MavenIndexerWrapper myIndexer;
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
@@ -145,15 +145,7 @@ public class MavenIndicesManager {
       myIndices = null;
     }
 
-    if (myIndexer != null) {
-      try {
-        myIndexer.release();
-      }
-      catch (Exception e) {
-        MavenLog.LOG.error("", e);
-      }
-      myIndexer = null;
-    }
+    myIndexer = null;
   }
 
   @TestOnly

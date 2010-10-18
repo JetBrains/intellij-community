@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -66,7 +65,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private final Project myProject;
-  private final ChangesViewManager myChangesViewManager;
+  private final ChangesViewI myChangesViewManager;
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
@@ -289,6 +288,50 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
+    try {
+      synchronized (myDataLock) {
+        final RecursiveFileHolder fileHolder = (RecursiveFileHolder)myComposite.get(FileHolder.HolderType.IGNORED);
+
+        for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext();) {
+          final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope) iterator.next();
+          final VcsDirtyScopeModifier modifier = scope.getModifier();
+          if (modifier != null) {
+            final Iterator<FilePath> filesIterator = modifier.getDirtyFilesIterator();
+            for (; filesIterator.hasNext();) {
+              final FilePath dirtyFile = filesIterator.next();
+              if ((dirtyFile.getVirtualFile() != null) && isIgnoredFile(dirtyFile.getVirtualFile())) {
+                filesIterator.remove();
+                fileHolder.addFile(dirtyFile.getVirtualFile());
+              }
+            }
+            final Collection<VirtualFile> roots = modifier.getAffectedVcsRoots();
+            for (VirtualFile root : roots) {
+              final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator(root);
+              for (; dirIterator.hasNext(); ) {
+                final FilePath dir = dirIterator.next();
+                if ((dir.getVirtualFile() != null) && isIgnoredFile(dir.getVirtualFile())) {
+                  dirIterator.remove();
+                  fileHolder.addFile(dir.getVirtualFile());
+                }
+              }
+            }
+            modifier.recheckDirtyDirKeys();
+            if (scope.isEmpty()) {
+              iterator.remove();
+            }
+          }
+        }
+      }
+    }
+    catch(Exception ex) {
+      LOG.error(ex);
+    }
+    catch(AssertionError ex) {
+      LOG.error(ex);
+    }
+  }
+
   private void updateImmediately(final AtomicSectionsAware atomicSectionsAware) {
     final FileHolderComposite composite;
     final ChangeListWorker changeListWorker;
@@ -310,7 +353,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
-
+    if (! wasEverythingDirty) {
+      filterOutIgnoredFiles(scopes);
+      if (scopes.isEmpty()) {
+        return;
+      }
+    }
 
     try {
       checkIfDisposed();
@@ -357,7 +405,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
-        final VcsAppendableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsAppendableDirtyScope) scope);
+        final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
 
         myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
         if (! wasEverythingDirty) {
@@ -790,11 +838,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       myModifier.moveChangesTo(list.getName(), changes);
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myChangesViewManager.refreshView();
-      }
-    });
+    myChangesViewManager.scheduleRefresh();
   }
 
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {

@@ -46,7 +46,7 @@ public class LogFileOptions implements JDOMExternalizable {
   private String myPathPattern;
   private boolean myEnabled;
   private boolean mySkipContent;
-  private boolean myLast;
+  private boolean myShowAll;
 
   //read external
   public LogFileOptions() {
@@ -57,7 +57,7 @@ public class LogFileOptions implements JDOMExternalizable {
     myPathPattern = path;
     myEnabled = enabled;
     mySkipContent = skipContent;
-    myLast = !showAll;
+    myShowAll = showAll;
   }
 
   public String getName() {
@@ -82,7 +82,12 @@ public class LogFileOptions implements JDOMExternalizable {
       final String pattern = myPathPattern.substring(dirIndex + File.separator.length());
       FileUtil.collectMatchedFiles(new File(basePath), Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
       if (!files.isEmpty()) {
-        if (myLast) {
+        if (myShowAll) {
+          for (File file : files) {
+            result.add(file.getPath());
+          }
+        }
+        else {
           File lastFile = null;
           for (File file : files) {
             if (lastFile != null) {
@@ -96,11 +101,6 @@ public class LogFileOptions implements JDOMExternalizable {
           }
           assert lastFile != null;
           result.add(lastFile.getPath());
-        }
-        else {
-          for (File file : files) {
-            result.add(file.getPath());
-          }
         }
       }
     }
@@ -132,12 +132,16 @@ public class LogFileOptions implements JDOMExternalizable {
     mySkipContent = skipContent;
   }
 
+  public void setShowAll(final boolean showAll) {
+    myShowAll = showAll;
+  }
+
   public void setLast(final boolean last) {
-    myLast = last;
+    myShowAll = !last;
   }
 
   public boolean isShowAll() {
-    return !myLast;
+    return myShowAll;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -156,7 +160,7 @@ public class LogFileOptions implements JDOMExternalizable {
 
     final String all = element.getAttributeValue(SHOW_ALL);
     Boolean showAll = skipped != null ? Boolean.valueOf(all) : Boolean.TRUE;
-    setLast(!showAll.booleanValue());
+    setShowAll(showAll.booleanValue());
 
     setName(element.getAttributeValue(ALIAS));
   }
@@ -176,7 +180,7 @@ public class LogFileOptions implements JDOMExternalizable {
 
     return options1.myName.equals(options2.myName) &&
            options1.myPathPattern.equals(options2.myPathPattern) &&
-           options1.myLast == options2.myLast &&
+           !options1.myShowAll == !options2.myShowAll &&
            options1.myEnabled == options2.myEnabled &&
            options1.mySkipContent == options2.mySkipContent;
 

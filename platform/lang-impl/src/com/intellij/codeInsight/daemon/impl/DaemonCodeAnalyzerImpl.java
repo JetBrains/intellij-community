@@ -279,10 +279,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   void reloadScopes() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+    final DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(myProject);
     addScopesToList(scopeList, NamedScopeManager.getInstance(myProject));
-    addScopesToList(scopeList, DependencyValidationManager.getInstance(myProject));
+    addScopesToList(scopeList, dependencyValidationManager);
     myScopes.clear();
     myScopes.addAll(scopeList);
+    dependencyValidationManager.reloadRules();
   }
 
   private static void addScopesToList(final List<Pair<NamedScope, NamedScopesHolder>> scopeList, final NamedScopesHolder holder) {
@@ -312,7 +314,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
-    stopProcess(true);
+    stopProcess(value);
   }
 
   public boolean isUpdateByTimerEnabled() {
@@ -370,6 +372,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(true);
   }
 
+  @Override
+  public void restart(@NotNull PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+    if (document == null) return;
+    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
+    stopProcess(true);
+  }
+
   public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
@@ -409,7 +419,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
 
-  public synchronized void stopProcess(boolean toRestartAlarm) {
+  synchronized void stopProcess(boolean toRestartAlarm) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
     cancelUpdateProgress(toRestartAlarm, "by Stop process");
@@ -590,6 +600,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public synchronized void hideLastIntentionHint() {
     if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
       myLastIntentionHint.hide();
+      myLastIntentionHint = null;
     }
   }
 

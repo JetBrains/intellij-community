@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -27,8 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
-class EditorChangeAction implements UndoableAction {
-  private final DocumentReference myReference;
+class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
   private final CharSequence myOldString;
   private final CharSequence myNewString;
@@ -41,7 +38,7 @@ class EditorChangeAction implements UndoableAction {
                             CharSequence oldString,
                             CharSequence newString,
                             long oldTimeStamp) {
-    myReference = DocumentReferenceManager.getInstance().create(document);
+    super(document);
 
     myOffset = offset;
     myOldString = oldString == null ? "" : oldString;
@@ -83,7 +80,7 @@ class EditorChangeAction implements UndoableAction {
   }
 
   private void refreshFileStatus() {
-    VirtualFile f = myReference.getFile();
+    VirtualFile f = getAffectedDocuments()[0].getFile();
     if (f == null || f instanceof LightVirtualFile) return;
 
     for (Project each : ProjectManager.getInstance().getOpenProjects()) {
@@ -92,16 +89,9 @@ class EditorChangeAction implements UndoableAction {
     }
   }
 
-  public DocumentReference[] getAffectedDocuments() {
-    return new DocumentReference[]{myReference};
-  }
-
-  public boolean isGlobal() {
-    return false;
-  }
 
   private DocumentEx getDocument() {
-    return (DocumentEx)myReference.getDocument();
+    return (DocumentEx)getAffectedDocuments()[0].getDocument();
   }
 
   @NonNls

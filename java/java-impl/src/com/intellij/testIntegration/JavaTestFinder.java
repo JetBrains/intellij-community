@@ -29,17 +29,18 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
-  public PsiClass findSourceElement(PsiElement element) {
+  public PsiClass findSourceElement(@NotNull PsiElement element) {
     return TestIntegrationUtils.findOuterClass(element);
   }
 
   @NotNull
-  public Collection<PsiElement> findClassesForTest(PsiElement element) {
+  public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -81,7 +82,7 @@ public class JavaTestFinder implements TestFinder {
     return result;
   }
 
-  private boolean isTestSubjectClass(PsiClass klass) {
+  private static boolean isTestSubjectClass(PsiClass klass) {
     if (klass.isEnum()
         || klass.isInterface()
         || klass.isAnnotationType()
@@ -91,7 +92,7 @@ public class JavaTestFinder implements TestFinder {
     return true;
   }
 
-  private List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
+  private static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
     String[] words = NameUtil.splitNameIntoWords(testName);
     List<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
 
@@ -106,7 +107,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   @NotNull
-  public Collection<PsiElement> findTestsForClass(PsiElement element) {
+  public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -157,19 +158,20 @@ public class JavaTestFinder implements TestFinder {
     return result;
   }
 
-  private Integer calcTestNameProximity(String klassName, String testName) {
+  private static Integer calcTestNameProximity(String klassName, String testName) {
     int posProximity = testName.indexOf(klassName);
     int sizeProximity = testName.length() - klassName.length();
 
     return posProximity + sizeProximity;
   }
 
+  @Nullable
   private static Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
     return index.getModuleForFile(element.getContainingFile().getVirtualFile());
   }
 
-  public boolean isTest(PsiElement element) {
+  public boolean isTest(@NotNull PsiElement element) {
     return TestIntegrationUtils.isTest(element);
   }
 }

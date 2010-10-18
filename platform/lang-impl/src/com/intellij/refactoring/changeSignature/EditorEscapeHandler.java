@@ -39,8 +39,8 @@ public class EditorEscapeHandler extends EditorActionHandler {
   public void execute(Editor editor, DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(project);
-    if (file != null && detector.containsChangeSignatureChange(file)) {
+    final ChangeSignatureGestureDetector detector = project != null ? ChangeSignatureGestureDetector.getInstance(project) : null;
+    if (file != null && detector != null && detector.containsChangeSignatureChange(file)) {
       detector.clearSignatureChange(file);
       DaemonCodeAnalyzer.getInstance(project).restart();
     }

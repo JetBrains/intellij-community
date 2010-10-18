@@ -59,4 +59,5 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
 
   public abstract Map<String,PackageSet> getUnnamedScopes();
 
+  public abstract void reloadRules();
 }

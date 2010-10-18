@@ -42,10 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -100,9 +97,9 @@ public class LibraryRootsComponent implements Disposable {
   @Nullable private final Project myProject;
 
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
-  private final LibraryEditor myLibraryEditor;
+  private final Computable<LibraryEditor> myLibraryEditor;
 
-  private LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
+  private LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditor) {
     myProject = project;
     myLibraryEditor = libraryEditor;
     updateProperties();
@@ -110,7 +107,7 @@ public class LibraryRootsComponent implements Disposable {
 
   private void updateProperties() {
     StringBuilder text = new StringBuilder();
-    for (String description : LibraryPresentationManager.getInstance().getDescriptions(myLibraryEditor.getFiles(OrderRootType.CLASSES))) {
+    for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES))) {
       if (text.length() > 0) {
         text.append("\n");
       }
@@ -120,6 +117,10 @@ public class LibraryRootsComponent implements Disposable {
   }
 
   public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
+    return createComponent(project, new Computable.PredefinedValueComputable<LibraryEditor>(libraryEditor));
+  }
+
+  public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditor) {
     LibraryRootsComponent rootsComponent = new LibraryRootsComponent(project, libraryEditor);
     rootsComponent.init(new LibraryTreeStructure(rootsComponent));
     return rootsComponent;
@@ -178,7 +179,7 @@ public class LibraryRootsComponent implements Disposable {
   }
 
   public LibraryEditor getLibraryEditor() {
-    return myLibraryEditor;
+    return myLibraryEditor.compute();
   }
 
   public boolean hasChanges() {

@@ -36,7 +36,6 @@ public class KeywordCompletionTest extends CompletionTestBase {
   public void testFin2() throws Throwable { doTest(); }
   public void testGRVY1064() throws Throwable { doTest(); }
   public void testGrvy1404() throws Throwable { doTest(); }
-  public void testGrvy945() throws Throwable { doTest(); }
   public void testImp1() throws Throwable { doTest(); }
   public void testImp2() throws Throwable { doTest(); }
   public void testImp3() throws Throwable { doTest(); }

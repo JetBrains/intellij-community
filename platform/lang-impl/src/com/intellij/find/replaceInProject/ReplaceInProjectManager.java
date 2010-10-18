@@ -66,6 +66,14 @@ public class ReplaceInProjectManager {
     myProject = project;
   }
 
+  public static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
+    for (Usage usage : usages) {
+      if (usage.isReadOnly()) return true;
+    }
+
+    return false;
+  }
+
   static class ReplaceContext {
     private final UsageView usageView;
     private final FindModel findModel;
@@ -168,7 +176,7 @@ public class ReplaceInProjectManager {
   private void replaceWithPrompt(final ReplaceContext replaceContext) {
     final List<Usage> _usages = replaceContext.getUsageView().getSortedUsages();
 
-    if (FindInProjectUtil.hasReadOnlyUsages(_usages)) {
+    if (hasReadOnlyUsages(_usages)) {
       WindowManager.getInstance().getStatusBar(myProject)
         .setInfo(FindBundle.message("find.replace.occurrences.found.in.read.only.files.status"));
       return;
@@ -363,7 +371,7 @@ public class ReplaceInProjectManager {
       ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyFiles));
     }
 
-    if (FindInProjectUtil.hasReadOnlyUsages(selectedUsages)) {
+    if (hasReadOnlyUsages(selectedUsages)) {
       int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
                                                FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
                                                FindBundle.message("find.replace.occurrences.in.read.only.files.title"),

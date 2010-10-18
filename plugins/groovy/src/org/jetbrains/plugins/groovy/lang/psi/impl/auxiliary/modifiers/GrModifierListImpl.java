@@ -215,7 +215,7 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return findChildrenByType(GroovyElementTypes.ANNOTATION, GrAnnotation.class);
+    return findChildrenByClass(GrAnnotation.class);
   }
 
   @NotNull

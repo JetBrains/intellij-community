@@ -49,7 +49,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final SynchronizedLife myLife;
 
   private final MyProgressHolder myProgressHolder;
-  private QueueProcessor<Consumer<DirtBuilder>> processor = new QueueProcessor<Consumer<DirtBuilder>>(new MyDirtyTaker(), false);
+  private final QueueProcessor<Consumer<DirtBuilder>> processor;
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -61,6 +61,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myDirtBuilder = new DirtBuilder(myGuess);
 
     myProgressHolder = new MyProgressHolder();
+    processor = new QueueProcessor<Consumer<DirtBuilder>>(new MyDirtyTaker(), false);
   }
 
   public void projectOpened() {

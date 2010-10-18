@@ -140,8 +140,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     // is put into undo queue
     final RunResult[] results = {result};
 
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
+        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
         results[0].run();
         results[0] = null;
       }

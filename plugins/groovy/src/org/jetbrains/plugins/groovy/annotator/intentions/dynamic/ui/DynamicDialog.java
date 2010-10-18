@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -330,12 +332,11 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     }
 
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
-    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        UndoManager.getInstance(myProject).undoableActionPerformed(new UndoableAction() {
+        UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
           public void undo() throws UnexpectedUndoException {
 
             final DItemElement itemElement;
@@ -367,14 +368,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
           public void redo() throws UnexpectedUndoException {
             addElement(mySettings);
-          }
-
-          public DocumentReference[] getAffectedDocuments() {
-            return refs;
-          }
-
-          public boolean isGlobal() {
-            return true;
           }
         });
 

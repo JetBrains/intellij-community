@@ -556,7 +556,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void updateRegisteredActions() {
-
+    final Project project = getProject();
+    if (project.isDisposed()) {
+      return;
+    }
     final List<Pair<String, AnAction>> actionList = new ArrayList<Pair<String, AnAction>>();
     for (final AntBuildFile buildFile : getBuildFiles()) {
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
@@ -574,7 +577,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     synchronized (this) {
       // unregister Ant actions
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(getProject()));
+      final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
       for (String oldId : oldIds) {
         actionManager.unregisterAction(oldId);
       }
@@ -711,6 +714,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final String title = AntBundle.message("loading.ant.config.progress");
     queueLater(new Task.Backgroundable(getProject(), title, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
+        if (getProject().isDisposed()) {
+          return;
+        }
         indicator.setIndeterminate(true);
         indicator.pushState();
         try {

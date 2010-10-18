@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
@@ -147,7 +148,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   protected JComponent createStatisticsPanel() {
     final JPanel panel = new JPanel(new BorderLayout()); //do not remove wrapper panel 
-    panel.add(resultsTable, BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(resultsTable), BorderLayout.CENTER);
     return panel;
   }
 

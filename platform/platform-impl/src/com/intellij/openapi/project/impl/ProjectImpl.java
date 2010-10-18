@@ -27,6 +27,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
@@ -45,8 +46,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +59,7 @@ import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -86,7 +91,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       return isDisposed();
     }
   };
-  private final String myName;
+
+  private String myName;
+  private String myOldName;
 
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
@@ -102,6 +109,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
     myManager = manager;
     myName = isDefault() ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
+    if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) myOldName = ""; // new project
+  }
+
+  public void setProjectName(final String projectName) {
+    if (!projectName.equals(myName)) {
+      myOldName = myName;
+      myName = projectName;
+      WindowManager.getInstance().getFrame(this).setTitle(FrameTitleBuilder.getInstance().getProjectTitle(this));
+    }
   }
 
   protected void boostrapPicoContainer() {
@@ -211,7 +227,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    return getName() + Integer.toHexString(str.hashCode());
+    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED? "" : getName();
+    return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Nullable
@@ -241,11 +258,43 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }
 
+  public boolean isToSaveProjectName() {
+    if (!isDefault()) {
+      final IProjectStore stateStore = getStateStore();
+      if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+        final VirtualFile baseDir = stateStore.getProjectBaseDir();
+        if (baseDir != null && baseDir.isValid()) {
+          return myOldName != null && !myOldName.equals(getName());
+        }
+      }
+    }
+
+    return false;
+  }
+
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
     if (mySavingInProgress.compareAndSet(false, true)) {
       try {
+        if (isToSaveProjectName()) {
+          final IProjectStore stateStore = getStateStore();
+          final VirtualFile baseDir = stateStore.getProjectBaseDir();
+          if (baseDir != null && baseDir.isValid()) {
+            final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+              final File nameFile = new File(ideaDir.getPath(), ".name");
+              try {
+                FileUtil.writeToFile(nameFile, new String(getName()).getBytes(), false);
+                myOldName = null;
+              }
+              catch (IOException e) {
+                LOG.info("Unable to store project name to: " + nameFile.getPath());
+              }
+            }
+          }
+        }
+
         doSave();
       }
       catch (IComponentStore.SaveCancelledException e) {

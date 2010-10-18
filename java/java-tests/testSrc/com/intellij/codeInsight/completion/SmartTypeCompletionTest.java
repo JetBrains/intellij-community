@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -1091,7 +1091,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
       return;
     }
 
-    final TestLookupManager manager = (TestLookupManager) LookupManager.getInstance(getProject());
+    final LookupManagerImpl manager = (LookupManagerImpl) LookupManager.getInstance(getProject());
     final Lookup lookup = manager.getActiveLookup();
     if(lookup != null) {
       manager.forceSelection(c, lookup.getCurrentItem());

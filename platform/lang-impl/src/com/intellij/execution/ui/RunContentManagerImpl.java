@@ -311,7 +311,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         if (wasInActiveWindow) {
           window.activate(null, true, false);
         } else {
-          window.show(null);
+          // let's activate tool window, but don't move focus
+          //
+          // window.show() isn't valid here, because it will not
+          // mark the window as "last activated" windows and thus
+          // some action like navigation up/down in stactrace wont
+          // work correctly
+          window.activate(null, false, false);
         }
       }
     });

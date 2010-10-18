@@ -22,11 +22,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -38,11 +37,19 @@ import java.util.ArrayList;
 
 public class IntroduceVariableHandler extends IntroduceVariableBase {
 
-  protected IntroduceVariableSettings getSettings(final Project project, Editor editor, PsiExpression expr,
-                                                  PsiElement[] occurrences, boolean anyAssignmentLHS,
-                                                  boolean declareFinalIfAll, PsiType type,
-                                                  TypeSelectorManagerImpl typeSelectorManager,
-                                                  InputValidator validator) {
+
+  @Override
+  public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                               PsiExpression expr, PsiExpression[] occurrences,
+                                               TypeSelectorManagerImpl typeSelectorManager,
+                                               boolean declareFinalIfAll,
+                                               boolean anyAssignmentLHS,
+                                               final InputValidator validator,
+                                               final OccurrencesChooser.ReplaceChoice replaceChoice) {
+    if (replaceChoice != null) {
+      return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,
+                               replaceChoice);
+    }
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = null;
     if (editor != null) {
@@ -76,15 +83,6 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
 
   protected void showErrorMessage(final Project project, Editor editor, String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
-  }
-
-  protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {
-    if (editor == null) return;
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
-    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
   protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {

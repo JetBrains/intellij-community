@@ -194,7 +194,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     if (status == null) {
       return NO_ICON;
     }
-    if (!status.enabled || status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       return NO_ANALYSIS_ICON;
     }
 
@@ -207,6 +207,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     }
 
     if (status.errorAnalyzingFinished) return icon;
+    if (!status.enabled) return NO_ANALYSIS_ICON;
+
     double progress = getOverallProgress(status);
     TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
 

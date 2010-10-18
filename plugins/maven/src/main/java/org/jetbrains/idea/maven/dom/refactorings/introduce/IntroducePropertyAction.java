@@ -136,7 +136,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
       editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
 
-      IntroducePropertyDialog dialog = new IntroducePropertyDialog(project, selectedElement, model, null, selectedString);
+      IntroducePropertyDialog dialog = new IntroducePropertyDialog(project, selectedElement, model, selectedString);
       dialog.show();
       if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 

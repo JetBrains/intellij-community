@@ -326,7 +326,7 @@ public class GitIgnoreTracker {
         }
         return;
       }
-      VirtualFile base = GitUtil.getPossibleBase(file, LOCAL_EXCLUDE_ARRAY);
+      final VirtualFile base = GitUtil.getPossibleBase(file, LOCAL_EXCLUDE_ARRAY);
       if (base != null) {
         myDirtyScopeManager.dirDirtyRecursively(base);
         return;

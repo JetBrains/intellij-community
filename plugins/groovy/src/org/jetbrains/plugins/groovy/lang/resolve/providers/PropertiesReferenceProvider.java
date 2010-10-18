@@ -43,8 +43,8 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
       GrLiteral literalExpression = (GrLiteral) element;
       value = literalExpression.getValue();
 
-      final Map<String, Object> annotationParams = new HashMap<String, Object>();
-      annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
+      //final Map<String, Object> annotationParams = new HashMap<String, Object>();
+      //annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
       /*if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         soft = false;
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
@@ -63,7 +63,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-  }
+  //public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
+  //}
 
 }

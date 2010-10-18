@@ -29,10 +29,10 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -246,10 +246,9 @@ public class TemplateState implements Disposable {
 
     myProcessor = processor;
 
-    final DocumentReference[] refs =
+    DocumentReference[] refs =
       myDocument == null ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)};
-
-    UndoManager.getInstance(myProject).undoableActionPerformed(new UndoableAction() {
+    UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       public void undo() {
         if (myDocument != null) {
           fireTemplateCancelled();
@@ -263,14 +262,6 @@ public class TemplateState implements Disposable {
       public void redo() {
         //TODO:
         // throw new UnexpectedUndoException("Not implemented");
-      }
-
-      public DocumentReference[] getAffectedDocuments() {
-        return refs;
-      }
-
-      public boolean isGlobal() {
-        return false;
       }
     });
     myTemplateIndented = false;
@@ -480,7 +471,6 @@ public class TemplateState implements Disposable {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
-    if (lookupManager.isDisposed()) return;
 
     final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
     toProcessTab = false;

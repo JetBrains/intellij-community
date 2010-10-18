@@ -87,6 +87,11 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     fireLibTableChanged();
   }
 
+  @Nullable
+  public Library getLibrary(String name) {
+    return myLibTable == null ? null : myLibTable.getLibraryByName(name);
+  }
+
   public void removeLibrary(String name) {
     Library libToRemove = myLibTable.getLibraryByName(name);
     if (libToRemove != null) {

@@ -3,7 +3,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.psi.PsiElement;
@@ -73,7 +73,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
     ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(getFile().getLanguage());
     assertNotNull(resolveSnapshotProvider);
-    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope);
+    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope.getBody());
     assertNotNull(snapshot);
 
     final int offset = element.getTextOffset();
@@ -88,7 +88,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
       TemplateManagerImpl.getTemplateState(myEditor).gotoEnd();
       renamer.performAutomaticRename(newName, PsiTreeUtil.getParentOfType(myFile.findElementAt(offset), PsiNameIdentifierOwner.class));
-      ((TestLookupManager)LookupManager.getInstance(getProject())).clearLookup();
+      ((LookupManagerImpl)LookupManager.getInstance(getProject())).clearLookup();
       ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

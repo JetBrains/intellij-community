@@ -210,10 +210,10 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       }
     }
   }
-
+                                                    
   public void addMessage(ErrorTreeElementKind kind, String[] text, Object data) {
     addSimpleMessage(kind, text, data);
-  }
+  }                                                         
 
   public void addNavigatableMessage(String groupName, Navigatable navigatable, final ErrorTreeElementKind kind, final String[] message,
                                     final Object data, String exportText, String rendererTextPrefix, VirtualFile file) {

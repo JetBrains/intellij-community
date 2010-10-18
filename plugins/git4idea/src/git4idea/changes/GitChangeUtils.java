@@ -47,7 +47,7 @@ public class GitChangeUtils {
   /**
    * the pattern for committed changelist assumed by {@link #parseChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.StringScanner,boolean)}
    */
-  public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x00%n%b%n%x00";
+  public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
 
   /**
    * A private constructor for utility class
@@ -352,9 +352,9 @@ public class GitChangeUtils {
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);
-    String commentSubject = s.boundedToken('\u0000', true);
+    String commentSubject = s.boundedToken('\u0003', true);
     s.nextLine();
-    String commentBody = s.boundedToken('\u0000', true);
+    String commentBody = s.boundedToken('\u0003', true);
     // construct full comment
     String fullComment;
     if (commentSubject.length() == 0) {

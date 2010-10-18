@@ -46,6 +46,7 @@ public class GroovyClassDescriptor {
   private final PsiType myPsiType;
   private final PsiElement myPlace;
   private final PsiFile myFile;
+  private final String myTypeText;
 
   @SuppressWarnings({"SetReplaceableByEnumSet"}) //order is important
   final Set<Factor> affectingFactors = new LinkedHashSet<Factor>();
@@ -54,6 +55,7 @@ public class GroovyClassDescriptor {
     myPsiType = psiType;
     myPlace = place;
     myFile = placeFile;
+    myTypeText = myPsiType.getCanonicalText();
   }
 
   public Project getProject() {
@@ -67,7 +69,8 @@ public class GroovyClassDescriptor {
 
   @Nullable
   public String getTypeText() {
-    return getPsiType().getCanonicalText();
+    affectingFactors.add(Factor.qualifierType);
+    return myTypeText;
   }
 
   public boolean isInheritor(String qname) {

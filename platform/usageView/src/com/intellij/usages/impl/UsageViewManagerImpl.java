@@ -44,6 +44,7 @@ import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -280,23 +282,37 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     private void searchUsages() {
       UsageSearcher usageSearcher = mySearcherFactory.create();
+      final AtomicBoolean warningShown = new AtomicBoolean();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
-          checkSearchCanceled();
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
 
           boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
           if (incrementCounter) {
-            int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
+            final int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
             if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
               myFirstUsage.compareAndSet(null, usage);
+            }
+            if (usageCount > UsageLimitUtil.USAGES_LIMIT && !warningShown.get() && warningShown.compareAndSet(false, true)) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return;
+                  String message = UsageViewBundle.message("find.excessive.usage.count.prompt", myUsageCountWithoutDefinition.get());
+                  int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
+                  if (ret != 0) {
+                    setCurrentSearchCancelled(true);
+                  }
+                }
+              });
             }
             UsageViewImpl usageView = getUsageView();
             if (usageView != null) {
               usageView.appendUsageLater(usage);
             }
           }
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           return indicator == null || !indicator.isCanceled();
         }
       });

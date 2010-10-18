@@ -27,10 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
-import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
@@ -822,6 +819,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     private final JComponent myPanel;
     private ChangeListener myListener;
     private boolean myInitialized;
+    private final static String ourKey = "MERGE_PANEL";
 
     public MergePanelFiltering(final JComponent panel) {
       myPanel = panel;
@@ -837,6 +835,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
       myInitialized = true;
       return myPanel;
+    }
+
+    @Override
+    public CommittedChangesFilterKey getKey() {
+      return new CommittedChangesFilterKey(ourKey, CommittedChangesFilterPriority.MERGE);
     }
 
     public void setFilterBase(final List<CommittedChangeList> changeLists) {

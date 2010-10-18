@@ -19,6 +19,8 @@
  */
 package com.intellij.lang.xml;
 
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.lang.DefaultWordCompletionFilter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,6 +32,10 @@ public class XmlWordCompletionFilter extends DefaultWordCompletionFilter {
                                                                  XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                                                                  XmlTokenType.XML_DATA_CHARACTERS);
   public boolean isWordCompletionEnabledIn(final IElementType element) {
+    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (process != null && process.isAutopopupCompletion()) {
+      return false;
+    }
     return super.isWordCompletionEnabledIn(element) || ENABLED_TOKENS.contains(element);
   }
 }

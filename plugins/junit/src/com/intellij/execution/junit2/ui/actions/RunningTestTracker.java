@@ -33,6 +33,7 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
   private final JUnitRunningModel myModel;
   private TrackingPolicy myTrackingPolicy;
   private TestProxy myLastRan = null;
+  private TestProxy myLastSelected = null;
 
   private RunningTestTracker(final JUnitRunningModel model) {
     myModel = model;
@@ -44,10 +45,22 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
     myTrackingPolicy.apply();
   }
 
+  @Override
+  public void onTestSelected(TestProxy test) {
+    if (test != null && test.isLeaf()) {
+      myLastSelected = test;
+    }
+  }
+
   public void onTestChanged(final TestEvent event) {
     if (event instanceof StateChangedEvent) {
       final TestProxy proxy = event.getSource();
-      if (proxy == myLastRan && !isRunningState(proxy)) myLastRan = null;
+      if (proxy == myLastRan && !isRunningState(proxy)) {
+        if (myLastSelected == proxy){
+          myLastSelected = null;
+        }
+        myLastRan = null;
+      }
       if (proxy.isLeaf() && isRunningState(proxy)) myLastRan = proxy;
       myTrackingPolicy.applyTo(proxy);
     }
@@ -92,7 +105,7 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
     }
 
     private void selectLastTest() {
-      if (myLastRan != null && isRunningState(myLastRan))
+      if (myLastRan != null && isRunningState(myLastRan) && myLastSelected == null)
         myModel.selectTest(myLastRan);
     }
   };

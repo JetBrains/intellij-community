@@ -25,63 +25,60 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBusConnection;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author peter
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
-  private Editor myEditor;
+  private boolean myAutopopupShown;
+  private boolean myGuard;
 
-  //todo store this in some less nasty place
-  public static int ourLastOffset;
+  @Override
+  public Result beforeCharTyped(char c,
+                                Project project,
+                                Editor editor,
+                                PsiFile file,
+                                FileType fileType) {
+    if (myAutopopupShown && LookupManager.getActiveLookup(editor) == null) {
+      myGuard = true;
+      try {
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(c), true);
+      }
+      finally {
+        myGuard = false;
+      }
+      return Result.STOP;
+    }
 
-  private static final Key<Object> COMPLETION_AUTO_POPUP_HANDLER = Key.create("CompletionAutoPopupHandler");
+    return Result.CONTINUE;
+  }
 
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
 
     if (!Character.isLetter(charTyped) && charTyped != '_') {
-      finishAutopopupCompletion();
+      finishAutopopupCompletion(editor, false);
       return Result.CONTINUE;
     }
 
-    if (myEditor != null) {
-      if (editor != myEditor || editor.getCaretModel().getOffset() != ourLastOffset + 1) {
-        finishAutopopupCompletion();
-      } else {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourLastOffset = editor.getCaretModel().getOffset();
-      }
+    if (myAutopopupShown || LookupManager.getActiveLookup(editor) != null) {
       return Result.CONTINUE;
-    } else {
-      if (LookupManager.getActiveLookup(editor) != null) {
-        return Result.CONTINUE;
-      }
     }
-
-    myEditor = editor;
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourLastOffset = editor.getCaretModel().getOffset();
-
-    trackProjectClosing(project);
-    trackUserActivity(project, editor);
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
@@ -92,18 +89,22 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
+
+        myAutopopupShown = true;
+        trackUserActivity(project, editor);
+
         final Lookup lookup = LookupManager.getActiveLookup(editor);
         if (lookup != null) {
           lookup.addLookupListener(new LookupAdapter() {
             @Override
             public void itemSelected(LookupEvent event) {
-              myEditor = null;
+              myAutopopupShown = false;
             }
 
             @Override
             public void lookupCanceled(LookupEvent event) {
               if (event.isCanceledExplicitly()) {
-                myEditor = null;
+                myAutopopupShown = false;
               }
             }
           });
@@ -118,47 +119,77 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
-        finishAutopopupCompletion();
-        connection.disconnect();
+        if (finishAutopopupCompletion(editor, false)) {
+          connection.disconnect();
+        }
       }
     });
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
       public void mouseClicked(EditorMouseEvent e) {
-        editor.removeEditorMouseListener(this);
-        finishAutopopupCompletion();
+        if (finishAutopopupCompletion(editor, false)) {
+          editor.removeEditorMouseListener(this);
+        }
+      }
+    });
+
+    editor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(CaretEvent e) {
+        if (finishAutopopupCompletion(editor, false)) {
+          editor.getCaretModel().removeCaretListener(this);
+        }
+      }
+    });
+
+    editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(SelectionEvent e) {
+        if (finishAutopopupCompletion(editor, false)) {
+          editor.getSelectionModel().removeSelectionListener(this);
+        }
       }
     });
 
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        if (StringUtil.containsLineBreak(e.getNewFragment())) {
-          finishAutopopupCompletion();
+        if (finishAutopopupCompletion(editor, false)) {
           editor.getDocument().removeDocumentListener(this);
+        }
+      }
+    });
+
+    final LookupManager lookupManager = LookupManager.getInstance(project);
+    lookupManager.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getNewValue() != null && finishAutopopupCompletion(editor, true)) {
+          lookupManager.removePropertyChangeListener(this);
         }
       }
     });
   }
 
-  private void trackProjectClosing(Project project) {
-    if (project.getUserData(COMPLETION_AUTO_POPUP_HANDLER) == null) {
-      project.putUserData(COMPLETION_AUTO_POPUP_HANDLER, new Object());
-      Disposer.register(project, new Disposable() {
-        @Override
-        public void dispose() {
-          myEditor = null;
-        }
-      });
+  private boolean finishAutopopupCompletion(Editor editor, boolean neglectLookup) {
+    if (!myAutopopupShown) {
+      return true; //to disconnect all the listeners
     }
-  }
 
-  private void finishAutopopupCompletion() {
-    myEditor = null;
+    if (myGuard) {
+      return false;
+    }
+
+    if (!neglectLookup && LookupManager.getActiveLookup(editor) != null) { //the events during visible lookup period are handled separately
+      return false;
+    }
+
+    myAutopopupShown = false;
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.closeAndFinish();
+      currentCompletion.closeAndFinish(true);
     }
+    return true;
   }
 }

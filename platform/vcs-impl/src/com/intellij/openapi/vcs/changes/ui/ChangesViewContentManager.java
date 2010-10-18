@@ -46,14 +46,14 @@ import java.util.*;
 /**
  * @author yole
  */
-public class ChangesViewContentManager extends AbstractProjectComponent {
+public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
   private MyContentManagerListener myContentManagerListener;
   private final ProjectLevelVcsManager myVcsManager;
 
-  public static ChangesViewContentManager getInstance(Project project) {
-    return project.getComponent(ChangesViewContentManager.class);
+  public static ChangesViewContentI getInstance(Project project) {
+    return project.getComponent(ChangesViewContentI.class);
   }
 
   private ContentManager myContentManager;

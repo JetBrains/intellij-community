@@ -20,11 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.util.Collection;
 
@@ -81,6 +84,23 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
     String output = tests ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
     if (output != null) {
       urls.add(output);
+    }
+  }
+
+  @Override
+  public void addAdditionalRoots(@NotNull Module forModule,
+                                 boolean productionOnly,
+                                 boolean runtimeOnly,
+                                 boolean compileOnly,
+                                 @NotNull Collection<String> urls) {
+    if (productionOnly) return;
+
+    MavenProject project = MavenProjectsManager.getInstance(forModule.getProject()).findProject(forModule);
+    if (project == null) return;
+
+    Element config = project.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
+    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
+      urls.add(VfsUtil.pathToUrl(each));
     }
   }
 }

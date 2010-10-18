@@ -683,7 +683,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
     final Content content = factory.createContent(panel, title, false);
-    final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(myProject);
+    final ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
 

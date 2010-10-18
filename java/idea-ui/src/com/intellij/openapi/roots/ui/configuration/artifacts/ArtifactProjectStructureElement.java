@@ -67,29 +67,32 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
         if (packagingElement instanceof ModuleOutputPackagingElement) {
           final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myArtifactsStructureContext);
           if (module != null) {
-            usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, new ModuleProjectStructureElement(myContext, module),
-                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
+            usages.add(createUsage(packagingElement, path, new ModuleProjectStructureElement(myContext, module)));
           }
         }
         else if (packagingElement instanceof LibraryPackagingElement) {
           final Library library = ((LibraryPackagingElement)packagingElement).findLibrary(myArtifactsStructureContext);
           if (library != null) {
-            usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, new LibraryProjectStructureElement(myContext, library),
-                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
+            usages.add(createUsage(packagingElement, path,
+                                   new LibraryProjectStructureElement(ArtifactProjectStructureElement.this.myContext, library)));
           }
         }
         else if (packagingElement instanceof ArtifactPackagingElement) {
           final Artifact usedArtifact = ((ArtifactPackagingElement)packagingElement).findArtifact(myArtifactsStructureContext);
           if (usedArtifact != null) {
             final ArtifactProjectStructureElement artifactElement = myArtifactsStructureContext.getOrCreateArtifactElement(usedArtifact);
-            usages.add(new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, artifactElement,
-                                           ArtifactProjectStructureElement.this, path.getPathString(), packagingElement));
+            usages.add(createUsage(packagingElement, path, artifactElement));
           }
         }
         return true;
       }
     }, myArtifactsStructureContext, false, artifact.getArtifactType());
     return usages;
+  }
+
+  private UsageInArtifact createUsage(PackagingElement<?> packagingElement, PackagingElementPath path,
+                                      final ProjectStructureElement element) {
+    return new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, element, this, path.getPathString(), packagingElement);
   }
 
   @Override

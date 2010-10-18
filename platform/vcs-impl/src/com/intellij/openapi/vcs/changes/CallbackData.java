@@ -55,7 +55,7 @@ class CallbackData {
                 LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + project.getName());
                 if (project.isDisposed()) return;
                 afterUpdate.run();
-                ChangesViewManager.getInstance(project).refreshView();
+                ChangesViewManager.getInstance(project).scheduleRefresh();
               }
             });
           } else {

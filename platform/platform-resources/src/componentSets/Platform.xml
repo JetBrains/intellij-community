@@ -112,6 +112,11 @@
       <interface-class>com.intellij.notification.NotificationsManager</interface-class>
       <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -119,37 +124,31 @@
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.ProjectPropertiesComponentImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.openapi.project.ProjectReloadState</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectReloadStateImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.ui.EditorNotifications</implementation-class>
-      <skipForDummyProject/>
     </component>
     
     <component>
       <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
@@ -163,7 +162,6 @@
 
     <component>
       <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
-      <skipForDummyProject/>
       <skipForDefaultProject/>
     </component>
   </project-components>

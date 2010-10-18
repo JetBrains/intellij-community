@@ -31,9 +31,9 @@ import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.AwtVisitor;
+import org.intellij.lang.annotations.Language;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
@@ -49,12 +49,12 @@ public class TrafficProgressPanel extends JPanel {
 
   private final JLabel statistics = new JLabel();
   private final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = new LinkedHashMap<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>>();
-  private Map<JProgressBar, JLabel> myProgressToText = new HashMap<JProgressBar, JLabel>();
+  private final Map<JProgressBar, JLabel> myProgressToText = new HashMap<JProgressBar, JLabel>();
 
   private final JLabel statusLabel = new JLabel();
   private final TrafficLightRenderer myTrafficLightRenderer;
   private final JPanel passStatuses = new JPanel();
-  private HintHint myHintHint;
+  private final HintHint myHintHint;
 
   public TrafficProgressPanel(TrafficLightRenderer trafficLightRenderer, Editor editor, HintHint hintHint) {
     myHintHint = hintHint;
@@ -132,7 +132,7 @@ public class TrafficProgressPanel extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
       JLabel label = new JLabel(pass.getPresentableName() + ": ");
-      label.setHorizontalTextPosition(JLabel.RIGHT);
+      label.setHorizontalTextPosition(SwingConstants.RIGHT);
 
       JProgressBar progressBar = new JProgressBar(0, MAX);
       progressBar.putClientProperty("JComponent.sizeVariant", "mini");
@@ -162,6 +162,12 @@ public class TrafficProgressPanel extends JPanel {
       statistics.setText("");
       return;
     }
+    if (status.errorAnalyzingFinished) {
+      statusLabel.setText(DaemonBundle.message("analysis.completed"));
+      passStatuses.setVisible(true);
+      setPassesEnabled(false, Boolean.TRUE);
+      return;
+    }
     if (!status.enabled) {
       statusLabel.setText("Code analysis has been suspended");
       passStatuses.setVisible(true);
@@ -177,33 +183,27 @@ public class TrafficProgressPanel extends JPanel {
       return;
     }
 
-    if (status.errorAnalyzingFinished) {
-      statusLabel.setText(DaemonBundle.message("analysis.completed"));
-      passStatuses.setVisible(true);
-      setPassesEnabled(false, Boolean.TRUE);
+    statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
+    passStatuses.setVisible(true);
+    setPassesEnabled(true, null);
+
+    if (!status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
+      // passes set has changed
+      rebuildPassesPanel(status);
     }
-    else {
-      statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
-      passStatuses.setVisible(true);
-      setPassesEnabled(true, null);
 
-      if (!status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
-        // passes set has changed
-        rebuildPassesPanel(status);
-      }
-
-      for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
-        double progress = pass.getProgress();
-        Pair<JProgressBar, JLabel> pair = passes.get(pass);
-        JProgressBar progressBar = pair.first;
-        int percent = (int)Math.round(progress * MAX);
-        progressBar.setValue(percent);
-        JLabel percentage = pair.second;
-        percentage.setText(percent + "%");
-      }
+    for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
+      double progress = pass.getProgress();
+      Pair<JProgressBar, JLabel> pair = passes.get(pass);
+      JProgressBar progressBar = pair.first;
+      int percent = (int)Math.round(progress * MAX);
+      progressBar.setValue(percent);
+      JLabel percentage = pair.second;
+      percentage.setText(percent + "%");
     }
 
     int currentSeverityErrors = 0;
+    @Language("HTML")
     String text = "<html><body>";
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] > 0) {

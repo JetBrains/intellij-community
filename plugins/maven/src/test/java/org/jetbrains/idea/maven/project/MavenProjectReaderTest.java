@@ -206,6 +206,26 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(new MavenId("group", "artifact", "1"), p.getMavenId());
   }
 
+  public void testCommentsWithNewLinesInTags() throws Exception {
+    createProjectPom("<groupId>test<!--a-->\n" +
+                     "</groupId>" +
+                     "<artifactId>\n" +
+                     "<!--a-->project</artifactId>" +
+                     "<version>1\n" +
+                     "<!--a--></version>" +
+                     "<name>\n" +
+                     "<!--a-->\n" +
+                     "</name>");
+
+    MavenModel p = readProject(myProjectPom);
+    MavenId id = p.getMavenId();
+
+    assertEquals("test", id.getGroupId());
+    assertEquals("project", id.getArtifactId());
+    assertEquals("1", id.getVersion());
+    assertNull(p.getName());
+  }
+
   public void testTextInContainerTag() throws Exception {
     createProjectPom("foo <name>name</name> bar");
 

@@ -411,6 +411,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+    if (project != null) {
+      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    }
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
 
@@ -529,7 +532,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       throw throwables[0];
     }
 
-    // just to make sure all deffered Runnable's to finish
+    // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
 
     if (IdeaLogger.ourErrorsOccurred != null) {
@@ -582,30 +585,26 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @throws com.intellij.util.IncorrectOperationException
    */
   protected static PsiFile createFile(@NonNls String fileName, String text) throws IncorrectOperationException {
-    return createPseudoPhysicalFile(fileName, text);
-  }
-
-  protected static PsiFile createLightFile(String fileName, String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
-      fileName), text, LocalTimeCounter.currentTime(), false);
-  }
-
-  protected static PsiFile createPseudoPhysicalFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
+  }
+
+  protected static PsiFile createLightFile(@NonNls String fileName, String text) throws IncorrectOperationException {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
   }
 
   /**
-   * Convinient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
+   * Convenient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    assertTrue("Test name should start with 'test'", name.startsWith("test"));
+    assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
     name = name.substring("test".length());
-    if (lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
+    if (name.length() > 0 && lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;

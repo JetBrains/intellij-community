@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
-import java.io.File;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -223,7 +223,44 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
     public ReopenProjectAction(String projectPath) {
       myProjectPath = projectPath;
-      getTemplatePresentation().setText(projectPath, false);
+
+      String _text = projectPath;
+      final String projectName = getProjectName(projectPath);
+      if (projectName != null) {
+        _text = String.format("%s (%s)", projectPath, projectName);
+      }
+
+      getTemplatePresentation().setText(_text, false);
+    }
+
+    @Nullable
+    private String getProjectName(String path) {
+      if (new File(path).isDirectory()) {
+        final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
+        if (nameFile.exists()) {
+          BufferedReader in = null;
+          try {
+            in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile)));
+            final String name = in.readLine();
+            if (name != null && name.length() > 0) return name.trim();
+          }
+          catch (IOException e) {
+            // ignore
+          }
+          finally {
+            if (in != null) {
+              try {
+                in.close();
+              }
+              catch (IOException e) {
+                // ignore
+              }
+            }
+          }
+        }
+      }
+
+      return null;
     }
 
     public void actionPerformed(AnActionEvent e) {

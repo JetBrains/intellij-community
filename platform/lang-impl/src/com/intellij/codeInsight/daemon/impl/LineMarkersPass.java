@@ -46,6 +46,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -119,41 +120,47 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
-  public static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result, @NotNull List<PsiElement> elements,
+  public static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result,
+                                                   @NotNull List<PsiElement> elements,
                                                    @NotNull final LineMarkersProcessor processor,
-                                                   @NotNull PsiFile file, @NotNull final ProgressIndicator progress) {
+                                                   @NotNull PsiFile file,
+                                                   @NotNull final ProgressIndicator progress) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
 
+    final Set<PsiFile> injectedFiles = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          final Project project = injectedPsi.getProject();
-          Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);
-          if (!(document instanceof DocumentWindow)) return;
-          List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
-          final List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
-          processor.addLineMarkers(injElements, providers, injectedMarkers, progress);
-          for (final LineMarkerInfo injectedMarker : injectedMarkers) {
-            GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
-            TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);
-            List<TextRange> editables = manager.intersectWithAllEditableFragments(injectedPsi, injectedRange);
-            for (TextRange editable : editables) {
-              TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
-              Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
-              LineMarkerInfo converted =
-                  new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
-                                     new Function<PsiElement, String>() {
-                                       public String fun(PsiElement element) {
-                                         return injectedMarker.getLineMarkerTooltip();
-                                       }
-                                     }, injectedMarker.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
-              result.add(converted);
-            }
-          }
-          injectedMarkers.clear();
+          injectedFiles.add(injectedPsi);
         }
       }, false);
+    }
+    for (PsiFile injectedPsi : injectedFiles) {
+      final Project project = injectedPsi.getProject();
+      Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);
+      if (!(document instanceof DocumentWindow)) return;
+      List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
+      final List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
+      processor.addLineMarkers(injElements, providers, injectedMarkers, progress);
+      for (final LineMarkerInfo<PsiElement> injectedMarker : injectedMarkers) {
+        GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
+        TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);
+        List<TextRange> editables = manager.intersectWithAllEditableFragments(injectedPsi, injectedRange);
+        for (TextRange editable : editables) {
+          TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
+          Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
+          LineMarkerInfo converted =
+              new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
+                                 new Function<PsiElement, String>() {
+                                   public String fun(PsiElement element) {
+                                     return injectedMarker.getLineMarkerTooltip();
+                                   }
+                                 }, injectedMarker.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
+          result.add(converted);
+        }
+      }
+      injectedMarkers.clear();
     }
   }
 
@@ -171,7 +178,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     return myUpdateAll ? super.getProgress() : -1;
   }
 
-  public static @NotNull LineMarkerInfo createMethodSeparatorLineMarker(PsiElement startFrom, EditorColorsManager colorsManager) {
+  @NotNull
+  public static LineMarkerInfo createMethodSeparatorLineMarker(PsiElement startFrom, EditorColorsManager colorsManager) {
     LineMarkerInfo info = new LineMarkerInfo<PsiElement>(
       startFrom, 
       startFrom.getTextRange(), 

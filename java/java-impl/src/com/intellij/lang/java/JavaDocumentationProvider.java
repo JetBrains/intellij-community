@@ -627,8 +627,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         if (classUrls != null) {
           urls = new ArrayList<String>();
           String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_TYPE,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_TYPE, 999);
+                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
+                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE, 999);
           for (String classUrl : classUrls) {
             urls.add(classUrl + "#" + signature);
           }
@@ -701,7 +701,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
     if (module != null) {
       String[] javadocPaths = ModuleRootManager.getInstance(module).getRootUrls(JavadocOrderRootType.getInstance());
-      return getHttpRoots(javadocPaths, relPath);
+      final List<String> httpRoots = getHttpRoots(javadocPaths, relPath);
+      // if found nothing and the file is from library classes, fall back to order entries
+      if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) { 
+        return httpRoots;
+      }
     }
 
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);

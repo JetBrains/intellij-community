@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -124,7 +123,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    final boolean hasFieldCandidates = fieldCandidates.length > 0;
     final boolean isPropertyName = GroovyPropertyUtils.isPropertyName(name);
 
     final boolean isLValue = PsiUtil.isLValue(this);
@@ -143,7 +141,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         ContainerUtil.addAll(accessorResults, candidates);
       }
     }
-    if (hasFieldCandidates) return fieldCandidates;
+    if (fieldCandidates.length > 0) return fieldCandidates;
     if (classCandidates == null) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       resolveImpl(classProcessor);
@@ -389,8 +387,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       } else {
         result = createJavaLangClassType(facade, facade.getElementFactory().createType((PsiClass)resolved));
       }
-    } else if (resolved instanceof GrVariableBase) {
-      result = ((GrVariableBase) resolved).getDeclaredType();
+    } else if (resolved instanceof GrVariable) {
+      result = ((GrVariable) resolved).getDeclaredType();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -518,7 +516,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           /*inside nested closure we could still try to infer from variable initializer.
           * Not sound, but makes sense*/
           final PsiElement resolved = refExpr.resolve();
-          if (resolved instanceof GrVariableBase) return ((GrVariableBase) resolved).getTypeGroovy();
+          if (resolved instanceof GrVariable) return ((GrVariable) resolved).getTypeGroovy();
         }
 
         return nominal;
@@ -598,9 +596,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         processQualifierForSpreadDot(processor, qualifier);
       }
 
-      if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
-        processIfJavaLangClass(processor, qualifier.getType(), qualifier);
-      } else if (qualifier instanceof GrThisReferenceExpression) {
+      if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
+          qualifier instanceof GrThisReferenceExpression) {
         processIfJavaLangClass(processor, qualifier.getType(), qualifier);
       }
     }

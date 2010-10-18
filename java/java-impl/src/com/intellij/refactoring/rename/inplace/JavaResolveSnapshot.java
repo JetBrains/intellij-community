@@ -71,6 +71,8 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
     if (referent instanceof PsiReferenceExpression && referee instanceof PsiField) {
       PsiReferenceExpression ref = ((PsiReferenceExpression) referent);
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
+        final PsiElement newlyResolved = ref.resolve();
+        if (referee.getManager().areElementsEquivalent(newlyResolved, referee)) return;
         PsiClass refereeClass = ((PsiField) referee).getContainingClass();
         PsiClass referentClass = PsiTreeUtil.getParentOfType(referent, PsiClass.class);
         if (refereeClass != null && referentClass != null &&

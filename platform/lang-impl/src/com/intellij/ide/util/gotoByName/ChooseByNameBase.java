@@ -520,7 +520,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private void doClose(final boolean ok) {
+  protected void doClose(final boolean ok) {
     if (myDisposedFlag) return;
 
     if (posponeCloseWhenListReady(ok)) return;
@@ -536,7 +536,7 @@ public abstract class ChooseByNameBase {
   }
 
   private boolean posponeCloseWhenListReady(boolean ok) {
-    if (!Registry.is("actionSystem.fixLostTyping")) return false;
+    if (!isToFixLostTyping()) return false;
 
     final String text = myTextField.getText();
     if (ok && !myListIsUpToDate && text != null && text.trim().length() > 0) {
@@ -546,6 +546,10 @@ public abstract class ChooseByNameBase {
     }
 
     return false;
+  }
+
+  protected boolean isToFixLostTyping() {
+    return Registry.is("actionSystem.fixLostTyping");
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -690,6 +694,10 @@ public abstract class ChooseByNameBase {
         }
       }
     }, modalityState);
+  }
+
+  protected boolean isToBuildListOnPolledThread() {
+    return true;
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -858,7 +866,9 @@ public abstract class ChooseByNameBase {
       if (myCommands.isEmpty() || myDisposedFlag) return;
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          if (myDisposedFlag) return;
+          if (myDisposedFlag) {
+            return;
+          }
           final long startTime = System.currentTimeMillis();
           while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
             final Cmd cmd = myCommands.remove(0);

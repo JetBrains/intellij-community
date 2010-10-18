@@ -101,16 +101,23 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private PopupMenuListener myOuterComboboxPopupListener;
 
-  public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions,
+  @NotNull
+  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                         @NotNull PsiFile file,
+                                                         @NotNull Editor editor,
+                                                         @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded) {
     final Point position = getHintPosition(editor);
     return showIntentionHint(project, file, editor, intentions, showExpanded, position);
   }
 
-  public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
+  @NotNull
+  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                         @NotNull PsiFile file,
+                                                         @NotNull Editor editor,
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded,
-                                                         final Point position) {
+                                                         @NotNull Point position) {
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
 
     component.showIntentionHintImpl(!showExpanded, position);
@@ -193,6 +200,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
+  @NotNull
   private static Point getHintPosition(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     final int offset = editor.getCaretModel().getOffset();

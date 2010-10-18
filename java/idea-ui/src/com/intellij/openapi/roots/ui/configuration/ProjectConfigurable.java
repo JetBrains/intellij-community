@@ -19,11 +19,13 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -71,6 +73,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   private FieldPanel myProjectCompilerOutput;
 
+  private JTextField myProjectName;
+
   private MyJPanel myPanel;
 
   private final Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -106,6 +110,29 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   private void init(final ProjectSdksModel model) {
     myPanel = new MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
+
+    if (((ProjectEx)myProject).getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+      final JPanel namePanel = new JPanel(new BorderLayout());
+      final JLabel label =
+        new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);
+      namePanel.add(label, BorderLayout.NORTH);
+
+      myProjectName = new JTextField();
+      myProjectName.setColumns(40);
+
+      final JPanel nameFieldPanel = new JPanel();
+      nameFieldPanel.setLayout(new BoxLayout(nameFieldPanel, BoxLayout.X_AXIS));
+      nameFieldPanel.add(Box.createHorizontalStrut(4));
+      nameFieldPanel.add(myProjectName);
+
+      namePanel.add(nameFieldPanel, BorderLayout.CENTER);
+      final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      wrapper.add(namePanel);
+      wrapper.setAlignmentX(0);
+      myPanel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
+                                                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                        new Insets(4, 0, 10, 0), 0, 0));
+    }
 
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
@@ -144,6 +171,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
       }
       myLanguageLevelCombo.reset(myProject);
       updateCircularDependencyWarning();
+
+      if (myProjectName != null) {
+        myProjectName.setText(myProject.getName());
+      }
     }
     finally {
       myFreeze = false;
@@ -193,6 +224,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   public void apply() throws ConfigurationException {
     final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
 
+    if (myProjectName != null && myProjectName.getText().trim().length() == 0) {
+      throw new ConfigurationException("Please, specify project name!");
+    }
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // set the output path first so that handlers of RootsChanged event sent after JDK is set
@@ -216,6 +251,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
         LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
         try {
           myProjectJdkConfigurable.apply();
+
+          if (myProjectName != null) {
+            ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+          }
         }
         catch (ConfigurationException e) {
           //cant't be
@@ -262,6 +301,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
+    if (myProjectName != null) {
+      if (!myProjectName.getText().trim().equals(myProject.getName())) return true;
+    }
+
     return false;
   }
 

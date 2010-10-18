@@ -112,4 +112,8 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     throw new IllegalStateException();
   }
 
+  @Override
+  public void dispose() {
+    myHostMarker.dispose();
+  }
 }

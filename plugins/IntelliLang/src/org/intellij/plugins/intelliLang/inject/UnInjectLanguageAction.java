@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -32,16 +33,17 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
+
 /**
  * @author Dmitry Avdeev
  */
-public class UnInjectLanguageAction implements IntentionAction {
+public class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
 
   @NotNull
   public String getText() {

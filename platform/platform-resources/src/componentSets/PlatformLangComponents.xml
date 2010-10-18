@@ -46,7 +46,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
-      <skipForDummyProject/>
     </component>
 
   </project-components>

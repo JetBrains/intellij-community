@@ -85,7 +85,14 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         provider.customizeSettings(this, getSettingsType());
       }
     }
-    onLanguageChange(language);
+
+    setSkipPreviewHighlighting(true);
+    try {
+      onLanguageChange(language);
+    }
+    finally {
+      setSkipPreviewHighlighting(false);
+    }
     updatePreview();
   }
 

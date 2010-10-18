@@ -51,6 +51,7 @@ import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -101,10 +102,15 @@ public class MavenFacadeManager {
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
-        mySupport.stopAll();
-        disposeFacade();
+        shutdown(false);
       }
     });
+  }
+
+  @TestOnly
+  public synchronized void shutdown(boolean wait) {
+    mySupport.stopAll(wait);
+    disposeFacade();
   }
 
   private void disposeFacade() {
@@ -133,7 +139,8 @@ public class MavenFacadeManager {
     }
   }
 
-  private synchronized MavenFacade getFacade() {
+  @TestOnly
+  synchronized MavenFacade getFacade() {
     if (myFacade != null) {
       try {
         myFacade.ping();
@@ -358,7 +365,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeLogger extends RemoteObject implements MavenFacadeLogger {
+  private static class RemoteMavenFacadeLogger extends MavenRemoteObject implements MavenFacadeLogger {
     public void info(Throwable e) {
       MavenLog.LOG.info(e);
     }
@@ -376,7 +383,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeDownloadListener extends RemoteObject implements MavenFacadeDownloadListener {
+  private static class RemoteMavenFacadeDownloadListener extends MavenRemoteObject implements MavenFacadeDownloadListener {
     private final List<MavenFacadeDownloadListener> myListeners = ContainerUtil.createEmptyCOWList();
 
     public void artifactDownloaded(File file, String relativePath) throws RemoteException {
@@ -386,7 +393,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeProgressIndicator extends RemoteObject implements MavenFacadeProgressIndicator {
+  private static class RemoteMavenFacadeProgressIndicator extends MavenRemoteObject implements MavenFacadeProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
     public RemoteMavenFacadeProgressIndicator(MavenProgressIndicator process) {
@@ -414,7 +421,7 @@ public class MavenFacadeManager {
     }
   }
 
-  private static class RemoteMavenFacadeConsole extends RemoteObject implements MavenFacadeConsole {
+  private static class RemoteMavenFacadeConsole extends MavenRemoteObject implements MavenFacadeConsole {
     private final MavenConsole myConsole;
 
     public RemoteMavenFacadeConsole(MavenConsole console) {

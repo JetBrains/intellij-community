@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -61,36 +60,39 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if (!isPackageOrDirectory(element)) {
-        PsiFile parentFile;
-        if (element instanceof PsiJavaFile) {
-          final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
-          if (classes.length == 0) return false;
-          for (PsiClass aClass : classes) {
-            if (aClass instanceof JspClass) return false;
-          }
-          parentFile = (PsiFile)element;
-        }
-        else {
-          if (element instanceof JspClass) return false;
-          if (!(element instanceof PsiClass)) return false;
-          if (!(element.getParent() instanceof PsiFile)) return false;
-          parentFile = (PsiFile)element.getParent();
-        }
-        if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(parentFile)) return false;
-      }
+      if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
     return super.canMove(elements, targetContainer);
+  }
+
+  public static boolean invalid4Move(PsiElement element) {
+    PsiFile parentFile;
+    if (element instanceof PsiJavaFile) {
+      final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+      if (classes.length == 0) return true;
+      for (PsiClass aClass : classes) {
+        if (aClass instanceof JspClass) return true;
+      }
+      parentFile = (PsiFile)element;
+    }
+    else {
+      if (element instanceof JspClass) return true;
+      if (!(element instanceof PsiClass)) return true;
+      if (!(element.getParent() instanceof PsiFile)) return true;
+      parentFile = (PsiFile)element.getParent();
+    }
+    if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(parentFile)) return true;
+    return false;
   }
 
   @Override
   public boolean isValidTarget(PsiElement psiElement, PsiElement[] sources) {
     if (isPackageOrDirectory(psiElement)) return true;
-    boolean hasPackageOrDir = false;
+    boolean areAllClasses = true;
     for (PsiElement source : sources) {
-      hasPackageOrDir |= isPackageOrDirectory(source);
+      areAllClasses &= !isPackageOrDirectory(source) && !invalid4Move(source);
     }
-    return !hasPackageOrDir && psiElement instanceof PsiClass;
+    return areAllClasses && psiElement instanceof PsiClass;
   }
 
   public PsiElement[] adjustForMove(final Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {

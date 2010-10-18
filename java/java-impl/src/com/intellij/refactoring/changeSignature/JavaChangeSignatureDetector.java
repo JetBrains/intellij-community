@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -24,14 +23,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -67,7 +63,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       catch (IncorrectOperationException e) {
         return null;
       }
-      final MyJavaChangeInfo fromMethod = new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName());
+      final MyJavaChangeInfo fromMethod = new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName(), method.getName());
       if (changeInfo == null) { //before replacement
         final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
         if (deepestSuperMethod != null) {
@@ -94,7 +90,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
             }
           }
           final MyJavaChangeInfo javaChangeInfo =
-            new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), info.getOldName()) {
+            new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), method.getName(), info.getOldName()) {
               @Override
               protected void fillOldParams(PsiMethod method) {
                 oldParameterNames = info.getOldParameterNames();
@@ -178,8 +174,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
                              CanonicalTypes.Type newType,
                              @NotNull ParameterInfoImpl[] newParms,
                              ThrownExceptionInfo[] newExceptions,
-                             String oldName) {
-      super(newVisibility, method, method.getName(), newType, newParms, newExceptions, false,
+                             String newName, String oldName) {
+      super(newVisibility, method, newName, newType, newParms, newExceptions, false,
             new HashSet<PsiMethod>(),
             new HashSet<PsiMethod>(), oldName);
       final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -279,7 +275,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return new ChangeSignatureProcessor(method.getProject(), new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
                                                                            info.getNewReturnType(),
                                                                            (ParameterInfoImpl[])info.getNewParameters(),
-                                                                           info.getNewExceptions(), info.getOldName()) {
+                                                                           info.getNewExceptions(), info.getNewName(), method.getName()) {
       @Override
       protected void fillOldParams(PsiMethod method) {
         super.fillOldParams(method);
@@ -327,14 +323,15 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean isToHighlight(PsiElement element) {
+  public boolean isToHighlight(PsiElement element, ChangeInfo changeInfo) {
     element = element.getParent();
+    LOG.assertTrue(changeInfo instanceof JavaChangeInfo);
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       SearchScope useScope = method.getUseScope();
       if (useScope instanceof GlobalSearchScope) {
         final PsiSearchHelper.SearchCostResult cheapEnough = element.getManager().getSearchHelper()
-          .isCheapEnoughToSearch(method.getName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
+          .isCheapEnoughToSearch(((JavaChangeInfo)changeInfo).getOldName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
       }
     }

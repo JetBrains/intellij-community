@@ -95,7 +95,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
           final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
           if (list != null) {
             myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-            myBrowser.setItems(list, false, CommittedChangesBrowserUseCase.INCOMING);
+            myBrowser.setItems(list, CommittedChangesBrowserUseCase.INCOMING);
           }
           else {
             cache.loadIncomingChangesAsync(null, inBackground);

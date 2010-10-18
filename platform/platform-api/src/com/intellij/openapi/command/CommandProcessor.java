@@ -19,7 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandProcessor {
@@ -30,26 +31,37 @@ public abstract class CommandProcessor {
   /**
    * @deprecated use {@link #executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object)}
    */
-  public abstract void executeCommand(Runnable runnable, @Nls String name, Object groupId);
+  public abstract void executeCommand(@NotNull Runnable runnable,
+                                      @Nullable String name,
+                                      @Nullable Object groupId);
 
-  public abstract void executeCommand(Project project, Runnable runnable, @Nls String name, Object groupId);
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable runnable,
+                                      @Nullable String name,
+                                      @Nullable Object groupId);
 
-  public abstract void executeCommand(Project project,
-                                      Runnable runnable,
-                                      @Nls String name,
-                                      Object groupId,
-                                      UndoConfirmationPolicy undoConfirmationPolicy);
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable runnable,
+                                      @Nullable String name,
+                                      @Nullable Object groupId,
+                                      @Nullable Document document);
 
-  public abstract void executeCommand(Project project,
-                                      Runnable command,
-                                      String name,
-                                      Object groupId,
-                                      UndoConfirmationPolicy undoConfirmationPolicy,
-                                      Document document);
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable runnable,
+                                      @Nullable String name,
+                                      @Nullable Object groupId,
+                                      @NotNull UndoConfirmationPolicy confirmationPolicy);
 
-  public abstract void setCurrentCommandName(@Nls String name);
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable command,
+                                      @Nullable String name,
+                                      @Nullable Object groupId,
+                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                      @Nullable Document document);
 
-  public abstract void setCurrentCommandGroupId(Object groupId);
+  public abstract void setCurrentCommandName(@Nullable String name);
+
+  public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
   @Nullable
   public abstract Runnable getCurrentCommand();
@@ -63,15 +75,19 @@ public abstract class CommandProcessor {
   @Nullable
   public abstract Project getCurrentCommandProject();
 
-  public abstract void addCommandListener(CommandListener listener);
-
-  public abstract void addCommandListener(CommandListener listener, Disposable parentDisposable);
-
-  public abstract void removeCommandListener(CommandListener listener);
-
-  public abstract void runUndoTransparentAction(Runnable action);
+  public abstract void runUndoTransparentAction(@NotNull Runnable action);
 
   public abstract boolean isUndoTransparentActionInProgress();
 
-  public abstract void markCurrentCommandAsGlobal(Project project);
+  public abstract void markCurrentCommandAsGlobal(@Nullable Project project);
+
+  public abstract void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs);
+
+  public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
+
+  public abstract void addCommandListener(@NotNull CommandListener listener);
+
+  public abstract void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable);
+
+  public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

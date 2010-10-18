@@ -54,8 +54,6 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas, delegate, false,
                                                                                             createInner, null, false);
         processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
   }

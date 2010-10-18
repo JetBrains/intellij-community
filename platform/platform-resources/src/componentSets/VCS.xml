@@ -14,17 +14,14 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
@@ -42,7 +39,9 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vcs.changes.ChangesViewI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangesViewManager</implementation-class>
+      <headless-implementation-class>com.intellij.openapi.vcs.changes.DummyChangesView</headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>
     </component>
@@ -59,15 +58,17 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
+      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vcs.changes.ui.ChangesViewContentI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager</implementation-class>
+      <headless-implementation-class>com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager</headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>
     </component>

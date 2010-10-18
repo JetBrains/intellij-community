@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,7 +143,7 @@ public class GitProjectLogManager {
 
     final Map<VirtualFile, Content> newKeys = new HashMap<VirtualFile, Content>(currentState);
 
-    final ChangesViewContentManager cvcm = ChangesViewContentManager.getInstance(myProject);
+    final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
 
     final VirtualFile baseDir = myProject.getBaseDir();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();

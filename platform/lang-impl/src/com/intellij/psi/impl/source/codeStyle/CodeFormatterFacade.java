@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -148,11 +149,14 @@ public class CodeFormatterFacade {
             component.doPostponedFormatting(file.getViewProvider());
             i = 0;
             for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
-              if (markers[i] != null) {
-                range.setTextRange(new TextRange(markers[i].getStartOffset(), markers[i].getEndOffset()));
+              RangeMarker marker = markers[i];
+              if (marker != null) {
+                range.setTextRange(new TextRange(marker.getStartOffset(), marker.getEndOffset()));
+                ((RangeMarkerEx)marker).dispose();
               }
               i++;
             }
+
           }
           final FormattingModel originalModel = builder.createModel(file, mySettings);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
@@ -343,10 +347,10 @@ public class CodeFormatterFacade {
       DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
 
       SelectionModel selectionModel = editor.getSelectionModel();
-      boolean restoreSelection;
       int startSelectionOffset = 0;
       int endSelectionOffset = 0;
-      if (restoreSelection = selectionModel.hasSelection()) {
+      boolean restoreSelection = selectionModel.hasSelection();
+      if (restoreSelection) {
         startSelectionOffset = selectionModel.getSelectionStart();
         endSelectionOffset = selectionModel.getSelectionEnd();
         selectionModel.removeSelection();

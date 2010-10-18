@@ -473,7 +473,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
   
-  public static boolean checkReturns(final ControlFlow flow, final ReturnStatementsVisitor afterVisitor) throws IncorrectOperationException {
+  public static boolean processReturns(final ControlFlow flow, final ReturnStatementsVisitor afterVisitor) throws IncorrectOperationException {
     final ConvertReturnClientVisitor instructionsVisitor = new ConvertReturnClientVisitor(flow, afterVisitor);
     
     depthFirstSearch(flow, instructionsVisitor);

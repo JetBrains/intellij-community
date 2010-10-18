@@ -3,7 +3,6 @@
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ModuleEditorState</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
 
     <!--

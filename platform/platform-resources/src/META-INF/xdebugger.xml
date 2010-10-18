@@ -3,13 +3,11 @@
     <component>
       <interface-class>com.intellij.xdebugger.XDebuggerManager</interface-class>
       <implementation-class>com.intellij.xdebugger.impl.XDebuggerManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</interface-class>
       <implementation-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

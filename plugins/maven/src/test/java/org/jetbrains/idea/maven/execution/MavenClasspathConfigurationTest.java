@@ -24,11 +24,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -38,11 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
-  public static Test suite() {
-    return new TestSuite(MavenClasspathConfigurationTest.class, "testConfiguringModuleDependencies");
-  }
-
-
   public void testConfiguringModuleDependencies() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -605,6 +599,64 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
                           getProjectPath() + "/m2/target/classes",
                           getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
                           getProjectPath() + "/m3/target/classes");
+  }
+
+  public void testAdditionalClasspathElementsInTests() throws Exception {
+    File iof1 = new File(myDir, "foo/bar1");
+    File iof2 = new File(myDir, "foo/bar2");
+    iof1.mkdirs();
+    iof2.mkdirs();
+    VirtualFile f1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof1);
+    VirtualFile f2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof2);
+
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>" +
+
+                                           "<build>" +
+                                           "  <plugins>" +
+                                           "    <plugin>" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>" +
+                                           "      <version>2.5</version>" +
+                                           "      <configuration>" +
+                                           "        <additionalClasspathElements>" +
+                                           "          <additionalClasspathElement>" + f1.getPath() + "</additionalClasspathElement>" +
+                                           "          <additionalClasspathElement>" + f2.getPath() + "</additionalClasspathElement>" +
+                                           "        </additionalClasspathElements>" +
+                                           "      </configuration>" +
+                                           "    </plugin>" +
+                                           "  </plugins>" +
+                                           "</build>");
+
+    importProjects(m1);
+    assertModules("m1");
+
+    assertModuleModuleDeps("m1");
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
+
+    setupJdkForModules("m1");
+
+    assertModuleClasspath("m1",
+                          JavaParameters.CLASSES_ONLY,
+                          getProjectPath() + "/m1/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+
+    assertModuleClasspath("m1",
+                          JavaParameters.CLASSES_AND_TESTS,
+                          getProjectPath() + "/m1/target/test-classes",
+                          getProjectPath() + "/m1/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
+                          f1.getPath(),
+                          f2.getPath());
   }
 
   private void assertModuleClasspath(String moduleName, String... paths) throws CantRunException {

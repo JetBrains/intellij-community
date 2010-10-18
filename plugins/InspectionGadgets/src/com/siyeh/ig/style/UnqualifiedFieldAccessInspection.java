@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnqualifiedFieldAccessInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unqualified.field.access.display.name");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnqualifiedFieldAccessVisitor();
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unqualified.field.access.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnqualifiedFieldAccessFix();
     }
@@ -58,15 +62,22 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
                     "add.this.qualifier.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
+            if (expression.getQualifierExpression() != null) {
+                return;
+            }
             final PsiField field = (PsiField)expression.resolve();
             if (field == null) {
                 return;
             }
             final PsiClass containingClass = field.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
             final PsiClass parentClass =
                     ClassUtils.getContainingClass(expression);
             @NonNls final String newExpression;

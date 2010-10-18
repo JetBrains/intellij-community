@@ -112,7 +112,7 @@ public class CompositePrintable implements Printable, Disposable {
     public void flash(List<Printable> printables) {
       final DataOutputStream fileWriter;
       try {
-        fileWriter = new DataOutputStream(new FileOutputStream(myFile, true));
+        fileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile, true)));
 
       }
       catch (FileNotFoundException e) {
@@ -173,7 +173,7 @@ public class CompositePrintable implements Printable, Disposable {
 
     public void printOn(Printer console) {
       try {
-        myReader = new DataInputStream(new FileInputStream(myFile));
+        myReader = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
         int lineNum = 0;
         while (myReader.available() > 0) {
           if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) console.mark();

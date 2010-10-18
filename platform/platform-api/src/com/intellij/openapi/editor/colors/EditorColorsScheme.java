@@ -18,10 +18,13 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Scheme {
+  @NonNls String DEFAULT_SCHEME_NAME = "Default";
+
   void setName(String name);
 
   TextAttributes getAttributes(TextAttributesKey key);

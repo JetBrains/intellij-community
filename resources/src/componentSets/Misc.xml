@@ -10,7 +10,6 @@
     <component>
       <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
       <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

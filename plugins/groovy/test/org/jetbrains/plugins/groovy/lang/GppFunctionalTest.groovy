@@ -66,6 +66,7 @@ Y y = <warning descr="Cannot find constructor of 'Y'">[a:'b']</warning>
   }
 
   public void testAnonymousClass() throws Exception {
+    myFixture.enableInspections new GroovyAssignabilityCheckInspection()
     testAssignability """
 def x = new Object() {
   def foo() {

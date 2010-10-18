@@ -281,7 +281,7 @@ public class TreeModelBuilder {
     for (FilePath file : filePaths) {
       assert file != null;
       // whether a folder does not matter
-      final StaticFilePath pathKey = new StaticFilePath(false, file.getIOFile().getAbsolutePath(), file.getVirtualFile());
+      final StaticFilePath pathKey = new StaticFilePath(false, new File(file.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), file.getVirtualFile());
       ChangesBrowserNode oldNode = myFoldersCache.get(pathKey.getKey());
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
@@ -435,7 +435,7 @@ public class TreeModelBuilder {
   }
 
   private static StaticFilePath staticFrom(final FilePath fp) {
-    return new StaticFilePath(fp.isDirectory(), fp.getIOFile().getAbsolutePath(), fp.getVirtualFile());
+    return new StaticFilePath(fp.isDirectory(), new File(fp.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), fp.getVirtualFile());
   }
   
   private static StaticFilePath staticFrom(final VirtualFile vf) {

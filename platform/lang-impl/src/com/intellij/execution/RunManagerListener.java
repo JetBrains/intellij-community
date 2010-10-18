@@ -18,6 +18,8 @@ package com.intellij.execution;
 import java.util.EventListener;
 
 public interface RunManagerListener extends EventListener {
+  void runConfigurationSelected();
+
   void beforeRunTasksChanged();
 
   void runConfigurationAdded(RunnerAndConfigurationSettings settings);

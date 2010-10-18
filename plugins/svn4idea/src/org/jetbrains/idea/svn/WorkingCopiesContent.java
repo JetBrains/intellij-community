@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -29,7 +30,7 @@ public class WorkingCopiesContent {
   }
 
   public void activate() {
-    final ChangesViewContentManager cvcm = ChangesViewContentManager.getInstance(myVcs.getProject());
+    final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myVcs.getProject());
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 
     final CopiesPanel copiesPanel = new CopiesPanel(myVcs.getProject());
@@ -41,7 +42,7 @@ public class WorkingCopiesContent {
 
   public void deactivate() {
     if (myShownContent != null) {
-      final ChangesViewContentManager cvcm = ChangesViewContentManager.getInstance(myVcs.getProject());
+      final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myVcs.getProject());
       cvcm.removeContent(myShownContent);
       myShownContent = null;
     }

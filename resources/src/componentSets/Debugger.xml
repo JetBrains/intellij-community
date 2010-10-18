@@ -3,24 +3,20 @@
     <component>
       <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
       <implementation-class>com.intellij.debugger.ui.DebuggerPanelsManager</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.debugger.impl.HotSwapManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.HotSwapManager</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.debugger.ui.HotSwapUI</interface-class>
       <implementation-class>com.intellij.debugger.ui.HotSwapUIImpl</implementation-class>      
-      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.debugger.DebuggerManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.DebuggerManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
   </project-components>
 

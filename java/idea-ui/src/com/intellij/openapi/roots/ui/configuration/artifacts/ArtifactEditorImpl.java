@@ -39,14 +39,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.ComplexPackagingElementType;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
@@ -361,6 +359,34 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.removeSelectedElements();
   }
 
+  @Override
+  public void removePackagingElement(@NotNull final String pathToParent, @NotNull final PackagingElement<?> element) {
+    myLayoutTreeComponent.editLayout(new Runnable() {
+      @Override
+      public void run() {
+        final CompositePackagingElement<?> parent = findCompositeElementByPath(pathToParent);
+        if (parent == null) return;
+        for (PackagingElement<?> child : parent.getChildren()) {
+          if (child.isEqualTo(element)) {
+            parent.removeChild(child);
+            break;
+          }
+        }
+      }
+    });
+    myLayoutTreeComponent.rebuildTree();
+  }
+
+  @Nullable
+  private CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
+    CompositePackagingElement<?> element = getRootElement();
+    for (String name : StringUtil.split(pathToElement, "/")) {
+      element = element.findCompositeChild(name);
+      if (element == null) return null;
+    }
+    return element;
+  }
+
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
@@ -449,6 +475,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public ArtifactValidationManagerImpl getValidationManager() {
     return myValidationManager;
+  }
+
+  private void createUIComponents() {
+    myShowContentCheckBox = new ThreeStateCheckBox();
+    myShowSpecificContentOptionsButton = new FixedSizeButton(16);
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

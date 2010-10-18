@@ -37,6 +37,7 @@ public abstract class PsiFormatUtilBase {
   public static final int JAVADOC_MODIFIERS_ONLY = 0x4000; // field, method, class
   public static final int SHOW_ANONYMOUS_CLASS_VERBOSE = 0x8000; // class
   public static final int SHOW_RAW_TYPE = 0x10000; //type
+  public static final int SHOW_RAW_NON_TOP_TYPE = 0x20000;
   public static final int MAX_PARAMS_TO_SHOW = 7;
 
   protected static void appendSpaceIfNeeded(StringBuilder buffer) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 
@@ -68,6 +69,9 @@ public abstract class RunManagerEx extends RunManager {
   public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
 
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@NotNull final String name);
+
+  public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
+  public abstract void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
 
   public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
 

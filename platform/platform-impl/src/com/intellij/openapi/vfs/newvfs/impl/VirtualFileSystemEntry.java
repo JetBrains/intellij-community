@@ -46,7 +46,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile int myId;
 
   public VirtualFileSystemEntry(final String name, final VirtualDirectoryImpl parent, int id) {
-    myName = name.replace('\\', '/');
+    myName = name.replace('\\', '/');  // note: on Unix-style FS names may contain backslashes
     myParent = parent;
     myId = id;
   }

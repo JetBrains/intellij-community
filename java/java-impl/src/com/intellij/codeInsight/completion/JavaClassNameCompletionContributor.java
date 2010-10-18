@@ -124,7 +124,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           }
         }
 
-        getter.getClasses(insertedElement, result, parameters.getOffset(), parameters.getInvocationCount() == 1);
+        getter.getClasses(insertedElement, result, parameters.getOffset(), parameters.getInvocationCount() <= 1);
       }
     });
 

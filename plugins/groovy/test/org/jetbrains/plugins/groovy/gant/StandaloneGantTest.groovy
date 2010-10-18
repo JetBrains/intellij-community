@@ -1,9 +1,18 @@
 package org.jetbrains.plugins.groovy.gant;
 
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.gant.GantSettings
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable.SdkHomeBean
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -11,6 +20,21 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 public class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
+  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName() + "!/");
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+      modifiableModel.commit();
+    }
+  };
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GROOVY_17_PROJECT_DESCRIPTOR;
+  }
 
   @Override
   protected String getBasePath() {

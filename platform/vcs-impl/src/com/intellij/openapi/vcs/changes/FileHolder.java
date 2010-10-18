@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 interface FileHolder {
   void cleanAll();
-  void cleanAndAdjustScope(VcsAppendableDirtyScope scope);
+  void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
   FileHolder copy();
   HolderType getType();
 

@@ -43,7 +43,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   }
 
   private static boolean isTextSearch(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
-    return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile, handler);
+    return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, isSingleFile, handler);
   }
 
   @Override

@@ -49,7 +49,7 @@ public class GroovyClassNameInsertHandler implements AllClassesGetter.ClassNameI
       JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(item.getObject()));
     }
 
-    if (isInVariable(position)) {
+    if (isInVariable(position) || GroovyCompletionContributor.isInClosurePropertyParameters(position)) {
       Project project = context.getProject();
       PsiClass psiClass = item.getObject();
       if (!psiClass.isValid()) return AllClassesGetter.ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
@@ -60,11 +60,11 @@ public class GroovyClassNameInsertHandler implements AllClassesGetter.ClassNameI
       PsiClass aClass = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedClass(shortName, position);
       if (aClass == null) {
         ((GroovyFileBase)file).addImportForClass(psiClass);
-        new GroovyInsertHandler().handleInsert(context, item);
+        GroovyInsertHandler.INSTANCE.handleInsert(context, item);
         return AllClassesGetter.ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
       }
       else if (aClass == psiClass) {
-        new GroovyInsertHandler().handleInsert(context, item);
+        GroovyInsertHandler.INSTANCE.handleInsert(context, item);
         return AllClassesGetter.ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
       }
     }

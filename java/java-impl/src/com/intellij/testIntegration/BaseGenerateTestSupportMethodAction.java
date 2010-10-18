@@ -54,10 +54,11 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     return findTargetClass(editor, file);
   }
 
+  @Nullable
   private static PsiClass findTargetClass(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return TestIntegrationUtils.findOuterClass(element);
+    return element == null ? null : TestIntegrationUtils.findOuterClass(element);
   }
 
   @Override
@@ -192,7 +193,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       int offset = findOffsetToInsertMethodTo(editor, file);
 
       GenerateMembersUtil.insertMembersAtOffset(file, offset, members);
-      return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(result[0]);
+      return result[0] != null ? CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(result[0]) : null;
     }
 
     private int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {

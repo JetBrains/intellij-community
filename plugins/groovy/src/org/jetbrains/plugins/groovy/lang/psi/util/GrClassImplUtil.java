@@ -42,9 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -61,7 +60,7 @@ import java.util.Map;
 public class GrClassImplUtil {
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
     public boolean value(PsiClassType psiClassType) {
-      return psiClassType.equalsToText(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
+      return TypesUtil.typeEqualsToText(psiClassType, GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
     }
   };
   public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
@@ -90,19 +89,18 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiClassType[] getExtendsListTypes(GrTypeDefinition grType) {
-    final List<PsiClassType> extendsTypes = getReferenceListTypes(grType.getExtendsClause());
-    return extendsTypes.toArray(new PsiClassType[extendsTypes.size()]);
+    return getReferenceListTypes(grType.getExtendsClause());
   }
 
   @NotNull
   public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType) {
-    final List<PsiClassType> implementsTypes = getReferenceListTypes(grType.getImplementsClause());
+    final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
     if (!grType.isInterface() &&
         !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
         !ContainerUtil.or(getReferenceListTypes(grType.getExtendsClause()), IS_GROOVY_OBJECT)) {
-      implementsTypes.add(getGroovyObjectType(grType));
+      return ArrayUtil.append(implementsTypes, getGroovyObjectType(grType));
     }
-    return implementsTypes.toArray(new PsiClassType[implementsTypes.size()]);
+    return implementsTypes;
   }
 
   private static PsiClassType getGroovyObjectType(GrTypeDefinition grType) {
@@ -195,14 +193,9 @@ public class GrClassImplUtil {
   }
 
 
-  private static List<PsiClassType> getReferenceListTypes(@Nullable GrReferenceList list) {
-    final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
-    if (list != null) {
-      for (GrCodeReferenceElement ref : list.getReferenceElements()) {
-        types.add(new GrClassReferenceType(ref));
-      }
-    }
-    return types;
+  private static PsiClassType[] getReferenceListTypes(@Nullable GrReferenceList list) {
+    if (list == null) return PsiClassType.EMPTY_ARRAY;
+    return list.getReferenceTypes();
   }
 
 

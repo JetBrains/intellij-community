@@ -41,7 +41,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -173,7 +172,7 @@ public class FileManagerImpl implements FileManager {
   private FileViewProvider getFromInjected(VirtualFile file) {
     if (file instanceof VirtualFileWindow) {
       DocumentWindow document = ((VirtualFileWindow)file).getDocumentWindow();
-      PsiFile psiFile = PsiDocumentManagerImpl.getInstance(myManager.getProject()).getCachedPsiFile(document);
+      PsiFile psiFile = PsiDocumentManager.getInstance(myManager.getProject()).getCachedPsiFile(document);
       if (psiFile == null) return null;
       return psiFile.getViewProvider();
     }
@@ -295,7 +294,9 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
       if (psiFile1 != null && fileViewProvider != null && fileViewProvider.isPhysical()) { // might get collected
-        assert psiFile1.getClass().equals(fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass());
+        PsiFile psi = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
+        assert psi != null : fileViewProvider +"; "+fileViewProvider.getBaseLanguage()+"; "+psiFile1;
+        assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 +"; "+psi + "; "+psiFile1.getClass() +"; "+psi.getClass();
       }
     }
 
@@ -349,8 +350,10 @@ public class FileManagerImpl implements FileManager {
 
     VirtualFile vFile;
     final Project project = myManager.getProject();
+    final PsiFile contextFile;
     if (element instanceof PsiDirectory) {
       vFile = ((PsiDirectory)element).getVirtualFile();
+      contextFile = null;
     }
     else {
       final PsiFile containingFile = element.getContainingFile();
@@ -366,7 +369,7 @@ public class FileManagerImpl implements FileManager {
         return getResolveScope(context);
       }
 
-      final PsiFile contextFile = containingFile != null ? FileContextUtil.getContextFile(containingFile) : null;
+      contextFile = containingFile != null ? FileContextUtil.getContextFile(containingFile) : null;
       if (contextFile == null) {
         return GlobalSearchScope.allScope(project);
       }
@@ -375,11 +378,11 @@ public class FileManagerImpl implements FileManager {
       }
       vFile = contextFile.getOriginalFile().getVirtualFile();
     }
-    if (vFile == null) {
+    if (vFile == null || contextFile == null) {
       return GlobalSearchScope.allScope(project);
     }
 
-    return getDefaultResolveScope(vFile);
+    return getDefaultResolveScope(project, contextFile, vFile);
   }
 
   
@@ -387,6 +390,10 @@ public class FileManagerImpl implements FileManager {
     final Project project = myManager.getProject();
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
     assert psiFile != null;
+    return getDefaultResolveScope(project, psiFile, vFile);
+  }
+
+  private GlobalSearchScope getDefaultResolveScope(@NotNull final Project project, @NotNull PsiFile psiFile, @NotNull final VirtualFile vFile) {
     return CachedValuesManager.getManager(project).getCachedValue(psiFile, new CachedValueProvider<GlobalSearchScope>() {
       @Override
       public Result<GlobalSearchScope> compute() {
@@ -1016,9 +1023,27 @@ public class FileManagerImpl implements FileManager {
         new ExternalChangeAction() {
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-            if (oldElement != null) {
-              if (newElement != null) {
-                if (!oldElement.getClass().equals(oldElement.getClass())) {
+            if (oldElement == null) {
+              myVFileToViewProviderMap.put(vFile, newViewProvider);
+              treeEvent.setParent(newParentDir);
+              treeEvent.setChild(newElement);
+              myManager.childAdded(treeEvent);
+            }
+            else {
+              if (newElement == null) {
+                myVFileToViewProviderMap.remove(vFile);
+                treeEvent.setParent(oldParentDir);
+                treeEvent.setChild(oldElement);
+                myManager.childRemoved(treeEvent);
+              }
+              else {
+                if (oldElement.getClass().equals(newElement.getClass())) {
+                  treeEvent.setOldParent(oldParentDir);
+                  treeEvent.setNewParent(newParentDir);
+                  treeEvent.setChild(newElement);
+                  myManager.childMoved(treeEvent);
+                }
+                else {
                   myVFileToViewProviderMap.put(vFile, newViewProvider);
                   PsiTreeChangeEventImpl treeRemoveEvent = new PsiTreeChangeEventImpl(myManager);
                   treeRemoveEvent.setParent(oldParentDir);
@@ -1029,26 +1054,7 @@ public class FileManagerImpl implements FileManager {
                   treeAddEvent.setChild(newElement);
                   myManager.childAdded(treeAddEvent);
                 }
-                else {
-                  treeEvent.setOldParent(oldParentDir);
-                  treeEvent.setNewParent(newParentDir);
-                  treeEvent.setChild(newElement);
-                  myManager.childMoved(treeEvent);
-                }
               }
-              else {
-                myVFileToViewProviderMap.remove(vFile);
-                treeEvent.setParent(oldParentDir);
-                treeEvent.setChild(oldElement);
-                myManager.childRemoved(treeEvent);
-              }
-            }
-            else {
-              myVFileToViewProviderMap.put(vFile, newViewProvider);
-              LOG.assertTrue(newElement != null); // checked above
-              treeEvent.setParent(newParentDir);
-              treeEvent.setChild(newElement);
-              myManager.childAdded(treeEvent);
             }
           }
         }

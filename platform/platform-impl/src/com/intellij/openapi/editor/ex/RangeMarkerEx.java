@@ -33,4 +33,5 @@ public interface RangeMarkerEx extends RangeMarker, MutableInterval, Segment {
   void documentChanged(DocumentEvent e);
 
   long getId();
+  void dispose();
 }

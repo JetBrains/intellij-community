@@ -4,7 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -335,11 +335,11 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   private void select(char completionChar, int index){
-    ((TestLookupManager)LookupManager.getInstance(getProject())).forceSelection(completionChar, index);
+    ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, index);
   }
 
   private void select(char completionChar, LookupElement item){
-    ((TestLookupManager)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
+    ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
   private LookupElement getSelected(){

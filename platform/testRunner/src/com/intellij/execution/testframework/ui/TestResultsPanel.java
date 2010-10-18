@@ -100,14 +100,13 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
       }
     };
     mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myStatisticsComponent);
     if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      mySplitter.setSecondComponent(scrollPane);
+      mySplitter.setSecondComponent(myStatisticsComponent);
     }
     myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
       public void onChanged(Boolean value) {
         if (value.booleanValue()) {
-          mySplitter.setSecondComponent(scrollPane);
+          mySplitter.setSecondComponent(myStatisticsComponent);
         }
         else {
           mySplitter.setSecondComponent(null);

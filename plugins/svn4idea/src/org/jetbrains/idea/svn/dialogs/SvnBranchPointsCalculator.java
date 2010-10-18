@@ -19,8 +19,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -28,7 +28,6 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -60,42 +59,23 @@ public class SvnBranchPointsCalculator {
   public void activate() {
     ValueHolder<WrapperInvertor<BranchCopyData>, KeyData> cache = null;
 
-    try {
-      myPersistentHolder = new PersistentHolder(myFile);
-      cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
-        public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
-          try {
-            final WrapperInvertor<BranchCopyData> result =
-              myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
-            }
-            return result;
-          } catch (IOException e) {
-          }
-          return null;
+    myPersistentHolder = new PersistentHolder(myFile);
+    cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
+      public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
+        final WrapperInvertor<BranchCopyData> result =
+          myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
         }
-        public void setValue(WrapperInvertor<BranchCopyData> value, KeyData dataHolder) {
-          try {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
-            }
-            myPersistentHolder.put(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
-          }
-          catch (IOException e) {
-          }
+        return result;
+      }
+      public void setValue(WrapperInvertor<BranchCopyData> value, KeyData dataHolder) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
         }
-      };
-    }
-    catch (IOException e) {
-      cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
-        public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
-          return null;
-        }
-        public void setValue(WrapperInvertor<BranchCopyData> value, KeyData dataHolder) {
-        }
-      };
-    }
+        myPersistentHolder.put(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
+      }
+    };
 
     myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(myProject, "Looking for branch origin", cache, new Loader(myProject));
   }
@@ -168,34 +148,21 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class PersistentHolder {
-    private final PersistentHashMap<String, TreeMap<String, BranchCopyData>> myPersistentMap;
+    private final SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
     private final MultiMap<String, String> myForSearchMap;
     private final Object myLock;
 
-    PersistentHolder(final File file) throws IOException {
+    PersistentHolder(final File file) {
       myLock = new Object();
-      myPersistentMap = new PersistentHashMap<String, TreeMap<String, BranchCopyData>>(
+      myPersistentMap = new SmallMapSerializer<String, TreeMap<String, BranchCopyData>>(
         file, new EnumeratorStringDescriptor(), new BranchDataExternalizer());
-      final Ref<IOException> excRef = new Ref<IOException>();
       // list for values by default
       myForSearchMap = new MultiMap<String, String>();
-      myPersistentMap.processKeys(new Processor<String>() {
-        public boolean process(final String s) {
-          try {
-            final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
-            if (map != null) {
-              myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
-            }
-          }
-          catch (IOException e) {
-            excRef.set(e);
-            return false;
-          }
-          return true;
+      for (String s : myPersistentMap.keySet()) {
+        final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
+        if (map != null) {
+          myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
         }
-      });
-      if (! excRef.isNull()) {
-        throw excRef.get();
       }
 
       for (String key : myForSearchMap.keySet()) {
@@ -204,15 +171,10 @@ public class SvnBranchPointsCalculator {
     }
 
     public void close() {
-      try {
-        myPersistentMap.close();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+      myPersistentMap.force();
     }
 
-    public void put(final String uid, final String target, final BranchCopyData data) throws IOException {
+    public void put(final String uid, final String target, final BranchCopyData data) {
       // todo - rewrite of rather big piece; consider rewriting
       synchronized (myLock) {
         TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
@@ -236,7 +198,7 @@ public class SvnBranchPointsCalculator {
     }
 
     @Nullable
-    public WrapperInvertor<BranchCopyData> getBestHit(final String repoUrl, final String source, final String target) throws IOException {
+    public WrapperInvertor<BranchCopyData> getBestHit(final String repoUrl, final String source, final String target) {
       final List<String> keys;
       synchronized (myLock) {
         keys = (List<String>) myForSearchMap.get(repoUrl);

@@ -19,7 +19,10 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.table.JBTable;
@@ -31,6 +34,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class EditLibraryDialog extends DialogWrapper {
   private JPanel contentPane;
@@ -44,8 +48,9 @@ public class EditLibraryDialog extends DialogWrapper {
   private VirtualFile mySelectedFile;
   private LangScriptingContextProvider myProvider;
 
-  public EditLibraryDialog(LangScriptingContextProvider provider, Project project) {
+  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project) {
     super(true);
+    setTitle(title);
     myProvider = provider;
     myAddFileButton.addActionListener(new ActionListener() {
       @Override
@@ -70,6 +75,12 @@ public class EditLibraryDialog extends DialogWrapper {
       }
     });
     init();
+  }
+
+  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, Library lib) {
+    this(title, provider, project);
+    myLibName.setText(lib.getName());
+    myFileTableModel.setFiles(lib.getFiles(OrderRootType.CLASSES));
   }
 
   @Override
@@ -110,16 +121,21 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private static class FileTableModel extends AbstractTableModel {
 
-    private ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
 
     public void addFile(VirtualFile file) {
-      files.add(file);
+      myFiles.add(file);
       fireTableDataChanged();
+    }
+
+    public void setFiles(VirtualFile[] files) {
+      myFiles.clear();
+      myFiles.addAll(Arrays.asList(files));
     }
 
     @Override
     public int getRowCount() {
-      return files.size();
+      return myFiles.size();
     }
 
     @Override
@@ -130,25 +146,25 @@ public class EditLibraryDialog extends DialogWrapper {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
-        return files.get(rowIndex);
+        return myFiles.get(rowIndex);
       }
       return null;
     }
 
     @Nullable
     public VirtualFile getFileAt(int row) {
-      if (row < 0 || row >= files.size()) return null;
-      return files.get(row);
+      if (row < 0 || row >= myFiles.size()) return null;
+      return myFiles.get(row);
     }
 
     public void removeFile(VirtualFile file) {
-      if (files.remove(file)) {
+      if (myFiles.remove(file)) {
         fireTableDataChanged();
       }
     }
 
     public VirtualFile[] getFiles() {
-      return files.toArray(new VirtualFile[files.size()]);
+      return myFiles.toArray(new VirtualFile[myFiles.size()]);
     }
   }
 
@@ -169,5 +185,18 @@ public class EditLibraryDialog extends DialogWrapper {
 
   public VirtualFile[] getFiles() {
     return myFileTableModel.getFiles();
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (!isLibNameValid(myLibName.getText())) {
+      Messages.showErrorDialog(myProject, "Invalid library name", "Error");
+      return;
+    }
+    super.doOKAction();
+  }
+
+  private static boolean isLibNameValid(String libName) {
+    return libName != null && libName.matches("\\w[\\w\\d\\._]*");
   }
 }

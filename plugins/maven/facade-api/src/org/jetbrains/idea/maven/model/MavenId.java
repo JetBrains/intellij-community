@@ -15,33 +15,40 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
 
 public class MavenId implements Serializable {
   public static final String UNKNOWN_VALUE = "Unknown";
 
-  private final String myGroupId;
-  private final String myArtifactId;
-  private final String myVersion;
+  @Nullable private final String myGroupId;
+  @Nullable private final String myArtifactId;
+  @Nullable private final String myVersion;
 
-  public MavenId(String groupId, String artifactId, String version) {
+  public MavenId(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
   }
 
+  @Nullable
   public String getGroupId() {
     return myGroupId;
   }
 
+  @Nullable
   public String getArtifactId() {
     return myArtifactId;
   }
 
+  @Nullable
   public String getVersion() {
     return myVersion;
   }
 
+  @NotNull
   public String getKey() {
     StringBuilder builder = new StringBuilder();
 
@@ -52,6 +59,7 @@ public class MavenId implements Serializable {
     return builder.toString();
   }
 
+  @NotNull
   public String getDisplayString() {
     return getKey();
   }
@@ -66,13 +74,13 @@ public class MavenId implements Serializable {
     return getDisplayString();
   }
 
-  public boolean equals(String groupId, String artifactId) {
+  public boolean equals(@Nullable String groupId, @Nullable String artifactId) {
     if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
     return true;
   }
 
-  public boolean equals(String groupId, String artifactId, String version) {
+  public boolean equals(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
     if (!equals(groupId, artifactId)) return false;
     if (myVersion != null ? !myVersion.equals(version) : version != null) return false;
     return true;
