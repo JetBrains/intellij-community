@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/plugins/android/android.iml" filepath="$PROJECT_DIR$/plugins/android/android.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" filepath="$PROJECT_DIR$/plugins/InspectionGadgets/InspectionGadgetsPlugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
