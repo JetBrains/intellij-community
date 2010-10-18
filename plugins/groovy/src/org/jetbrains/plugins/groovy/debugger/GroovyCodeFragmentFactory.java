@@ -89,7 +89,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);
-    StringBuffer javaText = new StringBuffer();
+    StringBuilder javaText = new StringBuilder();
 
     javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
@@ -256,11 +256,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
-  }
-
-  public String getDisplayName() {
-    return "Groovy";
+    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE);
   }
 
   public LanguageFileType getFileType() {

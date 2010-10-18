@@ -51,7 +51,7 @@ public class ProgramRunnerUtil {
                                           @NotNull final Executor executor) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
-      LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
+      LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration.getConfiguration().getFactory().getName());
       return;
     }
     if (ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())){

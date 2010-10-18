@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,7 +165,22 @@ public class ContextUtil {
     }
 
     PsiElement element;
-    final PsiElement rootElement = JspPsiUtil.isInJspFile(psiFile) ? (JspPsiUtil.getJspFile(psiFile)).getJavaClass() : psiFile;
+
+    PsiElement rootElement = psiFile;
+
+    List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
+    if (allFiles.size() > 1) { // jsp & gsp
+      PsiClassOwner owner = ContainerUtil.findInstance(allFiles, PsiClassOwner.class);
+      if (owner != null) {
+        PsiClass[] classes = owner.getClasses();
+        if (classes.length == 1 && classes[0]  instanceof SyntheticElement) {
+          rootElement = classes[0];
+        }
+      }
+    }
+
+    //final PsiElement rootElement = JspPsiUtil.isInJspFile(psiFile) ? (JspPsiUtil.getJspFile(psiFile)).getJavaClass() : psiFile;
+
     while(true) {
       final CharSequence charsSequence = document.getCharsSequence();
       for (; startOffset < charsSequence.length(); startOffset++) {

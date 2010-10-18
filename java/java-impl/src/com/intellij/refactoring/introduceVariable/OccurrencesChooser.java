@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class OccurrencesChooser {
   public static enum ReplaceChoice {
-    NO("Do not replace"), NO_WRITE("Replace all but write"), ALL("Replace all occurrences");
+    NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all occurrences");
 
     private String myDescription;
 

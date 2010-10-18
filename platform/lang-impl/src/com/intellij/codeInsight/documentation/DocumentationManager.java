@@ -358,7 +358,8 @@ public class DocumentationManager {
       }});
 
     final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = toolWindowManagerEx.registerToolWindow(ToolWindowId.DOCUMENTATION, true, ToolWindowAnchor.RIGHT, myProject);
+    final ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(ToolWindowId.DOCUMENTATION);
+    myToolWindow = toolWindow == null ? toolWindowManagerEx.registerToolWindow(ToolWindowId.DOCUMENTATION, true, ToolWindowAnchor.RIGHT, myProject) : toolWindow;
     myToolWindow.setIcon(IconLoader.getIcon("/general/documentation.png"));
 
     myToolWindow.setAvailable(true, null);

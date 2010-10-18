@@ -75,7 +75,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       defaultTargetDirectory = getCommonParentDirectory(elements);
     }
 
-    Project project = elements [0].getProject();
+    Project project = defaultTargetDirectory != null ? defaultTargetDirectory.getProject() : elements [0].getProject();
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {

@@ -134,6 +134,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionTool tool = inspectionResult.tool;
       LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
+      if (toolWrapper == null) continue;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
         toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), ignoreSuppressed);
       }

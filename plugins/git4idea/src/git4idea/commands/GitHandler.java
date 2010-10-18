@@ -413,7 +413,7 @@ public abstract class GitHandler {
     checkNotStarted();
     try {
       // setup environment
-      if (!myProject.isDefault() && !mySilent) {
+      if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
       }

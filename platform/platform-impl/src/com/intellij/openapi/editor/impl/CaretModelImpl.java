@@ -223,7 +223,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
       int offset = myEditor.logicalPositionToOffset(log);
       if (offset >= document.getTextLength()) {
-        newColumnNumber = myEditor.offsetToVisualPosition(document.getTextLength()).column;
+        int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
+        newColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
       }
       CharSequence text = document.getCharsSequence();
       if (offset >= 0 && offset < document.getTextLength()) {
