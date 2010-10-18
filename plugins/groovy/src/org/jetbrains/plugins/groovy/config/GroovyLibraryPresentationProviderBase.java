@@ -36,11 +36,6 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
   }
 
   @Override
-  public Icon getIcon(GroovyLibraryProperties properties) {
-    return getIcon();
-  }
-
-  @Override
   public String getDescription(@NotNull GroovyLibraryProperties properties) {
     final String version = properties.getVersion();
     return getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");

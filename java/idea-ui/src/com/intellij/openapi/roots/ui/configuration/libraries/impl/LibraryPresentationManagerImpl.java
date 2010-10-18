@@ -75,7 +75,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
         final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
         if (provider != null) {
-          ContainerUtil.addIfNotNull(icons, provider.getIcon(properties));
+          ContainerUtil.addIfNotNull(icons, provider.getIcon());
         }
         return true;
       }

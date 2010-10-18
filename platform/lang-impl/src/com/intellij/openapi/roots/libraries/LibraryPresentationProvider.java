@@ -30,16 +30,17 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   public static final ExtensionPointName<LibraryPresentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.library.presentationProvider");
   private final LibraryKind<P> myKind;
 
-  protected LibraryPresentationProvider(LibraryKind<P> kind) {
+  protected LibraryPresentationProvider(@NotNull LibraryKind<P> kind) {
     myKind = kind;
   }
 
+  @NotNull
   public final LibraryKind<P> getKind() {
     return myKind;
   }
 
   @Nullable
-  public abstract Icon getIcon(P properties);
+  public abstract Icon getIcon();
 
   @Nullable
   public String getDescription(@NotNull P properties) {

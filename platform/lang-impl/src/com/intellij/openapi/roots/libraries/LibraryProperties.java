@@ -21,6 +21,4 @@ import com.intellij.openapi.components.PersistentStateComponent;
  * @author nik
  */
 public abstract class LibraryProperties<T> implements PersistentStateComponent<T> {
-  public static final LibraryProperties DUMMY_PROPERTIES = new DummyLibraryProperties();
-
 }
