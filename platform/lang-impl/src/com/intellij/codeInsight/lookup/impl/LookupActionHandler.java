@@ -52,7 +52,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       return;
     }
 
-    lookup.markDirty();
+    lookup.markSelectionTouched();
     executeInLookup(lookup, dataContext);
   }
 
