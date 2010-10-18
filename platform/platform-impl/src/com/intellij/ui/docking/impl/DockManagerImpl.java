@@ -23,6 +23,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -123,6 +124,8 @@ public class DockManagerImpl extends DockManager {
     private Image myThumbnail;
     private DockableContent myContent;
 
+    private DockContainer myCurrentOverContainer;
+
     private MyDragSession(MouseEvent me, DockableContent content) {
       myWindow = new JWindow();
       myContent = content;
@@ -172,12 +175,33 @@ public class DockManagerImpl extends DockManager {
 
     @Override
     public void process(MouseEvent e) {
+      RelativePoint point = new RelativePoint(e);
+
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
+        DockContainer over = findContainerFor(point, myContent);
+        if (myCurrentOverContainer != null && myCurrentOverContainer != over) {
+          myCurrentOverContainer.resetDropOver(myContent);
+          myCurrentOverContainer = null;
+        }
+
+        if (myCurrentOverContainer == null && over != null) {
+          myCurrentOverContainer = over;
+          myCurrentOverContainer.startDropOver(myContent, point);
+        }
+
+        if (myCurrentOverContainer != null) {
+          myCurrentOverContainer.processDropOver(myContent, point);
+        }
+
         setLocationFrom(e);
       }
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-        createNewDockContainerFor(myContent, e);
-        stopCurrentDragSession();
+        if (myCurrentOverContainer == null) {
+          createNewDockContainerFor(myContent, point);
+          stopCurrentDragSession();
+        } else {
+          myCurrentOverContainer.add(myContent, point);
+        }
       }
     }
 
@@ -186,24 +210,33 @@ public class DockManagerImpl extends DockManager {
     }
   }
 
-  private void createNewDockContainerFor(DockableContent content, MouseEvent event) {
+  @Nullable
+  private DockContainer findContainerFor(RelativePoint point, DockableContent content) {
+    for (DockContainer each : myContainers) {
+      RelativeRectangle rec = each.getAcceptArea();
+      if (rec.contains(point) && each.canAccept(content, point)) return each;
+    }
+
+    return null;
+  }
+
+  private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
     DockContainer container = content.getContainerFactory().createContainer();
     register(container, null);
     DockWindow window = new DockWindow(myProject, container);
     window.show();
 
     Dimension size = content.getPreferredSize();
-    Point showPoint = event.getPoint();
-    SwingUtilities.convertPointToScreen(showPoint, event.getComponent());
+    Point showPoint = point.getPoint();
     showPoint.x -= size.width / 2;
-    showPoint.y += size.width / 2;
-
-    window.setLocation(showPoint);
+    showPoint.y -= size.width / 2;
 
     window.show();
 
+    window.setLocation(showPoint);
     window.setSize(size);
-    container.add(content, new RelativePoint(event));
+
+    container.add(content, new RelativePoint(point.getComponent(), showPoint));
   }
 
   private class DockWindow extends FrameWrapper {

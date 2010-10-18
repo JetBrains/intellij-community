@@ -493,11 +493,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     @Override
     public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
       final Image img = myTabs.getComponentImage(info);
+      info.setHidden(true);
 
       myFile = (VirtualFile)info.getObject();
-      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile));
-
-      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+      Presentation presentation = new Presentation(info.getText());
+      presentation.setIcon(info.getIcon());
+      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile, presentation));
     }
 
     private DockManager getDockManager() {
@@ -511,6 +512,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
+      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+
       mySession.process(event);
 
       myFile = null;
@@ -520,11 +523,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     class DockableEditor implements DockableContent<VirtualFile> {
       final Image myImg;
       private DockableEditorTabbedContainer myContainer;
+      private Presentation myPresentation;
 
 
-      public DockableEditor(Image img, VirtualFile file) {
+      public DockableEditor(Image img, VirtualFile file, Presentation presentation) {
         myImg = img;
         myFile = file;
+        myPresentation = presentation;
         myContainer = new DockableEditorTabbedContainer(myProject);
       }
 
@@ -546,6 +551,11 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       @Override
       public DockContainerFactory getContainerFactory() {
         return myContainer;
+      }
+
+      @Override
+      public Presentation getPresentation() {
+        return myPresentation;
       }
 
       @Override

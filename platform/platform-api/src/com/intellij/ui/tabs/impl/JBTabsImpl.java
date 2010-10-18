@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
@@ -2919,5 +2920,17 @@ public class JBTabsImpl extends JComponent
     public Object[] getEqualityObjects() {
       return new Object[] {myInfo};
     }
+  }
+
+  @Override
+  public void resetDropOver(TabInfo tabInfo) {
+  }
+
+  @Override
+  public void startDropOver(TabInfo tabInfo, RelativePoint point) {
+  }
+
+  @Override
+  public void processDropOver(TabInfo over, RelativePoint point) {
   }
 }

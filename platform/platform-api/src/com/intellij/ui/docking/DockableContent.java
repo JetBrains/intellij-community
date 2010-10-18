@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.docking;
 
+import com.intellij.openapi.actionSystem.Presentation;
+
 import java.awt.*;
 
 public interface DockableContent<T> {
@@ -28,4 +30,6 @@ public interface DockableContent<T> {
   Dimension getPreferredSize();
 
   void close();
+
+  Presentation getPresentation();
 }

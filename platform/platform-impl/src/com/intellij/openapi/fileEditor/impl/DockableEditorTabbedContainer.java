@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,8 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockableContent;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
 
 import javax.swing.*;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -37,24 +40,34 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
   private CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
 
+  private JBTabs myCurrentOver;
+  private TabInfo myCurrentOverInfo;
+
   DockableEditorTabbedContainer(Project project) {
     myProject = project;
   }
 
+  DockableEditorTabbedContainer(Project project, EditorsSplitters splitters) {
+    myProject = project;
+    mySplitters = splitters;
+  }
+
   @Override
   public DockContainer createContainer() {
-    mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)) {
-      @Override
-      protected void afterFileClosed(VirtualFile file) {
-        fireContentClosed(file);
-      }
+    if (mySplitters == null) {
+      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)) {
+        @Override
+        protected void afterFileClosed(VirtualFile file) {
+          fireContentClosed(file);
+        }
 
-      @Override
-      protected void afterFileOpen(VirtualFile file) {
-        fireContentOpen(file);
-      }
-    };
-    mySplitters.createCurrentWindow();
+        @Override
+        protected void afterFileOpen(VirtualFile file) {
+          fireContentOpen(file);
+        }
+      };
+      mySplitters.createCurrentWindow();
+    }
     return this;
   }
 
@@ -76,7 +89,7 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
   }
 
   @Override
-  public boolean canAccept(DockableContent content) {
+  public boolean canAccept(DockableContent content, RelativePoint point) {
     return content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor;
   }
 
@@ -85,6 +98,38 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
     EditorWindow currentWindow = mySplitters.getCurrentWindow();
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(currentWindow, file, true);
+  }
+
+  @Override
+  public void startDropOver(DockableContent content, RelativePoint point) {
+  }
+
+  @Override
+  public void processDropOver(DockableContent content, RelativePoint point) {
+    JBTabs current = mySplitters.getTabsAt(point);
+    if (myCurrentOver != null && myCurrentOver != current) {
+      resetDropOver(content);
+    }
+
+    if (myCurrentOver == null && current != null) {
+      myCurrentOver = current;
+      Presentation presentation = content.getPresentation();
+      myCurrentOverInfo = new TabInfo(null).setText(presentation.getText()).setIcon(presentation.getIcon());
+      myCurrentOver.startDropOver(myCurrentOverInfo, point);
+    }
+
+    if (myCurrentOver != null) {
+      myCurrentOver.processDropOver(myCurrentOverInfo, point);
+    }
+  }
+
+  @Override
+  public void resetDropOver(DockableContent content) {
+    if (myCurrentOver != null) {
+      myCurrentOver.resetDropOver(myCurrentOverInfo);
+      myCurrentOver = null;
+      myCurrentOverInfo = null;
+    }
   }
 
   @Override

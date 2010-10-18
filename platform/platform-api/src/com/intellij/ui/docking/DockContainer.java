@@ -24,7 +24,7 @@ import javax.swing.*;
 public interface DockContainer {
 
   RelativeRectangle getAcceptArea();
-  boolean canAccept(DockableContent content);
+  boolean canAccept(DockableContent content, RelativePoint point);
 
   JComponent getComponent();
 
@@ -35,6 +35,11 @@ public interface DockContainer {
   void addListener(Listener listener, Disposable parent);
 
   boolean isEmpty();
+
+  void startDropOver(DockableContent content, RelativePoint point);
+  void processDropOver(DockableContent content, RelativePoint point);
+  void resetDropOver(DockableContent content);
+
 
   interface Listener {
     void contentAdded(Object key);

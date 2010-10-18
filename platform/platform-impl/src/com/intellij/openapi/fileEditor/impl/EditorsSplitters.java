@@ -31,11 +31,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +75,9 @@ public class EditorsSplitters extends JPanel {
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
+
+    DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this);
+    DockManager.getInstance(myManager.getProject()).register(dockable, myManager.getProject());
   }
 
   public FileEditorManagerImpl getManager() {
@@ -435,6 +442,19 @@ public class EditorsSplitters extends JPanel {
   }
 
   protected void afterFileOpen(VirtualFile file) {
+  }
+
+  public JBTabs getTabsAt(RelativePoint point) {
+    Point thisPoint = point.getPoint(this);
+    Component c = SwingUtilities.getDeepestComponentAt(this, thisPoint.x, thisPoint.y);
+    while (c != null) {
+      if (c instanceof JBTabs) {
+        return (JBTabs)c;
+      }
+      c = c.getParent();
+    }
+
+    return null;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
