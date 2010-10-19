@@ -82,6 +82,12 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final int offset = editor.getCaretModel().getOffset();
+    if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
+      return Result.CONTINUE;
+    }
+
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
     final Runnable request = new Runnable() {
