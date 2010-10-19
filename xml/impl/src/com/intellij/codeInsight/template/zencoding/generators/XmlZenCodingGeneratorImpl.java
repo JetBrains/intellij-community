@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.zencoding.generators;
 
+import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -28,8 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,20 +75,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   public boolean isMyContext(@NotNull PsiElement context) {
-    if (!isMyLanguage(context.getLanguage())) {
-      return false;
-    }
-    if (PsiTreeUtil.getParentOfType(context, XmlComment.class) != null) {
-      return false;
-    }
-    if (PsiTreeUtil.getParentOfType(context, XmlText.class) != null) {
-      return true;
-    }
-    PsiElement parent = context.getParent();
-    if (parent instanceof PsiErrorElement) {
-      parent = parent.getParent();
-    }
-    return parent instanceof XmlDocument;
+    return isMyLanguage(context.getLanguage()) && HtmlTextContextType.isInContext(context);
   }
 
   protected boolean isMyLanguage(Language language) {
