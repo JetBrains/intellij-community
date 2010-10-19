@@ -222,8 +222,15 @@ class DaemonListeners implements Disposable {
             if (document != null) {
               // highlight markers no more
               //todo clear all highlights regardless the pass id
+
+              // Here color scheme required for TextEditorFields, as far as I understand this
+              // code related to standard file editors, which always use Global color scheme,
+              // thus we can pass null here.
+              final EditorColorsScheme editorColorScheme = null;
+
               UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
                                                              Collections.<HighlightInfo>emptyList(),
+                                                             editorColorScheme,
                                                              Pass.UPDATE_ALL);
             }
           }

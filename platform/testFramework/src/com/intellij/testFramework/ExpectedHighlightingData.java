@@ -482,7 +482,7 @@ public class ExpectedHighlightingData {
   }
 
   private boolean expectedInfosContainsInfo(HighlightInfo info) {
-    if (info.getTextAttributes(null) == TextAttributes.ERASE_MARKER) return true;
+    if (info.getTextAttributes(null, null) == TextAttributes.ERASE_MARKER) return true;
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity != info.getSeverity()) continue;
@@ -506,8 +506,8 @@ public class ExpectedHighlightingData {
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
       (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
-      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
-      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
+      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null, null).equals(info.getTextAttributes(null, null)))
+      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.getTextAttributes(null, null).equals(info.getTextAttributes(null, null)))
       ;
   }
 }
