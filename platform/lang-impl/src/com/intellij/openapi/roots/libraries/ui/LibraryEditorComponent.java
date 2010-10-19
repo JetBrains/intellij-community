@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries;
+package com.intellij.openapi.roots.libraries.ui;
+
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import org.jetbrains.annotations.NotNull;
 
 /**
-* @author nik
-*/
-public class DummyLibraryProperties extends LibraryProperties<Object> {
-  public static final DummyLibraryProperties INSTANCE = new DummyLibraryProperties();
-
-  @Override
-  public Object getState() {
-    return null;
-  }
-
-  @Override
-  public void loadState(Object state) {
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof DummyLibraryProperties;
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
-  }
+ * @author nik
+ */
+public interface LibraryEditorComponent<P extends LibraryProperties> {
+  @NotNull
+  P getProperties();
 }

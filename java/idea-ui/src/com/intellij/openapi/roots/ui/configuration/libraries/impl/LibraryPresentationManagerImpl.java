@@ -58,6 +58,10 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @Override
   public Icon getCustomIcon(@NotNull Library library, StructureConfigurableContext context) {
+    final LibraryType<?> type = ((LibraryEx)library).getType();
+    if (type != null) {
+      return type.getIcon();
+    }
     final List<Icon> icons = getCustomIcons(library, context);
     if (icons.size() == 1) {
       return icons.get(0);

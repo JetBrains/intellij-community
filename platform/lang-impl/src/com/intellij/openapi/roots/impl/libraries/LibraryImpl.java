@@ -93,10 +93,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     updateWatchedRoots();
   }
 
-  LibraryImpl(String name, LibraryTable table, ModifiableRootModel rootModel) {
+  LibraryImpl(String name, final @Nullable LibraryType<?> type, LibraryTable table, ModifiableRootModel rootModel) {
     myName = name;
     myLibraryTable = table;
     myRootModel = rootModel;
+    myType = type;
+    if (type != null) {
+      myProperties = type.createDefaultProperties();
+    }
     myRoots = initRoots();
     mySource = null;
   }
@@ -105,6 +109,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     assert !from.isDisposed();
     myRootModel = rootModel;
     myName = from.myName;
+    myType = from.myType;
+    if (from.myType != null && from.myProperties != null) {
+      myProperties = myType.createDefaultProperties();
+      //noinspection unchecked
+      myProperties.loadState(from.myProperties.getState());
+    }
     myRoots = initRoots();
     mySource = newSource;
     myLibraryTable = from.myLibraryTable;
@@ -204,6 +214,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return true;
   }
 
+  @Override
+  public void setProperties(LibraryProperties properties) {
+    LOG.assertTrue(isWritable());
+    myProperties = properties;
+  }
+
   @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
@@ -241,9 +257,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
     myProperties = myType.createDefaultProperties();
     final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
-    final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
-    //noinspection unchecked
-    myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
+    if (propertiesElement != null) {
+      final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
+      //noinspection unchecked
+      myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
+    }
   }
 
   private void readName(Element element) {
@@ -316,6 +334,16 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   private boolean isWritable() {
     return mySource != null;
+  }
+
+  @Override
+  public LibraryType<?> getType() {
+    return myType;
+  }
+
+  @Override
+  public LibraryProperties getProperties() {
+    return myProperties;
   }
 
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
@@ -436,6 +464,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
+    myProperties = fromModel.myProperties;
     if (areRootsChanged(fromModel)) {
       disposeMyPointers();
       copyRootsFrom(fromModel);
@@ -580,6 +609,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (!myJarDirectories.equals(library.myJarDirectories)) return false;
     if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
     if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
+    if (myType != null ? !myType.equals(library.myType) : library.myType != null) return false;
+    if (myProperties != null ? !myProperties.equals(library.myProperties) : library.myProperties != null) return false;
 
     return true;
   }

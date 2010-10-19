@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.impl.RootModelImpl;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,9 @@ public class LibraryTableImplUtil {
     return new LibraryImpl(null, element, rootModel);
   }
 
-  public static Library createModuleLevelLibrary(@Nullable String name, RootModelImpl rootModel) {
-    return new LibraryImpl(name, null, rootModel);
+  public static Library createModuleLevelLibrary(@Nullable String name,
+                                                 final LibraryType<?> type,
+                                                 RootModelImpl rootModel) {
+    return new LibraryImpl(name, type, null, rootModel);
   }
 }

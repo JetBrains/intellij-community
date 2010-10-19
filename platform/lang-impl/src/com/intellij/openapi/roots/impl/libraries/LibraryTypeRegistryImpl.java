@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries;
+package com.intellij.openapi.roots.impl.libraries;
+
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryTypeRegistry;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
-* @author nik
-*/
-public class DummyLibraryProperties extends LibraryProperties<Object> {
-  public static final DummyLibraryProperties INSTANCE = new DummyLibraryProperties();
+ * @author nik
+ */
+public class LibraryTypeRegistryImpl extends LibraryTypeRegistry {
 
-  @Override
-  public Object getState() {
+  @Nullable
+  public LibraryType<?> findTypeById(@NotNull String typeId) {
+    for (LibraryType type : LibraryType.EP_NAME.getExtensions()) {
+      if (type.getKind().getKindId().equals(typeId)) {
+        return type;
+      }
+    }
     return null;
-  }
-
-  @Override
-  public void loadState(Object state) {
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof DummyLibraryProperties;
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
   }
 }

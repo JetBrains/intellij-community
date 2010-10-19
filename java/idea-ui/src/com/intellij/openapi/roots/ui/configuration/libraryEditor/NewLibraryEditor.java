@@ -18,12 +18,15 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,9 +37,28 @@ public class NewLibraryEditor implements LibraryEditor {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
   private final Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
+  private final LibraryType myType;
+  private LibraryProperties myProperties;
 
   public NewLibraryEditor() {
+    this(null, null);
+  }
+
+  public NewLibraryEditor(LibraryType type, LibraryProperties properties) {
+    myType = type;
+    myProperties = properties;
     myRoots = new MultiMap<OrderRootType, LightFilePointer>();
+  }
+
+  @Override
+  @Nullable
+  public LibraryType getType() {
+    return myType;
+  }
+
+  @Override
+  public LibraryProperties getProperties() {
+    return myProperties;
   }
 
   @Override

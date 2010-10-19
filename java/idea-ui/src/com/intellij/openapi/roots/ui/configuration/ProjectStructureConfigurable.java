@@ -340,12 +340,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback selectProjectGeneralSettings(final boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, myProjectConfig);
+    Place place = createPlaceFor(myProjectConfig);
     return navigateTo(place, requestFocus);
   }
 
   public ActionCallback select(@Nullable final String moduleToSelect, String tab, final boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, myModulesConfig);
+    Place place = createPlaceFor(myModulesConfig);
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
@@ -355,7 +355,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, myModulesConfig);
+    Place place = createPlaceFor(myModulesConfig);
     if (facetToSelect != null) {
       place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, facetToSelect);
     }
@@ -363,19 +363,19 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback select(@NotNull Sdk sdk, final boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, myJdkListConfig);
+    Place place = createPlaceFor(myJdkListConfig);
     place.putPath(BaseStructureConfigurable.TREE_NAME, sdk.getName());
     return navigateTo(place, requestFocus);
   }
 
   public ActionCallback selectProjectOrGlobalLibrary(@NotNull Library library, boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, getConfigurableFor(library));
+    Place place = createPlaceFor(getConfigurableFor(library));
     place.putPath(BaseStructureConfigurable.TREE_NAME, library.getName());
     return navigateTo(place, requestFocus);
   }
 
   public ActionCallback select(@Nullable Artifact artifact, boolean requestFocus) {
-    Place place = new Place().putPath(CATEGORY, myArtifactsStructureConfigurable);
+    Place place = createPlaceFor(myArtifactsStructureConfigurable);
     if (artifact != null) {
       place.putPath(BaseStructureConfigurable.TREE_NAME, artifact.getName());
     }
@@ -385,11 +385,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
     final Library lib = libraryOrderEntry.getLibrary();
     if (lib == null || lib.getTable() == null) {
-      Place place = new Place().putPath(CATEGORY, myModulesConfig);
+      Place place = createPlaceFor(myModulesConfig);
       place.putPath(BaseStructureConfigurable.TREE_OBJECT, libraryOrderEntry.getOwnerModule());
       return navigateTo(place, requestFocus);
     }
-    Place place = new Place().putPath(CATEGORY, getConfigurableFor(lib));
+    Place place = createPlaceFor(getConfigurableFor(lib));
     place.putPath(BaseStructureConfigurable.TREE_NAME, libraryOrderEntry.getLibraryName());
     return navigateTo(place, requestFocus);
   }
@@ -400,6 +400,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     JComponent detailsContent = myDetails.getTargetComponent();
 
     if (mySelectedConfigurable != toSelect) {
+      if (mySelectedConfigurable instanceof BaseStructureConfigurable) {
+        ((BaseStructureConfigurable)mySelectedConfigurable).onStructureUnselected();
+      }
       saveSideProportion();
       removeSelected();
 
@@ -423,6 +426,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
       if (toSelect instanceof DetailsComponent.Facade) {
         ((DetailsComponent.Facade)toSelect).getDetailsComponent().setBannerMinHeight(myToolbarComponent.getPreferredSize().height);
+      }
+
+      if (toSelect instanceof BaseStructureConfigurable) {
+        ((BaseStructureConfigurable)toSelect).onStructureSelected();
       }
     }
 

@@ -16,7 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -45,4 +48,9 @@ public interface LibraryEditor {
   boolean isJarDirectory(String url);
 
   boolean isValid(String url, OrderRootType orderRootType);
+
+  LibraryProperties getProperties();
+
+  @Nullable
+  LibraryType getType();
 }

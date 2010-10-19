@@ -22,17 +22,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureLibraryTableModifiableModelProvider;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -44,40 +44,21 @@ import java.util.List;
 * @author nik
 */
 public class CreateNewLibraryAction extends AnAction {
-  private StructureLibraryTableModifiableModelProvider myModelProvider;
-  private Project myProject;
+  private final @Nullable LibraryType myType;
+  private BaseLibrariesConfigurable myLibrariesConfigurable;
+  private @Nullable Project myProject;
 
-  public CreateNewLibraryAction(String text, StructureLibraryTableModifiableModelProvider modelProvider, final Project project) {
-    super(text);
-    myModelProvider = modelProvider;
+  private CreateNewLibraryAction(@NotNull String text, @Nullable Icon icon, @Nullable LibraryType type, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @Nullable Project project) {
+    super(text, null, icon);
+    myType = type;
+    myLibrariesConfigurable = librariesConfigurable;
     myProject = project;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final LibrariesModifiableModel modifiableModel = myModelProvider.getModifiableModel();
-    final String initial = LibraryEditingUtil.suggestNewLibraryName(modifiableModel);
-    final String prompt = ProjectBundle.message("library.name.prompt");
-    final String title = ProjectBundle.message("library.create.library.action").replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
-    final Icon icon = Messages.getQuestionIcon();
-    final String libraryName = Messages.showInputDialog(myProject, prompt, title, icon, initial, new InputValidator() {
-      public boolean checkInput(final String inputString) {
-        return true;
-      }
-      public boolean canClose(final String inputString) {
-        if (inputString.length() == 0)  {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error"), ProjectBundle.message("library.name.not.specified.title"));
-          return false;
-        }
-        if (LibraryEditingUtil.libraryAlreadyExists(modifiableModel, inputString)) {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", inputString), ProjectBundle.message("library.name.already.exists.title"));
-          return false;
-        }
-        return true;
-      }
-    });
-    if (libraryName == null) return;
-    final Library library = modifiableModel.createLibrary(libraryName);
+    final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
+    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel), myType);
     if (myProject != null){
       final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
       final ExistingLibraryEditor libraryEditor = modifiableModel.getLibraryEditor(library);
@@ -105,10 +86,23 @@ public class CreateNewLibraryAction extends AnAction {
                                                               .message("choose.modules.dialog.description", libraryToSelect.getName()));
     dlg.show();
     if (dlg.isOK()) {
-      final List<Module> choosenModules = dlg.getChosenElements();
-      for (Module module : choosenModules) {
+      final List<Module> chosenModules = dlg.getChosenElements();
+      for (Module module : chosenModules) {
         rootConfigurable.addLibraryOrderEntry(module, libraryToSelect);
       }
     }
+  }
+
+  public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @Nullable Project project) {
+    final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
+    if (extensions.length == 0) {
+      return new AnAction[]{new CreateNewLibraryAction(text, Icons.LIBRARY_ICON, null, librariesConfigurable, project)};
+    }
+    List<AnAction> actions = new ArrayList<AnAction>();
+    actions.add(new CreateNewLibraryAction("Java", Icons.LIBRARY_ICON, null, librariesConfigurable, project));
+    for (LibraryType<?> type : extensions) {
+      actions.add(new CreateNewLibraryAction(type.getCreateActionName(), type.getIcon(), type, librariesConfigurable, project));
+    }
+    return actions.toArray(new AnAction[actions.size()]);
   }
 }

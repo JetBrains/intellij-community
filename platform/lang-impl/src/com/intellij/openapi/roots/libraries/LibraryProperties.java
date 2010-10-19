@@ -21,4 +21,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
  * @author nik
  */
 public abstract class LibraryProperties<T> implements PersistentStateComponent<T> {
+  @Override
+  public abstract boolean equals(Object obj);
+
+  @Override
+  public abstract int hashCode();
 }

@@ -15,28 +15,18 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
-* @author nik
-*/
-public class DummyLibraryProperties extends LibraryProperties<Object> {
-  public static final DummyLibraryProperties INSTANCE = new DummyLibraryProperties();
-
-  @Override
-  public Object getState() {
-    return null;
+ * @author nik
+ */
+public abstract class LibraryTypeRegistry {
+  public static LibraryTypeRegistry getInstance() {
+    return ServiceManager.getService(LibraryTypeRegistry.class);
   }
 
-  @Override
-  public void loadState(Object state) {
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof DummyLibraryProperties;
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
-  }
+  @Nullable
+  public abstract LibraryType<?> findTypeById(@NotNull String typeId);
 }

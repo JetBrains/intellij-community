@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries;
+package com.intellij.openapi.roots.libraries.ui;
+
+import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
-* @author nik
-*/
-public class DummyLibraryProperties extends LibraryProperties<Object> {
-  public static final DummyLibraryProperties INSTANCE = new DummyLibraryProperties();
+ * @author nik
+ */
+public abstract class LibraryPropertiesEditor implements UnnamedConfigurable {
+  @NotNull
+  public abstract JComponent createComponent();
 
   @Override
-  public Object getState() {
-    return null;
-  }
+  public abstract void apply();
 
-  @Override
-  public void loadState(Object state) {
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof DummyLibraryProperties;
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
+  public void disposeUIResources() {
   }
 }
