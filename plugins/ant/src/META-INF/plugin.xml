@@ -52,6 +52,7 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="file set"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="file list"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="path"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPathElement" name="pathelement"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
