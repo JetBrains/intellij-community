@@ -81,7 +81,7 @@ public class CherryPicker {
   }
 
   private void findAndProcessChangedForVcs() {
-    final ChangeListManager clm = PeriodicalTasksCloser.safeGetComponent(myVcs.getProject(), ChangeListManager.class);
+    final ChangeListManager clm = PeriodicalTasksCloser.getInstance().safeGetComponent(myVcs.getProject(), ChangeListManager.class);
     clm.invokeAfterUpdate(new Runnable() {
       public void run() {
         moveToCorrectLists(clm);

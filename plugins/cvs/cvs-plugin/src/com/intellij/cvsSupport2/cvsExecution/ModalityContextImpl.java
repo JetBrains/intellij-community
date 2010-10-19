@@ -47,7 +47,7 @@ public class ModalityContextImpl implements ModalityContext {
     }
     else {
       ModalityState modalityState = getCurrentModalityState();
-      PeriodicalTasksCloser.invokeAndWaitInterruptedWhenClosing(project, action, modalityState);
+      PeriodicalTasksCloser.getInstance().invokeAndWaitInterruptedWhenClosing(project, action, modalityState);
     }
   }
 

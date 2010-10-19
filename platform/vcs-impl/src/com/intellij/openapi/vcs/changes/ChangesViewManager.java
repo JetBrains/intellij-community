@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,7 +83,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
 
   public static ChangesViewI getInstance(Project project) {
-    return project.getComponent(ChangesViewI.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
   }
 
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
@@ -94,10 +95,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectOpened() {
-    ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    changeListManager.addChangeListListener(myListener);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
-        ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
+        changeListManager.removeChangeListListener(myListener);
       }
     });
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;

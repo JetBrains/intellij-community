@@ -144,7 +144,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   private static void notifyRootManagerIfUnderProject(final Project project, final File directory) {
     if (project.isDefault()) return;
-    final ProjectLevelVcsManagerEx plVcsManager = ProjectLevelVcsManagerEx.getInstanceChecked(project);
+    final ProjectLevelVcsManagerEx plVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
     final SvnVcs vcs = (SvnVcs) plVcsManager.findVcsByName(SvnVcs.VCS_NAME);
 
     final VirtualFile[] files = vcs.getSvnFileUrlMapping().getNotFilteredRoots();

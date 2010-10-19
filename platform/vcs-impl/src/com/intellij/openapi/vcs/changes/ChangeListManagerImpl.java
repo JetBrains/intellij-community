@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -48,6 +49,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcsUtil.Rethrow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,13 +102,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
-      VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
   };
   private final ChangelistConflictTracker myConflictTracker;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
-    return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
+    return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
   }
 
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
@@ -419,7 +421,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         catch (Throwable t) {
           LOG.info(t);
-          reThrowRuntime(t);
+          Rethrow.reThrowRuntime(t);
         }
 
         if (myUpdateException != null) break;
@@ -476,15 +478,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myChangesViewManager.scheduleRefresh();
       }
     }
-  }
-
-  private static void reThrowRuntime(final Throwable t) {
-    if (t instanceof Error) {
-      throw (Error) t;
-    } else if (t instanceof RuntimeException) {
-      throw (RuntimeException) t;
-    }
-    throw new RuntimeException(t);
   }
 
   private void actualUpdate(final boolean wasEverythingDirty, final FileHolderComposite composite, final UpdatingChangeListBuilder builder,

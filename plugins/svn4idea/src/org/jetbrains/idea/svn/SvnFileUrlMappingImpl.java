@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -88,7 +89,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   public static SvnFileUrlMappingImpl getInstance(final Project project) {
-    return project.getComponent(SvnFileUrlMappingImpl.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnFileUrlMappingImpl.class);
   }
 
   private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
