@@ -474,14 +474,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public volatile String cancelTrace;
+  private volatile Throwable cancelTrace;
+
+  @Nullable
+  public String getCancelTrace() {
+    Throwable t = cancelTrace;
+    if (t == null) return null;
+    final StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
+  }
+
   @Override
   public void cancel() {
     if (cancelTrace == null) {
-      Throwable t = new Throwable();
-      final StringWriter writer = new StringWriter();
-      t.printStackTrace(new PrintWriter(writer));
-      cancelTrace = writer.toString();
+      cancelTrace = new Throwable();
     }
     super.cancel();
   }
@@ -489,7 +496,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void start() {
     if (isCanceled()) {
-      throw new AssertionError("Restarting completion process is prohibited: trace=" + cancelTrace);
+      throw new AssertionError("Restarting completion process is prohibited: trace=" + getCancelTrace());
     }
 
     super.start();
@@ -498,7 +505,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void initStateFrom(@NotNull ProgressIndicatorEx indicator) {
     if (isCanceled()) {
-      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + cancelTrace);
+      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + getCancelTrace());
     }
 
     if (indicator.isCanceled()) {
