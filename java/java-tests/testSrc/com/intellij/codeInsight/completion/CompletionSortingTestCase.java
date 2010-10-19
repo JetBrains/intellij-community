@@ -96,6 +96,6 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
   protected static void imitateItemSelection(final LookupImpl lookup, final int index) {
     final LookupElement item = lookup.getItems().get(index);
     lookup.setCurrentItem(item);
-    lookup.getLookupModel().itemSelected(item, lookup);
+    lookup.getArranger().itemSelected(item, lookup);
   }
 }

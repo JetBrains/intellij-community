@@ -1005,7 +1005,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   @TestOnly
-  public LookupArranger getLookupModel() {
+  public LookupArranger getArranger() {
     return myArranger;
   }
 
