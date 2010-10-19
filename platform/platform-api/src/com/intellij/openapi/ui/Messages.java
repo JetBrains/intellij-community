@@ -26,6 +26,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -100,6 +101,17 @@ public class Messages {
     }
     else {
       MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
+      dialog.show();
+      return dialog.getExitCode();
+    }
+  }
+
+  public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
       dialog.show();
       return dialog.getExitCode();
     }
@@ -520,6 +532,46 @@ public class Messages {
     }
   }
 
+  private static class MoreInfoMessageDialog extends MessageDialog {
+    private String myInfoText;
+
+    public MoreInfoMessageDialog(Project project,
+                                 String message,
+                                 String title,
+                                 String moreInfo,
+                                 String[] options,
+                                 int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+      super(project);
+      myInfoText = moreInfo;
+      _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      return doCreateCenterPanel();
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final JPanel panel = new JPanel(new BorderLayout());
+      final JTextArea area = new JTextArea(myInfoText);
+      area.setEditable(false);
+      final JBScrollPane scrollPane = new JBScrollPane(area) {
+        @Override
+        public Dimension getPreferredSize() {
+          final Dimension preferredSize = super.getPreferredSize();
+          final Container parent = getParent();
+          if (parent != null) {
+            return new Dimension(preferredSize.width, Math.min(150, preferredSize.height));
+          }
+          return preferredSize;
+        }
+      };
+      panel.add(scrollPane);
+      return panel;
+    }
+  }
+
   private static class MessageDialog extends DialogWrapper {
     protected String myMessage;
     protected String[] myOptions;
@@ -561,6 +613,10 @@ public class Messages {
 
     protected MessageDialog() {
       super(false);
+    }
+
+    protected MessageDialog(Project project) {
+      super(project, false);
     }
 
     protected void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
@@ -619,6 +675,10 @@ public class Messages {
     }
 
     protected JComponent createCenterPanel() {
+      return doCreateCenterPanel();
+    }
+
+    protected JComponent doCreateCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
         JLabel iconLabel = new JLabel(myIcon);

@@ -67,6 +67,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
@@ -137,7 +138,17 @@ public class CompilerTask extends Task.Backgroundable {
     projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
 
     final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
-    semaphore.acquireUninterruptibly();
+    try {
+      while (!semaphore.tryAcquire(500, TimeUnit.MILLISECONDS)) {
+        if (indicator.isCanceled()) {
+          // give up obtaining the semaphore,
+          // let compile work begin in order to stop gracefuly on cancel event
+          break;
+        }
+      }
+    }
+    catch (InterruptedException ignored) {
+    }
     try {
       if (!isHeadless()) {
         addIndicatorDelegate();

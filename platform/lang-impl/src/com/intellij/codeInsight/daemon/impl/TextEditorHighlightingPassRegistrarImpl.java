@@ -128,6 +128,9 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           passesRefusedToCreate.add(passId);
         }
         else {
+          // init with editor's colors scheme
+          pass.setColorsScheme(editor.getColorsScheme());
+
           TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
           for (int id : passConfig.completionPredecessorIds) {
             if (myRegisteredPassFactories.containsKey(id)) ids.add(id);

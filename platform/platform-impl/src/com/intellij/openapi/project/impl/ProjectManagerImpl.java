@@ -47,6 +47,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -1004,9 +1005,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, project);
     if (notifications.length == 0) return true;
 
+    final String fileNames = StringUtil.join(notifications[0].getFileNames(), "\n");
+
     final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                      ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved project!", new String[]{"Yes", "No"}, 0, 1, Messages.getWarningIcon()) == 0;
+    return Messages.showDialog(project, msg, "Unsaved project!", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
+                               Messages.getWarningIcon()) == 0;
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {

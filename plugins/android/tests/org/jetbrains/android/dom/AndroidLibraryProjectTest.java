@@ -105,7 +105,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   private static String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + "/plugins/android/testData";
+    return PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/plugins/android/testData";
   }
 
   private String getTestSdkPath() {

@@ -127,7 +127,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
         MarkupModel model = myDocument.getMarkupModel(myProject);
         UpdateHighlightersUtil.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL,myFile);
-        UpdateHighlightersUtil.setHighlightersInRange(range, myHighlights, (MarkupModelEx)model, Pass.UPDATE_ALL, myDocument, myProject);
+        final EditorColorsScheme colorsScheme = getColorsScheme();
+        UpdateHighlightersUtil.setHighlightersInRange(range, myHighlights, colorsScheme, (MarkupModelEx)model, Pass.UPDATE_ALL, myDocument, myProject);
       }
     };
 
@@ -191,6 +192,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         public void run() {
           if (!addInjectedPsiHighlights(injectedInside, progress, Collections.synchronizedSet(result))) throw new ProcessCanceledException();
 
+          // set editor's color scheme
+          //final EditorColorsScheme colorsScheme = getColorsScheme();
+          //if (colorsScheme != null) {
+          //  for (HighlightInfo info : result) {
+          //    info.setCustomColorScheme(colorsScheme);
+          //  }
+          //}
+
           if (!outside.isEmpty() || !injectedOutside.isEmpty()) {
             if (!inside.isEmpty()) { // do not apply when there were no elements to highlight
               // clear infos found in visible area to avoid applying them twice
@@ -214,7 +223,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   MarkupModel markupModel = myDocument.getMarkupModel(myProject);
 
                   ProperTextRange range = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
-                  UpdateHighlightersUtil.setHighlightersInRange(range, toApply, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
+                  final EditorColorsScheme colorsScheme = getColorsScheme();
+                  UpdateHighlightersUtil.setHighlightersInRange(range, toApply, colorsScheme, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
                 }
               });
               UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -258,7 +268,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 }
                 */
 
-                UpdateHighlightersUtil.setHighlightersToEditorOutsideRange(myProject, myDocument, toApply, myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
+                UpdateHighlightersUtil.setHighlightersToEditorOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
+                                                                           myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
               }
             };
           }
@@ -354,7 +365,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
           else {
             HighlightInfo patched =
-              new HighlightInfo(info.forcedTextAttributes, info.type, fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
+              new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+                                fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
                                 info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
             infos.add(patched);
           }
@@ -400,7 +412,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextRange hostRange = fixedTextRange == null ? documentWindow.injectedToHost(editable) : fixedTextRange;
 
       HighlightInfo patched =
-        new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(),
+        new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+                          hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
       patched.setHint(info.hasHint());
       patched.setGutterIconRenderer(info.getGutterIconRenderer());
@@ -522,6 +535,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull final Set<HighlightInfo> gotHighlights,
                                  final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
+
+    // TODO - add color scheme to holder
     final HighlightInfoHolder holder = createInfoHolder(myFile);
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
@@ -569,7 +584,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 public void run() {
                   if (progress.isCanceled()) return;
-                  UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, 0, myDocument.getTextLength(), info, Pass.UPDATE_ALL);
+
+                  final EditorColorsScheme colorsScheme = getColorsScheme();
+                  UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, 0,
+                                                                             myDocument.getTextLength(),
+                                                                             info, colorsScheme, Pass.UPDATE_ALL);
                 }
               });
             }
@@ -642,7 +661,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
-    return new HighlightInfoHolder(file, filters);
+    return new HighlightInfoHolder(file, getColorsScheme(), filters);
   }
 
   private static void highlightTodos(@NotNull PsiFile file,

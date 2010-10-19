@@ -16,10 +16,10 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -37,6 +37,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private int[] myStartingPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private int myId;
   private boolean myDumb;
+  private EditorColorsScheme myColorsScheme;
 
   protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document, boolean runIntentionPassAfter) {
     myDocument = document;
@@ -52,6 +53,15 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) return; //Document has changed.
     myDumb = DumbService.getInstance(myProject).isDumb();
     doCollectInformation(progress);
+  }
+
+  @Nullable
+  public EditorColorsScheme getColorsScheme() {
+    return myColorsScheme;
+  }
+
+  public void setColorsScheme(@Nullable EditorColorsScheme colorsScheme) {
+    myColorsScheme = colorsScheme;
   }
 
   protected boolean isDumbMode() {

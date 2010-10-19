@@ -24,6 +24,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +42,18 @@ public class HighlightInfoHolder {
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
   private final AnnotationSession myAnnotationSession;
+  private EditorColorsScheme myCustomColorsScheme;
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
+  public HighlightInfoHolder(@NotNull final PsiFile contextFile,
+                             @NotNull final HighlightInfoFilter... filters) {
+    this(contextFile, null, filters);
+  }
+
+  public HighlightInfoHolder(@NotNull final PsiFile contextFile,
+                             @Nullable final EditorColorsScheme customColorsScheme,
+                             @NotNull final HighlightInfoFilter... filters) {
     myContextFile = contextFile;
+    myCustomColorsScheme = customColorsScheme;
     myFilters = filters;
     myAnnotationSession = new AnnotationSession(contextFile);
   }
@@ -94,5 +105,13 @@ public class HighlightInfoHolder {
 
   public HighlightInfo get(final int i) {
     return myInfos.get(i);
+  }
+
+  @NotNull
+  public EditorColorsScheme getColorsScheme() {
+    if (myCustomColorsScheme != null) {
+      return myCustomColorsScheme;
+    }
+    return EditorColorsManager.getInstance().getGlobalScheme();
   }
 }
