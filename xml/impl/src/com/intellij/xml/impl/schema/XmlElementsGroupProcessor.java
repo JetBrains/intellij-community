@@ -44,6 +44,11 @@ public class XmlElementsGroupProcessor extends XmlSchemaTagsProcessor {
       public Type getGroupType() {
         return Type.GROUP;
       }
+
+      @Override
+      public String toString() {
+        return "root";
+      }
     });
   }
 
