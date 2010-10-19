@@ -1009,7 +1009,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                      ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved project!", fileNames, new String[]{"Yes", "No"}, 0, 1, Messages.getWarningIcon()) == 0;
+    return Messages.showDialog(project, msg, "Unsaved project!", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
+                               Messages.getWarningIcon()) == 0;
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {

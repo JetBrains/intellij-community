@@ -556,7 +556,18 @@ public class Messages {
       final JPanel panel = new JPanel(new BorderLayout());
       final JTextArea area = new JTextArea(myInfoText);
       area.setEditable(false);
-      panel.add(new JBScrollPane(area));
+      final JBScrollPane scrollPane = new JBScrollPane(area) {
+        @Override
+        public Dimension getPreferredSize() {
+          final Dimension preferredSize = super.getPreferredSize();
+          final Container parent = getParent();
+          if (parent != null) {
+            return new Dimension(preferredSize.width, Math.min(150, preferredSize.height));
+          }
+          return preferredSize;
+        }
+      };
+      panel.add(scrollPane);
       return panel;
     }
   }
