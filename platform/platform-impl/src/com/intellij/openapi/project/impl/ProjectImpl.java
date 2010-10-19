@@ -51,6 +51,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -470,6 +472,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public static class UnableToSaveProjectNotification extends Notification {
     private Project myProject;
+    private String[] myFileNames;
 
     private UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
       super("Project Settings", "Could not save project!", buildMessage(readOnlyFiles), NotificationType.ERROR, new NotificationListener() {
@@ -486,6 +489,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       });
 
       myProject = project;
+      myFileNames = ContainerUtil.map(readOnlyFiles, new Function<VirtualFile, String>() {
+        @Override
+        public String fun(VirtualFile file) {
+          return file.getPath();
+        }
+      }, new String[readOnlyFiles.length]);
+    }
+
+    public String[] getFileNames() {
+      return myFileNames;
     }
 
     private static String buildMessage(final VirtualFile[] readOnlyFiles) {
