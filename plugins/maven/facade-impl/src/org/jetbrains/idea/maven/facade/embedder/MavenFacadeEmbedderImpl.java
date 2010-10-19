@@ -280,7 +280,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
           mavenPlugin.setGroupId(plugin.getGroupId());
           mavenPlugin.setArtifactId(plugin.getArtifactId());
           mavenPlugin.setVersion(plugin.getVersion());
-          MavenProject project = RemoteNativeMavenProjectHolder.findprojectById(nativeMavenProjectId);
+          MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
           PluginDescriptor result = getComponent(PluginManager.class).verifyPlugin(mavenPlugin, project,
                                                                                    myImpl.getSettings(), myImpl.getLocalRepository());
           if (!transitive) return Collections.emptyList();

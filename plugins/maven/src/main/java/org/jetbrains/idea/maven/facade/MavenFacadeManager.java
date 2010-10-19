@@ -51,7 +51,6 @@ import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -69,21 +68,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenFacadeManager {
+public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.facade.RemoteMavenServer";
-  private final RemoteProcessSupport<Object, MavenFacade, Object> mySupport;
-  private MavenFacade myFacade;
 
-  private RemoteMavenFacadeLogger myLogger = new RemoteMavenFacadeLogger();
+  private final RemoteProcessSupport<Object, MavenFacade, Object> mySupport;
+
+  private final RemoteMavenFacadeLogger myLogger = new RemoteMavenFacadeLogger();
+  private final RemoteMavenFacadeDownloadListener myDownloadListener = new RemoteMavenFacadeDownloadListener();
   private boolean myLoggerExported;
-  private RemoteMavenFacadeDownloadListener myDownloadListener = new RemoteMavenFacadeDownloadListener();
   private boolean myDownloadListenerExported;
 
   public static MavenFacadeManager getInstance() {
     return ServiceManager.getService(MavenFacadeManager.class);
   }
 
-  public MavenFacadeManager() throws RemoteException {
+  public MavenFacadeManager() {
+    super(null);
+
     mySupport = new RemoteProcessSupport<Object, MavenFacade, Object>(MavenFacade.class) {
       @Override
       protected void fireModificationCountChanged() {
@@ -107,18 +108,34 @@ public class MavenFacadeManager {
     });
   }
 
-  @TestOnly
-  public synchronized void shutdown(boolean wait) {
-    mySupport.stopAll(wait);
-    disposeFacade();
-  }
-
-  private void disposeFacade() {
-    if (myFacade != null) {
-      mySupport.release(myFacade, "");
-      myFacade = null;
+  @NotNull
+  protected synchronized MavenFacade create() throws RemoteException {
+    MavenFacade result;
+    try {
+      result = mySupport.acquire(this, "");
+    }
+    catch (Exception e) {
+      throw new RemoteException("Cannot start maven service", e);
     }
 
+    myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
+    myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
+    result.set(myLogger, myDownloadListener);
+    return result;
+  }
+
+  public synchronized void shutdown(boolean wait) {
+    mySupport.stopAll(wait);
+    cleanup();
+  }
+
+  @Override
+  protected synchronized void onError() {
+    super.onError();
+    cleanup();
+  }
+
+  private synchronized void cleanup() {
     if (myLoggerExported) {
       try {
         UnicastRemoteObject.unexportObject(myLogger, true);
@@ -139,42 +156,12 @@ public class MavenFacadeManager {
     }
   }
 
-  @TestOnly
-  synchronized MavenFacade getFacade() {
-    if (myFacade != null) {
-      try {
-        myFacade.ping();
-      }
-      catch (Exception ex) {
-        disposeFacade();
-      }
-    }
-    if (myFacade == null) {
-      try {
-        myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
-        myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
-
-        myFacade = mySupport.acquire(this, "");
-        myFacade.set(myLogger, myDownloadListener);
-      }
-      catch (Exception e) {
-        disposeFacade();
-
-        if (e instanceof RuntimeException) throw (RuntimeException)e;
-        throw new RuntimeException(e);
-      }
-    }
-    return myFacade;
-  }
-
-
   private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
         final SimpleJavaParameters params = new SimpleJavaParameters();
 
-        final Sdk ideaJdk = new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome());
-        params.setJdk(ideaJdk);
+        params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final ArrayList<String> classPath = new ArrayList<String>();
@@ -254,72 +241,73 @@ public class MavenFacadeManager {
     return Pair.create(classpath, libDir);
   }
 
-  public MavenEmbedderWrapper createEmbedder(Project project) {
-    MavenFacade facade = getFacade();
-    MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
-    try {
-      return new MavenEmbedderWrapper(facade.createEmbedder(convertSettings(settings)));
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public MavenEmbedderWrapper createEmbedder(final Project project) {
+    final MavenFacadeSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
+    return new MavenEmbedderWrapper(this) {
+      @NotNull
+      @Override
+      protected MavenFacadeEmbedder create() throws RemoteException {
+        return MavenFacadeManager.this.getOrCreateWrappee().createEmbedder(settings);
+      }
+    };
   }
 
   public MavenIndexerWrapper createIndexer() {
-    try {
-      return new MavenIndexerWrapper(getFacade().createIndexer());
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+    return new MavenIndexerWrapper(this) {
+      @NotNull
+      @Override
+      protected MavenFacadeIndexer create() throws RemoteException {
+        return MavenFacadeManager.this.getOrCreateWrappee().createIndexer();
+      }
+    };
   }
 
-  public List<MavenRepositoryInfo> getRepositories(String nexusUrl) {
-    try {
-      return getFacade().getRepositories(nexusUrl);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public List<MavenRepositoryInfo> getRepositories(final String nexusUrl) {
+    return perform(new Retriable<List<MavenRepositoryInfo>>() {
+      @Override
+      public List<MavenRepositoryInfo> execute() throws RemoteException {
+        return getOrCreateWrappee().getRepositories(nexusUrl);
+      }
+    });
   }
 
-  public List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String nexusUrl) {
-    try {
-      return getFacade().findArtifacts(template, nexusUrl);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public List<MavenArtifactInfo> findArtifacts(final MavenArtifactInfo template, final String nexusUrl) {
+    return perform(new Retriable<List<MavenArtifactInfo>>() {
+      @Override
+      public List<MavenArtifactInfo> execute() throws RemoteException {
+        return getOrCreateWrappee().findArtifacts(template, nexusUrl);
+      }
+    });
   }
 
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    try {
-      return getFacade().interpolateAndAlignModel(model, basedir);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
+    return perform(new Retriable<MavenModel>() {
+      @Override
+      public MavenModel execute() throws RemoteException {
+        return getOrCreateWrappee().interpolateAndAlignModel(model, basedir);
+      }
+    });
   }
 
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
-    try {
-      return getFacade().assembleInheritance(model, parentModel);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
+    return perform(new Retriable<MavenModel>() {
+      @Override
+      public MavenModel execute() throws RemoteException {
+        return getOrCreateWrappee().assembleInheritance(model, parentModel);
+      }
+    });
   }
 
-  public ProfileApplicationResult applyProfiles(MavenModel model,
-                                                File basedir,
-                                                Collection<String> explicitProfiles,
-                                                Collection<String> alwaysOnProfiles) {
-    try {
-      return getFacade().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public ProfileApplicationResult applyProfiles(final MavenModel model,
+                                                final File basedir,
+                                                final Collection<String> explicitProfiles,
+                                                final Collection<String> alwaysOnProfiles) {
+    return perform(new Retriable<ProfileApplicationResult>() {
+      @Override
+      public ProfileApplicationResult execute() throws RemoteException {
+        return getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      }
+    });
   }
 
   public void addDownloadListener(MavenFacadeDownloadListener listener) {
@@ -379,6 +367,7 @@ public class MavenFacadeManager {
     }
 
     public void print(String s) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.println(s);
     }
   }

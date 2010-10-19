@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.facade;
 
+import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
@@ -33,106 +35,162 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class MavenIndexerWrapper {
-  private final MavenFacadeIndexer myWrappee;
+public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenFacadeIndexer> {
+  private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<IndexData>();
 
-  public MavenIndexerWrapper(MavenFacadeIndexer wrappee) {
-    myWrappee = wrappee;
+  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
+    super(parent);
   }
 
-  public int createIndex(@NotNull String indexId,
-                         @Nullable String repositoryId,
-                         @Nullable File file,
-                         @Nullable String url,
-                         @NotNull File indexDir) throws MavenFacadeIndexerException {
-    try {
-      return myWrappee.createIndex(indexId, repositoryId, file, url, indexDir);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
+  @Override
+  protected synchronized void onError() {
+    super.onError();
+    for (int each : myDataMap.keys()) {
+      myDataMap.get(each).remoteId = -1;
     }
   }
 
-  public void releaseIndex(int id) throws MavenFacadeIndexerException {
+  public synchronized int createIndex(@NotNull final String indexId,
+                                      @Nullable final String repositoryId,
+                                      @Nullable final File file,
+                                      @Nullable final String url,
+                                      @NotNull final File indexDir) throws MavenFacadeIndexerException {
+    IndexData data = new IndexData(indexId, repositoryId, file, url, indexDir);
+    final int localId = System.identityHashCode(data);
+    myDataMap.put(localId, data);
+
+    perform(new IndexRetriable<Object>() {
+      @Override
+      public Object execute() throws RemoteException, MavenFacadeIndexerException {
+        return getRemoteId(localId);
+      }
+    });
+
+    return localId;
+  }
+
+  public synchronized void releaseIndex(int localId) throws MavenFacadeIndexerException {
+    IndexData data = myDataMap.remove(localId);
+    if (data == null) {
+      MavenLog.LOG.warn("index " + localId + " not found");
+      return;
+    }
+
+    // was invalidated on error
+    if (data.remoteId == -1) return;
+
+    MavenFacadeIndexer w = getWrappee();
+    if (w == null) return;
+
     try {
-      myWrappee.releaseIndex(id);
+      w.releaseIndex(data.remoteId);
     }
     catch (RemoteException e) {
-      throw new RuntimeException(e);
+      handleRemoteError(e);
     }
   }
 
   public int getIndexCount() {
-    try {
-      return myWrappee.getIndexCount();
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void updateIndex(int id, MavenGeneralSettings settings, MavenProgressIndicator indicator) throws MavenProcessCanceledException,
-                                                                                                          MavenFacadeIndexerException {
-    try {
-      MavenFacadeProgressIndicator indicatorWrapper = MavenFacadeManager.wrapAndExport(indicator);
-      try {
-        myWrappee.updateIndex(id, MavenFacadeManager.convertSettings(settings), indicatorWrapper);
+    return perform(new Retriable<Integer>() {
+      @Override
+      public Integer execute() throws RemoteException {
+        return getOrCreateWrappee().getIndexCount();
       }
-      finally {
-        UnicastRemoteObject.unexportObject(indicatorWrapper, true);
+    });
+  }
+
+  public void updateIndex(final int localId,
+                          final MavenGeneralSettings settings,
+                          final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
+                                                                         MavenFacadeIndexerException {
+    perform(new IndexRetriableCancelable<Object>() {
+      @Override
+      public Object execute() throws RemoteException, MavenFacadeIndexerException, MavenFacadeProcessCanceledException {
+        MavenFacadeProgressIndicator indicatorWrapper = MavenFacadeManager.wrapAndExport(indicator);
+        try {
+          getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenFacadeManager.convertSettings(settings), indicatorWrapper);
+        }
+        finally {
+          UnicastRemoteObject.unexportObject(indicatorWrapper, true);
+        }
+        return null;
       }
-    }
-    catch (MavenFacadeProcessCanceledException e) {
-      throw new MavenProcessCanceledException();
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
-  public List<MavenId> getAllArtifacts(int indexId) throws MavenFacadeIndexerException {
-    try {
-      return myWrappee.getAllArtifacts(indexId);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public List<MavenId> getAllArtifacts(final int indexId) throws MavenFacadeIndexerException {
+    return perform(new IndexRetriable<List<MavenId>>() {
+      @Override
+      public List<MavenId> execute() throws RemoteException, MavenFacadeIndexerException {
+        return getOrCreateWrappee().getAllArtifacts(getRemoteId(indexId));
+      }
+    });
   }
 
-  public MavenId addArtifact(int indexId, File artifactFile) throws MavenFacadeIndexerException {
-    try {
-      return myWrappee.addArtifact(indexId, artifactFile);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  public MavenId addArtifact(final int localId, final File artifactFile) throws MavenFacadeIndexerException {
+    return perform(new IndexRetriable<MavenId>() {
+      @Override
+      public MavenId execute() throws RemoteException, MavenFacadeIndexerException {
+        return getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile);
+      }
+    });
   }
 
-  public Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws MavenFacadeIndexerException {
-    try {
-      return myWrappee.search(indexId, query, maxResult);
+  public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenFacadeIndexerException {
+    return perform(new IndexRetriable<Set<MavenArtifactInfo>>() {
+      @Override
+      public Set<MavenArtifactInfo> execute() throws RemoteException, MavenFacadeIndexerException {
+        return getOrCreateWrappee().search(getRemoteId(localId), query, maxResult);
+      }
+    });
+  }
+
+  private synchronized int getRemoteId(int localId) throws RemoteException, MavenFacadeIndexerException {
+    IndexData result = myDataMap.get(localId);
+    MavenLog.LOG.assertTrue(result != null, "index " + localId + " not found");
+
+    if (result.remoteId == -1) {
+      result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir);
     }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+    return result.remoteId;
   }
 
   public Collection<MavenArchetype> getArchetypes() {
-    try {
-      return myWrappee.getArchetypes();
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+    return perform(new Retriable<Collection<MavenArchetype>>() {
+      @Override
+      public Collection<MavenArchetype> execute() throws RemoteException {
+        return getOrCreateWrappee().getArchetypes();
+      }
+    });
   }
 
   @TestOnly
   public void releaseInTests() {
+    MavenFacadeIndexer w = getWrappee();
+    if (w == null) return;
     try {
-      myWrappee.release();
+      w.release();
     }
     catch (RemoteException e) {
-      throw new RuntimeException(e);
+      handleRemoteError(e);
+    }
+  }
+
+  private static class IndexData {
+    private int remoteId = -1;
+
+    private final @NotNull String indexId;
+    private final @Nullable String repositoryId;
+    private final @Nullable File file;
+    private final @Nullable String url;
+    private final @NotNull File indexDir;
+
+    public IndexData(String indexId, String repositoryId, File file, String url, File indexDir) {
+      this.indexId = indexId;
+      this.repositoryId = repositoryId;
+      this.file = file;
+      this.url = url;
+      this.indexDir = indexDir;
     }
   }
 }
