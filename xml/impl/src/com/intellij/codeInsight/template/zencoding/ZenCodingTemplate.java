@@ -382,7 +382,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
 
-  public static boolean checkTemplateKey(String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     return parse(key, callback, generator) != null;
   }
 
