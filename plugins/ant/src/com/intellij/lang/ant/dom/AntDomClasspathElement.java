@@ -20,6 +20,7 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -35,5 +36,5 @@ public interface AntDomClasspathElement {
   @Convert(value = AntDomRefIdConverter.class)
   GenericAttributeValue<AntDomElement> getClasspathRef();
 
-  List<AntDomElement> getAntChildren();
+  Iterator<AntDomElement> getAntChildrenIterator();
 }

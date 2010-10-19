@@ -371,7 +371,9 @@ public class CustomAntElementsRegistry {
         }
       }
       // check nested elements
-      for (AntDomElement child : typedef.getAntChildren()) {
+      
+      for (final Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
+        AntDomElement child = it.next();
         if (child instanceof AntFilesProvider) {
           for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
             try {
@@ -382,7 +384,6 @@ public class CustomAntElementsRegistry {
             }
           }
         }
-  
       }
 
       return urls;
