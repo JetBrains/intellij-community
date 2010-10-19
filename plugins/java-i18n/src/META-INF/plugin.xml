@@ -12,7 +12,12 @@
     <extensionPoint name="resourceBundleManager"
                     interface="com.intellij.lang.properties.psi.ResourceBundleManager"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="i18nizeHandlerProvider" interface="com.intellij.codeInspection.i18n.I18nizeHandlerProvider"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.java-i18n">
+    <i18nizeHandlerProvider implementation="com.intellij.codeInspection.i18n.I18nizeJspHandlerProvider"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

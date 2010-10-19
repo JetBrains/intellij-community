@@ -199,6 +199,15 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
   }
 
+  @Deprecated
+  static void setHighlightersToEditor(@NotNull final Project project,
+                                      @NotNull final Document document,
+                                      @NotNull final Map<TextRange, Collection<HighlightInfo>> infos,
+                                      final int group) {
+    // For backward compatibility with TeamCity plugin, duplicates searcher.
+    setHighlightersToEditor(project, document, infos, null, group);
+  }
+
   static void setHighlightersToEditor(@NotNull Project project,
                                       @NotNull Document document,
                                       @NotNull Map<TextRange, Collection<HighlightInfo>> infos,

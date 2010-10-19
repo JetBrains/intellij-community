@@ -22,9 +22,11 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -51,6 +53,18 @@ public class JavaI18nUtil extends I18nUtil {
   };
 
   private JavaI18nUtil() {
+  }
+
+  @Nullable
+  public static TextRange getSelectedRange(Editor editor, final PsiFile psiFile) {
+    if (editor == null) return null;
+    String selectedText = editor.getSelectionModel().getSelectedText();
+    if (selectedText != null) {
+      return new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    }
+    PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    if (psiElement==null || psiElement instanceof PsiWhiteSpace) return null;
+    return psiElement.getTextRange();
   }
 
   public static boolean mustBePropertyKey(final PsiLiteralExpression expression, @NotNull Map<String, Object> annotationAttributeValues) {

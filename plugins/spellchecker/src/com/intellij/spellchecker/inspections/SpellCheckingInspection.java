@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
@@ -90,7 +91,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   public static void ensureFactoriesAreLoaded() {
     synchronized (factories) {
-      if (!factories.isEmpty()) return;
+      // Spellchecker should not rely classpath in unit test mode given module dependent classpath !
+      if (!factories.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) return;
       final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
       if (spellcheckingStrategies != null) {
         for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
