@@ -46,7 +46,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
   private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
   private final Object myLock = new Object();
   private final MultiMap<Project, Pair<String, Runnable>> myInterrupters;
-  private final static Map<Project, TracedLifeCycle> myStates = new HashMap<Project, TracedLifeCycle>();
+  private final Map<Project, TracedLifeCycle> myStates = new HashMap<Project, TracedLifeCycle>();
   private MessageBusConnection myConnection;
   private ProjectManager myProjectManager;
 

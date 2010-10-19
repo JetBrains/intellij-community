@@ -53,7 +53,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
-    myAccessProviders = Extensions.getExtensions(WritingAccessProvider.EP_NAME, project);
+    myAccessProviders = project.isDefault() ? new WritingAccessProvider[0] : Extensions.getExtensions(WritingAccessProvider.EP_NAME, project);
   }
 
   public State getState() {
