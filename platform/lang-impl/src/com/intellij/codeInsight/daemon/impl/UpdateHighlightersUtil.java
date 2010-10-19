@@ -125,6 +125,16 @@ public class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), colorsScheme, group);
   }
 
+  @Deprecated
+  public static void setHighlightersToEditor(Project project,
+                                              Document document,
+                                              int startOffset,
+                                              int endOffset,
+                                              Collection<HighlightInfo> highlights, int group) {
+    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, null, group);
+
+  }
+
   static boolean hasInfo(Collection<HighlightInfo> infos, int start, int end, String desc) {
     if (infos == null) return false;
     for (HighlightInfo info : infos) {
