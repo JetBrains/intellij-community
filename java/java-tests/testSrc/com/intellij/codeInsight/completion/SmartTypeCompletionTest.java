@@ -968,6 +968,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testWildcardedInstanceof2() throws Throwable { doTest(); }
   public void testWildcardedInstanceof3() throws Throwable { doTest(); }
 
+  public void testCheckStaticImportsType() throws Throwable { doAntiTest(); }
+
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
     performAction();

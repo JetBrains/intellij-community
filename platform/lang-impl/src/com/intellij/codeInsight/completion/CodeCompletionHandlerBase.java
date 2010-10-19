@@ -133,10 +133,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           }.execute();
         }
       }
-      indicator.closeAndFinish(true); //todo false
+      indicator.closeAndFinish(false);
     }
 
-    if (time != 1) {
+    if (time > 1) {
       if (myCompletionType == CompletionType.CLASS_NAME) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
       }
@@ -180,33 +180,46 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final int offset1 = initializationContext[0].getStartOffset();
     final int offset2 = initializationContext[0].getSelectionEndOffset();
-    final CompletionContext context = new CompletionContext(project, editor, psiFile, initializationContext[0].getOffsetMap());
+    final OffsetMap offsetMap = initializationContext[0].getOffsetMap();
+    final CompletionContext context = new CompletionContext(project, editor, psiFile, offsetMap);
 
-    doComplete(offset1, offset2, context, initializationContext[0].getFileCopyPatcher(), editor, time);
+    doComplete(offset1, offset2, context, initializationContext[0].getFileCopyPatcher(), editor, time, offsetMap);
   }
 
-  private LookupImpl createLookup(Editor editor) {
-    LookupImpl myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
-    if (editor.isOneLineMode()) {
-      myLookup.setForceShowAsPopup(true);
-      myLookup.setCancelOnClickOutside(true);
-      myLookup.setCancelOnOtherWindowOpen(true);
-      myLookup.setResizable(false);
-      myLookup.setForceLightweightPopup(false);
+  @NotNull
+  private LookupImpl obtainLookup(Editor editor) {
+    LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
+    if (existing != null) {
+      existing.markReused();
+      if (myFocusLookup) {
+        existing.setFocused(true);
+      }
+      return existing;
     }
-    myLookup.setFocused(myFocusLookup);
-    return myLookup;
+
+    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
+    if (editor.isOneLineMode()) {
+      lookup.setForceShowAsPopup(true);
+      lookup.setCancelOnClickOutside(true);
+      lookup.setCancelOnOtherWindowOpen(true);
+      lookup.setResizable(false);
+      lookup.setForceLightweightPopup(false);
+    }
+    lookup.setFocused(myFocusLookup);
+    return lookup;
   }
 
-  protected void doComplete(final int offset1,
-                            final int offset2,
-                            final CompletionContext context,
-                            final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
-    final CompletionParameters parameters = createCompletionParameters(context, patcher, invocationCount);
+  private void doComplete(final int offset1,
+                          final int offset2,
+                          final CompletionContext context,
+                          final FileCopyPatcher patcher, final Editor editor, final int invocationCount, final OffsetMap offsetMap) {
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, context.getOffsetMap(), createLookup(editor));
+
+    final CompletionParameters parameters = createCompletionParameters(context, patcher, invocationCount);
+    final LookupImpl lookup = obtainLookup(editor);
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, offsetMap, lookup);
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator);
 

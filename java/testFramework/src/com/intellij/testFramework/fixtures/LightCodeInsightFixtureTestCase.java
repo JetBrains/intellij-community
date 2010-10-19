@@ -122,9 +122,13 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
-        LightCodeInsightFixtureTestCase.super.runTest();
+        runTestBare();
       }
     }.execute();
+  }
+
+  protected final void runTestBare() throws Throwable {
+    LightCodeInsightFixtureTestCase.super.runTest();
   }
 
   protected Project getProject() {

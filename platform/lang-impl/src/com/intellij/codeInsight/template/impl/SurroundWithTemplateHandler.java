@@ -85,7 +85,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
   public static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
     List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
-    int offset = editor.getCaretModel().getOffset();
+    int offset = editor.getSelectionModel().getSelectionStart();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (template.supportsWrapping() && template.isApplicable(file, offset)) {
         result.add(template);

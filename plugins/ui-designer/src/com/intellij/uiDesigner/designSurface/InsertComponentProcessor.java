@@ -98,7 +98,9 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   public void setLastLocation(final ComponentDropLocation location) {
-    ComponentItemDragObject dragObject = new ComponentItemDragObject(getComponentToInsert());
+    final ComponentItem componentToInsert = getComponentToInsert();
+    assert componentToInsert != null;
+    ComponentItemDragObject dragObject = new ComponentItemDragObject(componentToInsert);
     if (location.canDrop(dragObject)) {
       myLastLocation = location;
     }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <TableRow>
+        <TextView android:layout_colu<caret>/>
+    </TableRow>
+</TableLayout>

@@ -312,9 +312,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     return icon;
   }
 
-  public int updateMaximumWidth(final LookupElement item){
-    final LookupElementPresentation p = new LookupElementPresentation();
-    item.renderElement(p);
+  public int updateMaximumWidth(final LookupElementPresentation p) {
     final Icon icon = p.getIcon();
     if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
       myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));

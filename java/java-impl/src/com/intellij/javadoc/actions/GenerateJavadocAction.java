@@ -60,4 +60,9 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
       myConfigurable = null;
     }
   }
+
+  @Override
+  protected String getHelpTopic() {
+    return "reference.dialogs.generate.javadoc";
+  }
 }

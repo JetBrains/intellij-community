@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditText android:id="@+id/anchor"/>
+    <TextView android:layout_alignRight="@id/anchor"/>
+</RelativeLayout>

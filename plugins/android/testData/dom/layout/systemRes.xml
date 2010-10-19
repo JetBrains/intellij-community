@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+  <ListView android:id="@id/android:list"/>
+  <ListView android:id="@android:id/android:list"/>
+  <ListView android:id="@android:id/list"/>
+  <ListView android:id="<error>@android:id/ist</error>"/>
+</LinearLayout>

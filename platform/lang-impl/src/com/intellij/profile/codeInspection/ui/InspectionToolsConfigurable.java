@@ -185,7 +185,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         if (files.length == 0) return;
         final Element element = new Element("inspections");
         try {
-          final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
+          final SingleInspectionProfilePanel panel = getSelectedPanel();
+          LOG.assertTrue(panel != null);
+          final InspectionProfileImpl profile = (InspectionProfileImpl)panel.getSelectedProfile();
           profile.writeExternal(element);
           final String filePath = files[0].getPath() + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
           if (new File(filePath).isFile()) {

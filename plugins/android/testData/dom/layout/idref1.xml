@@ -1,0 +1,4 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android">
+  <TextView android:id="@+id/anchor"/>
+  <TextView android:layout_alignBaseline="@id/anc<caret>"/>
+</RelativeLayout>

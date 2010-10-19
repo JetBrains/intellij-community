@@ -1,0 +1,5 @@
+<resources>
+  <style name="Theme.MyTheme">
+    <item name="android:windowBackground">@drawable/picture3</item>
+  </style>
+</resources>

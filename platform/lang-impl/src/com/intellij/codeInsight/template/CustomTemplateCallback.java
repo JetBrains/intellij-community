@@ -71,7 +71,7 @@ public class CustomTemplateCallback {
   }
 
   public void fixInitialState() {
-    myOffset = myEditor.getCaretModel().getOffset();
+    myOffset = myEditor.getSelectionModel().getSelectionStart();
   }
 
   @Nullable
