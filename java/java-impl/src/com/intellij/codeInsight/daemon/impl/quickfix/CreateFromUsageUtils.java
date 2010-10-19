@@ -766,7 +766,11 @@ public class CreateFromUsageUtils {
     final Module moduleForFile = ModuleUtil.findModuleForPsiElement(file);
     if (moduleForFile == null) return;
 
-    final GlobalSearchScope searchScope = file.getResolveScope();
+    final GlobalSearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      public GlobalSearchScope compute() {
+        return file.getResolveScope();
+      }
+    });
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiShortNamesCache cache = facade.getShortNamesCache();
