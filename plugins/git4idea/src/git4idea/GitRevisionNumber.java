@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
@@ -31,7 +32,7 @@ import java.util.StringTokenizer;
 /**
  * Git revision number
  */
-public class GitRevisionNumber implements VcsRevisionNumber {
+public class GitRevisionNumber implements ShortVcsRevisionNumber {
   /**
    * the name of tip revision
    */
@@ -95,6 +96,11 @@ public class GitRevisionNumber implements VcsRevisionNumber {
   @NotNull
   public String asString() {
     return myRevisionHash;
+  }
+
+  @Override
+  public String toShortString() {
+    return asString().substring(0, 7);
   }
 
   /**

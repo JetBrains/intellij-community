@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.openapi.Disposable;
@@ -80,7 +81,7 @@ public class TemplateState implements Disposable {
   private final ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
-  private boolean toProcessTab = true;
+  private boolean ourLookupShown = false;
 
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged = false;
@@ -151,7 +152,14 @@ public class TemplateState implements Disposable {
   }
 
   public boolean isToProcessTab() {
-    return toProcessTab;
+    if (ourLookupShown) {
+      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+      if (lookup != null && !lookup.isFocused()) {
+        return true;
+      }
+    }
+
+    return !ourLookupShown;
   }
 
   private void setCurrentVariableNumber(int variableNumber) {
@@ -473,17 +481,17 @@ public class TemplateState implements Disposable {
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
     final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
-    toProcessTab = false;
+    ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {
         lookup.removeLookupListener(this);
-        toProcessTab = true;
+        ourLookupShown = false;
       }
 
       public void itemSelected(LookupEvent event) {
         lookup.removeLookupListener(this);
         if (isFinished()) return;
-        toProcessTab = true;
+        ourLookupShown = false;
 
         TemplateState.this.itemSelected(event.getItem(), psiFile, currentSegmentNumber, event.getCompletionChar(), lookupItems);
       }
