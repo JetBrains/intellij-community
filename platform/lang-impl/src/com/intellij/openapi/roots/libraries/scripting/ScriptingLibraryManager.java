@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,22 +29,36 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ScriptingLibraryManager {
 
+  public enum LibraryLevel {GLOBAL, PROJECT}
+
   public static final String WEB_MODULE_TYPE = "WEB_MODULE";
 
   private ModifiableRootModel myRootModel;
   private Project myProject;
+  private LibraryLevel myLibLevel = LibraryLevel.PROJECT;
 
   public ScriptingLibraryManager(Project project) {
+    this(LibraryLevel.GLOBAL, project);
+  }
+
+  public ScriptingLibraryManager(LibraryLevel libLevel, Project project) {
     myProject = project;
-    myRootModel = getRootModel(project);
+    myLibLevel = libLevel;
+    myRootModel = getRootModel(libLevel, project);
   }
 
   @Nullable
-  private static ModifiableRootModel getRootModel(Project project) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (WEB_MODULE_TYPE.equals(module.getModuleType().getId())) {
-        return ModuleRootManager.getInstance(module).getModifiableModel();
-      }
+  private static ModifiableRootModel getRootModel(LibraryLevel libraryLevel, Project project) {
+    switch (libraryLevel) {
+      case PROJECT:
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (WEB_MODULE_TYPE.equals(module.getModuleType().getId())) {
+            return ModuleRootManager.getInstance(module).getModifiableModel();
+          }
+        }
+        break;
+      case GLOBAL:
+        return null;
     }
     return null;
   }
@@ -56,6 +71,10 @@ public class ScriptingLibraryManager {
   }
 
   public void commitModel() {
+    if (myLibLevel == LibraryLevel.GLOBAL) {
+      ModuleManager.getInstance(myProject).getModifiableModel().commit();
+      return;
+    }
     if (myRootModel != null && !myRootModel.isDisposed()) {
       myRootModel.commit();
       resetModel();
@@ -64,13 +83,20 @@ public class ScriptingLibraryManager {
 
   public void resetModel() {
     disposeModel();
-    myRootModel = getRootModel(myProject);
+    myRootModel = getRootModel(myLibLevel, myProject);
   }
 
   @Nullable
   public LibraryTable getLibraryTable() {
-    if (myRootModel != null) {
-      return myRootModel.getModuleLibraryTable();
+    switch (myLibLevel) {
+      case PROJECT:
+        if (myRootModel != null) {
+          return myRootModel.getModuleLibraryTable();
+        }
+        break;
+      case GLOBAL:
+        return
+          LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, myProject);
     }
     return null;
   }
