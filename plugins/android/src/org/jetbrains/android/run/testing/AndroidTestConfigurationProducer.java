@@ -51,7 +51,9 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
 
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
+    if (location == null) return null;
     location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) return null;
     PsiElement element = location.getPsiElement();
     RunnerAndConfigurationSettings settings = createAllInPackageConfiguration(element, context);
     if (settings != null) return settings;
