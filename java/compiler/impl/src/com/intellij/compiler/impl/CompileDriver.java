@@ -424,6 +424,12 @@ public class CompileDriver {
     
     compileTask.start(new Runnable() {
       public void run() {
+        if (compileContext.getProgressIndicator().isCanceled()) {
+          if (callback != null) {
+            callback.finished(true, 0, 0, compileContext);
+          }
+          return;
+        }
         long start = System.currentTimeMillis();
         try {
           if (myProject.isDisposed()) {
