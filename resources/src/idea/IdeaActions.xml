@@ -12,6 +12,8 @@
       <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
       <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
     </group>
+
+    <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
