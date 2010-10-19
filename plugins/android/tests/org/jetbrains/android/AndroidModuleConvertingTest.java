@@ -59,7 +59,7 @@ public class AndroidModuleConvertingTest extends PlatformTestCase {
   }
 
   private static String getGlobalTestDataPath() {
-    return FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/plugins/android/testData";
+    return FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/plugins/android/testData";
   }
 
   @Override
