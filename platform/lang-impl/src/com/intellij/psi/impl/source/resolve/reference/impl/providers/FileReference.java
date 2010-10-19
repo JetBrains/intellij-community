@@ -394,13 +394,13 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         }
 
         if (root == null) {
-          return element;
+          return getElement();
         }
       }
 
       final String relativePath = PsiFileSystemItemUtil.getRelativePath(root, dstItem);
       if (relativePath == null) {
-        return element;
+        return getElement();
       }
       newName = myFileReferenceSet.absoluteUrlNeedsStartSlash() ? "/" + relativePath : relativePath  ;
 
@@ -447,7 +447,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       }
       newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
       if (newName == null) {
-        return element;
+        return getElement();
       }
     }
 
