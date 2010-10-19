@@ -281,6 +281,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myTabs.addTab(tab, indexToInsert);
   }
 
+  public boolean isEmptyVisible() {
+    return myTabs.isEmptyVisible();
+  }
+
   private class MyQueryable implements Queryable {
 
     private final TabInfo myTab;

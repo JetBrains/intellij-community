@@ -21,14 +21,25 @@ import java.awt.event.MouseEvent;
 
 public class RelativePoint {
 
-  private final Component myComponent;
-  private final Point myPointOnComponent;
+  private Component myComponent;
+  private Point myPointOnComponent;
 
   public RelativePoint(MouseEvent event) {
-    this(event.getComponent(), event.getPoint());
+    init(event.getComponent(), event.getPoint());
   }
 
   public RelativePoint(Component aComponent, Point aPointOnComponent) {
+    init(aComponent, aPointOnComponent);
+  }
+
+  public RelativePoint(Point screenPoint) {
+    Point p = new Point(screenPoint.x, screenPoint.y);
+    Frame c = JOptionPane.getRootFrame();
+    SwingUtilities.convertPointFromScreen(p, c);
+    init(c, p);
+  }
+
+  private void init(Component aComponent, Point aPointOnComponent) {
     if (aComponent.isShowing()) {
       myComponent = SwingUtilities.getRootPane(aComponent);
       myPointOnComponent = SwingUtilities.convertPoint(aComponent, aPointOnComponent, myComponent);
@@ -102,5 +113,11 @@ public class RelativePoint {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
     return new RelativePoint(component, point);
+  }
+
+  public static RelativePoint fromScreen(Point screenPoint) {
+    Frame root = JOptionPane.getRootFrame();
+    SwingUtilities.convertPointFromScreen(screenPoint, root);
+    return new RelativePoint(root, screenPoint);
   }
 }

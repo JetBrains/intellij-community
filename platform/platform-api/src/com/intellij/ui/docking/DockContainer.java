@@ -21,7 +21,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 
 import javax.swing.*;
 
-public interface DockContainer {
+public interface DockContainer extends Disposable {
 
   RelativeRectangle getAcceptArea();
   boolean canAccept(DockableContent content, RelativePoint point);
@@ -40,6 +40,8 @@ public interface DockContainer {
   void processDropOver(DockableContent content, RelativePoint point);
   void resetDropOver(DockableContent content);
 
+
+  boolean isDisposeWhenEmpty();
 
   interface Listener {
     void contentAdded(Object key);

@@ -25,7 +25,7 @@ import java.util.Set;
 
 public abstract class DockManager implements ProjectComponent {
 
-  public abstract void register(DockContainer container, @Nullable Disposable parent);
+  public abstract void register(DockContainer container);
 
   public static DockManager getInstance(Project project) {
     return project.getComponent(DockManager.class);

@@ -2933,4 +2933,9 @@ public class JBTabsImpl extends JComponent
   @Override
   public void processDropOver(TabInfo over, RelativePoint point) {
   }
+
+  @Override
+  public boolean isEmptyVisible() {
+    return myVisibleInfos.isEmpty();
+  }
 }

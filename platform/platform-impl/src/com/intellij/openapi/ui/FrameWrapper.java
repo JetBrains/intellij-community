@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
@@ -57,7 +56,7 @@ public class FrameWrapper implements Disposable {
   private FocusWatcher myFocusWatcher;
 
   private ActionCallback myFocusedCallback;
-  private boolean isDisposed;
+  private boolean myDisposed;
 
   public FrameWrapper() {
   }
@@ -120,16 +119,20 @@ public class FrameWrapper implements Disposable {
   }
 
   public void close() {
-    getFrame().setVisible(false);
-    getFrame().dispose();
+    Disposer.dispose(this);
   }
 
   public void dispose() {
-    isDisposed = true;
+    if (isDisposed()) return;
+
+    getFrame().setVisible(false);
+    getFrame().dispose();
+
+    myDisposed = true;
   }
 
   public boolean isDisposed() {
-    return isDisposed;
+    return myDisposed;
   }
 
   private void addCloseOnEsc(final JFrame frame) {
@@ -152,7 +155,7 @@ public class FrameWrapper implements Disposable {
   }
 
   public JFrame getFrame() {
-    assert !isDisposed : "Already disposed!";
+    assert !myDisposed : "Already disposed!";
 
     if (myFrame == null) {
       myFrame = createJFrame();

@@ -43,19 +43,22 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
   private JBTabs myCurrentOver;
   private TabInfo myCurrentOverInfo;
 
+  private boolean myDisposeWhenEmpty;
+
   DockableEditorTabbedContainer(Project project) {
-    myProject = project;
+    this(project, null, true);
   }
 
-  DockableEditorTabbedContainer(Project project, EditorsSplitters splitters) {
+  DockableEditorTabbedContainer(Project project, EditorsSplitters splitters, boolean disposeWhenEmpty) {
     myProject = project;
     mySplitters = splitters;
+    myDisposeWhenEmpty = disposeWhenEmpty;
   }
 
   @Override
   public DockContainer createContainer() {
     if (mySplitters == null) {
-      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)) {
+      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject), false) {
         @Override
         protected void afterFileClosed(VirtualFile file) {
           fireContentClosed(file);
@@ -96,7 +99,7 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
   @Override
   public void add(DockableContent content, RelativePoint dropTarget) {
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
-    EditorWindow currentWindow = mySplitters.getCurrentWindow();
+    EditorWindow currentWindow = mySplitters.getOrCreateCurrentWindow(file);
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(currentWindow, file, true);
   }
 
@@ -166,6 +169,15 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
   @Override
   public boolean isEmpty() {
-    return mySplitters.getOpenFiles().length == 0;
+    return mySplitters.isEmptyVisible();
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  @Override
+  public boolean isDisposeWhenEmpty() {
+    return myDisposeWhenEmpty;
   }
 }

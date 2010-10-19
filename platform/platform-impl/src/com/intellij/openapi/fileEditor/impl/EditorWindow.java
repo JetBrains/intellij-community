@@ -307,6 +307,10 @@ public class EditorWindow {
     return myOwner;
   }
 
+  public boolean isEmptyVisible() {
+    return myTabbedPane != null ? myTabbedPane.isEmptyVisible() : getFiles().length == 0;
+  }
+
   protected static class TComp extends JPanel implements DataProvider{
     final EditorWithProviderComposite myEditor;
 

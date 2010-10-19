@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.docking.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
@@ -34,19 +35,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class DockManagerImpl extends DockManager {
 
   private Project myProject;
 
   private Set<DockContainer> myContainers = new HashSet<DockContainer>();
+  private Map<DockContainer, DockWindow> myWindows = new HashMap<DockContainer, DockWindow>();
+
   private MyDragSession myCurrentDragSession;
 
   private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
@@ -60,10 +62,9 @@ public class DockManagerImpl extends DockManager {
     myProject = project;
   }
 
-  @Override
-  public void register(final DockContainer container, @Nullable Disposable parent) {
+  public void register(final DockContainer container) {
     myContainers.add(container);
-    Disposer.register(parent != null ? parent : myProject, new Disposable() {
+    Disposer.register(container, new Disposable() {
       @Override
       public void dispose() {
         myContainers.remove(container);
@@ -79,6 +80,16 @@ public class DockManagerImpl extends DockManager {
   @Override
   public DragSession createDragSession(MouseEvent mouseEvent, DockableContent content) {
     stopCurrentDragSession();
+
+    for (DockContainer each : myContainers) {
+      if (each.isEmpty() && each.isDisposeWhenEmpty()) {
+        DockWindow window = myWindows.get(each);
+        if (window != null) {
+          window.setTransparrent(true);
+        }
+      }
+    }
+
     myCurrentDragSession = new MyDragSession(mouseEvent, content);
     return myCurrentDragSession;
   }
@@ -89,6 +100,15 @@ public class DockManagerImpl extends DockManager {
       myCurrentDragSession.cancel();
       myCurrentDragSession = null;
       myBusyObject.onReady();
+
+      for (DockContainer each : myContainers) {
+        if (!each.isEmpty()) {
+          DockWindow window = myWindows.get(each);
+          if (window != null) {
+            window.setTransparrent(false);
+          }
+        }
+      }
     }
   }
 
@@ -201,6 +221,7 @@ public class DockManagerImpl extends DockManager {
           stopCurrentDragSession();
         } else {
           myCurrentOverContainer.add(myContent, point);
+          stopCurrentDragSession();
         }
       }
     }
@@ -214,7 +235,9 @@ public class DockManagerImpl extends DockManager {
   private DockContainer findContainerFor(RelativePoint point, DockableContent content) {
     for (DockContainer each : myContainers) {
       RelativeRectangle rec = each.getAcceptArea();
-      if (rec.contains(point) && each.canAccept(content, point)) return each;
+      if (rec.contains(point) && each.canAccept(content, point)) {
+        return each;
+      }
     }
 
     return null;
@@ -222,12 +245,13 @@ public class DockManagerImpl extends DockManager {
 
   private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
     DockContainer container = content.getContainerFactory().createContainer();
-    register(container, null);
+    register(container);
     DockWindow window = new DockWindow(myProject, container);
+    myWindows.put(container, window);
     window.show();
 
     Dimension size = content.getPreferredSize();
-    Point showPoint = point.getPoint();
+    Point showPoint = point.getScreenPoint();
     showPoint.x -= size.width / 2;
     showPoint.y -= size.width / 2;
 
@@ -236,10 +260,10 @@ public class DockManagerImpl extends DockManager {
     window.setLocation(showPoint);
     window.setSize(size);
 
-    container.add(content, new RelativePoint(point.getComponent(), showPoint));
+    container.add(content, new RelativePoint(showPoint));
   }
 
-  private class DockWindow extends FrameWrapper {
+  private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
 
     private DockContainer myContainer;
 
@@ -247,22 +271,51 @@ public class DockManagerImpl extends DockManager {
       myContainer = container;
       setProject(project);
       setComponent(myContainer.getComponent());
+
+      IdeEventQueue.getInstance().addPostprocessor(this, this);
+      Disposer.register(myContainer, this);
+
       myContainer.addListener(new DockContainer.Listener.Adapter() {
         @Override
         public void contentRemoved(Object key) {
-          if (myContainer.isEmpty()) {
-            WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
-            WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 1f);
-
-            getReady().doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                close();
+          getReady().doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              if (myContainer.isEmpty()) {
+                Disposer.dispose(myContainer);
               }
-            });
-          }
+            }
+          });
         }
       }, this);
+    }
+
+    public void setTransparrent(boolean transparrent) {
+      if (transparrent) {
+        WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
+        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 1f);
+      } else {
+        WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
+        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0f);
+      }
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+
+      myWindows.remove(myContainer);
+      Disposer.dispose(myContainer);
+    }
+
+    @Override
+    public boolean dispatch(AWTEvent e) {
+      if (e instanceof KeyEvent) {
+        if (myCurrentDragSession != null) {
+          stopCurrentDragSession();
+        }
+      }
+      return false;
     }
 
     @Override

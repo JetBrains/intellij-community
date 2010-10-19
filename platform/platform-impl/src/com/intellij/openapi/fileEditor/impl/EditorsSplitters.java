@@ -66,7 +66,7 @@ public class EditorsSplitters extends JPanel {
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
 
-  public EditorsSplitters(final FileEditorManagerImpl manager) {
+  public EditorsSplitters(final FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
@@ -76,8 +76,10 @@ public class EditorsSplitters extends JPanel {
     setTransferHandler(new MyTransferHandler());
     clear();
 
-    DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this);
-    DockManager.getInstance(myManager.getProject()).register(dockable, myManager.getProject());
+    if (createOwnDockableContainer) {
+      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
+      DockManager.getInstance(myManager.getProject()).register(dockable);
+    }
   }
 
   public FileEditorManagerImpl getManager() {
@@ -455,6 +457,16 @@ public class EditorsSplitters extends JPanel {
     }
 
     return null;
+  }
+
+  public boolean isEmptyVisible() {
+    EditorWindow[] windows = getWindows();
+    for (EditorWindow each : windows) {
+      if (!each.isEmptyVisible()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
