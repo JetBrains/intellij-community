@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -387,7 +388,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             infos.clear();
             createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor);
             for (HighlightInfo info : infos) {
-              UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset, info, getId());
+              final EditorColorsScheme colorsScheme = getColorsScheme();
+
+              UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
+                                                                         info, colorsScheme, getId());
             }
           }
         }
@@ -447,7 +451,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   protected void applyInformationWithProgress() {
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getId());
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
   }
 
   private void addHighlightsFromResults(final List<HighlightInfo> outInfos) {

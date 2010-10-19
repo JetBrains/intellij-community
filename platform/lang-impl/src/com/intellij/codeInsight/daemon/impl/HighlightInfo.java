@@ -66,18 +66,18 @@ public class HighlightInfo implements Segment {
   public JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
   public final TextAttributesKey forcedTextAttributesKey;
-  private EditorColorsScheme myCustomColorScheme;
 
   public HighlightSeverity getSeverity() {
     return severity;
   }
 
-  public TextAttributes getTextAttributes(final PsiElement element) {
+  public TextAttributes getTextAttributes(final PsiElement element,
+                                          @Nullable  final EditorColorsScheme editorColorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes;
     }
 
-    final EditorColorsScheme colorsScheme = getColorsScheme();
+    final EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
     if (forcedTextAttributesKey != null) {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
     }
@@ -88,7 +88,8 @@ public class HighlightInfo implements Segment {
   public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
                                                    @NotNull HighlightInfoType type,
                                                    final EditorColorsScheme colorsScheme) {
-    final TextAttributes textAttributes = SeverityRegistrar.getInstance(element != null ? element.getProject() : null).getTextAttributesBySeverity(type.getSeverity(element));
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(element != null ? element.getProject() : null);
+    final TextAttributes textAttributes = severityRegistrar.getTextAttributesBySeverity(type.getSeverity(element));
     if (textAttributes != null) {
       return textAttributes;
     }
@@ -97,13 +98,14 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public Color getErrorStripeMarkColor(final PsiElement element) {
+  public Color getErrorStripeMarkColor(final PsiElement element,
+                                       @Nullable final EditorColorsScheme colorsScheme) { // if null global scheme will be used
     if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-    final EditorColorsScheme colorsScheme = getColorsScheme();
+    final EditorColorsScheme scheme = getColorsScheme(colorsScheme);
     if (forcedTextAttributesKey != null) {
-      final Color errorStripeColor = colorsScheme.getAttributes(forcedTextAttributesKey).getErrorStripeColor();
+      final Color errorStripeColor = scheme.getAttributes(forcedTextAttributesKey).getErrorStripeColor();
       // let's copy above behaviour of forcedTextAttributes stripe color, but I'm not sure that the behaviour is correct in general
       if (errorStripeColor != null) {
          return errorStripeColor;
@@ -111,27 +113,27 @@ public class HighlightInfo implements Segment {
     }
 
     if (severity == HighlightSeverity.ERROR) {
-      return colorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
+      return scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.WARNING) {
-      return colorsScheme.getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
+      return scheme.getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.INFO){
-      return colorsScheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
+      return scheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
     }
     if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
-      return colorsScheme.getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
+      return scheme.getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
     }
 
-    TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
+    TextAttributes attributes = getAttributesByType(element, type, scheme);
     return attributes == null ? null : attributes.getErrorStripeColor();
 
   }
 
   @NotNull
-  private EditorColorsScheme getColorsScheme() {
-    if (myCustomColorScheme != null) {
-      return myCustomColorScheme;
+  private EditorColorsScheme getColorsScheme(@Nullable final EditorColorsScheme customScheme) {
+    if (customScheme != null) {
+      return customScheme;
     }
     return EditorColorsManager.getInstance().getGlobalScheme();
   }
@@ -417,9 +419,9 @@ public class HighlightInfo implements Segment {
     return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
   }
 
-  public void setCustomColorScheme(@Nullable final EditorColorsScheme customColorScheme) {
-    myCustomColorScheme = customColorScheme;
-  }
+  //public void setCustomColorScheme(@Nullable final EditorColorsScheme customColorScheme) {
+  //  myCustomColorScheme = customColorScheme;
+  //}
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;

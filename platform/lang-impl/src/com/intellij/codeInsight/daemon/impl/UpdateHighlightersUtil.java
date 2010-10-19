@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -119,8 +120,9 @@ public class UpdateHighlightersUtil {
                                              int startOffset,
                                              int endOffset,
                                              @NotNull Collection<HighlightInfo> highlights,
+                                             @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
-    setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
+    setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), colorsScheme, group);
   }
 
   static boolean hasInfo(Collection<HighlightInfo> infos, int start, int end, String desc) {
@@ -170,6 +172,7 @@ public class UpdateHighlightersUtil {
                                                          int startOffset,
                                                          int endOffset,
                                                          @NotNull final HighlightInfo info,
+                                                         @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                          final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
@@ -188,7 +191,7 @@ public class UpdateHighlightersUtil {
 
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
-    createOrReuseHighlighterFor(info, document, group, file, (MarkupModelEx)markup, null, null,
+    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, null,
                                 SeverityRegistrar.getInstance(project));
 
     DaemonCodeAnalyzerImpl.addHighlight(markup, project, info);
@@ -199,6 +202,7 @@ public class UpdateHighlightersUtil {
   static void setHighlightersToEditor(@NotNull Project project,
                                       @NotNull Document document,
                                       @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
+                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                       final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -231,7 +235,7 @@ public class UpdateHighlightersUtil {
     for (Map.Entry<TextRange, Collection<HighlightInfo>> entry : infos.entrySet()) {
       TextRange range = entry.getKey();
       Collection<HighlightInfo> highlights = entry.getValue();
-      setHighlightersInRange(range, highlights, (MarkupModelEx)markup, group, document, project);
+      setHighlightersInRange(range, highlights, colorsScheme, (MarkupModelEx)markup, group, document, project);
     }
   }
 
@@ -239,6 +243,7 @@ public class UpdateHighlightersUtil {
   static void setHighlightersToEditorOutsideRange(@NotNull Project project,
                                                   @NotNull Document document,
                                                   @NotNull Collection<HighlightInfo> infos,
+                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   int startOffset, int endOffset,
                                                   @NotNull ProperTextRange range,
                                                   final int group) {
@@ -250,11 +255,12 @@ public class UpdateHighlightersUtil {
     MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    setHighlightersOutsideRange(startOffset, endOffset, range, infos, (MarkupModelEx)markup, group, document, project);
+    setHighlightersOutsideRange(startOffset, endOffset, range, infos, colorsScheme, (MarkupModelEx)markup, group, document, project);
   }
 
   static void setHighlightersInRange(final TextRange range,
                                              Collection<HighlightInfo> highlightsCo,
+                                             @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              final MarkupModelEx markup,
                                              final int group,
                                              final Document document,
@@ -306,7 +312,7 @@ public class UpdateHighlightersUtil {
           return true;
         }
         if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
-          createOrReuseHighlighterFor(info, document, group, psiFile, markup, infosToRemove,
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove,
                                           ranges2markersCache,
                                           severityRegistrar);
           changed[0] = true;
@@ -327,6 +333,7 @@ public class UpdateHighlightersUtil {
 
   private static void setHighlightersOutsideRange(final int startOffset, final int endOffset, final TextRange range,
                                                   Collection<HighlightInfo> highlightsCo,
+                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   final MarkupModelEx markup,
                                                   final int group,
                                                   final Document document,
@@ -378,7 +385,7 @@ public class UpdateHighlightersUtil {
           return true;
         }
         if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
-          createOrReuseHighlighterFor(info, document, group, psiFile, markup, infosToRemove,
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove,
                                           ranges2markersCache,
                                           severityRegistrar);
           changed[0] = true;
@@ -417,6 +424,7 @@ public class UpdateHighlightersUtil {
 
   // return true if changed
   private static void createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
+                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   @NotNull final Document document,
                                                   final int group,
                                                   @NotNull final PsiFile psiFile,
@@ -448,12 +456,12 @@ public class UpdateHighlightersUtil {
     final int finalInfoEndOffset = infoEndOffset;
     highlighter.changeAttributesInBatch(new Runnable() {
       public void run() {
-        finalHighlighter.setTextAttributes(info.getTextAttributes(psiFile));
+        finalHighlighter.setTextAttributes(info.getTextAttributes(psiFile, colorsScheme));
 
         info.highlighter = finalHighlighter;
         finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine);
 
-        Color color = info.getErrorStripeMarkColor(psiFile);
+        Color color = info.getErrorStripeMarkColor(psiFile, colorsScheme);
         finalHighlighter.setErrorStripeMarkColor(color);
         if (info != finalHighlighter.getErrorStripeTooltip()) {
           finalHighlighter.setErrorStripeTooltip(info);
@@ -475,8 +483,9 @@ public class UpdateHighlightersUtil {
       }
     });
 
-    assert Comparing.equal(info.getTextAttributes(psiFile), highlighter.getTextAttributes()) : "Info: " +
-                                                                                               info.getTextAttributes(psiFile) +
+    assert Comparing.equal(info.getTextAttributes(psiFile, colorsScheme), highlighter.getTextAttributes()) : "Info: " +
+                                                                                               info.getTextAttributes(psiFile, colorsScheme) +
+                                                                                               "; colorsSheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
                                                                                                "; highlighter:" +
                                                                                                highlighter.getTextAttributes();
   }

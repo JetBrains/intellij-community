@@ -28,7 +28,7 @@ public class HighlightInfoFilterImpl implements HighlightInfoFilter {
   public boolean accept(@NotNull HighlightInfo info, PsiFile file) {
     if (ourTestMode) return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting
 
-    TextAttributes attributes = info.getTextAttributes(file);
+    TextAttributes attributes = info.getTextAttributes(file, null);
     // optimization
      return attributes == TextAttributes.ERASE_MARKER || attributes != null &&
            !(attributes.isEmpty() && info.getSeverity() == HighlightSeverity.INFORMATION && info.getGutterIconRenderer() == null);
