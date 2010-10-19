@@ -17,7 +17,6 @@ package com.intellij.errorreport.itn;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.bean.ExceptionBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -99,15 +98,15 @@ public class ITNProxy {
   @NonNls public static final String MAC_OS_X = "Mac Os X";
   @NonNls public static final String LINUX = "Linux";
 
-  public static int postNewThread (String userName, String password, ErrorBean error, ExceptionBean e,
+  public static int postNewThread (String userName, String password, ErrorBean error,
                                    String compilationTimestamp)
           throws IOException, NoSuchEAPUserException, InternalEAPException {
     @NonNls Map<String,String> params = new HashMap<String, String>();
     params.put("username", userName);
     params.put("pwd", password);
     params.put("_title", MessageFormat.format(THREAD_SUBJECT,
-                                              error.getLastAction() == null ? e.getExceptionClass() :
-                                              error.getLastAction() + ", " + e.getExceptionClass()));
+                                              error.getLastAction() == null ? error.getExceptionClass() :
+                                              error.getLastAction() + ", " + error.getExceptionClass()));
     ApplicationInfoEx appInfo =
       (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(
         ApplicationInfo.class);
@@ -115,7 +114,7 @@ public class ITNProxy {
     params.put("_build", appInfo.getBuild().asString());
     params.put("_description",
                (compilationTimestamp != null ? ("Build time: " + compilationTimestamp + "\n") : "") +
-               error.getDescription() + "\n\n" + e.getStackTrace());
+               error.getDescription() + "\n\n" + error.getStackTrace());
 
     String jdkVersion = SystemProperties.getJavaVersion();
     String jdkVendor = SystemProperties.getJavaVmVendor();

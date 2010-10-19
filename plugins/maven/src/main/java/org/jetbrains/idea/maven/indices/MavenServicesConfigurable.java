@@ -58,10 +58,11 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   private JPanel myMainPanel;
   private JTable myTable;
   private JButton myUpdateButton;
-  private JButton myRemoveServiceUrlButton;
-  private JButton myAddServiceUrlButton;
+  private JButton myRemoveButton;
+  private JButton myAddButton;
   private JBList myServiceList;
   private JButton myTestButton;
+  private JButton myEditButton;
 
   private AnimatedIcon myUpdatingIcon;
   private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
@@ -83,17 +84,31 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
 
   private void configControls() {
     myServiceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myAddServiceUrlButton.addActionListener(new ActionListener() {
+    myAddButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final String value = (String)myServiceList.getSelectedValue();
-        final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(), value == null? "http://": value, new URLInputVaslidator());
+        final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(),
+                                                     value == null ? "http://" : value, new URLInputVaslidator());
         ((CollectionListModel)myServiceList.getModel()).add(text);
         myServiceList.setSelectedValue(text, true);
       }
     });
-    ListUtil.addRemoveListener(myRemoveServiceUrlButton, myServiceList);
+    myEditButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final int index = myServiceList.getSelectedIndex();
+        final CollectionListModel model = (CollectionListModel)myServiceList.getModel();
+        final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Edit Service URL", Messages.getQuestionIcon(),
+                                                     (String)model.getElementAt(index), new URLInputVaslidator());
+        if (text != null) {
+          model.setElementAt(text, index);
+        }
+      }
+    });
+    ListUtil.addRemoveListener(myRemoveButton, myServiceList);
     ListUtil.disableWhenNoSelection(myTestButton, myServiceList);
+    ListUtil.disableWhenNoSelection(myEditButton, myServiceList);
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

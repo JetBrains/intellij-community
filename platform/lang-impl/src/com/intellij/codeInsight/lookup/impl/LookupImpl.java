@@ -894,9 +894,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert !myDisposed;
     myHidden = true;
 
-    super.hide();
+    try {
+      super.hide();
 
-    Disposer.dispose(this);
+      Disposer.dispose(this);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
 
     if (fireCanceled) {
       fireLookupCanceled(explicitly);

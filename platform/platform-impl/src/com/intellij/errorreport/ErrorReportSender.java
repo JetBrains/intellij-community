@@ -17,10 +17,7 @@ package com.intellij.errorreport;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.bean.ExceptionBean;
-import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
-import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.reporter.ConnectionException;
@@ -31,8 +28,10 @@ import com.intellij.openapi.updateSettings.impl.BuildInfo;
 import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -47,72 +46,53 @@ public class ErrorReportSender {
   @NonNls public static final String PREPARE_URL = "http://www.intellij.net/";
   //public static String REPORT_URL = "http://unit-038:8080/error/report?sender=i";
 
-  @NonNls public static final String PRODUCT_CODE = "idea";
-  @NonNls private static final String PARAM_EMAIL = "EMAIL";
-  @NonNls private static final String PARAM_EAP = "eap";
-
-  public static ErrorReportSender getInstance () {
-    return new ErrorReportSender();
+  @Nullable
+  public static String checkNewBuild() {
+    BuildInfo newVersion = null;
+    try {
+      UpdateChannel channel = UpdateChecker.checkForUpdates();
+      newVersion = channel != null ? channel.getLatestBuild() : null;
+    }
+    catch (ConnectionException e) {
+      // ignore
+    }
+    return newVersion != null ? newVersion.getNumber().asString() : null;
   }
 
-  protected ErrorReportSender () {
-  }
-
-  class SendTask {
+  static class SendTask {
     private final Project myProject;
-    private NotifierBean notifierBean;
+    private String myLogin;
+    private String myPassword;
     private ErrorBean errorBean;
-    private final Throwable throwable;
-    private ExceptionBean exceptionBean;
+    private int myThreadId;
 
-    public SendTask(final Project project, Throwable throwable) {
+    public SendTask(final Project project, ErrorBean errorBean) {
       myProject = project;
-      this.throwable = throwable;
+      this.errorBean = errorBean;
     }
 
     public int getThreadId () {
-      return exceptionBean.getItnThreadId();
+      return myThreadId;
     }
 
-    public void setErrorBean(ErrorBean error) {
-      errorBean = error;
-    }
-
-    public void setNotifierBean(NotifierBean notifierBean) {
-      this.notifierBean = notifierBean;
-    }
-
-    public void checkNewBuild() throws NewBuildException {
-      BuildInfo newVersion = null;
-      try {
-        UpdateChannel channel = UpdateChecker.checkForUpdates();
-        newVersion = channel != null ? channel.getLatestBuild() : null;
-      }
-      catch (ConnectionException e) {
-        // ignore
-      }
-      if (newVersion != null) {
-        throw new NewBuildException(newVersion.getNumber().asString());
-      }
-      exceptionBean = new ExceptionBean(throwable);
+    public void setCredentials(String login, String password) {
+      myLogin = login;
+      myPassword = password;
     }
 
     public void sendReport() throws Exception {
-      errorBean.setExceptionHashCode(exceptionBean.getHashCode());
-
       final Ref<Exception> err = new Ref<Exception>();
       Runnable runnable = new Runnable() {
         public void run() {
           try {
             HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
 
-            if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
-              int threadId = ITNProxy.postNewThread(
-                notifierBean.getItnLogin(),
-                notifierBean.getItnPassword(),
-                errorBean, exceptionBean,
+            if (!StringUtil.isEmpty(myLogin)) {
+              myThreadId = ITNProxy.postNewThread(
+                myLogin,
+                myPassword,
+                errorBean,
                 IdeaLogger.getOurCompilationTimestamp());
-              exceptionBean.setItnThreadId(threadId);
             }
           }
           catch (Exception ex) {
@@ -134,29 +114,11 @@ public class ErrorReportSender {
     }
   }
 
-  private SendTask sendTask;
-
-  public void prepareError(Project project, Throwable exception) throws IOException, NewBuildException {
-
-    sendTask = new SendTask (project, exception);
-
-    try {
-      sendTask.checkNewBuild();
-    }
-    catch (NewBuildException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-  }
-
-  public int sendError (NotifierBean notifierBean, ErrorBean error)
+  public static int sendError(Project project, String login, String password, ErrorBean error)
     throws IOException, NoSuchEAPUserException, InternalEAPException {
 
-    sendTask.setErrorBean (error);
-    sendTask.setNotifierBean (notifierBean);
+    SendTask sendTask = new SendTask (project, error);
+    sendTask.setCredentials(login, password);
 
     try {
       sendTask.sendReport();
