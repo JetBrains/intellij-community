@@ -1183,8 +1183,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-
     assertInitialized();
     try {
       copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);

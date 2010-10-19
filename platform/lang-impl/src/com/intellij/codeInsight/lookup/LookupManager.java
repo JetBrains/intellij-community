@@ -35,7 +35,8 @@ public abstract class LookupManager {
     final Project project = editor.getProject();
     if (project == null) return null;
 
-    return getInstance(project).getActiveLookup();
+    final Lookup lookup = getInstance(project).getActiveLookup();
+    return lookup != null && lookup.getEditor() == editor ? lookup : null;
   }
 
   public Lookup showLookup(Editor editor, @NotNull LookupElement... items) {
