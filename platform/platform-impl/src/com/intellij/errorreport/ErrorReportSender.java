@@ -18,7 +18,6 @@ package com.intellij.errorreport;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.bean.ExceptionBean;
-import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -31,6 +30,7 @@ import com.intellij.openapi.updateSettings.impl.BuildInfo;
 import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 
@@ -60,7 +60,8 @@ public class ErrorReportSender {
 
   class SendTask {
     private final Project myProject;
-    private NotifierBean notifierBean;
+    private String myLogin;
+    private String myPassword;
     private ErrorBean errorBean;
     private final Throwable throwable;
     private ExceptionBean exceptionBean;
@@ -78,8 +79,9 @@ public class ErrorReportSender {
       errorBean = error;
     }
 
-    public void setNotifierBean(NotifierBean notifierBean) {
-      this.notifierBean = notifierBean;
+    public void setCredentials(String login, String password) {
+      myLogin = login;
+      myPassword = password;
     }
 
     public void checkNewBuild() throws NewBuildException {
@@ -106,10 +108,10 @@ public class ErrorReportSender {
           try {
             HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
 
-            if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
+            if (!StringUtil.isEmpty(myLogin)) {
               int threadId = ITNProxy.postNewThread(
-                notifierBean.getItnLogin(),
-                notifierBean.getItnPassword(),
+                myLogin,
+                myPassword,
                 errorBean, exceptionBean,
                 IdeaLogger.getOurCompilationTimestamp());
               exceptionBean.setItnThreadId(threadId);
@@ -152,11 +154,11 @@ public class ErrorReportSender {
     }
   }
 
-  public int sendError (NotifierBean notifierBean, ErrorBean error)
+  public int sendError(String login, String password, ErrorBean error)
     throws IOException, NoSuchEAPUserException, InternalEAPException {
 
     sendTask.setErrorBean (error);
-    sendTask.setNotifierBean (notifierBean);
+    sendTask.setCredentials(login, password);
 
     try {
       sendTask.sendReport();

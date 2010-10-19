@@ -18,7 +18,6 @@ package com.intellij.diagnostic;
 import com.intellij.CommonBundle;
 import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -61,7 +60,6 @@ public class ITNReporter extends ErrorReportSubmitter {
      * @noinspection ThrowablePrintStackTrace
      */
   private static SubmittedReportInfo sendError(IdeaLoggingEvent event, Component parentComponent) {
-    NotifierBean notifierBean = new NotifierBean();
     ErrorBean errorBean = new ErrorBean();
     errorBean.autoInit();
     errorBean.setLastAction(IdeaLogger.ourLastActionId);
@@ -84,14 +82,12 @@ public class ITNReporter extends ErrorReportSubmitter {
         dlg.setErrorDescription(description);
         dlg.show();
 
-        @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        @NonNls String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
-        if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
-          itnLogin = "idea_anonymous";
-          itnPassword = "guest";
+        @NonNls String login = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+        @NonNls String password = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+        if (login.trim().length() == 0 && password.trim().length() == 0) {
+          login = "idea_anonymous";
+          password = "guest";
         }
-        notifierBean.setItnLogin(itnLogin);
-        notifierBean.setItnPassword(itnPassword);
 
         description = dlg.getErrorDescription();
         String message = event.getMessage();
@@ -125,7 +121,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         errorBean.setDescription(descBuilder.toString());
 
         if (dlg.isShouldSend()) {
-          threadId = sender.sendError(notifierBean, errorBean);
+          threadId = sender.sendError(login, password, errorBean);
           previousExceptionThreadId = threadId;
           wasException = true;
           submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
