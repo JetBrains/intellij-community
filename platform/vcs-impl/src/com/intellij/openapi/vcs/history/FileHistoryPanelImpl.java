@@ -76,6 +76,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -133,7 +134,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
     }
   };
-  
+
   private final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
@@ -141,7 +142,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
 
       public String valueOf(VcsFileRevision object) {
-        return object.getRevisionNumber().asString();
+        final VcsRevisionNumber revisionNumber = object.getRevisionNumber();
+        return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revisionNumber).toShortString() : revisionNumber.asString();
       }
 
       @Override
@@ -167,9 +169,65 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
   };
 
+  private static class AuthorCellRenderer extends DefaultTableCellRenderer {
+    private String myTooltipText;
+
+    public void setTooltipText(final String text) {
+      myTooltipText = text;
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (component instanceof JComponent) {
+        ((JComponent)component).setToolTipText(myTooltipText);
+      }
+      return component;
+    }
+  }
+
+  private static final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
+
   private static final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
     protected String getDataOf(VcsFileRevision object) {
+      VcsFileRevision rev = object;
+      if (object instanceof TreeNodeOnVcsRevision) {
+        rev = ((TreeNodeOnVcsRevision)object).getRevision();
+      }
+
+      if (rev instanceof VcsFileRevisionEx) {
+        if (!rev.getAuthor().equals(((VcsFileRevisionEx)rev).getCommitterName())) return object.getAuthor() + "*";
+      }
+
       return object.getAuthor();
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+      return AUTHOR_RENDERER;
+    }
+
+    @Override
+    public TableCellRenderer getCustomizedRenderer(VcsFileRevision value, TableCellRenderer renderer) {
+      if (renderer instanceof AuthorCellRenderer) {
+        VcsFileRevision revision = value;
+        if (value instanceof TreeNodeOnVcsRevision) {
+          revision = ((TreeNodeOnVcsRevision)value).getRevision();
+        }
+
+        if (revision instanceof VcsFileRevisionEx) {
+          final VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
+          final StringBuilder sb = new StringBuilder(ex.getAuthor());
+          if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
+          if (ex.getCommitterName() != null && !ex.getAuthor().equals(ex.getCommitterName())) {
+            sb.append(", via ").append(ex.getCommitterName());
+            if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
+          }
+          ((AuthorCellRenderer)renderer).setTooltipText(sb.toString());
+        }
+      }
+
+      return renderer;
     }
 
     @Override
@@ -178,6 +236,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return "author_author";
     }
   };
+
   private JLabel myLoadingLabel;
   private Splitter mySplitter;
 
@@ -1239,6 +1298,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       for (final TreeItem<VcsFileRevision> root : roots) {
         add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));
       }
+    }
+
+    public VcsFileRevision getRevision() {
+      return myRevision;
     }
 
     public String getAuthor() {

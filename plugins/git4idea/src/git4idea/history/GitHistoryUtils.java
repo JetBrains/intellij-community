@@ -134,7 +134,6 @@ public class GitHistoryUtils {
           return;
         }
         final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-        final String author = record.getAuthorAndCommitter();
         final String message = record.getFullMessage();
 
         FilePath revisionPath = new FilePathImpl(root);
@@ -143,7 +142,10 @@ public class GitHistoryUtils {
           if (paths.size() > 0) {
             revisionPath = paths.get(0);
           }
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, author, message, null));
+
+          final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
+          final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null));
         } catch (VcsException e) {
           exceptionConsumer.consume(e);
         }
@@ -261,10 +263,11 @@ public class GitHistoryUtils {
     final List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
     for (GitLogRecord record : result) {
       final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-      final String author = record.getAuthorAndCommitter();
       final String message = record.getFullMessage();
       final FilePath revisionPath = record.getFilePaths(root).get(0);
-      rc.add(new GitFileRevision(project, revisionPath, revision, author, message, null));
+      final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
+      final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
+      rc.add(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null));
     }
     return rc;
   }

@@ -16,9 +16,11 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitFileUtils;
@@ -32,14 +34,14 @@ import java.util.Date;
 /**
  * Git file revision
  */
-public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevision> {
+public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision> {
   /**
    * encoding to be used for binary output
    */
   @SuppressWarnings({"HardCodedStringLiteral"}) private final static Charset BIN_ENCODING = Charset.forName("ISO-8859-1");
   private final FilePath path;
   private final GitRevisionNumber revision;
-  private final String author;
+  private final Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter;
   private final String message;
   private byte[] content;
   private final Project project;
@@ -52,13 +54,13 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   public GitFileRevision(@NotNull Project project,
                          @NotNull FilePath path,
                          @NotNull GitRevisionNumber revision,
-                         @Nullable String author,
+                         @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter,
                          @Nullable String message,
                          @Nullable String branch) {
     this.project = project;
     this.path = path;
     this.revision = revision;
-    this.author = author;
+    this.authorAndCommitter = authorAndCommitter;
     this.message = message;
     this.branch = branch;
   }
@@ -79,7 +81,22 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   }
 
   public String getAuthor() {
-    return author;
+    return authorAndCommitter.getFirst().getFirst();
+  }
+
+  @Override
+  public String getAuthorEmail() {
+    return authorAndCommitter.getFirst().getSecond();
+  }
+
+  @Override
+  public String getCommitterName() {
+    return authorAndCommitter.getSecond() == null ? null : authorAndCommitter.getSecond().getFirst();
+  }
+
+  @Override
+  public String getCommitterEmail() {
+    return authorAndCommitter.getSecond() == null ? null : authorAndCommitter.getSecond().getSecond();
   }
 
   public String getCommitMessage() {

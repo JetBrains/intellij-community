@@ -57,7 +57,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    TableCellRenderer renderer = columnInfo.getRenderer(getListTableModel().getItems().get(convertRowIndexToModel(row)));
+    final Item item = getListTableModel().getItems().get(convertRowIndexToModel(row));
+    final TableCellRenderer renderer = columnInfo.getCustomizedRenderer(item, columnInfo.getRenderer(item));
     if (renderer == null) {
       return super.getCellRenderer(row, column);
     }
