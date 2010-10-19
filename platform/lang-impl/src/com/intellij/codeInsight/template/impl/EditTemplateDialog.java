@@ -293,6 +293,12 @@ public class EditTemplateDialog extends DialogWrapper {
       gbConstraints.gridy = row;
       gbConstraints.gridx = col;
       JCheckBox cb = new JCheckBox(contextType.getPresentableName());
+      cb.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          updateContextTypesEnabledState();
+        }
+      });
       cb.getModel().addChangeListener(listener);
       panel.add(cb, gbConstraints);
       myCbContextMap.put(contextType, cb);
@@ -311,6 +317,15 @@ public class EditTemplateDialog extends DialogWrapper {
     }
 
     return panel;
+  }
+
+  private void updateContextTypesEnabledState() {
+    for (Map.Entry<TemplateContextType, JCheckBox> entry : myCbContextMap.entrySet()) {
+      TemplateContextType contextType = entry.getKey();
+      TemplateContextType baseContextType = contextType.getBaseContextType();
+      boolean enabled = baseContextType == null || !myCbContextMap.get(baseContextType).isSelected();
+      entry.getValue().setEnabled(enabled);
+    }
   }
 
   private boolean isEnabledInStaticContextOnly() {
@@ -428,6 +443,8 @@ public class EditTemplateDialog extends DialogWrapper {
       JCheckBox cb = myCbContextMap.get(type);
       cb.setSelected(myContext.get(type).booleanValue());
     }
+
+    updateContextTypesEnabledState();
 
     myCbReformat.setSelected(myTemplate.isToReformat());
 

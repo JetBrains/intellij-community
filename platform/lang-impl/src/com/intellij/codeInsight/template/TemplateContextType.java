@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -33,10 +32,20 @@ public abstract class TemplateContextType {
 
   private final String myContextId;
   private final String myPresentableName;
+  private final Class<? extends TemplateContextType> myBaseContextType;
 
   protected TemplateContextType(@NotNull @NonNls String id, @NotNull String presentableName) {
     myPresentableName = presentableName;
     myContextId = id;
+    myBaseContextType = null;
+  }
+
+  protected TemplateContextType(@NotNull @NonNls String id,
+                                @NotNull String presentableName,
+                                @Nullable Class<? extends TemplateContextType> baseContextType) {
+    myContextId = id;
+    myPresentableName = presentableName;
+    myBaseContextType = baseContextType;
   }
 
   public String getPresentableName() {
@@ -64,4 +73,8 @@ public abstract class TemplateContextType {
     return null;
   }
 
+  @Nullable
+  public TemplateContextType getBaseContextType() {
+    return myBaseContextType != null ? EP_NAME.findExtension(myBaseContextType) : null;
+  }
 }
