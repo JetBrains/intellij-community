@@ -672,18 +672,22 @@ public class FileUtil {
     return candidate;
   }
 
+  @NotNull
   public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
     return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 
+  @NotNull
   public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
     return aFileName.replace('\\', '/');
   }
 
+  @NotNull
   public static String nameToCompare(@NonNls @NotNull String name) {
     return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
   }
 
+  @NotNull
   public static String unquote(String urlString) {
     urlString = urlString.replace('/', File.separatorChar);
     return URLUtil.unescapePercentSequences(urlString);
