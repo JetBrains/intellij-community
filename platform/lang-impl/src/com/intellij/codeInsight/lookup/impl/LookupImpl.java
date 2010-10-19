@@ -45,12 +45,9 @@ import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -74,15 +71,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Project myProject;
   private final Editor myEditor;
 
-  @SuppressWarnings({"unchecked"}) private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new ConcurrentHashMap<LookupElement, Collection<LookupElementAction>>(TObjectHashingStrategy.IDENTITY);
-  @SuppressWarnings({"unchecked"}) private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private long myShownStamp = -1;
   private String myInitialPrefix;
   private LookupArranger myArranger;
-  private final ArrayList<LookupElement> myItems = new ArrayList<LookupElement>();
-  @Nullable private List<LookupElement> mySortedItems;
 
   private RangeMarker myLookupStartMarker;
   private final JList myList = new JBList(new DefaultListModel());
@@ -110,6 +103,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final int LOOKUP_HEIGHT = Integer.getInteger("idea.lookup.height", 11).intValue();
   private boolean myReused;
   private boolean myChangeGuard;
+  private LookupModel myModel = new LookupModel(this);
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -189,12 +183,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void resort() {
     mySelectionTouched = false;
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
-    final ArrayList<LookupElement> items;
-    synchronized (myItems) {
-      items = new ArrayList<LookupElement>(myItems);
-      myItems.clear();
-      mySortedItems = null;
-    }
+    final List<LookupElement> items = myModel.getItems();
+    myModel.clearItems();
     for (final LookupElement item : items) {
       addItem(item);
     }
@@ -202,10 +192,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void addItem(LookupElement item) {
-    synchronized (myItems) {
-      myItems.add(item);
-      mySortedItems = null;
-    }
+    myModel.addItem(item);
 
     updateLookupWidth(item);
     updateItemActions(item);
@@ -216,10 +203,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation);
     myLookupWidth = Math.max(maxWidth, myLookupWidth);
 
-    final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
-    synchronized (myItems) {
-      myItemPresentations.put(item, invariant);
-    }
+    myModel.setItemPresentation(item, presentation);
+
   }
 
   public void updateItemActions(LookupElement item) {
@@ -227,12 +212,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(item, this, consumer);
     }
-    myItemActions.put(item, consumer.getResult());
+    myModel.setItemActions(item, consumer.getResult());
   }
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    final Collection<LookupElementAction> collection = myItemActions.get(element);
-    return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
+    return myModel.getActionsFor(element);
   }
 
   public int getMinPrefixLength() {
@@ -241,18 +225,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public JList getList() {
     return myList;
-  }
-
-  @NotNull
-  private List<LookupElement> getSortedItems() {
-    synchronized (myItems) {
-      List<LookupElement> sortedItems = mySortedItems;
-      if (sortedItems == null) {
-        myArranger.sortItems(sortedItems = new ArrayList<LookupElement>(myItems));
-        mySortedItems = sortedItems;
-      }
-      return sortedItems;
-    }
   }
 
   public List<LookupElement> getItems() {
@@ -293,7 +265,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    final List<LookupElement> items = getSortedItems();
+    final List<LookupElement> items = myModel.getSortedItems();
     SortedMap<Comparable, List<LookupElement>> itemsMap = new TreeMap<Comparable, List<LookupElement>>();
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
@@ -307,12 +279,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       list.add(item);
     }
 
-    synchronized (myItems) {
-      if (myReused) {
-        myItemPresentations.keySet().retainAll(myItems);
-        myItemActions.keySet().retainAll(myItems);
-        myReused = false;
-      }
+    if (myReused) {
+      myModel.collectGarbage();
+      myReused = false;
     }
 
     if (myMinPrefixLength != minPrefixLength) {
@@ -373,7 +342,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       if (oldInvariant != null) {
         for (LookupElement element : getItems()) {
-          if (oldInvariant.equals(getItemPresentationInvariant(element)) && ListScrollingUtil.selectItem(myList, element)) {
+          if (oldInvariant.equals(myModel.getItemPresentationInvariant(element)) && ListScrollingUtil.selectItem(myList, element)) {
             return;
           }
         }
@@ -388,12 +357,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myPreselectedItem != null) {
       myPreselectedItem = getCurrentItem();
-    }
-  }
-
-  private String getItemPresentationInvariant(LookupElement element) {
-    synchronized (myItems) {
-      return myItemPresentations.get(element);
     }
   }
 
@@ -642,7 +605,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       public void valueChanged(ListSelectionEvent e){
         LookupElement item = getCurrentItem();
         if (oldItem != item) {
-          mySelectionInvariant = item == null ? null : getItemPresentationInvariant(item);
+          mySelectionInvariant = item == null ? null : myModel.getItemPresentationInvariant(item);
           fireCurrentItemChanged(item);
         }
         oldItem = item;
@@ -879,15 +842,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.getDocument().insertString(offset, afterCaret);
 
     final String newPrefix = presentPrefix + afterCaret;
-    synchronized (myItems) {
-      for (Iterator<LookupElement> iterator = myItems.iterator(); iterator.hasNext();) {
-        LookupElement item = iterator.next();
-        if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
-          iterator.remove();
-          mySortedItems = null;
-        }
-      }
-    }
+    myModel.retainMatchingItems(newPrefix);
     myAdditionalPrefix = "";
     updateList();
 
@@ -1004,16 +959,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  @TestOnly
   public LookupArranger getArranger() {
     return myArranger;
   }
 
   public void markReused() {
     myReused = true;
-    synchronized (myItems) {
-      myItems.clear();
-    }
+    myModel.clearItems();
     setAdvertisementText(null);
     myAdditionalPrefix = "";
     myPreselectedItem = null;
