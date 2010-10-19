@@ -15,12 +15,12 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -41,9 +41,17 @@ public class PathsChooserComponent {
 
   private List<String> myWorkingCollection;
   private final List<String> myInitialCollection;
+  @Nullable private final Project myProject;
 
   public PathsChooserComponent(@NotNull final List<String> collection, @NotNull final PathProcessor processor) {
+    this(collection, processor, null);
+  }
+
+  public PathsChooserComponent(@NotNull final List<String> collection,
+                               @NotNull final PathProcessor processor,
+                               @Nullable final Project project) {
     myInitialCollection = collection;
+    myProject = project;
     myWorkingCollection = new ArrayList<String>(myInitialCollection);
     myListModel = new DefaultListModel();
     myList.setModel(myListModel);
@@ -58,15 +66,18 @@ public class PathsChooserComponent {
         dirChooser.setShowFileSystemRoots(true);
         dirChooser.setHideIgnored(true);
         dirChooser.setTitle(UIBundle.message("file.chooser.default.title"));
-        FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(dirChooser, myContentPane);
-        VirtualFile[] files = chooser.choose(null, null);
-        for (VirtualFile file : files) {
-        // adding to the end
-          final String path = file.getPath();
-          if (processor.addPath(myWorkingCollection, path)){
-            myListModel.addElement(path);
+        FileChooser.chooseFilesWithSlideEffect(dirChooser, myProject, null, new Consumer<VirtualFile[]>() {
+          @Override
+          public void consume(VirtualFile[] files) {
+            for (VirtualFile file : files) {
+            // adding to the end
+              final String path = file.getPath();
+              if (processor.addPath(myWorkingCollection, path)){
+                myListModel.addElement(path);
+              }
+            }
           }
-        }
+        });
       }
     });
 
