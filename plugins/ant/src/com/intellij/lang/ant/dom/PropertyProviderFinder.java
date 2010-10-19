@@ -62,14 +62,32 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       myStage = Stage.TARGETS_WALKUP_STAGE;
       final AntDomTarget target = initialTargetName != null? getTargetByName(initialTargetName) : null;
       if (target != null) {
-        myCurrentTargetEffectiveName.push(initialTargetName);
-        try {
-          target.accept(this);
-        }
-        finally {
-          myCurrentTargetEffectiveName.pop();
+        processTarget(initialTargetName, target);
+      }
+      List<String> unprocessed = null;
+      for (String s : myTargetsResolveMap.keySet()) {
+        if (!myProcessedTargets.contains(s)) {
+          if (unprocessed == null) {
+            unprocessed = new ArrayList<String>();
+          }
+          unprocessed.add(s);
         }
       }
+      if (unprocessed != null) {
+        for (String targetName : unprocessed) {
+          processTarget(targetName, myTargetsResolveMap.get(targetName));
+        }
+      }
+    }
+  }
+
+  private void processTarget(String targetEffectiveName, AntDomTarget target) {
+    myCurrentTargetEffectiveName.push(targetEffectiveName);
+    try {
+      target.accept(this);
+    }
+    finally {
+      myCurrentTargetEffectiveName.pop();
     }
   }
 
@@ -83,13 +101,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           for (String dependencyName : depsList) {
             final AntDomTarget dependency = getTargetByName(dependencyName);
             if (dependency != null) {
-              myCurrentTargetEffectiveName.push(dependencyName);
-              try {
-                dependency.accept(this);
-              }
-              finally {
-                myCurrentTargetEffectiveName.pop();
-              }
+              processTarget(dependencyName, dependency);
             }
           }
         }
