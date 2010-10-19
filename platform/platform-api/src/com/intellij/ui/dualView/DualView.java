@@ -298,8 +298,17 @@ public class DualView extends JPanel {
   }
 
   public void setSelectionInterval(int first, int last) {
-    myTreeView.getSelectionModel().addSelectionInterval(first, last);
-    myFlatView.getSelectionModel().addSelectionInterval(first, last);
+    final int treeRowCount = myTreeView.getModel().getRowCount();
+    if (first < 0 || last < 0) return;
+
+    if (first < treeRowCount && last < treeRowCount) {
+      myTreeView.getSelectionModel().addSelectionInterval(first, last);
+    }
+
+    final int flatRowCount = myFlatView.getRowCount();
+    if (first < flatRowCount && last < flatRowCount) {
+      myFlatView.getSelectionModel().addSelectionInterval(first, last);
+    }
   }
 
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {

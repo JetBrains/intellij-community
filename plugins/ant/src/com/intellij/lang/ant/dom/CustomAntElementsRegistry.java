@@ -204,6 +204,29 @@ public class CustomAntElementsRegistry {
     }
     return false;
   }
+
+  public List<String> getTypeLoadingErrors(AntDomTypeDef typedef) {
+    final String generalError = myTypeDefErrors.get(typedef);
+    if (generalError != null) {
+      return Collections.singletonList(generalError);
+    }
+    List<String> errors = null;
+    for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
+      if (typedef.equals(entry.getValue())) {
+        final XmlName xmlName = entry.getKey();
+        if (myErrors.containsKey(xmlName))  {
+          final String err = myErrors.get(xmlName);
+          if (err != null) {
+            if (errors == null) {
+              errors = new ArrayList<String>();
+            }
+            errors.add(err);
+          }
+        }
+      }
+    }
+    return errors == null? Collections.<String>emptyList() : errors;
+  }
   
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {
     final String loaderRef = typedef.getLoaderRef().getStringValue();

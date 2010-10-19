@@ -52,6 +52,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("fileset", AntDomFileSet.class);
     TAG_MAPPING.put("dirset", AntDomDirSet.class);
     TAG_MAPPING.put("filelist", AntDomFileList.class);
+    TAG_MAPPING.put("pathelement", AntDomPathElement.class);
     TAG_MAPPING.put("path", AntDomPath.class);
     TAG_MAPPING.put("classpath", AntDomClasspath.class);
     TAG_MAPPING.put("typedef", AntDomTypeDef.class);
