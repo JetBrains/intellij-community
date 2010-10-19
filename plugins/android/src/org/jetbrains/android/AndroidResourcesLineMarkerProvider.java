@@ -149,7 +149,8 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
         PsiElement targetElement = ((PsiReferenceExpression)element).resolve();
         if (targetElement instanceof PsiField) {
           PsiField targetField = (PsiField)targetElement;
-          if (AndroidResourceUtil.isRJavaField(targetField.getContainingFile(), targetField)) {
+          PsiFile file = targetField.getContainingFile();
+          if (file != null && AndroidResourceUtil.isRJavaField(file, targetField)) {
             annotateElementNavToResource(element, targetField, LocalResourceManager.getInstance(containingFile), result, null, true);
           }
         }
