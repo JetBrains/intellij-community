@@ -190,19 +190,26 @@ public class TestsPresentationUtil {
     final SMTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
 
+    String presentationCandidate = name;
     if (parent != null) {
       final String parentName = parent.getName();
       if (name.startsWith(parentName)) {
-        final String presentationCandidate = name.substring(parentName.length());
+        presentationCandidate = name.substring(parentName.length());
+
+        // remove "." separator
         if (presentationCandidate.startsWith(".")) {
-          return presentationCandidate.substring(1).trim();
+          presentationCandidate = presentationCandidate.substring(1);
         }
-        return presentationCandidate.trim();
       }
     }
 
-    return name.trim();
+    // trim
+    presentationCandidate = presentationCandidate.trim();
 
+    // remove extra spaces
+    presentationCandidate = presentationCandidate.replaceAll("\\s+", " ");
+
+    return presentationCandidate;
   }
 
   @Nullable
