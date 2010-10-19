@@ -18,10 +18,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -41,6 +38,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,9 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author yole
@@ -240,17 +236,27 @@ public class SdkConfigurationUtil {
     return newSdkName;
   }
 
-  @Nullable
-  public static String selectSdkHome(final Component parentComponent, final SdkType sdkType){
+  public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer){
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
-    VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
-    if (files.length != 0){
-      final String path = files[0].getPath();
-      if (sdkType.isValidSdkHome(path)) return path;
-      String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      return sdkType.isValidSdkHome(adjustedPath) ? adjustedPath : null;
-    }
-    return null;
+    if (SystemInfo.isMac) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
+    FileChooser.chooseFilesWithSlideEffect(descriptor, null, getSuggestedSdkRoot(sdkType),
+                                           new Consumer<VirtualFile[]>() {
+                                             @Override
+                                             public void consume(final VirtualFile[] chosen) {
+                                               if (chosen != null && chosen.length != 0) {
+                                                 final String path = chosen[0].getPath();
+                                                 if (sdkType.isValidSdkHome(path)) {
+                                                   consumer.consume(path);
+                                                   return;
+                                                 }
+
+                                                 String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+                                                 if (sdkType.isValidSdkHome(adjustedPath)) {
+                                                   consumer.consume(adjustedPath);
+                                                 }
+                                               }
+                                             }
+                                           });
   }
 
   @Nullable

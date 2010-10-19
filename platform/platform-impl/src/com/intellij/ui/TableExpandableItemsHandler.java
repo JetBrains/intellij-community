@@ -88,8 +88,11 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     });
   }
 
+  // This method may be called from TableModelListener (before selection model update)
+  // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4730055
   private void updateSelection(JTable table) {
-    int row = table.getSelectedRowCount() == 1 ? table.getSelectedRow() : -1;
+    boolean hasSingleSelection = table.getSelectedRow() < table.getModel().getRowCount() && table.getSelectedRowCount() == 1;
+    int row = hasSingleSelection ? table.getSelectedRow() : -1;
     int column = table.getSelectedColumnCount() == 1 ? table.getSelectedColumn() : -1;
     handleSelectionChange((row == -1 || column == -1) ? null : new TableCell(row, column));
   }

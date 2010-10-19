@@ -33,7 +33,11 @@ public class HgExecutableValidator {
 
   public boolean check(final HgGlobalSettings globalSettings) {
     final HgVersionCommand command = new HgVersionCommand();
-    if (command.isValid(HgVcs.getInstance(myProject).getHgExecutable())) {
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) {
+      return false;
+    }
+    if (command.isValid(vcs.getHgExecutable())) {
       return true;
     }
 

@@ -31,7 +31,7 @@ import java.awt.*;
 public class ComponentItemDragObject implements ComponentDragObject {
   private final ComponentItem myItem;
 
-  public ComponentItemDragObject(final ComponentItem item) {
+  public ComponentItemDragObject(@NotNull final ComponentItem item) {
     myItem = item;
   }
 

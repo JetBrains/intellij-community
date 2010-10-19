@@ -15,9 +15,12 @@
  */
 package git4idea.tests;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -145,8 +148,35 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
   }
 
   @Test
+  public void testGetLastRevisionForExistingFile() throws Exception {
+    final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, bfilePath);
+    assertTrue(state.isItemExists());
+    final GitRevisionNumber revisionNumber = (GitRevisionNumber) state.getNumber();
+    assertEquals(revisionNumber.getRev(), myRevisions.get(0).myHash);
+    assertEquals(revisionNumber.getTimestamp(), myRevisions.get(0).myDate);
+  }
+
+  // TODO: need to configure a remote branch to run this test
+  //@Test
+  public void testGetLastRevisionForNonExistingFile() throws Exception {
+    myRepo.config("branch.master.remote", "origin");
+    myRepo.config("branch.master.merge", "refs/heads/master");
+    myRepo.rm(bfilePath.getPath());
+    myRepo.commit();
+    VirtualFile dir = myRepo.getDirFixture().findOrCreateDir("dir");
+    createFileInCommand(dir, "b.txt", "content");
+    String[] hashAndData = myRepo.log("--pretty=format:%H#%ct", "-n1").getStdout().split("#");
+
+    final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, bfilePath);
+    assertTrue(!state.isItemExists());
+    final GitRevisionNumber revisionNumber = (GitRevisionNumber) state.getNumber();
+    assertEquals(revisionNumber.getRev(), hashAndData[0]);
+    assertEquals(revisionNumber.getTimestamp(), GitTestRevision.gitTimeStampToDate(hashAndData[1]));
+  }
+
+  @Test
   public void testHistory() throws Exception {
-    List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, bfilePath);
+        List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, bfilePath);
     assertEquals(revisions.size(), myRevisions.size());
     for (int i = 0; i < revisions.size(); i++) {
       assertEqualRevisions((GitFileRevision) revisions.get(i), myRevisions.get(i));
@@ -200,7 +230,7 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
 
   @Test
   public void testCommitsDetails() throws Exception {
-    Collection<String> ids = new HashSet<String>(myRevisionsAfterRename.size());
+    List<String> ids = new ArrayList<String>(myRevisionsAfterRename.size());
     for (GitTestRevision rev : myRevisionsAfterRename) {
       ids.add(rev.myHash);
     }
@@ -210,11 +240,19 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
 
   @Test
   public void testHashesWithParents() throws Exception {
-    final CollectConsumer<CommitHashPlusParents> consumer = new CollectConsumer<CommitHashPlusParents>();
+    final int expectedSize = myRevisionsAfterRename.size();
+
+    final List<CommitHashPlusParents> hashesWithParents = new ArrayList<CommitHashPlusParents>(3);
+    Consumer<CommitHashPlusParents> consumer = new Consumer<CommitHashPlusParents>() {
+      @Override
+      public void consume(CommitHashPlusParents gitFileRevision) {
+        hashesWithParents.add(gitFileRevision);
+      }
+    };
+
     GitHistoryUtils.hashesWithParents(myProject, bfilePath, consumer);
-    final List<CommitHashPlusParents> hashesWithParents = (List<CommitHashPlusParents>) consumer.getResult();
-    
-    assertEquals(hashesWithParents.size(), myRevisionsAfterRename.size());
+
+    assertEquals(hashesWithParents.size(), expectedSize);
     for (Iterator hit = hashesWithParents.iterator(), myIt = myRevisionsAfterRename.iterator(); hit.hasNext(); ) {
       CommitHashPlusParents chpp = (CommitHashPlusParents)hit.next();
       GitTestRevision rev = (GitTestRevision)myIt.next();
@@ -272,7 +310,7 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
 
     public GitTestRevision(String hash, String gitTimestamp, String[] parents, String commitMessage, String author, String branch, String content) {
       myHash = hash;
-      myDate = new Date(Long.parseLong(gitTimestamp)*1000);
+      myDate = gitTimeStampToDate(gitTimestamp);
       myParents = parents;
       myCommitMessage = commitMessage;
       myAuthor = author;
@@ -283,6 +321,10 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
     @Override
     public String toString() {
       return myHash;
+    }
+
+    public static Date gitTimeStampToDate(String gitTimestamp) {
+      return new Date(Long.parseLong(gitTimestamp)*1000);
     }
   }
   

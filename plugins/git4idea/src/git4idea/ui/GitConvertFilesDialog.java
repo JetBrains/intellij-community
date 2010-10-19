@@ -229,10 +229,10 @@ public class GitConvertFilesDialog extends DialogWrapper {
             }
             if (selectedFiles != null) {
               for (VirtualFile f : selectedFiles) {
+                if (f == null) { continue; }
                 try {
                   LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                   //noinspection ThrowableInstanceNeverThrown
                   exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
                 }

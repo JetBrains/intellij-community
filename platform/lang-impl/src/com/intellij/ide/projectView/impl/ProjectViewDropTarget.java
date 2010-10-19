@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,7 +44,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,9 +92,12 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       }
       if (redundant) return false;
     } else {
-      final PsiFileSystemItem[] psiFiles = getPsiFiles(attached);
-      if (psiFiles == null) return false;
-      if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
+      // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
+      if (!SystemInfo.isMac) {
+        final PsiFileSystemItem[] psiFiles = getPsiFiles(attached);
+        if (psiFiles == null) return false;
+        if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
+      }
     }
     final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
     aEvent.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE );
@@ -259,6 +263,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
+    if (fileList == null) return null;
     List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -298,10 +303,10 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      doDrop(targetNode, sourceElements);
+      doDrop(targetNode, sourceElements, false);
     }
 
-    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
+    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements, final boolean externalDrop) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
@@ -312,7 +317,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
             return targetElement;
           }
           else {
-            return dataContext.getData(dataId);
+            return externalDrop ? null : dataContext.getData(dataId);
           }
         }
       });
@@ -333,7 +338,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
       final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
-      doDrop(targetNode, sourceFileArray);
+      doDrop(targetNode, sourceFileArray, true);
     }
   }
 

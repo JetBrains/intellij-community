@@ -41,8 +41,10 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     Processor<ComponentItem> processor = new Processor<ComponentItem>() {
       public boolean process(final ComponentItem selectedValue) {
-        myLastCreatedComponent = selectedValue;
-        editor.getMainProcessor().startInsertProcessor(selectedValue, getCreateLocation(editor, selection));
+        if (selectedValue != null) {
+          myLastCreatedComponent = selectedValue;
+          editor.getMainProcessor().startInsertProcessor(selectedValue, getCreateLocation(editor, selection));
+        }
         return true;
       }
     };

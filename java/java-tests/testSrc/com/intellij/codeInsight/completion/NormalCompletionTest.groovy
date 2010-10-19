@@ -753,4 +753,29 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
       """
   }
 
+  public void testNoMethodsInParameterType() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        static void foo(f<caret>int a) {}
+      }
+    """)
+    myFixture.completeBasic()
+    assertOrderedEquals myFixture.lookupElementStrings, "final", "float"
+  }
+
+  public void testStaticallyImportedFieldsTwice() {
+    myFixture.addClass("""
+      class Foo {
+        public static final int aZOO;
+      }
+    """)
+    myFixture.configureByText("a.java", """
+      import static Foo.*
+      class Bar {{
+        aZ<caret>a
+      }}
+    """)
+    assertOneElement myFixture.completeBasic()
+  }
+
 }

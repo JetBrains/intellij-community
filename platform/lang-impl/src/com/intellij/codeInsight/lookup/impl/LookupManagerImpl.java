@@ -25,6 +25,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
@@ -43,6 +44,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class LookupManagerImpl extends LookupManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupManagerImpl");
   private final Project myProject;
   private LookupImpl myActiveLookup = null;
   private Editor myActiveLookupEditor = null;
@@ -152,6 +154,7 @@ public class LookupManagerImpl extends LookupManager {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
         }
         if (myActiveLookup == null) return;
+        LOG.assertTrue(myActiveLookup.isDisposed());
         myActiveLookup.removeLookupListener(this);
         Lookup lookup = myActiveLookup;
         myActiveLookup = null;

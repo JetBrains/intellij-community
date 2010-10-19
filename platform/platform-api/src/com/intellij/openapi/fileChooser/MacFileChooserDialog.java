@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * User: spLeaner
  */
 public interface MacFileChooserDialog extends FileChooserDialog {
+  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_ENABLED = DataKey.create("native.mac.file.chooser.enabled");
 
   void chooseWithSheet(@Nullable VirtualFile toSelect, @Nullable Project project, @NotNull final MacFileChooserCallback callback);
 

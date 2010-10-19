@@ -23,6 +23,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -81,6 +84,19 @@ public class XLineBreakpointManager {
       });
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
+
+    // Update breakpoints colors if global color schema was changed
+    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
+      final MyEditorColorsListener myColorsSchemeListener = new MyEditorColorsListener();
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          colorsManager.removeEditorColorsListener(myColorsSchemeListener);
+        }
+      });
+      colorsManager.addEditorColorsListener(myColorsSchemeListener);
+    }
   }
 
   public void updateBreakpointsUI() {
@@ -231,6 +247,13 @@ public class XLineBreakpointManager {
 
     public void dependencyCleared(final XBreakpoint<?> breakpoint) {
       queueBreakpointUpdate(breakpoint);
+    }
+  }
+
+  private class MyEditorColorsListener extends EditorColorsAdapter {
+    @Override
+    public void globalSchemeChange(EditorColorsScheme scheme) {
+      updateBreakpointsUI();
     }
   }
 }

@@ -880,10 +880,8 @@ public class EquivalenceChecker {
     if (exp instanceof GrPropertySelection) {
       return PROPERTY_SELECTION_EXPRESSION;
     }
-    if (exp == null) {
-      return -1;
-    }
-    throw new AssertionError("Expression has unknown type: " + exp);
+
+    return -1; // Type of expression can be defined in thirdparty plugins. See issue #IDEA-59846
   }
 
   private static int getStatementType(@Nullable GrStatement statement) {
@@ -932,9 +930,7 @@ public class EquivalenceChecker {
     if (statement instanceof GrAssertStatement) {
       return ASSERT_STATEMENT;
     }
-    if (statement == null) {
-      return -1;
-    }
-    throw new AssertionError("Statement has unknown type: " + statement);
+
+    return -1; // Type of expression can be defined in thirdparty plugins. See issue #IDEA-59846
   }
 }

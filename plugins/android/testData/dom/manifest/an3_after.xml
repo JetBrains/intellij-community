@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="p1.a">
+    <application android:icon="@drawable/icon" android:manageSpaceActivity="MyActivity">
+        <activity android:name="MyActivity" android:label="MegAAA activity">
+            <intent-filter android:label="">
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

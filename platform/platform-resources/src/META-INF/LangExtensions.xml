@@ -171,6 +171,9 @@
   <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                   serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
 
+  <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                  serviceImplementation="com.intellij.psi.search.ProjectScopeBuilder"/>
+
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
 
@@ -491,7 +494,7 @@
   <editorTypedHandler implementationClass="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
   <!-- HighlightManagerActions -->
-  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="before hide-hints"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="after hide-hints"/>
 
   <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
 

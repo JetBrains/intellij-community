@@ -1,0 +1,296 @@
+package org.jetbrains.android.compiler;
+
+import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.SdkConstants;
+import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.compiler.tools.AndroidApt;
+import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
+import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Apt compiler.
+ *
+ * @author Alexey Efimov
+ */
+public class AndroidAptCompiler implements SourceGeneratingCompiler {
+  private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
+
+  public static boolean isToCompileModule(Module module, AndroidFacetConfiguration configuration) {
+    if (configuration.ENABLE_AAPT_COMPILER &&
+        !(configuration.COPY_RESOURCES_FROM_ARTIFACTS && AndroidMavenUtil.isMavenizedModule(module))) {
+      return true;
+    }
+    return false;
+  }
+
+  public GenerationItem[] getGenerationItems(CompileContext context) {
+    Module[] affectedModules = context.getCompileScope().getAffectedModules();
+    if (affectedModules.length > 0) {
+      Application application = ApplicationManager.getApplication();
+      return application.runReadAction(new PrepareAction(context));
+    }
+    return EMPTY_GENERATION_ITEM_ARRAY;
+  }
+
+  public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
+    if (items != null && items.length > 0) {
+      context.getProgressIndicator().setText("Generating " + AndroidUtils.R_JAVA_FILENAME + "...");
+      Computable<GenerationItem[]> computation = new Computable<GenerationItem[]>() {
+        public GenerationItem[] compute() {
+          if (context.getProject().isDisposed()) {
+            return EMPTY_GENERATION_ITEM_ARRAY;
+          }
+          return doGenerate(context, items);
+        }
+      };
+      GenerationItem[] generationItems = computation.compute();
+      List<VirtualFile> generatedVFiles = new ArrayList<VirtualFile>();
+      for (GenerationItem item : generationItems) {
+        File generatedFile = ((AptGenerationItem)item).myGeneratedFile;
+        if (generatedFile != null) {
+          CompilerUtil.refreshIOFile(generatedFile);
+          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+          if (generatedVFile != null) {
+            generatedVFiles.add(generatedVFile);
+          }
+        }
+      }
+      if (context instanceof CompileContextEx) {
+        ((CompileContextEx)context).markGenerated(generatedVFiles);
+      }
+      return generationItems;
+    }
+    return EMPTY_GENERATION_ITEM_ARRAY;
+  }
+
+  private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items) {
+    List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
+    for (GenerationItem item : items) {
+      if (item instanceof AptGenerationItem) {
+        final AptGenerationItem aptItem = (AptGenerationItem)item;
+        try {
+          Map<CompilerMessageCategory, List<String>> messages = AndroidApt
+            .compile(aptItem.myAndroidTarget, aptItem.myManifestPath, aptItem.mySourceRootPath, aptItem.myResourcesPaths,
+                     aptItem.myAssetsPath, aptItem.myCustomPackage ? aptItem.myPackage : null
+            );
+          AndroidCompileUtil.addMessages(context, messages);
+          if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+            results.add(aptItem);
+          }
+          if (aptItem.myGeneratedFile.exists()) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                String className = FileUtil.getNameWithoutExtension(aptItem.myGeneratedFile);
+                AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aptItem.myPackage, className, aptItem.myGeneratedFile);
+              }
+            });
+          }
+        }
+        catch (final IOException e) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              if (context.getProject().isDisposed()) return;
+              context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+            }
+          });
+        }
+      }
+    }
+    return results.toArray(new GenerationItem[results.size()]);
+  }
+
+  @NotNull
+  public String getDescription() {
+    return FileUtil.getNameWithoutExtension(SdkConstants.FN_AAPT);
+  }
+
+  public boolean validateConfiguration(CompileScope scope) {
+    return true;
+  }
+
+  public ValidityState createValidityState(DataInput is) throws IOException {
+    return new MyValidityState(is);
+  }
+
+  @Nullable
+  public static VirtualFile getResourceDirForApkCompiler(Module module, AndroidFacet facet) {
+    return facet.getConfiguration().USE_CUSTOM_APK_RESOURCE_FOLDER
+           ? getCustomResourceDirForApt(facet)
+           : AndroidRootUtil.getResourceDir(module);
+  }
+
+  private final static class AptGenerationItem implements GenerationItem {
+    final Module myModule;
+    final String myManifestPath;
+    final String[] myResourcesPaths;
+    final String myAssetsPath;
+    final String mySourceRootPath;
+    final IAndroidTarget myAndroidTarget;
+    final File myGeneratedFile;
+    final String myPackage;
+    final boolean myCustomPackage;
+
+    private AptGenerationItem(@NotNull Module module,
+                              @NotNull String manifestPath,
+                              @NotNull String[] resourcesPaths,
+                              @Nullable String assetsPath,
+                              @NotNull String sourceRootPath,
+                              @NotNull IAndroidTarget target,
+                              @NotNull String aPackage,
+                              boolean customPackage) {
+      myModule = module;
+      myManifestPath = manifestPath;
+      myResourcesPaths = resourcesPaths;
+      myAssetsPath = assetsPath;
+      mySourceRootPath = sourceRootPath;
+      myAndroidTarget = target;
+      myPackage = aPackage;
+      myCustomPackage = customPackage;
+      myGeneratedFile =
+        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+    }
+
+    public String getPath() {
+      return myPackage.replace('.', '/') + '/' + AndroidUtils.R_JAVA_FILENAME;
+    }
+
+    public ValidityState getValidityState() {
+      return new MyValidityState(myModule);
+    }
+
+    public Module getModule() {
+      return myModule;
+    }
+
+    public boolean isTestSource() {
+      return false;
+    }
+  }
+
+  @Nullable
+  public static VirtualFile getCustomResourceDirForApt(@NotNull AndroidFacet facet) {
+    return AndroidRootUtil.getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().CUSTOM_APK_RESOURCE_FOLDER, false);
+  }
+
+  private static final class PrepareAction implements Computable<GenerationItem[]> {
+    private final CompileContext myContext;
+
+    public PrepareAction(CompileContext context) {
+      myContext = context;
+    }
+
+    public GenerationItem[] compute() {
+      if (myContext.getProject().isDisposed()) {
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+      CompileScope compileScope = myContext.getCompileScope();
+      Module[] modules = compileScope.getAffectedModules();
+      List<GenerationItem> items = new ArrayList<GenerationItem>();
+      for (Module module : modules) {
+        AndroidFacet facet = AndroidFacet.getInstance(module);
+        if (facet != null) {
+          AndroidFacetConfiguration configuration = facet.getConfiguration();
+          if (!isToCompileModule(module, configuration)) {
+            continue;
+          }
+          Manifest manifest = facet.getManifest();
+
+          String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet);
+
+          VirtualFile assetsDir = !configuration.LIBRARY_PROJECT ? AndroidRootUtil.getAssetsDir(module) : null;
+
+          if (manifest != null && resPaths.length > 0) {
+            String packageName = manifest.getPackage().getValue();
+            if (packageName != null) {
+              packageName = packageName.trim();
+              if (packageName.length() > 0) {
+                String sourceRootPath = facet.getAptGenSourceRootPath();
+                if (sourceRootPath != null) {
+                  IAndroidTarget target = configuration.getAndroidTarget();
+                  if (target != null) {
+                    AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
+                    String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
+                    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+                    assert manifestFile != null;
+                    String manifestPath = manifestFile.getPath();
+                    items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+                                                    packageName, false));
+
+                    List<String> libPackages = AndroidUtils.getDepLibsPackages(module);
+                    for (String libPackage : libPackages) {
+                      items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+                                                      libPackage, true));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return items.toArray(new GenerationItem[items.size()]);
+    }
+  }
+
+  private static class MyValidityState extends ResourcesValidityState {
+    private final String myCustomGenPathR;
+
+    MyValidityState(Module module) {
+      super(module);
+      AndroidFacet facet = AndroidFacet.getInstance(module);
+      if (facet == null) {
+        myCustomGenPathR = "";
+        return;
+      }
+      AndroidFacetConfiguration configuration = facet.getConfiguration();
+      myCustomGenPathR = configuration.GEN_FOLDER_RELATIVE_PATH_APT;
+    }
+
+    public MyValidityState(DataInput is) throws IOException {
+      super(is);
+      String path = is.readUTF();
+      myCustomGenPathR = path != null ? path : "";
+    }
+
+    @Override
+    public boolean equalsTo(ValidityState otherState) {
+      if (!(otherState instanceof MyValidityState)) {
+        return false;
+      }
+      if (!super.equalsTo(otherState)) {
+        return false;
+      }
+      return Comparing.equal(myCustomGenPathR, ((MyValidityState)otherState).myCustomGenPathR);
+    }
+
+    @Override
+    public void save(DataOutput os) throws IOException {
+      super.save(os);
+      os.writeUTF(myCustomGenPathR);
+    }
+  }
+}

@@ -56,7 +56,7 @@ public class PagedFileStorage implements Forceable {
 
         int off = key.page * BUFFER_SIZE;
         if (off > key.owner.length()) {
-          throw new IndexOutOfBoundsException();
+          throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + key.owner.length());
         }
         return new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
       }

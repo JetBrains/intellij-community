@@ -58,9 +58,9 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   private JPanel myMainPanel;
   private JTable myTable;
   private JButton myUpdateButton;
-  private JButton myRemoveNexusButton;
-  private JButton myAddNexusButton;
-  private JBList myNexusList;
+  private JButton myRemoveServiceUrlButton;
+  private JButton myAddServiceUrlButton;
+  private JBList myServiceList;
   private JButton myTestButton;
 
   private AnimatedIcon myUpdatingIcon;
@@ -82,24 +82,24 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   }
 
   private void configControls() {
-    myNexusList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myAddNexusButton.addActionListener(new ActionListener() {
+    myServiceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myAddServiceUrlButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final String value = (String)myNexusList.getSelectedValue();
+        final String value = (String)myServiceList.getSelectedValue();
         final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(), value == null? "http://": value, new URLInputVaslidator());
-        ((CollectionListModel)myNexusList.getModel()).add(text);
-        myNexusList.setSelectedValue(text, true);
+        ((CollectionListModel)myServiceList.getModel()).add(text);
+        myServiceList.setSelectedValue(text, true);
       }
     });
-    ListUtil.addRemoveListener(myRemoveNexusButton, myNexusList);
-    ListUtil.disableWhenNoSelection(myTestButton, myNexusList);
+    ListUtil.addRemoveListener(myRemoveServiceUrlButton, myServiceList);
+    ListUtil.disableWhenNoSelection(myTestButton, myServiceList);
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final String value = (String)myNexusList.getSelectedValue();
+        final String value = (String)myServiceList.getSelectedValue();
         if (value != null) {
-          testNexusConnection(value);
+          testServiceConnection(value);
         }
       }
     });
@@ -134,10 +134,12 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
     updateButtonsState();
   }
 
-  private void testNexusConnection(String url) {
+  private void testServiceConnection(String url) {
+    myTestButton.setEnabled(false);
     RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), new Processor<Collection<MavenRepositoryInfo>>() {
       @Override
       public boolean process(Collection<MavenRepositoryInfo> infos) {
+        myTestButton.setEnabled(true);
         if (infos.isEmpty()) {
           Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
         }
@@ -219,7 +221,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   public void reset() {
     myServiceUrls.clear();
     myServiceUrls.addAll(MavenServicesManager.getInstance().getUrls());
-    myNexusList.setModel(new CollectionListModel(myServiceUrls));
+    myServiceList.setModel(new CollectionListModel(myServiceUrls));
 
     myTable.setModel(new MyTableModel(myManager.getIndices()));
     myTable.getColumnModel().getColumn(0).setPreferredWidth(400);

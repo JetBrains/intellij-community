@@ -60,6 +60,12 @@ public class JavaSdkImpl extends JavaSdk {
     return ICON;
   }
 
+  @NotNull
+  @Override
+  public String getHelpTopic() {
+    return "reference.project.structure.sdk.java";
+  }
+
   public Icon getIconForExpandedTreeNode() {
     return JDK_ICON_EXPANDED;
   }

@@ -74,7 +74,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   private void shutdownIndices() throws Exception {
     myIndices.close();
-    myIndexer.release();
+    myIndexer.releaseInTests();
   }
 
   public void testCreatingAndUpdatingLocal() throws Exception {
@@ -323,6 +323,19 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(index.getGroupIds(), "junit");
+  }
+
+  public void testCorrectlyClosingIndicesOnRemoteFacadeShutdown() throws Exception {
+    MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+
+    MavenFacadeManager.getInstance().shutdown(true);
+    initIndices();
+
+    i = myIndices.getIndices().get(0);
+
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+                        "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
   private void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {

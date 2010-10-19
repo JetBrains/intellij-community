@@ -87,12 +87,15 @@ public final class HgCommandService {
     if (myProject.isDisposed()) {
       return null;
     }
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) { return null; }
+
     if (!validator.check(mySettings)) {
       return null;
     }
 
-    List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(HgVcs.getInstance(myProject).getHgExecutable());
+    final List<String> cmdLine = new LinkedList<String>();
+    cmdLine.add(vcs.getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -149,7 +152,7 @@ public final class HgCommandService {
     // logging to the Version Control console (without extensions and configs)
     final String cmdString = String.format("%s %s %s", HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
             StringUtils.join(arguments, " "));
-    final HgVcs hgVcs = HgVcs.getInstance(myProject);
+    final HgVcs hgVcs = vcs;
     hgVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
     if (!suppressCommandOutput) {
       hgVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
@@ -161,9 +164,12 @@ public final class HgCommandService {
   }
 
   private void showError(Exception e) {
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) { return; }
+
     StringBuilder message = new StringBuilder();
     message.append(HgVcsMessages.message("hg4idea.command.executable.error",
-      HgVcs.getInstance(myProject).getHgExecutable()))
+      vcs.getHgExecutable()))
       .append("\n")
       .append("Original Error:\n")
       .append(e.getMessage());

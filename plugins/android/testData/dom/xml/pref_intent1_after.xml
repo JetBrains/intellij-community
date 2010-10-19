@@ -1,0 +1,13 @@
+<PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/launch_preferences">
+
+  <PreferenceScreen
+      android:title="@string/title_intent_preference"
+      android:summary="@string/summary_intent_preference">
+
+    <intent android:action="android.intent.action.VIEW"
+            android:data="data"/>
+
+  </PreferenceScreen>
+
+</PreferenceCategory>

@@ -328,6 +328,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private TextAttributes getAttributes(IElementType tokenType) {
     TextAttributes attrs = myAttributesMap.get(tokenType);
     if (attrs == null) {
+      // let's fetch syntax highlighter attributes for token and merge them with "TEXT" attribute of current color scheme
       attrs = convertAttributes(myHighlighter.getTokenHighlights(tokenType));
       myAttributesMap.put(tokenType, attrs);
     }

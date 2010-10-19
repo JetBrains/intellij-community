@@ -181,7 +181,7 @@ public class VariableInplaceRenamer {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            int offset = myEditor.getCaretModel().getOffset();
+            final int offset = myEditor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
             TextRange range = scope1.getTextRange();
@@ -223,15 +223,18 @@ public class VariableInplaceRenamer {
             });
 
             //move to old offset
+            Runnable runnable = new Runnable() {
+              public void run() {
+                myEditor.getCaretModel().moveToOffset(offset);
+              }
+            };
+
             final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-            final boolean lookupShown = lookup != null && lookup.getLookupStart() <= offset;
-            if (lookupShown) {
-              lookup.setAdditionalPrefix(myEditor.getDocument().getCharsSequence().subSequence(lookup.getLookupStart(), offset).toString());
+            if (lookup != null && lookup.getLookupStart() <= offset) {
               lookup.setFocused(false);
-            }
-            myEditor.getCaretModel().moveToOffset(offset);
-            if (lookupShown) {
-              lookup.setAdditionalPrefix("");
+              lookup.performGuardedChange(runnable);
+            } else {
+              runnable.run();
             }
 
             //add highlights

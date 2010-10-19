@@ -165,11 +165,13 @@ public class JavaClassReferenceSet {
         }
       }
 
-      final String subreferenceText =
-        nextDotOrDollar > 0 ? str.substring(currentDot + 1, nextDotOrDollar) : str.substring(currentDot + 1);
+      int beginIndex = currentDot + 1;
+      while (beginIndex < nextDotOrDollar && Character.isWhitespace(str.charAt(beginIndex))) beginIndex++;
+
+      final String subreferenceText = nextDotOrDollar > 0 ? str.substring(beginIndex, nextDotOrDollar) : str.substring(beginIndex);
 
       TextRange textRange =
-        new TextRange(myStartInElement + currentDot + 1, myStartInElement + (nextDotOrDollar > 0 ? nextDotOrDollar : str.length()));
+        new TextRange(myStartInElement + beginIndex, myStartInElement + (nextDotOrDollar > 0 ? nextDotOrDollar : str.length()));
       JavaClassReference currentContextRef = createReference(referenceIndex, subreferenceText, textRange, isStaticImport);
       referenceIndex++;
       referencesList.add(currentContextRef);
@@ -235,6 +237,7 @@ public class JavaClassReferenceSet {
     return myProvider.getOptions();
   }
 
+  @SuppressWarnings({"UnresolvedPropertyKey"})
   public String getUnresolvedMessagePattern(int index){
     if (canReferencePackage(index)) {
       return JavaErrorMessages.message("error.cannot.resolve.class.or.package");

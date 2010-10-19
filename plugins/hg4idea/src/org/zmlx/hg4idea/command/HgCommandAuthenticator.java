@@ -63,7 +63,9 @@ class HgCommandAuthenticator {
               final String key = keyForUrlAndLogin(runnable.getURL(), runnable.getUserName());
               try {
                 PasswordSafe.getInstance().storePassword(project, HgCommandAuthenticator.class, key, runnable.getPassword());
-                HgVcs.getInstance(project).getGlobalSettings().addRememberedUrl(runnable.getURL(), runnable.getUserName());
+                final HgVcs vcs = HgVcs.getInstance(project);
+                if (vcs == null) { return null; }
+                vcs.getGlobalSettings().addRememberedUrl(runnable.getURL(), runnable.getUserName());
               }
               catch (PasswordSafeException e) {
                 LOG.info("Couldn't store the password for key [" + key + "]", e);
@@ -106,7 +108,10 @@ class HgCommandAuthenticator {
       }
 
       // find if we've already been here
-      final HgGlobalSettings hgGlobalSettings = HgVcs.getInstance(project).getGlobalSettings();
+      final HgVcs vcs = HgVcs.getInstance(project);
+      if (vcs == null) { return; }
+
+      final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       final Map<String, List<String>> urls = hgGlobalSettings.getRememberedUrls();
       @Nullable List<String> rememberedLoginsForUrl = urls.get(stringUrl);
 

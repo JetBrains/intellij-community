@@ -1700,7 +1700,7 @@ public class FileBasedIndex implements ApplicationComponent {
           if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               try {
-                if (shouldIndexFile(file, indexId)) {
+                if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
                   myFiles.add(file);
                   oldStuff = false;
                   break;

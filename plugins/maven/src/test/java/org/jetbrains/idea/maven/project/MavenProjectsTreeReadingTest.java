@@ -631,7 +631,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     assertEquals("resolved: project ", listener.log);
@@ -684,7 +684,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       myTree.resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
@@ -1857,7 +1857,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       myTree.resolve(parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     File f = new File(myDir, "tree.dat");
@@ -1935,7 +1935,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
@@ -2040,7 +2040,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds(),
@@ -2167,7 +2167,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       myTree.resolve(project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
-      embeddersManager.release();
+      embeddersManager.releaseInTests();
     }
 
     assertPathEquals(pathFromBasedir("my-target"), project.getBuildDirectory());

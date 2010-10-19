@@ -55,6 +55,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -762,11 +763,15 @@ class FindDialog extends DialogWrapper {
     mySelectDirectoryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-        if (files.length != 0) {
-          myDirectoryComboBox.setSelectedItem(files[0].getPresentableUrl());
-          validateFindButton();
-        }
+        FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, null, new Consumer<VirtualFile[]>() {
+          @Override
+          public void consume(final VirtualFile[] files) {
+            if (files.length != 0) {
+              myDirectoryComboBox.setSelectedItem(files[0].getPresentableUrl());
+              validateFindButton();
+            }
+          }
+        });
       }
     });
 

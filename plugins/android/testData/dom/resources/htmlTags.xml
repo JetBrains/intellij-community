@@ -1,0 +1,3 @@
+<resources>
+  <string name="hello_world"><b><<caret></b></string>
+</resources>

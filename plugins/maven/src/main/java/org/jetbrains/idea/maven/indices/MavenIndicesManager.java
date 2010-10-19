@@ -145,15 +145,7 @@ public class MavenIndicesManager {
       myIndices = null;
     }
 
-    if (myIndexer != null) {
-      try {
-        myIndexer.release();
-      }
-      catch (Exception e) {
-        MavenLog.LOG.error("", e);
-      }
-      myIndexer = null;
-    }
+    myIndexer = null;
   }
 
   @TestOnly

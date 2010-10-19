@@ -73,7 +73,9 @@ public final class HgConflictResolver {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, HgVcs.getInstance(myProject).getMergeProvider());
+      final HgVcs vcs = HgVcs.getInstance(myProject);
+      if (vcs == null) { return; }
+      AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
     }
   }
 
