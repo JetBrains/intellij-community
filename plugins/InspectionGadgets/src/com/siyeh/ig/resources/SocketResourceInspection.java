@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,34 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class SocketResourceInspection extends ResourceInspection {
 
-  @Override
-  @NotNull
-  public String getID(){
-      return "SocketOpenedButNotSafelyClosed";
-  }
+    @SuppressWarnings({"PublicField"})
+    public boolean insideTryAllowed = false;
 
     @Override
     @NotNull
-    public String getDisplayName(){
+    public String getID() {
+        return "SocketOpenedButNotSafelyClosed";
+    }
+
+    @Override
+    @NotNull
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "socket.opened.not.closed.display.name");
     }
 
     @Override
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
         assert type != null;
@@ -49,71 +56,95 @@ public class SocketResourceInspection extends ResourceInspection {
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor(){
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+        final CheckBox checkBox = new CheckBox(
+                InspectionGadgetsBundle.message(
+                        "allow.resource.to.be.opened.inside.a.try.block"),
+                this, "insideTryAllowed");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+        return panel;
+    }
+
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
         return new SocketResourceVisitor();
     }
 
-    private static class SocketResourceVisitor extends BaseInspectionVisitor{
+    private class SocketResourceVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
+        @Override
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if(!isSocketFactoryMethod(expression)){
+            if (!isSocketFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if(parent instanceof PsiReturnStatement){
+            if (parent instanceof PsiReturnStatement) {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);
-            if(isSafelyClosed(boundVariable, expression)){
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
                 return;
             }
-            if(isResourceEscapedFromMethod(boundVariable, expression)){
+            if (isResourceEscapedFromMethod(boundVariable, expression)) {
                 return;
             }
             registerError(expression, expression);
         }
 
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression){
+        @Override
+        public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if(!isSocketResource(expression)){
+            if (!isSocketResource(expression)) {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if(parent instanceof PsiReturnStatement){
+            if (parent instanceof PsiReturnStatement) {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);
-            if(isSafelyClosed(boundVariable, expression)){
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
                 return;
             }
-            if(isResourceEscapedFromMethod(boundVariable, expression)){
+            if (isResourceEscapedFromMethod(boundVariable, expression)) {
                 return;
             }
             registerError(expression, expression);
         }
 
-        private static boolean isSocketResource(PsiNewExpression expression){
+        private boolean isSocketResource(PsiNewExpression expression) {
             return TypeUtils.expressionHasTypeOrSubtype(expression,
                     "java.net.Socket",
                     "java.net.DatagramSocket",
                     "java.net.ServerSocket") != null;
         }
 
-        private static boolean isSocketFactoryMethod(
-                PsiMethodCallExpression expression){
+        private boolean isSocketFactoryMethod(
+                PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             @NonNls final String methodName =
                     methodExpression.getReferenceName();
-            if(!"accept".equals(methodName)) {
+            if (!"accept".equals(methodName)) {
                 return false;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier == null) {
+            if (qualifier == null) {
                 return false;
             }
             return TypeUtils.expressionHasTypeOrSubtype(qualifier,

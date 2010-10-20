@@ -59,7 +59,8 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     protected static boolean isSafelyClosed(@Nullable PsiVariable variable,
-                                            PsiElement context) {
+                                            PsiElement context,
+                                            boolean insideTryAllowed) {
         if (variable == null) {
             return false;
         }
@@ -71,6 +72,23 @@ public abstract class ResourceInspection extends BaseInspection {
         PsiStatement nextStatement =
                 PsiTreeUtil.getNextSiblingOfType(statement,
                         PsiStatement.class);
+        if (insideTryAllowed) {
+            PsiStatement parentStatement =
+                    PsiTreeUtil.getParentOfType(statement, PsiStatement.class);
+            while (parentStatement != null &&
+                    !(parentStatement instanceof PsiTryStatement)) {
+                parentStatement =
+                        PsiTreeUtil.getParentOfType(statement,
+                                PsiStatement.class);
+            }
+            if (parentStatement != null) {
+                final PsiTryStatement tryStatement =
+                        (PsiTryStatement) parentStatement;
+                if (isResourceClosedInFinally(tryStatement, variable)) {
+                    return true;
+                }
+            }
+        }
         while (nextStatement == null) {
             statement = PsiTreeUtil.getParentOfType(statement,
                     PsiStatement.class, true);
@@ -90,10 +108,10 @@ public abstract class ResourceInspection extends BaseInspection {
             return isResourceClose(nextStatement, variable);
         }
         final PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
-        return resourceIsClosedInFinally(tryStatement, variable);
+        return isResourceClosedInFinally(tryStatement, variable);
     }
 
-    protected static boolean resourceIsClosedInFinally(
+    protected static boolean isResourceClosedInFinally(
             @NotNull PsiTryStatement tryStatement,
             @NotNull PsiVariable variable) {
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -126,16 +144,16 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     protected static boolean isResourceEscapedFromMethod(
-            PsiVariable boundVariable, PsiElement context){
+            PsiVariable boundVariable, PsiElement context) {
         // poor man dataflow
         final PsiMethod method =
                 PsiTreeUtil.getParentOfType(context, PsiMethod.class, true,
                         PsiMember.class);
-        if(method == null){
+        if (method == null) {
             return false;
         }
         final PsiCodeBlock body = method.getBody();
-        if(body == null){
+        if (body == null) {
             return false;
         }
         final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
@@ -274,40 +292,43 @@ public abstract class ResourceInspection extends BaseInspection {
         }
     }
 
-    private static class EscapeVisitor extends JavaRecursiveElementVisitor{
+    private static class EscapeVisitor extends JavaRecursiveElementVisitor {
 
         private final PsiVariable boundVariable;
         private boolean escaped = false;
 
-        public EscapeVisitor(PsiVariable boundVariable){
+        public EscapeVisitor(PsiVariable boundVariable) {
             this.boundVariable = boundVariable;
         }
 
-        @Override public void visitAnonymousClass(PsiAnonymousClass aClass){}
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        }
 
         @Override
-        public void visitElement(PsiElement element){
-            if(escaped){
+        public void visitElement(PsiElement element) {
+            if (escaped) {
                 return;
             }
             super.visitElement(element);
         }
 
-        @Override public void visitReturnStatement(
-                PsiReturnStatement statement){
+        @Override
+        public void visitReturnStatement(
+                PsiReturnStatement statement) {
             PsiExpression value = statement.getReturnValue();
             value = PsiUtil.deparenthesizeExpression(value);
-            if (value instanceof PsiReferenceExpression){
+            if (value instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression) value;
                 final PsiElement target = referenceExpression.resolve();
-                if(target == boundVariable){
+                if (target != null && target.equals(boundVariable)) {
                     escaped = true;
                 }
             }
         }
 
-        public boolean isEscaped(){
+        public boolean isEscaped() {
             return escaped;
         }
     }
