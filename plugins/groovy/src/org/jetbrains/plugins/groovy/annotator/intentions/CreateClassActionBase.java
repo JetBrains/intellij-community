@@ -25,11 +25,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -109,10 +109,9 @@ public abstract class CreateClassActionBase implements IntentionAction {
         });
   }
 
+  @Nullable
   public static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
-    TextRange range = element.getTextRange();
-    int textOffset = range.getStartOffset();
-
+    int textOffset = element.getTextOffset();
     VirtualFile virtualFile = targetFile.getVirtualFile();
     if (virtualFile != null) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, textOffset);
