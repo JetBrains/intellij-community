@@ -40,6 +40,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   public LibraryEditorDialogBase(final Component parent, final LibraryRootsComponent libraryRootsComponent) {
     super(parent, true);
     myLibraryRootsComponent = libraryRootsComponent;
+    libraryRootsComponent.resetProperties();
     setTitle(ProjectBundle.message("library.configure.title"));
     Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
@@ -83,6 +84,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
       }
       myLibraryRootsComponent.renameLibrary(newName);
     }
+    myLibraryRootsComponent.applyProperties();
     return true;
   }
 

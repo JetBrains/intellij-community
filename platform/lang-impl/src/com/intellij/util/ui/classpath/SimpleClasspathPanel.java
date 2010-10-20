@@ -176,7 +176,7 @@ public class SimpleClasspathPanel extends JPanel {
       final ArrayList<Library> result = new ArrayList<Library>();
       for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
         if (!existingFiles.add(file)) continue;
-        final Library newLibrary = LibraryTableImplUtil.createModuleLevelLibrary(null, null);
+        final Library newLibrary = LibraryTableImplUtil.createModuleLevelLibrary(null, null, null);
         Disposer.register(parentDisposable, newLibrary);
         final Library.ModifiableModel libModel = newLibrary.getModifiableModel();
         libModel.addRoot(file, OrderRootType.CLASSES);
@@ -387,7 +387,7 @@ public class SimpleClasspathPanel extends JPanel {
       }
       final List<Library> addedLibraries = new ArrayList<Library>(files.length);
       for (VirtualFile file : files) {
-        final Library library = LibraryTableImplUtil.createModuleLevelLibrary(null, null);
+        final Library library = LibraryTableImplUtil.createModuleLevelLibrary(null, null, null);
         Disposer.register(myParentDisposable, library);
         final Library.ModifiableModel libModel = library.getModifiableModel();
         libModel.addRoot(file, OrderRootType.CLASSES);
@@ -410,7 +410,7 @@ public class SimpleClasspathPanel extends JPanel {
         result.add(library);
       }
       else {
-        final Library newLibrary = LibraryTableImplUtil.createModuleLevelLibrary(null, null);
+        final Library newLibrary = LibraryTableImplUtil.createModuleLevelLibrary(null, null, null);
         Disposer.register(disposable, newLibrary);
         final Library.ModifiableModel libModel = newLibrary.getModifiableModel();
         final String libName = classpathElement.getLibraryName();

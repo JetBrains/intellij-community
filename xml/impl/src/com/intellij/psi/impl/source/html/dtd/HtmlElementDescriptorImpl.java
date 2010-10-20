@@ -162,4 +162,9 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
     return true;
   }
+
+  @Override
+  public String toString() {
+    return myDelegate.toString();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,38 +57,45 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         parseString(exceptionsString, exceptionList);
     }
 
+    @Override
     @NotNull
     public String getID(){
         return "ProhibitedExceptionDeclared";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "bad.exception.declared.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "bad.exception.declared.problem.descriptor");
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseString(exceptionsString, exceptionList);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException{
         exceptionsString = formatString(exceptionList);
         super.writeSettings(element);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new BadExceptionDeclaredVisitor();
     }
@@ -100,8 +107,12 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
-              final PsiClass containingClass = method.getContainingClass();
-              if(containingClass != null && TestUtil.isTestClass(containingClass)){
+                final PsiClass containingClass = method.getContainingClass();
+                if(containingClass != null &&
+                        TestUtil.isTestClass(containingClass)){
+                    return;
+                }
+                if (TestUtils.isJUnitTestMethod(method)) {
                     return;
                 }
             }

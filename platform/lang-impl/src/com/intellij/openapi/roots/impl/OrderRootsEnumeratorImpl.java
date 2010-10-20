@@ -116,7 +116,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         return true;
       }
     });
-    myOrderEnumerator.forEachModule(new Processor<Module>() {
+    myOrderEnumerator.processRootModules(new Processor<Module>() {
       @Override
       public boolean process(Module module) {
         myOrderEnumerator.addAdditionalRoots(module, result);
@@ -150,7 +150,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         return true;
       }
     });
-    myOrderEnumerator.forEachModule(new Processor<Module>() {
+    myOrderEnumerator.processRootModules(new Processor<Module>() {
       @Override
       public boolean process(Module module) {
         myOrderEnumerator.addAdditionalRootsUrls(module, result);

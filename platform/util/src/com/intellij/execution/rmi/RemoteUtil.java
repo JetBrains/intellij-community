@@ -2,7 +2,6 @@ package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 
@@ -47,15 +46,15 @@ public class RemoteUtil {
       }
     };
 
-  public static <T> T castToLocal(final Object remote, final Class<T> jdbcClass) {
-    final ClassLoader loader = jdbcClass.getClassLoader();
-    Object proxy = Proxy.newProxyInstance(loader, new Class[]{jdbcClass}, new InvocationHandler() {
+  public static <T> T castToLocal(final Object remote, final Class<T> clazz) {
+    final ClassLoader loader = clazz.getClassLoader();
+    Object proxy = Proxy.newProxyInstance(loader, new Class[]{clazz}, new InvocationHandler() {
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.getDeclaringClass() == Object.class) {
           return method.invoke(remote, args);
         }
         else {
-          Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(remote.getClass(), jdbcClass)).get(method);
+          Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(remote.getClass(), clazz)).get(method);
           if (m == null) throw new NoSuchMethodError(method.getName() + " in " + remote.getClass());
           try {
             Object result = m.invoke(remote, args);
@@ -65,18 +64,11 @@ public class RemoteUtil {
             return result;
           }
           catch (InvocationTargetException e) {
-            Throwable cause = e;
-            for (; cause.getCause() != null; cause = cause.getCause()) ;
+            Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) throw cause;
             if (cause instanceof Error) throw cause;
-            if (ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) throw cause;
+            if (canThrow(cause, method)) throw cause;
             throw new RuntimeException(cause);
-          }
-          catch (RuntimeException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
           }
         }
       }
@@ -111,19 +103,11 @@ public class RemoteUtil {
                   return result;
                 }
                 catch (InvocationTargetException e) {
-                  Throwable cause = e;
-                  while (cause.getCause() != null) cause = cause.getCause();
+                  Throwable cause = e.getCause();
                   if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-                  if (cause instanceof Exception && ArrayUtil.indexOf(method.getExceptionTypes(), cause.getClass()) > -1) {
-                    throw (Exception)cause;
-                  }
+                  if (cause instanceof Error) throw (Error)cause;
+                  if (canThrow(cause, method)) throw (Exception)cause;
                   throw new RuntimeException(cause);
-                }
-                catch (RuntimeException e) {
-                  throw e;
-                }
-                catch (Exception e) {
-                  throw new RuntimeException(e);
                 }
               }
             }, classLoader);
@@ -132,6 +116,13 @@ public class RemoteUtil {
         return (T)proxy;
       }
     }, classLoader);
+  }
+
+  private static boolean canThrow(Throwable cause, Method method) {
+    for (Class<?> each : method.getExceptionTypes()) {
+      if (each.isInstance(cause)) return true;
+    }
+    return false;
   }
 
   public static <T> T executeWithClassLoader(final ThrowableComputable<T, Exception> action, final ClassLoader classLoader)

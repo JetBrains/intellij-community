@@ -160,21 +160,31 @@ class GitLogParser {
       final String[] infoAndPath = line.split(RECORD_END);
       line = infoAndPath[0];
       if (infoAndPath.length > 1) {
-        final String[] nameAndPathSplit = infoAndPath[infoAndPath.length-1].split("[\\s]"); // not relying that separator is tab; taking the last element, thus avoiding possible blank line
-        int pathIndex = 0;
-        if (myNameStatusOutputted == NameStatus.STATUS) {  //  R100 dir/anew.txt    anew.txt
-          nameStatus = nameAndPathSplit[0].charAt(0); // for R100 we save R, it's enough for now.
-          pathIndex = 1;  // first element is not path but status which we've saved
+        // taking the last element, thus avoiding possible blank line
+        final List<String> nameAndPathSplit = new LinkedList<String>(Arrays.asList(infoAndPath[infoAndPath.length-1].split("[\\s]")));
+        // not relying that separator is tab => so splitting by any whitespace.
+        // Then removing blank (or whitespace) lines which could appear by this splitting:
+        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext(); ) {
+          if (it.next().trim().isEmpty()) {
+            it.remove();
+          }
         }
-        for (; pathIndex < nameAndPathSplit.length; pathIndex++) {
-          String path = nameAndPathSplit[pathIndex].trim();
-          if (!path.isEmpty()) {
-            paths.add(path);
+
+        if (!nameAndPathSplit.isEmpty()) { // safety check
+          final Iterator<String> pathIterator = nameAndPathSplit.iterator();
+          if (myNameStatusOutputted == NameStatus.STATUS) {  //  R100 dir/anew.txt    anew.txt
+            nameStatus = pathIterator.next().charAt(0); // for R100 we save R, it's enough for now.
+          }
+          while (pathIterator.hasNext()) {
+            String path = pathIterator.next().trim();
+            if (!path.isEmpty()) {
+              paths.add(path);
+            }
           }
         }
       }
     } else {
-      line = line.substring(0, line.length()-2);
+      line = line.substring(0, line.length()-1); // removing the last character which is RECORD_END
     }
 
     // parsing revision information

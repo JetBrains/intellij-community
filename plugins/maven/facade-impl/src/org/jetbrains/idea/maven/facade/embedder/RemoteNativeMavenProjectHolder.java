@@ -21,7 +21,7 @@ public class RemoteNativeMavenProjectHolder implements NativeMavenProjectHolder 
   }
 
   @NotNull
-  public static MavenProject findprojectById(int id) {
+  public static MavenProject findProjectById(int id) {
     RemoteNativeMavenProjectHolder result = myMap.get(id);
     if (result == null) {
       throw new RuntimeException("NativeMavenProjectHolder not found for id: " + id);

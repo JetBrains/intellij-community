@@ -16,11 +16,7 @@
 package org.jetbrains.idea.maven.facade;
 
 public class MavenFacadeIndexerException extends Exception {
-  public MavenFacadeIndexerException(String message) {
-    super(message);
-  }
-
   public MavenFacadeIndexerException(Throwable cause) {
-    super(null, cause);
+    super(cause.getMessage(), cause);
   }
 }

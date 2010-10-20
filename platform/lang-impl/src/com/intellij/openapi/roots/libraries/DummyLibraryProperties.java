@@ -29,4 +29,14 @@ public class DummyLibraryProperties extends LibraryProperties<Object> {
   @Override
   public void loadState(Object state) {
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof DummyLibraryProperties;
+  }
+
+  @Override
+  public int hashCode() {
+    return 0;
+  }
 }

@@ -269,6 +269,20 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     });
   }
 
+  @Override
+  public void forEachModule(@NotNull final Processor<Module> processor) {
+    forEach(new Processor<OrderEntry>() {
+      @Override
+      public boolean process(OrderEntry orderEntry) {
+        if (orderEntry instanceof ModuleSourceOrderEntry) {
+          final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
+          return processor.process(module);
+        }
+        return true;
+      }
+    });
+  }
+
   public boolean isProductionOnly() {
     return myProductionOnly;
   }
@@ -330,6 +344,13 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {
     return false;
   }
+
+  /**
+   * Runs processor on each module that this enumerator was created on.
+   *
+   * @param processor processor
+   */
+  public abstract void processRootModules(@NotNull Processor<Module> processor);
 
   private class OrderEntryProcessor<R> implements Processor<OrderEntry> {
     private R myValue;

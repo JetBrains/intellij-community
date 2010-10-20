@@ -65,4 +65,9 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
   public void addSubGroup(XmlElementsGroup group) {
     mySubGroups.add(group);
   }
+
+  @Override
+  public String toString() {
+    return getGroupType().toString();
+  }
 }

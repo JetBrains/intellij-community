@@ -497,4 +497,21 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public String toString() {
     return getName() + " (" + getNamespace() + ")";
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    XmlElementDescriptorImpl that = (XmlElementDescriptorImpl)o;
+
+    if (myDescriptorTag != null ? !myDescriptorTag.equals(that.myDescriptorTag) : that.myDescriptorTag != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptorTag != null ? myDescriptorTag.hashCode() : 0;
+  }
 }

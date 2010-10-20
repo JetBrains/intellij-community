@@ -20,15 +20,16 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
-import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInsight.template.macro.CompleteMacro;
+import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -37,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -45,13 +47,12 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
@@ -76,7 +77,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
 
       Template t = TemplateManager.getInstance(project).getActiveTemplate(editor);
-      if (t == null && descriptor != null) {
+      if (descriptor != null) {
         insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
       }
     }
@@ -92,11 +93,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       if (endTagStart != null) {
         PsiElement sibling = endTagStart.getNextSibling();
 
-        if (sibling.getNode().getElementType() == XmlTokenType.XML_NAME) {
+        assert sibling != null;
+        ASTNode node = sibling.getNode();
+        assert node != null;
+        if (node.getElementType() == XmlTokenType.XML_NAME) {
           int sOffset = sibling.getTextRange().getStartOffset();
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
+          assert otherTag != null;
           editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
         }
       }
@@ -114,14 +119,72 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 
-  private void insertIncompleteTag(char completionChar, final Editor editor, final Project project, XmlElementDescriptor descriptor, XmlTag tag) {
+  private static void insertIncompleteTag(char completionChar,
+                                          final Editor editor,
+                                          final Project project,
+                                          XmlElementDescriptor descriptor,
+                                          XmlTag tag) {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
 
     template.setToIndent(true);
 
     // temp code
-    boolean htmlCode = HtmlUtil.hasHtml(tag.getContainingFile());
+    PsiFile containingFile = tag.getContainingFile();
+    boolean htmlCode = HtmlUtil.hasHtml(containingFile);
+    template.setToReformat(!htmlCode);
+
+    StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
+    final boolean chooseAttributeName = addTail(completionChar, descriptor, tag, template, indirectRequiredAttrs);
+
+    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
+      private RangeMarker myAttrValueMarker;
+
+      @Override
+      public void waitingForInput(Template template) {
+        int offset = editor.getCaretModel().getOffset();
+        myAttrValueMarker = editor.getDocument().createRangeMarker(offset + 1, offset + 4);
+      }
+
+      public void templateFinished(final Template template, boolean brokenOff) {
+        final int offset = editor.getCaretModel().getOffset();
+
+        if (chooseAttributeName && offset >= 3) {
+          char c = editor.getDocument().getCharsSequence().charAt(offset - 3);
+          if (c == '/' || (c == ' ' && brokenOff)) {
+            new WriteCommandAction.Simple(project) {
+              protected void run() throws Throwable {
+                editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+              }
+            }.execute();
+          }
+        }
+      }
+
+      public void templateCancelled(final Template template) {
+        if (myAttrValueMarker == null) {
+          return;
+        }
+        if (chooseAttributeName) {
+          final int startOffset = myAttrValueMarker.getStartOffset();
+          final int endOffset = myAttrValueMarker.getEndOffset();
+          new WriteCommandAction.Simple(project) {
+            protected void run() throws Throwable {
+              editor.getDocument().replaceString(startOffset, endOffset, ">");
+            }
+          }.execute();
+        }
+      }
+    });
+  }
+
+  @Nullable
+  private static StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
+                                                     @Nullable XmlTag tag,
+                                                     Template template,
+                                                     PsiFile containingFile) {
+
+    boolean htmlCode = HtmlUtil.hasHtml(containingFile);
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {
@@ -139,26 +202,18 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    boolean toReformat = true;
-    boolean weInsertedSomeCodeThatCouldBeInvalidated = false;
-    if (htmlCode) {
-      toReformat = false;
-    }
-    template.setToReformat(toReformat);
-
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
-      final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
+      final XmlExtension extension = XmlExtension.getExtension(containingFile);
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
-        if (attributeDecl.isRequired() && tag.getAttributeValue(attributeName) == null) {
+        if (attributeDecl.isRequired() && (tag == null || tag.getAttributeValue(attributeName) == null)) {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
               template.addTextSegment(" " + attributeName + "=\"");
-              Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
-              template.addVariable(attributeName, expression, expression, true);
+              template.addVariable(new MacroCallNode(new CompleteMacro()), true);
               template.addTextSegment("\"");
             }
             else {
@@ -172,59 +227,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         }
       }
     }
-
-    weInsertedSomeCodeThatCouldBeInvalidated =
-      addTail(completionChar, descriptor, tag, template, weInsertedSomeCodeThatCouldBeInvalidated, attributes, indirectRequiredAttrs);
-
-    final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
-    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
-      private RangeMarker myAttrValueMarker;
-
-      @Override
-      public void waitingForInput(Template template) {
-        int offset = editor.getCaretModel().getOffset();
-        myAttrValueMarker = editor.getDocument().createRangeMarker(offset + 1, offset + 4);
-      }
-
-      public void templateFinished(final Template template, boolean brokenOff) {
-        final int offset = editor.getCaretModel().getOffset();
-
-        if (weInsertedSomeCodeThatCouldBeInvalidated1 && offset >= 3) {
-          char c = editor.getDocument().getCharsSequence().charAt(offset - 3);
-          if (c == '/' || (c == ' ' && brokenOff)) {
-            new WriteCommandAction.Simple(project) {
-              protected void run() throws Throwable {
-                editor.getDocument().replaceString(offset - 2, offset + 1, ">");
-              }
-            }.execute();
-          }
-        }
-      }
-
-      public void templateCancelled(final Template template) {
-        if (myAttrValueMarker == null) {
-          return;
-        }
-        if (weInsertedSomeCodeThatCouldBeInvalidated1) {
-          final int startOffset = myAttrValueMarker.getStartOffset();
-          final int endOffset = myAttrValueMarker.getEndOffset();
-          new WriteCommandAction.Simple(project) {
-            protected void run() throws Throwable {
-              editor.getDocument().replaceString(startOffset, endOffset, ">");
-            }
-          }.execute();
-        }
-      }
-    });
+    return indirectRequiredAttrs;
   }
 
-  protected boolean addTail(char completionChar,
+  protected static boolean addTail(char completionChar,
                                    XmlElementDescriptor descriptor,
                                    XmlTag tag,
                                    Template template,
-                                   boolean weInsertedSomeCodeThatCouldBeInvalidated,
-                                   XmlAttributeDescriptor[] attributes,
                                    StringBuilder indirectRequiredAttrs) {
+
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
       template.addTextSegment(">");
       boolean toInsertCDataEnd = false;
@@ -256,21 +267,89 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == '/') {
       template.addTextSegment("/>");
-    } else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
+    }
+    else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
-          (attributes.length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
+          (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         template.addTextSegment(" ");
-        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
-        template.addVariable("attrComplete", completeAttrExpr, completeAttrExpr, true);
-        weInsertedSomeCodeThatCouldBeInvalidated = true;
+        template.addVariable(new MacroCallNode(new CompleteSmartMacro()), true);
         template.addTextSegment("=\"");
         template.addEndVariable();
         template.addTextSegment("\"");
+        return true;
       }
-    } else if ((completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) && WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
-      template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
     }
-    return weInsertedSomeCodeThatCouldBeInvalidated;
+    else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) {
+      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() &&
+             HtmlUtil.isSingleHtmlTag(tag.getName())) {
+
+        template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
+      }
+      else {
+        completeTagTail(template, descriptor, tag.getContainingFile(), tag, true);
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean addRequiredSubTags(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context) {
+
+    if (!WebEditorOptions.getInstance().isAutomaticallyInsertRequiredSubTags()) return false;
+    List<XmlElementDescriptor> requiredSubTags = GenerateXmlTagAction.getRequiredSubTags(descriptor);
+    if (!requiredSubTags.isEmpty()) {
+      template.addTextSegment(">");
+      template.setToReformat(true);
+    }
+    for (XmlElementDescriptor subTag : requiredSubTags) {
+      if (subTag == null) { // placeholder for smart completion
+        template.addTextSegment("<");
+        template.addVariable(new MacroCallNode(new CompleteSmartMacro()), true);
+        continue;
+      }
+      template.addTextSegment("<" + subTag.getName());
+      addRequiredAttributes(subTag, null, template, file);
+      completeTagTail(template, subTag, file, context, false);
+    }
+    if (!requiredSubTags.isEmpty()) {
+      addTagEnd(template, descriptor, context);
+    }
+    return !requiredSubTags.isEmpty();
+  }
+
+  private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
+    boolean completeIt = !firstLevel || descriptor.getAttributesDescriptors(null).length == 0;
+    switch (descriptor.getContentType()) {
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+        if (completeIt) {
+          template.addTextSegment("/>");
+        }
+        break;
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
+         if (completeIt) {
+           template.addTextSegment(">");
+           if (firstLevel) {
+             template.addEndVariable();
+           }
+           else {
+             template.addVariable(new MacroCallNode(new CompleteMacro()), true);
+           }
+           addTagEnd(template, descriptor, context);
+         }
+         break;
+       default:
+         if (!addRequiredSubTags(template, descriptor, file, context)) {
+           if (completeIt) {
+             template.addTextSegment(">");
+             addTagEnd(template, descriptor, context);
+           }
+         }
+         break;
+    }
+  }
+
+  private static void addTagEnd(Template template, XmlElementDescriptor descriptor, XmlTag context) {
+    template.addTextSegment("</" + descriptor.getName(context) + ">");
   }
 
   private static boolean isTagFromHtml(final XmlTag tag) {

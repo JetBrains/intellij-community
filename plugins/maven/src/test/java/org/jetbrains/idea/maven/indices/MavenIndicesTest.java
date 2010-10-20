@@ -338,6 +338,19 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
+  public void testRestartingIndicesManagerOnRemoteMavenServerShutdown() throws Exception {
+    MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+                        "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
+
+    MavenFacadeManager.getInstance().shutdown(true);
+
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+                        "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
+  }
+
   private void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {
     File cachesDir = index.getCurrentDataDir();
     File file = new File(cachesDir, fileName);

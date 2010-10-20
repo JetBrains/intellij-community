@@ -16,23 +16,17 @@
 package com.intellij.codeInspection.internal;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.table.JBTable;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.QueryExecutor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.Map;
+import javax.swing.DefaultListCellRenderer;
 
-public class GtkPreferredJComboboxRendererInspection extends BaseJavaLocalInspectionTool {
+public class GtkPreferredJComboBoxRendererInspection extends BaseJavaLocalInspectionTool {
+  private static final String RENDERER_CLASS_NAME = DefaultListCellRenderer.class.getName();
+  private static final String MESSAGE = "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.";
+
   @Nls
   @NotNull
   @Override
@@ -44,13 +38,13 @@ public class GtkPreferredJComboboxRendererInspection extends BaseJavaLocalInspec
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Preferred JCombobox renderer";
+    return "Preferred JComboBox renderer";
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return "GtkPreferredJComboboxRenderer";
+    return "GtkPreferredJComboBoxRenderer";
   }
 
   public boolean isEnabledByDefault() {
@@ -67,17 +61,16 @@ public class GtkPreferredJComboboxRendererInspection extends BaseJavaLocalInspec
       @Override
       public void visitClass(final PsiClass aClass) {
         final PsiClass superClass = aClass.getSuperClass();
-        if (superClass != null && "javax.swing.DefaultListCellRenderer".equals(superClass.getQualifiedName())){
+        if (superClass != null && RENDERER_CLASS_NAME.equals(superClass.getQualifiedName())){
           final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-          holder.registerProblem(nameIdentifier != null ? nameIdentifier : aClass,
-                                 "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.");
+          holder.registerProblem(nameIdentifier != null ? nameIdentifier : aClass, MESSAGE);
         }
       }
 
       @Override
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-        if ("javax.swing.DefaultListCellRenderer".equals(aClass.getQualifiedName())){
-          holder.registerProblem(aClass.getBaseClassReference(), "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.");
+        if (RENDERER_CLASS_NAME.equals(aClass.getBaseClassReference().getQualifiedName())){
+          holder.registerProblem(aClass.getBaseClassReference(), MESSAGE);
         }
       }
     };

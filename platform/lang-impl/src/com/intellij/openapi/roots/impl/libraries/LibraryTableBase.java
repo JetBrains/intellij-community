@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -175,7 +176,11 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
-  public class LibraryModel implements ModifiableModel, JDOMExternalizable {
+  public interface ModifiableModelEx extends ModifiableModel {
+    Library createLibrary(String name, @Nullable LibraryType type);
+  }
+
+  public class LibraryModel implements ModifiableModelEx, JDOMExternalizable {
     private final ArrayList<Library> myLibraries = new ArrayList<Library>();
     private boolean myWritable;
 
@@ -207,7 +212,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       @NonNls final String libraryPrefix = "library.";
       final String libPath = System.getProperty(libraryPrefix + name);
       if (libPath != null) {
-        final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this, null);
+        final LibraryImpl library = new LibraryImpl(name, null, LibraryTableBase.this, null);
         library.addRoot(libPath, OrderRootType.CLASSES);
         return library;
       }
@@ -224,9 +229,15 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       LOG.assertTrue(myWritable);
     }
 
+    @Override
     public Library createLibrary(String name) {
+      return createLibrary(name, null);
+    }
+
+    @Override
+    public Library createLibrary(String name, @Nullable LibraryType type) {
       assertWritable();
-      final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this, null);
+      final LibraryImpl library = new LibraryImpl(name, type, LibraryTableBase.this, null);
       myLibraries.add(library);
       return library;
     }
