@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -182,11 +183,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (message.isSubmitted()) {
         final SubmittedReportInfo info = message.getSubmissionInfo();
         if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-          txt.append(DiagnosticBundle.message("error.list.message.submission.failed"));
+          txt.append(" ").append(DiagnosticBundle.message("error.list.message.submission.failed"));
         }
         else {
           if (info.getLinkText() != null) {
-            txt.append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getLinkText()));
+            txt.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getLinkText()));
             if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
               txt.append(DiagnosticBundle.message("error.list.message.duplicate"));
             }
@@ -196,6 +197,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
         }
         txt.append(". ");
+      }
+      else if (message.isSubmitting()) {
+        txt.append(" Submitting...");
       }
       else if (!message.isRead()) {
         txt.append(" ").append(DiagnosticBundle.message("error.list.message.unread"));
@@ -508,7 +512,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
 
       if (submitter != null) {
-        logMessage.setSubmitted(submitter.submit(getEvents(logMessage), getContentPane()));
+        logMessage.setSubmitting(true);
+        updateControls();
+        submitter.submitAsync(getEvents(logMessage), getContentPane(), new Consumer<SubmittedReportInfo>() {
+          @Override
+          public void consume(SubmittedReportInfo submittedReportInfo) {
+            logMessage.setSubmitting(false);
+            logMessage.setSubmitted(submittedReportInfo);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                updateControls();
+              }
+            });
+          }
+        });
       }
     }
 

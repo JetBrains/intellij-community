@@ -17,23 +17,23 @@ package com.intellij.errorreport;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.error.InternalEAPException;
-import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.BuildInfo;
 import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,7 +44,9 @@ import java.io.IOException;
  */
 public class ErrorReportSender {
   @NonNls public static final String PREPARE_URL = "http://www.intellij.net/";
-  //public static String REPORT_URL = "http://unit-038:8080/error/report?sender=i";
+
+  private ErrorReportSender() {
+  }
 
   @Nullable
   public static String checkNewBuild() {
@@ -64,15 +66,10 @@ public class ErrorReportSender {
     private String myLogin;
     private String myPassword;
     private ErrorBean errorBean;
-    private int myThreadId;
 
     public SendTask(final Project project, ErrorBean errorBean) {
       myProject = project;
       this.errorBean = errorBean;
-    }
-
-    public int getThreadId () {
-      return myThreadId;
     }
 
     public void setCredentials(String login, String password) {
@@ -80,58 +77,40 @@ public class ErrorReportSender {
       myPassword = password;
     }
 
-    public void sendReport() throws Exception {
-      final Ref<Exception> err = new Ref<Exception>();
-      Runnable runnable = new Runnable() {
-        public void run() {
+    public void sendReport(final Consumer<Integer> callback, final Consumer<Exception> errback) {
+      Task.Backgroundable task = new Task.Backgroundable(myProject, DiagnosticBundle.message("title.submitting.error.report")) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
             HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
 
             if (!StringUtil.isEmpty(myLogin)) {
-              myThreadId = ITNProxy.postNewThread(
+              int threadId = ITNProxy.postNewThread(
                 myLogin,
                 myPassword,
                 errorBean,
                 IdeaLogger.getOurCompilationTimestamp());
+              callback.consume(threadId);
             }
           }
           catch (Exception ex) {
-            err.set(ex);
+            errback.consume(ex);
           }
         }
       };
       if (myProject == null) {
-        runnable.run();
+        task.run(new EmptyProgressIndicator());
       }
       else {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
-                                                                          DiagnosticBundle.message("title.submitting.error.report"),
-                                                                          false, myProject);
-      }
-      if (!err.isNull()) {
-        throw err.get();
+        ProgressManager.getInstance().run(task);
       }
     }
   }
 
-  public static int sendError(Project project, String login, String password, ErrorBean error)
-    throws IOException, NoSuchEAPUserException, InternalEAPException {
-
+  public static void sendError(Project project, String login, String password, ErrorBean error,
+                              Consumer<Integer> callback, Consumer<Exception> errback) {
     SendTask sendTask = new SendTask (project, error);
     sendTask.setCredentials(login, password);
-
-    try {
-      sendTask.sendReport();
-      return sendTask.getThreadId();
-    } catch (IOException e) {
-      throw e;
-    } catch (NoSuchEAPUserException e) {
-      throw e;
-    } catch (InternalEAPException e) {
-      throw e;
-    } catch (Throwable e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
+    sendTask.sendReport(callback, errback);
   }
 }

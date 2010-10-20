@@ -17,6 +17,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.util.Consumer;
 
 import java.awt.*;
 
@@ -57,4 +58,8 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @return submission result status.
    */
   public abstract SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent);
+
+  public void submitAsync(IdeaLoggingEvent[] events, Component parentComponent, Consumer<SubmittedReportInfo> consumer) {
+    consumer.consume(submit(events, parentComponent));
+  }
 }
