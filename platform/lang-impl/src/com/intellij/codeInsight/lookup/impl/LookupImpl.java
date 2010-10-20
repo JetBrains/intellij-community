@@ -88,6 +88,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
+  private boolean myShown = false;
   private boolean myDisposed = false;
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
@@ -569,7 +570,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void show(){
     ApplicationManager.getApplication().assertIsDispatchThread();
-    assert !myDisposed;
+    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!myShown);
+    myShown = true;
 
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
@@ -971,6 +974,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public LookupArranger getArranger() {
     return myArranger;
+  }
+
+  public boolean isReused() {
+    return myReused;
   }
 
   public void markReused() {

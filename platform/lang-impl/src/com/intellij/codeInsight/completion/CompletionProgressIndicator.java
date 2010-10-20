@@ -76,7 +76,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private boolean myDisposed;
-  private boolean myInitialized;
+  private boolean myShownLookup;
   private int myCount;
   private final Update myUpdate = new Update("update") {
     public void run() {
@@ -124,6 +124,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
+    myShownLookup = lookup.isReused();
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -133,7 +134,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isReused()) {
       scheduleAdvertising();
     }
 
@@ -194,7 +195,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isOutdated()) {
                   return;
                 }
-                if (isAutopopupCompletion() && !myInitialized) {
+                if (isAutopopupCompletion() && !myShownLookup) {
                   return;
                 }
                 if (!isBackgrounded()) {
@@ -307,8 +308,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myInitialized) {
-      myInitialized = true;
+    if (!myShownLookup) {
+      myShownLookup = true;
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
@@ -534,10 +535,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }.execute().getResultObject();
     return aBoolean.booleanValue();
-  }
-
-  public boolean isInitialized() {
-    return myInitialized;
   }
 
   public void restorePrefix() {
