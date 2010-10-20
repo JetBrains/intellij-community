@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +34,7 @@ import javax.swing.*;
  */
 public class ChangeSignatureDetectorAction implements IntentionAction, Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
+  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
 
   @NotNull
   @Override

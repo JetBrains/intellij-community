@@ -112,7 +112,7 @@ public class ChangeSignatureGestureVisitor implements HighlightVisitor {
 
     @Override
     public String getTooltipText() {
-      return SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED;
+      return ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
     }
 
     @Override
