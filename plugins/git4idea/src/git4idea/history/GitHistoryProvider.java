@@ -89,9 +89,6 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    */
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    if (filePath.isDirectory()) {
-      return null;
-    }
     List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
     return createSession(filePath, revisions);
   }
@@ -141,6 +138,6 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * {@inheritDoc}
    */
   public boolean supportsHistoryForDirectories() {
-    return false;
+    return true;
   }
 }
