@@ -87,18 +87,28 @@ public class ScriptingLibraryManager {
   }
 
   @Nullable
-  public LibraryTable getLibraryTable() {
+  public LibraryTable getLibraryTable(boolean readOnly) {
+    if (!readOnly && myLibLevel == LibraryLevel.PROJECT) {
+      return myRootModel != null ? myRootModel.getModuleLibraryTable() : null;
+    }
+    String libLevel = null;
     switch (myLibLevel) {
       case PROJECT:
-        if (myRootModel != null) {
-          return myRootModel.getModuleLibraryTable();
-        }
+        libLevel = LibraryTablesRegistrar.PROJECT_LEVEL;
         break;
       case GLOBAL:
-        return
-          LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, myProject);
+        libLevel = LibraryTablesRegistrar.APPLICATION_LEVEL;
+        break;
+    }
+    if (libLevel != null) {
+      return LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libLevel, myProject);
     }
     return null;
+  }
+
+  @Nullable
+  public LibraryTable getLibraryTable() {
+    return getLibraryTable(false);
   }
 
   public Project getProject() {
