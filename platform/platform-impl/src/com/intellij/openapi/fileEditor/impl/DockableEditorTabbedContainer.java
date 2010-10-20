@@ -98,9 +98,17 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
   @Override
   public void add(DockableContent content, RelativePoint dropTarget) {
+    EditorWindow window = null;
+    if (myCurrentOver != null) {
+      window = EditorWindow.DATA_KEY.getData(myCurrentOver.getDataProvider());
+    }
+
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
-    EditorWindow currentWindow = mySplitters.getOrCreateCurrentWindow(file);
-    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(currentWindow, file, true);
+
+    if (window == null) {
+      window = mySplitters.getOrCreateCurrentWindow(file);
+    }
+    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
   }
 
   @Override

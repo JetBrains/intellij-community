@@ -390,6 +390,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }
       }
 
+      if (EditorWindow.DATA_KEY.is(dataId)) {
+        return myWindow;
+      }
+
       return null;
     }
   }

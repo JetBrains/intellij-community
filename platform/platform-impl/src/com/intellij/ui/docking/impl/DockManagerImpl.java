@@ -228,6 +228,11 @@ public class DockManagerImpl extends DockManager {
 
     public void cancel() {
       myWindow.dispose();
+
+      if (myCurrentOverContainer != null) {
+        myCurrentOverContainer.resetDropOver(myContent);
+        myCurrentOverContainer = null;
+      }
     }
   }
 
