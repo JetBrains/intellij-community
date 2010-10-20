@@ -33,8 +33,8 @@ import java.util.Set;
  * @author nik
  */
 public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
-  static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
-  static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
+  private static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
+  private static final Key<Set<Artifact>> CHANGED_ARTIFACTS = Key.create("affected_artifacts");
 
   public ArtifactsCompiler() {
     super("artifacts_compiler", 0, GenericCompiler.CompileOrderPlace.PACKAGING);
@@ -46,8 +46,13 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
     return compilers.length == 1 ? compilers[0] : null;
   }
 
-  static void setAffectedArtifacts(final CompileContext context, Set<Artifact> artifacts) {
-    context.putUserData(AFFECTED_ARTIFACTS, artifacts);
+  static void addChangedArtifact(final CompileContext context, Artifact artifact) {
+    Set<Artifact> artifacts = context.getUserData(CHANGED_ARTIFACTS);
+    if (artifacts == null) {
+      artifacts = new THashSet<Artifact>();
+      context.putUserData(CHANGED_ARTIFACTS, artifacts);
+    }
+    artifacts.add(artifact);
   }
 
   static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
@@ -90,8 +95,8 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
   }
 
   @Nullable
-  public static Set<Artifact> getAffectedArtifacts(final CompileContext compileContext) {
-    return compileContext.getUserData(AFFECTED_ARTIFACTS);
+  public static Set<Artifact> getChangedArtifacts(final CompileContext compileContext) {
+    return compileContext.getUserData(CHANGED_ARTIFACTS);
   }
 
   @Nullable

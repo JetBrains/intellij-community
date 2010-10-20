@@ -41,7 +41,8 @@ public class EditLibraryDialog extends DialogWrapper {
     super(parent, true);
     mySettings = settings;
     myLibraryEditor = libraryEditor;
-    myLibraryRootsComponent = LibraryRootsComponent.createComponent(libraryEditor);
+    myLibraryRootsComponent = new LibraryRootsComponent(null, libraryEditor);
+    myLibraryRootsComponent.resetProperties();
 
     Disposer.register(getDisposable(), myLibraryRootsComponent);
 
@@ -63,6 +64,7 @@ public class EditLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     myLibraryEditor.setName(myNameAndLevelPanel.getLibraryName());
+    myLibraryRootsComponent.applyProperties();
     if (myLibraryEditor instanceof NewLibraryEditor) {
       mySettings.setNewLibraryLevel(myNameAndLevelPanel.getLibraryLevel());
     }

@@ -34,7 +34,7 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public void forEachModule(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<Module> processor) {
     processor.process(myRootModel.getModule());
   }
 

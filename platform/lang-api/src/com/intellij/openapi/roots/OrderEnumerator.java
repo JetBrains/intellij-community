@@ -158,20 +158,25 @@ public abstract class OrderEnumerator {
   }
 
   /**
-   * Runs processor on each module that this enumerator was created on
-   *
-   * @param processor processor
-   */
-  public abstract void forEachModule(@NotNull Processor<Module> processor);
-
-  /**
    * Runs <code>processor.process()</code> for each entry processed by this enumerator.
    *
    * @param processor processor
    */
   public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
+  /**
+   * Runs <code>processor.process()</code> for each library processed by this enumerator.
+   *
+   * @param processor processor
+   */
   public abstract void forEachLibrary(@NotNull Processor<Library> processor);
+
+  /**
+   * Runs <code>processor.process()</code> for each module processed by this enumerator.
+   *
+   * @param processor processor
+   */
+  public abstract void forEachModule(@NotNull Processor<Module> processor);
 
   /**
    * Passes order entries to the specified visitor.

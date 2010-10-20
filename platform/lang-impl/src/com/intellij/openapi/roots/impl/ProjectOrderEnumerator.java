@@ -35,7 +35,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public void forEachModule(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<Module> processor) {
     Module[] modules = myModulesProvider != null ? myModulesProvider.getModules() : ModuleManager.getInstance(myProject).getSortedModules();
     for (Module each : modules) {
       processor.process(each);
@@ -47,7 +47,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
     myRecursively = false;
     myWithoutDepModules = true;
     final THashSet<Module> processed = new THashSet<Module>();
-    forEachModule(new Processor<Module>() {
+    processRootModules(new Processor<Module>() {
       @Override
       public boolean process(Module module) {
         processEntries(getRootModel(module), processor, processed, true);

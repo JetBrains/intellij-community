@@ -56,6 +56,7 @@ import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.*;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.maven.embedder.MavenEmbedder;
@@ -226,7 +227,6 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     }
     catch (Exception e) {
       throw rethrowException(e);
-
     }
     return Collections.emptyList();
   }
@@ -280,7 +280,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
           mavenPlugin.setGroupId(plugin.getGroupId());
           mavenPlugin.setArtifactId(plugin.getArtifactId());
           mavenPlugin.setVersion(plugin.getVersion());
-          MavenProject project = RemoteNativeMavenProjectHolder.findprojectById(nativeMavenProjectId);
+          MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
           PluginDescriptor result = getComponent(PluginManager.class).verifyPlugin(mavenPlugin, project,
                                                                                    myImpl.getSettings(), myImpl.getLocalRepository());
           if (!transitive) return Collections.emptyList();
@@ -557,49 +557,35 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
   }
 
-  public void customizeForResolve(MavenFacadeConsole console, MavenFacadeProgressIndicator process) {
-    doCustomize(null, false, console, process);
-  }
-
-  public void customizeForResolve(Map<MavenId, File> projectIdToFileMap, MavenFacadeConsole console, MavenFacadeProgressIndicator process) {
-    doCustomize(projectIdToFileMap, false, console, process);
-  }
-
-  public void customizeForStrictResolve(Map<MavenId, File> projectIdToFileMap,
-                                        MavenFacadeConsole console,
-                                        MavenFacadeProgressIndicator process) {
-    doCustomize(projectIdToFileMap, true, console, process);
-  }
-
-  private void doCustomize(Map<MavenId, File> projectIdToFileMap,
-                           boolean strict,
-                           MavenFacadeConsole logger,
-                           MavenFacadeProgressIndicator process) {
+  public void customize(@Nullable Map<MavenId, File> projectIdToFileMap,
+                        boolean failOnUnresolvedDependency,
+                        @NotNull MavenFacadeConsole console,
+                        @NotNull MavenFacadeProgressIndicator indicator) {
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
-      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
+      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, failOnUnresolvedDependency);
       ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(projectIdToFileMap);
-      ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
+      ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
-      setConsoleAndLogger(logger, process);
+      setConsoleAndIndicator(console, indicator);
     }
     catch (Exception e) {
       throw rethrowException(e);
     }
   }
 
-  private void setConsoleAndLogger(MavenFacadeConsole logger, MavenFacadeProgressIndicator process) {
-    myCurrentIndicatorWrapper = new MavenFacadeProgressIndicatorWrapper(process);
-    myConsoleWrapper.setWrappee(logger);
+  private void setConsoleAndIndicator(MavenFacadeConsole console, MavenFacadeProgressIndicator indicator) {
+    myConsoleWrapper.setWrappee(console);
+    myCurrentIndicatorWrapper = new MavenFacadeProgressIndicatorWrapper(indicator);
 
     WagonManager wagon = getComponent(WagonManager.class);
-    wagon.setDownloadMonitor(process == null ? null : new TransferListenerAdapter(new MavenFacadeProgressIndicatorWrapper(process)));
+    wagon.setDownloadMonitor(indicator == null ? null : new TransferListenerAdapter(new MavenFacadeProgressIndicatorWrapper(indicator)));
   }
 
   public void reset() {
     try {
-      setConsoleAndLogger(null, null);
+      setConsoleAndIndicator(null, null);
 
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();

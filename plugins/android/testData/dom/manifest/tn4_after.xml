@@ -3,7 +3,7 @@
           package="p1.a">
     <application android:icon="@drawable/icon" android:manageSpaceActivity="MyActivity">
         <activity android:name="MyActivity" android:label="MegAAA activity">
-            <meta-data
+            <meta-data><caret></meta-data>
         </activity>
     </application>
 </manifest>

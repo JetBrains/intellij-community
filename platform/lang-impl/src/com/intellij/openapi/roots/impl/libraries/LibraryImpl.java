@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -25,8 +26,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -38,8 +38,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,17 +57,22 @@ import java.util.*;
 public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
+  @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
   @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String RECURSIVE_ATTR = "recursive";
+  @NonNls private static final String PROPERTIES_ELEMENT = "properties";
+  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private final Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
   private final List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private final LibraryImpl mySource;
+  private LibraryType<?> myType;
+  private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
   private final ModifiableRootModel myRootModel;
@@ -77,6 +85,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRootModel = rootModel;
     mySource = null;
     readName(element);
+    readProperties(element);
     readJarDirectories(element);
     //init roots depends on my hashcode, hashcode depends on jardirectories and name
     myRoots = initRoots();
@@ -84,10 +93,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     updateWatchedRoots();
   }
 
-  LibraryImpl(String name, LibraryTable table, ModifiableRootModel rootModel) {
+  LibraryImpl(String name, final @Nullable LibraryType<?> type, LibraryTable table, ModifiableRootModel rootModel) {
     myName = name;
     myLibraryTable = table;
     myRootModel = rootModel;
+    myType = type;
+    if (type != null) {
+      myProperties = type.createDefaultProperties();
+    }
     myRoots = initRoots();
     mySource = null;
   }
@@ -96,6 +109,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     assert !from.isDisposed();
     myRootModel = rootModel;
     myName = from.myName;
+    myType = from.myType;
+    if (from.myType != null && from.myProperties != null) {
+      myProperties = myType.createDefaultProperties();
+      //noinspection unchecked
+      myProperties.loadState(from.myProperties.getState());
+    }
     myRoots = initRoots();
     mySource = newSource;
     myLibraryTable = from.myLibraryTable;
@@ -195,6 +214,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return true;
   }
 
+  @Override
+  public void setProperties(LibraryProperties properties) {
+    LOG.assertTrue(isWritable());
+    myProperties = properties;
+  }
+
   @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
@@ -217,9 +242,26 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public void readExternal(Element element) throws InvalidDataException {
     readName(element);
+    readProperties(element);
     readRoots(element);
     readJarDirectories(element);
     updateWatchedRoots();
+  }
+
+  private void readProperties(Element element) {
+    final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    if (typeId == null) return;
+
+    myType = LibraryTypeRegistry.getInstance().findTypeById(typeId);
+    if (myType == null) return;
+
+    myProperties = myType.createDefaultProperties();
+    final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
+    if (propertiesElement != null) {
+      final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
+      //noinspection unchecked
+      myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
+    }
   }
 
   private void readName(Element element) {
@@ -258,6 +300,16 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
+    if (myType != null) {
+      element.setAttribute(LIBRARY_TYPE_ATTR, myType.getKind().getKindId());
+      final Object state = myProperties.getState();
+      if (state != null) {
+        final Element propertiesElement = XmlSerializer.serialize(state, SERIALIZATION_FILTERS);
+        if (propertiesElement != null) {
+          element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
+        }
+      }
+    }
     for (OrderRootType rootType : OrderRootType.getSortedRootTypes()) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       if (roots.size() == 0 && rootType.skipWriteIfEmpty()) continue; //compatibility iml/ipr
@@ -282,6 +334,16 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   private boolean isWritable() {
     return mySource != null;
+  }
+
+  @Override
+  public LibraryType<?> getType() {
+    return myType;
+  }
+
+  @Override
+  public LibraryProperties getProperties() {
+    return myProperties;
   }
 
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
@@ -402,6 +464,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
+    myProperties = fromModel.myProperties;
     if (areRootsChanged(fromModel)) {
       disposeMyPointers();
       copyRootsFrom(fromModel);
@@ -546,6 +609,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (!myJarDirectories.equals(library.myJarDirectories)) return false;
     if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
     if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
+    if (myType != null ? !myType.equals(library.myType) : library.myType != null) return false;
+    if (myProperties != null ? !myProperties.equals(library.myProperties) : library.myProperties != null) return false;
 
     return true;
   }

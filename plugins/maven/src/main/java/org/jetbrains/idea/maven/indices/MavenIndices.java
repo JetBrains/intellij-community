@@ -56,7 +56,7 @@ public class MavenIndices {
       try {
         MavenIndex index = new MavenIndex(myIndexer, each, myListener);
         if (find(index.getRepositoryId(), index.getRepositoryPathOrUrl(), index.getKind()) != null) {
-          index.close();
+          index.close(true);
           FileUtil.delete(each);
           continue;
         }
@@ -71,7 +71,7 @@ public class MavenIndices {
 
   public synchronized void close() {
     for (MavenIndex each : myIndices) {
-      each.close();
+      each.close(false);
     }
     myIndices.clear();
   }

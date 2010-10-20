@@ -58,6 +58,10 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @Override
   public Icon getCustomIcon(@NotNull Library library, StructureConfigurableContext context) {
+    final LibraryType<?> type = ((LibraryEx)library).getType();
+    if (type != null) {
+      return type.getIcon();
+    }
     final List<Icon> icons = getCustomIcons(library, context);
     if (icons.size() == 1) {
       return icons.get(0);
@@ -75,7 +79,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
         final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
         if (provider != null) {
-          ContainerUtil.addIfNotNull(icons, provider.getIcon(properties));
+          ContainerUtil.addIfNotNull(icons, provider.getIcon());
         }
         return true;
       }

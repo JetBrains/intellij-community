@@ -84,7 +84,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   public boolean register(final Project project, final String name, final Runnable runnable) {
     synchronized (myLock) {
-      if (! project.isOpen()) {
+      if (project.isDisposed()) {
         return false;
       }
       /*if (Boolean.FALSE.equals(myStates.get(project))) {

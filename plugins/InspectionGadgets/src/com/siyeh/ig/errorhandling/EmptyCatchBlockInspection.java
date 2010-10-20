@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -40,22 +42,26 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreIgnoreParameter = true;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "empty.catch.block.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "empty.catch.block.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -69,6 +75,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new EmptyCatchBlockFix();
@@ -76,12 +83,14 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
     private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
 
+        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "rename.catch.parameter.to.ignored");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -98,8 +107,8 @@ public class EmptyCatchBlockInspection extends BaseInspection {
             if (identifier == null) {
                 return;
             }
-            final PsiManager manager = element.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                  JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiIdentifier newIdentifier =
                     factory.createIdentifier("ignored");
             identifier.replace(newIdentifier);
@@ -107,20 +116,29 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     }
 
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new EmptyCatchBlockVisitor();
     }
 
     private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(
+                @NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
-            if (m_ignoreTestCases &&
-                    TestUtils.isPartOfJUnitTestMethod(statement)) {
-                return;
+            if (m_ignoreTestCases) {
+                if (TestUtils.isPartOfJUnitTestMethod(statement)) {
+                    return;
+                }
+                final PsiClass containingClass =
+                        PsiTreeUtil.getParentOfType(statement, PsiClass.class);
+                if (containingClass != null &&
+                        TestUtil.isTestClass(containingClass)) {
+                    return;
+                }
             }
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();
@@ -131,7 +149,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
         private void checkCatchSection(PsiCatchSection section) {
             final PsiCodeBlock block = section.getCatchBlock();
-            if (block == null || !catchBlockIsEmpty(block)) {
+            if (block == null || !isCatchBlockEmpty(block)) {
                 return;
             }
             final PsiParameter parameter = section.getParameter();
@@ -156,7 +174,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
             registerError(catchToken);
         }
 
-        private boolean catchBlockIsEmpty(PsiCodeBlock block) {
+        private boolean isCatchBlockEmpty(PsiCodeBlock block) {
             if (m_includeComments) {
                 final PsiElement[] children = block.getChildren();
                 for (final PsiElement child : children) {

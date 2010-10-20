@@ -1,6 +1,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.idea.Bombed;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 import org.jetbrains.android.sdk.Android15TestProfile;
@@ -58,10 +59,12 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestHighlighting("hl2.xml");
   }
 
+  @Bombed(month = 10, day = 30)
   public void testTagNameCompletion3() throws Throwable {
     toTestCompletion("tn3.xml", "tn3_after.xml");
   }
 
+  @Bombed(month = 10, day = 30)
   public void testTagNameCompletion4() throws Throwable {
     toTestCompletion("tn4.xml", "tn4_after.xml");
   }
