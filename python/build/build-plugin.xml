@@ -121,7 +121,7 @@
         <patternset refid="resources.pt"/>
         <type type="file"/>
       </fileset>
-      <fileset dir="${idea.home}/bin">
+      <fileset dir="${plugin.home}/../bin">
         <filename name="runnerw.exe"/>
       </fileset>
     </copy>
