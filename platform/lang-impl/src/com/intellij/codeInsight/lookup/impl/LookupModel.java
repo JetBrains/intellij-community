@@ -25,6 +25,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.TestOnly;
 
@@ -118,8 +119,9 @@ public class LookupModel {
 
   public void collectGarbage() {
     synchronized (lock) {
-      myItemActions.keySet().retainAll(myItems);
-      myItemPresentations.keySet().retainAll(myItems);
+      Set<LookupElement> itemSet = new THashSet<LookupElement>(myItems, TObjectHashingStrategy.IDENTITY);
+      myItemActions.keySet().retainAll(itemSet);
+      myItemPresentations.keySet().retainAll(itemSet);
     }
   }
 
@@ -131,6 +133,10 @@ public class LookupModel {
           return item.isValid() && item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix));
         }
       });
+
+      if (newItems.size() == myItems.size()) {
+        return;
+      }
 
       clearItems();
       for (LookupElement newItem : newItems) {
