@@ -76,17 +76,7 @@ public class TypesUtil {
       return JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory().createTypeByFQClassName(qName, scope);
     }
 
-    final PsiType type = getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
-    if (type != null) {
-      return type;
-    }
-
-    if (typeEqualsToText(rType, GrStringUtil.GROOVY_LANG_GSTRING)) {
-      PsiType gstringType = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
-        .createTypeByFQClassName(GrStringUtil.GROOVY_LANG_GSTRING, binaryExpression.getResolveScope());
-      return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{gstringType});
-    }
-    return null;
+    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
   }
 
   @Nullable

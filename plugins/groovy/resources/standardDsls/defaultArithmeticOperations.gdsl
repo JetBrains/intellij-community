@@ -20,6 +20,7 @@ package standardDsls
  */
 
 final String NUMBER = "java.lang.Number"
+final String STRING = "java.lang.String"
 contributor(ctype:NUMBER) {
   method name: "plus", type: NUMBER, params:[arg:NUMBER]
   method name: "minus", type: NUMBER, params:[arg:NUMBER]
@@ -34,4 +35,14 @@ contributor(ctype:NUMBER) {
   method name: "previous", type: psiType.canonicalText
   method name: "negative", type: psiType.canonicalText
   method name: "positive", type: psiType.canonicalText
+
+  method name: "plus", type: STRING, params:[arg:STRING]
+  method name: "minus", type: STRING, params:[arg:STRING]
+  method name: "multiply", type: STRING, params:[arg:STRING]
+  method name: "power", type: STRING, params:[arg:STRING]
+  method name: "div", type: STRING, params:[arg:STRING]
+  method name: "mod", type: STRING, params:[arg:STRING]
+  method name: "or", type: STRING, params:[arg:STRING]
+  method name: "and", type: STRING, params:[arg:STRING]
+  method name: "xor", type: STRING, params:[arg:STRING]
 }
