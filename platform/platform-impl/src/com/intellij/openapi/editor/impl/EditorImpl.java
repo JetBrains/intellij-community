@@ -3035,7 +3035,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       getGutterComponentEx().invalidate();
     }
 
-    if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection) {
+    if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
+        && !myMousePressedEvent.isShiftDown())
+    {
       getSelectionModel().removeSelection();
     }
   }
@@ -4458,7 +4460,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @return    <code>true</code> if action that produces given event will trigger editor selection change; <code>false</code> otherwise
    */
   private boolean tweakSelectionEvent(@NotNull MouseEvent e) {
-    return getSelectionModel().hasSelection() && e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown();
+    return getSelectionModel().hasSelection() && e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown()
+           && e.getComponent() == getGutterComponentEx();
   }
 
   /**
