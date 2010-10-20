@@ -199,7 +199,12 @@ public class PsiCopyPasteManager {
         return getDataAsText();
       }
       if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-        return asFileList(myDataProxy.getElements());
+        return ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
+          @Override
+          public List<File> compute() {
+            return asFileList(myDataProxy.getElements());
+          }
+        });
       }
       return null;
     }
