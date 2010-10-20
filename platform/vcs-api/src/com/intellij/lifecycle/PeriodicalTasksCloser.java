@@ -30,7 +30,6 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.TracedLifeCycle;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -38,15 +37,14 @@ import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLifecycleListener, ApplicationComponent {
   private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
   private final Object myLock = new Object();
   private final MultiMap<Project, Pair<String, Runnable>> myInterrupters;
-  private final Map<Project, TracedLifeCycle> myStates = new HashMap<Project, TracedLifeCycle>();
+  //private final Map<Project, TracedLifeCycle> myStates = new HashMap<Project, TracedLifeCycle>();
   private MessageBusConnection myConnection;
   private ProjectManager myProjectManager;
 
@@ -64,11 +62,14 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   @Override
   public void disposeComponent() {
-    synchronized (myLock) {
+    /*synchronized (myLock) {
       myStates.clear(); // +-
-    }
+    }*/
     myProjectManager.removeProjectManagerListener(this);
     myConnection.disconnect();
+    synchronized (myLock) {
+      myInterrupters.clear();
+    }
   }
 
   @NotNull
@@ -83,34 +84,49 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   public boolean register(final Project project, final String name, final Runnable runnable) {
     synchronized (myLock) {
-      if (Boolean.FALSE.equals(myStates.get(project))) {
+      if (! project.isOpen()) {
         return false;
       }
+      /*if (Boolean.FALSE.equals(myStates.get(project))) {
+        return false;
+      }*/
       myInterrupters.putValue(project, new Pair<String, Runnable>(name, runnable));
       return true;
     }
   }
 
   public void projectOpened(Project project) {
+    clearForTests();
+    /*clearForTests();
+
     synchronized (myLock) {
       myStates.put(project, TracedLifeCycle.OPEN);
-    }
+    }*/
   }
 
   public boolean canCloseProject(Project project) {
     return true;
   }
 
-  public void projectClosed(Project project) {
-    synchronized (myLock) {
-      myStates.remove(project);
+  private void clearForTests() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final Project[] projects = myProjectManager.getOpenProjects();
+      synchronized (myLock) {
+        myInterrupters.keySet().retainAll(Arrays.asList(projects));
+      }
     }
   }
 
+  public void projectClosed(Project project) {
+    /*synchronized (myLock) {
+      myStates.remove(project);
+    }*/
+  }
+
   public void projectClosing(final Project project) {
-    synchronized (myLock) {
+    /*synchronized (myLock) {
       myStates.put(project, TracedLifeCycle.CLOSING);
-    }
+    }*/
     final Collection<Pair<String, Runnable>> list;
     synchronized (myLock) {
       list = myInterrupters.remove(project);
@@ -141,9 +157,12 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   @Override
   public void beforeProjectLoaded(@NotNull Project project) {
+    clearForTests();
+    /*clearForTests();
+
     synchronized (myLock) {
       myStates.put(project, TracedLifeCycle.OPENING);
-    }
+    }*/
   }
 
   public <T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
@@ -165,7 +184,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
   private void throwCanceledException(final Project project, final Throwable t) {
     synchronized (myLock) {
       // allow NPE & assertion catch only if project is closed and being disposed
-      if (! myStates.containsKey(project)) {
+      if (! project.isOpen()) {
         Rethrow.reThrowRuntime(t);
       }
     }
@@ -209,8 +228,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
       final Ref<Boolean> fire = new Ref<Boolean>();
       if (project != null) {
         synchronized (myLock) {
-          final TracedLifeCycle state = myStates.get(project);
-          if (state == null || state.isClosingOrClosed()) {
+          if (! project.isOpen()) {
             fire.set(Boolean.TRUE);
           }
           if (Boolean.TRUE.equals(fire.get())) {
