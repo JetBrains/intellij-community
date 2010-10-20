@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -38,12 +40,14 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unused.catch.parameter.display.name");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -56,6 +60,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final boolean namedIgnoreButUsed = ((Boolean) infos[0]).booleanValue();
@@ -68,6 +73,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                 "unused.catch.parameter.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final boolean namedIgnoreButUsed = ((Boolean) infos[0]).booleanValue();
@@ -79,12 +85,14 @@ public class UnusedCatchParameterInspection extends BaseInspection {
 
     private static class UnusedCatchParameterFix extends InspectionGadgetsFix {
 
+        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "rename.catch.parameter.to.ignored");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -100,6 +108,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnusedCatchParameterVisitor();
     }
@@ -109,9 +118,16 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         @Override public void visitTryStatement(
                 @NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            if (m_ignoreTestCases && TestUtils.isPartOfJUnitTestMethod(
-                    statement)) {
-                return;
+            if (m_ignoreTestCases) {
+                final PsiClass containingClass =
+                        PsiTreeUtil.getParentOfType(statement, PsiClass.class);
+                if(containingClass != null &&
+                        TestUtil.isTestClass(containingClass)){
+                    return;
+                }
+                if (TestUtils.isPartOfJUnitTestMethod(statement)) {
+                    return;
+                }
             }
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();
@@ -125,9 +141,9 @@ public class UnusedCatchParameterInspection extends BaseInspection {
             if (parameter == null) {
                 return;
             }
-            @NonNls final String parametername = parameter.getName();
-            final boolean namedIgnore = "ignore".equals(parametername) ||
-                    "ignored".equals(parametername);
+            @NonNls final String parameterName = parameter.getName();
+            final boolean namedIgnore = "ignore".equals(parameterName) ||
+                    "ignored".equals(parameterName);
             final PsiCodeBlock block = section.getCatchBlock();
             if (block == null) {
                 return;
