@@ -40,11 +40,16 @@ public abstract class RemoteObjectWrapper<T> {
     if (myWrappee == null) {
       myWrappee = create();
     }
+    onWrappeeAccessed();
     return myWrappee;
   }
 
   @NotNull
   protected abstract T create() throws RemoteException;
+
+  protected void onWrappeeAccessed() {
+    if (myParent != null) myParent.onWrappeeAccessed();
+  }
 
   protected synchronized void handleRemoteError(RemoteException e) {
     MavenLog.LOG.info("Connection failed. Will be reconnected on the next request.", e);
@@ -52,8 +57,12 @@ public abstract class RemoteObjectWrapper<T> {
   }
 
   protected synchronized void onError() {
-    myWrappee = null;
+    cleanup();
     if (myParent != null) myParent.onError();
+  }
+
+  protected synchronized void cleanup() {
+    myWrappee = null;
   }
 
   protected <T> T perform(Retriable<T> r) {

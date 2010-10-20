@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -77,6 +78,8 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
   private final RemoteMavenFacadeDownloadListener myDownloadListener = new RemoteMavenFacadeDownloadListener();
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
+
+  private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public static MavenFacadeManager getInstance() {
     return ServiceManager.getService(MavenFacadeManager.class);
@@ -121,6 +124,7 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
     myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
     myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
     result.set(myLogger, myDownloadListener);
+
     return result;
   }
 
@@ -129,13 +133,9 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
     cleanup();
   }
 
-  @Override
-  protected synchronized void onError() {
-    super.onError();
-    cleanup();
-  }
+  protected synchronized void cleanup() {
+    super.cleanup();
 
-  private synchronized void cleanup() {
     if (myLoggerExported) {
       try {
         UnicastRemoteObject.unexportObject(myLogger, true);
@@ -154,6 +154,19 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
       }
       myDownloadListenerExported = false;
     }
+
+    myShutdownAlarm.cancelAllRequests();
+  }
+
+  @Override
+  protected void onWrappeeAccessed() {
+    myShutdownAlarm.cancelAllRequests();
+    myShutdownAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        shutdown(true);
+      }
+    }, 5 * 60 * 1000);
   }
 
   private RunProfileState createRunProfileState() {
