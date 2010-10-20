@@ -269,6 +269,17 @@ def layoutFull(String home, String targetDirectory) {
       }
 
 
+      dir("xpath") {
+        dir("lib") {
+          jar("xpath.jar") {noResources("xpath")}
+          resources("xpath")
+
+          dir("rt") {
+            jar("xslt-rt.jar") {module("xslt-rt")}
+          }
+        }
+      }
+
       dir("Groovy") {
         dir("lib") {
           jar("Groovy.jar") {
