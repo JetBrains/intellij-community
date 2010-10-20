@@ -20,6 +20,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -50,11 +51,16 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   private final PsiDocumentManager myPsiDocumentManager;
   private final PsiManager myPsiManager;
   private final FileEditorManager myFileEditorManager;
+  private final Project myProject;
 
-  public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager, final PsiManager psiManager, final FileEditorManager fileEditorManager) {
+  public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
+                                        final PsiManager psiManager,
+                                        final FileEditorManager fileEditorManager,
+                                        final Project project) {
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myFileEditorManager = fileEditorManager;
+    myProject = project;
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -100,7 +106,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   public void projectOpened() {
     myPsiManager.addPsiTreeChangeListener(this);
     EditorFactory.getInstance().addEditorFactoryListener(this);
-    Disposer.register(myPsiManager.getProject(), new Disposable() {
+    Disposer.register(myProject, new Disposable() {
       public void dispose() {
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
         EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
@@ -163,7 +169,9 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void editorCreated(EditorFactoryEvent event) {
-    addDocListener(event.getEditor().getDocument());
+    final Editor editor = event.getEditor();
+    if (editor.getProject() != myProject) return;
+    addDocListener(editor.getDocument());
   }
 
   public void addDocListener(Document document) {
