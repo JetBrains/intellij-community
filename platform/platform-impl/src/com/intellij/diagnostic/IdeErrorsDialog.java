@@ -445,14 +445,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ShutdownAction extends AbstractAction {
     public ShutdownAction() {
-      super(DiagnosticBundle.message("error.list.shutdown.action"));
+      super(ApplicationManager.getApplication().isRestartCapable() ? "Restart" : DiagnosticBundle.message("error.list.shutdown.action"));
     }
 
     public void actionPerformed(ActionEvent e) {
       myMessagePool.setJvmIsShuttingDown();
       LaterInvocator.invokeLater(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().exit();
+          final Application app = ApplicationManager.getApplication();
+          if (app.isRestartCapable()) {
+            app.restart();
+          }
+          else {
+            app.exit();
+          }
         }
       }, ModalityState.NON_MODAL);
       doOKAction();
