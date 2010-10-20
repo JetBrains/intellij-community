@@ -97,7 +97,7 @@ public class JUnitStarter {
         } else if (arg.startsWith(SOCKET)) {
           final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
-            final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
+            final Socket socket = new Socket(InetAddress.getByName(null), port);  //start collecting tests
             final DataInputStream os = new DataInputStream(socket.getInputStream());
             try {
               os.readBoolean();//wait for ready flag

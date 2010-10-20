@@ -49,6 +49,7 @@ public class JavaParameters extends SimpleJavaParameters {
   public static final int JDK_ONLY = 0x1;
   public static final int CLASSES_ONLY = 0x2;
   private static final int TESTS_ONLY = 0x4;
+  public static final int RUNTIME_ONLY = 0x8;
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
@@ -109,9 +110,16 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   private ProjectRootsTraversing.RootTraversePolicy getPolicy(Project project, Module module, int classPathType) {
-    ProjectRootsTraversing.RootTraversePolicy result = (classPathType & TESTS_ONLY) != 0
-                                                       ? (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK
-                                                       : (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS;
+    ProjectRootsTraversing.RootTraversePolicy result;
+    if ((classPathType & RUNTIME_ONLY) != 0 && (classPathType & TESTS_ONLY) == 0) {
+      result = (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS_AND_PROVIDED
+                                               : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS_AND_PROVIDED;
+    }
+    else {
+      result = (classPathType & TESTS_ONLY) != 0
+               ? (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK
+               : (classPathType & JDK_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS;
+    }
 
     for (JavaClasspathPolicyExtender each : Extensions.getExtensions(JavaClasspathPolicyExtender.EP_NAME)) {
       if (project == null) {

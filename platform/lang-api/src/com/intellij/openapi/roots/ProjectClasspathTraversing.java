@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SmartList;
 
 import java.util.List;
-import java.util.ArrayList;
 
 public class ProjectClasspathTraversing {
   public static final AddModuleOutput ALL_OUTPUTS = new AddModuleOutput(true);
@@ -35,8 +34,12 @@ public class ProjectClasspathTraversing {
     new ProjectRootsTraversing.RootTraversePolicy(ALL_OUTPUTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE);
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS =
     new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
+  public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS_AND_PROVIDED =
+    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS_AND_PROVIDED, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS_AND_PROVIDED);
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS =
     new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
+  public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS_AND_PROVIDED =
+    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS_AND_PROVIDED, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS_AND_PROVIDED, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS_AND_PROVIDED);
 
   private ProjectClasspathTraversing() {
   }

@@ -248,7 +248,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final JavaParameters params = new JavaParameters();
       params.setupEnvs(getEnvs(), PASS_PARENT_ENVS);
       final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
-      JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
+      JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType | JavaParameters.RUNTIME_ONLY, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
 
       params.setMainClass(MAIN_CLASS_NAME);
