@@ -63,6 +63,7 @@ public interface XmlElementDescriptor extends PsiMetaData {
 
   int getContentType();
 
+  int CONTENT_TYPE_UNKNOWN = -1;
   int CONTENT_TYPE_EMPTY = 0;
   int CONTENT_TYPE_ANY = 1;
   int CONTENT_TYPE_CHILDREN = 2;
