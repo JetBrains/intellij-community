@@ -21,10 +21,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
@@ -39,7 +41,7 @@ import java.util.Iterator;
 /**
  *  @author dsl
  */
-public class ModuleLibraryTable implements LibraryTable, LibraryTable.ModifiableModel {
+public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.ModifiableModelEx {
   private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   private final RootModelImpl myRootModel;
@@ -72,13 +74,16 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   public Library createLibrary() {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(myRootModel, myProjectRootManager);
-    myRootModel.addOrderEntry(orderEntry);
-    return orderEntry.getLibrary();
+    return createLibrary(null);
   }
 
   public Library createLibrary(String name) {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, myRootModel, myProjectRootManager);
+    return createLibrary(name, null);
+  }
+
+  @Override
+  public Library createLibrary(String name, @Nullable LibraryType type) {
+    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, type, myRootModel, myProjectRootManager);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }

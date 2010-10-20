@@ -17,18 +17,25 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GotoClassModel2 extends ContributorsBasedGotoByModel {
+public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   public GotoClassModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getClassModelContributors());
+  }
+
+  @Override
+  protected Language filterValueFor(NavigationItem item) {
+    return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
   }
 
   @Nullable

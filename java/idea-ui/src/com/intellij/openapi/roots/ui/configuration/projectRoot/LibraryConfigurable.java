@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,13 +37,14 @@ import javax.swing.*;
  * Date: 02-Jun-2006
  */
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
-  private LibraryRootsComponent myLibraryEditor;
+  private LibraryRootsComponent myLibraryEditorComponent;
   private final Library myLibrary;
   private final StructureLibraryTableModifiableModelProvider myModel;
   private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
   private boolean myUpdatingName;
+  private boolean myPropertiesLoaded;
 
   protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
                                 final Library library,
@@ -59,23 +59,23 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public JComponent createOptionsPanel() {
-    myLibraryEditor = LibraryRootsComponent.createComponent(myProject, new Computable<LibraryEditor>() {
+    myLibraryEditorComponent = new LibraryRootsComponent(myProject, new Computable<LibraryEditor>() {
       @Override
       public LibraryEditor compute() {
-        return myModel.getModifiableModel().getLibraryEditor(myLibrary);
+        return getLibraryEditor();
       }
     });
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
-    myLibraryEditor.addListener(new Runnable() {
+    myLibraryEditorComponent.addListener(new Runnable() {
       public void run() {
         context.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
       }
     });
-    return myLibraryEditor.getComponent();
+    return myLibraryEditorComponent.getComponent();
   }
 
   public boolean isModified() {
-    return myLibraryEditor != null && myLibraryEditor.hasChanges();
+    return myLibraryEditorComponent != null && myLibraryEditorComponent.hasChanges();
   }
 
   @Override
@@ -83,18 +83,18 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     return myProjectStructureElement;
   }
 
-  public void apply() throws ConfigurationException {
-    //do nothing
+  public void apply() {
+    applyProperties();
   }
 
   public void reset() {
-    //do nothing
+    resetProperties();
   }
 
   public void disposeUIResources() {
-    if (myLibraryEditor != null) {
-      Disposer.dispose(myLibraryEditor);
-      myLibraryEditor = null;
+    if (myLibraryEditorComponent != null) {
+      Disposer.dispose(myLibraryEditorComponent);
+      myLibraryEditorComponent = null;
     }
   }
 
@@ -138,6 +138,28 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
 
     return myLibrary.getName();
+  }
+
+  public void onSelected() {
+    resetProperties();
+  }
+
+  public void onUnselected() {
+    applyProperties();
+  }
+
+  private void resetProperties() {
+    if (myLibraryEditorComponent != null) {
+      myLibraryEditorComponent.resetProperties();
+      myPropertiesLoaded = true;
+    }
+  }
+
+  private void applyProperties() {
+    if (myLibraryEditorComponent != null && myPropertiesLoaded) {
+      myLibraryEditorComponent.applyProperties();
+      myPropertiesLoaded = false;
+    }
   }
 
   public Icon getIcon() {

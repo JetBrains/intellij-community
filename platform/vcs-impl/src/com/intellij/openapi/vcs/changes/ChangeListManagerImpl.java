@@ -113,7 +113,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
-    myChangesViewManager = ChangesViewManager.getInstance(myProject);
+    myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);

@@ -31,45 +31,24 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * Model for "Go to | File" action
  */
-public class GotoFileModel extends ContributorsBasedGotoByModel{
+public class GotoFileModel extends FilteringGotoByModel<FileType> {
   private final int myMaxSize;
-  /** current file types */
-  private HashSet<FileType> myFileTypes;
 
   public GotoFileModel(Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
     myMaxSize = WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
-  /**
-   * Set file types
-   * @param fileTypes a file types to set 
-   */
-  public synchronized void setFileTypes(FileType[] fileTypes) {
-    // get and set method are called from different threads
-    myFileTypes = new HashSet<FileType>(Arrays.asList(fileTypes));
-  }
-
-  /**
-   * @return get file types
-   */
-  private synchronized Set<FileType> getFileTypes() {
-    // get and set method are called from different threads
-    return myFileTypes;
-  }
-
   @Override
   protected boolean acceptItem(final NavigationItem item) {
     if (item instanceof PsiFile) {
       final PsiFile file = (PsiFile)item;
-      final Set<FileType> types = getFileTypes();
+      final Collection<FileType> types = getFilterItems();
       // if language substitutors are used, PsiFile.getFileType() can be different from
       // PsiFile.getVirtualFile().getFileType()
       if (types != null) {
@@ -83,6 +62,12 @@ public class GotoFileModel extends ContributorsBasedGotoByModel{
     else {
       return super.acceptItem(item);
     }
+  }
+
+  @Nullable
+  @Override
+  protected FileType filterValueFor(NavigationItem item) {
+    return item instanceof PsiFile ? ((PsiFile) item).getFileType() : null;
   }
 
   public String getPromptText() {

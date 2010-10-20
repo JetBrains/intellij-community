@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.facade;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
@@ -26,15 +27,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface MavenFacadeEmbedder extends Remote {
-  void customizeForResolve(MavenFacadeConsole console, MavenFacadeProgressIndicator process) throws RemoteException;
-
-  void customizeForResolve(Map<MavenId, File> projectIdToFileMap,
-                           MavenFacadeConsole console,
-                           MavenFacadeProgressIndicator process) throws RemoteException;
-
-  void customizeForStrictResolve(Map<MavenId, File> projectIdToFileMap,
-                                 MavenFacadeConsole console,
-                                 MavenFacadeProgressIndicator process) throws RemoteException;
+  void customize(@Nullable Map<MavenId, File> projectIdToFileMap,
+                 boolean failOnUnresolvedDependency,
+                 @NotNull MavenFacadeConsole console,
+                 @NotNull MavenFacadeProgressIndicator indicator) throws RemoteException;
 
   @NotNull
   MavenWrapperExecutionResult resolveProject(@NotNull File file,

@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -86,8 +87,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
       isModified |= provider.isChanged();
     }
-
-    return isModified;
+    return isModified || super.isModified();
   }
 
   public void reset() {
@@ -169,13 +169,9 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(getAddText()) {
-      {
-        setPopup(false);
-      }
-
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        return new AnAction[]{new CreateNewLibraryAction(getAddText(), getModelProvider(), myProject)};
+        return CreateNewLibraryAction.createActionOrGroup(getAddText(), BaseLibrariesConfigurable.this, myProject);
       }
     };
   }
@@ -185,6 +181,32 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   public abstract StructureLibraryTableModifiableModelProvider getModelProvider();
 
   public abstract BaseLibrariesConfigurable getOppositeGroup();
+
+  @Override
+  protected void updateSelection(@Nullable NamedConfigurable configurable) {
+    boolean selectionChanged = !Comparing.equal(myCurrentConfigurable, configurable);
+    if (myCurrentConfigurable != null && selectionChanged) {
+      ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
+    }
+    super.updateSelection(configurable);
+    if (myCurrentConfigurable != null && selectionChanged) {
+      ((LibraryConfigurable)myCurrentConfigurable).onSelected();
+    }
+  }
+
+  @Override
+  public void onStructureUnselected() {
+    if (myCurrentConfigurable != null) {
+      ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
+    }
+  }
+
+  @Override
+  public void onStructureSelected() {
+    if (myCurrentConfigurable != null) {
+      ((LibraryConfigurable)myCurrentConfigurable).onSelected();
+    }
+  }
 
   protected boolean removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();

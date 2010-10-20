@@ -111,9 +111,6 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
         for (Artifact artifact : artifacts) {
           targets.add(new ArtifactBuildTarget(artifact));
         }
-        if (selectedOnly) {
-          ArtifactsCompiler.setAffectedArtifacts(ArtifactsCompilerInstance.this.myContext, artifacts);
-        }
       }
     }.execute();
     return targets;
@@ -164,9 +161,11 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, myBuilderContext, artifact.getArtifactType());
   }
 
-  private boolean doBuild(final List<GenericCompilerProcessingItem<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
+  private boolean doBuild(@NotNull Artifact artifact,
+                          final List<GenericCompilerProcessingItem<ArtifactCompilerCompileItem, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> changedItems,
                           final Set<ArtifactCompilerCompileItem> processedItems,
-                          final @NotNull Set<String> writtenPaths, final Set<String> deletedJars) {
+                          final @NotNull Set<String> writtenPaths,
+                          final Set<String> deletedJars) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
 
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
@@ -177,7 +176,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     }
 
     try {
-      onBuildStartedOrFinished(false);
+      onBuildStartedOrFinished(artifact, false);
       if (myContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return false;
       }
@@ -249,7 +248,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
         }
       }
 
-      onBuildStartedOrFinished(true);
+      onBuildStartedOrFinished(artifact, true);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -284,19 +283,14 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     }
   }
 
-  private void onBuildStartedOrFinished(final boolean finished) throws Exception {
-    final Set<Artifact> artifacts = ArtifactsCompiler.getAffectedArtifacts(myContext);
-    if (artifacts != null) {
-      for (Artifact artifact : artifacts) {
-        for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-          final ArtifactProperties<?> properties = artifact.getProperties(provider);
-          if (finished) {
-            properties.onBuildFinished(artifact, myContext);
-          }
-          else {
-            properties.onBuildStarted(artifact, myContext);
-          }
-        }
+  private void onBuildStartedOrFinished(@NotNull Artifact artifact, final boolean finished) throws Exception {
+    for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
+      final ArtifactProperties<?> properties = artifact.getProperties(provider);
+      if (finished) {
+        properties.onBuildFinished(artifact, myContext);
+      }
+      else {
+        properties.onBuildStarted(artifact, myContext);
       }
     }
   }
@@ -308,7 +302,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
   }
 
   @Override
-  public void processItems(@NotNull ArtifactBuildTarget target,
+  public void processItems(@NotNull final ArtifactBuildTarget target,
                            @NotNull final List<GenericCompilerProcessingItem<ArtifactCompilerCompileItem,VirtualFilePersistentState,ArtifactPackagingItemOutputState>> changedItems,
                            @NotNull List<GenericCompilerCacheState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,
                            @NotNull OutputConsumer<ArtifactCompilerCompileItem> consumer) {
@@ -320,7 +314,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     final Set<ArtifactCompilerCompileItem> processedItems = new HashSet<ArtifactCompilerCompileItem>();
     CompilerUtil.runInContext(myContext, "Copying files", new ThrowableRunnable<RuntimeException>() {
       public void run() throws RuntimeException {
-        built.set(doBuild(changedItems, processedItems, writtenPaths, deletedJars));
+        built.set(doBuild(target.getArtifact(), changedItems, processedItems, writtenPaths, deletedJars));
       }
     });
     if (!built.get()) {
@@ -336,6 +330,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
       consumer.addProcessedItem(item);
     }
     ArtifactsCompiler.addWrittenPaths(myContext, writtenPaths);
+    ArtifactsCompiler.addChangedArtifact(myContext, target.getArtifact());
   }
 
   private THashSet<String> deleteFiles(List<GenericCompilerCacheState<String, VirtualFilePersistentState, ArtifactPackagingItemOutputState>> obsoleteItems,

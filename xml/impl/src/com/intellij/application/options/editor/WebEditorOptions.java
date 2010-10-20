@@ -42,6 +42,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
+  private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myZenCodingEnabled = true;
   private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
@@ -104,6 +105,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setZenCodingEnabled(boolean zenCodingEnabled) {
     myZenCodingEnabled = zenCodingEnabled;
+  }
+
+  public boolean isAutomaticallyInsertRequiredSubTags() {
+    return myAutomaticallyInsertRequiredSubTags;
+  }
+
+  public void setAutomaticallyInsertRequiredSubTags(boolean automaticallyInsertRequiredSubTags) {
+    myAutomaticallyInsertRequiredSubTags = automaticallyInsertRequiredSubTags;
   }
 
   @NotNull

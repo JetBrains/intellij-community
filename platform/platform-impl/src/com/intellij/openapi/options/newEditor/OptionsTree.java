@@ -181,21 +181,26 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           myContext.fireSelected(null, OptionsTree.this);
         }
         else {
-          final EditorNode editorNode = myConfigurable2Node.get(configurable);
-          FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
-          if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
-            myBuilder.select(editorUiNode, new Runnable() {
-              public void run() {
-                fireSelected(configurable, callback);
+          myBuilder.getReady(this).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              final EditorNode editorNode = myConfigurable2Node.get(configurable);
+              FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+              if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
+                myBuilder.select(editorUiNode, new Runnable() {
+                  public void run() {
+                    fireSelected(configurable, callback);
+                  }
+                });
+              } else {
+                myBuilder.scrollSelectionToVisible(new Runnable() {
+                  public void run() {
+                    fireSelected(configurable, callback);
+                  }
+                }, false);
               }
-            });
-          } else {
-            myBuilder.scrollSelectionToVisible(new Runnable() {
-              public void run() {
-                fireSelected(configurable, callback);
-              }
-            }, false);
-          }
+            }
+          });
         }
       }
 
@@ -745,6 +750,11 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     @Override
     public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
       return myContext.isHoldingFilter();
+    }
+
+    @Override
+    public boolean isToEnsureSelectionOnFocusGained() {
+      return false;
     }
 
     @Override

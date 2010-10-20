@@ -138,4 +138,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy");
     assertEquals("java.lang.Integer", refExpr.getType().getCanonicalText());
   }
+
+  public void testRawTypeInReturnExpression() {
+    assertNotNull(resolve("A.groovy"));
+  }
 }

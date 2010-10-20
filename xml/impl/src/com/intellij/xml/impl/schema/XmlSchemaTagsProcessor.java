@@ -49,7 +49,7 @@ public abstract class XmlSchemaTagsProcessor {
     myVisited.add(tag);
 
     if (!XmlNSDescriptorImpl.checkSchemaNamespace(tag)) {
-      processTagWithSubTags(tag, context);
+      processTagWithSubTags(tag, context, null);
       return;
     }
 
@@ -71,7 +71,7 @@ public abstract class XmlSchemaTagsProcessor {
       if (value != null) {
         XmlTag group = myNsDescriptor.findGroup(value);
         if (group == null) group = resolveReference(tag.getAttribute("ref"));
-        processTagWithSubTags(group, tag);
+        processTagWithSubTags(group, tag, tag);
       }
     }
     else if (checkTagName(tagName, "attributeGroup")) {
@@ -88,20 +88,20 @@ public abstract class XmlSchemaTagsProcessor {
         group =  myNsDescriptor.findAttributeGroup(ref);
         if (group == null) group = resolveReference(tag.getAttribute("ref"));
       }
-      processTagWithSubTags(group, tag);
+      processTagWithSubTags(group, tag, null);
     }
     else if (checkTagName(tagName, "restriction", "extension")) {
-      processTagWithSubTags(resolveReference(tag.getAttribute("base")), tag);
-      processTagWithSubTags(tag, context);
+      processTagWithSubTags(resolveReference(tag.getAttribute("base")), tag, null);
+      processTagWithSubTags(tag, context, null);
     }
     else if (!checkTagName(tagName, myTagsToIgnore)) {
-      processTagWithSubTags(tag, context);
+      processTagWithSubTags(tag, context, null);
     }
   }
 
-  private void processTagWithSubTags(@Nullable XmlTag tag, XmlTag ctx) {
+  private void processTagWithSubTags(@Nullable XmlTag tag, XmlTag ctx, XmlTag ref) {
     if (tag == null) return;
-    tagStarted(tag, tag.getLocalName(), ctx, null);
+    tagStarted(tag, tag.getLocalName(), ctx, ref);
     XmlTag[] subTags = tag.getSubTags();
     for (XmlTag subTag : subTags) {
       processTag(subTag, tag);

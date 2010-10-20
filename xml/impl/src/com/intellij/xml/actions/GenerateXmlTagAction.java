@@ -55,9 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -157,10 +155,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         newTag.setAttribute(descriptor.getName(), "");
       }
     }
-    XmlElementsGroup topGroup = selected.getTopGroup();
-    if (topGroup == null) return newTag;
-    List<XmlElementDescriptor> tags = new ArrayList<XmlElementDescriptor>();
-    computeRequiredSubTags(topGroup, tags);
+    List<XmlElementDescriptor> tags = getRequiredSubTags(selected);
     for (XmlElementDescriptor descriptor : tags) {
       if (descriptor == null) {
         XmlTag tag = XmlElementFactory.getInstance(newTag.getProject()).createTagFromText("<", newTag.getLanguage());
@@ -172,6 +167,12 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       }
     }
     return newTag;
+  }
+
+  public static List<XmlElementDescriptor> getRequiredSubTags(XmlElementDescriptor selected) {
+    XmlElementsGroup topGroup = selected.getTopGroup();
+    if (topGroup == null) return Collections.emptyList();
+    return computeRequiredSubTags(topGroup);
   }
 
   private static void replaceElements(XmlTag tag, TemplateBuilder builder) {
@@ -219,20 +220,35 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return tag;
   }
 
-  private static void computeRequiredSubTags(XmlElementsGroup group, List<XmlElementDescriptor> tags) {
+  private static List<XmlElementDescriptor> computeRequiredSubTags(XmlElementsGroup group) {
 
-    if (group.getMinOccurs() < 1) return;
+    if (group.getMinOccurs() < 1) return Collections.emptyList();
     switch (group.getGroupType()) {
       case LEAF:
-        ContainerUtil.addIfNotNull(tags, group.getLeafDescriptor());
-        return;
+        XmlElementDescriptor descriptor = group.getLeafDescriptor();
+        return descriptor == null ? Collections.<XmlElementDescriptor>emptyList() : Collections.singletonList(descriptor);
       case CHOICE:
-        tags.add(null); // placeholder for smart completion
-        return;
-      default:
+        LinkedHashSet<XmlElementDescriptor> set = null;
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
-          computeRequiredSubTags(subGroup, tags);
+          List<XmlElementDescriptor> descriptors = computeRequiredSubTags(subGroup);
+          if (set == null) {
+            set = new LinkedHashSet<XmlElementDescriptor>(descriptors);
+          }
+          else {
+            set.retainAll(descriptors);
+          }
         }
+        if (set.isEmpty()) {
+          return Collections.singletonList(null); // placeholder for smart completion
+        }
+        return new ArrayList<XmlElementDescriptor>(set);
+
+      default:
+        ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+        for (XmlElementsGroup subGroup : group.getSubGroups()) {
+          list.addAll(computeRequiredSubTags(subGroup));
+        }
+        return list;
     }
   }
 

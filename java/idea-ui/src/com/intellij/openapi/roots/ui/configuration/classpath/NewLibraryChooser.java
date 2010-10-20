@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 
 import javax.swing.*;
@@ -61,13 +62,13 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     List<LibraryTable> tables = Arrays.asList(myRootModel.getModuleLibraryTable(),
                                               registrar.getLibraryTable(myProject),
                                               registrar.getLibraryTable());
-    CreateNewLibraryDialog dialog = CreateNewLibraryDialog.createDialog(myParentComponent, myProject, tables, 1);
+    CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, new NewLibraryEditor(), tables, 1);
     final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
     dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
     dialog.show();
     myIsOk = dialog.isOK();
     if (myIsOk) {
-      myChosenLibrary = dialog.createLibrary(myContext.getModifiableLibraryTable(dialog.getSelectedTable()));
+      myChosenLibrary = dialog.createLibrary();
     }
     else {
       myChosenLibrary = null;

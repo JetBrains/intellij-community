@@ -48,7 +48,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   public void testVetoableTransform() throws Throwable { doPlainTest() }
 
-  public void testNewifyTransform1() throws Throwable { doVariantsTest('newInstance', 'new', 'new',
+  public void testNewifyTransform1() throws Throwable { doVariantsTest('negative', 'newInstance', 'new', 'new',
                                                                        'newInstance', 'newInstance0', 'newInstanceCallerCache', 'next') }
 
   public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf') }

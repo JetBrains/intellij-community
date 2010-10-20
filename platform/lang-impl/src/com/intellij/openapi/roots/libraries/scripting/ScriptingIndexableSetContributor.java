@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.libraries.scripting;
 
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -46,7 +45,7 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
      final THashSet<VirtualFile> libFiles = new THashSet<VirtualFile>();
     if (project != null) {
       ScriptingLibraryManager manager = new ScriptingLibraryManager(project);
-      LibraryTable libTable = manager.getLibraryTable();
+      LibraryTable libTable = manager.getLibraryTable(true);
       if (libTable != null) {
         for (Library lib : libTable.getLibraries()) {
           for (VirtualFile libFile : lib.getFiles(OrderRootType.CLASSES)) {
@@ -55,7 +54,6 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
           }
         }
       }
-      manager.disposeModel();
     }
     return libFiles;
   }

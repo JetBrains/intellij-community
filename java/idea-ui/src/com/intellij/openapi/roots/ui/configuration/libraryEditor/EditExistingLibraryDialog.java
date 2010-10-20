@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private EditExistingLibraryDialog(Component parent,
                                    LibraryTable.ModifiableModel tableModifiableModel,
                                    @Nullable Project project, ExistingLibraryEditor libraryEditor, boolean commitChanges) {
-    super(parent, LibraryRootsComponent.createComponent(project, libraryEditor));
+    super(parent, new LibraryRootsComponent(project, libraryEditor));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;
@@ -78,5 +79,9 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   @Override
   protected LibraryTable.ModifiableModel getTableModifiableModel() {
     return myTableModifiableModel;
+  }
+
+  protected boolean shouldCheckName(String newName) {
+    return !Comparing.equal(newName, getLibraryRootsComponent().getLibraryEditor().getName());
   }
 }

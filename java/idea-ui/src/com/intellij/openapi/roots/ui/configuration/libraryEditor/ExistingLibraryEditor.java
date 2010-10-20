@@ -17,18 +17,23 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExistingLibraryEditor implements LibraryEditor, Disposable {
   private final Library myLibrary;
   private final LibraryEditorListener myListener;
   private String myLibraryName = null;
+  private LibraryProperties myLibraryProperties;
   private Library.ModifiableModel myModel = null;
 
-  public ExistingLibraryEditor(Library library, @Nullable LibraryEditorListener listener) {
+  public ExistingLibraryEditor(@NotNull Library library, @Nullable LibraryEditorListener listener) {
     myLibrary = library;
     myListener = listener;
   }
@@ -43,6 +48,28 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
       return myLibraryName;
     }
     return myLibrary.getName();
+  }
+
+  @Override
+  public LibraryType getType() {
+    return ((LibraryEx)myLibrary).getType();
+  }
+
+  @Override
+  public LibraryProperties getProperties() {
+    final LibraryType type = getType();
+    if (type == null) return null;
+
+    if (myLibraryProperties == null) {
+      myLibraryProperties = type.createDefaultProperties();
+      //noinspection unchecked
+      myLibraryProperties.loadState(getOriginalProperties().getState());
+    }
+    return myLibraryProperties;
+  }
+
+  private LibraryProperties getOriginalProperties() {
+    return ((LibraryEx)myLibrary).getProperties();
   }
 
   public void dispose() {
@@ -105,9 +132,13 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
 
   public void commit() {
     if (myModel != null) {
+      if (myLibraryProperties != null) {
+        ((LibraryEx.ModifiableModelEx)myModel).setProperties(myLibraryProperties);
+      }
       myModel.commit();
       myModel = null;
       myLibraryName = null;
+      myLibraryProperties = null;
     }
   }
 
@@ -120,7 +151,10 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
 
   @Override
   public boolean hasChanges() {
-    return myModel != null && myModel.isChanged();
+    if (myModel != null && myModel.isChanged()) {
+      return true;
+    }
+    return myLibraryProperties != null && !myLibraryProperties.equals(getOriginalProperties());
   }
   
   @Override

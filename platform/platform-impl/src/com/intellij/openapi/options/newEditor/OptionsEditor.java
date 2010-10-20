@@ -319,7 +319,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           checkModified(oldConfigurable);
           checkModified(configurable);
 
-          result.setDone();
+          if (myTree.myBuilder.getSelectedElements().size() == 0) {
+            select(configurable.getClass()).notify(result);
+          } else {
+            result.setDone();
+          }
         }
       });
     }

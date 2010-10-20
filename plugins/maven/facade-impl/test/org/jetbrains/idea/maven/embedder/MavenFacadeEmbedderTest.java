@@ -19,9 +19,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenFacadeEmbedder;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenWrapperExecutionResult;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
@@ -29,6 +31,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;
+import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -52,7 +55,13 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
     if (myEmbedder != null) releaseEmbedder();
 
     myEmbedderImpl = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));
-    myEmbedder = new MavenEmbedderWrapper(myEmbedderImpl);
+    myEmbedder = new MavenEmbedderWrapper(null) {
+      @NotNull
+      @Override
+      protected MavenFacadeEmbedder create() throws RemoteException {
+        return myEmbedderImpl;
+      }
+    };
   }
 
   private void releaseEmbedder() {
@@ -201,6 +210,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
     assertEquals(1, p.getDependencies().size());
     assertEquals("pom", p.getDependencies().get(0).getExtension());
   }
+
   public static class MyArtifactHandler implements ArtifactHandler {
     @Override
     public String getExtension() {

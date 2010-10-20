@@ -186,10 +186,15 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   public String getName(PsiElement context) {
+
+    if (context == null) {
+      return getName();
+    }
     final String form = myTag.getAttributeValue("form");
     boolean isQualifiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
 
-    final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
+    final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getRootTag();
+    assert rootTag != null;
     String targetNs = rootTag.getAttributeValue("targetNamespace");
     XmlTag contextTag = (XmlTag)context;
     String name = getName();
