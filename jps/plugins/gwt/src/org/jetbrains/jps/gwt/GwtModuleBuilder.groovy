@@ -59,6 +59,9 @@ class GwtModuleBuilder implements ModuleBuilder {
           state.sourceRoots.each {
             pathelement(location: it)
           }
+          state.moduleDependenciesSourceRoots.each {
+            pathelement(location: it)
+          }
           state.classpath.each {
             pathelement(location: it)
           }
