@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,5 +79,9 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   @Override
   protected LibraryTable.ModifiableModel getTableModifiableModel() {
     return myTableModifiableModel;
+  }
+
+  protected boolean shouldCheckName(String newName) {
+    return !Comparing.equal(newName, getLibraryRootsComponent().getLibraryEditor().getName());
   }
 }

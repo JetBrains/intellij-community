@@ -64,10 +64,10 @@ public class CreateCustomLibraryAction extends CustomLibraryActionBase {
     LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
     final Project project = myContext.getProject();
     final List<LibraryTable> tables = Arrays.asList(registrar.getLibraryTable(project), registrar.getLibraryTable());
-    final CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myModuleStructureConfigurable.getTree(), project, libraryEditor, tables, 0);
+    final CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myModuleStructureConfigurable.getTree(), myContext, libraryEditor, tables, 0);
     dialog.show();
     if (dialog.isOK()) {
-      final Library library = dialog.createLibrary(myContext.getModifiableLibraryTable(dialog.getSelectedTable()));
+      final Library library = dialog.createLibrary();
       final ModifiableRootModel rootModel = myContext.getModulesConfigurator().getOrCreateModuleEditor(myModule).getModifiableRootModelProxy();
       if (!askAndRemoveDuplicatedLibraryEntry(myCreator.getDescription(), rootModel)) {
         return;
