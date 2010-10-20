@@ -37,12 +37,4 @@ contributor(ctype:NUMBER) {
   method name: "positive", type: psiType.canonicalText
 
   method name: "plus", type: STRING, params:[arg:STRING]
-  method name: "minus", type: STRING, params:[arg:STRING]
-  method name: "multiply", type: STRING, params:[arg:STRING]
-  method name: "power", type: STRING, params:[arg:STRING]
-  method name: "div", type: STRING, params:[arg:STRING]
-  method name: "mod", type: STRING, params:[arg:STRING]
-  method name: "or", type: STRING, params:[arg:STRING]
-  method name: "and", type: STRING, params:[arg:STRING]
-  method name: "xor", type: STRING, params:[arg:STRING]
 }
