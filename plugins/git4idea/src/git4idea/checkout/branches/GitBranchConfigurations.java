@@ -499,23 +499,15 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
    */
   private void detectLocals() throws VcsException {
     synchronized (myStateLock) {
-      HashMap<VirtualFile, String> currents = new HashMap<VirtualFile, String>();
+      final HashMap<VirtualFile, String> rootToCurrentBranch = new HashMap<VirtualFile, String>();
       for (VirtualFile root : myGitRoots) {
         GitBranch current = GitBranch.current(myProject, root);
-        currents.put(root, current == null ? "" : current.getName());
+        rootToCurrentBranch.put(root, current == null ? "" : current.getName());
       }
+
       if (myConfigurations.isEmpty()) {
         detectLocalConfigurations(true);
-        for (GitBranchConfiguration configuration : myConfigurations.values()) {
-          boolean currentsMatched = true;
-          for (VirtualFile root : myGitRoots) {
-            currentsMatched &= currents.get(root).equals(configuration.getReference(root.getPath()));
-          }
-          if (currentsMatched) {
-            myCurrentConfiguration = configuration;
-            break;
-          }
-        }
+        updateCurrentConfiguration(rootToCurrentBranch);
         if (myCurrentConfiguration == null) {
           // the configuration does not matches any standard, there could be no configurations with spaces at this point
           // since it is not allowed branch name.
@@ -539,9 +531,29 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
             c.setReference(root.getPath(), describeRoot(root));
           }
         }
+      } else if (myCurrentConfiguration == null) {
+        updateCurrentConfiguration(rootToCurrentBranch);
       }
       fireCurrentConfigurationChanged();
       fireConfigurationsChanged();
+    }
+  }
+
+  /**
+   * Updates myCurrentConfiguration (displayed in the GitBranchesWidget) to the proper value from the list
+   * of all myConfigurations.
+   * @param rootToCurrentBranch Mapping from a git root to the name of current branch selected on this root.
+   */
+  private void updateCurrentConfiguration(HashMap<VirtualFile, String> rootToCurrentBranch) {
+    for (GitBranchConfiguration configuration : myConfigurations.values()) {
+      boolean currentsMatched = true;
+      for (VirtualFile root : myGitRoots) {
+        currentsMatched &= rootToCurrentBranch.get(root).equals(configuration.getReference(root.getPath()));
+      }
+      if (currentsMatched) {
+        myCurrentConfiguration = configuration;
+        break;
+      }
     }
   }
 
