@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -156,27 +155,8 @@ public class ProjectUtil {
       if (settings.getConfirmOpenNewProject() < 0) {
         exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
                                            new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                             CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
-            public boolean isToBeShown() {
-              return true;
-            }
-
-            public void setToBeShown(boolean value, int exitCode) {
-              settings.setConfirmOpenNewProject(value || exitCode == 2 ? -1 : exitCode);
-            }
-
-            public boolean canBeHidden() {
-              return true;
-            }
-
-            public boolean shouldSaveOptionsOnCancel() {
-              return false;
-            }
-
-            public String getDoNotShowMessage() {
-              return CommonBundle.message("dialog.options.do.not.ask");
-            }
-          });
+                                             CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(),
+                                           new ProjectNewWindowDoNotAskOption());
       } else {
         exitCode = settings.getConfirmOpenNewProject();
       }
