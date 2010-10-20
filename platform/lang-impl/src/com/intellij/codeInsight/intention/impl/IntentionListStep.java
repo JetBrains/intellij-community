@@ -321,7 +321,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
     final IntentionAction action = value.getAction();
 
-    Object iconable = null;
+    Object iconable = action;
     //custom icon
     if (action instanceof QuickFixWrapper) {
       iconable = ((QuickFixWrapper)action).getFix();

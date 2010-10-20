@@ -104,7 +104,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       public void dispose() {
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
         EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
-        myListenerMap.clear();
+        LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
       }
     });
   }
