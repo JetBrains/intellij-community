@@ -44,6 +44,10 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
         library = context.getLibrary(libraryName, libraryLevel);
       }
     } else {
+      final Library model = context.getLibraryModel(library);
+      if (model != null) {
+        library = model;
+      }
       library = context.getLibrary(library.getName(), library.getTable().getTableLevel());
     }
     return library;
