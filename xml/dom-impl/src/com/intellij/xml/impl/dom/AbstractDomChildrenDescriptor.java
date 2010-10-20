@@ -206,7 +206,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   public int getContentType() {
-    return CONTENT_TYPE_ANY;
+    return CONTENT_TYPE_UNKNOWN;
   }
 
   public void init(final PsiElement element) {

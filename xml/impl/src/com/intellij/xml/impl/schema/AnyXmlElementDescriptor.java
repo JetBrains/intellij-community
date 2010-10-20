@@ -99,6 +99,6 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   }
 
   public int getContentType() {
-    return 0;
+    return CONTENT_TYPE_UNKNOWN;
   }
 }
