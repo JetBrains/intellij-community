@@ -127,6 +127,9 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
         }
       }
     }
+
+    // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
+    myManager.getSortedConfigurations();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

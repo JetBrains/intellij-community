@@ -19,17 +19,22 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -42,11 +47,11 @@ public class ChangeSignatureGestureVisitor implements HighlightVisitor {
 
   @Override
   public boolean suitableForFile(PsiFile file) {
-    return file != null && ApplicationManagerEx.getApplicationEx().isInternal() && LanguageChangeSignatureDetectors.isSuitableForLanguage(file.getLanguage());
+    return file != null && LanguageChangeSignatureDetectors.isSuitableForLanguage(file.getLanguage());
   }
 
   @Override
-  public void visit(PsiElement element, HighlightInfoHolder holder) {
+  public void visit(final PsiElement element, HighlightInfoHolder holder) {
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(element.getProject());
     if (detector.isChangeSignatureAvailable(element)) {
       final TextRange range = LanguageChangeSignatureDetectors.getHighlightingRange(element);
@@ -58,7 +63,8 @@ public class ChangeSignatureGestureVisitor implements HighlightVisitor {
                                                    HighlightInfoType.INFORMATION, range.getStartOffset(), range.getEndOffset(),
                                                    SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
                                                    HighlightSeverity.INFORMATION, false, true, false);
-      QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction());
+      final ChangeSignatureDetectorAction action = new ChangeSignatureDetectorAction();
+      info.setGutterIconRenderer(new MyGutterIconRenderer(action, element));
       holder.add(info);
     }
   }
@@ -79,5 +85,45 @@ public class ChangeSignatureGestureVisitor implements HighlightVisitor {
     return 10;
   }
 
+  private static class MyGutterIconRenderer extends GutterIconRenderer {
+    private final ChangeSignatureDetectorAction myAction;
+    private final PsiElement myElement;
 
+    public MyGutterIconRenderer(ChangeSignatureDetectorAction action, PsiElement element) {
+      myAction = action;
+      myElement = element;
+    }
+
+    @NotNull
+    @Override
+    public Icon getIcon() {
+      return Icons.ADVICE_ICON;
+    }
+
+    @Override
+    public AnAction getClickAction() {
+      return new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myAction.invoke(myElement.getProject(), null, myElement.getContainingFile());
+        }
+      };
+    }
+
+    @Override
+    public String getTooltipText() {
+      return SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof MyGutterIconRenderer)) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+  }
 }
