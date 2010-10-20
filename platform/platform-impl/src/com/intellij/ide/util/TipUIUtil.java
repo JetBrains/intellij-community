@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -62,6 +63,7 @@ public class TipUIUtil {
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
+      replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       browser.read(new StringReader(replaced), null);
       final Document document = browser.getDocument();
       if (document instanceof HTMLDocument) {
