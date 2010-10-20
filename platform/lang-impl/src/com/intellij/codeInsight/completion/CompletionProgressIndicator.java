@@ -124,7 +124,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
-    myShownLookup = lookup.isReused();
+    myShownLookup = lookup.isShown();
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -134,7 +134,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isReused()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isShown()) {
       scheduleAdvertising();
     }
 

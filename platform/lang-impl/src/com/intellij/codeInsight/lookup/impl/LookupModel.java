@@ -15,13 +15,17 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -30,16 +34,20 @@ import java.util.*;
  * @author peter
  */
 public class LookupModel {
+  private static final Comparator<LookupElement> COMMUNISM = new Comparator<LookupElement>() {
+    @SuppressWarnings({"ComparatorMethodParameterNotUsed"})
+    @Override
+    public int compare(LookupElement o1, LookupElement o2) {
+      return 0;
+    }
+  };
   private final Object lock = new Object();
   @SuppressWarnings({"unchecked"}) private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new THashMap<LookupElement, Collection<LookupElementAction>>(TObjectHashingStrategy.IDENTITY);
   @SuppressWarnings({"unchecked"}) private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
   private final List<LookupElement> myItems = new ArrayList<LookupElement>();
-  @Nullable private List<LookupElement> mySortedItems;
-  private final LookupImpl myLookup;
-
-  public LookupModel(LookupImpl lookup) {
-    myLookup = lookup;
-  }
+  private SortedList<LookupElement> mySortedItems;
+  private TreeMap<Comparable, SortedList<LookupElement>> myRelevanceGroups;
+  private LookupArranger myArranger;
 
   @TestOnly
   public List<LookupElement> getItems() {
@@ -49,14 +57,22 @@ public class LookupModel {
   public void clearItems() {
     synchronized (lock) {
       myItems.clear();
-      mySortedItems = null;
+      mySortedItems.clear();
+      myRelevanceGroups.clear();
     }
   }
 
   public void addItem(LookupElement item) {
     synchronized (lock) {
       myItems.add(item);
-      mySortedItems = null;
+      mySortedItems.add(item);
+
+      final Comparable relevance = myArranger.getRelevance(item);
+      SortedList<LookupElement> group = myRelevanceGroups.get(relevance);
+      if (group == null) {
+        myRelevanceGroups.put(relevance, group = new SortedList<LookupElement>(mySortedItems.getComparator()));
+      }
+      group.add(item);
     }
   }
 
@@ -87,18 +103,18 @@ public class LookupModel {
     }
   }
 
-  @NotNull
-  public List<LookupElement> getSortedItems() {
+  public Pair<List<LookupElement>, List<List<LookupElement>>> getModelSnapshot() {
     synchronized (lock) {
-      List<LookupElement> sortedItems = mySortedItems;
-      if (sortedItems == null) {
-        myLookup.getArranger().sortItems(sortedItems = new ArrayList<LookupElement>(myItems));
-        mySortedItems = sortedItems;
-      }
-      return sortedItems;
+      final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
+      final List<List<LookupElement>> relevanceGroups = ContainerUtil.map(myRelevanceGroups.values(), new Function<SortedList<LookupElement>, List<LookupElement>>() {
+        @Override
+        public List<LookupElement> fun(SortedList<LookupElement> lookupElements) {
+          return new ArrayList<LookupElement>(lookupElements);
+        }
+      });
+      return Pair.create(sorted, relevanceGroups);
     }
   }
-
 
   public void collectGarbage() {
     synchronized (lock) {
@@ -107,16 +123,29 @@ public class LookupModel {
     }
   }
 
-  void retainMatchingItems(String newPrefix) {
+  void retainMatchingItems(final String newPrefix) {
     synchronized (lock) {
-      for (Iterator<LookupElement> iterator = myItems.iterator(); iterator.hasNext();) {
-        LookupElement item = iterator.next();
-        if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
-          iterator.remove();
-          mySortedItems = null;
+      final List<LookupElement> newItems = ContainerUtil.findAll(myItems, new Condition<LookupElement>() {
+        @Override
+        public boolean value(LookupElement item) {
+          return item.isValid() && item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix));
         }
+      });
+
+      clearItems();
+      for (LookupElement newItem : newItems) {
+        addItem(newItem);
       }
     }
   }
 
+  public void setArranger(final LookupArranger arranger) {
+    synchronized (lock) {
+      myArranger = arranger;
+
+      final Comparator<LookupElement> comparator = arranger.getItemComparator();
+      mySortedItems = new SortedList<LookupElement>(comparator == null ? COMMUNISM : comparator);
+      myRelevanceGroups = new TreeMap<Comparable, SortedList<LookupElement>>();
+    }
+  }
 }
