@@ -62,7 +62,7 @@ public class Merger implements IMerger {
                 String branchName) {
     myBranchName = branchName;
     myProject = vcs.getProject();
-    mySvnConfig = SvnConfiguration.getInstanceChecked(vcs.getProject());
+    mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;

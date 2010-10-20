@@ -67,7 +67,7 @@ public class GroupMerger implements IMerger {
     myInverseRange = inverseRange;
     myDryRun = dryRun;
     myProject = vcs.getProject();
-    mySvnConfig = SvnConfiguration.getInstanceChecked(vcs.getProject());
+    mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;

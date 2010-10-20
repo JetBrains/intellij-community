@@ -260,7 +260,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         public void processLoadedLists(final List<LocalChangeList> lists) {
           SvnConfiguration.SvnSupportOptions supportOptions = null;
           try {
-            ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+            ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
             supportOptions = myConfiguration.getSupportOptions();
 

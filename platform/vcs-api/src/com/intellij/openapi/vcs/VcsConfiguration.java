@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -207,7 +208,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   }
 
   public static VcsConfiguration getInstance(Project project) {
-    return project.getComponent(VcsConfiguration.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsConfiguration.class);
   }
 
   public void projectOpened() {

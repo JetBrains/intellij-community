@@ -71,7 +71,7 @@ public class ExecutorWrapper {
         return myDisposeStarted;
       }
     };
-    myDisposeStarted = ! PeriodicalTasksCloser.getInstance(myProject).register(myName, myStopper);
+    myDisposeStarted = ! PeriodicalTasksCloser.getInstance().register(project, myName, myStopper);
   }
 
   private void taskFinished() {

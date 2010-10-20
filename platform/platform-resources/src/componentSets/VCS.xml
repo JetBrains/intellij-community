@@ -9,6 +9,9 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>
@@ -37,6 +40,7 @@
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangesViewI</interface-class>
@@ -49,6 +53,7 @@
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>

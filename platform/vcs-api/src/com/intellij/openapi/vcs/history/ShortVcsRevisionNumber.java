@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.errorreport.error;
+package com.intellij.openapi.vcs.history;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Sep 19, 2003
- * Time: 7:49:19 PM
- * To change this template use Options | File Templates.
+ * User: spLeaner
  */
-public class NewBuildException extends Exception {
-  public NewBuildException(String s) {
-    super(s);
-  }
+public interface ShortVcsRevisionNumber extends VcsRevisionNumber {
+
+  String toShortString();
+
 }

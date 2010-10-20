@@ -19,11 +19,12 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.codeInsight.lookup.LookupManager
 
 /**
  * @author peter
  */
-class LookupReuseTest extends LightCodeInsightFixtureTestCase {
+class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
     super.setUp()
     CompletionAutoPopupHandler.ourTestingAutopopup = true
@@ -82,6 +83,18 @@ class LookupReuseTest extends LightCodeInsightFixtureTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+  }
+
+  public void testNoAutopopupInTheMiddleOfIdentifier() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String iterable) {
+          return it<caret>rable;
+        }
+      }
+    """)
+    type 'e'
+    assertNull LookupManager.getActiveLookup(myFixture.getEditor())
   }
 
 }

@@ -22,11 +22,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -80,7 +80,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
                                     SVNException {
       final long rev;
 
-      final SvnConfiguration configuration = SvnConfiguration.getInstanceChecked(myVcs.getProject());
+      final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
       final SVNUpdateClient updateClient = myVcs.createUpdateClient();
@@ -131,7 +131,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
-    final SvnConfiguration configuration = SvnConfiguration.getInstanceChecked(myVcs.getProject());
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
 
     final Map<File,UpdateRootInfo> map = configuration.getUpdateInfosMap();
     try {

@@ -18,9 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.CommonBundle;
 import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
-import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -61,10 +59,15 @@ public class ITNReporter extends ErrorReportSubmitter {
      * @noinspection ThrowablePrintStackTrace
      */
   private static SubmittedReportInfo sendError(IdeaLoggingEvent event, Component parentComponent) {
-    NotifierBean notifierBean = new NotifierBean();
-    ErrorBean errorBean = new ErrorBean();
-    errorBean.autoInit();
-    errorBean.setLastAction(IdeaLogger.ourLastActionId);
+    String newBuild = ErrorReportSender.checkNewBuild();
+    if (newBuild != null) {
+      Messages.showMessageDialog(parentComponent,
+                                 DiagnosticBundle.message("error.report.new.eap.build.message", newBuild), CommonBundle.getWarningTitle(),
+                                 Messages.getWarningIcon());
+      return new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED);
+    }
+
+    ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);
 
     int threadId = 0;
     SubmittedReportInfo.SubmissionStatus submissionStatus = SubmittedReportInfo.SubmissionStatus.FAILED;
@@ -76,56 +79,23 @@ public class ITNReporter extends ErrorReportSubmitter {
     do {
       // prepare
       try {
-        ErrorReportSender sender = ErrorReportSender.getInstance();
-
-        sender.prepareError(project, event.getThrowable());
-
         EAPSendErrorDialog dlg = new EAPSendErrorDialog();
         dlg.setErrorDescription(description);
         dlg.show();
 
-        @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        @NonNls String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
-        if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
-          itnLogin = "idea_anonymous";
-          itnPassword = "guest";
+        @NonNls String login = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+        @NonNls String password = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+        if (login.trim().length() == 0 && password.trim().length() == 0) {
+          login = "idea_anonymous";
+          password = "guest";
         }
-        notifierBean.setItnLogin(itnLogin);
-        notifierBean.setItnPassword(itnPassword);
 
         description = dlg.getErrorDescription();
-        String message = event.getMessage();
-
-        @NonNls StringBuilder descBuilder = new StringBuilder();
-        if (description.length() > 0) {
-          descBuilder.append("User description: ").append(description).append("\n");
-        }
-        if (message != null) {
-          descBuilder.append("Error message: ").append(message).append("\n");
-        }
-
-        Throwable t = event.getThrowable();
-        if (t != null) {
-          final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-          if (pluginId != null) {
-            final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
-            if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
-              descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
-            }
-          }
-        }
-
-        if (previousExceptionThreadId != 0) {
-          descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
-        }
-        if (wasException) {
-          descBuilder.append("There was at least one exception before this one.\n");
-        }
-
+        @NonNls StringBuilder descBuilder = buildDescription(event, description);
         errorBean.setDescription(descBuilder.toString());
 
         if (dlg.isShouldSend()) {
-          threadId = sender.sendError(notifierBean, errorBean);
+          threadId = ErrorReportSender.sendError(project, login, password, errorBean);
           previousExceptionThreadId = threadId;
           wasException = true;
           submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
@@ -158,12 +128,6 @@ public class ITNReporter extends ErrorReportSubmitter {
           break;
         }
       }
-      catch (NewBuildException e) {
-        Messages.showMessageDialog(parentComponent,
-                                   DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage()), CommonBundle.getWarningTitle(),
-                                   Messages.getWarningIcon());
-        break;
-      }
       catch (Exception e) {
         if (Messages.showYesNoDialog(JOptionPane.getRootFrame(), DiagnosticBundle.message("error.report.sending.failure"),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
@@ -177,5 +141,36 @@ public class ITNReporter extends ErrorReportSubmitter {
     return new SubmittedReportInfo(submissionStatus != SubmittedReportInfo.SubmissionStatus.FAILED ? URL_HEADER + threadId : null,
                                    String.valueOf(threadId),
                                    submissionStatus);
+  }
+
+  private static StringBuilder buildDescription(IdeaLoggingEvent event, String description) {
+    String message = event.getMessage();
+
+    @NonNls StringBuilder descBuilder = new StringBuilder();
+    if (description.length() > 0) {
+      descBuilder.append("User description: ").append(description).append("\n");
+    }
+    if (message != null) {
+      descBuilder.append("Error message: ").append(message).append("\n");
+    }
+
+    Throwable t = event.getThrowable();
+    if (t != null) {
+      final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      if (pluginId != null) {
+        final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
+        if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
+          descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
+        }
+      }
+    }
+
+    if (previousExceptionThreadId != 0) {
+      descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
+    }
+    if (wasException) {
+      descBuilder.append("There was at least one exception before this one.\n");
+    }
+    return descBuilder;
   }
 }

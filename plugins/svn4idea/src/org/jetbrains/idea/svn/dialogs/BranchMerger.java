@@ -82,7 +82,7 @@ public class BranchMerger implements IMerger {
     myAtStart = false;
     final SVNDiffClient dc = myVcs.createDiffClient();
     dc.setEventHandler(myHandler);
-    final SvnConfiguration svnConfig = SvnConfiguration.getInstanceChecked(myVcs.getProject());
+    final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
     dc.setMergeOptions(new SVNDiffOptions(svnConfig.IGNORE_SPACES_IN_MERGE, svnConfig.IGNORE_SPACES_IN_MERGE,
                                                     svnConfig.IGNORE_SPACES_IN_MERGE));
 

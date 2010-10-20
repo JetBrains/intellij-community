@@ -16,10 +16,11 @@
 package com.intellij.errorreport.bean;
 
 import com.intellij.util.SystemProperties;
-
-import java.util.Date;
-
 import org.jetbrains.annotations.NonNls;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,48 +30,41 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class ErrorBean {
-  private String notifierId;
-  private String exceptionHashCode;
   private Date date;
   private String os;
   private String lastAction;
   private String description;
 
-  public void autoInit () {
+  private String message;
+  private String stackTrace;
+
+  private String exceptionClass = "";
+
+  public ErrorBean(Throwable throwable, String lastAction) {
+    if (throwable != null) {
+      exceptionClass = throwable.getClass().getName();
+
+      message = throwable.getMessage();
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      throwable.printStackTrace(new PrintStream(baos, true));
+      stackTrace = baos.toString();
+    }
     os = SystemProperties.getOsName();
     date = new Date();
-  }
-
-  public String getNotifierId() {
-    return notifierId;
-  }
-
-  public void setNotifierId(String notifierId) {
-    this.notifierId = notifierId;
+    this.lastAction = lastAction;
   }
 
   public Date getDate() {
     return date;
   }
 
-  public void setDate(Date date) {
-    this.date = date;
-  }
-
   public String getOs() {
     return os;
   }
 
-  public void setOs(String os) {
-    this.os = os;
-  }
-
   public String getLastAction() {
     return lastAction;
-  }
-
-  public void setLastAction(String lastAction) {
-    this.lastAction = lastAction;
   }
 
   public String getDescription() {
@@ -81,11 +75,15 @@ public class ErrorBean {
     this.description = description;
   }
 
-  public String getExceptionHashCode() {
-    return exceptionHashCode;
+  public String getExceptionClass() {
+    return exceptionClass;
   }
 
-  public void setExceptionHashCode(String exceptionId) {
-    exceptionHashCode = exceptionId;
+  public String getStackTrace() {
+    return stackTrace;
+  }
+
+  public String getMessage() {
+    return message;
   }
 }

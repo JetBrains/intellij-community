@@ -134,6 +134,11 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
+  @Override
+  public Variable addVariable(Expression expression, boolean isAlwaysStopAt) {
+    return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
+  }
+
   public Variable addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
     if (mySegments != null) {
       Segment segment = new Segment(name, myTemplateText.length());

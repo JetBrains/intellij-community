@@ -71,7 +71,7 @@ public abstract class ZenCodingGenerator {
       elementStart = element.getTextRange().getStartOffset();
       int startOffset = elementStart > lineStart ? elementStart : lineStart;
       String key = computeKey(editor, startOffset);
-      if (ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
+      if (key != null && ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
         return key;
       }
       element = element.getParent();
@@ -80,6 +80,7 @@ public abstract class ZenCodingGenerator {
     return null;
   }
 
+  @Nullable
   protected static String computeKey(Editor editor, int startOffset) {
     int offset = editor.getCaretModel().getOffset();
     String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.errorreport.error;
+package com.intellij.util;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Aug 20, 2003
- * Time: 3:15:02 PM
- * To change this template use Options | File Templates.
+ * @author irengrig
  */
-public class SendException extends RuntimeException {
-  public SendException(Throwable cause) {
-    super(cause);
+public enum TracedLifeCycle {
+  NOT_EXIST,
+  OPENING,
+  OPEN,
+  CLOSING,
+  CLOSED;
+
+  public boolean isClosingOrClosed() {
+    return this == CLOSING || this == CLOSED;
   }
 }

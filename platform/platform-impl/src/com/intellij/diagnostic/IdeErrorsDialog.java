@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -42,6 +43,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,9 +71,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
   private final MessagePool myMessagePool;
   private JLabel myCountLabel;
-  private JLabel myBlameLabel;
   private JLabel myInfoLabel;
   private JCheckBox myImmediatePopupCheckbox;
+  private final BlameAction myBlameAction = new BlameAction();
+  private final DisablePluginAction myDisablePluginAction = new DisablePluginAction();
 
   private int myIndex = 0;
   @NonNls public static final String IMMEDIATE_POPUP_OPTION = "IMMEDIATE_FATAL_ERROR_POPUP";
@@ -101,47 +104,35 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   protected Action[] createActions() {
-    return new Action[]{new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
+    return new Action[]{new ShutdownAction(), new CloseAction()};
   }
 
   @Override
   protected Action[] createLeftSideActions() {
+    List<Action> actions = new ArrayList<Action>();
+    actions.add(myBlameAction);
+    actions.add(myDisablePluginAction);
     if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
       final AnAction analyze = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
       if (analyze != null) {
-        return new Action[] {new AbstractAction(analyze.getTemplatePresentation().getText()) {
-          public void actionPerformed(ActionEvent e) {
-            final DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
-
-            AnActionEvent event = new AnActionEvent(
-              null, dataContext,
-              ActionPlaces.UNKNOWN,
-              analyze.getTemplatePresentation(),
-              ActionManager.getInstance(),
-              e.getModifiers()
-            );
-
-            final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-            setEnabled(project != null);
-            if (project != null) {
-              analyze.actionPerformed(event);
-              doOKAction();
-            }
-          }
-        }};
+        actions.add(new AnalyzeAction(analyze));
       }
     }
 
-    return new Action[0];
+    return actions.toArray(new Action[actions.size()]);
   }
 
   public void calcData(DataKey key, DataSink sink) {
     if (CURRENT_TRACE_KEY == key) {
-      final AbstractMessage msg = getMessageAt(myIndex);
+      final AbstractMessage msg = getSelectedMessage();
       if (msg != null) {
         sink.put(CURRENT_TRACE_KEY, msg.getMessage() + msg.getThrowableText());
       }
     }
+  }
+
+  private AbstractMessage getSelectedMessage() {
+    return getMessageAt(myIndex);
   }
 
   private ActionToolbar createNavigationToolbar() {
@@ -154,6 +145,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), getRootPane());
     group.add(forward);
+
+    group.add(new ClearFatalsAction());
+
 
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -171,15 +165,17 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateControls() {
     updateCountLabel();
-    updateBlameLabel();
     updateInfoLabel();
     updateDetailsPane();
+    myBlameAction.update();
+    myDisablePluginAction.update();
   }
 
   private void updateInfoLabel() {
-    final AbstractMessage message = getMessageAt(myIndex);
+    final AbstractMessage message = getSelectedMessage();
     if (message != null) {
       StringBuffer txt = new StringBuffer();
+      txt.append("<html>").append(getBlameLabel()).append(" ");
       txt.append(DiagnosticBundle.message("error.list.message.info",
                  DateFormatUtil.formatPrettyDateTime(message.getDate()), myModel.get(myIndex).size()));
 
@@ -202,7 +198,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         txt.append(". ");
       }
       else if (!message.isRead()) {
-        txt.append(DiagnosticBundle.message("error.list.message.unread"));
+        txt.append(" ").append(DiagnosticBundle.message("error.list.message.unread"));
       }
       myInfoLabel.setText(txt.toString());
     }
@@ -211,31 +207,30 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void updateBlameLabel() {
-    final AbstractMessage message = getMessageAt(myIndex);
+  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
+  private String getBlameLabel() {
+    final AbstractMessage message = getSelectedMessage();
     if (message != null && !(message.getThrowable() instanceof MessagePool.TooManyErrorsException)) {
       final PluginId pluginId = findPluginId(message.getThrowable());
       if (pluginId == null) {
         if (message.getThrowable() instanceof AbstractMethodError) {
-          myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
+          return DiagnosticBundle.message("error.list.message.blame.unknown.plugin");
         }
         else {
-          myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.core",
-                                                        ApplicationNamesInfo.getInstance().getProductName()));
+          return DiagnosticBundle.message("error.list.message.blame.core",
+                                                        ApplicationNamesInfo.getInstance().getProductName());
         }
       }
       else {
         final Application app = ApplicationManager.getApplication();
-        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.plugin", app.getPlugin(pluginId).getName()));
+        return DiagnosticBundle.message("error.list.message.blame.plugin", app.getPlugin(pluginId).getName());
       }
     }
-    else {
-      myBlameLabel.setText("");
-    }
+    return "";
   }
 
   private void updateDetailsPane() {
-    final AbstractMessage message = getMessageAt(myIndex);
+    final AbstractMessage message = getSelectedMessage();
     if (message != null) {
       showMessageDetails(message);
     }
@@ -288,20 +283,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     myImmediatePopupCheckbox = new JCheckBox(DiagnosticBundle.message("error.list.popup.immediately.checkbox"));
     myImmediatePopupCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(IMMEDIATE_POPUP_OPTION));
+    myImmediatePopupCheckbox.setVisible(((ApplicationImpl) ApplicationManager.getApplication()).isInternal());
 
     myCountLabel = new JLabel();
-    myBlameLabel = new JLabel();
     myInfoLabel = new JLabel();
     ActionToolbar navToolbar = createNavigationToolbar();
     toolbar.add(navToolbar.getComponent());
     toolbar.add(myCountLabel);
     top.add(toolbar, BorderLayout.WEST);
-
-    JPanel blamePanel = new JPanel(new FlowLayout());
-    blamePanel.add(myBlameLabel);
-    final ActionToolbar blameToolbar = createBlameToolbar();
-    blamePanel.add(blameToolbar.getComponent());
-    top.add(blamePanel, BorderLayout.EAST);
 
     root.add(top, BorderLayout.NORTH);
 
@@ -321,15 +310,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     moveSelectionToEarliestMessage();
     updateControls();
     return root;
-  }
-
-  private ActionToolbar createBlameToolbar() {
-    DefaultActionGroup blameGroup = new DefaultActionGroup();
-    final BlameAction blameAction = new BlameAction();
-    blameGroup.add(blameAction);
-    blameAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, blameGroup, true);
   }
 
   private AbstractMessage getMessageAt(int idx) {
@@ -479,42 +459,40 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ClearFatalsAction extends AbstractAction {
+  private class ClearFatalsAction extends AnAction {
     public ClearFatalsAction() {
-      super(DiagnosticBundle.message("error.list.clear.action"));
+      super("Clear all fatal errors", "Clear all fatal errors",
+            IconLoader.getIcon("/general/reset.png"));
     }
 
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(AnActionEvent e) {
       myMessagePool.clearFatals();
-      doOKAction();
     }
   }
 
-  private class BlameAction extends AnAction implements DumbAware {
+  private class BlameAction extends AbstractAction {
     public BlameAction() {
-      super(DiagnosticBundle.message("error.list.submit.action"),
-            DiagnosticBundle.message("error.list.submit.action.description"), IconLoader.getIcon("/actions/startDebugger.png"));
+      super(DiagnosticBundle.message("error.list.submit.action"));
     }
 
-    public void update(AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      final AbstractMessage logMessage = getMessageAt(myIndex);
+    public void update() {
+      final AbstractMessage logMessage = getSelectedMessage();
       if (logMessage == null) {
-        presentation.setEnabled(false);
+        setEnabled(false);
         return;
       }
 
       final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
       if (logMessage.isSubmitted() || submitter == null) {
-        presentation.setEnabled(false);
+        setEnabled(false);
         return;
       }
-      presentation.setEnabled(true);
-      presentation.setDescription(submitter.getReportActionText());
+      setEnabled(true);
+      putValue(NAME, submitter.getReportActionText());
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      final AbstractMessage logMessage = getMessageAt(myIndex);
+    public void actionPerformed(ActionEvent e) {
+      final AbstractMessage logMessage = getSelectedMessage();
       reportMessage(logMessage);
       rebuildHeaders();
       updateControls();
@@ -589,7 +567,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   protected class CloseAction extends AbstractAction {
     public CloseAction() {
-      putValue(Action.NAME, DiagnosticBundle.message("error.list.close.action"));
+      putValue(NAME, DiagnosticBundle.message("error.list.close.action"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -617,5 +595,79 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     byte [] code = md5.digest(key.getBytes());
     BigInteger bi = new BigInteger(code).abs();
     return bi.abs().toString(16);
+  }
+
+  private class AnalyzeAction extends AbstractAction {
+    private final AnAction myAnalyze;
+
+    public AnalyzeAction(AnAction analyze) {
+      super(analyze.getTemplatePresentation().getText());
+      myAnalyze = analyze;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
+
+      AnActionEvent event = new AnActionEvent(
+        null, dataContext,
+        ActionPlaces.UNKNOWN,
+        myAnalyze.getTemplatePresentation(),
+        ActionManager.getInstance(),
+        e.getModifiers()
+      );
+
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      setEnabled(project != null);
+      if (project != null) {
+        myAnalyze.actionPerformed(event);
+        doOKAction();
+      }
+    }
+  }
+
+  private class DisablePluginAction extends AbstractAction {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      PluginId pluginId = getSelectedPluginId();
+      if (pluginId != null) {
+        PluginManager.disablePlugin(pluginId.toString());
+        final Application app = ApplicationManager.getApplication();
+        final String pluginName = app.getPlugin(pluginId).getName();
+        final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+        if (app.isRestartCapable()) {
+          int rc = Messages.showYesNoDialog(getRootPane(), pluginName + " has been disabled. Would you like to restart " + productName + " so that the changes would take effect?",
+                                            "Disable Plugin", Messages.getInformationIcon());
+          if (rc == 0) {
+            app.restart();
+          }
+        }
+        else {
+          Messages.showMessageDialog(getRootPane(), pluginName + " has been disabled. You'll need to restart " + productName + " for the changes to take effect.",
+                                     "Disable Plugin", Messages.getInformationIcon());
+        }
+      }
+    }
+
+    public void update() {
+      PluginId pluginId = getSelectedPluginId();
+      if (pluginId != null) {
+        setEnabled(true);
+        putValue(NAME, "Disable " + ApplicationManager.getApplication().getPlugin(pluginId).getName());
+      }
+      else {
+        setEnabled(false);
+        putValue(NAME, "Disable plugin");
+      }
+    }
+
+    @Nullable
+    private PluginId getSelectedPluginId() {
+      final AbstractMessage message = getSelectedMessage();
+      if (message != null) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        return findPluginId(message.getThrowable());
+      }
+      return null;
+    }
   }
 }

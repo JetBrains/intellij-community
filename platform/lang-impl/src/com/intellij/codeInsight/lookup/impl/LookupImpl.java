@@ -568,6 +568,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void show(){
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert !myDisposed;
 
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -893,9 +894,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert !myDisposed;
     myHidden = true;
 
-    super.hide();
+    try {
+      super.hide();
 
-    Disposer.dispose(this);
+      Disposer.dispose(this);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
 
     if (fireCanceled) {
       fireLookupCanceled(explicitly);
@@ -912,15 +918,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;
     assert !myDisposed;
-    myDisposed = true;
+
     Disposer.dispose(myProcessIcon);
     if (myEditorCaretListener != null) {
       myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
       myEditor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);
+      myEditorCaretListener = null;
+      myEditorSelectionListener = null;
     }
     if (myEditorMouseListener != null) {
       myEditor.removeEditorMouseListener(myEditorMouseListener);
+      myEditorMouseListener = null;
     }
+    myDisposed = true;
   }
 
   private int doSelectMostPreferableItem(List<LookupElement> items) {

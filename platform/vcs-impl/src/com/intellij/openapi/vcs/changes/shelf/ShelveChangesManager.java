@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -65,7 +66,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   @NonNls private static final String PATCH_EXTENSION = "patch";
 
   public static ShelveChangesManager getInstance(Project project) {
-    return project.getComponent(ShelveChangesManager.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
   }
 
   private final Project myProject;
