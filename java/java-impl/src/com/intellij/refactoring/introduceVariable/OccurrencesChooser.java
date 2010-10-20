@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -41,7 +42,7 @@ import java.util.List;
  */
 public class OccurrencesChooser {
   public static enum ReplaceChoice {
-    NO("Do not replace"), NO_WRITE("Replace all but write"), ALL("Replace all occurrences");
+    NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
     private String myDescription;
 
@@ -85,7 +86,11 @@ public class OccurrencesChooser {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final ReplaceChoice choices = (ReplaceChoice)value;
         if (choices != null) {
-          setText(choices.getDescription());
+          String text = choices.getDescription();
+          if (choices == ReplaceChoice.ALL) {
+            text = MessageFormat.format(text, occurrencesMap.get(choices).length);
+          }
+          setText(text);
         }
         return rendererComponent;
       }

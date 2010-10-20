@@ -1,0 +1,314 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.android.compiler;
+
+import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.SdkConstants;
+import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.facet.FacetManager;
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.compiler.tools.AndroidDx;
+import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
+import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+/**
+ * Android Dex compiler.
+ *
+ * @author Alexey Efimov
+ */
+public class AndroidDexCompiler implements ClassPostProcessingCompiler {
+
+  /*private static void saveDocuments() {
+    final Application application = ApplicationManager.getApplication();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        application.saveAll();
+      }
+    };
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      application.invokeAndWait(runnable, ModalityState.defaultModalityState());
+    }
+  }*/
+
+  @NotNull
+  public ProcessingItem[] getProcessingItems(CompileContext context) {
+    Module[] affectedModules = context.getCompileScope().getAffectedModules();
+    if (affectedModules.length > 0) {
+      Application application = ApplicationManager.getApplication();
+      //saveDocuments();
+      return application.runReadAction(new PrepareAction(context));
+    }
+    return ProcessingItem.EMPTY_ARRAY;
+  }
+
+  public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
+    if (items != null && items.length > 0) {
+      context.getProgressIndicator().setText("Generating " + AndroidUtils.CLASSES_FILE_NAME + "...");
+      Application application = ApplicationManager.getApplication();
+      return application.runReadAction(new ProcessAction(context, items));
+    }
+    return ProcessingItem.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public String getDescription() {
+    return FileUtil.getNameWithoutExtension(SdkConstants.FN_DX);
+  }
+
+  public boolean validateConfiguration(CompileScope scope) {
+    return true;
+  }
+
+  public ValidityState createValidityState(DataInput in) throws IOException {
+    final HashMap<String, Long> map = new HashMap<String, Long>();
+    int size = in.readInt();
+    while (size-- > 0) {
+      final String path = CompilerIOUtil.readString(in);
+      final long timestamp = in.readLong();
+      map.put(path, timestamp);
+    }
+    return new MyValidityState(map);
+  }
+
+  private static final class PrepareAction implements Computable<ProcessingItem[]> {
+    private final CompileContext myContext;
+
+    public PrepareAction(CompileContext context) {
+      myContext = context;
+    }
+
+    public ProcessingItem[] compute() {
+      CompileScope compileScope = myContext.getCompileScope();
+      Module[] modules = compileScope.getAffectedModules();
+      List<ProcessingItem> items = new ArrayList<ProcessingItem>();
+      for (Module module : modules) {
+        AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
+        if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+          CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+          VirtualFile outputDir = extension.getCompilerOutputPath();
+          if (outputDir != null) {
+            AndroidFacetConfiguration configuration = facet.getConfiguration();
+            AndroidPlatform platform = configuration.getAndroidPlatform();
+            if (platform != null) {
+              Set<VirtualFile> dependencies = AndroidRootUtil.getExternalLibrariesAndModules(module, outputDir, platform.getLibrary());
+              List<VirtualFile> files = new ArrayList<VirtualFile>();
+              files.add(outputDir);
+              files.addAll(dependencies);
+              VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+              if (outputDirForTests != null) {
+                files.add(outputDirForTests);
+              }
+              IAndroidTarget target = configuration.getAndroidTarget();
+              if (target != null) {
+                Set<String> excludedFiles = new HashSet<String>();
+                collectClassFilesInLibraryModules(facet, excludedFiles);
+                items.add(new DexItem(module, outputDir, target, files, excludedFiles));
+              }
+            }
+          }
+        }
+      }
+      return items.toArray(new ProcessingItem[items.size()]);
+    }
+  }
+
+  private static void collectClassFilesInLibraryModules(AndroidFacet facet, Collection<String> result) {
+    Manifest manifest = facet.getManifest();
+    String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
+      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depFacet.getModule());
+      if (extension != null) {
+        VirtualFile outputDir = extension.getCompilerOutputPath();
+        if (outputDir != null) {
+          Manifest depManifest = depFacet.getManifest();
+          String depPackage = depManifest != null ? depManifest.getPackage().getValue() : null;
+          collectRClassFiles(outputDir, result, aPackage, depPackage);
+        }
+      }
+    }
+  }
+
+  private static void collectRClassFiles(VirtualFile outDir, Collection<String> result, String... packages) {
+    for (String aPackage : packages) {
+      if (aPackage != null) {
+        String parentPath = outDir.getPath() + '/' + aPackage.replace('.', '/');
+        VirtualFile parentDir = LocalFileSystem.getInstance().findFileByPath(parentPath);
+        if (parentDir != null) {
+          for (VirtualFile child : parentDir.getChildren()) {
+            if (child.getFileType() == StdFileTypes.CLASS) {
+              if (isRJavaFile(child)) {
+                result.add(child.getPath());
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean isRJavaFile(VirtualFile file) {
+    String name = file.getNameWithoutExtension();
+    return name.equals(AndroidUtils.R_CLASS_NAME) || name.startsWith(AndroidUtils.R_CLASS_NAME + "$");
+  }
+
+  private final static class ProcessAction implements Computable<ProcessingItem[]> {
+    private final CompileContext myContext;
+    private final ProcessingItem[] myItems;
+
+    public ProcessAction(CompileContext context, ProcessingItem[] items) {
+      myContext = context;
+      myItems = items;
+    }
+
+    public ProcessingItem[] compute() {
+      List<ProcessingItem> results = new ArrayList<ProcessingItem>(myItems.length);
+      for (ProcessingItem item : myItems) {
+        if (item instanceof DexItem) {
+          DexItem dexItem = (DexItem)item;
+          AndroidDx dxTool = new AndroidDx();
+          String outputDirPath = FileUtil.toSystemDependentName(dexItem.myClassDir.getPath());
+          String[] files = new String[dexItem.myFiles.size()];
+          int i = 0;
+          for (VirtualFile file : dexItem.myFiles) {
+            files[i++] = FileUtil.toSystemDependentName(file.getPath());
+          }
+
+          for (String excludedFile : dexItem.myExcludedFiles) {
+            File f = new File(excludedFile);
+            if (f.exists()) {
+              f.delete();
+            }
+          }
+
+          Map<CompilerMessageCategory, List<String>> messages = dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath,
+                                                                               files);
+          addMessages(messages);
+          if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+            results.add(dexItem);
+          }
+        }
+      }
+      return results.toArray(new ProcessingItem[results.size()]);
+    }
+
+    private void addMessages(Map<CompilerMessageCategory, List<String>> messages) {
+      for (CompilerMessageCategory category : messages.keySet()) {
+        List<String> messageList = messages.get(category);
+        for (String message : messageList) {
+          myContext.addMessage(category, message, null, -1, -1);
+        }
+      }
+    }
+  }
+
+  private final static class DexItem implements ProcessingItem {
+    final Module myModule;
+    final VirtualFile myClassDir;
+    final IAndroidTarget myAndroidTarget;
+    final Collection<VirtualFile> myFiles;
+    final Set<String> myExcludedFiles;
+
+    public DexItem(@NotNull Module module,
+                   @NotNull VirtualFile classDir,
+                   @NotNull IAndroidTarget target,
+                   Collection<VirtualFile> files,
+                   Set<String> excludedFiles) {
+      myModule = module;
+      myClassDir = classDir;
+      myAndroidTarget = target;
+      myFiles = files;
+      this.myExcludedFiles = excludedFiles;
+    }
+
+    @NotNull
+    public VirtualFile getFile() {
+      return myClassDir;
+    }
+
+    @Nullable
+    public ValidityState getValidityState() {
+      return new MyValidityState(myFiles, myExcludedFiles);
+    }
+  }
+
+  private static class MyValidityState implements ValidityState {
+    private Map<String, Long> myFiles;
+
+    private void fillMap(VirtualFile file, Set<VirtualFile> visited, Set<String> excludedFiles) {
+      if (file.isDirectory() && visited.add(file)) {
+        for (VirtualFile child : file.getChildren()) {
+          fillMap(child, visited, excludedFiles);
+        }
+      }
+      else if (StdFileTypes.CLASS.equals(file.getFileType()) || file.getFileType() instanceof ArchiveFileType) {
+        if (!excludedFiles.contains(file.getPath())) {
+          myFiles.put(file.getPath(), file.getTimeStamp());
+        }
+      }
+    }
+
+    public MyValidityState(Collection<VirtualFile> files, Set<String> excludedFiles) {
+      myFiles = new HashMap<String, Long>();
+      Set<VirtualFile> visited = new HashSet<VirtualFile>();
+      for (VirtualFile file : files) {
+        fillMap(file, visited, excludedFiles);
+      }
+    }
+
+    public MyValidityState(Map<String, Long> files) {
+      myFiles = files;
+    }
+
+    public boolean equalsTo(ValidityState otherState) {
+      return otherState instanceof MyValidityState
+             && myFiles.equals(((MyValidityState)otherState).myFiles);
+    }
+
+    public void save(DataOutput out) throws IOException {
+      out.writeInt(myFiles.size());
+      for (String dependency : myFiles.keySet()) {
+        CompilerIOUtil.writeString(dependency, out);
+        out.writeLong(myFiles.get(dependency));
+      }
+    }
+  }
+}

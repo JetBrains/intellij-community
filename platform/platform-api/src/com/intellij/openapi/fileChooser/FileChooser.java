@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -62,9 +63,10 @@ public class FileChooser {
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> onChosenCallback
   ) {
+    if (SystemInfo.isMac) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
     final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     if (dialog instanceof MacFileChooserDialog) {
-      ((MacFileChooserDialog)dialog).chooseWithSheet(null, project, new MacFileChooserDialog.MacFileChooserCallback() {
+      ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
         public void onChosen(@NotNull final VirtualFile[] files) {
           onChosenCallback.consume(files);
         }

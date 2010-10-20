@@ -114,7 +114,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     indicator.setIndeterminate(true);
     final boolean supportsChangelists = myNewFormat.supportsChangelists();
     if (supportsChangelists) {
-      myBeforeChangeLists = ChangeListManager.getInstanceChecked(myProject).getChangeListsCopy();
+      myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeListsCopy();
     }
     final SVNWCClient wcClient = myVcs.createWCClient();
 

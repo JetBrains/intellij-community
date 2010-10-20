@@ -594,6 +594,20 @@ public class GroovyToJavaGenerator {
 
     writeParameterList(text, parameters);
 
+    final PsiReferenceList throwsList = method.getThrowsList();
+    final PsiClassType[] exceptions = throwsList.getReferencedTypes();
+    if (exceptions.length > 0) {
+      text.append("throws ");
+      for (int i = 0; i < exceptions.length; i++) {
+        PsiClassType exception = exceptions[i];
+        if (i != 0) {
+          text.append(",");
+        }
+        text.append(getTypeText(exception, method, false));
+        text.append(" ");
+      }
+    }
+
     if (!isAbstract) {
       /************* body **********/
       text.append("{\n");

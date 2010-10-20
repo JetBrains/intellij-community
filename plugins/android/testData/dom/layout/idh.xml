@@ -1,0 +1,7 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+  <Button android:id="@android:id/text1"/>
+  <Button android:id="@id/idd1"/>
+  <Button android:id="@+id/newId"/>
+  <RadioGroup android:checkedButton="@+id/lunch"/>
+  <RadioGroup android:checkedButton="@id/lunch"/>
+</LinearLayout>

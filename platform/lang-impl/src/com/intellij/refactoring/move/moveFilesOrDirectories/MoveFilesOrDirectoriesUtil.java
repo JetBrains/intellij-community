@@ -18,12 +18,14 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -87,28 +89,33 @@ public class MoveFilesOrDirectoriesUtil {
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
       public void run(final MoveFilesOrDirectoriesDialog moveDialog) {
-        final PsiDirectory targetDirectory = moveDialog != null ? moveDialog.getTargetDirectory() : initialTargetDirectory;
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            final PsiDirectory targetDirectory = moveDialog != null ? moveDialog.getTargetDirectory() : initialTargetDirectory;
 
-        LOG.assertTrue(targetDirectory != null);
-        PsiElement[] newElements = adjustElements != null ? adjustElements.fun(elements) : elements;
-        targetElement[0] = targetDirectory;
+            LOG.assertTrue(targetDirectory != null);
+            PsiElement[] newElements = adjustElements != null ? adjustElements.fun(elements) : elements;
+            targetElement[0] = targetDirectory;
 
-        PsiManager manager = PsiManager.getInstance(project);
-        try {
-          for (PsiElement psiElement : newElements) {
-            manager.checkMove(psiElement, targetDirectory);
-          }
+            PsiManager manager = PsiManager.getInstance(project);
+            try {
+              for (PsiElement psiElement : newElements) {
+                manager.checkMove(psiElement, targetDirectory);
+              }
 
-          new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory, false, false, moveCallback, new Runnable() {
-            public void run() {
-              if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+              new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory, false, false, moveCallback, new Runnable() {
+                public void run() {
+                  if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+                }
+              }).run();
             }
-          }).run();
-        }
-        catch (IncorrectOperationException e) {
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
-                                                 "refactoring.moveFile", project);
-        }
+            catch (IncorrectOperationException e) {
+              CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
+                                                     "refactoring.moveFile", project);
+            }
+          }
+        }, MoveHandler.REFACTORING_NAME, null);
       }
     };
 

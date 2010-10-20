@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* //device/apps/common/assets/res/any/colors.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Do not translate. These are all of the drawable resources that should be preloaded by
+         the zygote process before it starts forking application processes. -->
+    <array name="preloaded_drawables">
+        <item>@drawable/sym_def_app_icon</item>
+        <item>@drawable/arrow_down_float</item>
+        <item>@drawable/btn_check</item>
+        <item>@drawable/btn_check_label_background</item>
+        <item>@drawable/btn_check_off</item>
+        <item>@drawable/btn_check_on</item>
+        <item>@drawable/btn_default</item>
+        <item>@drawable/btn_default_small</item>
+        <item>@drawable/btn_dropdown</item>
+        <item>@drawable/btn_plus</item>
+        <item>@drawable/btn_minus</item>
+        <item>@drawable/btn_radio</item>
+        <item>@drawable/btn_star</item>
+        <item>@drawable/btn_toggle</item>
+        <item>@drawable/ic_emergency</item>
+        <item>@drawable/divider_horizontal_bright</item>
+        <item>@drawable/divider_horizontal_dark</item>
+        <item>@drawable/edit_text</item>
+        <item>@drawable/expander_group</item>
+        <item>@drawable/list_selector_background</item>
+        <item>@drawable/menu_background</item>
+        <item>@drawable/menu_background_fill_parent_width</item>
+        <item>@drawable/menu_selector</item>
+        <item>@drawable/panel_background</item>
+        <item>@drawable/popup_bottom_bright</item>
+        <item>@drawable/popup_bottom_dark</item>
+        <item>@drawable/popup_bottom_medium</item>
+        <item>@drawable/popup_center_bright</item>
+        <item>@drawable/popup_center_dark</item>
+        <item>@drawable/popup_full_dark</item>
+        <item>@drawable/popup_top_bright</item>
+        <item>@drawable/popup_top_dark</item>
+        <item>@drawable/progress_horizontal</item>
+        <item>@drawable/progress_indeterminate_horizontal</item>
+        <item>@drawable/progress_small</item>
+        <item>@drawable/progress_small_titlebar</item>
+        <item>@drawable/screen_background_dark</item>
+        <item>@drawable/screen_background_light</item>
+        <item>@drawable/scrollbar_handle_horizontal</item>
+        <item>@drawable/scrollbar_handle_vertical</item>
+        <item>@drawable/spinner_dropdown_background</item>
+        <item>@drawable/title_bar</item>
+        <item>@drawable/title_bar_shadow</item>
+        <!-- Visual lock screen -->
+        <item>@drawable/indicator_code_lock_drag_direction_green_up</item>
+        <item>@drawable/indicator_code_lock_drag_direction_red_up</item>
+        <item>@drawable/indicator_code_lock_point_area_default</item>
+        <item>@drawable/indicator_code_lock_point_area_green</item>
+        <item>@drawable/indicator_code_lock_point_area_red</item>
+    </array>
+
+    <!-- Do not translate. These are all of the color state list resources that should be
+         preloaded by the zygote process before it starts forking application processes. -->
+    <array name="preloaded_color_state_lists">
+        <item>@color/hint_foreground_dark</item>
+        <item>@color/hint_foreground_light</item>
+        <item>@color/primary_text_dark</item>
+        <item>@color/primary_text_dark_disable_only</item>
+        <item>@color/primary_text_light</item>
+        <item>@color/primary_text_light_disable_only</item>
+        <item>@color/primary_text_light_nodisable</item>
+        <item>@color/secondary_text_dark</item>
+        <item>@color/secondary_text_light</item>
+        <item>@color/tab_indicator_text</item>
+        <item>@color/tertiary_text_dark</item>
+        <item>@color/tertiary_text_light</item>
+        <item>#ff000000</item>
+        <item>#00000000</item>
+        <item>#ffffffff</item>
+    </array>
+
+    <!-- Do not translate. -->
+    <integer-array name="maps_starting_lat_lng">
+        <item>36149777</item>
+        <item>-95993398</item>
+    </integer-array>
+    <!-- Do not translate. -->
+    <integer-array name="maps_starting_zoom">
+        <item>3</item>
+    </integer-array>
+
+    <!-- Do not translate. Defines the slots for the right-hand side icons.  That is to say, the
+         icons in the status bar that are not notifications. -->
+    <string-array name="status_bar_icon_order">
+        <item><xliff:g id="id">clock</xliff:g></item>
+        <item><xliff:g id="id">alarm_clock</xliff:g></item>
+        <item><xliff:g id="id">battery</xliff:g></item>
+        <item><xliff:g id="id">phone_signal</xliff:g></item>
+        <item><xliff:g id="id">data_connection</xliff:g></item>
+        <item><xliff:g id="id">volume</xliff:g></item>
+        <item><xliff:g id="id">mute</xliff:g></item>
+        <item><xliff:g id="id">speakerphone</xliff:g></item>
+        <item><xliff:g id="id">wifi</xliff:g></item>
+        <item><xliff:g id="id">bluetooth</xliff:g></item>
+        <item><xliff:g id="id">gps</xliff:g></item>
+        <item><xliff:g id="id">sync_active</xliff:g></item>
+        <item><xliff:g id="id">sync_failing</xliff:g></item>
+        <item><xliff:g id="id">ime</xliff:g></item>
+    </string-array>
+</resources>

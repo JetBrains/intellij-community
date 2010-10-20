@@ -194,16 +194,15 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       index = CharArrayUtil.indexOf(chars, name, index);
 
       if (index < 0) break;
-      final PsiReference ref = file.findReferenceAt(index + offset + 1);
-      if (ref != null) {
-        final boolean isReferenceTo = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return ref.isReferenceTo(element);
-          }
-        }).booleanValue();
-        if (isReferenceTo){
-          if (!processor.process(ref)) return false;
+      final int finalIndex = index;
+      final PsiReference ref = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiReference>() {
+        public PsiReference compute() {
+          final PsiReference ref = file.findReferenceAt(finalIndex + offset + 1);
+          return ref != null && ref.isReferenceTo(element) ? ref : null;
         }
+      });
+      if (ref != null) {
+        if (!processor.process(ref)) return false;
       }
       index++;
     }

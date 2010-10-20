@@ -83,17 +83,23 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  protected boolean shouldContainTempFiles() {
+    return true;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    String testName = getTestName(true);
-    if (StringUtil.isEmptyOrSpaces(testName)) testName = "unitTest";
-    final String tempDirPath = ourOriginalTempDir + "/" + testName + ourPRNG.nextInt(Integer.MAX_VALUE);
-    setTmpDir(tempDirPath);
-    myTempDir = new File(tempDirPath);
-    assertTrue("can't setup temp directory: " + tempDirPath,
-               myTempDir.mkdirs());
+    if (shouldContainTempFiles()) {
+      String testName = getTestName(true);
+      if (StringUtil.isEmptyOrSpaces(testName)) testName = "unitTest";
+      final String tempDirPath = ourOriginalTempDir + "/" + testName + ourPRNG.nextInt(Integer.MAX_VALUE);
+      setTmpDir(tempDirPath);
+      myTempDir = new File(tempDirPath);
+      assertTrue("can't setup temp directory: " + tempDirPath,
+                 myTempDir.mkdirs());
+    }
   }
 
   @Override
@@ -101,8 +107,10 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.dispose(myTestRootDisposable);
     cleanupSwingDataStructures();
 
-    FileUtil.asyncDelete(myTempDir);
-    setTmpDir(ourOriginalTempDir);
+    if (shouldContainTempFiles()) {
+      FileUtil.asyncDelete(myTempDir);
+      setTmpDir(ourOriginalTempDir);
+    }
 
     super.tearDown();
   }

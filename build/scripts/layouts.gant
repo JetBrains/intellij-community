@@ -224,6 +224,20 @@ def layoutFull(String home, String targetDirectory) {
       }
 
 
+      dir("android") {
+        dir("lib") {
+          jar("android.jar") {
+            noResources("android")
+          }
+          resources("android")
+          fileset(dir: "${home}/plugins/android/lib") {
+            include(name: "**/*.jar")
+            exclude(name: "**/ddmlib_1.jar")
+          }
+        }
+      }
+
+
       dir("uiDesigner") {
         dir("lib") {
           jar("uiDesigner.jar") {

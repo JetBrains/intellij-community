@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +61,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
   public boolean REVERSE_PATCH = false;
 
   public static CreatePatchCommitExecutor getInstance(Project project) {
-    return project.getComponent(CreatePatchCommitExecutor.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, CreatePatchCommitExecutor.class);
   }
 
   public CreatePatchCommitExecutor(final Project project, final ChangeListManager changeListManager) {

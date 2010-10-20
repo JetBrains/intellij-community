@@ -44,7 +44,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
 
   public CreateNewLibraryDialog(@NotNull JComponent parent, @Nullable Project project, @NotNull NewLibraryEditor libraryEditor,
                                  @NotNull List<LibraryTable> libraryTables, int selectedTable) {
-    super(parent, LibraryRootsComponent.createComponent(project, libraryEditor));
+    super(parent, new LibraryRootsComponent(project, libraryEditor));
     myLibraryEditor = libraryEditor;
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     for (LibraryTable table : libraryTables) {

@@ -234,7 +234,7 @@ public class GitIgnoreTracker {
     VirtualFile meta = root.findChild(GIT_FOLDER);
     if (meta != null) {
       final VirtualFile localExclude = root.findFileByRelativePath(LOCAL_EXCLUDE);
-      if (localExclude != null) {
+      if (localExclude != null && localExclude.isValid()) {
         localExclude.getTimeStamp();
       }
       return root;

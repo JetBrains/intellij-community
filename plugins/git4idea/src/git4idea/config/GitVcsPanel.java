@@ -119,7 +119,9 @@ public class GitVcsPanel {
    * Test availability of the connection
    */
   private void testConnection() {
-    mySettings.setGitExecutable(myGitField.getText());
+    if (mySettings != null) {
+      mySettings.setGitExecutable(myGitField.getText());
+    }
     final String s;
     try {
       s = GitVcs.version(myProject);

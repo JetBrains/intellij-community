@@ -31,8 +31,9 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -74,7 +75,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 11, 2004
  */
-public class LibraryRootsComponent implements Disposable {
+public class LibraryRootsComponent implements Disposable, LibraryEditorComponent {
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
@@ -88,6 +89,8 @@ public class LibraryRootsComponent implements Disposable {
   private JButton myAttachAnnotationsButton;
   private JButton myAttachMoreButton;
   private MultiLineLabel myPropertiesLabel;
+  private JPanel myPropertiesPanel;
+  private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
   private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
@@ -97,12 +100,32 @@ public class LibraryRootsComponent implements Disposable {
   @Nullable private final Project myProject;
 
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
-  private final Computable<LibraryEditor> myLibraryEditor;
+  private final Computable<LibraryEditor> myLibraryEditorComputable;
 
-  private LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditor) {
+  public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
+    this(project, new Computable.PredefinedValueComputable<LibraryEditor>(libraryEditor));
+  }
+
+  public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditorComputable) {
     myProject = project;
-    myLibraryEditor = libraryEditor;
+    myLibraryEditorComputable = libraryEditorComputable;
+    final LibraryEditor editor = getLibraryEditor();
+    final LibraryType type = editor.getType();
+    if (type != null) {
+      //noinspection unchecked
+      myPropertiesEditor = type.createPropertiesEditor(this);
+      if (myPropertiesEditor != null) {
+        myPropertiesPanel.add(myPropertiesEditor.createComponent(), BorderLayout.CENTER);
+      }
+    }
+    init(new LibraryTreeStructure(this));
     updateProperties();
+  }
+
+  @NotNull
+  @Override
+  public LibraryProperties getProperties() {
+    return getLibraryEditor().getProperties();
   }
 
   private void updateProperties() {
@@ -114,20 +137,6 @@ public class LibraryRootsComponent implements Disposable {
       text.append(description);
     }
     myPropertiesLabel.setText(text.toString());
-  }
-
-  public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull LibraryEditor libraryEditor) {
-    return createComponent(project, new Computable.PredefinedValueComputable<LibraryEditor>(libraryEditor));
-  }
-
-  public static LibraryRootsComponent createComponent(final @Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditor) {
-    LibraryRootsComponent rootsComponent = new LibraryRootsComponent(project, libraryEditor);
-    rootsComponent.init(new LibraryTreeStructure(rootsComponent));
-    return rootsComponent;
-  }
-
-  public static LibraryRootsComponent createComponent(@NotNull LibraryEditor libraryEditor) {
-    return createComponent(null, libraryEditor);
   }
 
   private void init(AbstractTreeStructure treeStructure) {
@@ -179,10 +188,13 @@ public class LibraryRootsComponent implements Disposable {
   }
 
   public LibraryEditor getLibraryEditor() {
-    return myLibraryEditor.compute();
+    return myLibraryEditorComputable.compute();
   }
 
   public boolean hasChanges() {
+    if (myPropertiesEditor != null && myPropertiesEditor.isModified()) {
+      return true;
+    }
     return getLibraryEditor().hasChanges();
   }
 
@@ -229,7 +241,22 @@ public class LibraryRootsComponent implements Disposable {
   }
 
   public void dispose() {
+    if (myPropertiesEditor != null) {
+      myPropertiesEditor.disposeUIResources();
+    }
     myTreeBuilder = null;
+  }
+
+  public void resetProperties() {
+    if (myPropertiesEditor != null) {
+      myPropertiesEditor.reset();
+    }
+  }
+
+  public void applyProperties() {
+    if (myPropertiesEditor != null && myPropertiesEditor.isModified()) {
+      myPropertiesEditor.apply();
+    }
   }
 
   private abstract class AttachItemAction implements ActionListener {

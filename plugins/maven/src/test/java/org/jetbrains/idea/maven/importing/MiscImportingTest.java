@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
 import java.io.File;
@@ -46,6 +47,26 @@ public class MiscImportingTest extends MavenImportingTestCase {
         rootsChangedCount++;
       }
     });
+  }
+
+  public void testRestarting() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<name>1</name>");
+
+    assertModules("project");
+    assertEquals("1", myProjectsTree.getRootProjects().get(0).getName());
+
+    MavenFacadeManager.getInstance().shutdown(true);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<name>2</name>");
+
+    assertModules("project");
+    assertEquals("2", myProjectsTree.getRootProjects().get(0).getName());
   }
 
   public void testDoNotFailOnInvalidMirrors() throws Exception {

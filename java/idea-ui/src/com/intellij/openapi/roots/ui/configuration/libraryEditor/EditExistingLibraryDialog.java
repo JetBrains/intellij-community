@@ -53,7 +53,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private EditExistingLibraryDialog(Component parent,
                                    LibraryTable.ModifiableModel tableModifiableModel,
                                    @Nullable Project project, ExistingLibraryEditor libraryEditor, boolean commitChanges) {
-    super(parent, LibraryRootsComponent.createComponent(project, libraryEditor));
+    super(parent, new LibraryRootsComponent(project, libraryEditor));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;

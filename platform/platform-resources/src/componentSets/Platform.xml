@@ -117,6 +117,12 @@
       <interface-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</interface-class>
       <implementation-class>com.intellij.statistic.persistence.SentUsagesPersistenceComponent</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.util.FoundationLoader</implementation-class>
+      <headless-implementation-class/>
+    </component>
+
   </application-components>
 
   <project-components>

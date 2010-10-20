@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -167,7 +167,7 @@ public class RollbackWorker {
           action.finish();
           LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
                                                                                              actionName : myLocalHistoryActionName, -1);
-          final VcsDirtyScopeManager manager = PeriodicalTasksCloser.safeGetComponent(project, VcsDirtyScopeManager.class);
+          final VcsDirtyScopeManager manager = PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
           for (Change change : changesToRefresh) {
             if ((! change.isIsReplaced()) && Comparing.equal(change.getBeforeRevision(), change.getAfterRevision())) {
               manager.fileDirty(change.getBeforeRevision().getFile());

@@ -303,10 +303,10 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      doDrop(targetNode, sourceElements);
+      doDrop(targetNode, sourceElements, false);
     }
 
-    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
+    private void doDrop(TreeNode targetNode, PsiElement[] sourceElements, final boolean externalDrop) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
@@ -317,7 +317,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
             return targetElement;
           }
           else {
-            return dataContext.getData(dataId);
+            return externalDrop ? null : dataContext.getData(dataId);
           }
         }
       });
@@ -338,7 +338,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
       final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
-      doDrop(targetNode, sourceFileArray);
+      doDrop(targetNode, sourceFileArray, true);
     }
   }
 

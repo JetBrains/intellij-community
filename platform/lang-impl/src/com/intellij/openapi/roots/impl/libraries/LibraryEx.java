@@ -19,6 +19,8 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 
 /**
  *  @author dsl
@@ -30,7 +32,15 @@ public interface LibraryEx extends Library {
 
   boolean isDisposed();
 
+  LibraryType<?> getType();
+
+  LibraryProperties getProperties();
+
   interface ModifiableModelEx extends ModifiableModel {
     boolean allPathsValid(OrderRootType type);
+
+    void setProperties(LibraryProperties properties);
+
+    LibraryProperties getProperties();
   }
 }

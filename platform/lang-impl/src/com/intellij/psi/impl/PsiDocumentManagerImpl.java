@@ -187,8 +187,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void commitAllDocuments() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myUncommittedDocuments.isEmpty()) return;
-
     //long time1 = System.currentTimeMillis();
 
     final Document[] documents = getUncommittedDocuments();

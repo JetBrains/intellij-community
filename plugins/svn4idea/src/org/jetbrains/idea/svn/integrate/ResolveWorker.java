@@ -75,7 +75,7 @@ public class ResolveWorker {
     }
 
     return ((! myConflictedVirtualFiles.isEmpty()) || (! haveUnresolvedConflicts(updatedFiles))) &&
-           (! SvnConfiguration.getInstanceChecked(myProject).MERGE_DRY_RUN);
+           (! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN);
   }
 
   public static boolean haveUnresolvedConflicts(final UpdatedFiles updatedFiles) {

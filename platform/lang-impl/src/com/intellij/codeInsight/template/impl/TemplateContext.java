@@ -46,7 +46,14 @@ public class TemplateContext {
     synchronized (myAdditionalContexts) {
       storedValue = myAdditionalContexts.get(contextType.getContextId());
     }
-    return storedValue == null ? false : storedValue.booleanValue();
+    boolean result = storedValue == null ? false : storedValue.booleanValue();
+    if (!result) {
+      TemplateContextType baseContextType = contextType.getBaseContextType();
+      if (baseContextType != null) {
+        result = isEnabled(baseContextType);
+      }
+    }
+    return result;
   }
 
   public void setEnabled(TemplateContextType contextType, boolean value) {

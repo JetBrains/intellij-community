@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* apps/common/res/layout/SearchBar.xml
+**
+** Copyright 2007, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/search_bar"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingBottom="200dip"
+    android:orientation="vertical" 
+    android:focusable="true"
+    android:descendantFocusability="afterDescendants">
+    <!-- android:paddingBottom="14dip"  TODO MUST FIX - it's a hack to get the popup to show -->
+
+    <!-- Outer layout defines the entire search bar at the top of the screen -->
+    <!-- Bottom padding of 16 is due to the graphic, with 9 extra pixels of drop
+         shadow, plus the desired padding of "8" against the user-visible (grey)
+         pixels, minus "1" to correct for positioning of the edittext & button. -->
+    <LinearLayout
+        android:id="@+id/search_plate"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip"
+        android:paddingTop="6dip"
+        android:paddingBottom="16dip"
+        android:baselineAligned="false"
+        android:background="@android:drawable/search_plate"
+        android:addStatesFromChildren="true" >
+
+        <!-- This is actually used for the badge icon *or* the badge label (or neither) -->
+        <TextView 
+            android:id="@+id/search_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="2dip"
+            android:drawablePadding="0dip"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <!-- Inner layout contains the button(s) and EditText -->
+        <!-- The layout_marginTop of "1" corrects for the extra 1 pixel of padding at the top of 
+             textfield_selected.9.png.  The "real" margin as displayed is "2". -->
+        <!-- The layout_marginBottom of "-5" corrects for the spacing we see at the 
+             bottom of the edittext and button images.  The "real" margin as displayed is "8" -->
+        <LinearLayout
+            android:id="@+id/search_edit_frame"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dip"
+            android:layout_marginBottom="-5dip"
+            android:orientation="horizontal"
+            android:addStatesFromChildren="true"
+            android:gravity="center_vertical"
+            android:baselineAligned="false" >
+
+            <view class="android.app.SearchDialog$SearchAutoComplete"
+                android:id="@+id/search_src_text"
+                android:layout_height="wrap_content"
+                android:layout_width="0dip"
+                android:layout_weight="1.0"
+                android:paddingLeft="8dip"
+                android:paddingRight="6dip"
+                android:inputType="text|textAutoComplete"
+                android:dropDownWidth="fill_parent"
+                android:dropDownAnchor="@id/search_plate"
+                android:dropDownVerticalOffset="-15dip"
+                />
+                <!-- android:focusableInTouchMode="false" -->
+                <!-- android:singleLine="true" -->
+                <!-- android:selectAllOnFocus="true" -->
+                
+            <!-- This button can switch between text and icon "modes" -->
+            <Button 
+                android:id="@+id/search_go_btn"
+                android:layout_marginLeft="1dip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@android:drawable/ic_btn_search"
+            />
+
+            <ImageButton android:id="@+id/search_voice_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_btn_speak_now"
+            />
+        </LinearLayout>
+        
+    </LinearLayout>
+
+</LinearLayout>

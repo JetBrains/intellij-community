@@ -98,7 +98,7 @@ public class GitCheckoutDialog extends DialogWrapper {
   /**
    * The Git setting for the project
    */
-  private final GitVcsSettings mySettings;
+  @Nullable private final GitVcsSettings mySettings;
   /**
    * Existing branches for the currently selected root
    */
@@ -323,6 +323,9 @@ public class GitCheckoutDialog extends DialogWrapper {
    * Setup {@link #myIncludeTagsCheckBox}
    */
   private void setupIncludeTags() {
+    if (mySettings == null) {
+      return;
+    }
     boolean tagsIncluded = mySettings.isCheckoutIncludesTags();
     myIncludeTagsCheckBox.setSelected(tagsIncluded);
     myIncludeTagsCheckBox.addActionListener(new ActionListener() {

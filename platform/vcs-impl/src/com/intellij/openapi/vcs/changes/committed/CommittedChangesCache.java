@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -130,7 +131,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
                                                                                                             CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
-    return project.getComponent(CommittedChangesCache.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {

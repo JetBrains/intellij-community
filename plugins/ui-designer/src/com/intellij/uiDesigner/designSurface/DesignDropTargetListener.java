@@ -152,11 +152,15 @@ class DesignDropTargetListener implements DropTargetListener {
       ComponentDropLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
       if (!location.canDrop(myComponentDragObject) ||
           (myDraggedComponentList != null && FormEditingUtil.isDropOnChild(myDraggedComponentList, location))) {
-        myComponentTree.setDropTargetComponent(null);
+        if (myComponentTree != null) {
+          myComponentTree.setDropTargetComponent(null);
+        }
         dtde.rejectDrag();
       }
       else {
-        myComponentTree.setDropTargetComponent(location.getContainer());
+        if (myComponentTree != null) {
+          myComponentTree.setDropTargetComponent(location.getContainer());
+        }
         dtde.acceptDrag(dtde.getDropAction());
       }
     }

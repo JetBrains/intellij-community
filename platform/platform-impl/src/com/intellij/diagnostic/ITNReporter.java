@@ -18,13 +18,14 @@ package com.intellij.diagnostic;
 import com.intellij.CommonBundle;
 import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
-import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
-import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,12 +35,10 @@ import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 /**
  * @author max
@@ -54,128 +53,137 @@ public class ITNReporter extends ErrorReportSubmitter {
   }
 
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent) {
-    return sendError(events[0], parentComponent);
+    // obsolete API
+    return new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED);
+  }
+
+  @Override
+  public void submitAsync(IdeaLoggingEvent[] events, Component parentComponent, Consumer<SubmittedReportInfo> consumer) {
+    sendError(events [0], parentComponent, consumer);
   }
 
   /**
      * @noinspection ThrowablePrintStackTrace
      */
-  private static SubmittedReportInfo sendError(IdeaLoggingEvent event, Component parentComponent) {
-    NotifierBean notifierBean = new NotifierBean();
-    ErrorBean errorBean = new ErrorBean();
-    errorBean.autoInit();
-    errorBean.setLastAction(IdeaLogger.ourLastActionId);
+  private static void sendError(IdeaLoggingEvent event, final Component parentComponent, final Consumer<SubmittedReportInfo> callback) {
+    String newBuild = ErrorReportSender.checkNewBuild();
+    if (newBuild != null) {
+      Messages.showMessageDialog(parentComponent,
+                                 DiagnosticBundle.message("error.report.new.eap.build.message", newBuild), CommonBundle.getWarningTitle(),
+                                 Messages.getWarningIcon());
+      callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
+    }
 
-    int threadId = 0;
-    SubmittedReportInfo.SubmissionStatus submissionStatus = SubmittedReportInfo.SubmissionStatus.FAILED;
+    ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);
 
+    String description = "";
+
+    doSubmit(event, parentComponent, callback, errorBean, description);
+  }
+
+  private static void doSubmit(final IdeaLoggingEvent event,
+                               final Component parentComponent,
+                               final Consumer<SubmittedReportInfo> callback,
+                               final ErrorBean errorBean, final String description) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    String description = "";
-    do {
-      // prepare
-      try {
-        ErrorReportSender sender = ErrorReportSender.getInstance();
+    final EAPSendErrorDialog dlg = new EAPSendErrorDialog();
+    dlg.setErrorDescription(description);
+    dlg.show();
+    if (!dlg.isShouldSend()) {
+      return;
+    }
 
-        sender.prepareError(project, event.getThrowable());
+    @NonNls String login = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+    @NonNls String password = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+    if (login.trim().length() == 0 && password.trim().length() == 0) {
+      login = "idea_anonymous";
+      password = "guest";
+    }
 
-        EAPSendErrorDialog dlg = new EAPSendErrorDialog();
-        dlg.setErrorDescription(description);
-        dlg.show();
+    errorBean.setDescription(buildDescription(event, dlg.getErrorDescription()));
 
-        @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        @NonNls String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
-        if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
-          itnLogin = "idea_anonymous";
-          itnPassword = "guest";
-        }
-        notifierBean.setItnLogin(itnLogin);
-        notifierBean.setItnPassword(itnPassword);
-
-        description = dlg.getErrorDescription();
-        String message = event.getMessage();
-
-        @NonNls StringBuilder descBuilder = new StringBuilder();
-        if (description.length() > 0) {
-          descBuilder.append("User description: ").append(description).append("\n");
-        }
-        if (message != null) {
-          descBuilder.append("Error message: ").append(message).append("\n");
-        }
-
-        Throwable t = event.getThrowable();
-        if (t != null) {
-          final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-          if (pluginId != null) {
-            final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
-            if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
-              descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
+    ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
+      @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+      @Override
+      public void consume(Integer threadId) {
+        previousExceptionThreadId = threadId;
+        wasException = true;
+        callback.consume(new SubmittedReportInfo(URL_HEADER + threadId, String.valueOf(threadId),
+                                                 SubmittedReportInfo.SubmissionStatus.NEW_ISSUE));
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Notification notification = new Notification(ReportMessages.ERROR_REPORT, ReportMessages.ERROR_REPORT,
+                                                         DiagnosticBundle.message("error.report.confirmation"),
+                                                         NotificationType.INFORMATION);
+            Notifications.Bus.notify(notification);
+          }
+        });
+      }
+    }, new Consumer<Exception>() {
+      @Override
+      public void consume(final Exception e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            String msg;
+            if (e instanceof NoSuchEAPUserException) {
+              msg = DiagnosticBundle.message("error.report.authentication.failed");
+            }
+            else if (e instanceof InternalEAPException) {
+              msg = DiagnosticBundle.message("error.report.posting.failed", e.getMessage());
+            }
+            else {
+              msg = DiagnosticBundle.message("error.report.sending.failure");
+            }
+            if (Messages.showYesNoDialog(parentComponent, msg,
+                                         ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
+              callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  doSubmit(event, parentComponent, callback, errorBean, dlg.getErrorDescription());
+                }
+              });
             }
           }
-        }
-
-        if (previousExceptionThreadId != 0) {
-          descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
-        }
-        if (wasException) {
-          descBuilder.append("There was at least one exception before this one.\n");
-        }
-
-        errorBean.setDescription(descBuilder.toString());
-
-        if (dlg.isShouldSend()) {
-          threadId = sender.sendError(notifierBean, errorBean);
-          previousExceptionThreadId = threadId;
-          wasException = true;
-          submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
-
-          Messages.showInfoMessage(parentComponent,
-                                   DiagnosticBundle.message("error.report.confirmation"),
-                                   ReportMessages.ERROR_REPORT);
-          break;
-        }
-        else {
-          break;
-        }
-
+        });
       }
-      catch (NoSuchEAPUserException e) {
-        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.authentication.failed"),
-                                     ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
-          break;
-        }
-      }
-      catch (InternalEAPException e) {
-        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.posting.failed", e.getMessage()),
-                                     ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
-          break;
-        }
-      }
-      catch (IOException e) {
-        if (!IOExceptionDialog.showErrorDialog(DiagnosticBundle.message("error.report.exception.title"),
-                                               DiagnosticBundle.message("error.report.failure.message"))) {
-          break;
-        }
-      }
-      catch (NewBuildException e) {
-        Messages.showMessageDialog(parentComponent,
-                                   DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage()), CommonBundle.getWarningTitle(),
-                                   Messages.getWarningIcon());
-        break;
-      }
-      catch (Exception e) {
-        if (Messages.showYesNoDialog(JOptionPane.getRootFrame(), DiagnosticBundle.message("error.report.sending.failure"),
-                                     ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
-          break;
-        }
-      }
+    });
+  }
 
+  private static String buildDescription(IdeaLoggingEvent event, String description) {
+    String message = event.getMessage();
+
+    @NonNls StringBuilder descBuilder = new StringBuilder();
+    if (description.length() > 0) {
+      descBuilder.append("User description: ").append(description).append("\n");
     }
-    while (true);
+    if (message != null) {
+      descBuilder.append("Error message: ").append(message).append("\n");
+    }
 
-    return new SubmittedReportInfo(submissionStatus != SubmittedReportInfo.SubmissionStatus.FAILED ? URL_HEADER + threadId : null,
-                                   String.valueOf(threadId),
-                                   submissionStatus);
+    Throwable t = event.getThrowable();
+    if (t != null) {
+      final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      if (pluginId != null) {
+        final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
+        if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
+          descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
+        }
+      }
+    }
+
+    if (previousExceptionThreadId != 0) {
+      descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
+    }
+    if (wasException) {
+      descBuilder.append("There was at least one exception before this one.\n");
+    }
+    return descBuilder.toString();
   }
 }

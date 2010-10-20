@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.internal;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Map;
 
-public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool {
+public class UndesirableClassUsageInspection extends InternalInspection {
   private static final Map<String, String> CLASSES = new THashMap<String, String>();
 
   static {
@@ -46,13 +45,6 @@ public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool
   @Nls
   @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return InternalInspectionToolsProvider.GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
   public String getDisplayName() {
     return "Undesirable Class Usage";
   }
@@ -61,10 +53,6 @@ public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool
   @Override
   public String getShortName() {
     return "UndesirableClassUsage";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

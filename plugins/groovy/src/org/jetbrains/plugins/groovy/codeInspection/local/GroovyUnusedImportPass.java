@@ -117,7 +117,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       infos.add(HighlightInfo.fromAnnotation(annotation));
     }
 
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getId());
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
 
     final Runnable optimize = myOptimizeRunnable;
     if (optimize != null && timeToOptimizeImports()) {

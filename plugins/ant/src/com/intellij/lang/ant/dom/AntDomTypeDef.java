@@ -21,6 +21,8 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.apache.tools.ant.Task;
 
+import java.util.List;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 1, 2010
@@ -49,6 +51,10 @@ public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
 
   public final boolean hasTypeLoadingErrors() {
     return CustomAntElementsRegistry.getInstance(getAntProject()).hasTypeLoadingErrors(this);
+  }
+
+  public final List<String> getErrorDescriptions() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).getTypeLoadingErrors(this);
   }
   
   public boolean isTask(final Class clazz) {

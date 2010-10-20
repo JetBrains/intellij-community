@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="TextAppearance.Theme.PlainText">
+    <item name="android:textStyle"><caret></item>
+  </style>
+</resources>

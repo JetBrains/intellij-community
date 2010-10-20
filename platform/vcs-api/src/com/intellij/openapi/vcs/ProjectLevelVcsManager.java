@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -44,7 +45,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the manager instance.
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
-    return project.getComponent(ProjectLevelVcsManager.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ProjectLevelVcsManager.class);
   }
 
   /**

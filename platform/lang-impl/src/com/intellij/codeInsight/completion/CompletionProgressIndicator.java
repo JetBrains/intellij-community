@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -473,14 +474,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public volatile String cancelTrace;
+  private volatile Throwable cancelTrace;
+
+  @Nullable
+  public String getCancelTrace() {
+    Throwable t = cancelTrace;
+    if (t == null) return null;
+    final StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
+  }
+
   @Override
   public void cancel() {
     if (cancelTrace == null) {
-      Throwable t = new Throwable();
-      final StringWriter writer = new StringWriter();
-      t.printStackTrace(new PrintWriter(writer));
-      cancelTrace = writer.toString();
+      cancelTrace = new Throwable();
     }
     super.cancel();
   }
@@ -488,7 +496,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void start() {
     if (isCanceled()) {
-      throw new AssertionError("Restarting completion process is prohibited: trace=" + cancelTrace);
+      throw new AssertionError("Restarting completion process is prohibited: trace=" + getCancelTrace());
     }
 
     super.start();
@@ -497,7 +505,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void initStateFrom(@NotNull ProgressIndicatorEx indicator) {
     if (isCanceled()) {
-      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + cancelTrace);
+      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + getCancelTrace());
     }
 
     if (indicator.isCanceled()) {
@@ -562,7 +570,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
-    return completionType == myParameters.getCompletionType() && editor == myEditor && !isAutopopupCompletion();
+    return completionType == myParameters.getCompletionType() && editor == myEditor;
   }
 
   @Override
@@ -596,8 +604,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void restartCompletion() {
-    closeAndFinish(true); //todo false
+    closeAndFinish(false);
 
-    myHandler.invokeCompletion(getProject(), myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, getProject()), myParameters.getInvocationCount());
+    final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, myLookup.isFocused());
+    final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, getProject());
+    newHandler.invokeCompletion(getProject(), myEditor, psiFileInEditor, myParameters.getInvocationCount());
   }
 }

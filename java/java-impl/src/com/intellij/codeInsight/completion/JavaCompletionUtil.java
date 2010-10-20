@@ -876,9 +876,14 @@ public class JavaCompletionUtil {
 
     boolean mayHighlight = qualifierType != null && (castedQualifierType == null || !qualifierType.isAssignableFrom(castedQualifierType));
 
+    final Set<PsiMember> mentioned = new THashSet<PsiMember>();
     for (CompletionElement completionElement : plainResults) {
       LookupElement item = createLookupElement(completionElement, qualifierType);
       if (item != null) {
+        final Object o = item.getObject();
+        if (o instanceof PsiMember) {
+          mentioned.add((PsiMember)o);
+        }
         set.add(mayHighlight ? highlightIfNeeded(qualifierType, item) : item);
       }
     }
@@ -888,7 +893,9 @@ public class JavaCompletionUtil {
       memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
-          set.add(memberProcessor.createLookupElement(member, psiClass, true));
+          if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
+            set.add(memberProcessor.createLookupElement(member, psiClass, true));
+          }
         }
       });
     }

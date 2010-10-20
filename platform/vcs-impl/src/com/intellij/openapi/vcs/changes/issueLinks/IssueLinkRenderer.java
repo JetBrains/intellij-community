@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.IssueNavigationConfiguration;
-import com.intellij.openapi.util.TextRange;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,25 +36,33 @@ public class IssueLinkRenderer {
     myColoredComponent = coloredComponent;
   }
 
-  public void appendTextWithLinks(String text) {
-    appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  public List<String> appendTextWithLinks(String text) {
+    return appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public void appendTextWithLinks(String text, SimpleTextAttributes baseStyle) {
+  public List<String> appendTextWithLinks(String text, SimpleTextAttributes baseStyle) {
+    final List<String> pieces = new ArrayList<String>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       final TextRange textRange = match.getRange();
       if (textRange.getStartOffset() > pos) {
-        myColoredComponent.append(text.substring(pos, textRange.getStartOffset()), baseStyle);
+        final String piece = text.substring(pos, textRange.getStartOffset());
+        pieces.add(piece);
+        myColoredComponent.append(piece, baseStyle);
       }
-      myColoredComponent.append(textRange.substring(text), getLinkAttributes(baseStyle),
+      final String piece = textRange.substring(text);
+      pieces.add(piece);
+      myColoredComponent.append(piece, getLinkAttributes(baseStyle),
                                 new TreeLinkMouseListener.BrowserLauncher(match.getTargetUrl()));
       pos = textRange.getEndOffset();
     }
     if (pos < text.length()) {
-      myColoredComponent.append(text.substring(pos), baseStyle);
+      final String piece = text.substring(pos);
+      pieces.add(piece);
+      myColoredComponent.append(piece, baseStyle);
     }
+    return pieces;
   }
 
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {

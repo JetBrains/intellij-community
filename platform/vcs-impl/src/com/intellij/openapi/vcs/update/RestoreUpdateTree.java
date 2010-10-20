@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -90,7 +91,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
 
 
   public static RestoreUpdateTree getInstance(Project project) {
-    return project.getComponent(RestoreUpdateTree.class);
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, RestoreUpdateTree.class);
   }
 
   public void registerUpdateInformation(UpdatedFiles updatedFiles, ActionInfo actionInfo) {

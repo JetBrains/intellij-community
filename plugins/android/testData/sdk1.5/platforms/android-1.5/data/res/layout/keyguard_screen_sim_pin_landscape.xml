@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/background_dark"
+        >
+
+    <!-- displays dots as user enters pin -->
+    <LinearLayout android:id="@+id/pinDisplayGroup"
+        android:orientation="horizontal"
+        android:layout_centerInParent="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:addStatesFromChildren="true"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:paddingRight="0dip"
+        android:layout_marginRight="30dip"
+        android:layout_marginLeft="30dip"
+        android:background="@android:drawable/edit_text"
+    >
+
+        <EditText android:id="@+id/pinDisplay"
+            android:layout_width="0dip"
+            android:layout_weight="1"
+            android:layout_height="fill_parent"
+            android:maxLines="1"
+            android:background="@null"
+            android:textSize="32sp"
+            android:inputType="textPassword"
+            />
+
+        <ImageButton android:id="@+id/backspace"
+             android:src="@android:drawable/ic_input_delete"
+             android:layout_width="wrap_content"
+             android:layout_height="fill_parent"
+             android:layout_marginTop="2dip"
+             android:layout_marginRight="2dip"
+             android:layout_marginBottom="2dip"
+             android:gravity="center"
+            />
+
+    </LinearLayout>
+        
+    <!-- header text ('Enter Pin Code') -->
+    <TextView android:id="@+id/headerText"
+        android:layout_above="@id/pinDisplayGroup"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+            />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dip"
+        android:layout_marginLeft="8dip"
+        android:layout_marginRight="8dip">
+
+        <Button android:id="@+id/ok"
+            android:text="@android:string/ok"
+            android:layout_alignParentBottom="true"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:layout_marginBottom="8dip"
+            android:layout_marginRight="8dip"
+            android:textSize="18sp"
+            />
+
+        <Button android:id="@+id/emergencyCall"
+            android:text="@android:string/lockscreen_emergency_call"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.0"
+            android:layout_marginBottom="8dip"
+            android:layout_marginLeft="8dip"
+            android:textSize="18sp"
+            android:drawableLeft="@drawable/ic_emergency"
+            android:drawablePadding="8dip"
+        />
+    </LinearLayout>
+
+</RelativeLayout>

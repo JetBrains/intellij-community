@@ -20,6 +20,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.validation.AntInspection;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
@@ -30,6 +31,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public class AntResolveInspection extends AntInspection {
@@ -55,8 +57,19 @@ public class AntResolveInspection extends AntInspection {
     }
     else if (element instanceof AntDomTypeDef) {
       final AntDomTypeDef typeDef = (AntDomTypeDef)element;
-      if (typeDef.hasTypeLoadingErrors()) {
-        holder.createProblem(typeDef, AntBundle.message("failed.to.load.types"));
+      final List<String> errors = typeDef.getErrorDescriptions();
+      if (!errors.isEmpty()) {
+        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          builder.append(AntBundle.message("failed.to.load.types")).append(":");
+          for (String error : errors) {
+            builder.append("\n").append(error);
+          }
+          holder.createProblem(typeDef, builder.toString());
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
       }
     }
     else if (element instanceof AntDomCustomElement) {

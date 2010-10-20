@@ -238,6 +238,7 @@
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
                              implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
 
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
 

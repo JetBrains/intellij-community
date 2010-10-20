@@ -17,11 +17,11 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -95,17 +95,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private final List<AnnotationListener> myAnnotationListeners;
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
 
-  public static SvnConfiguration getInstance(Project project) {
-    return project.getComponent(SvnConfiguration.class);
-  }
-
-  public static SvnConfiguration getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<SvnConfiguration>() {
-      public SvnConfiguration compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return project.getComponent(SvnConfiguration.class);
-      }
-    });
+  public static SvnConfiguration getInstance(final Project project) {
+    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnConfiguration.class);
   }
 
   public SvnConfiguration(final Project project) {

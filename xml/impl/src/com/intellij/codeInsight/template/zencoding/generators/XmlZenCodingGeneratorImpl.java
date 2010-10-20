@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.template.zencoding.generators;
 
+import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -27,10 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,16 +75,11 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   public boolean isMyContext(@NotNull PsiElement context) {
-    if (!(context.getLanguage() instanceof XMLLanguage)) {
-      return false;
-    }
-    if (PsiTreeUtil.getParentOfType(context, XmlAttributeValue.class) != null) {
-      return false;
-    }
-    if (PsiTreeUtil.getParentOfType(context, XmlComment.class) != null) {
-      return false;
-    }
-    return true;
+    return isMyLanguage(context.getLanguage()) && HtmlTextContextType.isInContext(context);
+  }
+
+  protected boolean isMyLanguage(Language language) {
+    return language instanceof XMLLanguage;
   }
 
   public String getSuffix() {

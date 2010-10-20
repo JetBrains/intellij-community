@@ -1119,29 +1119,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public PsiFile configureByText(String fileName, @NonNls String text) {
+  public PsiFile configureByText(final String fileName, @NonNls final String text) {
     assertInitialized();
-    try {
-      final VirtualFile vFile;
-      if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-        final VirtualFile root = LightPlatformTestCase.getSourceRoot();
-        root.refresh(false, false);
-        vFile = root.findOrCreateChildData(this, fileName);
-      }
-      else{
-        String prefix = StringUtil.getPackageName(fileName);
-        if (prefix.length() < 3) {
-          prefix += "___";
+    new WriteCommandAction(getProject()){
+      @Override
+      protected void run(Result result) throws Throwable {
+        final VirtualFile vFile;
+        if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+          final VirtualFile root = LightPlatformTestCase.getSourceRoot();
+          root.refresh(false, false);
+          vFile = root.findOrCreateChildData(this, fileName);
         }
-        final File tempFile = File.createTempFile(prefix, "." + StringUtil.getShortName(fileName), new File(getTempDirPath()));
-        vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+        else{
+          String prefix = StringUtil.getPackageName(fileName);
+          if (prefix.length() < 3) {
+            prefix += "___";
+          }
+          final File tempFile = File.createTempFile(prefix, "." + StringUtil.getShortName(fileName), new File(getTempDirPath()));
+          vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+        }
+        VfsUtil.saveText(vFile, text);
+        configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
       }
-      VfsUtil.saveText(vFile, text);
-      configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    }.execute();
     return myFile;
   }
 

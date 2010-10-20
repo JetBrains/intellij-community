@@ -58,7 +58,7 @@ class FrameDiffTool implements DiffTool {
         public void actionPerformed(final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseEditor")),
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
                                   diffPanel.getComponent());
       showDiffDialog(builder, hints);
     } else {
@@ -72,7 +72,7 @@ class FrameDiffTool implements DiffTool {
         public void actionPerformed(final AnActionEvent e) {
           frameWrapper.getFrame().dispose();
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseEditor")),
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
                                   diffPanel.getComponent());
 
       frameWrapper.show();

@@ -158,7 +158,6 @@ public class UpdateRequestsQueue {
 
   private class MyRunnable implements Runnable {
     public void run() {
-      final boolean updateUnversioned;
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
 
       try {

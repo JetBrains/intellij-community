@@ -159,7 +159,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.POST_UPDATE_ALL);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, getColorsScheme(), Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
@@ -328,7 +328,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
-    return false;
+    return UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection);
   }
 
   private boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {
@@ -338,7 +338,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
-    return false;
+    return UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection);
   }
 
   private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {

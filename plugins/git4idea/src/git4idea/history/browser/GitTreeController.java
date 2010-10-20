@@ -358,7 +358,9 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public void next(final TravelTicket ticket) {
-    myFilterHolder.addContinuationPoint(new Pair<Date, SHAHash>(ticket.getLatestDate(), ticket.getLastHash()));
+    if (ticket != null) {
+      myFilterHolder.addContinuationPoint(new Pair<Date, SHAHash>(ticket.getLatestDate(), ticket.getLastHash()));
+    }
     myFilterRequestsMerger.request();
   }
 

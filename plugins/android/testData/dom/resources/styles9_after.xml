@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="TextAppearance.MyTheme" parent="android:Theme">
+  </style>
+  <style name="TextAppearance.Theme.PlainText" parent="TextAppearance.MyTheme">
+  </style>
+</resources>

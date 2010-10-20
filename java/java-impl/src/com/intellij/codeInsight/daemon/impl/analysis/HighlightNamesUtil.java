@@ -25,7 +25,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -45,28 +44,33 @@ import java.util.List;
 
 public class HighlightNamesUtil {
   @Nullable
-  public static HighlightInfo highlightMethodName(PsiMethod method, PsiElement elementToHighlight, boolean isDeclaration) {
+  public static HighlightInfo highlightMethodName(final PsiMethod method,
+                                                  final PsiElement elementToHighlight,
+                                                  final boolean isDeclaration,
+                                                  final EditorColorsScheme colorsScheme) {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
-      TextAttributes attributes = mergeWithScopeAttributes(method, type);
+      TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
       HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
       if (info != null) return info;
     }
     return null;
   }
 
-  private static TextAttributes mergeWithScopeAttributes(final PsiElement element, final HighlightInfoType type) {
-    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type);
+  private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
+                                                         final HighlightInfoType type,
+                                                         final EditorColorsScheme colorsScheme) {
+    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type, colorsScheme);
     if (element == null) return regularAttributes;
-    TextAttributes scopeAttributes = getScopeAttributes(element);
+    TextAttributes scopeAttributes = getScopeAttributes(element, colorsScheme);
     return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
 
   @Nullable
-  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight) {
+  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, final EditorColorsScheme colorsScheme) {
     HighlightInfoType type = getClassNameHighlightType(aClass);
     if (type != null && elementToHighlight != null) {
-      TextAttributes attributes = mergeWithScopeAttributes(aClass, type);
+      TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
       TextRange range = elementToHighlight.getTextRange();
       if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
@@ -92,11 +96,13 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightVariableName(PsiVariable variable, PsiElement elementToHighlight) {
+  public static HighlightInfo highlightVariableName(final PsiVariable variable,
+                                                    final PsiElement elementToHighlight,
+                                                    final EditorColorsScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
-        TextAttributes attributes = mergeWithScopeAttributes(variable, varType);
+        TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
         return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, null, attributes);
       }
       return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
@@ -105,7 +111,8 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightClassNameInQualifier(PsiJavaCodeReferenceElement element) {
+  public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
+                                                            final EditorColorsScheme colorsScheme) {
     PsiExpression qualifierExpression = null;
     if (element instanceof PsiReferenceExpression) {
       qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
@@ -113,7 +120,7 @@ public class HighlightNamesUtil {
     if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
       if (resolved instanceof PsiClass) {
-        return highlightClassName((PsiClass)resolved, qualifierExpression);
+        return highlightClassName((PsiClass)resolved, qualifierExpression, colorsScheme);
       }
     }
     return null;
@@ -172,11 +179,11 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static TextAttributes getScopeAttributes(PsiElement element) {
+  private static TextAttributes getScopeAttributes(final PsiElement element,
+                                                   final EditorColorsScheme colorsScheme) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(element.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = daemonCodeAnalyzer.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
@@ -185,7 +192,7 @@ public class HighlightNamesUtil {
       PackageSet packageSet = namedScope.getValue();
       if (packageSet != null && packageSet.contains(file, scopesHolder)) {
         TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(namedScope.getName());
-        TextAttributes attributes = scheme.getAttributes(scopeKey);
+        TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
         if (attributes == null || attributes.isEmpty()) {
           continue;
         }

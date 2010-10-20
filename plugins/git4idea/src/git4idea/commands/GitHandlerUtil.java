@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -184,19 +185,22 @@ public class GitHandlerUtil {
    * @param postStartAction an action that is executed
    */
   static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
+    final GitVcs vcs = GitVcs.getInstance(handler.myProject);
+    if (vcs == null) { return; }
+
     boolean suspendable = false;
     switch (handler.myCommand.lockingPolicy()) {
       case META:
         // do nothing no locks are taken for metadata
         break;
       case READ:
-        handler.myVcs.getCommandLock().readLock().lock();
+        vcs.getCommandLock().readLock().lock();
         break;
       case WRITE_SUSPENDABLE:
         suspendable = true;
         //noinspection fallthrough
       case WRITE:
-        handler.myVcs.getCommandLock().writeLock().lock();
+        vcs.getCommandLock().writeLock().lock();
         break;
     }
     try {
@@ -244,7 +248,7 @@ public class GitHandlerUtil {
             if (action == EXIT) {
               if (suspended) {
                 LOG.error("Exiting while RW lock is suspended (reacquiring W-lock command)");
-                handler.myVcs.getCommandLock().writeLock().lock();
+                vcs.getCommandLock().writeLock().lock();
               }
               break;
             }
@@ -253,7 +257,7 @@ public class GitHandlerUtil {
                 LOG.error("Suspending suspended W-lock (ignoring command)");
               }
               else {
-                handler.myVcs.getCommandLock().writeLock().unlock();
+                vcs.getCommandLock().writeLock().unlock();
                 suspended = true;
               }
             }
@@ -262,7 +266,7 @@ public class GitHandlerUtil {
                 LOG.error("Resuming not suspended W-lock (ignoring command)");
               }
               else {
-                handler.myVcs.getCommandLock().writeLock().lock();
+                vcs.getCommandLock().writeLock().lock();
                 suspended = false;
               }
             }
@@ -285,11 +289,11 @@ public class GitHandlerUtil {
           // do nothing no locks are taken for metadata
           break;
         case READ:
-          handler.myVcs.getCommandLock().readLock().unlock();
+          vcs.getCommandLock().readLock().unlock();
           break;
         case WRITE_SUSPENDABLE:
         case WRITE:
-          handler.myVcs.getCommandLock().writeLock().unlock();
+          vcs.getCommandLock().writeLock().unlock();
           break;
       }
     }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,5 +41,15 @@ public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProp
 
   @Override
   public void loadState(GroovyLibraryProperties state) {
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof GroovyLibraryProperties && Comparing.equal(myVersion, ((GroovyLibraryProperties)obj).myVersion);
+  }
+
+  @Override
+  public int hashCode() {
+    return myVersion != null ? myVersion.hashCode() : 0;
   }
 }

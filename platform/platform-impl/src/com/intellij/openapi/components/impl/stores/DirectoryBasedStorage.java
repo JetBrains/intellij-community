@@ -126,7 +126,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     myStorageData.processComponent(componentName, new PairConsumer<IFile, Element>() {
       public void consume(final IFile iFile, final Element element) {
         final List children = element.getChildren();
-        assert children.size() == 1;
+        assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
         final Element subElement = (Element)children.get(0);
         subElement.detach();
         subElements.add(subElement);

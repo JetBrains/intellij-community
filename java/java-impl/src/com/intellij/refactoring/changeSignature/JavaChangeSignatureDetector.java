@@ -329,10 +329,21 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       SearchScope useScope = method.getUseScope();
+      final PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
       if (useScope instanceof GlobalSearchScope) {
-        final PsiSearchHelper.SearchCostResult cheapEnough = element.getManager().getSearchHelper()
+        final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
           .isCheapEnoughToSearch(((JavaChangeInfo)changeInfo).getOldName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        final SearchScope classUseScope = containingClass.getUseScope();
+        final String className = containingClass.getName();
+        if (classUseScope instanceof GlobalSearchScope && className != null) {
+          final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
+            .isCheapEnoughToSearch(className, (GlobalSearchScope)classUseScope, containingClass.getContainingFile(), null);
+          if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+        }
       }
     }
     return true;

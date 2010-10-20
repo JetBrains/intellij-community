@@ -25,6 +25,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.*;
@@ -44,6 +45,7 @@ import java.beans.PropertyChangeListener;
  * @author peter
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
+  public static boolean ourTestingAutopopup = false;
   private boolean myAutopopupShown;
   private boolean myGuard;
 
@@ -80,9 +82,15 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final int offset = editor.getCaretModel().getOffset();
+    if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
+      return Result.CONTINUE;
+    }
+
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
-    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
+    final Runnable request = new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed() || !file.isValid()) return;
@@ -110,7 +118,12 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
           });
         }
       }
-    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    };
+    if (ourTestingAutopopup) {
+      ApplicationManager.getApplication().invokeLater(request);
+    } else {
+      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    }
     return Result.STOP;
   }
 

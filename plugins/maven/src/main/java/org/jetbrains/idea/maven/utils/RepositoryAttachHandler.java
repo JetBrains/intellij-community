@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.ide.mavenService.MavenService;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
@@ -79,7 +78,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
                                       final LibraryEditor libraryEditor,
                                       final @Nullable NullableComputable<Library.ModifiableModel> modelProvider) {
 
-    MavenService.getInstance(project);
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false);
     dialog.setTitle(getLongName());
     dialog.show();
@@ -294,7 +292,8 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void resolveLibrary(final Project project,
                                     final String coord,
-                                    List<MavenExtraArtifactType> extraTypes, final Collection<MavenRepositoryInfo> repositories,
+                                    List<MavenExtraArtifactType> extraTypes,
+                                    final Collection<MavenRepositoryInfo> repositories,
                                     boolean modal,
                                     final Processor<List<MavenArtifact>> resultProcessor) {
     final List<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>(3);
@@ -338,8 +337,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
       embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
-      List<MavenArtifact> resolved = embedder.resolveTransitively(artifacts,
-                                                                  convertRepositories(repositories));
+      List<MavenArtifact> resolved = embedder.resolveTransitively(artifacts, convertRepositories(repositories));
       result.set(ContainerUtil.findAll(resolved, new Condition<MavenArtifact>() {
         public boolean value(MavenArtifact mavenArtifact) {
           return mavenArtifact.isResolved();

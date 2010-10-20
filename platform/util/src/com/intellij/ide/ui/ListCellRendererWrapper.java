@@ -15,16 +15,15 @@
  */
 package com.intellij.ide.ui;
 
-import org.jetbrains.annotations.Nullable;
-
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author oleg
- * @date 9/30/10
  * Please use this wrapper in case you need simple cell renderer with text and icon.
- * This avoids ugly UI under GTK look and feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer is used instead of DefaultComboBoxRenderer
+ * This avoids ugly UI under GTK+ look&feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer is used instead of DefaultComboBoxRenderer.
+ *
+ * @author oleg
+ * Date: 9/30/10
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private final ListCellRenderer myOriginalRenderer;
@@ -34,7 +33,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   /**
    * Default JComboBox cell renderer should be passed here.
-   * @param listCellRenderer
+   * @param listCellRenderer Default cell renderer ({@link javax.swing.JComboBox#getRenderer()}).
    */
   public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) {
     this.myOriginalRenderer = listCellRenderer;
@@ -46,6 +45,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
                                                       final boolean isSelected,
                                                       final boolean cellHasFocus) {
     try {
+      //noinspection unchecked
       customize(list, (T)value, index, isSelected, cellHasFocus);
       final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (myIcon != null && component instanceof JLabel) {
@@ -64,14 +64,15 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   /**
    * Implement this method to configure text and icon for given value.
-   * Use setIcon(icon) and setText(text) methods.
-   * @param list
-   * @param value Value to customize presentation for
-   * @param index
-   * @param selected
-   * @param cellHasFocus
+   * Use {@link #setIcon(javax.swing.Icon)} and {@link #setText(String)} methods.
+   *
+   * @param list The JList we're painting.
+   * @param value The value returned by list.getModel().getElementAt(index).
+   * @param index The cells index.
+   * @param selected True if the specified cell was selected.
+   * @param hasFocus True if the specified cell has the focus.
    */
-  public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean cellHasFocus);
+  public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
   public final void setIcon(final Icon icon) {
     myIcon = icon;

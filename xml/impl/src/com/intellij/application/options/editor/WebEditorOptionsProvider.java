@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -31,6 +32,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JPanel myWholePanel;
   private JCheckBox myAutomaticallyInsertClosingTagCheckBox;
   private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
+  private JCheckBox myAutomaticallyInsertRequiredSubTagsCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
   private JCheckBox myEnableZenCodingCheckBox;
   private JComboBox myZenCodingExpandShortcutCombo;
@@ -83,13 +85,15 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
            xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
            xmlEditorOptions.isZenCodingEnabled() != myEnableZenCodingCheckBox.isSelected() ||
-           xmlEditorOptions.getZenCodingExpandShortcut() != getSelectedZenCodingExpandShortcut();
+           xmlEditorOptions.getZenCodingExpandShortcut() != getSelectedZenCodingExpandShortcut() ||
+           xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected();
   }
 
   public void apply() throws ConfigurationException {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
+    xmlEditorOptions.setAutomaticallyInsertRequiredSubTags(myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
     xmlEditorOptions.setZenCodingEnabled(myEnableZenCodingCheckBox.isSelected());
     xmlEditorOptions.setZenCodingExpandShortcut(getSelectedZenCodingExpandShortcut());
@@ -99,6 +103,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
     myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
+    myAutomaticallyInsertRequiredSubTagsCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredSubTags());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
     myEnableZenCodingCheckBox.setSelected(xmlEditorOptions.isZenCodingEnabled());
     myZenCodingExpandShortcutCombo.setEnabled(xmlEditorOptions.isZenCodingEnabled());
@@ -118,6 +123,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   public void disposeUIResources() {
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.webOptions";
   }

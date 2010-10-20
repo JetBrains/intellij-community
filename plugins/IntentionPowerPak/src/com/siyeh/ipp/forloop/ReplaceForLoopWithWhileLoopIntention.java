@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
         }
         final PsiStatement update = forStatement.getUpdate();
         if (update != null) {
+            final PsiStatement[] updateStatements;
             if (update instanceof PsiExpressionListStatement) {
                 final PsiExpressionListStatement expressionListStatement =
                         (PsiExpressionListStatement) update;
@@ -82,19 +83,56 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
                         expressionListStatement.getExpressionList();
                 final PsiExpression[] expressions =
                         expressionList.getExpressions();
-                for (PsiExpression expression : expressions) {
+                updateStatements = new PsiStatement[expressions.length];
+                for (int i = 0, expressionsLength = expressions.length;
+                     i < expressionsLength; i++) {
+                    final PsiExpression expression = expressions[i];
                     final PsiStatement updateStatement =
                             factory.createStatementFromText(
                                     expression.getText() + ';', element);
-                    newBody.addBefore(updateStatement, newBody.getLastChild());
+                    updateStatements[i] = updateStatement;
                 }
             } else {
                 final PsiStatement updateStatement =
                         factory.createStatementFromText(
                                 update.getText() + ';', element);
+                updateStatements = new PsiStatement[] {updateStatement};
+            }
+            newBody.accept(new UpdateInserter(whileStatement, updateStatements));
+            for (PsiStatement updateStatement : updateStatements) {
                 newBody.addBefore(updateStatement, newBody.getLastChild());
             }
         }
         forStatement.replace(whileStatement);
+    }
+
+    private static class UpdateInserter
+            extends JavaRecursiveElementWalkingVisitor {
+
+        private final PsiWhileStatement whileStatement;
+        private final PsiStatement[] updateStatements;
+
+        private UpdateInserter(PsiWhileStatement whileStatement,
+                               PsiStatement[] updateStatements) {
+            this.whileStatement = whileStatement;
+            this.updateStatements = updateStatements;
+        }
+
+        @Override
+        public void visitContinueStatement(PsiContinueStatement statement) {
+            final PsiStatement continuedStatement =
+                    statement.findContinuedStatement();
+            if (!whileStatement.equals(continuedStatement)) {
+                return;
+            }
+            final PsiElement parent = statement.getParent();
+            if (parent == null) {
+                return;
+            }
+            for (PsiStatement updateStatement : updateStatements) {
+                parent.addBefore(updateStatement, statement);
+            }
+            super.visitContinueStatement(statement);
+        }
     }
 }

@@ -30,17 +30,22 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
+import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
   private final IssueLinkRenderer myRenderer;
   private final java.util.List<CommittedChangeListDecorator> myDecorators;
   private final Project myProject;
+  private int myDateWidth;
+  private int myFontSize;
 
   public CommittedChangeListRenderer(final Project project, final java.util.List<CommittedChangeListDecorator> decorators) {
     myProject = project;
     myRenderer = new IssueLinkRenderer(project, this);
     myDecorators = decorators;
+    myDateWidth = 0;
+    myFontSize = -1;
   }
 
   public static String getDateOfChangeList(final Date date) {
@@ -89,7 +94,13 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
-    int size = fontMetrics.stringWidth(date);
+    int size = 0;
+    if (myDateWidth > 0 && (fontMetrics.getFont().getSize() == myFontSize)) {
+      size += myDateWidth;
+    } else {
+      myDateWidth = fontMetrics.stringWidth("Yesterday 00:00 ");
+      myFontSize = fontMetrics.getFont().getSize();
+    }
     size += boldMetrics.stringWidth(changeList.getCommitterName());
 
     final Pair<String, Boolean> descriptionInfo = getDescriptionOfChangeList(changeList.getName().trim());
@@ -133,8 +144,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       myRenderer.appendTextWithLinks(description);
     }
     else if (descWidth < descMaxWidth && !truncated) {
-      myRenderer.appendTextWithLinks(description);
-      appendAlign(parentWidth - size);
+      final List<String> pieces = myRenderer.appendTextWithLinks(description);
+      String subString = "";
+      for (int i = 0; i < (pieces.size() - 1); i++) {
+        final String s = pieces.get(i);
+        subString += s;
+      }
+      final int partWidth = fontMetrics.stringWidth(subString);
+      appendAlign(descMaxWidth - partWidth);
     }
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
@@ -146,7 +163,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       // align value is for the latest added piece
-      appendAlign(parentWidth - size - addWidth);
+      appendAlign(descMaxWidth - addWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

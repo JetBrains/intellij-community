@@ -23,6 +23,7 @@ import java.util.Date;
 public abstract class AbstractMessage {
 
   private boolean myIsRead = false;
+  private boolean myIsSubmitting = false;
   private SubmittedReportInfo mySubmissionInfo;
   private String myScrID;
 
@@ -50,6 +51,14 @@ public abstract class AbstractMessage {
 
   public SubmittedReportInfo getSubmissionInfo() {
     return mySubmissionInfo;
+  }
+
+  public boolean isSubmitting() {
+    return myIsSubmitting;
+  }
+
+  public void setSubmitting(boolean isSubmitting) {
+    myIsSubmitting = isSubmitting;
   }
 
   public boolean isSubmitted() {

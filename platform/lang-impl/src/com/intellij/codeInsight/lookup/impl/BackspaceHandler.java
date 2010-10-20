@@ -16,6 +16,9 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -28,21 +31,41 @@ public class BackspaceHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  public void execute(Editor editor, DataContext dataContext){
+  public void execute(final Editor editor, final DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){
       myOriginalHandler.execute(editor, dataContext);
       return;
     }
 
+    boolean toRestart = false;
     final String prefix = lookup.getAdditionalPrefix();
     if (prefix.length() > 0) {
       lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
     }
-    else{
-      lookup.hide();
+    else {
+      toRestart = lookup.getLookupStart() < editor.getCaretModel().getOffset();
     }
 
-    myOriginalHandler.execute(editor, dataContext);
+    lookup.performGuardedChange(new Runnable() {
+      @Override
+      public void run() {
+        myOriginalHandler.execute(editor, dataContext);
+      }
+    });
+
+    if (prefix.length() > 0) {
+      return;
+    }
+
+    if (toRestart) {
+      final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+      if (process instanceof CompletionProgressIndicator) {
+        ((CompletionProgressIndicator)process).restartCompletion();
+        return;
+      }
+    }
+
+    lookup.hide();
   }
 }

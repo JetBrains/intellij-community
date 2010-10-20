@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,8 +275,13 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void doSelectHomePath(){
     final SdkType sdkType = mySdk.getSdkType();
-    final String homePath = SdkConfigurationUtil.selectSdkHome(myHomeComponent, sdkType);
-    doSetHomePath(homePath, sdkType);
+    SdkConfigurationUtil.selectSdkHome(sdkType, new Consumer<String>() {
+      @Override
+      public void consume(final String path) {
+        doSetHomePath(path, sdkType);
+      }
+    });
+
   }
 
   private void doSetHomePath(final String homePath, final SdkType sdkType) {

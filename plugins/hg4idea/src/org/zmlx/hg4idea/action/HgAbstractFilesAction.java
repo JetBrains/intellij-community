@@ -49,7 +49,7 @@ abstract class HgAbstractFilesAction extends AnAction {
     project.save();
 
     final HgVcs vcs = HgVcs.getInstance(project);
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
+    if ((vcs == null) || !ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       return;
     }
 
@@ -85,8 +85,8 @@ abstract class HgAbstractFilesAction extends AnAction {
       return;
     }
 
-    HgVcs vcs = HgVcs.getInstance(project);
-    if (!vcs.isStarted()) {
+    final HgVcs vcs = HgVcs.getInstance(project);
+    if ((vcs == null) || !vcs.isStarted()) {
       presentation.setEnabled(false);
       return;
     }

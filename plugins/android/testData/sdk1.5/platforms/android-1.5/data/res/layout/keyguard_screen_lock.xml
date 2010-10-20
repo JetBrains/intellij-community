@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2008, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+        
+<!-- This is the general lock screen which shows information about the
+  state of the device, as well as instructions on how to get past it
+  depending on the state of the device.  It is the same for landscape
+  and portrait.-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="bottom"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+        >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="15dip"
+        android:layout_marginLeft="15dip"
+        android:layout_marginRight="15dip"
+        android:paddingTop="20dip"
+        android:paddingBottom="20dip"
+        android:background="@android:drawable/popup_full_dark"
+        >
+
+        <!-- when sim is present -->
+        <TextView android:id="@+id/headerSimOk1"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:textSize="34sp"/>
+        <TextView android:id="@+id/headerSimOk2"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:textSize="34sp"/>
+
+        <!-- when sim is missing / locked -->
+        <TextView android:id="@+id/headerSimBad1"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:text="@android:string/lockscreen_missing_sim_message"
+                  android:textAppearance="?android:attr/textAppearanceLarge"/>
+        <TextView android:id="@+id/headerSimBad2"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="7dip"
+                  android:layout_marginBottom="7dip"
+                  android:gravity="center"
+                  android:text="@android:string/lockscreen_missing_sim_instructions"
+                  android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <!-- spacer after carrier info / sim messages -->
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:layout_marginTop="8dip"
+            android:background="@android:drawable/divider_horizontal_dark"/>
+
+        <!-- time and date -->
+        <TextView android:id="@+id/time"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:textSize="34sp"/>
+
+        <TextView android:id="@+id/date"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:textSize="18sp"/>
+
+        <!-- spacer after time and date -->
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:layout_marginBottom="8dip"
+            android:background="@android:drawable/divider_horizontal_dark"
+                />
+
+        <!-- battery info -->
+        <LinearLayout android:id="@+id/batteryInfo"
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+              >
+
+            <ImageView android:id="@+id/batteryInfoIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="6dip"
+                android:baselineAligned="true"
+                android:gravity="center"
+            />
+
+            <TextView android:id="@+id/batteryInfoText"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:textSize="18sp"
+                      android:gravity="center"
+            />
+
+        </LinearLayout>
+
+        <!-- spacer after battery info -->
+        <View android:id="@+id/batteryInfoSpacer"
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:layout_marginTop="8dip"
+            android:layout_marginBottom="8dip"
+            android:background="@android:drawable/divider_horizontal_dark"
+                />
+
+        <!-- next alarm info -->
+
+        <LinearLayout android:id="@+id/nextAlarmInfo"
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+              >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="6dip"
+                android:baselineAligned="true"
+                android:src="@android:drawable/ic_lock_idle_alarm"
+                android:gravity="center"
+            />
+
+            <TextView android:id="@+id/nextAlarmText"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:textSize="18sp"
+                      android:gravity="center"
+            />
+        </LinearLayout>
+
+        <!-- spacer after alarm info -->
+        <View android:id="@+id/nextAlarmSpacer"
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:layout_marginTop="8dip"
+            android:layout_marginBottom="8dip"
+            android:background="@android:drawable/divider_horizontal_dark"/>
+
+        <!-- lock icon with 'screen locked' message
+             (shown when SIM card is present) -->
+        <LinearLayout android:id="@+id/screenLockedInfo"
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="6dip"
+                android:baselineAligned="true"
+                android:src="@android:drawable/ic_lock_idle_lock"
+                android:gravity="center"
+            />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:text="@android:string/lockscreen_screen_locked"
+                android:gravity="center"
+                    />
+        </LinearLayout>
+
+        <!-- message about how to unlock
+             (shown when SIM card is present) -->
+        <TextView android:id="@+id/lockInstructions"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginBottom="5dip"
+                  android:gravity="center"
+                  android:textSize="14sp"/>
+
+
+        <!-- emergency call button shown when sim is missing or PUKd -->
+        <Button
+            android:id="@+id/emergencyCallButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dip"
+            android:layout_marginTop="5dip"
+            android:layout_gravity="center_horizontal"
+            android:drawableLeft="@drawable/ic_emergency"
+            android:drawablePadding="8dip"
+            android:text="@android:string/lockscreen_emergency_call"
+           />
+
+    </LinearLayout>
+</LinearLayout>
