@@ -34,34 +34,37 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFacadeEmbedder> {
-  private MavenFacadeConsole myConsole;
-  private MavenFacadeProgressIndicator myIndicator;
+  private Customization myCustomization;
 
   public MavenEmbedderWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
   }
 
-  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
-    resetConsole(MavenFacadeManager.wrapAndExport(console));
-    resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
+  @Override
+  protected synchronized void onWrappeeCreated() throws RemoteException {
+    super.onWrappeeCreated();
+    if (myCustomization != null) {
+      doCustomize();
+    }
+  }
 
+  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
+    setCustomization(console, indicator, null, false);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
-        getOrCreateWrappee().customizeForResolve(myConsole, myIndicator);
+        doCustomize();
         return null;
       }
     });
   }
 
   public void customizeForResolve(final Map<MavenId, File> projectIdToFileMap, MavenConsole console, MavenProgressIndicator indicator) {
-    resetConsole(MavenFacadeManager.wrapAndExport(console));
-    resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
-
+    setCustomization(console, indicator, projectIdToFileMap, false);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
-        getOrCreateWrappee().customizeForResolve(projectIdToFileMap, myConsole, myIndicator);
+        doCustomize();
         return null;
       }
     });
@@ -70,16 +73,21 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
   public void customizeForStrictResolve(final Map<MavenId, File> projectIdToFileMap,
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
-    resetConsole(MavenFacadeManager.wrapAndExport(console));
-    resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
-
+    setCustomization(console, indicator, projectIdToFileMap, true);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
-        getOrCreateWrappee().customizeForStrictResolve(projectIdToFileMap, myConsole, myIndicator);
+        doCustomize();
         return null;
       }
     });
+  }
+
+  private synchronized void doCustomize() throws RemoteException {
+    getOrCreateWrappee().customize(myCustomization.projectIdToFileMap,
+                                   myCustomization.failOnUnresolvedDependency,
+                                   myCustomization.console,
+                                   myCustomization.indicator);
   }
 
   @NotNull
@@ -164,8 +172,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     catch (RemoteException e) {
       handleRemoteError(e);
     }
-    resetConsole(null);
-    resetIndicator(null);
+    resetCustomization();
   }
 
   public void release() {
@@ -177,33 +184,9 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     catch (RemoteException e) {
       handleRemoteError(e);
     }
-    resetConsole(null);
-    resetIndicator(null);
+    resetCustomization();
   }
 
-  private void resetConsole(MavenFacadeConsole console) {
-    if (myConsole != null) {
-      try {
-        UnicastRemoteObject.unexportObject(myConsole, true);
-      }
-      catch (NoSuchObjectException e) {
-        MavenLog.LOG.warn(e);
-      }
-    }
-    myConsole = console;
-  }
-
-  private void resetIndicator(MavenFacadeProgressIndicator indicator) {
-    if (myIndicator != null) {
-      try {
-        UnicastRemoteObject.unexportObject(myIndicator, true);
-      }
-      catch (NoSuchObjectException e) {
-        MavenLog.LOG.warn(e);
-      }
-    }
-    myIndicator = indicator;
-  }
 
   public void clearCaches() {
     MavenFacadeEmbedder w = getWrappee();
@@ -224,6 +207,54 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     }
     catch (RemoteException e) {
       handleRemoteError(e);
+    }
+  }
+
+  private synchronized void setCustomization(MavenConsole console,
+                                             MavenProgressIndicator indicator,
+                                             Map<MavenId, File> projectIdToFileMap,
+                                             boolean failOnUnresolvedDependency) {
+    resetCustomization();
+    myCustomization = new Customization(MavenFacadeManager.wrapAndExport(console),
+                                        MavenFacadeManager.wrapAndExport(indicator),
+                                        projectIdToFileMap,
+                                        failOnUnresolvedDependency);
+  }
+
+  private synchronized void resetCustomization() {
+    if (myCustomization == null) return;
+
+    try {
+      UnicastRemoteObject.unexportObject(myCustomization.console, true);
+    }
+    catch (NoSuchObjectException e) {
+      MavenLog.LOG.warn(e);
+    }
+    try {
+      UnicastRemoteObject.unexportObject(myCustomization.indicator, true);
+    }
+    catch (NoSuchObjectException e) {
+      MavenLog.LOG.warn(e);
+    }
+
+    myCustomization = null;
+  }
+
+  private static class Customization {
+    private final MavenFacadeConsole console;
+    private final MavenFacadeProgressIndicator indicator;
+
+    private final Map<MavenId, File> projectIdToFileMap;
+    private final boolean failOnUnresolvedDependency;
+
+    private Customization(MavenFacadeConsole console,
+                          MavenFacadeProgressIndicator indicator,
+                          Map<MavenId, File> projectIdToFileMap,
+                          boolean failOnUnresolvedDependency) {
+      this.console = console;
+      this.indicator = indicator;
+      this.projectIdToFileMap = projectIdToFileMap;
+      this.failOnUnresolvedDependency = failOnUnresolvedDependency;
     }
   }
 }

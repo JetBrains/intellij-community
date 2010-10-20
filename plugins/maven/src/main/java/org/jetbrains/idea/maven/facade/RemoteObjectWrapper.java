@@ -39,6 +39,7 @@ public abstract class RemoteObjectWrapper<T> {
   protected synchronized T getOrCreateWrappee() throws RemoteException {
     if (myWrappee == null) {
       myWrappee = create();
+      onWrappeeCreated();
     }
     onWrappeeAccessed();
     return myWrappee;
@@ -46,6 +47,9 @@ public abstract class RemoteObjectWrapper<T> {
 
   @NotNull
   protected abstract T create() throws RemoteException;
+
+  protected void onWrappeeCreated() throws RemoteException {
+  }
 
   protected void onWrappeeAccessed() {
     if (myParent != null) myParent.onWrappeeAccessed();
