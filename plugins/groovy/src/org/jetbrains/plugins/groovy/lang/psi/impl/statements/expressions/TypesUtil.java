@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -486,5 +487,14 @@ public class TypesUtil {
 
   public static boolean typeEqualsToText(@NotNull PsiType type, @NotNull String text) {
     return text.endsWith(type.getPresentableText()) && text.equals(type.getCanonicalText());
+  }
+
+  public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
+    final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
+    Map<PsiTypeParameter, PsiType> result = new com.intellij.util.containers.hash.HashMap<PsiTypeParameter, PsiType>(map.size());
+    for (PsiTypeParameter parameter : map.keySet()) {
+      result.put(parameter, s2.substitute(map.get(parameter)));
+    }
+    return PsiSubstitutorImpl.createSubstitutor(result);
   }
 }
