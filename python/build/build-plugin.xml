@@ -121,9 +121,6 @@
         <patternset refid="resources.pt"/>
         <type type="file"/>
       </fileset>
-      <fileset dir="${plugin.home}/../bin">
-        <filename name="runnerw.exe"/>
-      </fileset>
     </copy>
 
     <!-- copy plugin.xml -->
@@ -161,6 +158,8 @@
     <copy todir="${plugindir}/helpers">
       <fileset dir="${plugin.home}/helpers" includes="**/*.py"/>
     </copy>
+
+    <copy todir="${plugindir}" file="${plugin.home}/../bin/runnerw.exe"/>
 
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
   </target>
