@@ -168,7 +168,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   public void addDocListener(Document document) {
     final PsiFile file = myPsiDocumentManager.getPsiFile(document);
-    if (file != null && !myListenerMap.containsKey(file)) {
+    if (file != null && file.isPhysical() && !myListenerMap.containsKey(file)) {
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
       document.addDocumentListener(adapter);
       myListenerMap.put(file, adapter);
@@ -182,7 +182,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   public void removeDocListener(Document document) {
     final PsiFile file = myPsiDocumentManager.getPsiFile(document);
-    if (file != null) {
+    if (file != null && file.isPhysical()) {
       if (ArrayUtil.find(myFileEditorManager.getOpenFiles(), file.getVirtualFile()) != -1) {
         return;
       }
