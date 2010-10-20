@@ -201,7 +201,7 @@ public class PsiCopyPasteManager {
         return getDataAsText();
       }
       if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-        ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
+        return ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
           @Override
           public List<File> compute() {
             return asFileList(myDataProxy.getElements());

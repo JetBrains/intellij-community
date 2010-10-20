@@ -15,15 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.PossiblyIncorrectUsage;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -33,10 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -73,7 +73,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
           final MethodSignature methodSignature = resolved.getSignature(PsiSubstitutor.EMPTY);
           final PsiSubstitutor superMethodSignatureSubstitutor =
             MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superMethodSignature);
-          mySubstitutor = composeSubstitutors(superMethodSignatureSubstitutor, mySubstitutor);
+          mySubstitutor = TypesUtil.composeSubstitutors(superMethodSignatureSubstitutor, mySubstitutor);
         }
       }
     }
@@ -88,15 +88,6 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
       myMapToArguments =
         GrClosureSignatureUtil.mapParametersToArguments(signature, list);
     }
-  }
-
-  private static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
-    final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
-    Map<PsiTypeParameter, PsiType> result = new HashMap<PsiTypeParameter, PsiType>(map.size());
-    for (PsiTypeParameter parameter : map.keySet()) {
-      result.put(parameter, s2.substitute(map.get(parameter)));
-    }
-    return PsiSubstitutorImpl.createSubstitutor(result);
   }
 
   @Nullable

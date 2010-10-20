@@ -29,6 +29,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -65,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -175,6 +177,26 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
         return inferred;
       }
       if (inferred != null && inferred != PsiType.NULL) {
+        if (inferred instanceof PsiClassType && nominal instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult declaredResult = ((PsiClassType)nominal).resolveGenerics();
+          final PsiClass declaredClass = declaredResult.getElement();
+          if (declaredClass != null) {
+            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType)inferred).resolveGenerics();
+            final PsiClass initializerClass = initializerResult.getElement();
+            if (initializerClass != null &&
+                com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
+              if (declaredClass == initializerClass) return nominal;
+              final PsiSubstitutor declaredResultSubstitutor = declaredResult.getSubstitutor();
+              final PsiSubstitutor superSubstitutor =
+                TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, declaredResultSubstitutor);
+
+              if (superSubstitutor != null) {
+                return JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+                  .createType(declaredClass, TypesUtil.composeSubstitutors(declaredResultSubstitutor, superSubstitutor));
+              }
+            }
+          }
+        }
         if (nominal.isAssignableFrom(inferred)) return inferred;
       }
       return nominal;

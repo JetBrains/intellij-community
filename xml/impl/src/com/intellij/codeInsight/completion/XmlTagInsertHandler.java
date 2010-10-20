@@ -320,6 +320,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
     boolean completeIt = !firstLevel || descriptor.getAttributesDescriptors(null).length == 0;
     switch (descriptor.getContentType()) {
+      case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
+        return;
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
         if (completeIt) {
           template.addTextSegment("/>");
