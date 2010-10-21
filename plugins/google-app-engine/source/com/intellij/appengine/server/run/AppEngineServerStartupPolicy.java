@@ -40,7 +40,7 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     if (artifact == null) {
       throw new ExecutionException("Artifact isn't specified");
     }
-    final Sdk jdk = ProjectRootManager.getInstance(commonModel.getProject()).getProjectJdk();
+    final Sdk jdk = ProjectRootManager.getInstance(commonModel.getProject()).getProjectSdk();
     if (jdk == null) {
       throw new ExecutionException("JDK isn't specified for the project");
     }
