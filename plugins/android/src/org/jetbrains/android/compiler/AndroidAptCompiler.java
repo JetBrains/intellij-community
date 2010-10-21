@@ -34,6 +34,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
     if (items != null && items.length > 0) {
-      context.getProgressIndicator().setText("Generating " + AndroidUtils.R_JAVA_FILENAME + "...");
+      context.getProgressIndicator().setText(AndroidBundle.message("android.compile.messages.generating.r.java"));
       Computable<GenerationItem[]> computation = new Computable<GenerationItem[]>() {
         public GenerationItem[] compute() {
           if (context.getProject().isDisposed()) {

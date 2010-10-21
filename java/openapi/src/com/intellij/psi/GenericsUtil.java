@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;

@@ -16,6 +16,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
@@ -54,6 +55,10 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
    */
   private String myPathToGit;
 
+  public static GitVcsApplicationSettings getInstance() {
+    return ServiceManager.getService(GitVcsApplicationSettings.class);
+  }
+
   /**
    * @return the default executable name depending on the platform
    */
@@ -84,32 +89,25 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     return myPathToGit;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public State getState() {
     State s = new State();
     s.PATH_TO_GIT = myPathToGit;
     return s;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void loadState(State state) {
-    myPathToGit = state.PATH_TO_GIT;
+    myPathToGit = state.PATH_TO_GIT == null ? defaultGit() : state.PATH_TO_GIT;
   }
 
   /**
    * @return get last set path to git or null
    */
   public String getPathToGit() {
-    return myPathToGit;
+    return myPathToGit == null ? defaultGit() : myPathToGit;
   }
 
   /**
    * Change last set path to git (called on project settings save)
-   *
    * @param pathToGit the path to git
    */
   public void setPathToGit(String pathToGit) {

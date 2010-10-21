@@ -26,10 +26,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -92,13 +95,10 @@ public class I18nizeAction extends AnAction {
     return PlatformDataKeys.EDITOR.getData(e.getDataContext());
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = getEditor(e);
-    final Project project = editor.getProject();
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (psiFile == null) return;
-    final I18nQuickFixHandler handler = getHandler(e);
-    if (handler == null) return;
+  public static void doI18nSelectedString(final @NotNull Project project,
+                                          final @NotNull Editor editor,
+                                          final @NotNull PsiFile psiFile,
+                                          final @NotNull I18nQuickFixHandler handler) {
     try {
       handler.checkApplicability(psiFile, editor);
     }
@@ -134,6 +134,18 @@ public class I18nizeAction extends AnAction {
         }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
       }
     });
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    final Editor editor = getEditor(e);
+    final Project project = editor.getProject();
+    assert project != null;
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    if (psiFile == null) return;
+    final I18nQuickFixHandler handler = getHandler(e);
+    if (handler == null) return;
+
+    doI18nSelectedString(project, editor, psiFile, handler);
   }
 
 }

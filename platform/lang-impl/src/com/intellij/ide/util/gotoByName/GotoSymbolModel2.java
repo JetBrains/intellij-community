@@ -16,16 +16,23 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
+public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   public GotoSymbolModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
+  }
+
+  @Override
+  protected Language filterValueFor(NavigationItem item) {
+    return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
   }
 
   public String getPromptText() {

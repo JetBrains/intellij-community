@@ -16,7 +16,6 @@
 package org.jetbrains.android.maven;
 
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
@@ -72,7 +71,8 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   }
 
   @Override
-  protected void setupFacet(AndroidFacet f, MavenProject mavenProject) {
+  protected void setupFacet(AndroidFacet facet, MavenProject mavenProject) {
+    AndroidMavenProviderImpl.setPathsToDefault(mavenProject, facet.getModule(), facet.getConfiguration());
   }
 
   @Override
@@ -138,67 +138,49 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   private void configurePaths(AndroidFacet facet, MavenProject project) {
     String modulePath = facet.getModule().getModuleFilePath();
     String moduleDirPath = FileUtil.toSystemIndependentName(new File(modulePath).getParent());
-    if (moduleDirPath != null) {
-      AndroidFacetConfiguration configuration = facet.getConfiguration();
+    AndroidFacetConfiguration configuration = facet.getConfiguration();
 
-      String genSources = FileUtil.toSystemIndependentName(project.getGeneratedSourcesDirectory(false));
+    String resFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceDirectory");
+    if (resFolderRelPath != null) {
+      configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
+    }
 
-      if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
-        String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
-        if (genRelativePath != null) {
-          configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
-          configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
-
-          configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
-          configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
-        }
-      }
-
-      configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
-      configuration.ENABLE_AAPT_COMPILER = false;
-
-      String resFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceDirectory");
-      if (resFolderRelPath != null) {
-        configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
-      }
-
-      Element resourceOverlayDirectories = getConfig(project, "resourceOverlayDirectories");
-      if (resourceOverlayDirectories != null) {
-        List<String> dirs = new ArrayList<String>();
-        for (Object child : resourceOverlayDirectories.getChildren()) {
-          String dir = ((Element)child).getTextTrim();
-          if (dir != null && dir.length() > 0) {
-            String relativePath = getRelativePath(moduleDirPath, makePath(project, dir));
-            if (relativePath != null && relativePath.length() > 0) {
-              dirs.add('/' + relativePath);
-            }
+    Element resourceOverlayDirectories = getConfig(project, "resourceOverlayDirectories");
+    if (resourceOverlayDirectories != null) {
+      List<String> dirs = new ArrayList<String>();
+      for (Object child : resourceOverlayDirectories.getChildren()) {
+        String dir = ((Element)child).getTextTrim();
+        if (dir != null && dir.length() > 0) {
+          String relativePath = getRelativePath(moduleDirPath, makePath(project, dir));
+          if (relativePath != null && relativePath.length() > 0) {
+            dirs.add('/' + relativePath);
           }
         }
-        if (dirs.size() > 0) {
-          configuration.RES_OVERLAY_FOLDERS = ArrayUtil.toStringArray(dirs);
-        }
       }
-      else {
-        String resOverlayFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceOverlayDirectory");
-        if (resOverlayFolderRelPath != null) {
-          configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
-        }
+      if (dirs.size() > 0) {
+        configuration.RES_OVERLAY_FOLDERS = ArrayUtil.toStringArray(dirs);
       }
+    }
+    else {
+      String resOverlayFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceOverlayDirectory");
+      if (resOverlayFolderRelPath != null) {
+        configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
+      }
+    }
 
-      String assetsFolderRelPath = getPathFromConfig(project, moduleDirPath, "assetsDirectory");
-      if (assetsFolderRelPath != null) {
-        configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
-      }
+    String assetsFolderRelPath = getPathFromConfig(project, moduleDirPath, "assetsDirectory");
+    if (assetsFolderRelPath != null) {
+      configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
+    }
 
-      String manifestFileRelPath = getPathFromConfig(project, moduleDirPath, "androidManifestFile");
-      if (manifestFileRelPath != null) {
-        configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
-      }
+    String manifestFileRelPath = getPathFromConfig(project, moduleDirPath, "androidManifestFile");
+    if (manifestFileRelPath != null) {
+      configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
+    }
 
-      String nativeLibsFolderRelPath = getPathFromConfig(project, moduleDirPath, "nativeLibrariesDirectory");
-      if (nativeLibsFolderRelPath != null) {
-        configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
-      }
+    String nativeLibsFolderRelPath = getPathFromConfig(project, moduleDirPath, "nativeLibrariesDirectory");
+    if (nativeLibsFolderRelPath != null) {
+      configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
   }
 

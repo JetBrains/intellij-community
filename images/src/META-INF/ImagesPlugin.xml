@@ -27,7 +27,7 @@
   </application-components>
 
   <actions>
-    <action class="org.intellij.images.actions.EditExternalyAction"
+    <action class="org.intellij.images.actions.EditExternallyAction"
             id="Images.EditExternaly"
             icon="/org/intellij/images/icons/EditExternaly.png"
             text="Open image in external editor">

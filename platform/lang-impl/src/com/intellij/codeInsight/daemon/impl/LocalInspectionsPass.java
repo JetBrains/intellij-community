@@ -269,22 +269,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                             List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
     boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(init, new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
       @Override
-      public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> i) {
-        LocalInspectionTool tool = i.first;
+      public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
+        LocalInspectionTool tool = trinity.first;
         indicator.checkCanceled();
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
-        ProblemsHolder holder = i.second;
-        PsiElementVisitor elementVisitor = i.third;
-        for (PsiElement element : elements) {
+        ProblemsHolder holder = trinity.second;
+        PsiElementVisitor elementVisitor = trinity.third;
+        for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+          PsiElement element = elements.get(i);
           indicator.checkCanceled();
           element.accept(elementVisitor);
         }
 
         advanceProgress(1);
 
-        tool.inspectionFinished(session);
+        tool.inspectionFinished(session, holder);
 
         if (holder.hasResults()) {
           appendDescriptors(myFile, holder.getResults(), tool);

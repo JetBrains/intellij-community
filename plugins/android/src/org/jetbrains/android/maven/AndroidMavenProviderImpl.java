@@ -15,7 +15,11 @@
  */
 package org.jetbrains.android.maven;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,6 +34,25 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class AndroidMavenProviderImpl implements AndroidMavenProvider {
+
+  public static void setPathsToDefault(MavenProject mavenProject, Module module, AndroidFacetConfiguration configuration) {
+    String moduleDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
+    String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
+
+    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
+      String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+      if (genRelativePath != null) {
+        configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
+        configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
+
+        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
+        configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
+      }
+    }
+
+    configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
+    configuration.ENABLE_AAPT_COMPILER = false;
+  }
 
   @Override
   public boolean isMavenizedModule(@NotNull Module module) {
@@ -49,5 +72,13 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       }
     }
     return result;
+  }
+
+  @Override
+  public void setPathsToDefault(@NotNull Module module, AndroidFacetConfiguration facetConfiguration) {
+    MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
+    if (mavenProject != null) {
+      setPathsToDefault(mavenProject, module, facetConfiguration);
+    }
   }
 }

@@ -523,6 +523,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider == null) return;
     if (viewProvider.getVirtualFile().getFileType().isBinary()) return;
+    if (viewProvider.getManager() != myPsiManager) return;
 
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = false;
@@ -536,7 +537,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
 
       textBlock.documentChanged(event);
-      assert file instanceof PsiFileImpl : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
+      assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
       myUncommittedDocuments.add(document);
       commitNecessary = true;
     }
@@ -568,6 +569,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     char[] fileText = psiFile.textToCharArray();
+    @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
     @NonNls String error = "File '" + psiFile.getName() + "' text mismatch after reparse. " +
                            "File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
     int i = 0;

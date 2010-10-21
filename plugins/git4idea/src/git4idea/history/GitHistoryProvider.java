@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.GitFileRevision;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
+import git4idea.config.GitExecutableValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
   /**
    * the current project instance
    */
-  private final Project project;
+  private final Project myProject;
 
   /**
    * A constructor
@@ -51,7 +52,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * @param project a context project
    */
   public GitHistoryProvider(@NotNull Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
   /**
@@ -89,10 +90,12 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    */
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    if (filePath.isDirectory()) {
-      return null;
+    List<VcsFileRevision> revisions = null;
+    try {
+      revisions = GitHistoryUtils.history(myProject, filePath);
+    } catch (VcsException e) {
+      GitExecutableValidator.getInstance(myProject).showNotificationOrThrow(e);
     }
-    List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
     return createSession(filePath, revisions);
   }
 
@@ -101,7 +104,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
-          return GitHistoryUtils.getCurrentRevision(project, GitHistoryUtils.getLastCommitName(project, filePath));
+          return GitHistoryUtils.getCurrentRevision(myProject, GitHistoryUtils.getLastCommitName(myProject, filePath));
         }
         catch (VcsException e) {
           // likely the file is not under VCS anymore.
@@ -126,13 +129,18 @@ public class GitHistoryProvider implements VcsHistoryProvider {
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList());
     partner.reportCreatedEmptySession(emptySession);
-    GitHistoryUtils.history(project, path, new Consumer<GitFileRevision>() {
+    final GitExecutableValidator validator = GitExecutableValidator.getInstance(myProject);
+    GitHistoryUtils.history(myProject, path, new Consumer<GitFileRevision>() {
       public void consume(GitFileRevision gitFileRevision) {
         partner.acceptRevision(gitFileRevision);
       }
     }, new Consumer<VcsException>() {
       public void consume(VcsException e) {
-        partner.reportException(e);
+        if (!validator.isGitExecutableValid()) {
+          validator.showExecutableNotConfiguredNotification();
+        } else {
+          partner.reportException(e);
+        }
       }
     });
   }
@@ -141,6 +149,6 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * {@inheritDoc}
    */
   public boolean supportsHistoryForDirectories() {
-    return false;
+    return true;
   }
 }

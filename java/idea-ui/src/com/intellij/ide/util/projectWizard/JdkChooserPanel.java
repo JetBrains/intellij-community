@@ -223,14 +223,14 @@ public class JdkChooserPanel extends JPanel {
   }
 
   public static Sdk chooseAndSetJDK(final Project project) {
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     if (jdk == null) {
       return null;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ProjectRootManager.getInstance(project).setProjectJdk(jdk);
+        ProjectRootManager.getInstance(project).setProjectSdk(jdk);
       }
     });
     return jdk;

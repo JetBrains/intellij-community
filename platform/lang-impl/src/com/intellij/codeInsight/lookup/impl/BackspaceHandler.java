@@ -38,15 +38,6 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
-    boolean toRestart = false;
-    final String prefix = lookup.getAdditionalPrefix();
-    if (prefix.length() > 0) {
-      lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
-    }
-    else {
-      toRestart = lookup.getLookupStart() < editor.getCaretModel().getOffset();
-    }
-
     lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
@@ -54,11 +45,13 @@ public class BackspaceHandler extends EditorActionHandler {
       }
     });
 
+    final String prefix = lookup.getAdditionalPrefix();
     if (prefix.length() > 0) {
+      lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
       return;
     }
 
-    if (toRestart) {
+    if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
       final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
       if (process instanceof CompletionProgressIndicator) {
         ((CompletionProgressIndicator)process).restartCompletion();

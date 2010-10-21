@@ -136,8 +136,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   }
 
   /**
-   * This method allows exetending classes to introduce additional filtering criteria to model
-   * beyoud pattern and project/non-project files. The default implementation just returns true.
+   * This method allows extending classes to introduce additional filtering criteria to model
+   * beyond pattern and project/non-project files. The default implementation just returns true.
+   *
    * @param item an item to filter
    * @return true if the item is acceptable according to additional filtering criteria.
    */

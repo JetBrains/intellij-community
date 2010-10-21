@@ -15,8 +15,6 @@
  */
 package com.intellij.platform;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -76,9 +73,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
-      int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
-                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                           CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon());
+      int exitCode = ProjectUtil.confirmOpenNewProject();
       if (exitCode == 1) { // "No" option
         if (!ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }

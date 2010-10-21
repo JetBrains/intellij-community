@@ -15,15 +15,14 @@
  */
 package com.intellij.codeInspection.internal;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.DefaultListCellRenderer;
+import javax.swing.*;
 
-public class GtkPreferredJComboBoxRendererInspection extends BaseJavaLocalInspectionTool {
+public class GtkPreferredJComboBoxRendererInspection extends InternalInspection {
   private static final String RENDERER_CLASS_NAME = DefaultListCellRenderer.class.getName();
   private static final String MESSAGE = "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.";
 

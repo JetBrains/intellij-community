@@ -10,7 +10,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -76,11 +76,11 @@ public class ClassContextFilter implements ContextFilter {
   private static PsiType getCachedType(String typeText, PsiFile context) {
     Map<String, PsiType> map = context.getUserData(CACHED_TYPES);
     if (map == null) {
-      map = new HashMap<String, PsiType>();
+      map = new ConcurrentHashMap<String, PsiType>();
       context.putUserData(CACHED_TYPES, map);
     }
     PsiType type = map.get(typeText);
-    if (type == null) {
+    if (type == null || !type.isValid()) {
       type = JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(typeText, context);
       map.put(typeText, type);
     }

@@ -462,6 +462,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
+        final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -473,7 +474,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-                  new VariableInplaceRenamer(elementToRename, editor).performInplaceRename(false);
+                  new VariableInplaceRenamer(elementToRename, editor).performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
               }
             }

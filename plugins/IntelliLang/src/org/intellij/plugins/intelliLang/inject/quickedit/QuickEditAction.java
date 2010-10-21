@@ -263,10 +263,10 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       }
       boolean first = true;
       for (Pair<RangeMarker, RangeMarker> markers : myMarkers.values()) {
-        if (first) {
+        //if (first) {
           markers.first.setGreedyToLeft(true);
           markers.second.setGreedyToLeft(true);
-        }
+        //}
         markers.first.setGreedyToRight(true);
         markers.second.setGreedyToRight(true);
         first = false;

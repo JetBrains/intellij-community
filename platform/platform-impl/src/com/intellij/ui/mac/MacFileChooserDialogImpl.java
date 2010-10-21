@@ -97,6 +97,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles());
       invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
+      invoke(chooser, "setTreatsFilePackagesAsDirectories:", myChooserDescriptor.isChooseFolders());
+      //invoke(chooser, "setCanCreateDirectories:", true);
       if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("_setIncludeNewFolderButton:"))) {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
@@ -108,10 +110,18 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       invoke(chooser, "setDelegate:", self);
 
+      Object directory = null;
+      Object file = null;
       final String toSelectPath = toSelect.intValue() == 0 ? null : Foundation.toStringViaUTF8(toSelect);
       final VirtualFile toSelectFile = toSelectPath == null ? null : LocalFileSystem.getInstance().findFileByPath(toSelectPath);
-      final ID directory = toSelectFile == null ? null : toSelectFile.isDirectory() ? toSelect : null;
-      final ID file = toSelectFile == null ? null : !toSelectFile.isDirectory() ? toSelect : null;
+      if (toSelectFile != null) {
+       if (toSelectFile.isDirectory()) {
+         directory = toSelect;
+       } else {
+         directory = Foundation.cfString(toSelectFile.getParent().getPath());
+         file = Foundation.cfString(toSelectFile.getName());
+       }
+      }
 
       if (mySheetCallback != null) {
         final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

@@ -19,13 +19,16 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidMavenExecutor;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -70,11 +73,19 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
         }
       };
       GenerationItem[] generationItems = computation.compute();
+      List<VirtualFile> generatedVFiles = new ArrayList<VirtualFile>();
       for (GenerationItem item : generationItems) {
         File generatedFile = ((MyGenerationItem)item).myGeneratedFile;
         if (generatedFile != null) {
           CompilerUtil.refreshIOFile(generatedFile);
+          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+          if (generatedVFile != null) {
+            generatedVFiles.add(generatedVFile);
+          }
         }
+      }
+      if (context instanceof CompileContextEx) {
+        ((CompileContextEx)context).markGenerated(generatedVFiles);
       }
       return generationItems;
     }
@@ -147,10 +158,11 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
     }
   }
 
-  private static class MyValidityState implements ValidityState {
+  private static class MyValidityState extends ResourcesValidityState {
     private final long[] myMavenArtifactsTimespamps;
 
     private MyValidityState(Module module) {
+      super(module);
       AndroidMavenProvider mavenProvider = AndroidMavenUtil.getMavenProvider();
       assert mavenProvider != null;
       List<File> files = mavenProvider.getMavenDependencyArtifactFiles(module);
@@ -160,7 +172,13 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       }
     }
 
+    @Override
+    protected VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
+      return AndroidRootUtil.getResourceDir(module);
+    }
+
     public MyValidityState(DataInput is) throws IOException {
+      super(is);
       int c = is.readInt();
       myMavenArtifactsTimespamps = new long[c];
       for (int i = 0; i < c; i++) {
@@ -170,6 +188,9 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
 
     @Override
     public boolean equalsTo(ValidityState otherState) {
+      if (!super.equalsTo(otherState)) {
+        return false;
+      }
       if (!(otherState instanceof MyValidityState)) {
         return false;
       }
@@ -178,6 +199,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
 
     @Override
     public void save(DataOutput out) throws IOException {
+      super.save(out);
       out.writeInt(myMavenArtifactsTimespamps.length);
       for (long timespamp : myMavenArtifactsTimespamps) {
         out.writeLong(timespamp);

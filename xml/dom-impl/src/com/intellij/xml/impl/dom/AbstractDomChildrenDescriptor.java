@@ -206,7 +206,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   public int getContentType() {
-    throw new UnsupportedOperationException("Method getContentType not implemented in " + getClass());
+    return CONTENT_TYPE_UNKNOWN;
   }
 
   public void init(final PsiElement element) {

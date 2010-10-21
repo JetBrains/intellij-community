@@ -115,26 +115,6 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static void setHighlightersToEditor(@NotNull Project project,
-                                             @NotNull Document document,
-                                             int startOffset,
-                                             int endOffset,
-                                             @NotNull Collection<HighlightInfo> highlights,
-                                             @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                             int group) {
-    setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), colorsScheme, group);
-  }
-
-  @Deprecated
-  public static void setHighlightersToEditor(Project project,
-                                              Document document,
-                                              int startOffset,
-                                              int endOffset,
-                                              Collection<HighlightInfo> highlights, int group) {
-    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, null, group);
-
-  }
-
   static boolean hasInfo(Collection<HighlightInfo> infos, int start, int end, String desc) {
     if (infos == null) return false;
     for (HighlightInfo info : infos) {
@@ -177,13 +157,13 @@ public class UpdateHighlightersUtil {
   }
 
   static void addHighlighterToEditorIncrementally(@NotNull Project project,
-                                                         @NotNull Document document,
-                                                         @NotNull PsiFile file,
-                                                         int startOffset,
-                                                         int endOffset,
-                                                         @NotNull final HighlightInfo info,
+                                                  @NotNull Document document,
+                                                  @NotNull PsiFile file,
+                                                  int startOffset,
+                                                  int endOffset,
+                                                  @NotNull final HighlightInfo info,
                                                          @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                         final int group) {
+                                                  final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
 
@@ -204,100 +184,68 @@ public class UpdateHighlightersUtil {
     createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, null,
                                 SeverityRegistrar.getInstance(project));
 
-    DaemonCodeAnalyzerImpl.addHighlight(markup, project, info);
     clearWhiteSpaceOptimizationFlag(document);
     assertMarkupConsistent(markup, project);
   }
 
-  @Deprecated
-  static void setHighlightersToEditor(@NotNull final Project project,
-                                      @NotNull final Document document,
-                                      @NotNull final Map<TextRange, Collection<HighlightInfo>> infos,
-                                      final int group) {
-    // For backward compatibility with TeamCity plugin, duplicates searcher.
-    setHighlightersToEditor(project, document, infos, null, group);
-  }
-
-  static void setHighlightersToEditor(@NotNull Project project,
-                                      @NotNull Document document,
-                                      @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
-                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                      final int group) {
+  public static void setHighlightersToEditor(@NotNull Project project,
+                                             @NotNull Document document,
+                                             int startOffset,
+                                             int endOffset,
+                                             @NotNull Collection<HighlightInfo> highlights,
+                                             @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                             int group) {
+    TextRange range = new TextRange(startOffset, endOffset);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     cleanFileLevelHighlights(project, group, psiFile);
 
-    final List<TextRange> ranges = new ArrayList<TextRange>(infos.keySet());
-    Collections.sort(ranges, BY_START_OFFSET);
-    //merge intersecting
-    for (int i = 1; i < ranges.size(); i++) {
-      TextRange range = ranges.get(i);
-      TextRange prev = ranges.get(i-1);
-      if (prev.intersects(range)) {
-        ranges.remove(i);
-        TextRange union = prev.union(range);
-
-        Collection<HighlightInfo> collection = infos.get(prev);
-        collection.addAll(infos.get(range));
-        infos.remove(prev);
-        infos.remove(range);
-        infos.put(union, collection);
-        ranges.set(i - 1, union);
-        i--;
-      }
-    }
-
     MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    for (Map.Entry<TextRange, Collection<HighlightInfo>> entry : infos.entrySet()) {
-      TextRange range = entry.getKey();
-      Collection<HighlightInfo> highlights = entry.getValue();
-      setHighlightersInRange(range, highlights, colorsScheme, (MarkupModelEx)markup, group, document, project);
-    }
+    setHighlightersInRange(project, document, range, colorsScheme, highlights, (MarkupModelEx)markup, group);
+  }
+
+  @Deprecated //for teamcity
+  public static void setHighlightersToEditor(@NotNull Project project,
+                                             @NotNull Document document,
+                                             int startOffset,
+                                             int endOffset,
+                                             @NotNull Collection<HighlightInfo> highlights,
+                                             int group) {
+    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, null, group);
   }
 
   // set highlights inside startOffset,endOffset but outside range
-  static void setHighlightersToEditorOutsideRange(@NotNull Project project,
-                                                  @NotNull Document document,
-                                                  @NotNull Collection<HighlightInfo> infos,
+  static void setHighlightersOutsideRange(@NotNull final Project project,
+                                          @NotNull final Document document,
+                                          @NotNull Collection<HighlightInfo> infos,
                                                   @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                  int startOffset, int endOffset,
-                                                  @NotNull ProperTextRange range,
-                                                  final int group) {
+                                          int startOffset, int endOffset,
+                                          @NotNull final ProperTextRange range,
+                                          final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     cleanFileLevelHighlights(project, group, psiFile);
 
-    MarkupModel markup = document.getMarkupModel(project);
+    final MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    setHighlightersOutsideRange(startOffset, endOffset, range, infos, colorsScheme, (MarkupModelEx)markup, group, document, project);
-  }
-
-  static void setHighlightersInRange(final TextRange range,
-                                             Collection<HighlightInfo> highlightsCo,
-                                             @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                             final MarkupModelEx markup,
-                                             final int group,
-                                             final Document document,
-                                             final Project project) {
-    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>(highlightsCo);
+    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>(infos);
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
+    DaemonCodeAnalyzerImpl.processHighlights(document, project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         if (info.group == group) {
           RangeHighlighter highlighter = info.highlighter;
-          int endOffset = highlighter.getEndOffset();
-          int startOffset = highlighter.getStartOffset();
-          boolean willBeRemoved = endOffset == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                                  || range.contains(startOffset)
-                                  || range.containsRange(startOffset, endOffset);
+          int hiStart = highlighter.getStartOffset();
+          int hiEnd = highlighter.getEndOffset();
+          boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
+                                  || !range.containsRange(hiStart, hiEnd);
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;
@@ -309,7 +257,6 @@ public class UpdateHighlightersUtil {
 
     Collections.sort(highlights, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(10);
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
@@ -330,10 +277,8 @@ public class UpdateHighlightersUtil {
         if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
           return true;
         }
-        if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
-          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove,
-                                          ranges2markersCache,
-                                          severityRegistrar);
+        if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove, ranges2markersCache, severityRegistrar);
           changed[0] = true;
         }
         return true;
@@ -350,27 +295,27 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
   }
 
-  private static void setHighlightersOutsideRange(final int startOffset, final int endOffset, final TextRange range,
-                                                  Collection<HighlightInfo> highlightsCo,
-                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                  final MarkupModelEx markup,
-                                                  final int group,
-                                                  final Document document,
-                                                  final Project project) {
+  static void setHighlightersInRange(@NotNull final Project project,
+                                     @NotNull final Document document,
+                                     @NotNull final TextRange range,
+                                     @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                     @NotNull Collection<HighlightInfo> highlightsCo,
+                                     @NotNull final MarkupModelEx markup,
+                                     final int group) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>(highlightsCo);
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
+    DaemonCodeAnalyzerImpl.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         if (info.group == group) {
           RangeHighlighter highlighter = info.highlighter;
-          int endOffset = highlighter.getEndOffset();
-          int startOffset = highlighter.getStartOffset();
-          boolean willBeRemoved = endOffset == document.getTextLength() && range.getEndOffset() != document.getTextLength()
-                                  || !range.contains(startOffset)
-                                  && !range.containsRange(startOffset, endOffset);
+          int hiEnd = highlighter.getEndOffset();
+          int hiStart = highlighter.getStartOffset();
+          boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
+                                  || range.intersects(hiStart, hiEnd);
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;
@@ -403,10 +348,8 @@ public class UpdateHighlightersUtil {
         if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
           return true;
         }
-        if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
-          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove,
-                                          ranges2markersCache,
-                                          severityRegistrar);
+        if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
           changed[0] = true;
         }
         return true;

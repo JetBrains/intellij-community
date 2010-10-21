@@ -175,8 +175,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     TreePath[] paths = getSelectionModel().getSelectionPaths();
     if (paths != null) {
       for (TreePath each : paths) {
-        Rectangle selection = getPathBounds(each);
-        if (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection)) {
+        final Rectangle selection = getPathBounds(each);
+        if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
           if (myBusy) {
             Rectangle busyIconBounds = myBusyIcon.getBounds();
             if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {

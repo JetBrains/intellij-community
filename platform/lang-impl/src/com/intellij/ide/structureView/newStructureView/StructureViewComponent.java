@@ -19,7 +19,6 @@ package com.intellij.ide.structureView.newStructureView;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
@@ -50,6 +49,8 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -384,14 +385,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       result.add(new TreeActionWrapper(filter, this));
     }
 
+    result.add(new ExpandAllAction(getTree()));
+    result.add(new CollapseAllAction(getTree()));
     if (showScrollToFromSourceActions()) {
       result.addSeparator();
 
       result.add(myAutoScrollToSourceHandler.createToggleAction());
       result.add(myAutoScrollFromSourceHandler.createToggleAction());
     }
-    result.addSeparator();
-    result.add(new ContextHelpAction(getHelpID()));
     return result;
   }
 
@@ -707,7 +708,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   
   public void doUpdate() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ((StructureTreeBuilder)myAbstractTreeBuilder).addRootToUpdate();
+    myAbstractTreeBuilder.addRootToUpdate();
   }
 
 //todo [kirillk] dirty hack for discovering invalid psi elements, to delegate it to a proper place after 8.1

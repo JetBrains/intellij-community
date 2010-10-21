@@ -214,7 +214,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     try {
       ProjectImpl project =
-        createAndInitProject(projectName, filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
+        createAndInitProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode(),
                              useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
@@ -244,11 +244,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
+  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
                                            @Nullable Project template) throws IOException {
-    if (isDummy) {
-      throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
-    }
     final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
                                 new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
 
@@ -299,7 +296,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     filePath = canonicalize(filePath);
     ProjectImpl project = null;
     try {
-      project = createAndInitProject(null, filePath, false, false, false, null);
+      project = createAndInitProject(null, filePath, false, false, null);
     }
     catch (ProcessCanceledException e) {
       if (project != null) {
@@ -332,7 +329,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createAndInitProject(null, null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);
+        myDefaultProject = createAndInitProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode(), null);
         myDefaultProjectRootElement = null;
       }
       catch (IOException e) {
