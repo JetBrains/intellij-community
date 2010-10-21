@@ -94,10 +94,10 @@ public class VariableInplaceRenamer {
   }
 
   public boolean performInplaceRename() {
-    return performInplaceRename(true);
+    return performInplaceRename(true, null);
   }
 
-  public boolean performInplaceRename(boolean processTextOccurrences) {
+  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
@@ -170,9 +170,9 @@ public class VariableInplaceRenamer {
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
-    if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
+    if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder, nameSuggestions);
     for (PsiReference ref : refs) {
-      addVariable(ref, selectedElement, builder, offset);
+      addVariable(ref, selectedElement, builder, offset, nameSuggestions);
     }
     
     final PsiElement scope1 = scope;
@@ -391,10 +391,14 @@ public class VariableInplaceRenamer {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 
-  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilderImpl builder, int offset) {
+  private void addVariable(final PsiReference reference,
+                           final PsiElement selectedElement,
+                           final TemplateBuilderImpl builder,
+                           int offset,
+                           final LinkedHashSet<String> names) {
     if (reference.getElement() == selectedElement &&
         contains(reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()), offset)) {
-      Expression expression = new MyExpression(myElementToRename.getName());
+      Expression expression = new MyExpression(myElementToRename.getName(), names);
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
     }
     else {
@@ -402,9 +406,12 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilderImpl builder) {
+  private void addVariable(final PsiElement element,
+                           final PsiElement selectedElement,
+                           final TemplateBuilderImpl builder,
+                           final LinkedHashSet<String> names) {
     if (element == selectedElement) {
-      Expression expression = new MyExpression(myElementToRename.getName());
+      Expression expression = new MyExpression(myElementToRename.getName(), names);
       builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
     }
     else {
@@ -416,11 +423,13 @@ public class VariableInplaceRenamer {
     private final String myName;
     private final LookupElement[] myLookupItems;
 
-    private MyExpression(String name) {
+    private MyExpression(String name, LinkedHashSet<String> names) {
       myName = name;
-      Set<String> names = new HashSet<String>();
-      for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-        provider.getSuggestedNames(myElementToRename, myElementToRename, names);
+      if (names == null) {
+        names = new LinkedHashSet<String>();
+        for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+          provider.getSuggestedNames(myElementToRename, myElementToRename, names);
+        }
       }
       myLookupItems = new LookupElement[names.size()];
       final Iterator<String> iterator = names.iterator();
