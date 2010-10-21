@@ -40,6 +40,15 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected final JComboBox myExtentions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
+  public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Component parent) {
+    super(chooserDescriptor, parent);
+    myDescriptor = chooserDescriptor;
+    setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
+    for (String ext : chooserDescriptor.getFileExtensions()) {
+      myExtentions.addItem(ext);
+    }
+  }
+
   public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Project project) {
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
