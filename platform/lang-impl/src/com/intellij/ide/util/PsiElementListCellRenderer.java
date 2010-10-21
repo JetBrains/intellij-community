@@ -134,6 +134,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     removeAll();
     String moduleName = null;
     DefaultListCellRenderer rightRenderer = getRightCellRenderer();
+    if (rightRenderer != null) {
+      moduleName = rightRenderer.getText();
+    }
     final Component leftCellRendererComponent =
       new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (rightRenderer != null) {
@@ -141,7 +144,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       rightCellRendererComponent.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
       add(rightCellRendererComponent, BorderLayout.EAST);
-      moduleName = rightRenderer.getText();
       final JPanel spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());

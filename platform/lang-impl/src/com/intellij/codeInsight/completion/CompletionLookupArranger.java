@@ -30,7 +30,6 @@ import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -48,13 +47,13 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   @Override
-  public void sortItems(List<LookupElement> items) {
-    Collections.sort(items, new Comparator<LookupElement>() {
+  public Comparator<LookupElement> getItemComparator() {
+    return new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
         //noinspection unchecked
         return getSortingWeight(o1).compareTo(getSortingWeight(o2));
       }
-    });
+    };
   }
 
   public void itemSelected(LookupElement item, final Lookup lookup) {

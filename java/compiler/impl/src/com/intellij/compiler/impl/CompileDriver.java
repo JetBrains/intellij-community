@@ -736,7 +736,7 @@ public class CompileDriver {
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      GenericCompilerRunner runner = new GenericCompilerRunner(context, compilerManager, isRebuild, onlyCheckStatus);
+      GenericCompilerRunner runner = new GenericCompilerRunner(context, myCompilerFilter, compilerManager, isRebuild, onlyCheckStatus);
       try {
         didSomething |= generateSources(compilerManager, context, forceCompile, onlyCheckStatus);
 

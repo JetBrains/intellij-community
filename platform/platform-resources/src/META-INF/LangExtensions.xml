@@ -116,6 +116,9 @@
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeRegistry"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeRegistryImpl"/>
+
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>
 
@@ -224,8 +227,10 @@
   <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
                   serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
 
-  <projectService serviceInterface="com.intellij.ide.actions.GotoFileConfiguration"
-                  serviceImplementation="com.intellij.ide.actions.GotoFileConfiguration"/>
+  <projectService serviceInterface="com.intellij.ide.util.gotoByName.GotoFileConfiguration"
+                  serviceImplementation="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
+  <projectService serviceInterface="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"
+                  serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
 
   <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
                   serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>

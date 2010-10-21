@@ -16,6 +16,9 @@
 
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -28,9 +31,6 @@ public abstract class LookupArranger {
       return 0;
     }
 
-    @Override
-    public void sortItems(List<LookupElement> items) {
-    }
   };
 
   public abstract Comparable getRelevance(LookupElement element);
@@ -42,5 +42,8 @@ public abstract class LookupArranger {
     return 0;
   }
 
-  public abstract void sortItems(List<LookupElement> items);
+  @Nullable
+  public Comparator<LookupElement> getItemComparator() {
+    return null; //don't sort
+  }
 }

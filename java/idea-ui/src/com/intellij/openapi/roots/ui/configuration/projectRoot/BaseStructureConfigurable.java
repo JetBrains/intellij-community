@@ -349,6 +349,12 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return null;
   }
 
+  public void onStructureUnselected() {
+  }
+
+  public void onStructureSelected() {
+  }
+
   @Nullable
   protected abstract AbstractAddGroup createAddAction();
 

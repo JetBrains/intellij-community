@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.mavenService;
+package com.intellij.ide.util.gotoByName;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
-
 /**
- * @author Dmitry Avdeev
+ * @author yole
  */
-public abstract class MavenService {
-
-  public static MavenService getInstance(Project project) {
-    return ServiceManager.getService(project, MavenService.class);
+@State(
+    name = "GotoFileConfiguration",
+    storages = {@Storage(
+        id = "other",
+        file = "$WORKSPACE_FILE$")})
+public class GotoClassSymbolConfiguration extends ChooseByNameFilterConfiguration<Language> {
+  public static GotoClassSymbolConfiguration getInstance(Project project) {
+    return ServiceManager.getService(project, GotoClassSymbolConfiguration.class);
   }
 
-  public abstract Artifact createArtifact(String groupId, String artifactId, String versionId);
-
-  public abstract Artifact[] getVersions(String groupId, String artifactId);
-
-  public abstract List<Artifact> resolveDependencies(List<Artifact> artifact, List<String> repositories);
-
-  public abstract List<DownloadResult> downloadArtifacts(List<Artifact> artifacts, int options);
+  @Override
+  protected String nameForElement(Language type) {
+    return type.getID();
+  }
 }

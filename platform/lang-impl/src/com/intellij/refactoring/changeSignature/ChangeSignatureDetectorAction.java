@@ -19,16 +19,22 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * User: anna
  * Date: Sep 6, 2010
  */
-public class ChangeSignatureDetectorAction implements IntentionAction {
+public class ChangeSignatureDetectorAction implements IntentionAction, Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
+  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
 
   @NotNull
   @Override
@@ -55,5 +61,10 @@ public class ChangeSignatureDetectorAction implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return Icons.ADVICE_ICON;
   }
 }

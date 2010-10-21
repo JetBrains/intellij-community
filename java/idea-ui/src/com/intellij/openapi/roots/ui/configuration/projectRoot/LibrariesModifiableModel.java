@@ -18,14 +18,17 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,7 +37,7 @@ import java.util.*;
  * Date: 04-Jun-2006
  */
 
-public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
+public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModelEx {
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap = new HashMap<Library, ExistingLibraryEditor>();
   private final Set<Library> myRemovedLibraries = new HashSet<Library>();
 
@@ -50,8 +53,12 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public Library createLibrary(String name) {
-    final Library library = getLibrariesModifiableModel().createLibrary(name);
-    //createLibraryEditor(library);
+    return createLibrary(name, null);
+  }
+
+  public Library createLibrary(String name, @Nullable LibraryType type) {
+    final Library library = ((LibraryTableBase.ModifiableModelEx)getLibrariesModifiableModel()).createLibrary(name, type);
+    //createLibraryEditor(library);                     \
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
     return library;

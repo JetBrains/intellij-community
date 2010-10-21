@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.facade;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.idea.maven.MavenTestCase;
 
+import java.rmi.RemoteException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 public class MavenFacadeManagerTest extends MavenTestCase {
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
-    MavenFacadeManager.getInstance().getFacade();
+    MavenFacadeManager.getInstance().getOrCreateWrappee();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -34,7 +35,12 @@ public class MavenFacadeManagerTest extends MavenTestCase {
           @Override
           public void run() {
             MavenFacadeManager.getInstance().shutdown(true);
-            MavenFacadeManager.getInstance().getFacade();
+            try {
+              MavenFacadeManager.getInstance().getOrCreateWrappee();
+            }
+            catch (RemoteException e) {
+              throw new RuntimeException(e);
+            }
           }
         });
 

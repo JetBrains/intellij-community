@@ -183,8 +183,7 @@ public class TipPanel extends JPanel {
       myTipPaths.add(element.getAttributeValue(ATTRIBUTE_FILE));
     }
     final ProductivityFeaturesProvider[] providers = ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class);
-    for (int i = 0; i < providers.length; i++) {
-      ProductivityFeaturesProvider provider = providers[i];
+    for (ProductivityFeaturesProvider provider : providers) {
       final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
       for (int j = 0; featureDescriptors != null && j < featureDescriptors.length; j++) {
         FeatureDescriptor featureDescriptor = featureDescriptors[j];
@@ -192,13 +191,4 @@ public class TipPanel extends JPanel {
       }
     }
   }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
-
 }

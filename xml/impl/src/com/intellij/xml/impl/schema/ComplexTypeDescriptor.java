@@ -384,12 +384,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public int getContentType() {
-    final XmlElementDescriptor[] elements = getElements(null);
 
-    if (elements.length > 0) return XmlElementDescriptor.CONTENT_TYPE_CHILDREN;
-    if ("simpleType".equals(myTag.getLocalName())) {
+    if ("simpleType".equals(myTag.getLocalName()) || "true".equals(myTag.getAttributeValue("mixed"))) {
       return XmlElementDescriptor.CONTENT_TYPE_MIXED;
     }
+
+    if (getElements(null).length > 0) return XmlElementDescriptor.CONTENT_TYPE_CHILDREN;
+
     for (XmlTag tag : myTag.getSubTags()) {
       if ("simpleContent".equals(tag.getLocalName())) {
         return XmlElementDescriptor.CONTENT_TYPE_MIXED;

@@ -85,18 +85,26 @@ public class FileReferenceContextUtil {
     decodeFileReferences(element);
   }
 
-  private static PsiElement bindElement(PsiElement element, PsiFileSystemItem item) {
+  private static PsiElement bindElement(final PsiElement element, PsiFileSystemItem item) {
     if (item != null && item.isValid()) {
       PsiReference[] refs = element.getReferences();
-      if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
-        final FileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
-        if (ref != null) {
-          try {
-            element = ref.bindToElement(item);
+      for (PsiReference ref : refs) {
+        if (ref instanceof FileReferenceOwner) {
+          final FileReference fileReference = ((FileReferenceOwner)refs[0]).getLastFileReference();
+          if (fileReference != null) {
+            try {
+              PsiElement newElement = fileReference.bindToElement(item);
+              if (newElement != null) {
+                // assertion for troubles like IDEA-59540
+                LOG.assertTrue(element.getClass() == newElement.getClass(), "Reference " + ref + " violated contract of bindToElement()");
+              }
+              return newElement;
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+          break;
         }
       }
     }

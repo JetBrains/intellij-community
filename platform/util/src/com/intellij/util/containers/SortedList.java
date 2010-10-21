@@ -21,74 +21,91 @@ import java.util.*;
  * @author peter
  */
 public class SortedList<T> extends AbstractList<T>{
+  private final SortedMap<T, List<T>> myMap;
   private final Comparator<T> myComparator;
-  private boolean mySorted;
-  private final List<T> myDelegate = new ArrayList<T>();
+  private List<T> myDelegate = null;
 
   public SortedList(final Comparator<T> comparator) {
     myComparator = comparator;
+    myMap = new TreeMap<T, List<T>>(comparator);
+  }
+
+  public Comparator<T> getComparator() {
+    return myComparator;
   }
 
   @Override
   public void add(final int index, final T element) {
-    mySorted = false;
-    myDelegate.add(index, element);
+    _addToMap(element);
+  }
+
+  private void _addToMap(T element) {
+    List<T> group = myMap.get(element);
+    if (group == null) {
+      myMap.put(element, group = new ArrayList<T>());
+    }
+    group.add(element);
+    myDelegate = null;
+  }
+
+  @Override
+  public boolean add(T t) {
+    _addToMap(t);
+    return true;
   }
 
   @Override
   public T remove(final int index) {
-    return myDelegate.remove(index);
+    final T value = get(index);
+    remove(value);
+    return value;
   }
 
   @Override
-  public boolean remove(Object o) {
-    ensureSorted();
-    final int i = Collections.binarySearch(myDelegate, (T)o, myComparator);
-    if (i >= 0) {
-      myDelegate.remove(i);
-      return true;
+  public boolean remove(Object value) {
+    final List<T> group = myMap.remove(value);
+    if (group == null) return false;
+
+    group.remove(value);
+    if (!group.isEmpty()) {
+      myMap.put(group.get(0), group);
     }
-    return false;
+    myDelegate = null;
+    return true;
   }
 
   public T get(final int index) {
-    ensureSorted();
+    ensureLinearized();
     return myDelegate.get(index);
   }
 
-  private void ensureSorted() {
-    if (!mySorted) {
-      sort(myDelegate);
-      mySorted = true;
+  private List<T> ensureLinearized() {
+    if (myDelegate == null) {
+      myDelegate = ContainerUtil.concat(myMap.values());
     }
-  }
-
-  public void markDirty() {
-    mySorted = false;
-  }
-
-  protected void sort(List<T> delegate) {
-    Collections.sort(myDelegate, myComparator);
+    return myDelegate;
   }
 
   @Override
   public void clear() {
-    myDelegate.clear();
+    myMap.clear();
+    myDelegate = null;
   }
 
   @Override
   public Iterator<T> iterator() {
-    ensureSorted();
-    return super.iterator();
+    ensureLinearized();
+    return myDelegate.iterator();
   }
 
   @Override
   public ListIterator<T> listIterator() {
-    ensureSorted();
-    return super.listIterator();
+    ensureLinearized();
+    return myDelegate.listIterator();
   }
 
   public int size() {
+    ensureLinearized();
     return myDelegate.size();
   }
 }

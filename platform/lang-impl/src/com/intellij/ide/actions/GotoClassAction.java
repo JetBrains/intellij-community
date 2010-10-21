@@ -18,9 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
-import com.intellij.ide.util.gotoByName.GotoClassModel2;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -48,13 +46,16 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), getPsiContext(e));
+    final GotoClassModel2 model = new GotoClassModel2(project);
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e));
+    final ChooseByNameFilter filterUI = new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
         if (GotoClassAction.class.equals(myInAction)) {
           myInAction = null;
         }
+        filterUI.close();
       }
 
       public void elementChosen(Object element) {

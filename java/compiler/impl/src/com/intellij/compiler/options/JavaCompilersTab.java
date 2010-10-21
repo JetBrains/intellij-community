@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -63,12 +64,10 @@ public class JavaCompilersTab implements SearchableConfigurable {
       myContentPanel.add(configurable.createComponent(), compiler.getId());
     }
     myCompiler.setModel(new DefaultComboBoxModel(new Vector(compilers)));
-    myCompiler.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final String presentableName = value != null? ((BackendCompiler)value).getPresentableName() : "";
-        component.setText(presentableName);
-        return component;
+    myCompiler.setRenderer(new ListCellRendererWrapper<BackendCompiler>(myCompiler.getRenderer()) {
+      @Override
+      public void customize(final JList list, final BackendCompiler value, final int index, final boolean selected, final boolean hasFocus) {
+        setText(value != null ? value.getPresentableName() : "");
       }
     });
     myCompiler.addActionListener(new ActionListener() {

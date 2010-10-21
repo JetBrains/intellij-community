@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +39,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   public LibraryEditorDialogBase(final Component parent, final LibraryRootsComponent libraryRootsComponent) {
     super(parent, true);
     myLibraryRootsComponent = libraryRootsComponent;
+    libraryRootsComponent.resetProperties();
     setTitle(ProjectBundle.message("library.configure.title"));
     Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
@@ -64,12 +64,11 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   }
 
   protected boolean validateAndApply() {
-    final String currentName = myLibraryRootsComponent.getLibraryEditor().getName();
     String newName = myNameField.getText().trim();
     if (newName.length() == 0) {
       newName = null;
     }
-    if (!Comparing.equal(newName, currentName)) {
+    if (shouldCheckName(newName)) {
       final LibraryTable.ModifiableModel tableModifiableModel = getTableModifiableModel();
       if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTable)) {
         if (newName == null) {
@@ -83,12 +82,19 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
       }
       myLibraryRootsComponent.renameLibrary(newName);
     }
+    myLibraryRootsComponent.applyProperties();
     return true;
   }
+
+  protected abstract boolean shouldCheckName(String newName);
 
   @Nullable
   protected LibraryTable.ModifiableModel getTableModifiableModel() {
     return null;
+  }
+
+  protected LibraryRootsComponent getLibraryRootsComponent() {
+    return myLibraryRootsComponent;
   }
 
   protected JComponent createNorthPanel() {

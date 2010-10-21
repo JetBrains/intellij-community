@@ -184,14 +184,14 @@ public class MavenIndex {
   }
 
   private void cleanupBrokenData() {
-    close();
+    close(true);
     FileUtil.delete(getCurrentDataDir());
     myDataDirName = null;
   }
 
-  public synchronized void close() {
+  public synchronized void close(boolean releaseIndexContext) {
     try {
-      if (myData != null) myData.close();
+      if (myData != null) myData.close(releaseIndexContext);
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
@@ -331,7 +331,7 @@ public class MavenIndex {
       newData.flush();
     }
     catch (Throwable e) {
-      newData.close();
+      newData.close(true);
       FileUtil.delete(getDataDir(newDataDirName));
 
       if (e instanceof MavenFacadeIndexerException) throw new MavenIndexException(e);
@@ -347,7 +347,7 @@ public class MavenIndex {
 
       myUpdateTimestamp = System.currentTimeMillis();
 
-      oldData.close();
+      oldData.close(true);
       for (File each : getAllDataDirs()) {
         if (each.getName().equals(newDataDirName)) continue;
         FileUtil.delete(each);
@@ -364,7 +364,7 @@ public class MavenIndex {
     Map<String, Set<String>> groupToArtifactMap = new THashMap<String, Set<String>>();
     Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<String, Set<String>>();
 
-    List<MavenId> artifacts = myIndexer.getAllArtifacts(data.indexId);
+    List<MavenId> artifacts = data.getAllArtifacts();
     int total = artifacts.size();
     for (int i = 0; i < total; i++) {
       progress.setFraction(i / total);
@@ -452,7 +452,7 @@ public class MavenIndex {
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(new IndexTask<Object>() {
       public Object doTask() throws Exception {
-        MavenId id = myIndexer.addArtifact(myData.indexId, artifactFile);
+        MavenId id = myData.addArtifact(artifactFile);
 
         String groupId = id.getGroupId();
         String artifactId = id.getArtifactId();
@@ -557,7 +557,7 @@ public class MavenIndex {
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
     return doIndexTask(new IndexTask<Set<MavenArtifactInfo>>() {
       public Set<MavenArtifactInfo> doTask() throws Exception {
-        return myIndexer.search(myData.indexId, query, maxResult);
+        return myData.search(query, maxResult);
       }
     }, Collections.<MavenArtifactInfo>emptySet());
   }
@@ -603,7 +603,7 @@ public class MavenIndex {
     final Map<String, Boolean> hasArtifactCache = new THashMap<String, Boolean>();
     final Map<String, Boolean> hasVersionCache = new THashMap<String, Boolean>();
 
-    final int indexId;
+    private final int indexId;
 
     public IndexData(File dir) throws MavenIndexException {
       try {
@@ -617,11 +617,11 @@ public class MavenIndex {
         indexId = createContext(getDataContextDir(dir), dir.getName());
       }
       catch (IOException e) {
-        close();
+        close(true);
         throw new MavenIndexException(e);
       }
       catch (MavenFacadeIndexerException e) {
-        close();
+        close(true);
         throw new MavenIndexException(e);
       }
     }
@@ -630,11 +630,11 @@ public class MavenIndex {
       return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
     }
 
-    public void close() throws MavenIndexException {
+    public void close(boolean releaseIndexContext) throws MavenIndexException {
       MavenIndexException[] exceptions = new MavenIndexException[1];
 
       try {
-        if (indexId != 0) myIndexer.releaseIndex(indexId);
+        if (indexId != 0 && releaseIndexContext) myIndexer.releaseIndex(indexId);
       }
       catch (MavenFacadeIndexerException e) {
         MavenLog.LOG.info(e);
@@ -668,6 +668,18 @@ public class MavenIndex {
 
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
+    }
+
+    public List<MavenId> getAllArtifacts() throws MavenFacadeIndexerException {
+      return myIndexer.getAllArtifacts(indexId);
+    }
+
+    public MavenId addArtifact(File artifactFile) throws MavenFacadeIndexerException {
+      return myIndexer.addArtifact(indexId, artifactFile);
+    }
+
+    public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenFacadeIndexerException {
+      return myIndexer.search(indexId, query, maxResult);
     }
   }
 

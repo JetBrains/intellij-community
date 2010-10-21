@@ -17,13 +17,12 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,18 +32,14 @@ import java.util.List;
  * @author nik
  */
 public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
+  private final StructureConfigurableContext myContext;
   private NewLibraryEditor myLibraryEditor;
   private ComboBox myLibraryLevelCombobox;
 
-  public static CreateNewLibraryDialog createDialog(JComponent parent, @Nullable Project project,
-                                                    @NotNull List<LibraryTable> libraryTables,
-                                                    int selectedTable) {
-    return new CreateNewLibraryDialog(parent, project, new NewLibraryEditor(), libraryTables, selectedTable);
-  }
-
-  public CreateNewLibraryDialog(@NotNull JComponent parent, @Nullable Project project, @NotNull NewLibraryEditor libraryEditor,
+  public CreateNewLibraryDialog(@NotNull JComponent parent, @NotNull StructureConfigurableContext context, @NotNull NewLibraryEditor libraryEditor,
                                  @NotNull List<LibraryTable> libraryTables, int selectedTable) {
-    super(parent, LibraryRootsComponent.createComponent(project, libraryEditor));
+    super(parent, new LibraryRootsComponent(context.getProject(), libraryEditor));
+    myContext = context;
     myLibraryEditor = libraryEditor;
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     for (LibraryTable table : libraryTables) {
@@ -65,11 +60,14 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     init();
   }
 
-  public LibraryTable getSelectedTable() {
-    return (LibraryTable)myLibraryLevelCombobox.getSelectedItem();
+  @NotNull @Override
+  protected LibraryTable.ModifiableModel getTableModifiableModel() {
+    final LibraryTable selectedTable = (LibraryTable)myLibraryLevelCombobox.getSelectedItem();
+    return myContext.getModifiableLibraryTable(selectedTable);
   }
 
-  public Library createLibrary(final @NotNull LibraryTable.ModifiableModel modifiableModel) {
+  public Library createLibrary() {
+    final LibraryTable.ModifiableModel modifiableModel = getTableModifiableModel();
     final Library library = modifiableModel.createLibrary(myLibraryEditor.getName());
     final Library.ModifiableModel model = library.getModifiableModel();
     myLibraryEditor.apply(model);
@@ -84,5 +82,9 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   @Override
   protected void addNorthComponents(FormBuilder formBuilder) {
     formBuilder.addLabeledComponent("Level:", myLibraryLevelCombobox);
+  }
+
+  protected boolean shouldCheckName(String newName) {
+    return true;
   }
 }

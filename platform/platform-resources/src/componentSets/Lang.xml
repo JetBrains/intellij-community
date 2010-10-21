@@ -197,6 +197,7 @@
 
     <component>
       <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector</implementation-class>
+      <skipForDefaultProject/>
     </component>
   </project-components>
 
