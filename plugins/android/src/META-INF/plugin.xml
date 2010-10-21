@@ -53,6 +53,10 @@
     <action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
       <keyboard-shortcut first-keystroke="control shift alt R" keymap="$default"/>
     </action>
+    <action id="RegenerateRJavaFile" class="org.jetbrains.android.actions.AndroidRegenerateRJavaFileAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
   </actions>
 
   <depends>JUnit</depends>
