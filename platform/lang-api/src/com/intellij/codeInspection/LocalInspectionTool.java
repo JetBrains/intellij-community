@@ -146,5 +146,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   public void inspectionStarted(LocalInspectionToolSession session) {}
 
-  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {}
+  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
+    inspectionFinished(session);
+  }
+
+  @Deprecated()
+  public void inspectionFinished(LocalInspectionToolSession session) {}
 }
