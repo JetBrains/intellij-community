@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.util.Collection;
 public abstract class XDebuggerManager {
 
   public static XDebuggerManager getInstance(@NotNull Project project) {
-    return project.getComponent(XDebuggerManager.class);
+    return ServiceManager.getService(project, XDebuggerManager.class);
   }
 
   @NotNull
