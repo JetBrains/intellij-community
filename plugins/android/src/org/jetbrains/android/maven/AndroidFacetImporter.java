@@ -16,7 +16,6 @@
 package org.jetbrains.android.maven;
 
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
@@ -73,27 +72,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   @Override
   protected void setupFacet(AndroidFacet facet, MavenProject mavenProject) {
-    String modulePath = facet.getModule().getModuleFilePath();
-    String moduleDirPath = FileUtil.toSystemIndependentName(new File(modulePath).getParent());
-    if (moduleDirPath != null) {
-      String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
-
-      AndroidFacetConfiguration configuration = facet.getConfiguration();
-
-      if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
-        String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
-        if (genRelativePath != null) {
-          configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
-          configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
-
-          configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
-          configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
-        }
-      }
-
-      configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
-      configuration.ENABLE_AAPT_COMPILER = false;
-    }
+    AndroidMavenProviderImpl.setPathsToDefault(mavenProject, facet.getModule(), facet.getConfiguration());
   }
 
   @Override
