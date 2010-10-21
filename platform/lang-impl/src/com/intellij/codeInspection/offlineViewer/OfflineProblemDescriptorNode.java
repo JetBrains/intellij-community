@@ -85,7 +85,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
           for (PsiElement el : elementsInRange) {
             el.accept(visitor);
           }
-          localInspectionTool.inspectionFinished(session);
+          localInspectionTool.inspectionFinished(session, holder);
           if (holder.hasResults()) {
             final List<ProblemDescriptor> list = holder.getResults();
             final int idx = offlineProblemDescriptor.getProblemIndex();

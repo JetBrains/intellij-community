@@ -73,7 +73,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       }
     });
 
-    myTool.inspectionFinished(session);
+    myTool.inspectionFinished(session, holder);
 
     addProblemDescriptors(holder.getResults(), filterSuppressed);
   }
