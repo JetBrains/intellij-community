@@ -23,6 +23,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -52,7 +53,7 @@ public class ResourcesValidityState implements ValidityState {
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }
-    VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+    VirtualFile resourcesDir = getResourcesDir(module, facet);
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
@@ -61,7 +62,7 @@ public class ResourcesValidityState implements ValidityState {
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
       }
-      VirtualFile depResDir = AndroidAptCompiler.getResourceDirForApkCompiler(depFacet.getModule(), depFacet);
+      VirtualFile depResDir = getResourcesDir(depFacet.getModule(), depFacet);
       if (depResDir != null) {
         collectFiles(depResDir);
       }
@@ -70,6 +71,11 @@ public class ResourcesValidityState implements ValidityState {
     if (assetsDir != null) {
       collectFiles(assetsDir);
     }
+  }
+
+  @Nullable
+  protected VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
+    return AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
   }
 
   private void collectFiles(VirtualFile resourcesDir) {
