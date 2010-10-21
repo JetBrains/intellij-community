@@ -154,6 +154,9 @@ public class ITNReporter extends ErrorReportSubmitter {
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else {
+              if (e instanceof NoSuchEAPUserException) {
+                new JetBrainsAccountDialog(parentComponent).show();
+              }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -171,7 +174,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     String message = event.getMessage();
 
     @NonNls StringBuilder descBuilder = new StringBuilder();
-    if (description.length() > 0) {
+    if (!StringUtil.isEmpty(description)) {
       descBuilder.append("User description: ").append(description).append("\n");
     }
     if (message != null) {
