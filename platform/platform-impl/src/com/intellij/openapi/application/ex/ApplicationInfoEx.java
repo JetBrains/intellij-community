@@ -27,6 +27,7 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.application.ApplicationInfo;
 
 import java.awt.*;
+import java.util.Calendar;
 import java.util.List;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
@@ -34,6 +35,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
     return (ApplicationInfoEx) getInstance();
   }
+
+  public abstract Calendar getMajorReleaseBuildDate();
 
   public abstract String getLogoUrl();
 

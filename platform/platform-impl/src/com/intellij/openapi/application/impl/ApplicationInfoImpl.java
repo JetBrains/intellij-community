@@ -51,6 +51,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myOpaqueIconUrl = "/icon.png";
   @NonNls private String myToolWindowIconUrl = "/general/toolWindowProject.png";
   private Calendar myBuildDate = null;
+  private Calendar myMajorReleaseBuildDate = null;
   private String myPackageCode = null;
   private boolean myShowLicensee = true;
   private String myWelcomeScreenCaptionUrl;
@@ -81,6 +82,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_BUILD = "build";
   @NonNls private static final String ATTRIBUTE_NUMBER = "number";
   @NonNls private static final String ATTRIBUTE_DATE = "date";
+  @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   @NonNls private static final String ELEMENT_LOGO = "logo";
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ATTRIBUTE_TEXTCOLOR = "textcolor";
@@ -126,6 +128,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public Calendar getBuildDate() {
     return myBuildDate;
+  }
+
+  public Calendar getMajorReleaseBuildDate() {
+    return myMajorReleaseBuildDate != null ? myMajorReleaseBuildDate : myBuildDate;
   }
 
   @Override
@@ -314,21 +320,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
         myBuildDate = new GregorianCalendar();
       }
       else {
-        int year = 0;
-        int month = 0;
-        int day = 0;
-        try {
-          year = Integer.parseInt(dateString.substring(0, 4));
-          month = Integer.parseInt(dateString.substring(4, 6));
-          day = Integer.parseInt(dateString.substring(6, 8));
-        }
-        catch (Exception ex) {
-          //ignore
-        }
-        if (month > 0) {
-          month--;
-        }
-        myBuildDate = new GregorianCalendar(year, month, day);
+        myBuildDate = parseDate(dateString);
+      }
+      String majorReleaseDateString = buildElement.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
+      if (majorReleaseDateString != null) {
+        myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
       }
     }
 
@@ -444,6 +440,24 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     for(Object child: children) {
       myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
     }
+  }
+
+  private static GregorianCalendar parseDate(String dateString) {
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    try {
+      year = Integer.parseInt(dateString.substring(0, 4));
+      month = Integer.parseInt(dateString.substring(4, 6));
+      day = Integer.parseInt(dateString.substring(6, 8));
+    }
+    catch (Exception ex) {
+      //ignore
+    }
+    if (month > 0) {
+      month--;
+    }
+    return new GregorianCalendar(year, month, day);
   }
 
   public List<PluginChooserPage> getPluginChooserPages() {
