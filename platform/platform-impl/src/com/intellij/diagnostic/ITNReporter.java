@@ -178,6 +178,10 @@ public class ITNReporter extends ErrorReportSubmitter {
       }
     }
 
+    if (IdeaLogger.ourLastActionId != null) {
+      descBuilder.append("Last action: ").append(IdeaLogger.ourLastActionId);
+    }
+
     if (previousExceptionThreadId != 0) {
       descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
     }
