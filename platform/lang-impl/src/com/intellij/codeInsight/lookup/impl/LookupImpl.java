@@ -550,13 +550,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myLookupStartMarker.getStartOffset();
   }
 
-  @Override
-  protected void beforeShow() {
-    if (isRealPopup()) {
-      getComponent().setBorder(null);
-    }
-  }
-
   public void performGuardedChange(Runnable change) {
     assert !myChangeGuard;
     myChangeGuard = true;
@@ -647,6 +640,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     });
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    getComponent().setBorder(null);
 
     Point p = calculatePosition();
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
