@@ -963,6 +963,7 @@ public class CompileDriver {
 
     final DumbService dumbService = DumbService.getInstance(myProject);
     try {
+      final Set<Module> processedModules = new HashSet<Module>();
       VirtualFile[] snapshot = null;
       final Map<Chunk<Module>, Collection<VirtualFile>> chunkMap = new HashMap<Chunk<Module>, Collection<VirtualFile>>();
       int total = 0;
@@ -1054,7 +1055,16 @@ public class CompileDriver {
               filesToRecompile.addAll(compiledWithErrors);
 
               dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, dependencyFilter);
-
+              if (!processedModules.isEmpty()) {
+                for (Iterator<VirtualFile> it = dependentFiles.iterator(); it.hasNext();) {
+                  final VirtualFile next = it.next();
+                  final Module module = context.getModuleByFile(next);
+                  if (module != null && processedModules.contains(module)) {
+                    it.remove();
+                  }
+                }
+              }
+              
               if (ourDebugMode) {
                 if (!dependentFiles.isEmpty()) {
                   for (VirtualFile dependentFile : dependentFiles) {
@@ -1102,7 +1112,7 @@ public class CompileDriver {
 
               indicator.setText(CompilerBundle.message("progress.saving.caches"));
               cache.resetState();
-
+              processedModules.addAll(currentChunk.getNodes());
               indicator.popState();
             }
           }
