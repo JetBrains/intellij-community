@@ -97,6 +97,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles());
       invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
+      invoke(chooser, "setTreatsFilePackagesAsDirectories:", myChooserDescriptor.isChooseFolders());
+      //invoke(chooser, "setCanCreateDirectories:", true);
       if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("_setIncludeNewFolderButton:"))) {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
