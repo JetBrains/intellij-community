@@ -453,6 +453,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     public void actionPerformed(ActionEvent e) {
+      final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      int rc = Messages.showYesNoDialog(getRootPane(), "Are you sure you would like to " + (canRestart ? "restart" : "shutdown") +
+                                                       " " + ApplicationNamesInfo.getInstance().getFullProductName() + "?",
+                                        "Confirm", Messages.getQuestionIcon());
+      if (rc != 0) return;
       myMessagePool.setJvmIsShuttingDown();
       LaterInvocator.invokeLater(new Runnable() {
         public void run() {
@@ -657,9 +662,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         PluginManager.disablePlugin(pluginId.toString());
         final Application app = ApplicationManager.getApplication();
         final String pluginName = app.getPlugin(pluginId).getName();
+        int rc = Messages.showYesNoDialog(getRootPane(), "Are you sure you would like to disable the plugin " + pluginName +
+                                                         "? The features provided by the plugin will no longer be available.",
+                                          "Disable Plugin", Messages.getQuestionIcon());
+        if (rc != 0) return;
         final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         if (app.isRestartCapable()) {
-          int rc = Messages.showYesNoDialog(getRootPane(), pluginName + " has been disabled. Would you like to restart " + productName + " so that the changes would take effect?",
+          rc = Messages.showYesNoDialog(getRootPane(), pluginName + " has been disabled. Would you like to restart " + productName + " so that the changes would take effect?",
                                             "Disable Plugin", Messages.getInformationIcon());
           if (rc == 0) {
             app.restart();
