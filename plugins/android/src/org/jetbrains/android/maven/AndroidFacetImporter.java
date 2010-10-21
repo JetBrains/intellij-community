@@ -67,12 +67,14 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   @Override
   public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) {
-    result.add("apksources");
+    result.add(AndroidMavenUtil.APKSOURCES_DEPENDENCY_TYPE);
   }
 
   @Override
   protected void setupFacet(AndroidFacet facet, MavenProject mavenProject) {
     AndroidMavenProviderImpl.setPathsToDefault(mavenProject, facet.getModule(), facet.getConfiguration());
+    AndroidMavenProviderImpl.configureAaptCompilation(mavenProject, facet.getModule(), facet.getConfiguration(),
+                                                        AndroidMavenProviderImpl.hasApkSourcesDependency(mavenProject));
   }
 
   @Override

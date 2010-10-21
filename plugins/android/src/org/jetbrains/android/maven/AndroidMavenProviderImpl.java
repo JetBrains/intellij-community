@@ -44,14 +44,27 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       if (genRelativePath != null) {
         configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
         configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
+      }
+    }
+  }
 
-        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
+  public static void configureAaptCompilation(MavenProject mavenProject,
+                                              Module module,
+                                              AndroidFacetConfiguration configuration,
+                                              boolean hasApkSources) {
+    String moduleDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
+    String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
+
+    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
+      String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+      if (genRelativePath != null) {
+        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = hasApkSources;
         configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
       }
     }
 
-    configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
-    configuration.ENABLE_AAPT_COMPILER = false;
+    configuration.COPY_RESOURCES_FROM_ARTIFACTS = hasApkSources;
+    configuration.ENABLE_AAPT_COMPILER = !hasApkSources;
   }
 
   @Override
@@ -66,7 +79,7 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
     List<File> result = new ArrayList<File>();
     if (mavenProject != null) {
       for (MavenArtifact depArtifact : mavenProject.getDependencies()) {
-        if ("apksources".equals(depArtifact.getType())) {
+        if (AndroidMavenUtil.APKSOURCES_DEPENDENCY_TYPE.equals(depArtifact.getType())) {
           result.add(MavenArtifactUtil.getArtifactFile(mavenProject.getLocalRepository(), depArtifact.getMavenId()));
         }
       }
@@ -79,6 +92,18 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
     MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
     if (mavenProject != null) {
       setPathsToDefault(mavenProject, module, facetConfiguration);
+      if (hasApkSourcesDependency(mavenProject)) {
+        configureAaptCompilation(mavenProject, module, facetConfiguration, true);
+      }
     }
+  }
+
+  public static boolean hasApkSourcesDependency(MavenProject mavenProject) {
+    for (MavenArtifact artifact : mavenProject.getDependencies()) {
+      if (AndroidMavenUtil.APKSOURCES_DEPENDENCY_TYPE.equals(artifact.getType())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
