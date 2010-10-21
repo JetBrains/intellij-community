@@ -115,9 +115,9 @@ public class TooBroadScopeInspection extends BaseInspection
                              ProblemDescriptor descriptor)
                 throws IncorrectOperationException
         {
-            final PsiElement variableIdentifier =
-                    descriptor.getPsiElement();
-            if (!(variableIdentifier instanceof PsiVariable)) {
+            final PsiElement variableIdentifier = descriptor.getPsiElement();
+            if (!(variableIdentifier instanceof PsiIdentifier))
+            {
                 return;
             }
             final PsiVariable variable =
