@@ -52,11 +52,15 @@ public class GenericCompilerRunner {
   private final GenericCompiler<?,?,?>[] myCompilers;
   private final Project myProject;
 
-  public GenericCompilerRunner(CompileContext context, CompilerManager compilerManager, boolean forceCompile, boolean onlyCheckStatus) {
+  public GenericCompilerRunner(CompileContext context,
+                               CompilerFilter compilerFilter,
+                               CompilerManager compilerManager,
+                               boolean forceCompile,
+                               boolean onlyCheckStatus) {
     myContext = context;
     myForceCompile = forceCompile;
     myOnlyCheckStatus = onlyCheckStatus;
-    myCompilers = compilerManager.getCompilers(GenericCompiler.class);
+    myCompilers = compilerManager.getCompilers(GenericCompiler.class, compilerFilter);
     myProject = myContext.getProject();
   }
 
