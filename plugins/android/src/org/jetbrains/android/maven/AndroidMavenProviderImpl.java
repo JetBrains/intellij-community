@@ -37,23 +37,21 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
   public static void setPathsToDefault(MavenProject mavenProject, Module module, AndroidFacetConfiguration configuration) {
     String moduleDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
-    if (moduleDirPath != null) {
-      String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
+    String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
 
-      if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
-        String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
-        if (genRelativePath != null) {
-          configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
-          configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
+    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
+      String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+      if (genRelativePath != null) {
+        configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
+        configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
 
-          configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
-          configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
-        }
+        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
+        configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
       }
-
-      configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
-      configuration.ENABLE_AAPT_COMPILER = false;
     }
+
+    configuration.COPY_RESOURCES_FROM_ARTIFACTS = true;
+    configuration.ENABLE_AAPT_COMPILER = false;
   }
 
   @Override

@@ -138,51 +138,49 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   private void configurePaths(AndroidFacet facet, MavenProject project) {
     String modulePath = facet.getModule().getModuleFilePath();
     String moduleDirPath = FileUtil.toSystemIndependentName(new File(modulePath).getParent());
-    if (moduleDirPath != null) {
-      AndroidFacetConfiguration configuration = facet.getConfiguration();
+    AndroidFacetConfiguration configuration = facet.getConfiguration();
 
-      String resFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceDirectory");
-      if (resFolderRelPath != null) {
-        configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
-      }
+    String resFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceDirectory");
+    if (resFolderRelPath != null) {
+      configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
+    }
 
-      Element resourceOverlayDirectories = getConfig(project, "resourceOverlayDirectories");
-      if (resourceOverlayDirectories != null) {
-        List<String> dirs = new ArrayList<String>();
-        for (Object child : resourceOverlayDirectories.getChildren()) {
-          String dir = ((Element)child).getTextTrim();
-          if (dir != null && dir.length() > 0) {
-            String relativePath = getRelativePath(moduleDirPath, makePath(project, dir));
-            if (relativePath != null && relativePath.length() > 0) {
-              dirs.add('/' + relativePath);
-            }
+    Element resourceOverlayDirectories = getConfig(project, "resourceOverlayDirectories");
+    if (resourceOverlayDirectories != null) {
+      List<String> dirs = new ArrayList<String>();
+      for (Object child : resourceOverlayDirectories.getChildren()) {
+        String dir = ((Element)child).getTextTrim();
+        if (dir != null && dir.length() > 0) {
+          String relativePath = getRelativePath(moduleDirPath, makePath(project, dir));
+          if (relativePath != null && relativePath.length() > 0) {
+            dirs.add('/' + relativePath);
           }
         }
-        if (dirs.size() > 0) {
-          configuration.RES_OVERLAY_FOLDERS = ArrayUtil.toStringArray(dirs);
-        }
       }
-      else {
-        String resOverlayFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceOverlayDirectory");
-        if (resOverlayFolderRelPath != null) {
-          configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
-        }
+      if (dirs.size() > 0) {
+        configuration.RES_OVERLAY_FOLDERS = ArrayUtil.toStringArray(dirs);
       }
+    }
+    else {
+      String resOverlayFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceOverlayDirectory");
+      if (resOverlayFolderRelPath != null) {
+        configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
+      }
+    }
 
-      String assetsFolderRelPath = getPathFromConfig(project, moduleDirPath, "assetsDirectory");
-      if (assetsFolderRelPath != null) {
-        configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
-      }
+    String assetsFolderRelPath = getPathFromConfig(project, moduleDirPath, "assetsDirectory");
+    if (assetsFolderRelPath != null) {
+      configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
+    }
 
-      String manifestFileRelPath = getPathFromConfig(project, moduleDirPath, "androidManifestFile");
-      if (manifestFileRelPath != null) {
-        configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
-      }
+    String manifestFileRelPath = getPathFromConfig(project, moduleDirPath, "androidManifestFile");
+    if (manifestFileRelPath != null) {
+      configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
+    }
 
-      String nativeLibsFolderRelPath = getPathFromConfig(project, moduleDirPath, "nativeLibrariesDirectory");
-      if (nativeLibsFolderRelPath != null) {
-        configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
-      }
+    String nativeLibsFolderRelPath = getPathFromConfig(project, moduleDirPath, "nativeLibrariesDirectory");
+    if (nativeLibsFolderRelPath != null) {
+      configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
   }
 
