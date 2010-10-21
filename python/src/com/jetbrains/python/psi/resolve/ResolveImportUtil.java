@@ -312,6 +312,15 @@ public class ResolveImportUtil {
     return visitor.results;
   }
 
+  @NotNull
+  public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider, @NotNull PsiManager psiManager, @NotNull PyQualifiedName moduleQualifiedName) {
+    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, psiManager, null);
+    for (VirtualFile file: rootProvider.getFiles(OrderRootType.CLASSES)) {
+      visitor.visitRoot(file);
+    }
+    return visitor.results;
+  }
+
   // TODO: rewrite using resolveImportReference
 
   /**
