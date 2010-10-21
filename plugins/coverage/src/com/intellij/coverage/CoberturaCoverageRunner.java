@@ -75,7 +75,7 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
       for (VirtualFile sourceRoot : sourceRoots) {
         javaParameters.getProgramParametersList().add(FileUtil.toSystemDependentName(sourceRoot.getPath()));
       }
-      javaParameters.setJdk(projectRootManager.getProjectJdk());
+      javaParameters.setJdk(projectRootManager.getProjectSdk());
       final DefaultJavaProcessHandler processHandler = new DefaultJavaProcessHandler(javaParameters);
       processHandler.startNotify();
       processHandler.addProcessListener(new ProcessAdapter() {
