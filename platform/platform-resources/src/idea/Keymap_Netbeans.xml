@@ -334,9 +334,6 @@
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="shift alt F12" />
     </action>
-    <action id="Uml.PrintGraph">
-      <keyboard-shortcut first-keystroke="shift control alt P" />
-    </action>
     <action id="Unwrap" />
     <action id="ValidateJsp">
       <keyboard-shortcut first-keystroke="shift alt F9" />
