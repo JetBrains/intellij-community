@@ -219,7 +219,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       final boolean isBinary2 = (b2 instanceof BinaryContentRevision);
       return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0 && isBinary1 == isBinary2;
     }
-    return false;
+    return b1 == null && b2 == null;
   }
 
   public synchronized boolean equals(final Object o) {

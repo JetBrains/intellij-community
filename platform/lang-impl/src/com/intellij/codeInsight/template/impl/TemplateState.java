@@ -130,7 +130,7 @@ public class TemplateState implements Disposable {
               afterChangedUpdate();
             }
           };
-          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          final LookupImpl lookup = myEditor != null ? (LookupImpl)LookupManager.getActiveLookup(myEditor) : null;
           if (lookup != null) {
             lookup.performGuardedChange(runnable);
           } else {
