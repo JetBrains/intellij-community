@@ -175,7 +175,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     String magicWord;
     if (magicEvaluator && element.getText().indexOf(magicWord = "xmxmxm") != -1) {
       System.out.println("~~~~~~"+tokenizer);
-      System.out.println(SpellCheckerManager.getInstance(element.getProject()).getUserDictionary().contains(magicWord));
+      SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(element.getProject());
+      System.out.println(spellCheckerManager.getUserDictionary().contains(magicWord));
+      System.out.println(spellCheckerManager.hasProblem(magicWord));
     }
     return tokenizer.tokenize(element);
   }
