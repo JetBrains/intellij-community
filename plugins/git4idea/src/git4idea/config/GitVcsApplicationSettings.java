@@ -103,7 +103,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
    * @return get last set path to git or null
    */
   public String getPathToGit() {
-    return myPathToGit;
+    return myPathToGit == null ? defaultGit() : myPathToGit;
   }
 
   /**
