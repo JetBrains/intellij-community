@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
 import com.intellij.formatting.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
@@ -92,7 +93,9 @@ public class AutoHardWrapHandler {
     }
 
     // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
-    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)) {
+    if (project == null ||
+        !editor.getSettings().isWrapWhenTypingReachesRightMargin(project) ||
+        TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       return;
     }
 
