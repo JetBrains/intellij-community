@@ -290,10 +290,9 @@ import java.util.Map;
 
   @Override
   public void closeFile(@NotNull VirtualFile file) {
-    Editor editor = myVirtualFile2Editor.get(file);
+    Editor editor = myVirtualFile2Editor.remove(file);
     if (editor != null){
       EditorFactory.getInstance().releaseEditor(editor);
-      myVirtualFile2Editor.remove(file);
     }
     if (file == myActiveFile) myActiveFile = null;
   }

@@ -24,10 +24,7 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -330,16 +327,27 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private VirtualFile ensureFileText(final String fileName, final byte[] text) throws IOException {
-    VirtualFile file = myVFSBaseDir.findChild(fileName);
-    if (file == null) {
-      file = myVFSBaseDir.createChildData(this, fileName);
+    final IOException[] ex = new IOException[] {null};
+    final VirtualFile _file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        VirtualFile file = myVFSBaseDir.findChild(fileName);
+        try {
+          if (file == null) file = myVFSBaseDir.createChildData(SchemesManagerImpl.this, fileName);
+          if (!Arrays.equals(file.contentsToByteArray(), text)) {
+            file.setBinaryContent(text);
+          }
+        }
+        catch (IOException e) {
+          ex[0] = e;
+        }
 
-    }
-    if (!Arrays.equals(file.contentsToByteArray(), text)) {
-      file.setBinaryContent(text);
-    }
+        return file;
+      }
+    });
 
-    return file;
+    if (ex[0] != null) throw ex[0];
+    return _file;
   }
 
   private String checkFileNameIsFree(final String subpath, final String schemeName) {

@@ -27,6 +27,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,104 +43,50 @@ import java.util.*;
  * A handler for git commands
  */
 public abstract class GitHandler {
-  /**
-   * Error codes that are ignored for the handler
-   */
-  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>();
-  /**
-   * Error list
-   */
-  private final List<VcsException> myErrors = Collections.synchronizedList(new LinkedList<VcsException>());
-  /**
-   * the logger
-   */
-  private static final Logger log = Logger.getInstance(GitHandler.class.getName());
-  /**
-   * a command line
-   */
-  final GeneralCommandLine myCommandLine;
-  /**
-   * process
-   */
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) Process myProcess;
-  /**
-   * If true, the standard output is not copied to version control console
-   */
-  private boolean myStdoutSuppressed;
-  /**
-   * If true, the standard error is not copied to version control console
-   */
-  private boolean myStderrSuppressed;
-  /**
-   * the context project (might be a default project)
-   */
-  final Project myProject;
-  /**
-   * The descriptor for the command to be executed
-   */
-  protected final GitCommand myCommand;
-  /**
-   * the working directory
-   */
-  private final File myWorkingDirectory;
-  /**
-   * the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-   */
-  private boolean myEnvironmentCleanedUp = true;
-  /**
-   * the handler number
-   */
-  private int myHandlerNo;
-  /**
-   * The processor for stdin
-   */
-  private Processor<OutputStream> myInputProcessor;
-  /**
-   * if true process might be cancelled
-   */
-  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean myIsCancellable = true;
-  /**
-   * exit code or null if exit code is not yet available
-   */
-  private Integer myExitCode;
-  /**
-   * Character set to use for IO
-   */
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) @NonNls private Charset myCharset = Charset.forName("UTF-8");
-  /**
-   * No ssh flag
-   */
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean myNoSSHFlag = false;
-  /**
-   * listeners
-   */
-  private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
-  /**
-   * if true, the command execution is not logged in version control view
-   */
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean mySilent;
 
-  /**
-   * The vcs object
-   */
+  protected final Project myProject;
+  protected final GitCommand myCommand;
+
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>(); // Error codes that are ignored for the handler
+  private final List<VcsException> myErrors = Collections.synchronizedList(new LinkedList<VcsException>());
+  private static final Logger log = Logger.getInstance(GitHandler.class.getName());
+  final GeneralCommandLine myCommandLine;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  Process myProcess;
+
+  private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
+  private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
+  private final File myWorkingDirectory;
+
+  private boolean myEnvironmentCleanedUp = true; // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
+  private int myHandlerNo;
+  private Processor<OutputStream> myInputProcessor; // The processor for stdin
+
+  // if true process might be cancelled
+  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private boolean myIsCancellable = true;
+
+  private Integer myExitCode; // exit code or null if exit code is not yet available
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  @NonNls
+  private Charset myCharset = Charset.forName("UTF-8"); // Character set to use for IO
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private boolean myNoSSHFlag = false;
+
+  private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private boolean mySilent; // if true, the command execution is not logged in version control view
+
   protected final GitVcs myVcs;
-  /**
-   * The environment
-   */
   private final Map<String, String> myEnv;
-  /**
-   * The settings object
-   */
-  private GitVcsSettings mySettings;
-  /**
-   * Suspend action used by {@link #suspendWriteLock()}
-   */
-  private Runnable mySuspendAction;
-  /**
-   * Resume action used by {@link #resumeWriteLock()}
-   */
-  private Runnable myResumeAction;
+  private GitVcsApplicationSettings myAppSettings;
+  private GitVcsSettings myProjectSettings;
+
+  private Runnable mySuspendAction; // Suspend action used by {@link #suspendWriteLock()}
+  private Runnable myResumeAction; // Resume action used by {@link #resumeWriteLock()}
 
 
   /**
@@ -152,7 +99,8 @@ public abstract class GitHandler {
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     myProject = project;
     myCommand = command;
-    mySettings = GitVcsSettings.getInstance(project);
+    myAppSettings = GitVcsApplicationSettings.getInstance();
+    myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<String, String>(System.getenv());
     if (!myEnv.containsKey("HOME")) {
       String home = System.getProperty("user.home");
@@ -166,8 +114,8 @@ public abstract class GitHandler {
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
-    if (mySettings != null) {
-      myCommandLine.setExePath(mySettings.getGitExecutable());
+    if (myAppSettings != null) {
+      myCommandLine.setExePath(myAppSettings.getPathToGit());
     }
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     if (command.name().length() > 0) {
@@ -422,7 +370,7 @@ public abstract class GitHandler {
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
-      if (!myNoSSHFlag && mySettings.isIdeaSsh()) {
+      if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
