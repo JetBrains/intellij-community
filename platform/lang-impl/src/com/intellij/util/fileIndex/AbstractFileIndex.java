@@ -44,6 +44,8 @@ import java.util.*;
 
 /**
  * @author nik
+ *
+ * @deprecated use {@link com.intellij.util.indexing.FileBasedIndex} instead
  */
 public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> implements FileIndex<IndexEntry> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.fileIndex.AbstractFileIndex");
