@@ -323,7 +323,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       ArrayList<VirtualFile> nativeLibs = new ArrayList<VirtualFile>();
       for (VirtualFile nativeLibFolder : nativeLibFolders) {
         for (VirtualFile child : nativeLibFolder.getChildren()) {
-          AndroidApkBuilder.collectNativeLibraries(nativeLibFolder, child, nativeLibs);
+          AndroidApkBuilder.collectNativeLibraries(child, nativeLibs);
         }
       }
       for (VirtualFile nativeLib : nativeLibs) {
