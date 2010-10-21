@@ -54,6 +54,7 @@ import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.branches.GitBranchConfigurations;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitExecutableValidator;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
@@ -83,6 +84,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
+  public static final String NOTIFICATION_GROUP_ID = "Git";
   /**
    * the logger
    */
@@ -501,6 +503,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
+    GitExecutableValidator.getInstance(myProject).checkExecutableAndNotifyIfNeeded();
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
