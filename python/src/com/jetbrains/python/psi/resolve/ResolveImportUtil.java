@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -23,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.NONE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.*;
 
 /**
  * @author dcheryasov
@@ -96,7 +95,7 @@ public class ResolveImportUtil {
       for (PsiElement element : psiElements) {
         final PsiElement init = PyUtil.turnDirIntoInit(element);
         if (init instanceof PsiFile) {
-          VirtualFile vFile = ((PsiFile) init).getVirtualFile();
+          VirtualFile vFile = ((PsiFile)init).getVirtualFile();
           if (vFile != null && vFile.getLength() > 0) {
             return element;
           }
@@ -313,10 +312,14 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider, @NotNull PsiManager psiManager, @NotNull PyQualifiedName moduleQualifiedName) {
-    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, psiManager, null);
-    for (VirtualFile file: rootProvider.getFiles(OrderRootType.CLASSES)) {
-      visitor.visitRoot(file);
+  public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider,
+                                                              @NotNull Module module,
+                                                              @NotNull PyQualifiedName moduleQualifiedName) {
+    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null);
+    if (!visitModuleContentEntries(module, visitor)) {
+      for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
+        visitor.visitRoot(file);
+      }
     }
     return visitor.results;
   }
@@ -397,7 +400,6 @@ public class ResolveImportUtil {
     }
     else {
       visitSdkRoots(elt, visitor);
-
     }
   }
 
@@ -417,26 +419,36 @@ public class ResolveImportUtil {
   private static void visitRoots(Module module, RootVisitor visitor) {
     // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
     // Module-based approach works only in the IDEA plugin.
+    if (visitModuleContentEntries(module, visitor)) return;
+    // else look in SDK roots
+    visitModuleSdkRoots(visitor, module);
+  }
+
+  private static boolean visitModuleContentEntries(Module module, RootVisitor visitor) {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     // look in module sources
     boolean sourceEntriesMissing = true;
-    Set<VirtualFile> contentRoots = new java.util.HashSet<VirtualFile>();
+    Set<VirtualFile> contentRoots = Sets.newHashSet();
     for (ContentEntry entry : rootManager.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
-      if (rootFile != null && !visitor.visitRoot(rootFile)) return;
+      if (rootFile != null && !visitor.visitRoot(rootFile)) return true;
       contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
         sourceEntriesMissing = false;
-        if (!visitor.visitRoot(folder)) return;
+        if (!visitor.visitRoot(folder)) return true;
       }
     }
     if (sourceEntriesMissing) {
       // fallback for a case without any source entries: use project root
       VirtualFile projectRoot = module.getProject().getBaseDir();
-      if (projectRoot != null && !contentRoots.contains(projectRoot) && !visitor.visitRoot(projectRoot)) return;
+      if (projectRoot != null && !contentRoots.contains(projectRoot) && !visitor.visitRoot(projectRoot)) return true;
     }
-    // else look in SDK roots
+    return false;
+  }
+
+  private static void visitModuleSdkRoots(@NotNull RootVisitor visitor, @NotNull Module module) {
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
   }
 
@@ -524,7 +536,10 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInRoot(VirtualFile root, PyQualifiedName qualifiedName, PsiManager psiManager, @Nullable PsiFile foothold_file) {
+  private static PsiElement resolveInRoot(VirtualFile root,
+                                          PyQualifiedName qualifiedName,
+                                          PsiManager psiManager,
+                                          @Nullable PsiFile foothold_file) {
     PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
     for (String component : qualifiedName.getComponents()) {
       if (component == null) {
@@ -657,7 +672,8 @@ public class ResolveImportUtil {
     }
     VirtualFile skeletonsRoot = findSkeletonsRoot(dir);
     if (skeletonsRoot != null && relativeName != null) {
-      VirtualFile skeletonsVFile = relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
+      VirtualFile skeletonsVFile =
+        relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
       if (skeletonsVFile != null) {
         return dir.getManager().findDirectory(skeletonsVFile);
       }
@@ -697,7 +713,7 @@ public class ResolveImportUtil {
         List<String> result = StringUtil.split(relativePath, "/");
         if (myResult == null || result.size() < myResult.size()) {
           if (result.size() > 0) {
-            result.set(result.size()-1, FileUtil.getNameWithoutExtension(result.get(result.size()-1)));
+            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
           }
           myResult = result;
         }
@@ -772,8 +788,9 @@ public class ResolveImportUtil {
   /**
    * When a name is imported from a module, tries to find the definition of that name inside the module,
    * as opposed to looking for submodules.
+   *
    * @param where an element related to the name, presumably inside import
-   * @param name the name to find
+   * @param name  the name to find
    * @return found element, or null.
    */
   @Nullable
@@ -837,7 +854,6 @@ public class ResolveImportUtil {
        */
       AS_NAME
     }
-
   }
 
   /**
