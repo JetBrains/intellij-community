@@ -125,6 +125,7 @@
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
+    <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
   </extensions>
 
   <extensionPoints>

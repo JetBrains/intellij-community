@@ -225,7 +225,8 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     }
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForFileResource(file, false);
     for (PsiField resField : resFields) {
-      allRenames.put(resField, FileUtil.getNameWithoutExtension(newName));
+      String newFieldName = ResourceManager.getResourceName(type, newName);
+      allRenames.put(resField, newFieldName);
     }
   }
 
