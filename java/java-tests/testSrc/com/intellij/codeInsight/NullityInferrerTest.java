@@ -50,6 +50,10 @@ public class NullityInferrerTest extends CodeInsightTestCase {
     doTest(false);
   }
 
+  public void testParameterUsedInForeachIteratedValue() throws Exception {
+    doTest(false);
+  }
+
   //-----------------------fields---------------------------------------------------
   public void testFieldsAssignment() throws Exception {
     doTest(false);

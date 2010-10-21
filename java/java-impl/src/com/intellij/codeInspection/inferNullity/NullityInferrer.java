@@ -466,6 +466,11 @@ public class NullityInferrer {
                     }
                   }
                 }
+              } else if (parent instanceof PsiForeachStatement) {
+                if (((PsiForeachStatement)parent).getIteratedValue() == expr) {
+                  registerNotNullAnnotation(parameter);
+                  return;
+                }
               }
 
               if (isNotNull(method)) {
