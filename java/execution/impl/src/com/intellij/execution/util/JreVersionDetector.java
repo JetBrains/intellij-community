@@ -49,7 +49,7 @@ public class JreVersionDetector {
         return isJre50(jdk);
       }
 
-      final Sdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectJdk();
+      final Sdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectSdk();
       return isJre50(projectJdk);
     }
   }

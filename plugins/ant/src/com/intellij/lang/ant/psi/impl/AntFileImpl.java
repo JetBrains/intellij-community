@@ -346,7 +346,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public Sdk getTargetJdk() {
     final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
     if (buildFile == null) {
-      return ProjectRootManager.getInstance(getProject()).getProjectJdk();
+      return ProjectRootManager.getInstance(getProject()).getProjectSdk();
     }
 
     String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
@@ -356,7 +356,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     if (jdkName != null && jdkName.length() > 0) {
       return ProjectJdkTable.getInstance().findJdk(jdkName);
     }
-    return ProjectRootManager.getInstance(getProject()).getProjectJdk();
+    return ProjectRootManager.getInstance(getProject()).getProjectSdk();
   }
 
   @Nullable

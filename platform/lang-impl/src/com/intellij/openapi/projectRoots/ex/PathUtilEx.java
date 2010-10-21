@@ -55,7 +55,7 @@ public class PathUtilEx {
   }
 
   public static Sdk chooseJdk(Project project, Collection<Module> modules) {
-    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {
       return projectJdk;
     }

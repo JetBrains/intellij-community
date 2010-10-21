@@ -177,7 +177,7 @@ public class NewProjectUtil {
     if (versionString == null) return;
 
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
-    rootManager.setProjectJdk(jdk);
+    rootManager.setProjectSdk(jdk);
     LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
     LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
     if (level.compareTo(ext.getLanguageLevel()) < 0) {

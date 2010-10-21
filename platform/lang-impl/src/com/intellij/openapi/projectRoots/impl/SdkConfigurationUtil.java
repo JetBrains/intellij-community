@@ -159,7 +159,7 @@ public class SdkConfigurationUtil {
   public static void setDirectoryProjectSdk(final Project project, final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ProjectRootManager.getInstance(project).setProjectJdk(sdk);
+        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
@@ -171,7 +171,7 @@ public class SdkConfigurationUtil {
   }
 
   public static void configureDirectoryProjectSdk(final Project project, final SdkType... sdkTypes) {
-    Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
       return;
     }
@@ -185,7 +185,7 @@ public class SdkConfigurationUtil {
   @Nullable
   public static Sdk findOrCreateSdk(final SdkType... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+    final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null) {
       for (SdkType type : sdkTypes) {
         if (sdk.getSdkType() == type) {
