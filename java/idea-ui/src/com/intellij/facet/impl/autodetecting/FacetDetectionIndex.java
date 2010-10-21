@@ -22,6 +22,7 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -135,8 +136,8 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
     myAutodetectingManager.queueUpdate(file);
   }
 
-  protected void doUpdateIndexEntry(final VirtualFile file) {
-    myAutodetectingManager.processFile(file);
+  protected void doUpdateIndexEntry(final FileContent fileContent) {
+    myAutodetectingManager.processFile(fileContent);
   }
 
   @Nullable

@@ -16,19 +16,23 @@
 
 package com.intellij.facet.impl.autodetecting;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
-import com.intellij.facet.impl.autodetecting.model.*;
+import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
+import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author nik
@@ -36,25 +40,25 @@ import java.util.*;
 public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
   private final AutodetectionFilter myAutodetectionFilter;
-  private final VirtualFileFilter myVirtualFileFilter;
+  private final FileContentFilter myFileContentFilter;
   private final FacetDetector<S,C> myFacetDetector;
   private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
   private final ProjectFacetInfoSet myDetectedFacetSet;
   private final FacetType<F,C> myFacetType;
 
-  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
+  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final FileContentFilter fileContentFilter,
                                  final FacetDetector<S, C> facetDetector,
                                  final UnderlyingFacetSelector<VirtualFile, U> selector) {
     myDetectedFacetSet = projectFacetSet;
     myFacetType = facetType;
     myAutodetectionFilter = autodetectionFilter;
-    myVirtualFileFilter = virtualFileFilter;
+    myFileContentFilter = fileContentFilter;
     myFacetDetector = facetDetector;
     myUnderlyingFacetSelector = selector;
   }
 
-  public VirtualFileFilter getVirtualFileFilter() {
-    return myVirtualFileFilter;
+  public FileContentFilter getFileContentFilter() {
+    return myFileContentFilter;
   }
 
   public FacetType<?, C> getFacetType() {

@@ -25,6 +25,7 @@ import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -392,7 +393,7 @@ public class DetectedFacetManager implements Disposable {
         }
       }
       for (VirtualFile file : files) {
-        myAutodetectingManager.processFile(file);
+        myAutodetectingManager.processFile(new FileContent(file));
       }
     }
 

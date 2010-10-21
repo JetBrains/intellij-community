@@ -60,7 +60,7 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
   public void afterRefreshFinish(boolean asynchonous) {
     if (!asynchonous) {
       for (VirtualFile file : myChangedFiles) {
-        myFileIndex.updateIndexEntry(file);
+        myFileIndex.updateIndexEntry(new FileContent(file));
       }
       updatingDone();
     }
@@ -75,7 +75,7 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
   }
 
   public void processFile(FileContent fileContent) {
-    myFileIndex.updateIndexEntry(fileContent.getVirtualFile());
+    myFileIndex.updateIndexEntry(fileContent);
   }
 
   public void updatingDone() {
@@ -129,7 +129,7 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
       }
       else {
         if (create) {
-          myFileIndex.updateIndexEntry(file);
+          myFileIndex.updateIndexEntry(new FileContent(file));
         }
         else {
           myFileIndex.removeIndexEntry(file);

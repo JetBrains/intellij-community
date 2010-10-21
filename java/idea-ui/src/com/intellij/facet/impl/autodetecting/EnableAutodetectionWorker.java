@@ -16,6 +16,7 @@
 package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.FacetType;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -146,7 +147,7 @@ public class EnableAutodetectionWorker {
       }
     }
     else {
-      myFacetAutodetectingManager.processFile(file);
+      myFacetAutodetectingManager.processFile(new FileContent(file));
     }
   }
 

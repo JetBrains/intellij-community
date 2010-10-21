@@ -76,7 +76,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
 
   public abstract void queueEntryUpdate(final VirtualFile file);
 
-  protected abstract void doUpdateIndexEntry(final VirtualFile file);
+  protected abstract void doUpdateIndexEntry(final FileContent fileContent);
 
   public ProjectFileIndex getProjectFileIndex() {
     return myProjectFileIndex;
@@ -87,12 +87,12 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
     return new File(PathManager.getSystemPath() + File.separator + dirName + File.separator + cacheFileName);
   }
 
-  public final void updateIndexEntry(final VirtualFile file) {
-    if (!myStartupManager.startupActivityPassed() || myProjectFileIndex.isIgnored(file)) {
+  public final void updateIndexEntry(final FileContent fileContent) {
+    if (!myStartupManager.startupActivityPassed() || myProjectFileIndex.isIgnored(fileContent.getVirtualFile())) {
       return;
     }
     
-    doUpdateIndexEntry(file);
+    doUpdateIndexEntry(fileContent);
   }
 
   public final void removeIndexEntry(final VirtualFile file) {
@@ -341,7 +341,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
     }
 
     public void processFile(FileContent fileContent) {
-      updateIndexEntry(fileContent.getVirtualFile());
+      updateIndexEntry(fileContent);
     }
 
     public void updatingDone() {
