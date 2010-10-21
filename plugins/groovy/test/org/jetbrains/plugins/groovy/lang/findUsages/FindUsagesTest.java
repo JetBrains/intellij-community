@@ -190,7 +190,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   public void testGDKSuperMethodSearch() throws Exception {
-    doSuperMethodTest("Object");
+    doSuperMethodTest("T");
   }
 
   public void testGDKSuperMethodForMapSearch() throws Exception {
