@@ -89,7 +89,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   protected RootProvider getRootProvider() {
-    final Sdk projectJdk = myProjectRootManagerImpl.getProjectJdk();
+    final Sdk projectJdk = myProjectRootManagerImpl.getProjectSdk();
     return projectJdk == null ? null : projectJdk.getRootProvider();
   }
 

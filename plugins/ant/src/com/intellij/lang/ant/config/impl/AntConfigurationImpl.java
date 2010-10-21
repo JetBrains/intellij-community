@@ -94,7 +94,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     public String get(final AbstractPropertyContainer container) {
       if (!container.hasProperty(this)) return null;
       AntConfiguration antConfiguration = AntConfigurationImpl.INSTANCE.get(container);
-      return ProjectRootManager.getInstance(antConfiguration.getProject()).getProjectJdkName();
+      return ProjectRootManager.getInstance(antConfiguration.getProject()).getProjectSdkName();
     }
 
     public String copy(final String jdkName) {

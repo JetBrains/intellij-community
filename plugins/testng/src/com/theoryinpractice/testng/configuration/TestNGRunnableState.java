@@ -237,7 +237,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                         .getPath());//todo !do not hard code lib name!
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
-    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getSdk();
+    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {

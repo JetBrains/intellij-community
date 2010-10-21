@@ -124,28 +124,28 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * to any existing JDK instance.
    */
   @Nullable
-  public abstract Sdk getProjectJdk();
+  public abstract Sdk getProjectSdk();
 
   /**
    * Returns the name of the JDK selected for the project.
    *
    * @return the JDK name.
    */
-  public abstract String getProjectJdkName();
+  public abstract String getProjectSdkName();
 
   /**
    * Sets the JDK to be used for the project.
    *
    * @param jdk the JDK instance.
    */
-  public abstract void setProjectJdk(@Nullable Sdk jdk);
+  public abstract void setProjectSdk(@Nullable Sdk jdk);
 
   /**
    * Sets the name of the JDK to be used for the project.
    *
    * @param name the name of the JDK.
    */
-  public abstract void setProjectJdkName(String name);
+  public abstract void setProjectSdkName(String name);
 
   /**
    * Commits the change to the lists of roots for the specified modules.

@@ -72,7 +72,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
 
   @Nullable
   public String getProjectSdkName(final Project project) {
-    final String projectJdkName = ProjectRootManager.getInstance(project).getProjectJdkName();
+    final String projectJdkName = ProjectRootManager.getInstance(project).getProjectSdkName();
     final Sdk projectJdk = getProjectSdk(project);
     if (projectJdk != null) {
       return projectJdk.getName();

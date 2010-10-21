@@ -125,7 +125,17 @@ public class TemplateState implements Disposable {
 
       public void beforeCommandFinished(CommandEvent event) {
         if (started) {
-          afterChangedUpdate();
+          Runnable runnable = new Runnable() {
+            public void run() {
+              afterChangedUpdate();
+            }
+          };
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(runnable);
+          } else {
+            runnable.run();
+          }
         }
       }
     };

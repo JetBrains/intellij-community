@@ -177,14 +177,14 @@ public class OrderEntryCellAppearanceUtils {
 
   public static CellAppearance forProjectJdk(final Project project) {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final Sdk projectJdk = projectRootManager.getProjectJdk();
+    final Sdk projectJdk = projectRootManager.getProjectSdk();
     final CellAppearance appearance;
     if (projectJdk != null) {
       appearance = forJdk(projectJdk, false, false);
     }
     else {
       // probably invalid JDK
-      final String projectJdkName = projectRootManager.getProjectJdkName();
+      final String projectJdkName = projectRootManager.getProjectSdkName();
       if (projectJdkName != null) {
         appearance = SimpleTextCellAppearance.invalid(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName),
                                                       CellAppearanceUtils.INVALID_ICON);

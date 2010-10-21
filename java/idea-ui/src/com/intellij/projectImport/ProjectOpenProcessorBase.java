@@ -124,7 +124,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
 
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+      Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
       if (jdk == null) {
         jdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
       }

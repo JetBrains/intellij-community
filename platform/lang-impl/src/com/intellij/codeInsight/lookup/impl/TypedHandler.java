@@ -58,7 +58,6 @@ public class TypedHandler implements TypedActionHandler {
       }
     });
     if (result == CharFilter.Result.ADD_TO_PREFIX) {
-      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
       Document document = editor.getDocument();
       long modificationStamp = document.getModificationStamp();
 
@@ -67,6 +66,7 @@ public class TypedHandler implements TypedActionHandler {
           EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
         }
       });
+      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
 
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
