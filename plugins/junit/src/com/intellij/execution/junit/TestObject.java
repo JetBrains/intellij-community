@@ -199,7 +199,7 @@ public abstract class TestObject implements JavaCommandLine {
     if (myJavaParameters.getJdk() == null){
       myJavaParameters.setJdk(module != null
                               ? ModuleRootManager.getInstance(module).getSdk()
-                              : ProjectRootManager.getInstance(myProject).getProjectJdk());
+                              : ProjectRootManager.getInstance(myProject).getProjectSdk());
     }
 
     myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());

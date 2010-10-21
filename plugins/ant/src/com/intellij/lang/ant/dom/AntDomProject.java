@@ -168,7 +168,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
         return ProjectJdkTable.getInstance().findJdk(jdkName);
       }
     }
-    return ProjectRootManager.getInstance(tag.getProject()).getProjectJdk();
+    return ProjectRootManager.getInstance(tag.getProject()).getProjectSdk();
   }
 
   @NotNull

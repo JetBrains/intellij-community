@@ -110,7 +110,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   @Nullable
   private static Sdk getRelevantJdk(final Project project, @Nullable Module module) {
-    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Sdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     return moduleJdk == null ? projectJdk : moduleJdk;
   }

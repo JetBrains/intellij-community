@@ -34,7 +34,7 @@ public class InheritedJdkTest extends ModuleTestCase {
       @Override
       public void run() {
         final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-        rootManagerEx.setProjectJdkName(jdk.getName());
+        rootManagerEx.setProjectSdkName(jdk.getName());
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
         rootModel.inheritSdk();
         rootModel.commit();
@@ -102,7 +102,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        projectRootManager.setProjectJdk(mockJdk);
+        projectRootManager.setProjectSdk(mockJdk);
       }
     });
 
@@ -112,7 +112,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        projectRootManager.setProjectJdkName("jdk1");
+        projectRootManager.setProjectSdkName("jdk1");
       }
     });
 

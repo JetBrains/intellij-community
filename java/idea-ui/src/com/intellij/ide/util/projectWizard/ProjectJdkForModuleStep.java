@@ -149,7 +149,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   @Nullable
   private static Sdk getDefaultJdk() {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectJdk();
+    return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
   }
 
 

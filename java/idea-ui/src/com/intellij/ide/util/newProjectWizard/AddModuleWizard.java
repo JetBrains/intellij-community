@@ -301,7 +301,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       return context.getProjectJdk();
     }
     final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {
       return projectJdk;
     }
