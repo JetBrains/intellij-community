@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+/*
+ * @author max
+ */
 public class LimitedPool<T> {
   private final int capacity;
   private final ObjectFactory<T> factory;
