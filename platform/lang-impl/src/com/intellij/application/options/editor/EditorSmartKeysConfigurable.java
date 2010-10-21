@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * To provide an additional settings editor register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
+ * To provide additional options in Editor | Smart Keys section register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
  * <p/>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;editorSmartKeysConfigurable instance="class-name"/&gt;<br>
