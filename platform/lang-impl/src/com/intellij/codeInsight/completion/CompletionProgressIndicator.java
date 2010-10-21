@@ -218,6 +218,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void trackModifiers() {
+    if (isAutopopupCompletion()) {
+      return;
+    }
+
     final JComponent contentComponent = myEditor.getContentComponent();
     contentComponent.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
