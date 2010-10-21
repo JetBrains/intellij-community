@@ -66,7 +66,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     else {
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
           if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }

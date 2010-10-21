@@ -402,7 +402,7 @@ public class PythonSdkType extends SdkType {
     final ProgressManager progman = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
-    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
+    final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
@@ -418,7 +418,7 @@ public class PythonSdkType extends SdkType {
         }
       }
     };
-    progman.run(setup_task);
+    progman.run(setupTask);
     return success.get();
   }
 

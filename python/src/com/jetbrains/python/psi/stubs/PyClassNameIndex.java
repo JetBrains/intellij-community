@@ -49,7 +49,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
    * @return the resulting scope
    */
   public static GlobalSearchScope projectWithLibrariesScope(Project project) {
-    final Sdk sdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
       VirtualFile libDir = findLibDir(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));

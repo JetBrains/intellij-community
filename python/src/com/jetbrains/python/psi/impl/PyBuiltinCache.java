@@ -85,7 +85,7 @@ public class PyBuiltinCache {
       final VirtualFile vfile = psifile.getVirtualFile();
       if (vfile != null) { // reality
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-        sdk = projectRootManager.getProjectJdk();
+        sdk = projectRootManager.getProjectSdk();
         if (sdk == null) {
           final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
           for (OrderEntry orderEntry : orderEntries) {
