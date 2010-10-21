@@ -67,7 +67,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   }
 
   @Override
-  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
+  public void inspectionFinished(LocalInspectionToolSession session) {
     final Visitor visitor = session.getUserData(KEY);
     assert visitor != null;
     if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
