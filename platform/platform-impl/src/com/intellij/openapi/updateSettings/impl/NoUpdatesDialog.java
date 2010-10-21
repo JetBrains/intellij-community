@@ -17,8 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 
 import javax.swing.*;
 import java.util.List;
@@ -53,9 +52,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
   @Override
   protected boolean doDownloadAndPrepare() {
     boolean hasSmthToUpdate = super.doDownloadAndPrepare();
-    if (hasSmthToUpdate && isShowConfirmation() &&
-        Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
-                                 IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) != 0) {
+    if (hasSmthToUpdate && isShowConfirmation() && PluginManagerConfigurable.showRestartIDEADialog() != 0) {
       hasSmthToUpdate = false;
     }
     return hasSmthToUpdate;
