@@ -283,21 +283,21 @@ public class CustomAntElementsRegistry {
       clazz = loader.loadClass(classname);
     }
     catch (ClassNotFoundException e) {
-      error = e.getMessage();
+      error = "Class not found " + e.getMessage();
       if (error == null) {
         error = "";
       }
       clazz = null;
     }
     catch (NoClassDefFoundError e) {
-      error = e.getMessage();
+      error = "Class definition not found " + e.getMessage();
       if (error == null) {
         error = "";
       }
       clazz = null;
     }
     catch (UnsupportedClassVersionError e) {
-      error = e.getMessage();
+      error = "Unsupported class version " + e.getMessage();
       if (error == null) {
         error = "";
       }
@@ -309,7 +309,7 @@ public class CustomAntElementsRegistry {
   private void addCustomDefinition(@NotNull AntDomNamedElement declaringTag, String customTagName, String nsUri, Class clazz, String error) {
     final XmlName xmlName = new XmlName(customTagName, nsUri == null? "" : nsUri);
     if (error != null) {
-      myErrors.put(xmlName, customTagName);
+      myErrors.put(xmlName, error);
     }
     myCustomElements.put(xmlName, clazz);
     myDeclarations.put(xmlName, declaringTag);
