@@ -25,4 +25,5 @@ public interface LighterASTNode {
   IElementType getTokenType();
   int getStartOffset();
   int getEndOffset();
+  LighterASTNode getParent();
 }
