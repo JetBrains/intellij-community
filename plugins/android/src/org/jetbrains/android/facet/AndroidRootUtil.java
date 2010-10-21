@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -136,7 +133,10 @@ public class AndroidRootUtil {
     return getFileByRelativeModulePath(module, '/' + SdkConstants.FD_GEN_SOURCES, false);
   }
 
-  public static void fillExternalLibrariesAndModules(final Module module, final Set<VirtualFile> result, final Library platformLibrary) {
+  private static void fillExternalLibrariesAndModules(final Module module,
+                                                      final Set<VirtualFile> outputDirs,
+                                                      @Nullable final Collection<VirtualFile> libraries,
+                                                      final Library platformLibrary) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
@@ -144,18 +144,19 @@ public class AndroidRootUtil {
           if (!(entry instanceof ExportableOrderEntry) || ((ExportableOrderEntry)entry).getScope() != DependencyScope.COMPILE) {
             continue;
           }
-          if (entry instanceof LibraryOrderEntry) {
+          if (libraries != null && entry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry)entry).getLibrary();
+            assert platformLibrary != null;
             if (!platformLibrary.equals(library)) {
               if (library != null) {
                 for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
                   if (file.exists()) {
                     if (file.getFileSystem() instanceof JarFileSystem) {
                       VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-                      if (localFile != null) result.add(localFile);
+                      if (localFile != null) libraries.add(localFile);
                     }
                     else {
-                      result.add(file);
+                      libraries.add(file);
                     }
                   }
                 }
@@ -168,17 +169,17 @@ public class AndroidRootUtil {
             if (extension != null) {
               VirtualFile classDir = extension.getCompilerOutputPath();
               boolean added = false;
-              if (!result.contains(classDir) && classDir != null && classDir.exists()) {
-                result.add(classDir);
+              if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                outputDirs.add(classDir);
                 added = true;
               }
               VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-              if (!result.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                result.add(classDirForTests);
+              if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
+                outputDirs.add(classDirForTests);
                 added = true;
               }
               if (added) {
-                fillExternalLibrariesAndModules(module, result, platformLibrary);
+                fillExternalLibrariesAndModules(module, outputDirs, libraries, platformLibrary);
               }
             }
           }
@@ -188,16 +189,24 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static Set<VirtualFile> getExternalLibrariesAndModules(Module module, VirtualFile moduleOutputDir, Library platformLibrary) {
+  public static List<VirtualFile> getExternalLibraries(Module module, Library platformLibrary) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, platformLibrary);
+    List<VirtualFile> libs = new ArrayList<VirtualFile>();
+    fillExternalLibrariesAndModules(module, files, libs, platformLibrary);
+    return libs;
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getDependentModules(Module module, VirtualFile moduleOutputDir) {
+    Set<VirtualFile> files = new HashSet<VirtualFile>();
+    fillExternalLibrariesAndModules(module, files, null, null);
     files.remove(moduleOutputDir);
     return files;
   }
 
   @NotNull
   public static VirtualFile[] getResourceOverlayDirs(Module module) {
-     AndroidFacet facet = AndroidFacet.getInstance(module);
+    AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet == null) {
       return VirtualFile.EMPTY_ARRAY;
     }

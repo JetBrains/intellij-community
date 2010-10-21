@@ -52,20 +52,11 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
   @NotNull
   private static VirtualFile[] getExternalJars(@NotNull Module module,
-                                               @NotNull VirtualFile moduleOutputDir,
                                                @NotNull AndroidFacetConfiguration configuration) {
     AndroidPlatform platform = configuration.getAndroidPlatform();
     if (platform != null) {
-      Set<VirtualFile> externalLibsAndModules =
-        AndroidRootUtil.getExternalLibrariesAndModules(module, moduleOutputDir, platform.getLibrary());
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
-      for (VirtualFile file : externalLibsAndModules) {
-        // ignore modules' compiler output folders
-        if (!file.isDirectory()) {
-          result.add(file);
-        }
-      }
-      return result.toArray(new VirtualFile[result.size()]);
+      List<VirtualFile> externalLibsAndModules = AndroidRootUtil.getExternalLibraries(module, platform.getLibrary());
+      return externalLibsAndModules.toArray(new VirtualFile[externalLibsAndModules.size()]);
     }
     return VirtualFile.EMPTY_ARRAY;
   }
@@ -107,7 +98,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
           VirtualFile outputDir = context.getModuleOutputDirectory(module);
           if (outputDir != null) {
-            VirtualFile[] externalJars = getExternalJars(module, outputDir, configuration);
+            VirtualFile[] externalJars = getExternalJars(module, configuration);
             String resPackage = AndroidResourcesPackagingCompiler.getOutputPath(module, outputDir);
             String outputPath = new File(outputDir.getPath(), module.getName() + ".apk").getPath();
             String classesDexPath = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME).getPath();
