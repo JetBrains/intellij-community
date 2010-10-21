@@ -57,9 +57,22 @@ public class GitCheckoutProvider implements CheckoutProvider {
       return;
     }
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
-    GitLineHandler handler =
-      clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
-    int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
+    final String directoryName = dialog.getDirectoryName();
+    final String originName = dialog.getOriginName();
+    final String parentDirectory = dialog.getParentDirectory();
+    checkout(project, listener, destinationParent, sourceRepositoryURL, directoryName, originName, parentDirectory);
+  }
+
+  public static void checkout(final Project project,
+                              final Listener listener,
+                              final VirtualFile destinationParent,
+                              final String sourceRepositoryURL,
+                              final String directoryName,
+                              final String originName,
+                              final String parentDirectory) {
+    final GitLineHandler handler =
+      clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
+    final int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
 
     destinationParent.refresh(true, true, new Runnable() {
       public void run() {
@@ -72,7 +85,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
 
     if (code == 0) {
       if (listener != null) {
-        listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
+        listener.directoryCheckedOut(new File(parentDirectory, directoryName));
       }
     }
     if (listener != null) {
