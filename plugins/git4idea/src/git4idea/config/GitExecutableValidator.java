@@ -19,11 +19,14 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.ui.GuiUtils;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -65,10 +68,7 @@ public class GitExecutableValidator {
    * Expires the notification if user fixes the path to Git from the opened Settings dialog.
    */
   public void showExecutableNotConfiguredNotification() {
-    if (myNotification != null && !myNotification.isExpired()) { // don't display this notification twice
-      return;
-    }
-    myNotification = new Notification(GitVcs.NOTIFICATION_GROUP_ID, GitBundle.getString("executable.error.title"), 
+    final Notification newNotification = new Notification(GitVcs.NOTIFICATION_GROUP_ID, GitBundle.getString("executable.error.title"),
       GitBundle.getString("executable.error.description"), NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -78,7 +78,19 @@ public class GitExecutableValidator {
           }
         }
       });
-    Notifications.Bus.notify(myNotification, myProject);
+
+    // expire() needs to be called from EventDispatch thread. notify handles it by itself.
+    // but we want to be sure that previous notification expires before new one is shown (and assigned to myNotification).
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override public void run() {
+        if (myNotification != null && !myNotification.isExpired()) {
+          // don't display this notification twice, but better to redisplay it again so that popup appears.
+          myNotification.expire();
+        }
+        myNotification = newNotification;
+        Notifications.Bus.notify(myNotification, myProject);
+      }
+    });
   }
 
   /**
@@ -87,6 +99,21 @@ public class GitExecutableValidator {
   public void checkExecutableAndNotifyIfNeeded() {
     if (!isGitExecutableValid()) {
       showExecutableNotConfiguredNotification();
+    }
+  }
+
+  /**
+   * Checks if git executable is valid. If not (which is a common case for low-level vcs exceptions), shows the
+   * notification. Otherwise throws the exception.
+   * This is to be used in catch-clauses
+   * @param e exception which was thrown.
+   * @throws VcsException if git executable is valid.
+   */
+  public void showNotificationOrThrow(VcsException e) throws VcsException {
+    if (!isGitExecutableValid()) {
+      showExecutableNotConfiguredNotification();
+    } else {
+      throw e;
     }
   }
   
