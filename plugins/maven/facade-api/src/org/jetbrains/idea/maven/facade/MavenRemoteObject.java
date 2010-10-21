@@ -22,4 +22,9 @@ public class MavenRemoteObject extends RemoteObject{
   protected boolean isKnownException(Throwable ex) {
     return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());
   }
+
+  public RuntimeException rethrowException(Throwable e) {
+    Throwable wrap = wrapException(e);
+    throw wrap instanceof RuntimeException ? (RuntimeException)wrap : new RuntimeException(wrap);
+  }
 }

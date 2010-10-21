@@ -113,8 +113,4 @@ public class RemoteObject implements Remote, Unreferenced {
     return false;
   }
 
-  public RuntimeException rethrowException(Throwable e) {
-    Throwable wrap = wrapException(e);
-    throw wrap instanceof RuntimeException ? (RuntimeException)wrap : new RuntimeException(wrap);
-  }
 }
