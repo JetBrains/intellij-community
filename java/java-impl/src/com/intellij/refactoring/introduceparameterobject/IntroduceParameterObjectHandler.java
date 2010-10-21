@@ -44,13 +44,22 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (element instanceof PsiMethod) {
       selectedMethod = (PsiMethod)element;
     }
+    else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod){
+      selectedMethod = (PsiMethod)((PsiParameter)element).getDeclarationScope();
+    }
     else {
       final CaretModel caretModel = editor.getCaretModel();
       final int position = caretModel.getOffset();
+      final PsiElement elementAt = file.findElementAt(position);
       final PsiMethodCallExpression methodCallExpression =
-       PsiTreeUtil.getParentOfType(file.findElementAt(position), PsiMethodCallExpression.class);
+       PsiTreeUtil.getParentOfType(elementAt, PsiMethodCallExpression.class);
       if (methodCallExpression != null) {
         selectedMethod = methodCallExpression.resolveMethod();
+      } else {
+        final PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
+        if (parameterList != null && parameterList.getParent() instanceof PsiMethod) {
+          selectedMethod = (PsiMethod)parameterList.getParent();
+        }
       }
     }
     if (selectedMethod == null) {
