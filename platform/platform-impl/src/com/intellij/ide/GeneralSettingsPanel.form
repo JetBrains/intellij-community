@@ -51,7 +51,7 @@
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Confirm frame to open project in"/>
+              <text value="Confirm window to open project in"/>
             </properties>
           </component>
         </children>

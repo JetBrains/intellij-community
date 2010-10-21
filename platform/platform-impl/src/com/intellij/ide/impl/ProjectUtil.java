@@ -150,16 +150,7 @@ public class ProjectUtil {
     }
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
-      final GeneralSettings settings = GeneralSettings.getInstance();
-      int exitCode;
-      if (settings.getConfirmOpenNewProject() < 0) {
-        exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
-                                           new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                             CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(),
-                                           new ProjectNewWindowDoNotAskOption());
-      } else {
-        exitCode = settings.getConfirmOpenNewProject();
-      }
+      int exitCode = confirmOpenNewProject();
       if (exitCode == 1) { // "No" option
         if (!closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
@@ -188,6 +179,18 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  public static int confirmOpenNewProject() {
+    final GeneralSettings settings = GeneralSettings.getInstance();
+    if (settings.getConfirmOpenNewProject() < 0) {
+      return Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
+                                 new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
+                                       CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(),
+                                  new ProjectNewWindowDoNotAskOption());
+    } else {
+      return settings.getConfirmOpenNewProject();
+    }
   }
 
   private static boolean isSameProject(String path, Project p) {
