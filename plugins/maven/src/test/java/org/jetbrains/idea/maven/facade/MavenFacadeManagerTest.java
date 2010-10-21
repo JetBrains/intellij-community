@@ -45,7 +45,7 @@ public class MavenFacadeManagerTest extends MavenTestCase {
         });
 
         try {
-          result.get(5, TimeUnit.SECONDS);
+          result.get(10, TimeUnit.SECONDS);
         }
         catch (InterruptedException e) {
           throw new RuntimeException(e);
