@@ -931,10 +931,20 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
+  public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo,
+                                                     PsiElement place,
+                                                     boolean ignorePlaceName,
+                                                     boolean lookForward) {
     final String[] names = baseNameInfo.names;
     final LinkedHashSet<String> uniqueNames = new LinkedHashSet<String>(names.length);
     for (String name : names) {
+      if (ignorePlaceName && place instanceof PsiNamedElement) {
+        final String placeName = ((PsiNamedElement)place).getName();
+        if (Comparing.strEqual(placeName, name)) {
+          uniqueNames.add(name);
+          continue;
+        }
+      }
       uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
 

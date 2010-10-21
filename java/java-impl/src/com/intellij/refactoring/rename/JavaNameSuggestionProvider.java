@@ -38,7 +38,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element);
     if (info != null) {
-      info = JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName(info, element, true);
+      info = JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName(info, element, true, true);
     }
 
     String parameterName = null;
