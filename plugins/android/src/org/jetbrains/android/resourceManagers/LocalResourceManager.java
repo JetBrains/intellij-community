@@ -103,8 +103,7 @@ public class LocalResourceManager extends ResourceManager {
     if (resDir == null || !result.add(resDir)) {
       return;
     }
-    List<AndroidFacet> depFacets = AndroidUtils.getAndroidDependencies(module, false);
-    for (AndroidFacet depFacet : depFacets) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, false)) {
       collectResourceDirs(depFacet.getModule(), result);
     }
   }

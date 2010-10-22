@@ -57,7 +57,7 @@ public class ResourcesValidityState implements ValidityState {
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet.getModule());
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());

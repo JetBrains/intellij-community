@@ -163,22 +163,63 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
   }
 
   private static void collectClassFilesInLibraryModules(AndroidFacet facet, Collection<String> result) {
+    HashSet<AndroidFacet> visited = new HashSet<AndroidFacet>();
+    visited.add(facet);
+    HashSet<String> packages = new HashSet<String>();
     Manifest manifest = facet.getManifest();
     String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+    packages.add(aPackage);
     for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
-      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depFacet.getModule());
-      if (extension != null) {
-        VirtualFile outputDir = extension.getCompilerOutputPath();
-        if (outputDir != null) {
-          Manifest depManifest = depFacet.getManifest();
-          String depPackage = depManifest != null ? depManifest.getPackage().getValue() : null;
-          collectRClassFiles(outputDir, result, aPackage, depPackage);
-        }
+      collectRClassFiles(depFacet, result, visited, packages);
+    }
+  }
+
+  private static void collectRClassFiles(AndroidFacet facet,
+                                         Collection<String> result,
+                                         Set<AndroidFacet> visited,
+                                         Set<String> parentPackages) {
+    if (!visited.add(facet)) {
+      return;
+    }
+    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(facet.getModule());
+    String thisPackage = null;
+    if (extension != null) {
+      VirtualFile outputDir = extension.getCompilerOutputPath();
+      if (outputDir != null) {
+        HashSet<String> packages = new HashSet<String>(parentPackages);
+        thisPackage = collectPackages(facet, packages, new HashSet<AndroidFacet>());
+        collectRClassFiles(outputDir, result, packages);
+      }
+    }
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
+      boolean added = false;
+      if (thisPackage != null) {
+        added = parentPackages.add(thisPackage);
+      }
+      collectRClassFiles(depFacet, result, visited, parentPackages);
+      if (added) {
+        parentPackages.remove(thisPackage);
       }
     }
   }
 
-  private static void collectRClassFiles(VirtualFile outDir, Collection<String> result, String... packages) {
+  @Nullable
+  private static String collectPackages(AndroidFacet facet, Set<String> result, Set<AndroidFacet> visited) {
+    if (!visited.add(facet)) {
+      return null;
+    }
+    Manifest manifest = facet.getManifest();
+    String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+    if (aPackage != null) {
+      result.add(aPackage);
+    }
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), true)) {
+      collectPackages(depFacet, result, visited);
+    }
+    return aPackage;
+  }
+
+  private static void collectRClassFiles(VirtualFile outDir, Collection<String> result, Collection<String> packages) {
     for (String aPackage : packages) {
       if (aPackage != null) {
         String parentPath = outDir.getPath() + '/' + aPackage.replace('.', '/');

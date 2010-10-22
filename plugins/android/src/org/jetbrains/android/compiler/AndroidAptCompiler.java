@@ -256,8 +256,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                     items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
                                                     packageName, false));
 
-                    List<String> libPackages = AndroidUtils.getDepLibsPackages(module);
-                    for (String libPackage : libPackages) {
+                    for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
                       items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
                                                       libPackage, true));
                     }
