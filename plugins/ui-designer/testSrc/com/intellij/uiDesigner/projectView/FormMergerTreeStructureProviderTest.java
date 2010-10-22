@@ -37,15 +37,15 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
                                            new FormMergerTreeStructureProvider(myProject));
 
     assertStructureEqual(getPackageDirectory(), "PsiDirectory: package1\n" +
-                                                " Form:Form1\n" +
-                                                "  PsiClass:Form1\n" +
-                                                "  PsiFile(plain text):Form1.form\n" +
                                                 " PsiClass:Class1\n" +
-                                                " PsiFile(plain text):Form2.form\n" +
                                                 " PsiJavaFile:Class2.java\n" +
                                                 "  PsiClass:Class2\n" +
                                                 "  PsiClass:Class3\n" +
-                                                " PsiJavaFile:Class4.java\n");
+                                                " PsiJavaFile:Class4.java\n" +
+                                                " PsiFile(plain text):Form2.form\n" +
+                                                " Form:Form1\n" +
+                                                "  PsiClass:Form1\n" +
+                                                "  PsiFile(plain text):Form1.form\n");
 
     PsiClass psiClass = ((PsiJavaFile)getPackageDirectory().findFile("Form1.java")).getClasses()[0];
     checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
