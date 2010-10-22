@@ -20,7 +20,6 @@ import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,18 +34,13 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
     return QuickFixBundle.message("create.enum.constant.from.usage.text", myReferenceExpression.getReferenceName());
   }
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
-    try {
-      final PsiEnumConstant enumConstant =
-        JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createEnumConstantFromText(name, null);
-      targetClass.add(enumConstant);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    final PsiEnumConstant enumConstant =
+      JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createEnumConstantFromText(name, null);
+    targetClass.add(enumConstant);
   }
 
 

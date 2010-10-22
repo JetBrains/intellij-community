@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,7 +54,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
            scope instanceof PsiLocalVariable || scope instanceof PsiAnonymousClass;
   }
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
       return;
     }
@@ -65,56 +64,52 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiFile targetFile = targetClass.getContainingFile();
 
-    try {
-      PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
-      PsiType type = expectedTypes[0];
+    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+    PsiType type = expectedTypes[0];
 
-      String varName = myReferenceExpression.getReferenceName();
-      PsiExpression initializer = null;
-      boolean isInline = false;
-      PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
-      PsiStatement anchor = getAnchor(expressions);
-      if (anchor instanceof PsiExpressionStatement && ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
-        if (assignment.getLExpression().textMatches(myReferenceExpression)) {
-          initializer = assignment.getRExpression();
-          isInline = true;
-        }
+    String varName = myReferenceExpression.getReferenceName();
+    PsiExpression initializer = null;
+    boolean isInline = false;
+    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+    PsiStatement anchor = getAnchor(expressions);
+    if (anchor instanceof PsiExpressionStatement &&
+        ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
+      if (assignment.getLExpression().textMatches(myReferenceExpression)) {
+        initializer = assignment.getRExpression();
+        isInline = true;
       }
-
-      PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(varName, type, initializer);
-
-      TypeExpression expression = new TypeExpression(project, expectedTypes);
-
-      if (isInline) {
-        decl = (PsiDeclarationStatement)anchor.replace(decl);
-      }
-      else {
-        decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);
-      }
-
-      PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
-      boolean isFinal =
-        CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
-      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
-
-      var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(var);
-      if (var == null) return;
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
-      builder.replaceElement(var.getTypeElement(), expression);
-      builder.setEndVariableAfter(var.getNameIdentifier());
-      Template template = builder.buildTemplate();
-
-      Editor newEditor = positionCursor(project, targetFile, var);
-      TextRange range = var.getTextRange();
-      newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-      TemplateManager manager = TemplateManager.getInstance(project);
-      manager.startTemplate(newEditor, template);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+
+    PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(varName, type, initializer);
+
+    TypeExpression expression = new TypeExpression(project, expectedTypes);
+
+    if (isInline) {
+      decl = (PsiDeclarationStatement)anchor.replace(decl);
     }
+    else {
+      decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);
+    }
+
+    PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
+    boolean isFinal =
+      CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
+    PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
+
+    var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(var);
+    if (var == null) return;
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
+    builder.replaceElement(var.getTypeElement(), expression);
+    builder.setEndVariableAfter(var.getNameIdentifier());
+    Template template = builder.buildTemplate();
+
+    Editor newEditor = positionCursor(project, targetFile, var);
+    TextRange range = var.getTextRange();
+    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+
+    TemplateManager manager = TemplateManager.getInstance(project);
+    manager.startTemplate(newEditor, template);
   }
 
   protected boolean isAllowOuterTargetClass() {
