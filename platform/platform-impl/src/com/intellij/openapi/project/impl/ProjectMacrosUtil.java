@@ -53,6 +53,16 @@ public class ProjectMacrosUtil {
     return editor.isOK();
   }
 
+  public static boolean checkNonIgnoredMacros(final Project project, final Set<String> usedMacros){
+    final PathMacros pathMacros = PathMacros.getInstance();
+    for (Iterator<String> iterator = usedMacros.iterator(); iterator.hasNext();) {
+      if (pathMacros.isIgnoredMacroName(iterator.next())) {
+        iterator.remove();
+      }
+    }
+    return checkMacros(project, usedMacros);
+  }
+
   public static boolean checkMacros(final Project project, final Set<String> usedMacros) {
     final Set<String> defined = getDefinedMacros();
     usedMacros.removeAll(defined);
