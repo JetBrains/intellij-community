@@ -287,7 +287,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
               final File nameFile = new File(ideaDir.getPath(), ".name");
               try {
-                FileUtil.writeToFile(nameFile, new String(getName()).getBytes(), false);
+                FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
                 myOldName = null;
               }
               catch (IOException e) {

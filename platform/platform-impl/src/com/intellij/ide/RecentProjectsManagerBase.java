@@ -240,7 +240,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
         if (nameFile.exists()) {
           BufferedReader in = null;
           try {
-            in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile)));
+            in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
             final String name = in.readLine();
             if (name != null && name.length() > 0) return name.trim();
           }
