@@ -25,6 +25,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -57,6 +58,20 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (containingClass == null) return false;
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       MyElementProcessor processor = new MyElementProcessor(method);
+      if (containingClass.isEnum()) {
+        for (PsiField field : containingClass.getFields()) {
+          if (field instanceof PsiEnumConstant) {
+            final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
+            if (initializingClass == null) {
+              processor.myHasMissingImplementations = true;
+            } else {
+              if (!processor.execute(initializingClass)){
+                break;
+              }
+            }
+          }
+        }
+      }
       ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(
         processor));
       return isAvailable(processor);
