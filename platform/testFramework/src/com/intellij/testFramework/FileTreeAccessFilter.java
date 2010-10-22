@@ -49,4 +49,8 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
   public void allowTreeAccessForAllFiles() {
     myTreeAccessAllowed = true;
   }
+
+  public String toString() {
+    return "JAVA {allowed=" + myTreeAccessAllowed + " files=" + myAddedClasses + "}";
+  }
 }

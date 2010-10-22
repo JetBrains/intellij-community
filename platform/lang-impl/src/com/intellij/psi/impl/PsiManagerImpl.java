@@ -308,7 +308,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
-    // Find something to ensure there's no changed files waiting to be processed in repository indicies.
+    // Find something to ensure there's no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
   }
 
