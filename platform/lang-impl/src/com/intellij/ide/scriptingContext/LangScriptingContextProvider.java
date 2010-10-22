@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LangScriptingContextProvider {
 
-  public static final ExtensionPointName<LangScriptingContextProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langScriptingContextProvider");
-
   @NotNull
   public abstract Language getLanguage();
 
@@ -36,8 +33,4 @@ public abstract class LangScriptingContextProvider {
 
   public abstract boolean acceptsExtension(String fileExt);
 
-  @NotNull
-  public static LangScriptingContextProvider[] getProviders() {
-    return Extensions.getExtensions(EP_NAME);
-  }
 }

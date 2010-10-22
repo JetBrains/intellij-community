@@ -441,8 +441,6 @@
 
   <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
-  <extensionPoint name="langScriptingContextProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextProvider"/>
-
   <extensionPoint name="semContributor"
                   beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>
 

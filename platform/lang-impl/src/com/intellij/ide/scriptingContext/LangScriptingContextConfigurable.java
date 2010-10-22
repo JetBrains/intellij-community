@@ -28,31 +28,19 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class LangScriptingContextConfigurable implements Configurable {
+public abstract class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
   private ScriptingLibraryManager myLibManager;
-  private LangScriptingContextProvider myProvider;
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
     myPanel = new ScriptingLibrariesPanel(provider, project, myLibManager);
-    myProvider = provider;
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return myProvider.getLanguage().getDisplayName();
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return "Libraries";
   }
 
   @Override
