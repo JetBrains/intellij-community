@@ -17,10 +17,15 @@ package com.intellij.semantic;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -33,6 +38,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.IdeaPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +66,28 @@ public class SemServiceImpl extends SemService{
 
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+    final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
       public void modificationCountChanged() {
         if (!isInsideAtomicChange()) {
           clearCache();
         }
+      }
+    });
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileOpened(FileEditorManager source, VirtualFile file) {
+        clearCache();
+      }
+
+      @Override
+      public void fileClosed(FileEditorManager source, VirtualFile file) {
+        clearCache();
+      }
+
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        clearCache();
       }
     });
     ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
@@ -74,6 +97,7 @@ public class SemServiceImpl extends SemService{
         }
       }
     });
+
 
     myProducers = collectProducers();
 
