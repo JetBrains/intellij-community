@@ -52,6 +52,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   public MemoryUsagePanel() {
     setOpaque(false);
+    setFocusable(false);
 
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
