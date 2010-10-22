@@ -19,7 +19,10 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.DataInputStream;
@@ -30,7 +33,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -48,8 +50,18 @@ public class SocketLock {
   private final List<String> myLockedPaths = new ArrayList<String>();
   private boolean myIsDialogShown = false;
   @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
+  @NonNls private static final String ACTIVATE_COMMAND = "activate ";
+
+  @Nullable
+  private Consumer<List<String>> myActivateListener;
+
+  public static enum ActivateStatus { ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE }
 
   public SocketLock() {
+  }
+
+  public void setActivateListener(@Nullable Consumer<List<String>> consumer) {
+    myActivateListener = consumer;
   }
 
   public synchronized void dispose() {
@@ -65,11 +77,12 @@ public class SocketLock {
     }
   }
 
-  public synchronized boolean lock(String path) {
+  public synchronized ActivateStatus lock(String path, String... args) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(path='" + path + "')");
     }
 
+    ActivateStatus status = ActivateStatus.NO_INSTANCE;
     acquireSocket();
     if (mySocket == null) {
       if (!myIsDialogShown) {
@@ -86,18 +99,21 @@ public class SocketLock {
         );
         myIsDialogShown = true;
       }
-      return true;
+      return status;
     }
+
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
-      List lockedList = readLockedList(i);
-      if (lockedList.contains(path)) return false;
+      status = tryActivate(i, path, args);
+      if (status != ActivateStatus.NO_INSTANCE) {
+        return status;
+      }
     }
 
     myLockedPaths.add(path);
 
-    return true;
+    return status;
   }
 
   private static boolean isPortForbidden(int port) {
@@ -107,23 +123,19 @@ public class SocketLock {
     return false;
   }
 
-  public synchronized void unlock(String path) {
-    myLockedPaths.remove(path);
-  }
-
-  private static List<String> readLockedList(int i) {
+  private static ActivateStatus tryActivate(int portNumber, String path, String[] args) {
     List<String> result = new ArrayList<String>();
 
     try {
       try {
-        ServerSocket serverSocket = new ServerSocket(i);
+        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getLocalHost());
         serverSocket.close();
-        return result;
+        return ActivateStatus.NO_INSTANCE;
       }
       catch (IOException e) {
       }
 
-      Socket socket = new Socket(InetAddress.getLocalHost(), i);
+      Socket socket = new Socket(InetAddress.getLocalHost(), portNumber);
       socket.setSoTimeout(300);
 
       DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -136,6 +148,20 @@ public class SocketLock {
           break;
         }
       }
+      if (result.contains(path)) {
+        try {
+          DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+          out.writeUTF(ACTIVATE_COMMAND + StringUtil.join(args, "\0"));
+          String response = in.readUTF();
+          if (response.equals("ok")) {
+            return ActivateStatus.ACTIVATED;
+          }
+        }
+        catch(IOException e) {
+
+        }
+        return ActivateStatus.CANNOT_ACTIVATE;
+      }
 
       in.close();
     }
@@ -143,7 +169,7 @@ public class SocketLock {
       LOG.debug(e);
     }
 
-    return result;
+    return ActivateStatus.NO_INSTANCE;
   }
 
   private void acquireSocket() {
@@ -167,26 +193,30 @@ public class SocketLock {
     thread.start();
   }
 
-  private synchronized void writeLockedPaths(Socket socket) {
-    try {
-      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-      for (String path: myLockedPaths) {
-        out.writeUTF(path);
-      }
-      out.close();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
-  }
-
   private class MyRunnable implements Runnable {
+
     public void run() {
       try {
         while (true) {
           try {
             final Socket socket = mySocket.accept();
-            writeLockedPaths(socket);
+            socket.setSoTimeout(800);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            synchronized (SocketLock.this) {
+              for (String path: myLockedPaths) {
+                out.writeUTF(path);
+              }
+            }
+            DataInputStream stream = new DataInputStream(socket.getInputStream());
+            final String command = stream.readUTF();
+            if (command.startsWith(ACTIVATE_COMMAND)) {
+              List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
+              if (myActivateListener != null) {
+                myActivateListener.consume(args);
+              }
+              out.writeUTF("ok");
+            }
+            out.close();
           }
           catch (IOException e) {
             LOG.debug(e);

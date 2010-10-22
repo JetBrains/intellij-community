@@ -15,17 +15,19 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.ide.startupWizard.StartupWizard;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author yole
@@ -114,30 +116,36 @@ public class StartupUtil {
                                   JOptionPane.INFORMATION_MESSAGE);
   }
 
-  synchronized static boolean lockSystemFolders() {
+  synchronized static boolean lockSystemFolders(String[] args) {
     if (ourLock == null) {
       ourLock = new SocketLock();
     }
 
-    boolean locked = ourLock.lock(PathManager.getConfigPath(false)) && ourLock.lock(PathManager.getSystemPath());
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(false), args);
+    if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
+      activateStatus = ourLock.lock(PathManager.getSystemPath());
+    }
 
-    if (!locked) {
+    if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       if (isHeadless()) { //team server inspections
         System.out.println("Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
         return false;
       }
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() +
-                                    " can be run at a time.",
-                                    "Error",
-                                    JOptionPane.INFORMATION_MESSAGE);
+      if (activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                      "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() +
+                                      " can be run at a time.",
+                                      "Error",
+                                      JOptionPane.INFORMATION_MESSAGE);
+      }
+      return false;
     }
 
-    return locked;
+    return true;
   }
 
-  static boolean checkStartupPossible() {
-    return checkJdkVersion() && lockSystemFolders();
+  static boolean checkStartupPossible(String[] args) {
+    return checkJdkVersion() && lockSystemFolders(args);
   }
 
   static void runStartupWizard() {
@@ -148,5 +156,9 @@ public class StartupUtil {
       startupWizard.show();
       PluginManager.invalidatePlugins();
     }
+  }
+
+  public static void addExternalInstanceListener(Consumer<List<String>> consumer) {
+    ourLock.setActivateListener(consumer);
   }
 }
