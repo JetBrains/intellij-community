@@ -121,7 +121,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       boolean hasClosableBlockNew = injection.getClosableBlock() != null;
       injectionRange = injection.getTextRange();
       final String text = (hasClosableBlock ? "}" : "") + "..." + (hasClosableBlockNew ? "${" : "$");
-      descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(), new TextRange(start, injectionRange.getStartOffset()), group) {
+      descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(),
+                                            new TextRange(start, injectionRange.getStartOffset() + (hasClosableBlockNew ? 2 : 1)), group) {
         @Override
         public String getPlaceholderText() {
           return text;
