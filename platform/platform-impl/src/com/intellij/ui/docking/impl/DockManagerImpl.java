@@ -141,10 +141,14 @@ public class DockManagerImpl extends DockManager {
   private class MyDragSession implements DragSession {
 
     private JWindow myWindow;
-    private Image myThumbnail;
+
+    private Image myDragImage;
+    private Image myDefaultDragImage;
+
     private DockableContent myContent;
 
     private DockContainer myCurrentOverContainer;
+    private JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, DockableContent content) {
       myWindow = new JWindow();
@@ -168,12 +172,13 @@ public class DockManagerImpl extends DockManager {
       BufferedImage buffer = new BufferedImage((int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
       buffer.createGraphics().drawImage(previewImage, 0, 0, (int)width, (int)height, null);
 
-      myThumbnail = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);
+      myDefaultDragImage = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);
+      myDragImage = myDefaultDragImage;
 
       myWindow.getContentPane().setLayout(new BorderLayout());
-      JLabel label = new JLabel(new ImageIcon(myThumbnail));
-      label.setBorder(new LineBorder(Color.lightGray));
-      myWindow.getContentPane().add(label, BorderLayout.CENTER);
+      myImageContainer = new JLabel(new ImageIcon(myDragImage));
+      myImageContainer.setBorder(new LineBorder(Color.lightGray));
+      myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
       setLocationFrom(me);
 
@@ -188,15 +193,16 @@ public class DockManagerImpl extends DockManager {
       Point showPoint = me.getPoint();
       SwingUtilities.convertPointToScreen(showPoint, me.getComponent());
 
-      showPoint.x -= myThumbnail.getWidth(null) / 2;
+      showPoint.x -= myDragImage.getWidth(null) / 2;
       showPoint.y += 10;
-      myWindow.setBounds(new Rectangle(showPoint, new Dimension(myThumbnail.getWidth(null), myThumbnail.getHeight(null))));
+      myWindow.setBounds(new Rectangle(showPoint, new Dimension(myDragImage.getWidth(null), myDragImage.getHeight(null))));
     }
 
     @Override
     public void process(MouseEvent e) {
       RelativePoint point = new RelativePoint(e);
 
+      Image img = null;
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
         DockContainer over = findContainerFor(point, myContent);
         if (myCurrentOverContainer != null && myCurrentOverContainer != over) {
@@ -206,11 +212,21 @@ public class DockManagerImpl extends DockManager {
 
         if (myCurrentOverContainer == null && over != null) {
           myCurrentOverContainer = over;
-          myCurrentOverContainer.startDropOver(myContent, point);
+          img = myCurrentOverContainer.startDropOver(myContent, point);
         }
 
         if (myCurrentOverContainer != null) {
-          myCurrentOverContainer.processDropOver(myContent, point);
+          img = myCurrentOverContainer.processDropOver(myContent, point);
+        }
+
+        if (img == null) {
+          img = myDefaultDragImage;
+        }
+
+        if (img != myDragImage) {
+          myDragImage = img;
+          myImageContainer.setIcon(new ImageIcon(myDragImage));
+          myWindow.pack();
         }
 
         setLocationFrom(e);

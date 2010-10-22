@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.awt.RelativePoint;
 
 import java.awt.*;
 
@@ -42,4 +43,5 @@ public abstract class TabLayout {
     return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
   }
 
+  public abstract int getDropIndexFor(Point point);
 }

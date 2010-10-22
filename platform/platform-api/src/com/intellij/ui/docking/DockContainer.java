@@ -18,8 +18,10 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface DockContainer extends Disposable {
 
@@ -36,8 +38,13 @@ public interface DockContainer extends Disposable {
 
   boolean isEmpty();
 
-  void startDropOver(DockableContent content, RelativePoint point);
-  void processDropOver(DockableContent content, RelativePoint point);
+  @Nullable
+  Image startDropOver(DockableContent content, RelativePoint point);
+
+  @Nullable
+  Image processDropOver(DockableContent content, RelativePoint point);
+
+  @Nullable
   void resetDropOver(DockableContent content);
 
 

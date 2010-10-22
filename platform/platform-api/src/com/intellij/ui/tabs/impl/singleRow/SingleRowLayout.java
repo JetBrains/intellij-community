@@ -17,7 +17,6 @@ package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,14 +93,14 @@ public class SingleRowLayout extends TabLayout {
     return null;
   }
 
-  private boolean checkLayoutLabels() {
+  private boolean checkLayoutLabels(SingleRowPassInfo data) {
   boolean layoutLabels = true;
 
     if (!myTabs.myForcedRelayout &&
         myLastSingRowLayout != null &&
         myLastSingRowLayout.contentCount == myTabs.getTabCount() &&
         myLastSingRowLayout.laayoutSize.equals(myTabs.getSize())) {
-      for (TabInfo each : myTabs.myVisibleInfos) {
+      for (TabInfo each : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
         if (!eachLabel.isValid()) {
           break;
@@ -117,12 +116,12 @@ public class SingleRowLayout extends TabLayout {
     return layoutLabels;
   }
 
-  public LayoutPassInfo layoutSingleRow() {
-    SingleRowPassInfo data = new SingleRowPassInfo(this);
+  public LayoutPassInfo layoutSingleRow(java.util.List<TabInfo> visibleInfos)  {
+    SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
     final TabInfo selected = myTabs.getSelectedInfo();
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
 
-    final boolean layoutLabels = checkLayoutLabels();
+    final boolean layoutLabels = checkLayoutLabels(data);
     if (!layoutLabels) {
       data = myLastSingRowLayout;
     }
@@ -153,10 +152,10 @@ public class SingleRowLayout extends TabLayout {
       getStrategy().layoutComp(data);
     }
 
-    if (data.toLayout.size() > 0 && myTabs.myVisibleInfos.size() > 0) {
-      final int left = myTabs.myVisibleInfos.indexOf(data.toLayout.get(0));
-      final int right = myTabs.myVisibleInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
-      myMoreIcon.setPaintedIcons(left > 0, right < myTabs.myVisibleInfos.size() - 1);
+    if (data.toLayout.size() > 0 && data.myVisibleInfos.size() > 0) {
+      final int left = data.myVisibleInfos.indexOf(data.toLayout.get(0));
+      final int right = data.myVisibleInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
+      myMoreIcon.setPaintedIcons(left > 0, right < data.myVisibleInfos.size() - 1);
     }
     else {
       myMoreIcon.setPaintedIcons(false, false);
@@ -241,7 +240,7 @@ public class SingleRowLayout extends TabLayout {
       data.toFitLength -= myTabs.getGhostTabLength() * 2;
     }
                                 
-    for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+    for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize());
       data.toLayout.add(eachInfo);
     }
@@ -278,10 +277,10 @@ public class SingleRowLayout extends TabLayout {
       }
     }
 
-    for (int i = 1; i < myTabs.myVisibleInfos.size() - 1; i++) {
-      final TabInfo each = myTabs.myVisibleInfos.get(i);
-      final TabInfo prev = myTabs.myVisibleInfos.get(i - 1);
-      final TabInfo next = myTabs.myVisibleInfos.get(i + 1);
+    for (int i = 1; i < data.myVisibleInfos.size() - 1; i++) {
+      final TabInfo each = data.myVisibleInfos.get(i);
+      final TabInfo prev = data.myVisibleInfos.get(i - 1);
+      final TabInfo next = data.myVisibleInfos.get(i + 1);
 
       if (data.toLayout.contains(each) && data.toDrop.contains(prev)) {
         myLeftGhost.setInfo(prev);
@@ -344,5 +343,18 @@ public class SingleRowLayout extends TabLayout {
         data.toFitLength -= myTabs.getGhostTabLength();
       }
     }
+  }
+
+  @Override
+  public int getDropIndexFor(Point point) {
+    if (myLastSingRowLayout == null) return -1;
+
+    Component c = myTabs.getComponentAt(point);
+    if (c instanceof TabLabel) {
+      TabInfo info = ((TabLabel)c).getInfo();
+      return myLastSingRowLayout.myVisibleInfos.indexOf(info);
+    }
+
+    return -1;
   }
 }

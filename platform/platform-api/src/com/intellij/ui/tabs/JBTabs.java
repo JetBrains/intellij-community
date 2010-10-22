@@ -121,7 +121,7 @@ public interface JBTabs extends SwitchProvider {
   Image getComponentImage(TabInfo info);
 
   void resetDropOver(TabInfo tabInfo);
-  void startDropOver(TabInfo tabInfo, RelativePoint point);
+  Image startDropOver(TabInfo tabInfo, RelativePoint point);
   void processDropOver(TabInfo over, RelativePoint point);
 
   boolean isEmptyVisible();

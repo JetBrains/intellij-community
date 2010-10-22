@@ -21,6 +21,13 @@ import java.awt.*;
 import java.util.List;
 
 public abstract class LayoutPassInfo {
+
+  public java.util.List<TabInfo> myVisibleInfos;
+
+  protected LayoutPassInfo(List<TabInfo> visibleInfos) {
+    myVisibleInfos = visibleInfos;
+  }
+
   public abstract TabInfo getPreviousFor(TabInfo info);
 
   public abstract TabInfo getNextFor(TabInfo info);

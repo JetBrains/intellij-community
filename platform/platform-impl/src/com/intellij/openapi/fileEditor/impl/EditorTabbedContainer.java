@@ -506,7 +506,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       myFile = (VirtualFile)info.getObject();
       Presentation presentation = new Presentation(info.getText());
       presentation.setIcon(info.getIcon());
-      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile, presentation));
+      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile, presentation, myWindow));
     }
 
     private DockManager getDockManager() {
@@ -532,13 +532,15 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       final Image myImg;
       private DockableEditorTabbedContainer myContainer;
       private Presentation myPresentation;
+      private EditorWindow myEditorWindow;
 
 
-      public DockableEditor(Image img, VirtualFile file, Presentation presentation) {
+      public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
         myImg = img;
         myFile = file;
         myPresentation = presentation;
         myContainer = new DockableEditorTabbedContainer(myProject);
+        myEditorWindow = window;
       }
 
       @Override
@@ -559,6 +561,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       @Override
       public DockContainerFactory getContainerFactory() {
         return myContainer;
+      }
+
+      public EditorWindow getEditorWindow() {
+        return myEditorWindow;
       }
 
       @Override

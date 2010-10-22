@@ -29,8 +29,10 @@ import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 class DockableEditorTabbedContainer implements DockContainerFactory, DockContainer {
@@ -41,6 +43,7 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
   private CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
 
   private JBTabs myCurrentOver;
+  private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
 
   private boolean myDisposeWhenEmpty;
@@ -93,7 +96,17 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
   @Override
   public boolean canAccept(DockableContent content, RelativePoint point) {
-    return content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor;
+    if (content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor) {
+      EditorTabbedContainer.MyDragOutDelegate.DockableEditor editor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
+
+      JBTabs targetTabs = mySplitters.getTabsAt(point);
+      if (targetTabs != null) {
+        EditorWindow targetWindow = EditorWindow.DATA_KEY.getData(targetTabs.getDataProvider());
+        if (targetWindow != editor.getEditorWindow()) return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -105,18 +118,27 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
     VirtualFile file = ((EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content).getFile();
 
+
     if (window == null) {
       window = mySplitters.getOrCreateCurrentWindow(file);
     }
+
+
+    if (myCurrentOver != null) {
+      int index = ((JBTabsImpl)myCurrentOver).getDropInfoIndex();
+      file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+    }
+
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
   }
 
   @Override
-  public void startDropOver(DockableContent content, RelativePoint point) {
+  public Image startDropOver(DockableContent content, RelativePoint point) {
+    return null;
   }
 
   @Override
-  public void processDropOver(DockableContent content, RelativePoint point) {
+  public Image processDropOver(DockableContent content, RelativePoint point) {
     JBTabs current = mySplitters.getTabsAt(point);
     if (myCurrentOver != null && myCurrentOver != current) {
       resetDropOver(content);
@@ -125,13 +147,15 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
     if (myCurrentOver == null && current != null) {
       myCurrentOver = current;
       Presentation presentation = content.getPresentation();
-      myCurrentOverInfo = new TabInfo(null).setText(presentation.getText()).setIcon(presentation.getIcon());
-      myCurrentOver.startDropOver(myCurrentOverInfo, point);
+      myCurrentOverInfo = new TabInfo(new JLabel("")).setText(presentation.getText()).setIcon(presentation.getIcon());
+      myCurrentOverImg = myCurrentOver.startDropOver(myCurrentOverInfo, point);
     }
 
     if (myCurrentOver != null) {
       myCurrentOver.processDropOver(myCurrentOverInfo, point);
     }
+
+    return myCurrentOverImg;
   }
 
   @Override
@@ -140,6 +164,7 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
       myCurrentOver.resetDropOver(myCurrentOverInfo);
       myCurrentOver = null;
       myCurrentOverInfo = null;
+      myCurrentOverImg = null;
     }
   }
 

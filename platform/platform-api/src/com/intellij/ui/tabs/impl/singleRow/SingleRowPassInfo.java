@@ -51,7 +51,9 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public JComponent comp;
   public Rectangle tabRectangle;
 
-  public SingleRowPassInfo(SingleRowLayout layout) {
+
+  public SingleRowPassInfo(SingleRowLayout layout, java.util.List<TabInfo> visibleInfos) {
+    super(visibleInfos);
     myTabs = layout.myTabs;
     laayoutSize = layout.myTabs.getSize();
     contentCount = myTabs.getTabCount();
@@ -61,11 +63,11 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   }
 
   public TabInfo getPreviousFor(final TabInfo info) {
-    return getPrevious(myTabs.myVisibleInfos, myTabs.myVisibleInfos.indexOf(info));
+    return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
   public TabInfo getNextFor(final TabInfo info) {
-    return getNext(myTabs.myVisibleInfos, myTabs.myVisibleInfos.indexOf(info));
+    return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
   public int getRowCount() {
@@ -73,11 +75,11 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   }
 
   public int getColumnCount(final int row) {
-    return myTabs.myVisibleInfos.size();
+    return myVisibleInfos.size();
   }
 
   public TabInfo getTabAt(final int row, final int column) {
-    return myTabs.myVisibleInfos.get(column);
+    return myVisibleInfos.get(column);
   }
 
   public Rectangle getHeaderRectangle() {
