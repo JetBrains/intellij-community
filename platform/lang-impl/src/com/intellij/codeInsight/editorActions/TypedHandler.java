@@ -189,7 +189,7 @@ public class TypedHandler implements TypedActionHandler {
           if (handleRParen(editor, fileType, charTyped)) return;
         }
       }
-      else if ('"' == charTyped || '\'' == charTyped) {
+      else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped) {
         if (handleQuote(editor, charTyped, dataContext, file)) return;
       }
     }
