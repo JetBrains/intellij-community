@@ -162,7 +162,7 @@ public class ImplementAbstractMethodHandler {
     }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  static PsiClass addClassInitializer(PsiEnumConstant enumConstant) {
+  public static PsiClass addClassInitializer(PsiEnumConstant enumConstant) {
     final PsiEnumConstant constantFromText = JavaPsiFacade.getElementFactory(enumConstant.getProject()).createEnumConstantFromText(
       enumConstant.getName() + "{}", enumConstant);
     final PsiEnumConstant replace = (PsiEnumConstant)enumConstant.replace(constantFromText);

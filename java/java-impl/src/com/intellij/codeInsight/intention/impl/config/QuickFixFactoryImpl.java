@@ -60,6 +60,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new ImplementMethodsFix(aClass);
   }
 
+  public IntentionAction createImplementMethodsFix(@NotNull PsiElement psiElement) {
+    return new ImplementMethodsFix(psiElement);
+  }
+
   public IntentionAction createMethodThrowsFix(@NotNull PsiMethod method,
                                                @NotNull PsiClassType exceptionClass,
                                                boolean shouldThrow,
