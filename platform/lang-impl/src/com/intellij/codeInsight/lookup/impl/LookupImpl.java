@@ -853,10 +853,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final String newPrefix = presentPrefix + afterCaret;
     myModel.retainMatchingItems(newPrefix);
     myAdditionalPrefix = "";
-    refreshUi();
 
     offset += afterCaret.length();
     myEditor.getCaretModel().moveToOffset(offset);
+    refreshUi();
   }
 
   @Nullable
