@@ -204,27 +204,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
-    }
 
-    StartupUtil.addExternalInstanceListener(new Consumer<List<String>>() {
-      @Override
-      public void consume(final List<String> args) {
-        invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final Project project = CommandLineProcessor.processExternalCommandLine(args);
-            final IdeFrame frame;
-            if (project != null) {
-              frame = WindowManager.getInstance().getIdeFrame(project);
+      StartupUtil.addExternalInstanceListener(new Consumer<List<String>>() {
+        @Override
+        public void consume(final List<String> args) {
+          invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final Project project = CommandLineProcessor.processExternalCommandLine(args);
+              final IdeFrame frame;
+              if (project != null) {
+                frame = WindowManager.getInstance().getIdeFrame(project);
+              }
+              else {
+                frame = WindowManager.getInstance().getAllFrames() [0];
+              }
+              ((IdeFrameImpl)frame).requestFocus();
             }
-            else {
-              frame = WindowManager.getInstance().getAllFrames() [0];
-            }
-            ((IdeFrameImpl)frame).requestFocus();
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
   }
 
   private void registerShutdownHook() {
