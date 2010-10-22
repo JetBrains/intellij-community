@@ -326,5 +326,7 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
+
+    <sourceRootFinder implementation="com.intellij.ide.util.newProjectWizard.JavaSourceRootFinder"/>
   </extensions>
 </idea-plugin>

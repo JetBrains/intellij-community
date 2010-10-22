@@ -19,7 +19,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
@@ -42,10 +42,10 @@ import java.util.List;
 public class JavaUtil {
   private JavaUtil() { }
 
-  public static List<Pair<File,String>> suggestRoots(File dir) {
+  public static List<Pair<File,String>> suggestRoots(File dir, LanguageFileType fileType) {
     ArrayList<Pair<File,String>> foundDirectories = new ArrayList<Pair<File, String>>();
     try{
-      suggestRootsImpl(dir, dir, foundDirectories);
+      suggestRootsImpl(dir, dir, foundDirectories, fileType);
     }
     catch(PathFoundException ignore){
     }
@@ -60,7 +60,10 @@ public class JavaUtil {
     }
   }
 
-  private static void suggestRootsImpl(File base, File dir, ArrayList<? super Pair<File, String>> foundDirectories) throws PathFoundException {
+  private static void suggestRootsImpl(File base,
+                                       File dir,
+                                       ArrayList<? super Pair<File, String>> foundDirectories,
+                                       LanguageFileType fileType) throws PathFoundException {
     if (!dir.isDirectory()) {
       return;
     }
@@ -83,7 +86,7 @@ public class JavaUtil {
     for (File child : list) {
       if (child.isFile()) {
         FileType type = typeManager.getFileTypeByFileName(child.getName());
-        if (StdFileTypes.JAVA == type) {
+        if (fileType == type) {
           if (progressIndicator != null && progressIndicator.isCanceled()) {
             return;
           }
@@ -108,7 +111,7 @@ public class JavaUtil {
     for (File child : list) {
       if (child.isDirectory()) {
         try {
-          suggestRootsImpl(base, child, foundDirectories);
+          suggestRootsImpl(base, child, foundDirectories, fileType);
         }
         catch (PathFoundException found) {
           if (!found.myDirectory.equals(child)) {

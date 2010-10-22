@@ -285,6 +285,8 @@
     <stacktrace.fold substring="at org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods." negate="true"/>
     <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport." negate="true"/>
 
+    <sourceRootFinder implementation="org.jetbrains.plugins.groovy.GroovySourceRootFinder"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
