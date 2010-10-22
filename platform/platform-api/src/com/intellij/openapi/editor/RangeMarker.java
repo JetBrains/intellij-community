@@ -89,4 +89,6 @@ public interface RangeMarker extends UserDataHolder{
 
   boolean isGreedyToRight();
   boolean isGreedyToLeft();
+
+  void dispose();
 }

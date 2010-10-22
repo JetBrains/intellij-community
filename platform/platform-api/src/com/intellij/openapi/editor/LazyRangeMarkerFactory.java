@@ -138,6 +138,11 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     public boolean isGreedyToLeft() {
       return ensureDelegate().isGreedyToLeft();
     }
+
+    @Override
+    public void dispose() {
+      ensureDelegate().dispose();
+    }
   }
 
   private static class OffsetLazyMarker extends LazyMarker {

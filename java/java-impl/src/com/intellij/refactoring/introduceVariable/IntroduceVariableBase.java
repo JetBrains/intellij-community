@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -462,6 +463,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
+        final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
@@ -474,7 +476,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-                  new VariableInplaceRenamer(elementToRename, editor).performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
+                  new VariableInplaceRenamer(elementToRename, editor)
+                    .performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), exprMarker);
                 }
               }
             }

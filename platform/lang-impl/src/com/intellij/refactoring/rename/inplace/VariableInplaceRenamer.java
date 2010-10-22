@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -38,6 +39,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,10 +96,10 @@ public class VariableInplaceRenamer {
   }
 
   public boolean performInplaceRename() {
-    return performInplaceRename(true, null);
+    return performInplaceRename(true, null, null);
   }
 
-  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
+  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions, final RangeMarker offsetAfter) {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
@@ -215,10 +217,22 @@ public class VariableInplaceRenamer {
                 if (myNewName != null) {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
+                if (offsetAfter != null) {
+                  int startOffset = offsetAfter.getStartOffset();
+                  final PsiReference referenceAt = containingFile.findReferenceAt(startOffset);
+                  if (referenceAt != null) {
+                    startOffset = referenceAt.getElement().getTextRange().getEndOffset();
+                  }
+                  myEditor.getCaretModel().moveToOffset(startOffset);
+                  offsetAfter.dispose();
+                }
               }
 
               public void templateCancelled(Template template) {
                 finish();
+                if (offsetAfter != null) {
+                  offsetAfter.dispose();
+                }
               }
             });
 
