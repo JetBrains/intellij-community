@@ -143,7 +143,7 @@ public class NullityInferrer {
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
-        if (!myAnnotateLocalVariables && element instanceof PsiLocalVariable) continue;
+        if (shouldIgnore(element)) continue;
         new AddAnnotationFix(AnnotationUtil.NULLABLE, element, AnnotationUtil.NOT_NULL).invoke(project, null, element.getContainingFile());
       }
     }
@@ -151,10 +151,18 @@ public class NullityInferrer {
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
-        if (!myAnnotateLocalVariables && element instanceof PsiLocalVariable) continue;
+        if (shouldIgnore(element)) continue;
         new AddAnnotationFix(AnnotationUtil.NOT_NULL, element, AnnotationUtil.NULLABLE).invoke(project, null, element.getContainingFile());
       }
     }
+  }
+
+  private boolean shouldIgnore(PsiModifierListOwner element) {
+    if (!myAnnotateLocalVariables){
+      if (element instanceof PsiLocalVariable) return true;
+      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiForeachStatement) return true;
+    }
+    return false;
   }
 
   private void registerNullableAnnotation(@NotNull PsiModifierListOwner method) {
@@ -420,7 +428,7 @@ public class NullityInferrer {
           isNotNull(parameter) || isNullable(parameter)) {
         return;
       }
-      final PsiElement grandParent = parameter.getParent().getParent();
+      final PsiElement grandParent = parameter.getDeclarationScope();
       if (grandParent instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)grandParent;
         if (method.getBody() != null) {
@@ -429,50 +437,8 @@ public class NullityInferrer {
             final PsiElement place = reference.getElement();
             if (place instanceof PsiReferenceExpression) {
               final PsiReferenceExpression expr = (PsiReferenceExpression)place;
-              if (PsiUtil.isAccessedForWriting(expr)) return;
               final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
-              if (parent instanceof PsiBinaryExpression) {   //todo check if comparison operation
-                PsiExpression opposite = null;
-                final PsiExpression lOperand = ((PsiBinaryExpression)parent).getLOperand();
-                final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
-                if (lOperand == expr) {
-                  opposite = rOperand;
-                }
-                else if (rOperand == expr) {
-                  opposite = lOperand;
-                }
-                if (opposite != null && opposite.getType() == PsiType.NULL) {
-                  registerNullableAnnotation(parameter);
-                  return;
-                }
-              }
-              else if (parent instanceof PsiReferenceExpression) {
-                if (((PsiReferenceExpression)parent).getQualifierExpression() == expr) {
-                  registerNotNullAnnotation(parameter);
-                  return;
-                }
-              }
-              else if (parent instanceof PsiAssignmentExpression) {
-                if (((PsiAssignmentExpression)parent).getRExpression() == expr) {
-                  final PsiExpression expression = ((PsiAssignmentExpression)parent).getLExpression();
-                  if (expression instanceof PsiReferenceExpression) {
-                    final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-                    if (resolve instanceof PsiVariable) {
-                      final PsiVariable localVar = (PsiVariable)resolve;
-                      if (isNotNull(localVar)) {
-                        registerNotNullAnnotation(parameter);
-                        return;
-                      }
-                    }
-                  }
-                }
-              } else if (parent instanceof PsiForeachStatement) {
-                if (((PsiForeachStatement)parent).getIteratedValue() == expr) {
-                  registerNotNullAnnotation(parameter);
-                  return;
-                }
-              }
-
+              if (processParameter(parameter, expr, parent)) return;
               if (isNotNull(method)) {
                 PsiElement toReturn = parent;
                 if (parent instanceof PsiConditionalExpression &&
@@ -484,29 +450,17 @@ public class NullityInferrer {
                   return;
                 }
               }
-
-              final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
-              if (call != null) {
-                final PsiExpressionList argumentList = call.getArgumentList();
-                if (argumentList != null) {
-                  final PsiExpression[] args = argumentList.getExpressions();
-                  int idx = ArrayUtil.find(args, expr);
-                  if (idx >= 0) {
-                    final PsiMethod resolvedMethod = call.resolveMethod();
-                    if (resolvedMethod != null) {
-                      final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-                      if (idx < parameters.length) { //not vararg
-                        final PsiParameter resolvedToParam = parameters[idx];
-                        if (isNotNull(resolvedToParam) && !resolvedToParam.isVarArgs()) {
-                          registerNotNullAnnotation(parameter);
-                          return;
-                        }
-                      }
-                    }
-                  }
-                }
-              }
             }
+          }
+        }
+      }
+      else if (grandParent instanceof PsiForeachStatement) {
+        for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent))) {
+          final PsiElement place = reference.getElement();
+          if (place instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression expr = (PsiReferenceExpression)place;
+            final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
+            if (processParameter(parameter, expr, parent)) return;
           }
         }
       }
@@ -518,6 +472,74 @@ public class NullityInferrer {
           registerNullableAnnotation(parameter);
         }
       }
+    }
+
+    private boolean processParameter(PsiParameter parameter, PsiReferenceExpression expr, PsiElement parent) {
+      if (PsiUtil.isAccessedForWriting(expr)) return true;
+      if (parent instanceof PsiBinaryExpression) {   //todo check if comparison operation
+        PsiExpression opposite = null;
+        final PsiExpression lOperand = ((PsiBinaryExpression)parent).getLOperand();
+        final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+        if (lOperand == expr) {
+          opposite = rOperand;
+        }
+        else if (rOperand == expr) {
+          opposite = lOperand;
+        }
+        if (opposite != null && opposite.getType() == PsiType.NULL) {
+          registerNullableAnnotation(parameter);
+          return true;
+        }
+      }
+      else if (parent instanceof PsiReferenceExpression) {
+        if (((PsiReferenceExpression)parent).getQualifierExpression() == expr) {
+          registerNotNullAnnotation(parameter);
+          return true;
+        }
+      }
+      else if (parent instanceof PsiAssignmentExpression) {
+        if (((PsiAssignmentExpression)parent).getRExpression() == expr) {
+          final PsiExpression expression = ((PsiAssignmentExpression)parent).getLExpression();
+          if (expression instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+            if (resolve instanceof PsiVariable) {
+              final PsiVariable localVar = (PsiVariable)resolve;
+              if (isNotNull(localVar)) {
+                registerNotNullAnnotation(parameter);
+                return true;
+              }
+            }
+          }
+        }
+      } else if (parent instanceof PsiForeachStatement) {
+        if (((PsiForeachStatement)parent).getIteratedValue() == expr) {
+          registerNotNullAnnotation(parameter);
+          return true;
+        }
+      }
+
+      final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
+      if (call != null) {
+        final PsiExpressionList argumentList = call.getArgumentList();
+        if (argumentList != null) {
+          final PsiExpression[] args = argumentList.getExpressions();
+          int idx = ArrayUtil.find(args, expr);
+          if (idx >= 0) {
+            final PsiMethod resolvedMethod = call.resolveMethod();
+            if (resolvedMethod != null) {
+              final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
+              if (idx < parameters.length) { //not vararg
+                final PsiParameter resolvedToParam = parameters[idx];
+                if (isNotNull(resolvedToParam) && !resolvedToParam.isVarArgs()) {
+                  registerNotNullAnnotation(parameter);
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+      return false;
     }
 
     @Override
