@@ -19,7 +19,7 @@ import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import org.jetbrains.annotations.Nls;
 
@@ -30,14 +30,13 @@ import javax.swing.*;
  */
 public class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
-  private LangScriptingContextProvider myProvider;
   private ScriptingLibraryManager myLibManager;
+  private LangScriptingContextProvider myProvider;
 
-  public LangScriptingContextConfigurable(ScriptingLibraryManager libManager, LangScriptingContextProvider provider) {
-    LibraryTable libTable = libManager.getLibraryTable();
-    myPanel = new ScriptingLibrariesPanel(provider, libManager.getProject(), libTable);
+  public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
+    myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
+    myPanel = new ScriptingLibrariesPanel(provider, project, myLibManager);
     myProvider = provider;
-    myLibManager = libManager;
   }
 
   @Nls
@@ -71,16 +70,16 @@ public class LangScriptingContextConfigurable implements Configurable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        myLibManager.commitModel();
-        myPanel.resetTable(myLibManager.getLibraryTable());
+        myLibManager.commitChanges();
+        myPanel.resetTable();
       }
     });
   }
 
   @Override
   public void reset() {
-    myLibManager.resetModel();
-    myPanel.resetTable(myLibManager.getLibraryTable());
+    myLibManager.dropChanges();
+    myPanel.resetTable();
   }
 
   @Override

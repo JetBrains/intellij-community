@@ -19,7 +19,7 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
@@ -43,9 +43,9 @@ public class ScriptingLibrariesPanel {
   private Project myProject;
   private LangScriptingContextProvider myProvider;
 
-  public ScriptingLibrariesPanel(LangScriptingContextProvider provider, Project project, LibraryTable libTable) {
+  public ScriptingLibrariesPanel(LangScriptingContextProvider provider, Project project, ScriptingLibraryManager libraryManager) {
     myProvider = provider;
-    myLibTableModel = new ScriptingLibraryTableModel(libTable, provider.getLibraryType());
+    myLibTableModel = new ScriptingLibraryTableModel(libraryManager);
     myLibraryTable.setModel(myLibTableModel);
     myAddLibraryButton.addActionListener(new ActionListener(){
       @Override
@@ -67,9 +67,6 @@ public class ScriptingLibrariesPanel {
         editLibrary(mySelectedLibName);
       }
     });
-    if (libTable == null) {
-      myAddLibraryButton.setEnabled(false);
-    }
     myRemoveLibraryButton.setEnabled(false);
     myEditLibraryButton.setEnabled(false);
     myLibraryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -99,7 +96,7 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      myLibTableModel.createLibrary(editLibDialog.getLibName(), myProvider.getLibraryType(), editLibDialog.getFiles());
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
     }
   }
 
@@ -107,8 +104,8 @@ public class ScriptingLibrariesPanel {
     return myLibTableModel.isChanged();
   }
 
-  public void resetTable(LibraryTable libTable) {
-    myLibTableModel.resetTable(libTable);
+  public void resetTable() {
+    myLibTableModel.resetTable();
   }
 
   private void onSelectionChange() {
@@ -132,7 +129,7 @@ public class ScriptingLibrariesPanel {
       editLibDialog.show();
       if (editLibDialog.isOK()) {
         removeLibrary(lib.getName());
-        myLibTableModel.createLibrary(editLibDialog.getLibName(), myProvider.getLibraryType(), editLibDialog.getFiles());
+        myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
       }
     }
   }

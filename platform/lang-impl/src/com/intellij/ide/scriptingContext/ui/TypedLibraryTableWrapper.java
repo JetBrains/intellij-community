@@ -17,11 +17,12 @@ package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -29,24 +30,23 @@ import java.util.List;
  */
 public class TypedLibraryTableWrapper {
 
-  private LibraryTable myLibraryTable;
-  private LibraryType myLibraryType;
   private Library[] myLibs;
   private boolean myIsUpdated;
+  private ScriptingLibraryManager myLibraryManager;
 
-  public TypedLibraryTableWrapper(LibraryTable libraryTable, LibraryType libraryType) {
-    myLibraryTable = libraryTable;
-    myLibraryType = libraryType;
+  public TypedLibraryTableWrapper(ScriptingLibraryManager libraryManager) {
+    myLibraryManager = libraryManager;
     myLibs = getLibraries();
     myIsUpdated = false;
   }
 
   private Library[] getLibraries() {
     List<Library> libs = new ArrayList<Library>();
-    for (Library library : myLibraryTable.getLibraries()) {
+    for (Iterator<Library> libIterator = myLibraryManager.getModelLibraryIterator(); libIterator != null && libIterator.hasNext();) {
+      Library library = libIterator.next();
       if (library instanceof LibraryEx) {
         LibraryType libraryType = ((LibraryEx)library).getType();
-        if (libraryType != null && libraryType.equals(myLibraryType)) {
+        if (libraryType != null && libraryType.equals(myLibraryManager.getLibraryType())) {
           libs.add(library);
         }
       }
@@ -73,15 +73,14 @@ public class TypedLibraryTableWrapper {
 
   @Nullable
   public Library getLibraryByName(String name) {
-    Library library = myLibraryTable.getLibraryByName(name);
-    if (library instanceof  LibraryEx && ((LibraryEx)library).getType().equals(myLibraryType)) {
-      return library;
+    for (Library library : myLibs) {
+      if (library.getName().equals(name) &&
+          library instanceof LibraryEx &&
+          ((LibraryEx)library).getType().equals(myLibraryManager.getLibraryType())) {
+        return library;
+      }
     }
     return null;
-  }
-
-  public void removeLibrary(Library libToRemove) {
-    myLibraryTable.removeLibrary(libToRemove);
   }
 
   public boolean isUpdated() {

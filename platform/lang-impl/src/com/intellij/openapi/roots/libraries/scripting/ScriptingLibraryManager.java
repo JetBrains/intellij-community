@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.roots.libraries.scripting;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 /**
  * @author Rustam Vishnyakov
@@ -31,68 +33,77 @@ public class ScriptingLibraryManager {
 
   public enum LibraryLevel {GLOBAL, PROJECT}
 
-  public static final String WEB_MODULE_TYPE = "WEB_MODULE";
-
-  private ModifiableRootModel myRootModel;
   private Project myProject;
   private LibraryLevel myLibLevel = LibraryLevel.PROJECT;
+  private LibraryTableBase.ModifiableModelEx myLibTableModel;
+  private LibraryType myLibraryType;
 
-  public ScriptingLibraryManager(Project project) {
-    this(LibraryLevel.GLOBAL, project);
+  public ScriptingLibraryManager(Project project, LibraryType libraryType) {
+    this(LibraryLevel.GLOBAL, project, libraryType);
   }
 
-  public ScriptingLibraryManager(LibraryLevel libLevel, Project project) {
+  public ScriptingLibraryManager(LibraryLevel libLevel, Project project, LibraryType libraryType) {
     myProject = project;
     myLibLevel = libLevel;
-    myRootModel = getRootModel(libLevel, project);
+    myLibraryType = libraryType;
+  }
+
+  public void commitChanges() {
+    if (myLibTableModel != null) {
+      myLibTableModel.commit();
+    }
+    if (myLibLevel == LibraryLevel.GLOBAL) {
+      ModuleManager.getInstance(myProject).getModifiableModel().commit();
+    }
+  }
+
+  public void dropChanges() {
+    myLibTableModel = null;
   }
 
   @Nullable
-  private static ModifiableRootModel getRootModel(LibraryLevel libraryLevel, Project project) {
-    switch (libraryLevel) {
-      case PROJECT:
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          if (WEB_MODULE_TYPE.equals(module.getModuleType().getId())) {
-            return ModuleRootManager.getInstance(module).getModifiableModel();
-          }
-        }
-        break;
-      case GLOBAL:
-        return null;
+  public Library createLibrary(String name) {
+    if (ensureModel()) {
+      return myLibTableModel.createLibrary(name, myLibraryType);
     }
     return null;
   }
 
-  public void disposeModel() {
-    if (myRootModel != null && !myRootModel.isDisposed()) {
-      myRootModel.dispose();
-      myRootModel = null;
+  public void removeLibrary(Library library) {
+    if (ensureModel()) {
+      myLibTableModel.removeLibrary(library);
     }
-  }
-
-  public void commitModel() {
-    if (myLibLevel == LibraryLevel.GLOBAL) {
-      ModuleManager.getInstance(myProject).getModifiableModel().commit();
-      return;
-    }
-    if (myRootModel != null && !myRootModel.isDisposed()) {
-      myRootModel.commit();
-      resetModel();
-    }
-  }
-
-  public void resetModel() {
-    disposeModel();
-    myRootModel = getRootModel(myLibLevel, myProject);
   }
 
   @Nullable
-  public LibraryTable getLibraryTable(boolean readOnly) {
-    if (!readOnly && myLibLevel == LibraryLevel.PROJECT) {
-      return myRootModel != null ? myRootModel.getModuleLibraryTable() : null;
+  public Iterator<Library> getModelLibraryIterator() {
+    if (ensureModel()) {
+      return myLibTableModel.getLibraryIterator();
     }
+    return null;
+  }
+
+  public boolean ensureModel() {
+    if (myLibTableModel == null) {
+      LibraryTable libTable = getLibraryTable();
+      if (libTable != null) {
+        myLibTableModel = (LibraryTableBase.ModifiableModelEx)libTable.getModifiableModel();
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public LibraryTable getLibraryTable() {
+    return getLibraryTable(myProject, myLibLevel);
+  }
+
+  @Nullable
+  public static LibraryTable getLibraryTable(Project project, LibraryLevel libraryLevel) {
     String libLevel = null;
-    switch (myLibLevel) {
+    switch (libraryLevel) {
       case PROJECT:
         libLevel = LibraryTablesRegistrar.PROJECT_LEVEL;
         break;
@@ -101,17 +112,16 @@ public class ScriptingLibraryManager {
         break;
     }
     if (libLevel != null) {
-      return LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libLevel, myProject);
+      return LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libLevel, project);
     }
     return null;
   }
 
-  @Nullable
-  public LibraryTable getLibraryTable() {
-    return getLibraryTable(false);
-  }
-
   public Project getProject() {
     return myProject;
+  }
+
+  public LibraryType getLibraryType() {
+    return myLibraryType;
   }
 }

@@ -31,13 +31,11 @@ import java.util.ArrayList;
 public class ScriptingContextsConfigurable implements Configurable, Configurable.Composite {
 
   private MainScriptingContextsPanel myPanel;
-  private String myLangNames;
-  private ScriptingLibraryManager myLibManager;
+  private Project myProject;
 
   public ScriptingContextsConfigurable(Project project) {
     myPanel = new MainScriptingContextsPanel();
-    myLangNames = getLangNames();
-    myLibManager = new ScriptingLibraryManager(project);
+    myProject = project;
   }
 
   @Nls
@@ -63,40 +61,29 @@ public class ScriptingContextsConfigurable implements Configurable, Configurable
 
   @Override
   public boolean isModified() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myLibManager.commitModel();
   }
 
   @Override
   public void reset() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public void disposeUIResources() {
-    myLibManager.disposeModel();
   }
 
   @Override
   public Configurable[] getConfigurables() {
     ArrayList<LangScriptingContextConfigurable> configurables = new ArrayList<LangScriptingContextConfigurable>();
     for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
-      configurables.add(new LangScriptingContextConfigurable(myLibManager, provider));
+      configurables.add(new LangScriptingContextConfigurable(myProject, provider));
     }
     return configurables.toArray(new LangScriptingContextConfigurable[configurables.size()]);
   }
 
-  private static String getLangNames() {
-    StringBuffer buf = new StringBuffer();
-    for (LangScriptingContextProvider provider : LangScriptingContextProvider.getProviders()) {
-      buf.append(provider.getLanguage().getDisplayName()).append('/');
-    }
-    String result = buf.toString();
-    return result.substring(0, result.length() - 1);
-  }
 
 }

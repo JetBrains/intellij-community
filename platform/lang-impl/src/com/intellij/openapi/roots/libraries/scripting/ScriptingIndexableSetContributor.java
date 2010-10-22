@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -44,8 +45,7 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
   public Set<VirtualFile> getLibraryFiles(Project project) {
      final THashSet<VirtualFile> libFiles = new THashSet<VirtualFile>();
     if (project != null) {
-      ScriptingLibraryManager manager = new ScriptingLibraryManager(project);
-      LibraryTable libTable = manager.getLibraryTable(true);
+      LibraryTable libTable = ScriptingLibraryManager.getLibraryTable(project, ScriptingLibraryManager.LibraryLevel.GLOBAL);
       if (libTable != null) {
         for (Library lib : libTable.getLibraries()) {
           for (VirtualFile libFile : lib.getFiles(OrderRootType.SOURCES)) {
@@ -66,4 +66,6 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
   public abstract Set<VirtualFile> getPredefinedFilesToIndex();
 
   public abstract Key<String> getIndexKey();
+
+  public abstract LibraryType getLibraryType();
 }

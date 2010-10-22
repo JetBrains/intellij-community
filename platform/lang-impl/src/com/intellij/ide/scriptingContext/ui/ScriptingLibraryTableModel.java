@@ -17,11 +17,8 @@ package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,20 +33,15 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
 
   //private LibraryTable myLibTable;
   private TypedLibraryTableWrapper myTableWrapper;
-  private LibraryTableBase.ModifiableModelEx myLibTableModel;
-  private LibraryType myLibraryType;
+  private ScriptingLibraryManager myLibraryManager;
 
-  public ScriptingLibraryTableModel(LibraryTable libTable, LibraryType libraryType) {
-    LibraryTable.ModifiableModel model = libTable.getModifiableModel();
-    if (model instanceof LibraryTableBase.ModifiableModelEx) {
-      myTableWrapper = new TypedLibraryTableWrapper(libTable, libraryType);
-      myLibTableModel = (LibraryTableBase.ModifiableModelEx)model;
-      myLibraryType = libraryType;
-    }
+  public ScriptingLibraryTableModel(ScriptingLibraryManager libManager) {
+    myTableWrapper = new TypedLibraryTableWrapper(libManager);
+    myLibraryManager = libManager;
   }
 
-  public void resetTable(LibraryTable libTable) {
-    myTableWrapper = new TypedLibraryTableWrapper(libTable, myLibraryType);
+  public void resetTable() {
+    myTableWrapper = new TypedLibraryTableWrapper(myLibraryManager);
     fireTableDataChanged();
   }
 
@@ -84,18 +76,19 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     return "?";
   }
 
-  public void createLibrary(final String name, final LibraryType libType, final VirtualFile[] files) {
+  public void createLibrary(final String name, final VirtualFile[] files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        Library lib = myLibTableModel.createLibrary(name, libType);
-        Library.ModifiableModel libModel = lib.getModifiableModel();
-        for (VirtualFile file : files) {
-          libModel.addRoot(file, OrderRootType.CLASSES);
+        Library lib = myLibraryManager.createLibrary(name);
+        if (lib != null) {
+          Library.ModifiableModel libModel = lib.getModifiableModel();
+          for (VirtualFile file : files) {
+            libModel.addRoot(file, OrderRootType.CLASSES);
+          }
+          libModel.commit();
+          fireLibTableChanged();
         }
-        libModel.commit();
-        myLibTableModel.commit();
-        fireLibTableChanged();
       }
     });
   }
@@ -108,7 +101,7 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
   public void removeLibrary(String name) {
     Library libToRemove = myTableWrapper.getLibraryByName(name);
     if (libToRemove != null) {
-      myTableWrapper.removeLibrary(libToRemove);
+      myLibraryManager.removeLibrary(libToRemove);
       fireLibTableChanged();
     }
   }
