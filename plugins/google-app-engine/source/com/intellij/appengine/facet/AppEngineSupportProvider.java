@@ -275,6 +275,10 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     }
 
     @Override
+    public void wizardStepUpdated() {
+    }
+
+    @Override
     public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel, @Nullable Library library) {
       AppEngineSupportProvider.this.addSupport(module, rootModel, mySdkEditor.getPath(), PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
     }
@@ -284,7 +288,5 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     public JComponent getComponent() {
       return myMainPanel;
     }
-
   }
-
 }
