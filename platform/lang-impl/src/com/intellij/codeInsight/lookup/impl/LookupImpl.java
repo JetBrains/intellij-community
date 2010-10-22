@@ -272,8 +272,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       myReused = false;
     }
 
-    final Pair<List<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
-    final List<LookupElement> items = snapshot.first;
+    final Pair<LinkedHashSet<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
+    final LinkedHashSet<LookupElement> items = snapshot.first;
     checkMinPrefixLengthChanges(items);
 
     LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
@@ -290,7 +290,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       hasExactPrefixes = addExactPrefixItems(model, firstItems, items);
       addMostRelevantItems(model, firstItems, snapshot.second);
-      hasPreselectedItem = addPreselectedItem(model, firstItems, preselectedItem);
+      hasPreselectedItem = items.contains(preselectedItem) && addPreselectedItem(model, firstItems, preselectedItem);
       myPreferredItemsCount = firstItems.size();
 
       addRemainingItemsLexicographically(model, firstItems, items);
@@ -321,7 +321,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private void checkMinPrefixLengthChanges(List<LookupElement> items) {
+  private void checkMinPrefixLengthChanges(Collection<LookupElement> items) {
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
@@ -381,8 +381,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return p;
   }
 
-  private void addRemainingItemsLexicographically(DefaultListModel model, Set<LookupElement> firstItems, List<LookupElement> myItems) {
-    for (LookupElement item : myItems) {
+  private void addRemainingItemsLexicographically(DefaultListModel model, Set<LookupElement> firstItems, Collection<LookupElement> allItems) {
+    for (LookupElement item : allItems) {
       if (!firstItems.contains(item) && prefixMatches(item)) {
         model.addElement(item);
       }
@@ -415,7 +415,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private boolean addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems, final List<LookupElement> elements) {
+  private boolean addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<LookupElement> elements) {
     List<LookupElement> sorted = new SortedList<LookupElement>(new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
         //noinspection unchecked
@@ -853,7 +853,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final String newPrefix = presentPrefix + afterCaret;
     myModel.retainMatchingItems(newPrefix);
     myAdditionalPrefix = "";
-    updateList();
+    refreshUi();
 
     offset += afterCaret.length();
     myEditor.getCaretModel().moveToOffset(offset);
