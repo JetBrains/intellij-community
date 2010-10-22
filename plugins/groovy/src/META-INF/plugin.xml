@@ -45,6 +45,7 @@
     <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
 
     <extensionPoint name="groovyFrameworkConfigNotification" interface="org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification"/>
+    <extensionPoint name="groovySourceFolderDetector" interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
