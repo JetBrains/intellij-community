@@ -26,6 +26,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -44,9 +45,8 @@ public class SocketLock {
   private static final int[] FORBIDDEN_PORTS = new int[]{6953, 6969, 6970};
 
   private ServerSocket mySocket;
-  private final List myLockedPaths = new ArrayList();
+  private final List<String> myLockedPaths = new ArrayList<String>();
   private boolean myIsDialogShown = false;
-  @NonNls private static final String LOCALHOST = "localhost";
   @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
 
   public SocketLock() {
@@ -111,8 +111,8 @@ public class SocketLock {
     myLockedPaths.remove(path);
   }
 
-  private List readLockedList(int i) {
-    List result = new ArrayList();
+  private static List<String> readLockedList(int i) {
+    List<String> result = new ArrayList<String>();
 
     try {
       try {
@@ -123,7 +123,7 @@ public class SocketLock {
       catch (IOException e) {
       }
 
-      Socket socket = new Socket(LOCALHOST, i);
+      Socket socket = new Socket(InetAddress.getLocalHost(), i);
       socket.setSoTimeout(300);
 
       DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -153,7 +153,7 @@ public class SocketLock {
       try {
         if (isPortForbidden(i)) continue;
 
-        mySocket = new ServerSocket(i);
+        mySocket = new ServerSocket(i, 50, InetAddress.getLocalHost());
         break;
       }
       catch (IOException e) {
@@ -165,15 +165,12 @@ public class SocketLock {
     final Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
     thread.setPriority(Thread.MIN_PRIORITY);
     thread.start();
-
-    return;
   }
 
   private synchronized void writeLockedPaths(Socket socket) {
     try {
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-      for (Iterator iterator = myLockedPaths.iterator(); iterator.hasNext();) {
-        String path = (String)iterator.next();
+      for (String path: myLockedPaths) {
         out.writeUTF(path);
       }
       out.close();

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 
 /**
@@ -50,7 +51,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     final int currentPriority = thread.getPriority();
     try {
       thread.setPriority(Thread.NORM_PRIORITY - 2);
-      myWebServer = new IdeaAwareWebServer(getPortNumber(), null, new IdeaAwareXmlRpcServer());
+      myWebServer = new IdeaAwareWebServer(getPortNumber(), InetAddress.getLocalHost(), new IdeaAwareXmlRpcServer());
       myWebServer.start();
     }
     catch (Exception e) {
