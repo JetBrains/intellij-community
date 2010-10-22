@@ -205,4 +205,6 @@
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
   <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
+
+  <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 </extensions>

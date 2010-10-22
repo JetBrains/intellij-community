@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
@@ -60,6 +61,17 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
     finally {
       thread.setPriority(currentPriority);
+    }
+    for(XmlRpcHandlerBean handlerBean: Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
+      final Object handler;
+      try {
+        handler = handlerBean.instantiate();
+      }
+      catch (ClassNotFoundException e) {
+        LOG.error(e);
+        continue;
+      }
+      addHandler(handlerBean.name, handler);
     }
   }
 

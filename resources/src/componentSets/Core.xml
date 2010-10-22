@@ -1,9 +1,6 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
       <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>

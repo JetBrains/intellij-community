@@ -19,7 +19,10 @@ package com.intellij.ide;
  * @author mike
  */
 public interface XmlRpcServer {
- void addHandler(String name, Object handler);
- void removeHandler(String name);
- int getPortNumber();
+  /**
+   * @deprecated use xmlRpcHandler extension point instead
+   */
+  void addHandler(String name, Object handler);
+  void removeHandler(String name);
+  int getPortNumber();
 }

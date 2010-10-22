@@ -110,4 +110,6 @@
 
   <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
   <extensionPoint name="statistics.usagesCollector" interface="com.intellij.statistic.UsagesCollector"/>
+
+  <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
 </extensionPoints>
