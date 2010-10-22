@@ -340,7 +340,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     }
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
-    GrClassImplUtil.addGroovyObjectMethods(this, result);
     return result.toArray(new PsiMethod[result.size()]);
   }
 

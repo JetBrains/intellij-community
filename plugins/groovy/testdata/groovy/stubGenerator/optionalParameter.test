@@ -2,7 +2,7 @@ class Test {
   def foo(h, i = 0, j = 0, k = 0) {}
 }
 -----
-public class Test implements groovy.lang.GroovyObject {
+public class Test extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j, java.lang.Object k) {
     return null;
   }

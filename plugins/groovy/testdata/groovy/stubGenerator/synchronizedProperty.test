@@ -2,7 +2,7 @@ class Foo {
   synchronized def bar
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public java.lang.Object getBar() {
     return null;
   }

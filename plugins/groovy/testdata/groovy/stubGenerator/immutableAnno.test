@@ -10,7 +10,7 @@ class FailingA {
     }
 }
 -----
-public class FailingA implements groovy.lang.GroovyObject {
+public class FailingA extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   protected void act() {
     return ;
   }

@@ -14,7 +14,7 @@ class StringMethodName {
     def "a b" = 0 //does not have a java image
 }
 -----
-public class StringMethodName implements groovy.lang.GroovyObject {
+public class StringMethodName extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public java.lang.Object foo0() {
     return null;
   }
