@@ -65,11 +65,15 @@ public class ReplacePromptDialog extends DialogWrapper {
       JLabel iconLabel = new JLabel(icon);
       panel.add(iconLabel, BorderLayout.WEST);
     }
-    JLabel label = new JLabel(UIBundle.message("replace.propmt.replace.occurrence.label"));
+    JLabel label = new JLabel(getMessage());
     label.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     label.setForeground(Color.black);
     panel.add(label, BorderLayout.CENTER);
     return panel;
+  }
+
+  protected String getMessage() {
+    return UIBundle.message("replace.propmt.replace.occurrence.label");
   }
 
   public JComponent createCenterPanel() {

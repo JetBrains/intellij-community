@@ -18,6 +18,7 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,5 +32,5 @@ public interface MatchProvider {
 
   boolean hasDuplicates();
 
-  @NotNull String getConfirmDuplicatePrompt(Match match);
+  @Nullable String getConfirmDuplicatePrompt(Match match);
 }
