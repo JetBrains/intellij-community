@@ -59,24 +59,32 @@ public class SdkConfigurationUtil {
   private SdkConfigurationUtil() {
   }
 
-  @Nullable
-  public static Sdk createSdk(final Project project, final Sdk[] existingSdks, final SdkType... sdkTypes) {
-    if (sdkTypes.length == 0) return null;
+  public static void createSdk(final Project project, final Sdk[] existingSdks,
+                               final Consumer<Sdk> onSdkCreatedCallBack,
+                               final SdkType... sdkTypes) {
+    if (sdkTypes.length == 0) {
+      onSdkCreatedCallBack.consume(null);
+      return;
+    }
     final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     String suggestedPath = sdkTypes [0].suggestHomePath();
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
                                :  LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
-    final VirtualFile[] selection = dialog.choose(suggestedDir, project);
-    if (selection.length > 0) {
-      for (SdkType sdkType : sdkTypes) {
-        if (sdkType.isValidSdkHome(selection[0].getPath())) {
-          return setupSdk(existingSdks, selection[0], sdkType, false, null, null);
+    FileChooser.chooseFilesWithSlideEffect(descriptor, project, suggestedDir, new Consumer<VirtualFile[]>() {
+      @Override
+      public void consume(VirtualFile[] selectedFiles) {
+        if (selectedFiles.length > 0) {
+          for (SdkType sdkType : sdkTypes) {
+            if (sdkType.isValidSdkHome(selectedFiles[0].getPath())) {
+              onSdkCreatedCallBack.consume(setupSdk(existingSdks, selectedFiles[0], sdkType, false, null, null));
+              return;
+            }
+          }
         }
+        onSdkCreatedCallBack.consume(null);
       }
-    }
-    return null;
+    });
   }
 
   private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
@@ -271,7 +279,7 @@ public class SdkConfigurationUtil {
                                        SdkType sdkType,
                                        final Sdk[] existingSdks,
                                        JComponent popupOwner,
-                                       Consumer<Sdk> callback) {
+                                       final Consumer<Sdk> callback) {
     Collection<String> sdkHomes = sdkType.suggestHomePaths();
     List<String> suggestedSdkHomes = filterExistingPaths(sdkType, sdkHomes, existingSdks);
     if (suggestedSdkHomes.size() > 0) {
@@ -279,8 +287,12 @@ public class SdkConfigurationUtil {
       showSuggestedHomesPopup(project, sdkType, existingSdks, suggestedSdkHomes, popupOwner, callback);
     }
     else {
-      Sdk sdk = createSdk(project, existingSdks, sdkType);
-      callback.consume(sdk);
+      createSdk(project, existingSdks, new Consumer<Sdk>() {
+        @Override
+        public void consume(Sdk sdk) {
+          callback.consume(sdk);
+        }
+      }, sdkType);
     }
   }
 
@@ -303,8 +315,12 @@ public class SdkConfigurationUtil {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              Sdk sdk = createSdk(project, existingSdks, sdkType);
-              callback.consume(sdk);
+              createSdk(project, existingSdks, new Consumer<Sdk>() {
+                @Override
+                public void consume(Sdk sdk) {
+                  callback.consume(sdk);
+                }
+              },  sdkType);
             }
           }, ModalityState.current());
         }
