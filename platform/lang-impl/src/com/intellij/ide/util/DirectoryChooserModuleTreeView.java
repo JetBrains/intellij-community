@@ -87,6 +87,8 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myItemNodes.clear();
     myModuleNodes.clear();
     myModuleGroupNodes.clear();
+    myRootNode.removeAllChildren();
+    ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myRootNode);
   }
 
   public JComponent getComponent() {
