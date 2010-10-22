@@ -290,7 +290,9 @@ public class GitVFSListener extends VcsVFSListener {
             final File rootFile = new File(root.getPath());
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
-            GitUtil.markFilesDirty(myProject, e.getValue());
+            if (myProject != null && !myProject.isDisposed()) {
+              GitUtil.markFilesDirty(myProject, e.getValue());
+            }
             for (FilePath p : e.getValue()) {
               for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {
                 filesToRefresh.add(f);
