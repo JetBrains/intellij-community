@@ -34,7 +34,9 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -58,12 +60,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable {
 
-  private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(2);
+  private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
@@ -184,9 +187,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          List<TextChange> changesBeforeReformat = null;
+          Pair<CharSequence, List<TextChange>> beforeReformat = null;
           if (!mySkipPreviewHighlighting) {
-            changesBeforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+            beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
           }
 
           //important not mark as generated not to get the classes before setting language level
@@ -222,8 +225,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
           document = myEditor.getDocument();
           document.replaceString(0, document.getTextLength(), formatted.getText());
-          if (document != null && changesBeforeReformat != null) {
-            highlightChanges(changesBeforeReformat);
+          if (document != null && beforeReformat != null) {
+            highlightChanges(beforeReformat);
           }
         }
         catch (IncorrectOperationException e) {
@@ -242,7 +245,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    *                  by change start offset in ascending order
    */
   @Nullable
-  private List<TextChange> collectChangesBeforeCurrentSettingsAppliance(Project project) {
+  private Pair<CharSequence, List<TextChange>> collectChangesBeforeCurrentSettingsAppliance(Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -267,7 +270,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
         List<TextChange> result = new ArrayList<TextChange>(myChangesCollector.getChanges());
         myChangesCollector.reset();
-        return result;
+        return new Pair<CharSequence, List<TextChange>>(document.getCharsSequence(), result);
       }
     }
     return null;
@@ -304,7 +307,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return project;
   }
 
-  private void highlightChanges(List<TextChange> changesBeforeReformat) {
+  private void highlightChanges(Pair<CharSequence, List<TextChange>> beforeReformat) {
     if (mySkipPreviewHighlighting) {
       return;
     }
@@ -314,7 +317,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     markupModel.removeAllHighlighters();
     int textLength = myEditor.getDocument().getTextLength();
     boolean highlightPreview = false;
-    for (TextRange range : myDiffCalculator.calculateDiff(changesBeforeReformat, myChangesCollector.getChanges())) {
+    Collection<TextRange> ranges = myDiffCalculator.calculateDiff(
+      beforeReformat.second, beforeReformat.first, myChangesCollector.getChanges(), myEditor.getDocument().getCharsSequence()
+    );
+    for (TextRange range : ranges) {
       if (range.getStartOffset() >= textLength) {
         continue;
       }
@@ -355,25 +361,30 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    * @return        resulting range to highlight
    */
   private TextRange calculateChangeHighlightRange(TextRange range) {
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    Document document = myEditor.getDocument();
-    CharSequence text = document.getCharsSequence();
+    CharSequence text = myEditor.getDocument().getCharsSequence();
 
-    if (start == end) {
-      if (end < document.getTextLength() - 1) {
-        end++;
+    if (range.getLength() <= 0) {
+      int offset = range.getStartOffset();
+      while (offset < text.length() && text.charAt(offset) == ' ') {
+        offset++;
       }
-      else if (start > 0) {
-        start--;
-      }
+      return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
     }
 
-    if (end > 0 && end < document.getTextLength() - 1 && text.charAt(end - 1) == '\n') {
-      end++;
+    int startOffset = range.getStartOffset() + 1;
+    int endOffset = range.getEndOffset() + 1;
+    boolean useSameRange = true;
+    while (endOffset <= text.length()
+           && StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()), text.subSequence(startOffset, endOffset)))
+    {
+      useSameRange = false;
+      startOffset++;
+      endOffset++;
     }
+    startOffset--;
+    endOffset--;
 
-    return new TextRange(start, end);
+    return useSameRange ? range : new TextRange(startOffset, endOffset);
   }
 
   private void updatePreviewHighlighter(final EditorEx editor) {
@@ -514,7 +525,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       }
       int offsetToScroll = -1;
       CharSequence text = myEditor.getDocument().getCharsSequence();
-      TextAttributes attributes = myEditor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      TextAttributes backgroundAttributes = myEditor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      TextAttributes borderAttributes = new TextAttributes(
+        null, null, backgroundAttributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN
+      );
       for (TextRange range : myPreviewRangesToHighlight) {
         if (scrollToChange) {
           boolean rangeVisible = isWithinBounds(myEditor.offsetToVisualPosition(range.getStartOffset()), visualStart, visualEnd)
@@ -532,9 +546,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           }
         }
 
+        TextAttributes attributesToUse = range.getLength() > 0 ? backgroundAttributes : borderAttributes;
         markupModel.addRangeHighlighter(
-          range.getStartOffset(), range.getEndOffset(), HighlighterLayer.SELECTION, attributes,
-          HighlighterTargetArea.EXACT_RANGE
+          range.getStartOffset(), range.getEndOffset(), HighlighterLayer.SELECTION, attributesToUse, HighlighterTargetArea.EXACT_RANGE
         );
       }
 

@@ -469,6 +469,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return null; // suppress events in shutdown hook
     }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
+    //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s', document modification stamp=%d%nDocument:'%s'%n",
+    //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getDocument().getModificationStamp(),
+    //                  event.getDocument().getText());
 
     DocumentListener[] listeners = getCachedListeners();
     for (int i = listeners.length - 1; i >= 0; i--) {
@@ -485,6 +488,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
+    //System.out.printf("after change: new modification stamp=%d%ndocument='%s'%n", event.getDocument().getModificationStamp(),
+    //                  event.getDocument().getText());
     if (ShutDownTracker.isShutdownHookRunning()) {
       return; // suppress events in shutdown hook
     }

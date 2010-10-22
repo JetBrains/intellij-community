@@ -1839,57 +1839,58 @@ public class HighlightUtil {
     if (highlightInfo != null) return highlightInfo;
 
     PsiElement refParent = ref.getParent();
-    if (!(refParent instanceof PsiMethodCallExpression)) {
-      if (resolved == null) {
-        // do not highlight unknown packages - javac does not care about illegal package names
-        if (isInsidePackageStatement(refName)) return null;
-        if (result.isPackagePrefixPackageReference()) return null;
-        JavaResolveResult[] results = ref.multiResolve(true);
-        String description;
-        if (results.length > 1) {
-          String t1 = format(results[0].getElement());
-          String t2 = format(results[1].getElement());
-          description = JavaErrorMessages.message("ambiguous.reference", refName.getText(), t1, t2);
-        }
-        else {
-          description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
-        }
-
-        HighlightInfoType type = HighlightInfoType.WRONG_REF;
-        if (PsiUtil.isInsideJavadocComment(ref)) return null;
-
-        HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
-
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
-        return info;
+    if (refParent instanceof PsiMethodCallExpression) {
+      return null;  // methods checked elsewhere
+    }
+    if (resolved == null) {
+      // do not highlight unknown packages - javac does not care about illegal package names
+      if (isInsidePackageStatement(refName)) return null;
+      if (result.isPackagePrefixPackageReference()) return null;
+      JavaResolveResult[] results = ref.multiResolve(true);
+      String description;
+      if (results.length > 1) {
+        String t1 = format(results[0].getElement());
+        String t2 = format(results[1].getElement());
+        description = JavaErrorMessages.message("ambiguous.reference", refName.getText(), t1, t2);
+      }
+      else {
+        description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
       }
 
-      if (!result.isValidResult() && !PsiUtil.isInsideJavadocComment(ref)) {
-        if (!result.isAccessible()) {
-          String description = buildProblemWithAccessDescription(ref, result);
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-          if (result.isStaticsScopeCorrect()) {
-            registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
-            if (ref instanceof PsiReferenceExpression) {
-              QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
-            }
-          }
-          return info;
-        }
+      HighlightInfoType type = HighlightInfoType.WRONG_REF;
+      if (PsiUtil.isInsideJavadocComment(ref)) return null;
 
-        if (!result.isStaticsScopeCorrect()) {
-          String description = buildProblemWithStaticDescription(resolved);
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-          registerStaticProblemQuickFixAction(resolved, info, ref);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
+
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+      return info;
+    }
+
+    if (!result.isValidResult() && !PsiUtil.isInsideJavadocComment(ref)) {
+      if (!result.isAccessible()) {
+        String description = buildProblemWithAccessDescription(ref, result);
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
+        if (result.isStaticsScopeCorrect()) {
+          registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
           }
-          return info;
         }
+        return info;
       }
-      if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
-        highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref);
+
+      if (!result.isStaticsScopeCorrect()) {
+        String description = buildProblemWithStaticDescription(resolved);
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
+        registerStaticProblemQuickFixAction(resolved, info, ref);
+        if (ref instanceof PsiReferenceExpression) {
+          QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
+        }
+        return info;
       }
+    }
+    if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
+      highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref);
     }
     return highlightInfo;
   }

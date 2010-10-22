@@ -206,4 +206,14 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath, parameters);
     Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
   }
+
+  @Nullable
+  public static BrowserFamily findFamilyByName(@Nullable String name) {
+    for (BrowserFamily family : BrowserFamily.values()) {
+      if (family.getName().equals(name)) {
+        return family;
+      }
+    }
+    return null;
+  }
 }

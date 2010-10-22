@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -81,9 +82,11 @@ public class CodeInsightUtilBase {
     documentManager.doPostponedOperationsAndUnblockDocument(document);
     documentManager.commitDocument(document);
 
-    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                              (Class<? extends T>)element.getClass(),
-                              language);
+    T elementInRange = findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                                          (Class<? extends T>)element.getClass(),
+                                          language);
+    ((RangeMarkerEx)rangeMarker).dispose();
+    return elementInRange;
   }
 
   public static boolean prepareFileForWrite(final PsiFile psiFile) {

@@ -51,8 +51,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       final PsiFile file = targetClass.getContainingFile();
       TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(constructor);
-      CreateFromUsageUtils
-        .setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
+      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(),
+                                                 getTargetSubstitutor(myConstructorCall));
       CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
 
       constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
@@ -60,7 +60,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
       if (targetClass == null) return;
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
-      TextRange textRange = constructor.getTextRange();
+      final TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 

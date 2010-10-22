@@ -21,7 +21,9 @@ import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
@@ -108,10 +110,22 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
 
   @Override
   public ModuleWizardStep createSupportForFrameworksStep(WizardContext wizardContext, ModuleBuilder moduleBuilder) {
-    if (!FrameworkSupportUtil.getProviders(moduleBuilder).isEmpty()) {
-      return new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(wizardContext.getProject()));
+    return createSupportForFrameworksStep(wizardContext, moduleBuilder, ModulesProvider.EMPTY_MODULES_PROVIDER);
+  }
+
+  @Override
+  public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
+    if (!FrameworkSupportUtil.getProviders(builder).isEmpty()) {
+      final LibrariesContainer container;
+      if (modulesProvider instanceof ModulesConfigurator) {
+        ModulesConfigurator configurator = (ModulesConfigurator)modulesProvider;
+        container = LibrariesContainerFactory.createContainer(configurator.getContext());
+      }
+      else {
+        container = LibrariesContainerFactory.createContainer(context.getProject());
+      }
+      return new SupportForFrameworksStep(builder, container);
     }
     return null;
   }
-
 }

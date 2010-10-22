@@ -271,6 +271,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
     fireRunConfigurationsRemoved(removed);
+
+    final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
+    if (selectedConfiguration != null && removed.contains(selectedConfiguration)) {
+      final Collection<RunnerAndConfigurationSettings> sortedConfigurations = getSortedConfigurations();
+      RunnerAndConfigurationSettings toSelect = null;
+      if (sortedConfigurations.size() > 0) {
+        toSelect = sortedConfigurations.iterator().next();
+      }
+
+      setSelectedConfiguration(toSelect);
+    }
   }
 
   @Override

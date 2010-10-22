@@ -24,7 +24,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -46,7 +45,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * @author Mike
@@ -97,13 +95,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  private void doInvoke(Project project, PsiClass targetClass) {
+  private void doInvoke(Project project, final PsiClass targetClass) {
     if (!CodeInsightUtilBase.prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    invokeImpl(targetClass);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        invokeImpl(targetClass);
+      }
+    });
   }
 
   @Nullable
@@ -124,16 +126,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                doInvoke(project, aClass);
-              }
-            });
-
-          }
-        }, getText(), null);
+        doInvoke(project, aClass);
       }
     };
 
@@ -338,5 +331,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else {
       ApplicationManager.getApplication().invokeLater(runnable);
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

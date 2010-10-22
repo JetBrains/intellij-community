@@ -17,7 +17,6 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunManagerListener;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
@@ -55,6 +54,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +74,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
+public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorer");
 
@@ -78,8 +82,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
   private AntExplorerTreeBuilder myBuilder;
   private Tree myTree;
   private KeymapListener myKeymapListener;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
+  private final MergingUpdateQueue myQueue;
+  
 
   private final TreeExpander myTreeExpander = new TreeExpander() {
     public void expandAll() {
@@ -143,6 +148,20 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
 
+    myQueue = new MergingUpdateQueue("AntExplorer.Queue", 300, true, this, this);
+    DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
+      public void eventOccured(DomEvent event) {
+        myQueue.queue(new Update(AntExplorer.this) {
+          public void run() {
+            myBuilder.refresh();
+          }
+
+          public boolean canEat(Update update) {
+            return true;
+          }
+        });
+      }
+    }, this);
     RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       public void beforeRunTasksChanged() {
         myBuilder.refresh();
@@ -151,10 +170,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
   }
 
   public void dispose() {
-    for (final Disposable disposable : myDisposables) {
-      disposable.dispose();
-    }
-    myDisposables.clear();
     myProject = null;
     if (myKeymapListener != null) {
       myKeymapListener.stopListen();
@@ -667,7 +682,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     public RemoveMetaTargetsOrBuildFileAction() {
       super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)), myTree);
-      myDisposables.add(new Disposable() {
+      Disposer.register(AntExplorer.this, new Disposable() {
         public void dispose() {
           RemoveMetaTargetsOrBuildFileAction.this.unregisterCustomShortcutSet(myTree);
         }

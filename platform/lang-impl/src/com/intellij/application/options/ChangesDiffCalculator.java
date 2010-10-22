@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,18 +58,24 @@ public class ChangesDiffCalculator {
    *
    * @param beforeChanges   contains information about changes after modifying document at past at particular manner.
    *                        Is assumed to be sorted by change start offset in ascending order
+   * @param beforeText      document text after applying given <code>'before changes'</code>
    * @param currentChanges  contains information about changes after modifying active document at particular manner.
    *                        Is assumed to be sorted by change start offset in ascending order
+   * @param currentText     document text after applying given <code>'current changes'</code>
    * @return                information about diff ranges between the given changes against the <b>current</b> document
    */
   @SuppressWarnings({"MethodMayBeStatic"})
-  public Collection<TextRange> calculateDiff(@NotNull List<? extends TextChange> beforeChanges,
-                                             @NotNull List<? extends TextChange> currentChanges)
+  public Collection<TextRange> calculateDiff(@NotNull List<? extends TextChange> beforeChanges, @NotNull CharSequence beforeText,
+                                             @NotNull List<? extends TextChange> currentChanges, @NotNull CharSequence currentText)
   {
     List<TextRange> result = new ArrayList<TextRange>();
-    Context context = new Context(beforeChanges, currentChanges);
+    Context context = new Context(beforeChanges, beforeText, currentChanges, currentText);
 
     while (context.beforeChange != null && context.currentChange != null) {
+      if (tryMatchScatteredChanges(context)) {
+        continue;
+      }
+
       // 'Before' change starts before 'current' change
       if (context.beforeOriginalStart < context.currentOriginalStart) {
         handleBeforeChangeBeforeCurrentChange(context, result);
@@ -96,13 +103,14 @@ public class ChangesDiffCalculator {
   private static void handleBeforeChangeBeforeCurrentChange(Context context, List<TextRange> storage) {
     if (context.beforeOriginalEnd < context.currentOriginalStart) {
       storage.add(new TextRange(context.beforeCurrentStart, context.beforeCurrentStart + context.beforeChange.getText().length()));
-      context.beforeShiftToCurrent += getDiff(context.beforeChange);
     }
     else {
       storage.add(new TextRange(context.beforeCurrentStart, context.currentChange.getEnd()));
+      context.beforeShiftToCurrent -= getDiff(context.currentChange);
       context.proceedToNextChange(Context.ChangeType.CURRENT);
     }
 
+    context.beforeShiftToCurrent += getDiff(context.beforeChange);
     context.proceedToNextChange(Context.ChangeType.BEFORE);
   }
 
@@ -128,12 +136,121 @@ public class ChangesDiffCalculator {
    */
   private static void handleChangesSharingStartOffset(Context context, List<TextRange> storage) {
     int lengthDiff = getLength(context.currentChange) - getLength(context.beforeChange);
-    if (lengthDiff != 0 || !StringUtil.equals(context.beforeChange.getText(), context.currentChange.getText())) {
-      storage.add(new TextRange(context.currentChange.getStart(), context.currentChange.getEnd()));
-      context.beforeShiftToCurrent -= getDiff(context.currentChange) - getDiff(context.beforeChange);
+    int originTextDiff = context.beforeChange.getText().length() - context.currentChange.getText().length();
+
+    //if (lengthDiff != 0 && tryMatchScatteredChanges(context)) {
+    //  return;
+    //}
+
+    int oldSize = storage.size();
+
+    if (lengthDiff > 0) {
+      storage.add(new TextRange(
+        context.beforeChange.getEnd() + context.beforeShiftToCurrent, context.currentChange.getEnd() + originTextDiff
+      ));
     }
+    else if (lengthDiff < 0) {
+      storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd()));
+    }
+    else if (context.beforeChange.getText().length() != context.currentChange.getText().length()) {
+      if (StringUtil.equals(context.textForChangeRange(Context.ChangeType.BEFORE), context.textForChangeRange(Context.ChangeType.CURRENT)))
+      {
+        if (originTextDiff < 0) {
+          storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd()));
+        }
+        else {
+          storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd() + originTextDiff));
+        }
+      }
+    }
+
+    if (storage.size() != oldSize) {
+      context.beforeShiftToCurrent += getDiff(context.beforeChange) - getDiff(context.currentChange);
+    }
+
     context.proceedToNextChange(Context.ChangeType.BEFORE);
     context.proceedToNextChange(Context.ChangeType.CURRENT);
+  }
+
+  private static boolean tryMatchScatteredChanges(Context context) {
+    TextChange currentChange = context.currentChange;
+    TextChange beforeChange = context.beforeChange;
+    CharSequence beforeTail = context.beforeText.subSequence(beforeChange.getStart(), context.beforeText.length());
+    CharSequence currentTail = context.currentText.subSequence(currentChange.getStart(), context.currentText.length());
+    int matchedSymbolsNumber = StringUtil.commonPrefixLength(beforeTail, currentTail);
+    if (matchedSymbolsNumber <= 0) {
+      return false;
+    }
+
+    int beforeEnd = beforeChange.getStart() + matchedSymbolsNumber;
+    int currentEnd = currentChange.getStart() + matchedSymbolsNumber;
+    Context contextCopy = new Context();
+    context.copyTo(contextCopy);
+
+    int offset = -1;
+    StringBuilder beforeOriginalText = new StringBuilder(beforeChange.getText());
+    int matchedChangesNumber = 0;
+    int beforeUnchangedTailSymbolsNumber = 0;
+    while (context.beforeChange != null && context.beforeChange.getStart() < beforeEnd) {
+      if (offset >= 0) {
+        CharSequence text = context.beforeText.subSequence(offset, context.beforeChange.getStart());
+        beforeOriginalText.append(text);
+        beforeOriginalText.append(context.beforeChange.getText());
+      }
+      offset = context.beforeChange.getEnd();
+      if (context.beforeChange.getEnd() <= beforeEnd) {
+        beforeUnchangedTailSymbolsNumber = beforeEnd - context.beforeChange.getEnd();
+        context.proceedToNextChange(Context.ChangeType.BEFORE);
+        matchedChangesNumber++;
+      }
+      else {
+        context.beforeChange = new TextChangeImpl(context.beforeChange.getText(), beforeEnd, context.beforeChange.getEnd());
+        beforeUnchangedTailSymbolsNumber = 0;
+        break;
+      }
+    }
+    if (offset >= 0 && offset < beforeEnd) {
+      beforeOriginalText.append(context.beforeText.subSequence(offset, beforeEnd));
+    }
+
+    matchedChangesNumber = matchedChangesNumber < 2 ? 0 : matchedChangesNumber;
+    offset = -1;
+    StringBuilder currentOriginalText = new StringBuilder(currentChange.getText());
+    while (context.currentChange != null && context.currentChange.getStart() < currentEnd) {
+      if (offset >= 0) {
+        CharSequence text = context.currentText.subSequence(offset, context.currentChange.getStart());
+        currentOriginalText.append(text);
+        if (context.currentChange.getEnd() < currentEnd) {
+          currentOriginalText.append(context.currentChange.getText());
+        }
+      }
+      offset = context.currentChange.getEnd();
+      if (context.currentChange.getEnd() <= currentEnd) {
+        context.proceedToNextChange(Context.ChangeType.CURRENT);
+        matchedChangesNumber++;
+      }
+      else {
+        context.currentShiftToOriginal += context.currentChange.getStart() - currentEnd + beforeUnchangedTailSymbolsNumber;
+        context.currentChange = new TextChangeImpl(
+          context.currentChange.getText(), currentEnd - beforeUnchangedTailSymbolsNumber, context.currentChange.getEnd()
+        );
+        break;
+      }
+    }
+    if (offset >= 0 && offset < currentEnd) {
+      currentOriginalText.append(context.currentText.subSequence(offset, currentEnd));
+    }
+
+    context.beforeShiftToCurrent += contextCopy.currentShiftToOriginal - context.currentShiftToOriginal
+                                    - (contextCopy.beforeShiftToOriginal - context.beforeShiftToOriginal);
+
+    if (matchedChangesNumber < 2 || !StringUtil.equals(beforeOriginalText, currentOriginalText)) {
+      contextCopy.copyTo(context);
+      return false;
+    }
+
+    context.update();
+    return true;
   }
 
   /**
@@ -175,8 +292,10 @@ public class ChangesDiffCalculator {
 
     enum ChangeType { BEFORE, CURRENT }
 
-    private final List<TextChange> beforeChanges = new ArrayList<TextChange>();
-    private final List<TextChange> currentChanges = new ArrayList<TextChange>();
+    private List<TextChange> beforeChanges = new ArrayList<TextChange>();
+    private List<TextChange> currentChanges = new ArrayList<TextChange>();
+    private CharSequence beforeText;
+    private CharSequence currentText;
 
     /** Shift to apply to 'before' change start offset in order to get offset within original document. */
     int beforeShiftToOriginal;
@@ -196,9 +315,16 @@ public class ChangesDiffCalculator {
     int currentOriginalStart;
     int currentOriginalEnd;
 
-    Context(List<? extends TextChange> beforeChanges, List<? extends TextChange> currentChanges) {
+    Context() {
+    }
+
+    Context(List<? extends TextChange> beforeChanges, CharSequence beforeText, List<? extends TextChange> currentChanges,
+            CharSequence currentText)
+    {
       this.beforeChanges.addAll(beforeChanges);
+      this.beforeText = beforeText;
       this.currentChanges.addAll(currentChanges);
+      this.currentText = currentText;
       beforeChange = beforeChanges.isEmpty() ? null : beforeChanges.get(0);
       currentChange = currentChanges.isEmpty() ? null : currentChanges.get(0);
       update();
@@ -212,12 +338,20 @@ public class ChangesDiffCalculator {
     void update() {
       if (beforeChange != null) {
         beforeOriginalStart = beforeChange.getStart() + beforeShiftToOriginal;
+        //TODO den check
+        //if (getDiff(beforeChange) > 0) {
+        //  beforeOriginalStart += getDiff(beforeChange);
+        //}
         beforeCurrentStart = beforeChange.getStart() + beforeShiftToCurrent;
         beforeOriginalEnd = beforeOriginalStart + beforeChange.getText().length();
       }
 
       if (currentChange != null) {
         currentOriginalStart = currentChange.getStart() + currentShiftToOriginal;
+        //TODO den check
+        //if (getDiff(currentChange) > 0) {
+        //  currentOriginalStart += getDiff(currentChange);
+        //}
         currentOriginalEnd = currentOriginalStart + currentChange.getText().length();
       }
     }
@@ -232,6 +366,33 @@ public class ChangesDiffCalculator {
         currentChange = ++currentIndex < currentChanges.size() ? currentChanges.get(currentIndex) : null;
       }
       update();
+    }
+
+    CharSequence textForChangeRange(ChangeType changeType) {
+      CharSequence text = changeType == ChangeType.BEFORE ? beforeText : currentText;
+      TextChange change = changeType == ChangeType.BEFORE ? beforeChange : currentChange;
+      return text.subSequence(change.getStart(), change.getEnd());
+    }
+
+    void copyTo(Context context) {
+      context.beforeChanges.clear();
+      context.beforeChanges.addAll(beforeChanges);
+      context.currentChanges.clear();
+      context.currentChanges.addAll(currentChanges);
+      context.beforeText = beforeText;
+      context.currentText = currentText;
+      context.beforeShiftToOriginal = beforeShiftToOriginal;
+      context.beforeShiftToCurrent = beforeShiftToCurrent;
+      context.currentShiftToOriginal = currentShiftToOriginal;
+      context.beforeIndex = beforeIndex;
+      context.beforeChange = beforeChange;
+      context.currentIndex = currentIndex;
+      context.currentChange = currentChange;
+      context.beforeOriginalStart = beforeOriginalStart;
+      context.beforeCurrentStart = beforeCurrentStart;
+      context.beforeOriginalEnd = beforeOriginalEnd;
+      context.currentOriginalStart = currentOriginalStart;
+      context.currentOriginalEnd = currentOriginalEnd;
     }
   }
 }

@@ -21,10 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -393,12 +390,20 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private static Collection<DocumentReference> getDocRefs(FileEditor editor) {
-    if (editor instanceof TextEditor && ((TextEditor)editor).getEditor().isViewer()) return null;
+    if (editor instanceof TextEditor && ((TextEditor)editor).getEditor().isViewer()) {
+      return null;
+    }
     return getDocumentReferences(editor);
   }
 
   static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
     Set<DocumentReference> result = new THashSet<DocumentReference>();
+
+    if (editor instanceof DocumentReferenceProvider) {
+      result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());
+      return result;
+    }
+
     Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
     if (documents != null) {
       for (Document each : documents) {
