@@ -50,7 +50,7 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
       LibraryTable libTable = ScriptingLibraryManager.getLibraryTable(project, ScriptingLibraryManager.LibraryLevel.GLOBAL);
       if (libTable != null) {
         for (Library lib : libTable.getLibraries()) {
-          if (lib instanceof LibraryEx && ((LibraryEx)lib).getType().equals(libType)) {
+          if (lib instanceof LibraryEx && libType.equals(((LibraryEx)lib).getType())) {
             for (VirtualFile libFile : lib.getFiles(OrderRootType.SOURCES)) {
               libFile.putUserData(getIndexKey(), "");
               libFiles.add(libFile);
