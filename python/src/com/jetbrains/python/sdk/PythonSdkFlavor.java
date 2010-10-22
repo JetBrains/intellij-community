@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -20,6 +21,14 @@ public abstract class PythonSdkFlavor {
       pythonPath += File.pathSeparator + syspath;
     }
     return pythonPath;
+  }
+
+  public static void initPythonPath(Map<String, String> envs, boolean passParentEnvs, List<String> pythonPathList) {
+    String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
+    if (passParentEnvs && !envs.containsKey(PYTHONPATH)) {
+      pythonPath = appendSystemPythonPath(pythonPath);
+    }
+    addToPythonPath(envs, pythonPath);
   }
 
   public Collection<String> suggestHomePaths() {
