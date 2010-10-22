@@ -254,6 +254,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
           if (myProjectName != null) {
             ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+            myDetailsComponent.setText(getBannerSlogan());
           }
         }
         catch (ConfigurationException e) {
