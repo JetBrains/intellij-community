@@ -18,6 +18,7 @@ package com.intellij.ide.browsers;
 import com.intellij.ide.BrowserSettings;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.ArrayUtil;
@@ -39,7 +40,7 @@ public class BrowserSelector {
 
   public BrowserSelector(boolean allowDefaultBrowser) {
     myAllowDefaultBrowser = allowDefaultBrowser;
-    myBrowserComboWithBrowse = new ComboboxWithBrowseButton();
+    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox());
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
