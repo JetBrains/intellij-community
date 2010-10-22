@@ -8,7 +8,7 @@ class B extends A {
     }
 }
 -----
-public abstract class A implements groovy.lang.GroovyObject {
+public abstract class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public abstract java.lang.Object myMethod() ;
 
   public groovy.lang.MetaClass getMetaClass() {

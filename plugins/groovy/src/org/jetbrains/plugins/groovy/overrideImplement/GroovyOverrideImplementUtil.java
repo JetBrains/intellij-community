@@ -76,9 +76,6 @@ public class GroovyOverrideImplementUtil {
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, isImplement);
     Collection<CandidateInfo> secondary = isImplement ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, !isImplement);
 
-    cleanGroovyObjectMethods(candidates);
-    cleanGroovyObjectMethods(secondary);
-
     MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, isImplement, candidates, secondary);
     if (chooser == null) return;
 

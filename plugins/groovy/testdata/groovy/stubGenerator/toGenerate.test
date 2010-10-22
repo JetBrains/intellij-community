@@ -1,7 +1,7 @@
 class s {
 }
 -----
-public class s implements groovy.lang.GroovyObject {
+public class s extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public groovy.lang.MetaClass getMetaClass() {
     return null;
   }

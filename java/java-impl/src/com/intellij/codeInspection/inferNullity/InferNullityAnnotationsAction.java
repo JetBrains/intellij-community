@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,10 +38,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TitledSeparator;
@@ -131,6 +129,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     }
     if (scope.checkScopeWritable(project)) return;
     final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
+    final PsiManager psiManager = PsiManager.getInstance(project);
     if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -139,9 +138,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           @Override
           public void visitFile(final PsiFile file) {
             myFileCount++;
+            final VirtualFile virtualFile = file.getVirtualFile();
+            final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+            final Document document = viewProvider == null ? null : viewProvider.getDocument();
+            if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progressIndicator != null) {
-              final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null) {
                 progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
               }

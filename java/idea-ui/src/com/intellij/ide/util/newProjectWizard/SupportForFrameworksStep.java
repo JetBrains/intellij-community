@@ -7,6 +7,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -30,11 +31,15 @@ import java.util.List;
  */
 public class SupportForFrameworksStep extends ModuleWizardStep {
   private final AddSupportForFrameworksPanel mySupportForFrameworksPanel;
+  private final FrameworkSupportModelImpl myFrameworkSupportModel;
   private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder);
-    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, builder, new Computable<String>() {
+    myFrameworkSupportModel = new FrameworkSupportModelImpl(librariesContainer.getProject(), builder);
+    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer,
+                                                                   myFrameworkSupportModel,
+                                                                   new Computable<String>() {
       public String compute() {
         return getBaseDirectory(builder);
       }
@@ -89,6 +94,11 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
 
   public JComponent getComponent() {
     return mySupportForFrameworksPanel.getMainPanel();
+  }
+
+  @Override
+  public void updateStep() {
+    myFrameworkSupportModel.fireWizardStepUpdated();
   }
 
   public void updateDataModel() {

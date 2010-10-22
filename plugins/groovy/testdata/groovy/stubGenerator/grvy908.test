@@ -8,7 +8,7 @@ class MyClass {
     }
 }
 -----
-public class MyClass implements groovy.lang.GroovyObject {
+public class MyClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public MyClass(int i) {
     this((java.lang.Object)null);
   }

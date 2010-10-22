@@ -17,15 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -49,10 +47,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -63,6 +58,8 @@ public class GrClassImplUtil {
       return TypesUtil.typeEqualsToText(psiClassType, GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
     }
   };
+
+  private static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
   public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
 
   private GrClassImplUtil() {
@@ -87,9 +84,61 @@ public class GrClassImplUtil {
     }
   }
 
+  private static final Key<CachedValue<Boolean>> HAS_GROOVY_OBJECT_METHODS = Key.create("has groovy object methods");
+
   @NotNull
   public static PsiClassType[] getExtendsListTypes(GrTypeDefinition grType) {
-    return getReferenceListTypes(grType.getExtendsClause());
+    final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
+    if (grType.isInterface() /*|| extendsTypes.length > 0*/) return extendsTypes;
+    for (PsiClassType type : extendsTypes) {
+      final PsiClass superClass = type.resolve();
+      if (superClass instanceof GrTypeDefinition && !superClass.isInterface()) return extendsTypes;
+    }
+
+    PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
+    if (grObSupport != null) {
+      return ArrayUtil.append(extendsTypes, JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport));
+      //return new PsiClassType[]{JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport)};
+    }
+    return extendsTypes;
+  }
+
+  private static boolean hasGroovyObjectSupportInner(final PsiClass psiClass,
+                                                     Set<PsiClass> visited,
+                                                     PsiClass groovyObjSupport,
+                                                     PsiManager manager) {
+    final CachedValue<Boolean> userData = psiClass.getUserData(HAS_GROOVY_OBJECT_METHODS);
+    if (userData != null && userData.getValue() != null) return userData.getValue();
+
+    if (manager.areElementsEquivalent(groovyObjSupport, psiClass)) return true;
+
+    final PsiClassType[] supers;
+    if (psiClass instanceof GrTypeDefinition) {
+      supers = getReferenceListTypes(((GrTypeDefinition)psiClass).getExtendsClause());
+    }
+    else {
+      supers = psiClass.getExtendsListTypes();
+    }
+
+    boolean result = false;
+    for (PsiClassType superType : supers) {
+      PsiClass aSuper = superType.resolve();
+      if (aSuper == null || visited.contains(aSuper)) continue;
+      visited.add(aSuper);
+      if (hasGroovyObjectSupportInner(aSuper, visited, groovyObjSupport, manager)) {
+        result = true;
+        break;
+      }
+    }
+    final boolean finalResult = result;
+    psiClass.putUserData(HAS_GROOVY_OBJECT_METHODS,
+                         CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Boolean>() {
+                           @Override
+                           public Result<Boolean> compute() {
+                             return Result.create(finalResult, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                           }
+                         }, false));
+    return finalResult;
   }
 
   @NotNull
@@ -157,41 +206,10 @@ public class GrClassImplUtil {
     }
 
     final PsiClass[] supers = clazz.getSupers();
-    if (supers.length < 2) {
-      addGroovyObjectMethods(clazz, allMethods);
-    }
     for (PsiClass aSuper : supers) {
       getAllMethodsInner(aSuper, allMethods, visited);
     }
   }
-
-  public static void addGroovyObjectMethods(PsiClass clazz, List<PsiMethod> allMethods) {
-    if (clazz instanceof GrTypeDefinition && !clazz.isInterface() /*&& clazz.getExtendsListTypes().length == 0*/) {
-      final PsiClass groovyObject =
-        JavaPsiFacade.getInstance(clazz.getProject()).findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, clazz.getResolveScope());
-      if (groovyObject != null) {
-        for (final PsiMethod method : groovyObject.getMethods()) {
-          allMethods.add(createSyntheticMethodImplementation(clazz, method));
-        }
-      }
-    }
-  }
-
-  private static LightMethodBuilder createSyntheticMethodImplementation(PsiClass containingClass, PsiMethod interfaceMethod) {
-    final LightMethodBuilder result =
-      new LightMethodBuilder(interfaceMethod.getManager(), GroovyFileType.GROOVY_LANGUAGE, interfaceMethod.getName()).
-        setContainingClass(containingClass).
-        setNavigationElement(interfaceMethod).
-        setReturnType(interfaceMethod.getReturnType()).
-        setModifiers(PsiModifier.PUBLIC).
-        setBaseIcon(GroovyIcons.METHOD).
-        setMethodKind(SYNTHETIC_METHOD_IMPLEMENTATION);
-    for (PsiParameter psiParameter : interfaceMethod.getParameterList().getParameters()) {
-      result.addParameter(psiParameter);
-    }
-    return result;
-  }
-
 
   private static PsiClassType[] getReferenceListTypes(@Nullable GrReferenceList list) {
     if (list == null) return PsiClassType.EMPTY_ARRAY;
