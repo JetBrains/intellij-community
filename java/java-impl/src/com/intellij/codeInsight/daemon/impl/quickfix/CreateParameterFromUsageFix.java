@@ -80,24 +80,39 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
 
-    List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+    final List<ParameterInfoImpl> parameterInfos =
+      new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
     ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), false);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);
-    } else {
+    }
+    else {
       parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
       @Modifier String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
+      ChangeSignatureProcessor processor =
+        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
       processor.run();
     }
     else {
-      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, myReferenceExpression);
-      dialog.setParameterInfos(parameterInfos);
-      dialog.show();
+      final PsiMethod finalMethod = method;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (project.isDisposed()) return;
+          try {
+            JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, finalMethod, false, myReferenceExpression);
+            dialog.setParameterInfos(parameterInfos);
+            dialog.show();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
     }
   }
 

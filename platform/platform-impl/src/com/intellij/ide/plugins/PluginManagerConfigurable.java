@@ -151,8 +151,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       saveSorting(availablePluginsTable, true);
       saveSorting(installedPluginTable, false);
       if (app.isRestartCapable()) {
-        if (Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
-                                     IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
+        if (showRestartIDEADialog() == 0) {
           app.restart();
         }
         else {
@@ -160,8 +159,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
         }
       }
       else {
-        if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
-                                     IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
+        if (showShutDownIDEADialog() == 0) {
           app.exit(true);
         }
         else {
@@ -169,6 +167,20 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
         }
       }
     }
+  }
+
+  private static int showShutDownIDEADialog() {
+    String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
+    String title = IdeBundle.message("title.plugins.changed");
+    String cancel = IdeBundle.message("button.cancel");
+    return Messages.showDialog(message, title, new String[]{"Shut Down", cancel},0,0,Messages.getQuestionIcon());
+  }
+
+  public static int showRestartIDEADialog() {
+    String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName());
+    String title = IdeBundle.message("title.plugins.changed");
+    String cancel = IdeBundle.message("button.cancel");
+    return Messages.showDialog(message, title, new String[]{"Restart", cancel},0,0,Messages.getQuestionIcon());
   }
 
   public boolean isModified() {

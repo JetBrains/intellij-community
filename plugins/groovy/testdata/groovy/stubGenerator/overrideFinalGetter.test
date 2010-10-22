@@ -6,7 +6,7 @@ class Derived extends Base {
   int p = 0 //should not create a getter here
 }
 -----
-public class Base implements groovy.lang.GroovyObject {
+public class Base extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public final int getP() {
     return 0;
   }

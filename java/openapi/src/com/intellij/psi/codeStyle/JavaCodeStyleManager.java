@@ -148,7 +148,26 @@ public abstract class JavaCodeStyleManager {
    * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
    * @return the generated unique name,
    */
-  @NotNull public abstract SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward);
+  @NotNull
+  public SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
+                                                              PsiElement place,
+                                                              boolean lookForward) {
+    return suggestUniqueVariableName(baseNameInfo, place, false, lookForward);
+  }
+
+  /**
+   * Suggests a unique name for the variable used at the specified location.
+   *
+   *
+   * @param baseNameInfo    the base name info for the variable.
+   * @param place           the location where the variable will be used.
+   * @param ignorePlaceName  if true and place is PsiNamedElement, place.getName() would be still treated as unique name
+   * @param lookForward     if true, the existing variables are searched in both directions; if false - only backward  @return the generated unique name,
+   */
+  @NotNull public abstract SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
+                                                                       PsiElement place,
+                                                                       boolean ignorePlaceName,
+                                                                       boolean lookForward);
 
   /**
    * Replaces all references to Java classes in the contents of the specified element,

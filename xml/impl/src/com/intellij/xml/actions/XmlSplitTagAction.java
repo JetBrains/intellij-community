@@ -140,13 +140,13 @@ public class XmlSplitTagAction implements IntentionAction {
     final String name = xmlTag.getName();
     sb.append("<root><").append(name);
     if (attrs.length() > 0) {
-      sb.append(' ').append(attrs.toString());
+      sb.append(' ').append(attrs);
     }
     sb.append('>');
     sb.append(first);
     sb.append("</").append(name).append("><").append(name);
     if (attrsWoId.length() > 0) {
-      sb.append(' ').append(attrsWoId.toString());
+      sb.append(' ').append(attrsWoId);
     }
     sb.append('>');
     sb.append(second).append("</").append(name).append("></root>");

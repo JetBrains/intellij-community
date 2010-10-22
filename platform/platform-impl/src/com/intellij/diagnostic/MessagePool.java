@@ -48,12 +48,7 @@ public class MessagePool {
   }
 
   public static MessagePool getInstance() {
-
     return MessagePoolHolder.ourInstance;
-  }
-
-  public void addIdeFatalMessage(LoggingEvent aEvent) {
-    addIdeFatalMessage(new LogMessage(aEvent));
   }
 
   public void addIdeFatalMessage(IdeaLoggingEvent aEvent) {
@@ -69,13 +64,8 @@ public class MessagePool {
     }
   }
 
-  public boolean isFatalErrorsPoolEmpty() {
-    return myIdeFatals.isEmpty();
-  }
-
   public boolean hasUnreadMessages() {
-    for (int i = 0; i < myIdeFatals.size(); i++) {
-      AbstractMessage message = myIdeFatals.get(i);
+    for (AbstractMessage message : myIdeFatals) {
       if (!message.isRead()) return true;
     }
     return false;
@@ -83,11 +73,11 @@ public class MessagePool {
 
   public List<AbstractMessage> getFatalErrors(boolean aIncludeReadMessages, boolean aIncludeSubmittedMessages) {
     List<AbstractMessage> result = new ArrayList<AbstractMessage>();
-    for (int i = 0; i < myIdeFatals.size(); i++) {
-      AbstractMessage each = myIdeFatals.get(i);
+    for (AbstractMessage each : myIdeFatals) {
       if (!each.isRead() && !each.isSubmitted()) {
         result.add(each);
-      } else if ((each.isRead() && aIncludeReadMessages) || (each.isSubmitted() && aIncludeSubmittedMessages)) {
+      }
+      else if ((each.isRead() && aIncludeReadMessages) || (each.isSubmitted() && aIncludeSubmittedMessages)) {
         result.add(each);
       }
     }
@@ -111,15 +101,15 @@ public class MessagePool {
     if (ourJvmIsShuttingDown) return;
 
     final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
-    for (int i = 0; i < messagePoolListeners.length; i++) {
-      messagePoolListeners[i].newEntryAdded();
+    for (MessagePoolListener messagePoolListener : messagePoolListeners) {
+      messagePoolListener.newEntryAdded();
     }
   }
 
   private void notifyListenersClear() {
     final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
-    for (int i = 0; i < messagePoolListeners.length; i++) {
-      messagePoolListeners[i].poolCleared();
+    for (MessagePoolListener messagePoolListener : messagePoolListeners) {
+      messagePoolListener.poolCleared();
     }
   }
 

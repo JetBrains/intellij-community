@@ -26,6 +26,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitExecutableValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -63,20 +64,23 @@ public class GitChangeProvider implements ChangeProvider {
     }
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
 
-    final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
-
-    for (VirtualFile root : roots) {
-      ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
-      final Collection<Change> changes = c.changes();
-      holder.changed(changes);
-      for (Change file : changes) {
-        builder.processChange(file, GitVcs.getKey());
+    try {
+      final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
+      for (VirtualFile root : roots) {
+        ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
+        final Collection<Change> changes = c.changes();
+        holder.changed(changes);
+        for (Change file : changes) {
+          builder.processChange(file, GitVcs.getKey());
+        }
+        for (VirtualFile f : c.unversioned()) {
+          builder.processUnversionedFile(f);
+          holder.unversioned(f);
+        }
+        holder.feedBuilder(builder);
       }
-      for (VirtualFile f : c.unversioned()) {
-        builder.processUnversionedFile(f);
-        holder.unversioned(f);
-      }
-      holder.feedBuilder(builder);
+    } catch (VcsException e) {// most probably the error happened because git is not configured
+      GitExecutableValidator.getInstance(myProject).showNotificationOrThrow(e);
     }
   }
 

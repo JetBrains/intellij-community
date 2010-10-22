@@ -180,7 +180,7 @@ public class BuildPropertiesImpl extends BuildProperties {
       }
     }
 
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null ? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
     add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null ? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
     add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null ? getJdkPathId(projectJdk.getName()) : ""));

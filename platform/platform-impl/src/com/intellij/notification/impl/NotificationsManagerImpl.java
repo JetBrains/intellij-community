@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -128,7 +127,10 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
     }
 
-    myModel.add(notification, project);
+    if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY) {
+      myModel.add(notification, project);
+    }
+
     showNotification(notification, project);
   }
 
@@ -142,6 +144,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       //  break;
       case STICKY_BALLOON:
       case BALLOON:
+      case BALLOON_ONLY:
       default:
         notifyByBalloon(notification, settings.getDisplayType(), project);
         break;
@@ -191,7 +194,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       .setHideOnClickOutside(NotificationDisplayType.BALLOON == displayType)
       .setHideOnKeyOutside(NotificationDisplayType.BALLOON == displayType).setHideOnFrameResize(false);
 
-    if (NotificationDisplayType.BALLOON == displayType) {
+    if (NotificationDisplayType.BALLOON == displayType || NotificationDisplayType.BALLOON_ONLY == displayType) {
       builder.setFadeoutTime(3000);
     }
 

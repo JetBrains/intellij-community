@@ -139,6 +139,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         super.visitForeachStatement(statement);
         final PsiParameter param = statement.getIterationParameter();
         final PsiStatement body = statement.getBody();
+        if (body == null) return;
         int from = flow.getStartOffset(body);
         int end = flow.getEndOffset(body);
         if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(param)) {

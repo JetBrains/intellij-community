@@ -16,6 +16,7 @@
 package org.jetbrains.android.maven;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene.Kudelevsky
  */
 public class AndroidMavenUtil {
+  @NonNls public static final String APKSOURCES_DEPENDENCY_TYPE = "apksources";
+
   private AndroidMavenUtil() {
   }
 

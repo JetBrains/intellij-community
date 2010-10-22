@@ -138,7 +138,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
       AbstractIntrospector parentIntrospector = null;
       if (classBasedIntrospector != null) {
-        parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector);
+        parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector, coreTaskDefs, coreTypeDefs);
       }
       else {
         if (isCustom) {
@@ -438,9 +438,19 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   private static class ClassIntrospectorAdapter extends AbstractIntrospector {
 
     private final AntIntrospector myIntrospector;
+    private final Map<String, Class> myCoreTaskDefs;
+    private final Map<String, Class> myCoreTypeDefs;
+    private List<String> myNestedElements;
+    private Map<String, Class> myNestedElementTypes;
 
     private ClassIntrospectorAdapter(AntIntrospector introspector) {
+      this(introspector, null, null);
+    }
+
+    public ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class> coreTaskDefs, Map<String, Class> coreTypeDefs) {
       myIntrospector = introspector;
+      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.<String, Class>emptyMap();
+      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.<String, Class>emptyMap();
     }
 
     @NotNull 
@@ -458,11 +468,44 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
     @NotNull 
     public Iterator<String> getNestedElementsIterator() {
-      return new EnumerationToIteratorAdapter<String>(myIntrospector.getNestedElements());
+      initNestedElements();
+      return myNestedElements.iterator();
     }
 
     public Class getNestedElementType(String attribName) {
-      return myIntrospector.getElementType(attribName);
+      initNestedElements();
+      return myNestedElementTypes.get(attribName);
+    }
+
+    private void initNestedElements() {
+      if (myNestedElements != null) {
+        return;
+      }
+      myNestedElements = new ArrayList<String>();
+      myNestedElementTypes = new HashMap<String, Class>();
+      final Enumeration<String> nestedElements = myIntrospector.getNestedElements();
+      while (nestedElements.hasMoreElements()) {
+        final String elemName = nestedElements.nextElement();
+        myNestedElements.add(elemName);
+        myNestedElementTypes.put(elemName, myIntrospector.getElementType(elemName));
+      }
+      
+      final Set<String> extensionPointTypes = myIntrospector.getExtensionPointTypes();
+      for (String extPoint : extensionPointTypes) {
+        processEntries(extPoint, myCoreTaskDefs);
+        processEntries(extPoint, myCoreTypeDefs);
+      }
+    }
+
+    private void processEntries(String extPoint, final Map<String, Class> definitions) {
+      for (Map.Entry<String, Class> entry : definitions.entrySet()) {
+        final String elementName = entry.getKey();
+        final Class taskClass = entry.getValue();
+        if (isAssignableFrom(extPoint, taskClass)) {
+          myNestedElements.add(elementName);
+          myNestedElementTypes.put(elementName, taskClass);
+        }
+      }
     }
   }
   

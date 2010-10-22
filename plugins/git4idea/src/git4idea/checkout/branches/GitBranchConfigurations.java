@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -266,9 +267,9 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         if (calculateSpecialStatus() == SpecialStatus.NORMAL) {
           try {
             detectLocals();
-          }
-          catch (VcsException e) {
-            LOG.error("Exception during detecting local configurations", e);
+          } catch (VcsException e) {
+            LOG.info("Exception during detecting local configurations", e);
+            GitUIUtil.checkGitExecutableAndShowNotification(myProject, e);
           }
         }
       }

@@ -26,6 +26,7 @@ public abstract class AbstractMessage {
   private boolean myIsSubmitting = false;
   private SubmittedReportInfo mySubmissionInfo;
   private String myScrID;
+  private String myAdditionalInfo;
 
   private final Date myDate;
 
@@ -65,6 +66,14 @@ public abstract class AbstractMessage {
     return mySubmissionInfo != null &&
           (mySubmissionInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.NEW_ISSUE ||
            mySubmissionInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE);
+  }
+
+  public String getAdditionalInfo() {
+    return myAdditionalInfo;
+  }
+
+  public void setAdditionalInfo(String additionalInfo) {
+    myAdditionalInfo = additionalInfo;
   }
 
   public Date getDate() {

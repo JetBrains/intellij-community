@@ -25,6 +25,7 @@ import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -36,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -153,23 +153,24 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myDisabledAutodetectionInfo = state;
   }
 
-  public void processFile(VirtualFile virtualFile) {
-    if (!virtualFile.isValid() || virtualFile.isDirectory() || myProject.isDisposed()
-        || !virtualFile.exists() || !myFileIndex.getProjectFileIndex().isInContent(virtualFile)) return;
+  public void processFile(FileContent fileContent) {
+    final VirtualFile file = fileContent.getVirtualFile();
+    if (!file.isValid() || file.isDirectory() || myProject.isDisposed()
+        || !file.exists() || !myFileIndex.getProjectFileIndex().isInContent(file)) return;
 
-    FileType fileType = virtualFile.getFileType();
+    FileType fileType = file.getFileType();
     Collection<FacetDetectorWrapper> detectors = myDetectors.get(fileType);
     if (detectors == null) return;
 
     List<FacetInfo2<Module>> facets = null;
     for (FacetDetectorWrapper<?,?,?,?> detector : detectors) {
-      facets = process(virtualFile, detector, facets);
+      facets = process(file, fileContent, detector, facets);
     }
 
-    String url = virtualFile.getUrl();
+    String url = file.getUrl();
     FacetDetectionIndexEntry indexEntry = myFileIndex.getIndexEntry(url);
     if (indexEntry == null) {
-      indexEntry = new FacetDetectionIndexEntry(virtualFile.getTimeStamp());
+      indexEntry = new FacetDetectionIndexEntry(file.getTimeStamp());
     }
 
     Collection<Integer> removed = indexEntry.update(myFacetPointersManager, facets);
@@ -193,9 +194,11 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     return myDetectedFacetSet;
   }
 
-  private List<FacetInfo2<Module>> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ?, ?, ?> detector,
-                                                         List<FacetInfo2<Module>> facets) {
-    if (!myDetectionInProgress && detector.getVirtualFileFilter().accept(virtualFile)) {
+  private List<FacetInfo2<Module>> process(final VirtualFile virtualFile,
+                                           FileContent fileContent,
+                                           final FacetDetectorWrapper<?, ?, ?, ?> detector,
+                                           List<FacetInfo2<Module>> facets) {
+    if (!myDetectionInProgress && detector.getFileContentFilter().accept(fileContent)) {
       try {
         myDetectionInProgress = true;
         FacetInfo2<Module> facet = detector.detectFacet(virtualFile, myPsiManager);
@@ -255,7 +258,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   public void queueUpdate(final VirtualFile file) {
     Update update = new Update("file:" + file.getUrl()) {
       public void run() {
-        processFile(file);
+        processFile(new FileContent(file));
       }
     };
 
@@ -346,23 +349,23 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
       myType = type;
     }
 
-    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentFilter fileContentFilter,
                                                         @NotNull final FacetDetector<VirtualFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
       myId2Detector.put(facetDetector.getId(), facetDetector);
       myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType,
-                                                                               FacetAutodetectingManagerImpl.this, virtualFileFilter,
+                                                                               FacetAutodetectingManagerImpl.this, fileContentFilter,
                                                                                facetDetector, selector));
     }
 
-    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentFilter fileContentFilter,
                                                         @NotNull final Condition<PsiFile> psiFileFilter, @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
       myId2Detector.put(facetDetector.getId(), facetDetector);
       myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this,
-                                                                           virtualFileFilter, facetDetector, psiFileFilter, selector));
+                                                                           fileContentFilter, facetDetector, psiFileFilter, selector));
     }
 
     public boolean hasDetectors() {

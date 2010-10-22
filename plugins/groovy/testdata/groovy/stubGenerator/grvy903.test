@@ -7,7 +7,7 @@ class MyTestClass {
     }
 }
 -----
-public class MyTestClass implements groovy.lang.GroovyObject {
+public class MyTestClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public MyTestClass(java.lang.String s) {
 
   }

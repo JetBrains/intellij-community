@@ -2,7 +2,7 @@ class Foo {
   def <T extends String> f() {}
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public <T extends java.lang.String> java.lang.Object f() {
     return null;
   }

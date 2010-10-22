@@ -2,7 +2,7 @@ class MyClass {
   boolean enabled
 }
 -----
-public class MyClass implements groovy.lang.GroovyObject {
+public class MyClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public boolean getEnabled() {
     return false;
   }

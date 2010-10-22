@@ -2,7 +2,7 @@ class Foo {
   def foo() throws IOException {}
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public java.lang.Object foo() throws java.io.IOException {
     return null;
   }

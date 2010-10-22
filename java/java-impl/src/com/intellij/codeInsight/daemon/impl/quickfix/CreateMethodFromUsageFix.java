@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -136,63 +137,58 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
 
-    try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-      PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
-      if (targetClass.equals(parentClass)) {
-        method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
+    if (targetClass.equals(parentClass)) {
+      method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
+    }
+    else {
+      PsiElement anchor = enclosingContext;
+      while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
+        anchor = anchor.getParent();
+      }
+      if (anchor != null && anchor.getParent() == null) anchor = null;
+      if (anchor != null) {
+        method = (PsiMethod)targetClass.addAfter(method, anchor);
       }
       else {
-        PsiElement anchor = enclosingContext;
-        while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
-          anchor = anchor.getParent();
-        }
-        if (anchor != null && anchor.getParent() == null) anchor = null;
-        if (anchor != null) {
-          method = (PsiMethod)targetClass.addAfter(method, anchor);
-        }
-        else {
-          method = (PsiMethod)targetClass.add(method);
-        }
+        method = (PsiMethod)targetClass.add(method);
       }
-
-      if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
-          PsiTreeUtil.isAncestor(targetClass, parentClass, true)) {
-        FieldConflictsResolver.qualifyReference(ref, method, null);
-      }
-
-      PsiCodeBlock body = method.getBody();
-      assert body != null;
-      if (shouldBeAbstract(targetClass)) {
-        body.delete();
-        if (!targetClass.isInterface()) {
-          method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-        }
-      }
-
-      setupVisibility(parentClass, targetClass, method.getModifierList());
-
-      expression = getMethodCall();
-      LOG.assertTrue(expression.isValid());
-
-      if (shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
-        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
-      }
-
-      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
-
-      PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-      doCreate(targetClass, method, shouldBeAbstract(targetClass),
-               ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
-               getTargetSubstitutor(expression),
-               CreateFromUsageUtils.guessExpectedTypes(expression, true),
-               context);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+
+    if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
+        PsiTreeUtil.isAncestor(targetClass, parentClass, true)) {
+      FieldConflictsResolver.qualifyReference(ref, method, null);
     }
+
+    PsiCodeBlock body = method.getBody();
+    assert body != null;
+    if (shouldBeAbstract(targetClass)) {
+      body.delete();
+      if (!targetClass.isInterface()) {
+        method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+      }
+    }
+
+    setupVisibility(parentClass, targetClass, method.getModifierList());
+
+    expression = getMethodCall();
+    LOG.assertTrue(expression.isValid());
+
+    if (shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
+      PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
+    }
+
+    final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
+
+    PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+    doCreate(targetClass, method, shouldBeAbstract(targetClass),
+             ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
+             getTargetSubstitutor(expression),
+             CreateFromUsageUtils.guessExpectedTypes(expression, true),
+             context);
   }
 
   public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
@@ -233,6 +229,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
     newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+    ((RangeMarkerEx)rangeMarker).dispose();
 
     if (!shouldBeAbstract) {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {

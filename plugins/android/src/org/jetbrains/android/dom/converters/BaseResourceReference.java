@@ -15,17 +15,17 @@
  */
 package org.jetbrains.android.dom.converters;
 
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomCompletionContributor;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.resources.ResourceValue;
+import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,8 +70,11 @@ public abstract class BaseResourceReference extends PsiReferenceBase.Poly<XmlEle
     }
     ResourceValue value = myValue.getValue();
     assert value != null;
-    myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), value.getResourceType(),
-                                               FileUtil.getNameWithoutExtension(newElementName)));
+    String resType = value.getResourceType();
+    if (resType != null && newElementName != null) {
+      myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType,
+                                                 ResourceManager.getResourceName(resType, newElementName)));
+    }
     return myValue.getXmlTag();
   }
 }

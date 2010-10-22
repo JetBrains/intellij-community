@@ -25,7 +25,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   private void doTest() throws Exception {

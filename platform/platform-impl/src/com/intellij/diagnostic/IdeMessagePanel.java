@@ -17,6 +17,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -115,7 +116,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Cust
   }
 
   private void _openFatals() {
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myDialog = new IdeErrorsDialog(myMessagePool) {
           protected void doOKAction() {
@@ -189,7 +190,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Cust
   }
 
   private void updateFatalErrorsIcon() {
-    if (myMessagePool.getFatalErrors(true, true).isEmpty()) {
+    if (myMessagePool.getFatalErrors(false, false).isEmpty()) {
       myNotificationPopupAlreadyShown = false;
       myIdeFatal.deactivate();
     }

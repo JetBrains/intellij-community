@@ -61,6 +61,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         return cache.getAllClassNames();
       }
     });
+    ProgressManager.checkCanceled();
     Arrays.sort(names, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareToIgnoreCase(o2);

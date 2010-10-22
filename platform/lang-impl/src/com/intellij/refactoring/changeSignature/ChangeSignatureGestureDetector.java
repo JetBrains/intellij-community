@@ -134,6 +134,20 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
+  public void beforeChildRemoval(PsiTreeChangeEvent event) {
+    final PsiElement child = event.getChild();
+    if (child instanceof PsiFile) {
+      final PsiFile psiFile = (PsiFile)child;
+      final Document document = myPsiDocumentManager.getDocument(psiFile);
+      if (document != null) {
+        removeDocListener(document, psiFile);
+      } else {
+        myListenerMap.remove(psiFile);
+      }
+    }
+  }
+
+  @Override
   public void childRemoved(PsiTreeChangeEvent event) {
     change(event.getParent());
   }
@@ -194,10 +208,14 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       if (ArrayUtil.find(myFileEditorManager.getOpenFiles(), file.getVirtualFile()) != -1) {
         return;
       }
-      final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
-      if (adapter != null) {
-        document.removeDocumentListener(adapter);
-      }
+      removeDocListener(document, file);
+    }
+  }
+
+  private void removeDocListener(Document document, PsiFile file) {
+    final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
+    if (adapter != null) {
+      document.removeDocumentListener(adapter);
     }
   }
 

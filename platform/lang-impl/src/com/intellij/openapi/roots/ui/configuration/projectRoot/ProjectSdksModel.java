@@ -91,7 +91,7 @@ public class ProjectSdksModel implements SdkModel {
         //can't be
       }
     }
-    myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
+    myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectSdkName());
     myModified = false;
     myInitialized = true;
   }

@@ -99,7 +99,7 @@ public class RootsChangedTest extends ModuleTestCase {
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 
-    ProjectRootManager.getInstance(myProject).setProjectJdk(jdkBBB);
+    ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
     assertEventsCount(0);
 
     final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -109,7 +109,7 @@ public class RootsChangedTest extends ModuleTestCase {
     ProjectRootManager.getInstance(myProject).multiCommit(new ModifiableRootModel[]{rootModelA, rootModelB});
     assertEventsCount(1);
 
-    ProjectRootManager.getInstance(myProject).setProjectJdk(jdk);
+    ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
     assertEventsCount(1);
 
     final SdkModificator sdkModificator = jdk.getSdkModificator();

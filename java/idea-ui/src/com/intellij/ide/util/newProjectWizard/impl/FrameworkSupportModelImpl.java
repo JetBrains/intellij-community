@@ -93,4 +93,8 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
       multicaster.frameworkUnselected(node.getProvider());
     }
   }
+
+  public void fireWizardStepUpdated() {
+    myDispatcher.getMulticaster().wizardStepUpdated();
+  }
 }

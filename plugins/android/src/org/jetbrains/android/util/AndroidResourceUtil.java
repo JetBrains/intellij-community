@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -40,6 +39,7 @@ import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
+import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +167,7 @@ public class AndroidResourceUtil {
       LocalResourceManager manager = facet.getLocalResourceManager();
       String resourceType = manager.getFileResourceType(file);
       if (resourceType != null) {
-        String resourceName = FileUtil.getNameWithoutExtension(file.getName());
+        String resourceName = ResourceManager.getResourceName(resourceType, file.getName());
         return findResourceFields(facet, resourceType, resourceName, onlyInOwnPackages);
       }
     }

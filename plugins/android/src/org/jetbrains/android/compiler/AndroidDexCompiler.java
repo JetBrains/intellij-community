@@ -129,13 +129,15 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             AndroidFacetConfiguration configuration = facet.getConfiguration();
             AndroidPlatform platform = configuration.getAndroidPlatform();
             if (platform != null) {
-              Set<VirtualFile> dependencies = AndroidRootUtil.getExternalLibrariesAndModules(module, outputDir, platform.getLibrary());
-              List<VirtualFile> files = new ArrayList<VirtualFile>();
-              files.add(outputDir);
-              files.addAll(dependencies);
+              Set<VirtualFile> files = new HashSet<VirtualFile>();
+              addModuleOutputDir(files, outputDir);
+              files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
+              for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
+                addModuleOutputDir(files, file);
+              }
               VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
               if (outputDirForTests != null) {
-                files.add(outputDirForTests);
+                addModuleOutputDir(files, outputDirForTests);
               }
               IAndroidTarget target = configuration.getAndroidTarget();
               if (target != null) {
@@ -148,6 +150,15 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
         }
       }
       return items.toArray(new ProcessingItem[items.size()]);
+    }
+
+    private static void addModuleOutputDir(Set<VirtualFile> files, VirtualFile dir) {
+      // only include files inside packages
+      for (VirtualFile child : dir.getChildren()) {
+        if (child.isDirectory()) {
+          files.add(child);
+        }
+      }
     }
   }
 

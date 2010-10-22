@@ -21,9 +21,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -294,9 +296,9 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
       final List<ArtifactImpl> allArtifacts = artifactModel.getOriginalArtifacts();
 
-      Set<ArtifactImpl> removed = new THashSet<ArtifactImpl>(myModel.myArtifactsList);
-      List<ArtifactImpl> added = new ArrayList<ArtifactImpl>();
-      List<Pair<ArtifactImpl, String>> changed = new ArrayList<Pair<ArtifactImpl, String>>();
+      final Set<ArtifactImpl> removed = new THashSet<ArtifactImpl>(myModel.myArtifactsList);
+      final List<ArtifactImpl> added = new ArrayList<ArtifactImpl>();
+      final List<Pair<ArtifactImpl, String>> changed = new ArrayList<Pair<ArtifactImpl, String>>();
 
       for (ArtifactImpl artifact : allArtifacts) {
         final boolean isAdded = !removed.remove(artifact);
@@ -314,16 +316,20 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myModel.setArtifactsList(allArtifacts);
       myModificationCount++;
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
-      for (ArtifactImpl artifact : removed) {
-        publisher.artifactRemoved(artifact);
-      }
-      //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
-      for (ArtifactImpl artifact : added) {
-        publisher.artifactAdded(artifact);
-      }
-      for (Pair<ArtifactImpl, String> pair : changed) {
-        publisher.artifactChanged(pair.getFirst(), pair.getSecond());
-      }
+      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
+        public void run() {
+          for (ArtifactImpl artifact : removed) {
+            publisher.artifactRemoved(artifact);
+          }
+          //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
+          for (ArtifactImpl artifact : added) {
+            publisher.artifactAdded(artifact);
+          }
+          for (Pair<ArtifactImpl, String> pair : changed) {
+            publisher.artifactChanged(pair.getFirst(), pair.getSecond());
+          }
+        }
+      });
     }
     finally {
       myInsideCommit = false;

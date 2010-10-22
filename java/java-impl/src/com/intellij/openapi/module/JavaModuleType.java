@@ -75,7 +75,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
         return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
       }
     }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
-    final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder);
+    final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
     if (supportForFrameworksStep != null) {
       steps.add(supportForFrameworksStep);
     }

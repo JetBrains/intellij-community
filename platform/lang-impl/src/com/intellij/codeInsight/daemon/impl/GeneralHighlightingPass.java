@@ -128,7 +128,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         MarkupModel model = myDocument.getMarkupModel(myProject);
         UpdateHighlightersUtil.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL,myFile);
         final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(range, myHighlights, colorsScheme, (MarkupModelEx)model, Pass.UPDATE_ALL, myDocument, myProject);
+        UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, range, colorsScheme, myHighlights, (MarkupModelEx)model, Pass.UPDATE_ALL);
       }
     };
 
@@ -192,16 +192,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         public void run() {
           if (!addInjectedPsiHighlights(injectedInside, progress, Collections.synchronizedSet(result))) throw new ProcessCanceledException();
 
-          // set editor's color scheme
-          //final EditorColorsScheme colorsScheme = getColorsScheme();
-          //if (colorsScheme != null) {
-          //  for (HighlightInfo info : result) {
-          //    info.setCustomColorScheme(colorsScheme);
-          //  }
-          //}
-
           if (!outside.isEmpty() || !injectedOutside.isEmpty()) {
-            if (!inside.isEmpty()) { // do not apply when there were no elements to highlight
+            if (!inside.isEmpty() || !injectedInside.isEmpty()) { // do not apply when there were no elements to highlight
               // clear infos found in visible area to avoid applying them twice
               final List<HighlightInfo> toApply = new ArrayList<HighlightInfo>(result.size());
               for (HighlightInfo info : result) {
@@ -219,18 +211,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
                 public void run() {
-                  if (progress.isCanceled()) return;
+                  if (myProject.isDisposed()) return;
                   MarkupModel markupModel = myDocument.getMarkupModel(myProject);
 
                   ProperTextRange range = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
                   final EditorColorsScheme colorsScheme = getColorsScheme();
-                  UpdateHighlightersUtil.setHighlightersInRange(range, toApply, colorsScheme, (MarkupModelEx)markupModel, Pass.UPDATE_ALL, myDocument, myProject);
+                  UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, range, colorsScheme, toApply,
+                                                                (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
                 }
               });
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
                 public void run() {
-                  if (progress.isCanceled() || myEditor == null) return;
+                  if (myProject.isDisposed() || myEditor == null) return;
                   new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
                 }
               });
@@ -268,7 +261,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 }
                 */
 
-                UpdateHighlightersUtil.setHighlightersToEditorOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
+                UpdateHighlightersUtil.setHighlightersOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
                                                                            myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
               }
             };

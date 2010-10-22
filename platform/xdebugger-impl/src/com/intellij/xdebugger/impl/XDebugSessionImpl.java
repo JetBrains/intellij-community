@@ -20,7 +20,6 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -37,17 +36,18 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
-import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +91,7 @@ public class XDebugSessionImpl implements XDebugSession {
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
     myProject = debuggerManager.getProject();
+    ValueLookupManager.getInstance(myProject).startListening();
   }
 
   @NotNull

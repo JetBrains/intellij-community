@@ -83,10 +83,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
-  private CaretListener myEditorCaretListener;
-  private SelectionListener myEditorSelectionListener;
-  private EditorMouseListener myEditorMouseListener;
-
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private boolean myShown = false;
@@ -141,6 +137,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     updateListHeight(model);
 
     setArranger(arranger);
+
+    addListeners();
   }
 
   public void setArranger(LookupArranger arranger) {
@@ -550,13 +548,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myLookupStartMarker.getStartOffset();
   }
 
-  @Override
-  protected void beforeShow() {
-    if (isRealPopup()) {
-      getComponent().setBorder(null);
-    }
-  }
-
   public void performGuardedChange(Runnable change) {
     assert !myChangeGuard;
     myChangeGuard = true;
@@ -578,6 +569,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     LOG.assertTrue(!myShown);
     myShown = true;
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    getComponent().setBorder(null);
+
+    Point p = calculatePosition();
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
+
+    myShownStamp = System.currentTimeMillis();
+  }
+
+  private void addListeners() {
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard) {
@@ -586,29 +589,41 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }, this);
 
-    myEditorCaretListener = new CaretListener() {
+    final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
-        caretOrSelectionChanged();
+        if (!myChangeGuard) {
+          hide();
+        }
       }
     };
-    myEditorSelectionListener = new SelectionListener() {
+    final SelectionListener selectionListener = new SelectionListener() {
       public void selectionChanged(final SelectionEvent e) {
-        caretOrSelectionChanged();
+        if (!myChangeGuard) {
+          hide();
+        }
       }
     };
-    myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
-    myEditor.getSelectionModel().addSelectionListener(myEditorSelectionListener);
-
-    myEditorMouseListener = new EditorMouseAdapter() {
+    final EditorMouseListener mouseListener = new EditorMouseAdapter() {
       public void mouseClicked(EditorMouseEvent e){
         e.consume();
         hide();
       }
     };
-    myEditor.addEditorMouseListener(myEditorMouseListener);
+
+    myEditor.getCaretModel().addCaretListener(caretListener);
+    myEditor.getSelectionModel().addSelectionListener(selectionListener);
+    myEditor.addEditorMouseListener(mouseListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        myEditor.getCaretModel().removeCaretListener(caretListener);
+        myEditor.getSelectionModel().removeSelectionListener(selectionListener);
+        myEditor.removeEditorMouseListener(mouseListener);
+      }
+    });
 
     myList.addListSelectionListener(new ListSelectionListener() {
-      private LookupElement oldItem = null; 
+      private LookupElement oldItem = null;
 
       public void valueChanged(ListSelectionEvent e){
         LookupElement item = getCurrentItem();
@@ -628,7 +643,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         final int i = myList.locationToIndex(point);
         if (i >= 0) {
           final LookupElement selected = (LookupElement)myList.getModel().getElementAt(i);
-          if (selected != null && 
+          if (selected != null &&
               e.getClickCount() == 1 &&
               point.x >= myList.getCellBounds(i, i).width - PopupIcons.EMPTY_ICON.getIconWidth() &&
               ShowLookupActionsHandler.showItemActions(LookupImpl.this, selected)) {
@@ -645,20 +660,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         }
       }
     });
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    Point p = calculatePosition();
-    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
-
-    myShownStamp = System.currentTimeMillis();
-  }
-
-  private void caretOrSelectionChanged() {
-    if (!myChangeGuard) {
-      hide();
-    }
   }
 
   private int calcLookupStart() {
@@ -927,16 +928,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert !myDisposed;
 
     Disposer.dispose(myProcessIcon);
-    if (myEditorCaretListener != null) {
-      myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
-      myEditor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);
-      myEditorCaretListener = null;
-      myEditorSelectionListener = null;
-    }
-    if (myEditorMouseListener != null) {
-      myEditor.removeEditorMouseListener(myEditorMouseListener);
-      myEditorMouseListener = null;
-    }
+
     myDisposed = true;
   }
 

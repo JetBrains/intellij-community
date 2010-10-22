@@ -24,6 +24,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -35,6 +36,7 @@ import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
@@ -58,14 +60,20 @@ public class ITNReporter extends ErrorReportSubmitter {
   }
 
   @Override
-  public void submitAsync(IdeaLoggingEvent[] events, Component parentComponent, Consumer<SubmittedReportInfo> consumer) {
-    sendError(events [0], parentComponent, consumer);
+  public void submitAsync(IdeaLoggingEvent[] events,
+                          String additionalInfo,
+                          Component parentComponent,
+                          Consumer<SubmittedReportInfo> consumer) {
+    sendError(events [0], additionalInfo, parentComponent, consumer);
   }
 
   /**
      * @noinspection ThrowablePrintStackTrace
      */
-  private static void sendError(IdeaLoggingEvent event, final Component parentComponent, final Consumer<SubmittedReportInfo> callback) {
+  private static void sendError(IdeaLoggingEvent event,
+                                String additionalInfo,
+                                final Component parentComponent,
+                                final Consumer<SubmittedReportInfo> callback) {
     String newBuild = ErrorReportSender.checkNewBuild();
     if (newBuild != null) {
       Messages.showMessageDialog(parentComponent,
@@ -76,33 +84,36 @@ public class ITNReporter extends ErrorReportSubmitter {
 
     ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);
 
-    String description = "";
-
-    doSubmit(event, parentComponent, callback, errorBean, description);
+    doSubmit(event, parentComponent, callback, errorBean, additionalInfo);
   }
 
   private static void doSubmit(final IdeaLoggingEvent event,
                                final Component parentComponent,
                                final Consumer<SubmittedReportInfo> callback,
-                               final ErrorBean errorBean, final String description) {
+                               final ErrorBean errorBean,
+                               final String description) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    final EAPSendErrorDialog dlg = new EAPSendErrorDialog();
-    dlg.setErrorDescription(description);
-    dlg.show();
-    if (!dlg.isShouldSend()) {
-      return;
+    final ErrorReportConfigurable errorReportConfigurable = ErrorReportConfigurable.getInstance();
+    if (!errorReportConfigurable.KEEP_ITN_PASSWORD &&
+        !StringUtil.isEmpty(errorReportConfigurable.ITN_LOGIN) &&
+        StringUtil.isEmpty(errorReportConfigurable.getPlainItnPassword())) {
+      final JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
+      dlg.show();
+      if (!dlg.isOK()) {
+        return;
+      }
     }
 
-    @NonNls String login = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-    @NonNls String password = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+    @NonNls String login = errorReportConfigurable.ITN_LOGIN;
+    @NonNls String password = errorReportConfigurable.getPlainItnPassword();
     if (login.trim().length() == 0 && password.trim().length() == 0) {
       login = "idea_anonymous";
       password = "guest";
     }
 
-    errorBean.setDescription(buildDescription(event, dlg.getErrorDescription()));
+    errorBean.setDescription(buildDescription(event, description));
 
     ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -118,7 +129,7 @@ public class ITNReporter extends ErrorReportSubmitter {
             Notification notification = new Notification(ReportMessages.ERROR_REPORT, ReportMessages.ERROR_REPORT,
                                                          DiagnosticBundle.message("error.report.confirmation"),
                                                          NotificationType.INFORMATION);
-            Notifications.Bus.notify(notification);
+            Notifications.Bus.notify(notification, NotificationDisplayType.BALLOON_ONLY, project);
           }
         });
       }
@@ -143,10 +154,13 @@ public class ITNReporter extends ErrorReportSubmitter {
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else {
+              if (e instanceof NoSuchEAPUserException) {
+                new JetBrainsAccountDialog(parentComponent).show();
+              }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  doSubmit(event, parentComponent, callback, errorBean, dlg.getErrorDescription());
+                  doSubmit(event, parentComponent, callback, errorBean, description);
                 }
               });
             }
@@ -160,7 +174,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     String message = event.getMessage();
 
     @NonNls StringBuilder descBuilder = new StringBuilder();
-    if (description.length() > 0) {
+    if (!StringUtil.isEmpty(description)) {
       descBuilder.append("User description: ").append(description).append("\n");
     }
     if (message != null) {
@@ -176,6 +190,10 @@ public class ITNReporter extends ErrorReportSubmitter {
           descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
         }
       }
+    }
+
+    if (IdeaLogger.ourLastActionId != null) {
+      descBuilder.append("Last action: ").append(IdeaLogger.ourLastActionId);
     }
 
     if (previousExceptionThreadId != 0) {

@@ -97,6 +97,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       public void run() {
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
+        if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
 

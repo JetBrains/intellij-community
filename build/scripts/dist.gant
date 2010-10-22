@@ -196,6 +196,7 @@ def layoutLinux(Map args, String home, Paths paths) {
       fileset(dir: "$home/bin") { include(name: "*.*") }
       fileset(dir: "$home/bin/linux") { include(name: "*.*") }
       fileset(dir: "$home/bin/nix") { include(name: "*.*") }
+      fileset(dir: "$home/build/images")
     }
   }
 

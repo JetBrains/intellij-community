@@ -166,6 +166,7 @@ public class GitHistoryUtils {
       public void startFailed(Throwable exception) {
         //noinspection ThrowableInstanceNeverThrown
         exceptionConsumer.consume(new VcsException(exception));
+        semaphore.up();
       }
 
       @Override

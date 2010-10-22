@@ -27,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
@@ -38,10 +37,10 @@ public class FacetByPsiFileDetectorWrapper<C extends FacetConfiguration, F exten
   private final Condition<PsiFile> myPsiFileFilter;
 
   public FacetByPsiFileDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType,
-                                       final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
+                                       final AutodetectionFilter autodetectionFilter, final FileContentFilter fileContentFilter,
                                        final FacetDetector<PsiFile, C> facetDetector,
                                        Condition<PsiFile> psiFileFilter, final UnderlyingFacetSelector<VirtualFile, U> selector) {
-    super(projectFacetSet, facetType, autodetectionFilter, virtualFileFilter, facetDetector, selector);
+    super(projectFacetSet, facetType, autodetectionFilter, fileContentFilter, facetDetector, selector);
     myPsiFileFilter = psiFileFilter;
   }
 

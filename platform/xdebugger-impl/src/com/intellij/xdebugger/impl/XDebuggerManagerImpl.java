@@ -17,20 +17,18 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentListener;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.Disposable;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -61,9 +59,7 @@ import java.util.*;
     storages = {@Storage(
         id = "other",
         file = "$WORKSPACE_FILE$")})
-public class XDebuggerManagerImpl extends XDebuggerManager
-    implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebuggerManagerImpl");
+public class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
@@ -89,6 +85,22 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         }
       }
     });
+
+    messageBus.connect().subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+      @Override
+      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      }
+
+      @Override
+      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          XDebugSessionTab sessionTab = mySessionTabs.remove(descriptor.getProcessHandler());
+          if (sessionTab != null) {
+            Disposer.dispose(sessionTab);
+          }
+        }
+      }
+    });
   }
 
   @NotNull
@@ -96,47 +108,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return myBreakpointManager;
   }
 
-  public void projectOpened() {
-    final RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
-    LOG.assertTrue(contentManager != null, "Content manager is null");
-    final RunContentListener myContentListener = new RunContentListener() {
-      public void contentSelected(RunContentDescriptor descriptor) {
-      }
-
-      public void contentRemoved(RunContentDescriptor descriptor) {
-        XDebugSessionTab sessionTab = mySessionTabs.remove(descriptor.getProcessHandler());
-        if (sessionTab != null) {
-          Disposer.dispose(sessionTab);
-        }
-      }
-    };
-
-
-    contentManager.addRunContentListener(myContentListener, DefaultDebugExecutor.getDebugExecutorInstance());
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        contentManager.removeRunContentListener(myContentListener);
-      }
-    });
-  }
-
-  public void projectClosed() {
-  }
-
   public Project getProject() {
     return myProject;
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   @NotNull

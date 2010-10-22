@@ -34,58 +34,19 @@ import java.awt.event.ActionListener;
  * Git VCS configuration panel
  */
 public class GitVcsPanel {
-  /**
-   * Test git executable button
-   */
-  private JButton myTestButton;
-  /**
-   * The root panel
-   */
-  private JComponent myPanel;
-  /**
-   * The git path field
-   */
+  private JButton myTestButton; // Test git executable
+  private JComponent myRootPanel;
   private TextFieldWithBrowseButton myGitField;
-  /**
-   * Type of SSH executable to use
-   */
-  private JComboBox mySSHExecutableComboBox;
-  /**
-   * The conversion policy
-   */
-  private JComboBox myConvertTextFilesComboBox;
-  /**
-   * The confirmation checkbox
-   */
-  private JCheckBox myAskBeforeConversionsCheckBox;
-  /**
-   * The if selected, the branches widget is enabled in the status bar
-   */
-  private JCheckBox myEnableBranchesWidgetCheckBox;
-  /**
-   * The project
-   */
+  private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
+  private JComboBox myConvertTextFilesComboBox; // The conversion policy
+  private JCheckBox myAskBeforeConversionsCheckBox; // The confirmation checkbox
+  private JCheckBox myEnableBranchesWidgetCheckBox; // if selected, the branches widget is enabled in the status bar
   private final Project myProject;
-  /**
-   * The settings component
-   */
-  private final GitVcsSettings mySettings;
-  /**
-   * IDEA ssh value
-   */
-  private static final String IDEA_SSH =
-    ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea");
-  /**
-   * Native SSH value
-   */
-  private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native");
-  /**
-   * IDEA ssh value
-   */
+  private final GitVcsApplicationSettings myAppSettings;
+  private final GitVcsSettings myProjectSettings;
+  private static final String IDEA_SSH = ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
+  private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
   private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
-  /**
-   * Native SSH value
-   */
   private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
 
   /**
@@ -94,14 +55,15 @@ public class GitVcsPanel {
    * @param project the context project
    */
   public GitVcsPanel(@NotNull Project project) {
-    mySettings = GitVcsSettings.getInstance(project);
+    myAppSettings = GitVcsApplicationSettings.getInstance();
+    myProjectSettings = GitVcsSettings.getInstance(project);
     myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     mySSHExecutableComboBox
       .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myAskBeforeConversionsCheckBox.setSelected(mySettings.askBeforeLineSeparatorConversion());
+    myAskBeforeConversionsCheckBox.setSelected(myProjectSettings.askBeforeLineSeparatorConversion());
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
@@ -119,8 +81,8 @@ public class GitVcsPanel {
    * Test availability of the connection
    */
   private void testConnection() {
-    if (mySettings != null) {
-      mySettings.setGitExecutable(myGitField.getText());
+    if (myAppSettings != null) {
+      myAppSettings.setPathToGit(myGitField.getText());
     }
     final String s;
     try {
@@ -143,7 +105,7 @@ public class GitVcsPanel {
    * @return the configuration panel
    */
   public JComponent getPanel() {
-    return myPanel;
+    return myRootPanel;
   }
 
   /**
@@ -152,7 +114,7 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public void load(@NotNull GitVcsSettings settings) {
-    myGitField.setText(settings.getGitExecutable());
+    myGitField.setText(settings.getAppSettings().getPathToGit());
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myAskBeforeConversionsCheckBox.setSelected(settings.askBeforeLineSeparatorConversion());
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
@@ -187,7 +149,7 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public boolean isModified(@NotNull GitVcsSettings settings) {
-    return !settings.getGitExecutable().equals(myGitField.getText()) ||
+    return !settings.getAppSettings().getPathToGit().equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            settings.askBeforeLineSeparatorConversion() != myAskBeforeConversionsCheckBox.isSelected() ||
@@ -200,7 +162,7 @@ public class GitVcsPanel {
    * @param settings the settings object
    */
   public void save(@NotNull GitVcsSettings settings) {
-    settings.setGitExecutable(myGitField.getText());
+    settings.getAppSettings().setPathToGit(myGitField.getText());
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
     GitVcsSettings.ConversionPolicy conversionPolicy;

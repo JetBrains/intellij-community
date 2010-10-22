@@ -1,16 +1,4 @@
 <root>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.xdebugger.XDebuggerManager</interface-class>
-      <implementation-class>com.intellij.xdebugger.impl.XDebuggerManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</interface-class>
-      <implementation-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</implementation-class>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType"/>
@@ -25,6 +13,11 @@
 
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
+                    serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager"/>
 
     <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"
                     serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"/>

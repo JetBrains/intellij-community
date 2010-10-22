@@ -20,7 +20,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -28,33 +28,27 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class ValueLookupManager implements EditorMouseMotionListener, ProjectComponent {
+public class ValueLookupManager implements EditorMouseMotionListener {
   private final Project myProject;
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm;
   private AbstractValueHint myRequest = null;
   private DebuggerSupport[] mySupports;
+  private boolean myListening;
 
   public ValueLookupManager(Project project) {
     myProject = project;
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
     mySupports = DebuggerSupport.getDebuggerSupports();
+    myAlarm = new Alarm(project);
   }
 
-  public void projectOpened() {
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this,myProject);
-  }
-
-  public void projectClosed() {
-    myAlarm.cancelAllRequests();
+  public void startListening() {
+    if (!myListening) {
+      myListening = true;
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this,myProject);
+    }
   }
 
   public void mouseDragged(EditorMouseEvent e) {
@@ -115,11 +109,6 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
   }
 
   public static ValueLookupManager getInstance(Project project) {
-    return project.getComponent(ValueLookupManager.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ValueLookupManager";
+    return ServiceManager.getService(project, ValueLookupManager.class);
   }
 }

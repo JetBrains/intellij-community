@@ -44,6 +44,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidIdlCompiler;
+import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidPlatformChooser;
@@ -147,7 +148,15 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myResetPathsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        resetOptions(new AndroidFacetConfiguration());
+        AndroidFacetConfiguration configuration = new AndroidFacetConfiguration();
+        Module module = myContext.getModule();
+        if (AndroidMavenUtil.isMavenizedModule(module)) {
+          AndroidMavenProvider mavenProvider = AndroidMavenUtil.getMavenProvider();
+          if (mavenProvider != null) {
+            mavenProvider.setPathsToDefault(module, configuration);
+          }
+        }
+        resetOptions(configuration);
       }
     });
 

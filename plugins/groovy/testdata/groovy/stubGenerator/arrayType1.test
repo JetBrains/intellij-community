@@ -6,7 +6,7 @@ class Foo {
  def Object[] getObj () {}
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public int[] foo() {
     return null;
   }

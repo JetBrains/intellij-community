@@ -122,7 +122,7 @@ public abstract class ResourceManager {
     return dirs;
   }
 
-  @Nullable
+  @NotNull
   public static String getResourceName(@NotNull String resourceType, @NotNull String fileName) {
     String extension = FileUtil.getExtension(fileName);
     String s = FileUtil.getNameWithoutExtension(fileName);

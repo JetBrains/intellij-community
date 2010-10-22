@@ -20,7 +20,8 @@
  */
 package com.intellij.codeInspection.offlineViewer;
 
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -30,20 +31,32 @@ import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.lang.Language;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
 
   public OfflineProblemDescriptorNode(final OfflineProblemDescriptor descriptor,
                                       final DescriptorProviderInspection tool) {
     super(descriptor, tool);
+  }
+
+  private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
+    final FileViewProvider viewProvider = file.getViewProvider();
+    final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    for (Language language : viewProvider.getLanguages()) {
+      final PsiFile psiRoot = viewProvider.getPsi(language);
+      if (HighlightLevelUtil.shouldInspect(psiRoot)) {
+        result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+      }
+    }
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   @Nullable
@@ -79,13 +92,13 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
           LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
           final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false, session);
           localInspectionTool.inspectionStarted(session);
-          final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(containingFile,
-                                                                                                 startOffset,
-                                                                                                 endOffset);
+          final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile,
+                                                                            startOffset,
+                                                                            endOffset);
           for (PsiElement el : elementsInRange) {
             el.accept(visitor);
           }
-          localInspectionTool.inspectionFinished(session);
+          localInspectionTool.inspectionFinished(session, holder);
           if (holder.hasResults()) {
             final List<ProblemDescriptor> list = holder.getResults();
             final int idx = offlineProblemDescriptor.getProblemIndex();

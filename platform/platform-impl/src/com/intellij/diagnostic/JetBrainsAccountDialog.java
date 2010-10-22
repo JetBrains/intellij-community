@@ -15,17 +15,12 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.TextComponentUndoProvider;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -36,7 +31,7 @@ import java.awt.event.MouseEvent;
  * Time: 3:49:50 PM
  * To change this template use Options | File Templates.
  */
-public class EAPSendErrorDialog extends DialogWrapper {
+public class JetBrainsAccountDialog extends DialogWrapper {
   private JTextField myItnLoginTextField;
   private JPasswordField myItnPasswordTextField;
   private JCheckBox myRememberITNPasswordCheckBox;
@@ -53,24 +48,14 @@ public class EAPSendErrorDialog extends DialogWrapper {
     myRememberITNPasswordCheckBox.setSelected(ErrorReportConfigurable.getInstance().KEEP_ITN_PASSWORD);
   }
 
-  public EAPSendErrorDialog() throws HeadlessException {
-    super(false);
-
+  public JetBrainsAccountDialog(Component parent) throws HeadlessException {
+    super(parent, false);
     init ();
   }
 
   protected JPanel myMainPanel;
-  protected JTextArea myErrorDescriptionTextArea;
-  private Action mySendAction;
-  private Action myCancelAction;
   protected JLabel mySendingSettingsLabel;
   private JLabel myCreateAccountLabel;
-
-  private boolean myShouldSend = false;
-
-  public boolean isShouldSend() {
-    return myShouldSend;
-  }
 
   protected String getDimensionServiceKey() {
     return "#com.intellij.diagnostic.AbstractSendErrorDialog";
@@ -79,22 +64,6 @@ public class EAPSendErrorDialog extends DialogWrapper {
   protected void init() {
     setTitle(ReportMessages.ERROR_REPORT);
     getContentPane().add(myMainPanel);
-    mySendAction = new AbstractAction(DiagnosticBundle.message("diagnostic.error.report.send")) {
-      public void actionPerformed(ActionEvent e) {
-        myShouldSend = true;
-        storeInfo();
-        Disposer.dispose(myDisposable);
-      }
-    };
-    mySendAction.putValue(Action.MNEMONIC_KEY, new Integer(KeyEvent.VK_S));
-    mySendAction.putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE.toString());
-    myCancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
-      public void actionPerformed(ActionEvent e) {
-        myShouldSend = false;
-        Disposer.dispose(myDisposable);
-      }
-    };
-    myCancelAction.putValue(Action.MNEMONIC_KEY, new Integer (KeyEvent.VK_C));
 
     mySendingSettingsLabel.addMouseListener(new MouseAdapter () {
       public void mouseClicked(MouseEvent e) {
@@ -116,25 +85,16 @@ public class EAPSendErrorDialog extends DialogWrapper {
     });
     myCreateAccountLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
 
-    new TextComponentUndoProvider(myErrorDescriptionTextArea);
     super.init ();
+  }
+
+  @Override
+  protected void doOKAction() {
+    storeInfo();
+    super.doOKAction();
   }
 
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }
-
-  protected Action[] createActions() {
-    return new Action [] {mySendAction, myCancelAction};
-  }
-
-  public String getErrorDescription() {
-    return myErrorDescriptionTextArea.getText();
-  }
-
-  public void setErrorDescription (String description) {
-    myErrorDescriptionTextArea.setText(description);
-  }
-
-
 }
