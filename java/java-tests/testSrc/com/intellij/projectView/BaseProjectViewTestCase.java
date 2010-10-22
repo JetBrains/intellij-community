@@ -109,15 +109,14 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertStructureEqual(myStructure.getRootElement(), expected, 27, comparator);
   }
 
-
   private void assertStructureEqual(PsiDirectory root, String expected, int maxRowCount, AbstractTreeStructure structure) {
     assertNotNull(root);
     PsiDirectoryNode rootNode = new PsiDirectoryNode(myProject, root, (ViewSettings)structure);
-    assertStructureEqual(rootNode, expected, maxRowCount, IdeaTestUtil.DEFAULT_COMPARATOR);
+    assertStructureEqual(rootNode, expected, maxRowCount, IdeaTestUtil.createComparator(myPrintInfo));
   }
 
   private void assertStructureEqual(Object rootNode, String expected) {
-    assertStructureEqual(rootNode, expected, 17, IdeaTestUtil.DEFAULT_COMPARATOR);
+    assertStructureEqual(rootNode, expected, 17, IdeaTestUtil.createComparator(myPrintInfo));
   }
 
   private void assertStructureEqual(Object rootNode, String expected, int maxRowCount, Comparator comparator) {

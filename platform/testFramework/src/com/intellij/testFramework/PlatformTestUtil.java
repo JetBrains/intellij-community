@@ -242,13 +242,8 @@ public class PlatformTestUtil {
   }
 
   /**
-   * @deprecated use {@link #print(AbstractTreeStructure structure,
-                                   Object node,
-                                   int currentLevel,
-                                   Comparator comparator,
-                                   int maxRowCount,
-                                   char paddingChar,
-                                   String[] dumpNames)}
+   * @deprecated use {@link #print(com.intellij.ide.util.treeView.AbstractTreeStructure, Object, int, java.util.Comparator, int, char,
+   *                               com.intellij.openapi.ui.Queryable.PrintInfo)}
    */
   public static StringBuffer print(AbstractTreeStructure structure,
                                    Object node,
