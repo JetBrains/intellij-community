@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.HashMap;
@@ -37,6 +38,10 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   // visited URL -> list of logins for this URL. Passwords are remembered in the PasswordSafe.
   private Map<String, List<String>> myRememberedUrls = new HashMap<String, List<String>>();
+
+  public static HgGlobalSettings getInstance() {
+    return ServiceManager.getService(HgGlobalSettings.class);
+  }
 
   /**
    * Returns the rememebered urls which were accessed while working in the plugin.
