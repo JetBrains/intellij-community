@@ -27,8 +27,10 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
@@ -57,7 +59,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new StripedLockConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
+  private final ConcurrentMap<Object, ConcurrentMap<SemKey, List<SemElement>>> myCache = new StripedLockConcurrentHashMap<Object, ConcurrentMap<SemKey, List<SemElement>>>();
   private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
   private final MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
@@ -105,7 +107,7 @@ public class SemServiceImpl extends SemService{
     
     final LowMemoryWatcher watcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
       public void force() {
-        myCache.clear();
+        clearCache();
         //System.out.println("SemService cache flushed");
       }
     });
@@ -236,7 +238,7 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, PsiElement psi, boolean paranoid) {
-    final ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
+    final ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(cacheKey(psi));
     if (map == null) return null;
 
     List<T> singleList = null;
@@ -275,19 +277,28 @@ public class SemServiceImpl extends SemService{
     return new ArrayList<T>(result);
   }
 
+  private static Object cacheKey(PsiElement psi) {
+    if (psi instanceof StubBasedPsiElement) {
+      return PsiAnchor.create(psi);
+    }
+
+    return psi;
+  }
+
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
     cacheOrGetMap(psi).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
   }
 
   @Override
   public void clearCachedSemElements(@NotNull PsiElement psi) {
-    myCache.remove(psi);
+    myCache.remove(cacheKey(psi));
   }
 
   private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(PsiElement psi) {
-    ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
+    final Object key = cacheKey(psi);
+    ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(key);
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myCache, psi, new StripedLockConcurrentHashMap<SemKey, List<SemElement>>());
+      map = ConcurrencyUtil.cacheOrGet(myCache, key, new StripedLockConcurrentHashMap<SemKey, List<SemElement>>());
     }
     return map;
   }
