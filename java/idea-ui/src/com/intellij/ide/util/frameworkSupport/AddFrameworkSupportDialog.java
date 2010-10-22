@@ -6,6 +6,7 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -35,9 +36,10 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     super(module.getProject(), true);
     setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()), null,
-                                                         new Computable<String>() {
-      public String compute() {
+    final FrameworkSupportModelImpl model = new FrameworkSupportModelImpl(module.getProject(), null);
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()),
+                                                         model, new Computable<String>() {
+        public String compute() {
         return contentRootPath;
       }
     }) {

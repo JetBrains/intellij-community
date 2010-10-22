@@ -24,7 +24,6 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListen
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -75,11 +74,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private FrameworkSupportNode myLastSelectedNode;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
-                                      @Nullable ModuleBuilder builder, Computable<String> baseDirForLibrariesGetter) {
+                                      final FrameworkSupportModelImpl model,
+                                      Computable<String> baseDirForLibrariesGetter) {
+    myModel = model;
     myLibrariesContainer = librariesContainer;
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
-    myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject(), builder);
     createNodes();
 
     final Splitter splitter = new Splitter(false, 0.30f, 0.1f, 0.7f);
