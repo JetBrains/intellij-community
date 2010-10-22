@@ -121,7 +121,7 @@ public final class CompressedDictionary implements Dictionary {
     }
     try {
       UnitBitSet bs = encoder.encode(word, false);
-      if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS) return true;
+      if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS) return false;  // TODO: polyglot.dic contains word typppo , wtf ?! also make tests for your changes!!!
       if (bs == null) return false; // fail faster w/o search
       byte[] compressed = UnitBitSet.getBytes(bs);
       int index = -1;
