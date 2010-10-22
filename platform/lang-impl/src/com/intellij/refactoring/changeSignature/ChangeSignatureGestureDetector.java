@@ -138,11 +138,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     final PsiElement child = event.getChild();
     if (child instanceof PsiFile) {
       final PsiFile psiFile = (PsiFile)child;
-      final Document document = myPsiDocumentManager.getDocument(psiFile);
-      if (document != null) {
-        removeDocListener(document, psiFile);
-      } else {
-        myListenerMap.remove(psiFile);
+      if (myListenerMap.containsKey(psiFile)) {
+        final Document document = myPsiDocumentManager.getDocument(psiFile);
+        if (document != null) {
+          removeDocListener(document, psiFile);
+        } else {
+          myListenerMap.remove(psiFile);
+        }
       }
     }
   }
