@@ -576,4 +576,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
+  public StructureConfigurableContext getContext() {
+    return myContext;
+  }
 }
