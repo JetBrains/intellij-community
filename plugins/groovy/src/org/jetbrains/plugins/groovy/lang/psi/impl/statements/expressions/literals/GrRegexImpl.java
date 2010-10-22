@@ -19,10 +19,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
@@ -43,6 +43,11 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
 
   public boolean isPlainString() {
     return true;
+  }
+
+  @Override
+  public GrStringInjection[] getInjections() {
+    return GrStringInjection.EMPTY_ARRAY;
   }
 
   public void accept(GroovyElementVisitor visitor) {

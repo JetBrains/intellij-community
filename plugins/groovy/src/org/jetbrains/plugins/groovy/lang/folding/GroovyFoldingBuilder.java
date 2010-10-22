@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -30,6 +31,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -66,9 +69,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     }
 
     //multiline strings
-    if (isMultiLineStringLiteral(node)) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
-    }
+    addFoldingForStrings(descriptors, node);
 
     PsiElement child = element.getFirstChild();
     while (child != null) {
@@ -80,6 +81,63 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       GroovyFile file = (GroovyFile)element;
       addFoldingsForImports(descriptors, file);
     }
+  }
+
+  private static void addFoldingForStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
+    if (!isMultiLineStringLiteral(node)) return;
+
+    if (!node.getElementType().equals(GSTRING)) {
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      return;
+    }
+
+    final GrString grString = (GrString)node.getPsi();
+    if (grString == null) return;
+
+    final GrStringInjection[] injections = grString.getInjections();
+    if (injections.length == 0) {
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      return;
+    }
+    final String quote = GrStringUtil.getStartQuote(node.getText());
+    final FoldingGroup group = FoldingGroup.newGroup("GString");
+    final TextRange nodeRange = node.getTextRange();
+    int start = nodeRange.getStartOffset();
+
+
+    GrStringInjection injection = injections[0];
+    boolean hasClosableBlock = injection.getClosableBlock() != null;
+    final String holderText = quote + "..." + (hasClosableBlock ? "${" : "$");
+    TextRange injectionRange = injection.getTextRange();
+    descriptors.add(new FoldingDescriptor(node, new TextRange(start, injectionRange.getStartOffset() + (hasClosableBlock ? 2 : 1)), group) {
+      @Override
+      public String getPlaceholderText() {
+        return holderText;
+      }
+    });
+    start = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+    for (int i = 1; i < injections.length; i++) {
+      injection = injections[i];
+      boolean hasClosableBlockNew = injection.getClosableBlock() != null;
+      injectionRange = injection.getTextRange();
+      final String text = (hasClosableBlock ? "}" : "") + "..." + (hasClosableBlockNew ? "${" : "$");
+      descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(), new TextRange(start, injectionRange.getStartOffset()), group) {
+        @Override
+        public String getPlaceholderText() {
+          return text;
+        }
+      });
+
+      hasClosableBlock = hasClosableBlockNew;
+      start = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+    }
+    final String text = (hasClosableBlock ? "}" : "") + "..." + quote;
+    descriptors.add(new FoldingDescriptor(node.getLastChildNode(), new TextRange(start, nodeRange.getEndOffset()), group) {
+      @Override
+      public String getPlaceholderText() {
+        return text;
+      }
+    });
   }
 
   private static void addFoldingsForImports(final List<FoldingDescriptor> descriptors, final GroovyFile file) {
