@@ -1,12 +1,18 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +87,7 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
+    if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
     PyArgumentList.AnalysisResult result = node.analyzeCall(context);
     if (!result.isImplicitlyResolved()) {
       for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
@@ -102,6 +109,9 @@ public class PyArgumentListInspection extends PyInspection {
           if (flags.contains(PyArgumentList.ArgFlag.IS_UNMAPPED)) {
             holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
           }
+          if (flags.contains(PyArgumentList.ArgFlag.IS_TOO_LONG)) {
+            holder.registerProblem(arg, "More arguments than positional parameters left");
+          }
         }
       }
       // show unfilled params
@@ -115,11 +125,51 @@ public class PyArgumentListInspection extends PyInspection {
         }
       }
     }
-    /*
-    else if (! node.getTextRange().isEmpty()) {
-      holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
+    // syntax of *args
+    for (PyExpression arg : node.getArguments()) {
+      if (arg instanceof PyStarArgument) {
+        PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
+        PyType inside_type = context.getType(content);
+        if (inside_type != null) {
+          if (((PyStarArgument)arg).isKeyword()) {
+            if (! isMappingType(inside_type)) {
+              holder.registerProblem(arg, "Expected a dictionary, got " + inside_type.getName());
+            }
+          }
+          else { // * arg
+            if (! isSequenceType(inside_type)) {
+              holder.registerProblem(arg, "Expected a sequence, got " + inside_type.getName());
+            }
+          }
+        }
+      }
     }
-    */
+    // did we succeed at all?
+    if (result.getMarkedCallee() == null) {
+      PsiElement marked = node;
+      while (marked != null && marked.getTextRange().isEmpty()) marked = marked.getParent();
+      if (marked != null) holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
+    }
+  }
+
+  private static boolean isSequenceType(PyType a_type) {
+    if (a_type instanceof PyTupleType) return true;
+    if ("list".equals(a_type.getName()) && a_type.isBuiltin()) return true;
+    if (a_type instanceof PyClassType) {
+      final PyClass cls = ((PyClassType)a_type).getPyClass();
+      if (cls != null && cls.findMethodByName("__getitem__", true) != null) return true;
+    }
+    return false;
+  }
+
+  private static boolean isMappingType(PyType a_type) {
+    // TODO: when we have proper support for ABCs, we could use an interface conformance check here
+    if ("dict".equals(a_type.getName()) && a_type.isBuiltin()) return true;
+    if (a_type instanceof PyClassType) {
+      final PyClass cls = ((PyClassType)a_type).getPyClass();
+      if (cls != null && cls.findMethodByName("__getitem__", true) != null  && cls.findMethodByName("keys", true) != null) return true;
+    }
+    return false;
   }
 
 }
