@@ -2,11 +2,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +140,8 @@ public class PyCallExpressionHelper {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
       PyExpression lastQualifier = resolveResult != null ? resolveResult.getLastQualifier() : null;
       final PyExpression callReference = us.getCallee();
-      boolean is_by_instance = isByInstance(callReference, context);
+      boolean is_by_instance = isConstructorCall || /*isByInstance(callReference, context);*/
+              divinate(us.getCallee(), (Callable)resolved, lastQualifier, context);
       if (lastQualifier != null) {
         PyType qualifier_type = context.getType(lastQualifier);
         is_by_instance |=
@@ -202,8 +205,8 @@ public class PyCallExpressionHelper {
         implicit_offset += 1;
       } // Both Foo.method() and foo.method() have implicit the first arg
     }
-    if (!isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // constructor call
-    // decorators?
+    if (!isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // __new__ call
+    /*
     if (PyNames.INIT.equals(method.getName())) {
       String refName = callReference instanceof PyReferenceExpression
                        ? ((PyReferenceExpression)callReference).getReferencedName()
@@ -212,6 +215,8 @@ public class PyCallExpressionHelper {
         implicit_offset += 1;
       }
     }
+    */
+    // decorators?
     // look for closest decorator
     PyDecoratorList decolist = method.getDecoratorList();
     if (decolist != null) {
@@ -249,6 +254,23 @@ public class PyCallExpressionHelper {
           return true;
         }
       }
+    }
+    return false;
+  }
+
+  private static boolean divinate(PyExpression callee, Callable resolved, PyExpression lastQualifier, TypeEvalContext context) {
+    // true = call by instance
+    PyFunction method = resolved.asMethod();
+    if (method != null) {
+      if (lastQualifier == null) return true; // unqualified + method = implicit constructor call
+      PyType qtype = context.getType(lastQualifier);
+      if (qtype != null) {
+        if (qtype instanceof PyClassType) {
+          return ! ((PyClassType)qtype).isDefinition();
+        }
+        else return true; // TODO: handle UnionType
+      }
+      else return true; // NOTE. best guess: unknown qualifier is more probably an instance.
     }
     return false;
   }
@@ -387,7 +409,7 @@ public class PyCallExpressionHelper {
           else param_slots.put(a_param.getName(), null);
         }
       }
-      // look for star args
+      // look for star args, mark duplicate star args
       for (PyExpression arg : arguments) {
         if (arg instanceof PyStarArgument) {
           final PyStarArgument star_arg = (PyStarArgument)arg;
@@ -395,7 +417,6 @@ public class PyCallExpressionHelper {
             if (kwd_arg == null) kwd_arg = star_arg;
             else {
               markArgument(arg, PyArgumentList.ArgFlag.IS_DUP_KWD);
-              //getHolder().createErrorAnnotation(arg, "duplicate **arg");
               unmatched_args.remove(arg); // error. ignore later
             }
           }
@@ -405,7 +426,6 @@ public class PyCallExpressionHelper {
             }
             else {
               markArgument(arg, PyArgumentList.ArgFlag.IS_DUP_TUPLE);
-              //getHolder().createErrorAnnotation(arg, "duplicate *arg");
               unmatched_args.remove(arg); // error. ignore later
             }
           }
@@ -414,7 +434,7 @@ public class PyCallExpressionHelper {
       // rule out 'self' or other implicit params
       int param_index = 0;
       for (int i=0; i < resolved_callee.getImplicitOffset() && i < params.length; i+=1) {
-        param_slots.remove(params[i].getName()); // the self param
+        param_slots.remove(params[i].getName());
         param_index += 1;
       }
       boolean seen_tuple_arg = false;
@@ -455,7 +475,7 @@ public class PyCallExpressionHelper {
           if (tupleParameter != null) {
             unmatched_arg_iter.previous(); // step back so that the visitor takes this arg again
             MyParamVisitor visitor = new MyParamVisitor(unmatched_arg_iter, this);
-            visitor.enterTuple(a_param.getAsTuple()); // will recurse as needed
+            visitor.enterTuple(a_param.getAsTuple()); // will recur as needed
             unmatched_subargs.addAll(visitor.getUnmatchedSubargs()); // what it's seen
           }
         }
@@ -502,23 +522,18 @@ public class PyCallExpressionHelper {
                   // we'll put() it to ret.myPlainMappedParams later
                   seen_kwd = true;
                 }
-                else {
-                  //getHolder().createErrorAnnotation(arg, "duplicate arg '" + argname + "'");
-                  markArgument(arg, PyArgumentList.ArgFlag.IS_DUP);
-                }
+                else markArgument(arg, PyArgumentList.ArgFlag.IS_DUP);
                 unmatched_arg_iter.remove(); // it has been matched or flagged, forget
               }
               // else: ignore unknown arg, we'll deal with them later
             }
             else {
               markArgument(arg, PyArgumentList.ArgFlag.IS_UNMAPPED);
-              //getHolder().createErrorAnnotation(arg, "cannot appear past an *arg");
               unmatched_arg_iter.remove(); // it has been flagged, forget
             }
           }
-          else if (seen_kwd && (arg != kwd_arg)) {
+          else if (seen_kwd && (arg != kwd_arg) && (arg != tuple_arg)) {
             markArgument(arg, PyArgumentList.ArgFlag.IS_POS_PAST_KWD);
-            //getHolder().createErrorAnnotation(arg, "non-keyword arg after keyword arg");
             unmatched_arg_iter.remove(); // it has been flagged, forget
           }
           seen_tuple_arg |= (arg == tuple_arg);
@@ -671,6 +686,265 @@ public class PyCallExpressionHelper {
       for (PyExpression subarg : unmatched_subargs) {
         myArgFlags.put(subarg, EnumSet.of(PyArgumentList.ArgFlag.IS_UNMAPPED));
       }
+    }
+
+
+    void mapArguments2(PyExpression[] arguments, PyCallExpression.PyMarkedCallee resolved_callee, LanguageLevel language_level) {
+      TypeEvalContext type_context = TypeEvalContext.fast(); // TODO: get it from parameters
+      myMarkedCallee = resolved_callee;
+      List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
+      Collections.addAll(unmatched_args, arguments);
+      final List<PyExpression> unmatched_subargs = new LinkedList<PyExpression>(); // unmatched nested arguments will go here
+      // detect starred args
+      for (PyExpression arg : arguments) {
+        if (arg instanceof PyStarArgument) {
+          PyStarArgument star_arg = (PyStarArgument)arg;
+          if (star_arg.isKeyword()) {
+            if (myKwdArg == null) myKwdArg = star_arg;
+            else {
+              markArgument(arg, PyArgumentList.ArgFlag.IS_DUP_KWD);
+              unmatched_args.remove(arg);
+            }
+          }
+          else {
+            if (myTupleArg == null) myTupleArg = star_arg;
+            else {
+              markArgument(arg, PyArgumentList.ArgFlag.IS_DUP_TUPLE);
+              unmatched_args.remove(arg);
+            }
+          }
+        }
+      }
+      // prepare parameter slots
+      final PyParameter[] parameters = myMarkedCallee.getCallable().getParameterList().getParameters();
+      Map<PyNamedParameter, PyExpression> slots = new HashMap<PyNamedParameter, PyExpression>();
+      PyNamedParameter kwd_par = null;   // **param
+      PyNamedParameter tuple_par = null; // *param
+      Set<PyExpression> mapped_args = new HashSet<PyExpression>();
+      final int implicit_offset = resolved_callee.getImplicitOffset();
+      int positional_index = 0; // up to this index parameters are positional
+      // check positional arguments, fill slots
+      int i = 0;
+      for (PyParameter par : parameters) {
+        if (tuple_par == null && kwd_par == null && positional_index < implicit_offset) {
+          positional_index += 1;
+          continue;
+        }
+        PyNamedParameter n_par = par.getAsNamed();
+        if (n_par != null) {
+          if (n_par.isPositionalContainer()) tuple_par = n_par;
+          else if (n_par.isKeywordContainer()) kwd_par = n_par;
+          else {
+            slots.put(n_par, null); // regular parameter that may serve as positional
+            positional_index += 1;
+          }
+        }
+        else {
+          PyTupleParameter t_par = par.getAsTuple();
+          if (t_par != null) positional_index += 1; // tuple can only be positional
+          // else lone star, skip
+        }
+        i += 1;
+      }
+      // rule out 'self' or other implicit params
+      for (i=0; i < implicit_offset && i < parameters.length; i+=1) {
+        slots.remove(parameters[i].getAsNamed());
+        positional_index += 1;
+      }
+      // now params to the left of positional_index are positional.
+      // map positional args to positional params.
+      // we assume that implicitly skipped parameters are never nested tuples. no idea when they could ever be.
+      int cnt = implicit_offset;
+      int positional_bound = arguments.length; // to the right of this pos args are verboten
+      ListIterator<PyExpression> unmatched_arg_iter = unmatched_args.listIterator();
+      while (unmatched_arg_iter.hasNext()) {
+        PyExpression arg = unmatched_arg_iter.next();
+        if (arg instanceof PyStarArgument || arg instanceof PyKeywordArgument) {
+          positional_bound = cnt;
+          break;
+        }
+        if (cnt < parameters.length && cnt < positional_index) {
+          final PyParameter par = parameters[cnt];
+          PyNamedParameter n_par = par.getAsNamed();
+          if (n_par != null) {
+            cnt += 1;
+            slots.put(n_par, arg);
+            mapped_args.add(arg);
+          }
+          else {
+            PyTupleParameter t_par = par.getAsTuple();
+            if (t_par != null) {
+              if (arg instanceof PyParenthesizedExpression) {
+                mapped_args.add(arg); // tuple itself is always mapped; its insides can fail
+              }
+              unmatched_arg_iter.previous();
+              MyParamVisitor visitor = new MyParamVisitor(unmatched_arg_iter, this);
+              visitor.enterTuple(t_par.getAsTuple()); // will recur as needed
+              unmatched_subargs.addAll(visitor.getUnmatchedSubargs()); // what didn't match inside
+              cnt += 1;
+            }
+            // else: goes to *param
+          }
+        }
+        else break;
+      }
+      // anything left after mapping of tuple params?
+      for (Map.Entry<PyExpression, List<PyNamedParameter>> pair : myNestedMappedParams.entrySet()) {
+        PyExpression arg = pair.getKey();
+        List<PyNamedParameter> params = pair.getValue();
+        mapped_args.add(arg);
+        for (PyNamedParameter n_par : params) slots.remove(n_par);
+      }
+      for (PyExpression arg : unmatched_subargs) {
+        markArgument(arg, PyArgumentList.ArgFlag.IS_UNMAPPED);
+      }
+      // mark past-bound positional args
+      i = positional_bound;
+      while (i<arguments.length) {
+        PyExpression arg = arguments[i];
+        if (!(arg instanceof PyStarArgument) && !(arg instanceof PyKeywordArgument)) {
+          markArgument(arg, PyArgumentList.ArgFlag.IS_POS_PAST_KWD);
+        }
+        i += 1;
+      }
+      // map named args to named params if possible
+      Map<String, PyNamedParameter> parameter_by_name = new HashMap<String, PyNamedParameter>();
+      for (PyParameter par : parameters) {
+        PyNamedParameter n_par = par.getAsNamed();
+        if (n_par != null) parameter_by_name.put(n_par.getName(), n_par);
+      }
+      for (PyExpression arg : arguments) {
+        if (arg instanceof PyKeywordArgument) { // to explicitly named param?
+          String arg_name = ((PyKeywordArgument)arg).getKeyword();
+          PyNamedParameter respective_par = parameter_by_name.get(arg_name);
+          if (respective_par != null && !respective_par.isKeywordContainer() && !respective_par.isPositionalContainer()) {
+            if (slots.get(respective_par) != null) markArgument(arg, PyArgumentList.ArgFlag.IS_DUP);
+            else slots.put(respective_par, arg);
+          }
+          else { // to **param?
+            if (kwd_par != null) {
+              myPlainMappedParams.put(arg, kwd_par);
+              mapped_args.add(arg);
+            }
+          }
+        }
+      }
+      // map *arg to positional params if possible
+      if (cnt < parameters.length && cnt < positional_index && myTupleArg != null) {
+        // check length of myTupleArg
+        PyType tuple_arg_type = null;
+        if (type_context != null) {
+          tuple_arg_type = type_context.getType(PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class));
+        }
+        int tuple_length = -1;
+        boolean tuple_length_known = false;
+        if (tuple_arg_type instanceof PyTupleType) {
+          tuple_length = ((PyTupleType)tuple_arg_type).getElementCount();
+          tuple_length_known = true;
+        }
+        i = 1;
+        while (cnt < parameters.length && cnt < positional_index) {
+          PyParameter par = parameters[cnt];
+          if (par instanceof PySingleStarParameter) break;
+          PyNamedParameter n_par = par.getAsNamed();
+          if (slots.containsKey(n_par)) {
+            final PyExpression arg_here = slots.get(n_par);
+            final boolean over_tuple_length = tuple_length_known && i > tuple_length;
+            if (over_tuple_length || arg_here != null) {
+              /*
+              if (!over_tuple_length && arg_here != null) {
+                // tuple would overwrite these
+                markArgument(arg_here, PyArgumentList.ArgFlag.IS_DUP);
+                myTupleMappedParams.add(n_par);
+                mapped_args.add(myTupleArg);
+              }
+              */
+              // the spree is over
+              break;
+            }
+            else if (n_par != null) { // normally always true
+              myTupleMappedParams.add(n_par);
+              mapped_args.add(myTupleArg);
+              slots.remove(n_par);
+            }
+          }
+          cnt += 1;
+          i += 1;
+        }
+        if (tuple_length_known && i <= tuple_length) {
+          markArgument(myTupleArg, PyArgumentList.ArgFlag.IS_TOO_LONG);
+        }
+      }
+      // map *param to the leftmost chunk of unmapped positional args
+      // NOTE: will fail on nested-tuple params!
+      if (tuple_par != null) {
+        i = 0;
+        while (i < arguments.length && mapped_args.contains(arguments[i]) && isPositionalArg(arguments[i])) {
+          i += 1; // skip first mapped args
+        }
+        if (i < arguments.length && isPositionalArg(arguments[i])) {
+          while (i < arguments.length && !mapped_args.contains(arguments[i]) && isPositionalArg(arguments[i])) {
+            myPlainMappedParams.put(arguments[i], tuple_par);
+            mapped_args.add(arguments[i]);
+            i += 1;
+          }
+        }
+      }
+      // map unmapped *arg to *param
+      if (myTupleArg != null && !mapped_args.contains(myTupleArg) && tuple_par != null) {
+        myTupleMappedParams.add(tuple_par);
+        mapped_args.add(myTupleArg);
+      }
+      // map unmapped named params to **kwarg
+      if (myKwdArg != null) {
+        for (PyParameter par : parameters) {
+          PyNamedParameter n_par = par.getAsNamed();
+          if (n_par != null && !n_par.isKeywordContainer() && !n_par.isPositionalContainer() && slots.get(n_par) == null) {
+            slots.put(n_par, myKwdArg);
+          }
+        }
+      }
+      // map unmapped **kwarg to **param
+      if (myKwdArg != null && kwd_par != null && !mapped_args.contains(myKwdArg)) {
+        myKwdMappedParams.add(kwd_par);
+        mapped_args.add(myKwdArg);
+      }
+      // fill in ret, mark unmapped named params
+      for (Map.Entry<PyNamedParameter, PyExpression> pair : slots.entrySet()) {
+        PyNamedParameter n_par = pair.getKey();
+        PyExpression arg = pair.getValue();
+        if (arg == null) {
+          if (!n_par.hasDefaultValue()) myUnmappedParams.add(n_par);
+        }
+        else {
+          if (arg == myTupleArg) {
+            myTupleMappedParams.add(n_par);
+          }
+          else if (arg == myKwdArg) {
+            myKwdMappedParams.add(n_par);
+          }
+          else {
+            myPlainMappedParams.put(arg, n_par);
+          }
+        }
+      }
+      // mark unmapped args
+      for (PyExpression arg : slots.values()) {
+        if (arg != null) mapped_args.add(arg);
+      }
+      for (PyExpression arg : arguments) {
+        if (!mapped_args.contains(arg)) {
+          final EnumSet<PyArgumentList.ArgFlag> flags = myArgFlags.get(arg);
+          if (flags == null || flags.isEmpty()) {
+            markArgument(arg, PyArgumentList.ArgFlag.IS_UNMAPPED);
+          }
+        }
+
+      }
+    }
+
+    private static boolean isPositionalArg(PyExpression arg) {
+      return !(arg instanceof PyKeywordArgument) && !(arg instanceof PyStarArgument);
     }
 
     public boolean isImplicitlyResolved() {

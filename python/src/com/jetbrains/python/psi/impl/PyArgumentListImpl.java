@@ -246,7 +246,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         LanguageLevel level;
         if (psifile instanceof PyFile) level = ((PyFile)psifile).getLanguageLevel();
         else level = LanguageLevel.PYTHON24; // lowest common
-        ret.mapArguments(arguments, resolved_callee, level);
+        ret.mapArguments2(arguments, resolved_callee, level);
       }
     }
     return ret;

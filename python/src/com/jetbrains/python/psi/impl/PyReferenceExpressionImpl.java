@@ -105,7 +105,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public QualifiedResolveResult followAssignmentsChain(TypeEvalContext context) {
     PyReferenceExpression seeker = this;
     QualifiedResolveResult ret = null;
-    PyExpression last_qualifier = null;
+    PyExpression last_qualifier = seeker.getQualifier();
     Set<PyExpression> visited = new HashSet<PyExpression>();
     visited.add(this);
     SEARCH:

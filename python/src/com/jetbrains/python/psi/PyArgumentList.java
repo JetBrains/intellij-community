@@ -44,7 +44,8 @@ public interface PyArgumentList extends PyElement {
     /** unexpected */               IS_UNMAPPED,
     /** duplicate **arg */          IS_DUP_KWD,
     /** duplicate *arg */           IS_DUP_TUPLE,
-    /** positional past keyword */  IS_POS_PAST_KWD
+    /** positional past keyword */  IS_POS_PAST_KWD,
+    /** *param is too long */       IS_TOO_LONG,
   }
 
 
