@@ -48,21 +48,20 @@ public class CustomTemplateCallback {
 
   private FileType myFileType;
 
-  public CustomTemplateCallback(Editor editor, PsiFile file) {
+  public CustomTemplateCallback(Editor editor, PsiFile file, boolean wrapping) {
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
 
-    int caretOffset = editor.getCaretModel().getOffset();
-
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, caretOffset);
 
+    int offset = getOffset(wrapping, editor);
+    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
-    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file) : editor;
+    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, offset) : editor;
 
-    fixInitialState();
+    fixInitialState(wrapping);
   }
 
   @NotNull
@@ -70,8 +69,18 @@ public class CustomTemplateCallback {
     return getContext(myFile, myOffset);
   }
 
-  public void fixInitialState() {
-    myOffset = myEditor.getSelectionModel().getSelectionStart();
+  public void fixInitialState(boolean wrapping) {
+    myOffset = getOffset(wrapping, myEditor);
+  }
+
+  private static int getOffset(boolean wrapping, Editor editor) {
+    if (wrapping) {
+      return editor.getSelectionModel().getSelectionStart();
+    }
+    else {
+      int caretOffset = editor.getCaretModel().getOffset();
+      return caretOffset > 0 ? caretOffset - 1 : 0;
+    }
   }
 
   @Nullable
@@ -90,7 +99,7 @@ public class CustomTemplateCallback {
   private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (TemplateManagerImpl.isApplicable(myFile, myOffset > 0 ? myOffset - 1 : myOffset, candidate)) {
+      if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
         result.add(candidate);
       }
       /*TemplateContext context = candidate.getTemplateContext();
@@ -155,7 +164,7 @@ public class CustomTemplateCallback {
       element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     }
     if (element == null) {
-      element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+      element = file.findElementAt(offset);
       if (element == null) {
         element = file;
       }

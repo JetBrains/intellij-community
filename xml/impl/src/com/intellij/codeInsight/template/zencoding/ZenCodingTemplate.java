@@ -465,6 +465,14 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     ZenCodingGenerator generator = findApplicableGenerator(node, context);
     List<ZenCodingFilter> filters = getFilters(node, context);
 
+    expand(node, generator, filters, surroundedText, callback);
+  }
+
+  private static void expand(ZenCodingNode node,
+                             ZenCodingGenerator generator,
+                             List<ZenCodingFilter> filters,
+                             String surroundedText,
+                             CustomTemplateCallback callback) {
     if (surroundedText != null) {
       surroundedText = surroundedText.trim();
     }
@@ -567,10 +575,17 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       public void run() {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
           public void run() {
+            callback.fixInitialState(true);
+            ZenCodingNode node = parse(abbreviation, callback, defaultGenerator);
+            assert node != null;
+            PsiElement context = callback.getContext();
+            ZenCodingGenerator generator = findApplicableGenerator(node, context);
+            List<ZenCodingFilter> filters = getFilters(node, context);
+
             EditorModificationUtil.deleteSelectedText(callback.getEditor());
             PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
-            callback.fixInitialState();
-            expand(abbreviation, callback, selection, defaultGenerator);
+
+            expand(node, generator, filters, selection, callback);
           }
         }, CodeInsightBundle.message("insert.code.template.command"), null);
       }
