@@ -160,8 +160,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     };
   }
 
-  private static final boolean magicEvaluator = ApplicationManager.getApplication().isUnitTestMode();
-
   /**
    * Splits element text in tokens according to spell checker strategy of given language
    * @param element Psi element
@@ -172,13 +170,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   public static Token[] tokenize(@NotNull final PsiElement element, @NotNull final Language language) {
     final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
     final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
-    String magicWord;
-    if (magicEvaluator && element.getText().indexOf(magicWord = "xmxmxm") != -1) {
-      System.out.println("~~~~~~"+tokenizer);
-      SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(element.getProject());
-      System.out.println(spellCheckerManager.getUserDictionary().contains(magicWord));
-      System.out.println(spellCheckerManager.hasProblem(magicWord));
-    }
     return tokenizer.tokenize(element);
   }
 
