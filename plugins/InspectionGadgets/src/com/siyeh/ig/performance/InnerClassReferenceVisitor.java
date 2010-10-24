@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
     }
 
     private boolean isClassStaticallyAccessible(PsiClass aClass) {
-        if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+        if (aClass.getContainingClass() != null &&
+                aClass.hasModifierProperty(PsiModifier.STATIC)) {
             if (!PsiTreeUtil.isAncestor(aClass, innerClass, false)) {
                 return true;
             }
@@ -62,7 +63,8 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
         return true;
     }
 
-    @Override public void visitThisExpression(@NotNull PsiThisExpression expression){
+    @Override public void visitThisExpression(
+            @NotNull PsiThisExpression expression){
         if(!referencesStaticallyAccessible) {
             return;
         }
@@ -73,7 +75,8 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
         }
     }
 
-    @Override public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(
+            @NotNull PsiSuperExpression expression) {
         if (!referencesStaticallyAccessible) {
             return;
         }
