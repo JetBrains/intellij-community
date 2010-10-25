@@ -15,6 +15,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -86,6 +87,10 @@ public class MockEditorFactory extends EditorFactory {
 
   @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
+  }
+
+  @Override
+  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
   }
 
   @Override

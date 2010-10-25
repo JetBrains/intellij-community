@@ -24,14 +24,12 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -84,12 +82,7 @@ public class LookupManagerImpl extends LookupManager {
         }
       }
     };
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-      }
-    });
+    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
   public Lookup showLookup(final Editor editor,

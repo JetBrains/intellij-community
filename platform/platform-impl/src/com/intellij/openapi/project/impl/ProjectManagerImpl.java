@@ -934,8 +934,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void addProjectManagerListener(Project project, ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
-      listeners = new ArrayList<ProjectManagerListener>();
-      project.putUserData(LISTENERS_IN_PROJECT_KEY, listeners);
+      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, new ArrayList<ProjectManagerListener>());
     }
     listeners.add(listener);
   }
