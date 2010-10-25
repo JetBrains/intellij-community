@@ -17,14 +17,14 @@ package com.intellij.openapi.roots.libraries.scripting;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 /**
  * @author Rustam Vishnyakov
@@ -35,7 +35,7 @@ public class ScriptingLibraryManager {
 
   private Project myProject;
   private LibraryLevel myLibLevel = LibraryLevel.PROJECT;
-  private LibraryTableBase.ModifiableModelEx myLibTableModel;
+  private ScriptingLibraryTable myLibTable;
   private LibraryType myLibraryType;
 
   public ScriptingLibraryManager(Project project, LibraryType libraryType) {
@@ -48,9 +48,45 @@ public class ScriptingLibraryManager {
     myLibraryType = libraryType;
   }
 
+  public ScriptingLibraryTable getScriptingLibraryTable() {
+    ensureModel();
+    return myLibTable;
+  }
+
   public void commitChanges() {
-    if (myLibTableModel != null) {
-      myLibTableModel.commit();
+    if (myLibTable != null) {
+      LibraryTable libTable = getLibraryTable();
+      if (libTable != null) {
+        LibraryTable.ModifiableModel libTableModel = libTable.getModifiableModel();
+        for (Library library : libTableModel.getLibraries()) {
+          ScriptingLibraryTable.LibraryModel scriptingLibModel = myLibTable.getLibraryByName(library.getName());
+          if (scriptingLibModel == null) {
+            libTableModel.removeLibrary(library);
+          }
+          else {
+            Library.ModifiableModel libModel = library.getModifiableModel();
+            for (VirtualFile libRoot : libModel.getFiles(OrderRootType.SOURCES)) {
+              libModel.removeRoot(libRoot.getUrl(), OrderRootType.SOURCES);
+            }
+            for (VirtualFile newRoot : scriptingLibModel.getSourceFiles()) {
+              libModel.addRoot(newRoot, OrderRootType.SOURCES);
+            }
+            libModel.commit();
+          }
+        }
+        for (ScriptingLibraryTable.LibraryModel scriptingLibModel : myLibTable.getLibraries()) {
+          Library library = libTableModel.getLibraryByName(scriptingLibModel.getName());
+          if (library == null && libTableModel instanceof LibraryTableBase.ModifiableModelEx) {
+            library = ((LibraryTableBase.ModifiableModelEx)libTableModel).createLibrary(scriptingLibModel.getName(), myLibraryType);
+            Library.ModifiableModel libModel = library.getModifiableModel();
+            for (VirtualFile newRoot : scriptingLibModel.getSourceFiles()) {
+              libModel.addRoot(newRoot, OrderRootType.SOURCES);
+            }
+            libModel.commit();
+          }
+        }
+        libTableModel.commit();
+      }
     }
     if (myLibLevel == LibraryLevel.GLOBAL) {
       ModuleManager.getInstance(myProject).getModifiableModel().commit();
@@ -58,36 +94,64 @@ public class ScriptingLibraryManager {
   }
 
   public void dropChanges() {
-    myLibTableModel = null;
+    myLibTable = null;
   }
 
   @Nullable
-  public Library createLibrary(String name) {
+  public ScriptingLibraryTable.LibraryModel createLibrary(String name, VirtualFile[] sourceFiles) {
     if (ensureModel()) {
-      return myLibTableModel.createLibrary(name, myLibraryType);
+      return myLibTable.createLibrary(name, sourceFiles);
     }
     return null;
   }
 
-  public void removeLibrary(Library library) {
+  @Nullable
+  public Library createSourceLibrary(String libName, String sourceUrl, LibraryLevel libraryLevel) {
+    LibraryTable libraryTable = getLibraryTable(myProject, libraryLevel);
+    if (libraryTable == null) return null;
+    LibraryTable.ModifiableModel libTableModel = libraryTable.getModifiableModel();
+    if (libTableModel instanceof LibraryTableBase.ModifiableModelEx) {
+      Library library = ((LibraryTableBase.ModifiableModelEx)libTableModel).createLibrary(libName, myLibraryType);
+      if (library != null) {
+        Library.ModifiableModel libModel = library.getModifiableModel();
+        libModel.addRoot(sourceUrl, OrderRootType.SOURCES);
+        libModel.commit();
+        libTableModel.commit();
+        return library;
+      }
+    }
+    return null;
+  }
+
+  public void removeLibrary(ScriptingLibraryTable.LibraryModel library) {
     if (ensureModel()) {
-      myLibTableModel.removeLibrary(library);
+      myLibTable.removeLibrary(library);
+    }
+  }
+
+  public void updateLibrary(String oldName, String name, VirtualFile[] files) {
+    if (ensureModel()) {
+      ScriptingLibraryTable.LibraryModel libModel = myLibTable.getLibraryByName(oldName);
+      if (libModel != null) {
+        libModel.setName(name);
+        libModel.setSourceFiles(files);
+      }
     }
   }
 
   @Nullable
-  public Iterator<Library> getModelLibraryIterator() {
+  public ScriptingLibraryTable.LibraryModel[] getLibraries() {
     if (ensureModel()) {
-      return myLibTableModel.getLibraryIterator();
+      return myLibTable.getLibraries();
     }
     return null;
   }
 
   public boolean ensureModel() {
-    if (myLibTableModel == null) {
+    if (myLibTable == null) {
       LibraryTable libTable = getLibraryTable();
       if (libTable != null) {
-        myLibTableModel = (LibraryTableBase.ModifiableModelEx)libTable.getModifiableModel();
+        myLibTable = new ScriptingLibraryTable(libTable, myLibraryType);
         return true;
       }
       return false;
@@ -121,7 +185,4 @@ public class ScriptingLibraryManager {
     return myProject;
   }
 
-  public LibraryType getLibraryType() {
-    return myLibraryType;
-  }
 }

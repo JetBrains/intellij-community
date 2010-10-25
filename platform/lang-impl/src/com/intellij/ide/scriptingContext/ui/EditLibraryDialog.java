@@ -19,8 +19,7 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,10 +77,10 @@ public class EditLibraryDialog extends DialogWrapper {
     init();
   }
 
-  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, Library lib) {
+  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, ScriptingLibraryTable.LibraryModel lib) {
     this(title, provider, project);
     myLibName.setText(lib.getName());
-    myFileTableModel.setFiles(lib.getFiles(OrderRootType.SOURCES));
+    myFileTableModel.setFiles(lib.getSourceFiles());
   }
 
   @Override
@@ -149,7 +148,7 @@ public class EditLibraryDialog extends DialogWrapper {
       if (columnIndex == 0) {
         return myFiles.get(rowIndex);
       }
-      return null;
+      return "";
     }
 
     @Nullable
