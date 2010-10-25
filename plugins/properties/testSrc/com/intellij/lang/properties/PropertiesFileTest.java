@@ -18,6 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -67,12 +68,17 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testDeleteProperty() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\n#s\nzzz=ttt\n\n");
 
-    List<Property> properties = propertiesFile.getProperties();
+    final List<Property> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), "zzz", "ttt");
 
-    properties.get(1).delete();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        properties.get(1).delete();
+      }
+    });
+
     List<Property> propertiesAfter = propertiesFile.getProperties();
     assertEquals(1, propertiesAfter.size());
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
@@ -81,16 +87,26 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testDeletePropertyWhitespaceAround() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
-    Property property = propertiesFile.findPropertyByKey("xxx2");
-    property.delete();
+    final Property property = propertiesFile.findPropertyByKey("xxx2");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        property.delete();
+      }
+    });
+
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getText());
   }
   public void testDeletePropertyWhitespaceAhead() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
-    Property property = propertiesFile.findPropertyByKey("xxx");
-    property.delete();
+    final Property property = propertiesFile.findPropertyByKey("xxx");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        property.delete();
+      }
+    });
+
 
     assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());
   }

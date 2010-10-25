@@ -462,19 +462,23 @@ public abstract class BaseRefactoringProcessor {
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
     if (!ensureElementsWritable(usages, descriptor)) return;
 
-    RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
-    myTransaction = listenerManager.startTransaction();
-    Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
-    for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-      preparedData.put(helper, helper.prepareOperation(usages));
-    }
-    performRefactoring(usages);
-    for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
-      //noinspection unchecked
-      e.getKey().performOperation(myProject, e.getValue());
-    }
-    myTransaction.commit();
-    performPsiSpoilingRefactoring();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
+        myTransaction = listenerManager.startTransaction();
+        Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+        for (RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+          preparedData.put(helper, helper.prepareOperation(usages));
+        }
+        performRefactoring(usages);
+        for (Map.Entry<RefactoringHelper, Object> e : preparedData.entrySet()) {
+          //noinspection unchecked
+          e.getKey().performOperation(myProject, e.getValue());
+        }
+        myTransaction.commit();
+        performPsiSpoilingRefactoring();
+      }
+    });
   }
 
   public static class ConflictsInTestsException extends RuntimeException {

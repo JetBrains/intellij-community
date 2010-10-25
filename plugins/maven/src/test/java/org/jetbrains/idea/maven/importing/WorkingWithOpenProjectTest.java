@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -58,19 +59,24 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   
   public void testSavingAllDocumentBeforeReimport() throws Exception {
     myProjectsManager.listenForExternalChanges();
-    Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    d.setText(createPomXml("<groupId>test</groupId>" +
-                             "<artifactId>project</artifactId>" +
-                             "<version>1</version>" +
+    final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        d.setText(createPomXml("<groupId>test</groupId>" +
+                               "<artifactId>project</artifactId>" +
+                               "<version>1</version>" +
 
-                             "<dependencies>" +
-                             "  <dependency>" +
-                             "    <groupId>junit</groupId>" +
-                             "    <artifactId>junit</artifactId>" +
-                             "    <version>4.0</version>" +
-                             "  </dependency>" +
-                             "</dependencies>"));
-    
+                               "<dependencies>" +
+                               "  <dependency>" +
+                               "    <groupId>junit</groupId>" +
+                               "    <artifactId>junit</artifactId>" +
+                               "    <version>4.0</version>" +
+                               "  </dependency>" +
+                               "</dependencies>"));
+      }
+    });
+
+
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");

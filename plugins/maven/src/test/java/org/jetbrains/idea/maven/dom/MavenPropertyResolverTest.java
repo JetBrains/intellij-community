@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -237,14 +238,19 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    doc.setText(createPomXml("<groupId>test</groupId>" +
-                             "<artifactId>project</artifactId>" +
-                             "<version>2</version>" +
+    final Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        doc.setText(createPomXml("<groupId>test</groupId>" +
+                                 "<artifactId>project</artifactId>" +
+                                 "<version>2</version>" +
 
-                             "<properties>" +
-                             "  <uncomitted>value</uncomitted>" +
-                             "</properties>"));
+                                 "<properties>" +
+                                 "  <uncomitted>value</uncomitted>" +
+                                 "</properties>"));
+      }
+    });
+
     PsiDocumentManager.getInstance(myProject).commitDocument(doc);
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));

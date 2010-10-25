@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -140,8 +141,12 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     final MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
     new MoveMembersProcessor(myFixture.getProject(), null, options).run();
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
   }
 
   class MockMoveMembersOptions implements MoveMembersOptions {

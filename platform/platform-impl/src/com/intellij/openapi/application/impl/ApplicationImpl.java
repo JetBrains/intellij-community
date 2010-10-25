@@ -853,7 +853,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     */
   }
 
-  private void assertCanRunWriteAction() {
+  private static void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
 
   }
@@ -862,8 +862,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private void assertIsDispatchThread(String message) {
-    if (myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
+  private static void assertIsDispatchThread(String message) {
+    if (ShutDownTracker.isShutdownHookRunning()) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 

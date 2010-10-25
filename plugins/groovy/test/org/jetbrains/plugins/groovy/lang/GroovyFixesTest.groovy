@@ -4,10 +4,10 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
+
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection.ConstantIfStatementVisitor
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
-import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection
 
 /**
  * @author peter
@@ -21,8 +21,7 @@ public class GroovyFixesTest extends LightCodeInsightFixtureTestCase {
   aaa
 }""")
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for statement"))
-    myFixture.checkResult """
-//noinspection GroovyConstantIfStatement
+    myFixture.checkResult """//noinspection GroovyConstantIfStatement
 if (true) {
   aaa
 }"""

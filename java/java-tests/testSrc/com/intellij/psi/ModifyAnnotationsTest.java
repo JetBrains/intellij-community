@@ -19,22 +19,9 @@ public class ModifyAnnotationsTest extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-
-        @Override
-        public void run() {
-          try {
-            String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("mock 1.5"));
-            PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("mock 1.5"));
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
   @Override

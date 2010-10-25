@@ -17,8 +17,6 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -116,17 +114,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     myModule = null;
     super.tearDown();
   }
-
-  @Override
-  protected void runTest() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        runTestBare();
-      }
-    }.execute();
-  }
-
   protected final void runTestBare() throws Throwable {
     LightCodeInsightFixtureTestCase.super.runTest();
   }

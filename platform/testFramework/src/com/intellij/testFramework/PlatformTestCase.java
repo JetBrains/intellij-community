@@ -26,7 +26,10 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -229,17 +232,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void setUpModule() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction.Simple(getProject()) {
       @Override
-      public void run() {
-        try {
-          myModule = createMainModule();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      protected void run() throws Throwable {
+        myModule = createMainModule();
       }
-    });
+    }.execute().throwException();
   }
 
   protected Module createMainModule() throws IOException {
@@ -257,10 +255,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
                                      moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-    Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath(), getModuleType());
-    module.getModuleFile();
-    return module;
+    return new WriteAction<Module>() {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+        Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath(), getModuleType());
+        module.getModuleFile();
+        result.setResult(module);
+      }
+    }.execute().getResultObject();
   }
 
   protected ModuleType getModuleType() {

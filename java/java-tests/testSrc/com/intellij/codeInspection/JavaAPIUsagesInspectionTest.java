@@ -7,6 +7,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -35,19 +36,29 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   }
 
   public void testConstructor() throws Exception {
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
-    final LanguageLevel languageLevel = extension.getLanguageLevel();
+    final LanguageLevel[] languageLevel = {null};
     try {
-      extension.setLanguageLevel(LanguageLevel.JDK_1_4);
-      model.commit();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+          languageLevel[0] = extension.getLanguageLevel();
+          extension.setLanguageLevel(LanguageLevel.JDK_1_4);
+          model.commit();
+        }
+      });
+
       doTest();
     }
     finally {
-      model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-      extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
-      extension.setLanguageLevel(languageLevel);
-      model.commit();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+          extension.setLanguageLevel(languageLevel[0]);
+          model.commit();
+        }
+      });
     }
   }
 

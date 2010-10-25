@@ -23,16 +23,16 @@
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import junit.framework.TestCase;
 
 /**
  * @author Maxim.Mossienko
  */
-public class AntMultiFileCompletionTest extends TestCase {
+public class AntMultiFileCompletionTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
 
   protected String getTestDataPath() {

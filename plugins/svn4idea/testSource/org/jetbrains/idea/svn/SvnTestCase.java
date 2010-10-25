@@ -24,6 +24,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Before;
 
@@ -47,69 +48,89 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
   @Before
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    myTempDirFixture = fixtureFactory.createTempDirTestFixture();
-    myTempDirFixture.setUp();
-
-    final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
-    svnRoot.mkdir();
-
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
-    if (!pluginRoot.isDirectory()) {
-      // try standalone mode
-      Class aClass = SvnTestCase.class;
-      String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
-    }
-    myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
-
-    ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), svnRoot, null);
-
-    myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
-    myWcRoot.mkdir();
-
-    myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
-    verify(runSvn("co", myRepoUrl, "."));
-
-    initProject(myWcRoot);
-    activateVCS(SvnVcs.VCS_NAME);
-
-    myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
-
-    myRefreshCopiesStub = new AtomicSectionsAware() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      public void enter() {
-      }
-      @Override
-      public void exit() {
-      }
-      @Override
-      public boolean shouldExitAsap() {
-        return false;
-      }
-      @Override
-      public void checkShouldExit() throws ProcessCanceledException {
-      }
-    };
+      public void run() {
+        try {
+          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+          myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+          myTempDirFixture.setUp();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
-    //vcs.postStartup();
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
+          final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
+          svnRoot.mkdir();
 
-    // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+          File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+          if (!pluginRoot.isDirectory()) {
+            // try standalone mode
+            Class aClass = SvnTestCase.class;
+            String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+            pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
+          }
+          myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
+
+          ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), svnRoot, null);
+
+          myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
+          myWcRoot.mkdir();
+
+          myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
+          verify(runSvn("co", myRepoUrl, "."));
+
+          initProject(myWcRoot);
+          activateVCS(SvnVcs.VCS_NAME);
+
+          myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
+
+          myRefreshCopiesStub = new AtomicSectionsAware() {
+            @Override
+            public void enter() {
+            }
+            @Override
+            public void exit() {
+            }
+            @Override
+            public boolean shouldExitAsap() {
+              return false;
+            }
+            @Override
+            public void checkShouldExit() throws ProcessCanceledException {
+            }
+          };
+
+          final SvnVcs vcs = SvnVcs.getInstance(myProject);
+          ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
+          //vcs.postStartup();
+          ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
+
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+          // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
+          ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+          VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+          changeListManager.ensureUpToDate(false);
   }
 
   @After
   public void tearDown() throws Exception {
-    tearDownProject();
-    if (myTempDirFixture != null) {
-      myTempDirFixture.tearDown();
-      myTempDirFixture = null;
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDownProject();
+          if (myTempDirFixture != null) {
+            myTempDirFixture.tearDown();
+            myTempDirFixture = null;
+          }
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {
@@ -149,12 +170,17 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   }
 
   protected void undo() {
-    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
-    try {
-      UndoManager.getInstance(myProject).undo(null);
-    }
-    finally {
-      Messages.setTestDialog(oldTestDialog);
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+        try {
+          UndoManager.getInstance(myProject).undo(null);
+        }
+        finally {
+          Messages.setTestDialog(oldTestDialog);
+        }
+      }
+    });
   }
 }

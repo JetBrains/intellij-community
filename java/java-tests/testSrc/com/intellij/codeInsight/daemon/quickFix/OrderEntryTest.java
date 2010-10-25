@@ -12,7 +12,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,19 +31,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   protected void setUpProject() throws Exception {
     final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
 
-    VirtualFile tempProjectRootDir =
-    ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>(){
-      @Override
-      public VirtualFile compute() {
-        try {
-          return PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          return null;
-        }
-      }
-    });
+    VirtualFile tempProjectRootDir = PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
 
     VirtualFile projectFile = tempProjectRootDir.findChild("orderEntry.ipr");
 
@@ -70,7 +57,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     final String text = pair.getFirst();
     final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
     Collection<HighlightInfo> infosBefore = highlightErrors();
-    IntentionAction action = findActionWithText(text, infosBefore);
+    final IntentionAction action = findActionWithText(text, infosBefore);
 
     if (action == null) {
       if (actionShouldBeAvailable) {
@@ -84,7 +71,12 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      action.invoke(getProject(), getEditor(), getFile());
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          action.invoke(getProject(), getEditor(), getFile());
+        }
+      });
+
       Collection<HighlightInfo> infosAfter = highlightErrors();
       final IntentionAction afterAction = findActionWithText(text, infosAfter);
       if (afterAction != null) {
@@ -99,14 +91,24 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     return LightQuickFixTestCase.findActionWithText(actions, actionText);
   }
 
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
+
   public void testAddDependency() throws Exception { doTest("B/src/y/AddDependency.java"); }
   public void testAddLibrary() throws Exception { doTest("B/src/y/AddLibrary.java"); }
   public void testAddCircularDependency() throws Exception {
-    Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
-    Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
-    ModifiableRootModel model = ModuleRootManager.getInstance(a).getModifiableModel();
-    model.addModuleOrderEntry(b);
-    model.commit();
+    final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
+    final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel model = ModuleRootManager.getInstance(a).getModifiableModel();
+        model.addModuleOrderEntry(b);
+        model.commit();
+      }
+    });
+
     try {
       doTest("B/src/y/AddDependency.java");
       fail("user should have been warned");

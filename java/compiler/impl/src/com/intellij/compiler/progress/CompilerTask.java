@@ -99,7 +99,7 @@ public class CompilerTask extends Task.Backgroundable {
     super(project, contentName);
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
-    myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
+    myHeadlessMode = headlessMode;
     myIdeFrame = (IdeFrame)WindowManager.getInstance().getFrame(myProject);
   }
 
@@ -172,6 +172,7 @@ public class CompilerTask extends Task.Backgroundable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         //if (myIsBackgroundMode) {
         //  openMessageView();
         //} 
@@ -189,7 +190,9 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void addIndicatorDelegate() {
-    ((ProgressIndicatorEx)myIndicator).addStateDelegate(new ProgressIndicatorBase() {
+    ProgressIndicator indicator = myIndicator;
+    if (!(indicator instanceof ProgressIndicatorEx)) return;
+    ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
 
       public void cancel() {
         super.cancel();

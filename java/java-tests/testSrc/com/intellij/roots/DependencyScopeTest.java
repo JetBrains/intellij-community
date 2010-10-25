@@ -1,5 +1,6 @@
 package com.intellij.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
@@ -49,23 +50,28 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertEquals(0, pathsListWithoutTests.getPathList().size());
   }
 
-  private Module addDependentModule(Module moduleA, final DependencyScope scope) {
-    Module moduleB = createModule("b.iml", StdModuleTypes.JAVA);
+  private Module addDependentModule(final Module moduleA, final DependencyScope scope) {
+    final Module moduleB = createModule("b.iml", StdModuleTypes.JAVA);
 
-    VirtualFile rootB = myFixture.findOrCreateDir("b");
-    VirtualFile outB = myFixture.findOrCreateDir("out");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        VirtualFile rootB = myFixture.findOrCreateDir("b");
+        VirtualFile outB = myFixture.findOrCreateDir("out");
 
-    final ModifiableRootModel modelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-    modelA.addModuleOrderEntry(moduleB).setScope(scope);
-    modelA.commit();
+        final ModifiableRootModel modelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+        modelA.addModuleOrderEntry(moduleB).setScope(scope);
+        modelA.commit();
 
-    final ModifiableRootModel modelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-    final ContentEntry contentEntry = modelB.addContentEntry(rootB);
-    contentEntry.addSourceFolder(rootB, false);
-    final CompilerModuleExtension extension = modelB.getModuleExtension(CompilerModuleExtension.class);
-    extension.inheritCompilerOutputPath(false);
-    extension.setCompilerOutputPath(outB);
-    modelB.commit();
+        final ModifiableRootModel modelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+        final ContentEntry contentEntry = modelB.addContentEntry(rootB);
+        contentEntry.addSourceFolder(rootB, false);
+        final CompilerModuleExtension extension = modelB.getModuleExtension(CompilerModuleExtension.class);
+        extension.inheritCompilerOutputPath(false);
+        extension.setCompilerOutputPath(outB);
+        modelB.commit();
+      }
+    });
+
     return moduleB;
   }
 
@@ -147,17 +153,22 @@ public class DependencyScopeTest extends ModuleTestCase {
     return ModuleRootManager.getInstance(m).orderEntries().recursively().exportedOnly().getClassesRoots();
   }
 
-  private VirtualFile addLibrary(Module m, final DependencyScope scope) {
-    VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
+  private VirtualFile addLibrary(final Module m, final DependencyScope scope) {
+    final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
-    final ModifiableRootModel model = ModuleRootManager.getInstance(m).getModifiableModel();
-    final Library library = model.getModuleLibraryTable().createLibrary("l");
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    libraryModel.addRoot(libraryRoot, OrderRootType.CLASSES);
-    libraryModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(m).getModifiableModel();
+        final Library library = model.getModuleLibraryTable().createLibrary("l");
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
+        libraryModel.addRoot(libraryRoot, OrderRootType.CLASSES);
+        libraryModel.commit();
 
-    model.findLibraryOrderEntry(library).setScope(scope);
-    model.commit();
+        model.findLibraryOrderEntry(library).setScope(scope);
+        model.commit();
+      }
+    });
+
     return libraryRoot;
   }
 }

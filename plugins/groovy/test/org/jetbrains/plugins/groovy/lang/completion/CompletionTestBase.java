@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -89,10 +88,5 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
 
   protected boolean addReferenceVariants() {
     return true;
-  }
-
-  @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
-    SwingUtilities.invokeAndWait(runnable);
   }
 }
