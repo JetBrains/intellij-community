@@ -275,6 +275,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private ProductionMarker myFirstChild;
     private ProductionMarker myLastChild;
     private int myHC = -1;
+    private LighterASTNode[] myCachedChildren;
 
     private StartMarker() {
       myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
@@ -289,6 +290,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myFirstChild = myLastChild = null;
       myHC = -1;
       myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
+      myCachedChildren = null;
     }
 
     public int hc() {
@@ -1241,9 +1243,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       count = 0;
 
+      if (marker.myCachedChildren != null) {
+        count = marker.myCachedChildren.length;
+        if (into.get() == null || into.get().length < count) {
+          into.set(new LighterASTNode[count]);
+        }
+        System.arraycopy(marker.myCachedChildren, 0, into.get(), 0, count);
+        return count;
+      }
+
       ProductionMarker child = marker.myFirstChild;
       ProductionMarker prevChild = null;
       int lexIndex = marker.myLexemeIndex;
+      boolean hasCollapsed = false;
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
 
@@ -1255,6 +1267,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           if (prevChild != null) prevChild.myNext = child.myNext;
           if (marker.myFirstChild == child) marker.myFirstChild = child.myNext;
           if (marker.myLastChild == child) marker.myLastChild = prevChild;
+          hasCollapsed = true;
         }
         else {
           ensureCapacity(into);
@@ -1269,6 +1282,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, into, marker.myBuilder);
+
+      // kids with collapsed nodes have to be cached - in order for getChildren() to return a same result
+      if (hasCollapsed) {
+        marker.myCachedChildren = new LighterASTNode[count];
+        System.arraycopy(into.get(), 0, marker.myCachedChildren, 0, count);
+      }
 
       return count;
     }
