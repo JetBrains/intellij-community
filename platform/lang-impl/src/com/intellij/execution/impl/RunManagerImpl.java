@@ -508,6 +508,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myUnloadedElements = null;
     myConfigurationToBeforeTasksMap.clear();
     mySharedConfigurations.clear();
+    myTemplateConfigurationsMap.clear();
+    mySelectedConfiguration = null;
     myIdToIcon.clear();
     fireRunConfigurationsRemoved(configurations);
   }
