@@ -469,7 +469,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return null; // suppress events in shutdown hook
     }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
-    //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s', document modification stamp=%d%nDocument:'%s'%n",
+    //System.out.printf("%nbefore change: offset=%d, old text='%n%s%n', new text='%n%s%n', document modification stamp=%d%nDocument:'%s'%n",
     //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getDocument().getModificationStamp(),
     //                  event.getDocument().getText());
 
