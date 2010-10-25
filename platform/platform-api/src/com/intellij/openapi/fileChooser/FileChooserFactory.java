@@ -42,6 +42,7 @@ public abstract class FileChooserFactory {
    * @since 9.0
    */
   public abstract FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project);
+  public abstract FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Component parent);
 
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent);
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent);

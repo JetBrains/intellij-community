@@ -125,57 +125,9 @@ public class OverrideImplementUtil {
       }
     }
 
-    Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new Comparator<MethodSignature>() {
-      // signatures should appear in the order of declaration
-      public int compare(MethodSignature o1, MethodSignature o2) {
-        if (o1 instanceof MethodSignatureBackedByPsiMethod && o2 instanceof MethodSignatureBackedByPsiMethod) {
-          PsiMethod m1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
-          PsiMethod m2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
-          PsiElement p1 = m1.getParent();
-          PsiElement p2 = m2.getParent();
-          if (p1 instanceof PsiClass && p2 instanceof PsiClass) {
-            final PsiClass c1 = (PsiClass)p1;
-            final PsiClass c2 = (PsiClass)p2;
-
-            if (c1 == c2) {
-              final List<PsiMethod> methods = Arrays.asList(c1.getMethods());
-              return methods.indexOf(m1) - methods.indexOf(m2);
-            }
-
-            if (c1.isInheritor(c2, true)) return -1;
-            if (c2.isInheritor(c1, true)) return 1;
-
-            return StringUtil.notNullize(c1.getName()).compareTo(StringUtil.notNullize(c2.getName()));
-          }
-          return m1.getTextOffset() - m2.getTextOffset();
-        }
-        return 0;
-      }
-    });
+    final Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new MethodSignatureComparator());
     if (toImplement || aClass.isInterface()) {
-      for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
-        MethodSignature signature = entry.getKey();
-        PsiMethod abstractOne = entry.getValue();
-        PsiMethod concrete = concretes.get(signature);
-        if (concrete == null
-            || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
-            || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)) {
-          if (finals.get(signature) == null) {
-            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne, signature.getSubstitutor());
-            CandidateInfo info = new CandidateInfo(abstractOne, subst);
-            result.put(signature, info);
-          }
-        }
-      }
-
-      for (final MethodImplementor implementor : getImplementors()) {
-        for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
-          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
-                                                                                method.getTypeParameterList(), PsiSubstitutor.EMPTY);
-          CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
-          result.put(signature, info);
-        }
-      }
+      collectMethodsToImplement(aClass, abstracts, finals, concretes, result);
     }
     else {
       for (Map.Entry<MethodSignature, PsiMethod> entry : concretes.entrySet()) {
@@ -194,6 +146,36 @@ public class OverrideImplementUtil {
     }
 
     return result;
+  }
+
+  public static void collectMethodsToImplement(PsiClass aClass,
+                                               Map<MethodSignature, PsiMethod> abstracts,
+                                               Map<MethodSignature, PsiMethod> finals,
+                                               Map<MethodSignature, PsiMethod> concretes,
+                                               Map<MethodSignature, CandidateInfo> result) {
+    for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
+      MethodSignature signature = entry.getKey();
+      PsiMethod abstractOne = entry.getValue();
+      PsiMethod concrete = concretes.get(signature);
+      if (concrete == null
+          || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
+          || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)) {
+        if (finals.get(signature) == null) {
+          PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne, signature.getSubstitutor());
+          CandidateInfo info = new CandidateInfo(abstractOne, subst);
+          result.put(signature, info);
+        }
+      }
+    }
+
+    for (final MethodImplementor implementor : getImplementors()) {
+      for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
+        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
+                                                                              method.getTypeParameterList(), PsiSubstitutor.EMPTY);
+        CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
+        result.put(signature, info);
+      }
+    }
   }
 
   private static boolean preferLeftForImplement(PsiMethod left, PsiMethod right) {
@@ -497,7 +479,7 @@ public class OverrideImplementUtil {
 
   @Nullable
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(Editor editor,
-                                                                            final PsiClass aClass,
+                                                                            final PsiElement aClass,
                                                                             final boolean toImplement,
                                                                             Collection<CandidateInfo> candidates,
                                                                             Collection<CandidateInfo> secondary) {
@@ -568,7 +550,7 @@ public class OverrideImplementUtil {
       });
   }
 
-  private static void registerHandlerForComplementaryAction(final Project project, final Editor editor, final PsiClass aClass,
+  private static void registerHandlerForComplementaryAction(final Project project, final Editor editor, final PsiElement aClass,
                                                             final boolean toImplement,
                                                             final MemberChooser<PsiMethodMember> chooser) {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
@@ -724,5 +706,33 @@ public class OverrideImplementUtil {
                                                                     boolean copyJavadoc) throws IncorrectOperationException {
     boolean insert = CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION;
     return overrideOrImplementMethodCandidates(aClass, candidatesToImplement, copyJavadoc, insert);
+  }
+
+  public static class MethodSignatureComparator implements Comparator<MethodSignature> {
+    // signatures should appear in the order of declaration
+    public int compare(MethodSignature o1, MethodSignature o2) {
+      if (o1 instanceof MethodSignatureBackedByPsiMethod && o2 instanceof MethodSignatureBackedByPsiMethod) {
+        PsiMethod m1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
+        PsiMethod m2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
+        PsiElement p1 = m1.getParent();
+        PsiElement p2 = m2.getParent();
+        if (p1 instanceof PsiClass && p2 instanceof PsiClass) {
+          final PsiClass c1 = (PsiClass)p1;
+          final PsiClass c2 = (PsiClass)p2;
+
+          if (c1 == c2) {
+            final List<PsiMethod> methods = Arrays.asList(c1.getMethods());
+            return methods.indexOf(m1) - methods.indexOf(m2);
+          }
+
+          if (c1.isInheritor(c2, true)) return -1;
+          if (c2.isInheritor(c1, true)) return 1;
+
+          return StringUtil.notNullize(c1.getName()).compareTo(StringUtil.notNullize(c2.getName()));
+        }
+        return m1.getTextOffset() - m2.getTextOffset();
+      }
+      return 0;
+    }
   }
 }

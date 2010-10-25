@@ -1046,6 +1046,11 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Component parent) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   private static class MyFileChooserDialog implements FileChooserDialog {

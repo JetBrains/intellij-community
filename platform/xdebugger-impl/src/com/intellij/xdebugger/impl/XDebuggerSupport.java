@@ -17,16 +17,17 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelProvider;
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsPanelProviderImpl;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +196,7 @@ public class XDebuggerSupport extends DebuggerSupport {
 
   @Override
   public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    return XDebuggerManagerImpl.getInstance(project).getCurrentSession();
+    return XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
   @NotNull

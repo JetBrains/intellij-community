@@ -160,7 +160,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
-    highlightAnnotation(myHolder, refElement, resolveResult);
     registerUsedImport(refElement, resolveResult);
     highlightAnnotation(myHolder, refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
@@ -1466,7 +1465,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
     final String referenceName = refElement.getReferenceName();
     //noinspection ConstantConditions
-    if (StringUtil.isEmpty(referenceName) || Character.isLowerCase(referenceName.charAt(0))) {
+    if (StringUtil.isEmpty(referenceName) ||
+        (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0)))) {
       return;
     }
 

@@ -35,7 +35,7 @@ public class ArrayUtil {
   public static final short[] EMPTY_SHORT_ARRAY = new short[0];
   public static final char[] EMPTY_CHAR_ARRAY = new char[0];
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-  public static final int [] EMPTY_INT_ARRAY = new int[0];
+  public static final int[] EMPTY_INT_ARRAY = new int[0];
   public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
   @SuppressWarnings({"SSBasedInspection"}) public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
   @SuppressWarnings({"SSBasedInspection"}) public static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -46,7 +46,7 @@ public class ArrayUtil {
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
 
   @NotNull
-  public static byte[] realloc (@NotNull byte [] array, final int newSize) {
+  public static byte[] realloc(@NotNull byte[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_BYTE_ARRAY;
     }
@@ -56,13 +56,13 @@ public class ArrayUtil {
       return array;
     }
 
-    final byte [] result = new byte [newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    final byte[] result = new byte[newSize];
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
     return result;
   }
 
   @NotNull
-  public static int[] realloc (@NotNull int [] array, final int newSize) {
+  public static int[] realloc(@NotNull int[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_INT_ARRAY;
     }
@@ -72,8 +72,8 @@ public class ArrayUtil {
       return array;
     }
 
-    final int [] result = new int [newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    final int[] result = new int[newSize];
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
     return result;
   }
 
@@ -85,7 +85,7 @@ public class ArrayUtil {
   }
 
   @NotNull
-  public static char[] realloc (@NotNull char[] array, final int newSize) {
+  public static char[] realloc(@NotNull char[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_CHAR_ARRAY;
     }
@@ -96,19 +96,19 @@ public class ArrayUtil {
     }
 
     final char[] result = new char[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
     return result;
   }
 
   @NotNull
-  public static<T> T[] toObjectArray(@NotNull Collection<T> collection, @NotNull Class<T> aClass) {
-    T[] array = (T[]) Array.newInstance(aClass, collection.size());
+  public static <T> T[] toObjectArray(@NotNull Collection<T> collection, @NotNull Class<T> aClass) {
+    T[] array = (T[])Array.newInstance(aClass, collection.size());
     return collection.toArray(array);
   }
 
   @NotNull
-  public static<T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
-    T[] array = (T[]) Array.newInstance(aClass, source.length);
+  public static <T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
+    T[] array = (T[])Array.newInstance(aClass, source.length);
     System.arraycopy(source, 0, array, 0, array.length);
     return array;
   }
@@ -127,6 +127,16 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static int[] toIntArray(@NotNull List<Integer> list) {
+    int[] ret = new int[list.size()];
+    int i = 0;
+    for (Integer e : list) {
+      ret[i++] = e.intValue();
+    }
+    return ret;
+  }
+
+  @NotNull
   public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull Class<T> aClass) {
     if (a1.length == 0) {
       return a2;
@@ -134,7 +144,7 @@ public class ArrayUtil {
     if (a2.length == 0) {
       return a1;
     }
-    T[] highlights =(T[])Array.newInstance(aClass, a1.length + a2.length);
+    T[] highlights = (T[])Array.newInstance(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, highlights, 0, a1.length);
     System.arraycopy(a2, 0, highlights, a1.length, a2.length);
     return highlights;
@@ -163,9 +173,10 @@ public class ArrayUtil {
   /**
    * Allocates new array of size <code>array.length + collection.size()</code> and copies elements of <code>array</code> and
    * <code>collection</code> to it.
-   * @param array source array
+   *
+   * @param array      source array
    * @param collection source collection
-   * @param factory array factory used to create destination array of type <code>T</code>
+   * @param factory    array factory used to create destination array of type <code>T</code>
    * @return destination array
    */
   @NotNull
@@ -190,18 +201,19 @@ public class ArrayUtil {
   /**
    * Appends <code>element</code> to the <code>src</code> array. As you can
    * imagine the appended element will be the last one in the returned result.
-   * @param src array to which the <code>element</code> should be appended.
+   *
+   * @param src     array to which the <code>element</code> should be appended.
    * @param element object to be appended to the end of <code>src</code> array.
    * @return new array
    */
   @NotNull
-  public static <T> T[] append(@NotNull final T[] src,final T element){
+  public static <T> T[] append(@NotNull final T[] src, final T element) {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
-  public static <T> T[] append(@NotNull final T[] src,final T element, ArrayFactory<T> factory) {
-    int length=src.length;
-    T[] result= factory.create(length + 1);
+  public static <T> T[] append(@NotNull final T[] src, final T element, ArrayFactory<T> factory) {
+    int length = src.length;
+    T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
@@ -209,8 +221,8 @@ public class ArrayUtil {
 
   @NotNull
   public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
-    int length=src.length;
-    T[] result=(T[])Array.newInstance(componentType, length+ 1);
+    int length = src.length;
+    T[] result = (T[])Array.newInstance(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
@@ -218,31 +230,32 @@ public class ArrayUtil {
 
   /**
    * Removes element with index <code>idx</code> from array <code>src</code>.
+   *
    * @param src array.
    * @param idx index of element to be removed.
    * @return modified array.
    */
   @NotNull
-  public static <T> T[] remove(@NotNull final T[] src,int idx){
-    int length=src.length;
+  public static <T> T[] remove(@NotNull final T[] src, int idx) {
+    int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);
+    T[] result = (T[])Array.newInstance(src.getClass().getComponentType(), length - 1);
     System.arraycopy(src, 0, result, 0, idx);
-    System.arraycopy(src, idx+1, result, idx, length-idx-1);
+    System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
   }
 
   @NotNull
-  public static <T> T[] remove(@NotNull final T[] src,int idx, ArrayFactory<T> factory) {
-    int length=src.length;
+  public static <T> T[] remove(@NotNull final T[] src, int idx, ArrayFactory<T> factory) {
+    int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    T[] result=factory.create(length-1);
+    T[] result = factory.create(length - 1);
     System.arraycopy(src, 0, result, 0, idx);
-    System.arraycopy(src, idx+1, result, idx, length-idx-1);
+    System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
   }
 
@@ -263,14 +276,14 @@ public class ArrayUtil {
   }
 
   @NotNull
-  public static int[] remove(@NotNull final int[] src,int idx){
-    int length=src.length;
+  public static int[] remove(@NotNull final int[] src, int idx) {
+    int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     int[] result = new int[src.length - 1];
     System.arraycopy(src, 0, result, 0, idx);
-    System.arraycopy(src, idx+1, result, idx, length-idx-1);
+    System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
   }
 
@@ -278,34 +291,37 @@ public class ArrayUtil {
    * @param src source array.
    * @param obj object to be found.
    * @return index of <code>obj</code> in the <code>src</code> array.
-   * Returns <code>-1</code> if passed object isn't found. This method uses
-   * <code>equals</code> of arrays elements to compare <code>obj</code> with
-   * these elements.
+   *         Returns <code>-1</code> if passed object isn't found. This method uses
+   *         <code>equals</code> of arrays elements to compare <code>obj</code> with
+   *         these elements.
    */
-  public static <T> int find(@NotNull final T[] src,final T obj){
-    for(int i=0;i<src.length;i++){
-      final T o=src[i];
-      if(o==null){
-        if(obj==null){
+  public static <T> int find(@NotNull final T[] src, final T obj) {
+    for (int i = 0; i < src.length; i++) {
+      final T o = src[i];
+      if (o == null) {
+        if (obj == null) {
           return i;
         }
-      }else{
-        if(o.equals(obj)){
+      }
+      else {
+        if (o.equals(obj)) {
           return i;
         }
       }
     }
     return -1;
   }
-  public static <T> int lastIndexOf(@NotNull final T[] src,final T obj){
-    for(int i=src.length-1;i>=0;i--){
-      final T o=src[i];
-      if(o==null){
-        if(obj==null){
+
+  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (o == null) {
+        if (obj == null) {
           return i;
         }
-      }else{
-        if(o.equals(obj)){
+      }
+      else {
+        if (o.equals(obj)) {
           return i;
         }
       }
@@ -453,6 +469,7 @@ public class ArrayUtil {
     }
     return 0;
   }
+
   //must be Comparables
   public static <T> int lexicographicCompare(@NotNull T[] obj1, @NotNull T[] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
@@ -466,7 +483,7 @@ public class ArrayUtil {
     return 0;
   }
 
-  public static <T>void swap(@NotNull T[] array, int i1, int i2) {
+  public static <T> void swap(@NotNull T[] array, int i1, int i2) {
     final T t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
@@ -477,25 +494,28 @@ public class ArrayUtil {
     array[i1] = array[i2];
     array[i2] = t;
   }
-  public static void swap(@NotNull boolean [] array, int i1, int i2) {
+
+  public static void swap(@NotNull boolean[] array, int i1, int i2) {
     final boolean t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
+
   public static void swap(@NotNull char[] array, int i1, int i2) {
     final char t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
-  public static <T>void rotateLeft(@NotNull T[] array, int i1, int i2) {
+  public static <T> void rotateLeft(@NotNull T[] array, int i1, int i2) {
     final T t = array[i1];
-    System.arraycopy(array, i1 + 1, array, i1, i2-i1);
+    System.arraycopy(array, i1 + 1, array, i1, i2 - i1);
     array[i2] = t;
   }
-  public static <T>void rotateRight(@NotNull T[] array, int i1, int i2) {
+
+  public static <T> void rotateRight(@NotNull T[] array, int i1, int i2) {
     final T t = array[i2];
-    System.arraycopy(array, i1, array, i1+1, i2-i1);
+    System.arraycopy(array, i1, array, i1 + 1, i2 - i1);
     array[i1] = t;
   }
 
@@ -512,12 +532,14 @@ public class ArrayUtil {
     }
     return -1;
   }
+
   public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Comparator<T> comparator) {
     for (int i = 0; i < objects.size(); i++) {
       if (comparator.compare(objects.get(i), object) == 0) return i;
     }
     return -1;
   }
+
   public static <T> int indexOf(@NotNull T[] objects, T object, @NotNull Equality<T> comparator) {
     for (int i = 0; i < objects.length; i++) {
       if (comparator.equals(objects[i], object)) return i;
@@ -540,6 +562,7 @@ public class ArrayUtil {
   public static int[] newIntArray(int count) {
     return count == 0 ? EMPTY_INT_ARRAY : new int[count];
   }
+
   public static String[] newStringArray(int count) {
     return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
   }
@@ -553,7 +576,7 @@ public class ArrayUtil {
 
   @Nullable
   public static <T> T getLastElement(T[] array) {
-    return array.length > 0 ? array[array.length -1] : null;
+    return array.length > 0 ? array[array.length - 1] : null;
   }
 
   public static <T> T[] join(T[] array1, T[] array2) {

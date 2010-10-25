@@ -37,7 +37,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * To provide an additional settings editor register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
+ * To provide additional options in Editor | Appearance section register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
  * <p/>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;editorAppearanceConfigurable instance="class-name"/&gt;<br>

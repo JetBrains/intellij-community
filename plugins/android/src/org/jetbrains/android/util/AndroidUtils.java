@@ -56,6 +56,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -492,15 +493,47 @@ public class AndroidUtils {
     return depFacets;
   }
 
-  public static List<String> getDepLibsPackages(Module module) {
-    List<String> result = new ArrayList<String>();
-    for (AndroidFacet depFacet : getAndroidDependencies(module, true)) {
+  public static Set<AndroidFacet> getAllAndroidDependencies(Module module, boolean androidLibrariesOnly) {
+    Set<AndroidFacet> result = new HashSet<AndroidFacet>();
+    collectAllAndroidDependencies(module, androidLibrariesOnly, result);
+    return result;
+  }
+
+  private static void collectAllAndroidDependencies(Module module, boolean androidLibrariesOnly, Set<AndroidFacet> result) {
+    for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+        if (moduleOrderEntry.getScope() == DependencyScope.COMPILE) {
+          Module depModule = moduleOrderEntry.getModule();
+          if (depModule != null) {
+            AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
+            if (depFacet != null && (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT)) {
+              if (result.add(depFacet)) {
+                collectAllAndroidDependencies(depModule, androidLibrariesOnly, result);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public static Set<String> getDepLibsPackages(Module module) {
+    Set<String> result = new HashSet<String>();
+    collectDepLibsPackages(module, result, new HashSet<Module>());
+    return result;
+  }
+
+  private static void collectDepLibsPackages(Module module, Collection<String> result, Set<Module> visited) {
+    if (!visited.add(module)) {
+      return;
+    }
+    for (AndroidFacet depFacet : getAllAndroidDependencies(module, true)) {
       Manifest manifest = depFacet.getManifest();
       if (manifest != null) {
         String aPackage = manifest.getPackage().getValue();
         result.add(aPackage);
       }
     }
-    return result;
   }
 }

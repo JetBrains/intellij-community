@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * To provide an additional settings editor register implementation of {@link com.intellij.openapi.options.SearchableConfigurable} in the plugin.xml:
+ * To provide additional options in General section register implementation of {@link com.intellij.openapi.options.SearchableConfigurable} in the plugin.xml:
  * <p/>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;generalOptionsProvider instance="class-name"/&gt;<br>

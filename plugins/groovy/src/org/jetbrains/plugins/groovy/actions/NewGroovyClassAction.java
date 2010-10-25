@@ -16,12 +16,15 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
+import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -60,6 +63,31 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   @Override
   protected PsiElement getNavigationElement(@NotNull GrTypeDefinition createdElement) {
     return createdElement.getLBraceGroovy();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
+    if (!presentation.isVisible()) return;
+
+    IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
+    if (view == null) return;
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project == null) return;
+
+    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (PsiDirectory dir : view.getDirectories()) {
+      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
+        for (GroovySourceFolderDetector detector : GroovySourceFolderDetector.EP_NAME.getExtensions()) {
+          if (detector.isGroovySourceFolder(dir)) {
+            presentation.setWeight(Presentation.HIGHER_WEIGHT);
+            break;
+          }
+        }
+        return;
+      }
+    }
   }
 
   protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,6 +48,7 @@ public class DirectoryChooser extends DialogWrapper {
   @NonNls private static final String FILTER_NON_EXISTING = "filter_non_existing";
   private final DirectoryChooserView myView;
   private boolean myFilterExisting;
+  private PsiDirectory myDefaultSelection;
   private List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
 
   public DirectoryChooser(Project project){
@@ -76,6 +78,10 @@ public class DirectoryChooser extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myFilterExisting = checkBox.isSelected();
         final ItemWrapper selectedItem = myView.getSelectedItem();
+        PsiDirectory directory = selectedItem != null ? selectedItem.getDirectory() : null;
+        if (directory == null && myDefaultSelection != null) {
+          directory = myDefaultSelection;
+        }
         myView.clearItems();
         int idx = 0;
         int selectionId = -1;
@@ -86,7 +92,7 @@ public class DirectoryChooser extends DialogWrapper {
               continue;
             }
           }
-          if (item == selectedItem) {
+          if (item.getDirectory() == directory) {
             selectionId = idx;
           }
           idx++;
@@ -373,6 +379,9 @@ public class DirectoryChooser extends DialogWrapper {
       if (myFilterExisting) {
         if (selectionIndex == i) selectionIndex = -1;
         if (postfixForDirectory != null && directory.getVirtualFile().findFileByRelativePath(StringUtil.trimStart(postfixForDirectory, File.separator)) == null) {
+          if (isParent(directory, defaultSelection)) {
+            myDefaultSelection = directory;
+          }
           continue;
         }
       }

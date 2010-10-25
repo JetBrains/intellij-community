@@ -29,7 +29,7 @@ public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClas
   }
 
   @Nullable
-  protected static String getContainerTextStatic(final PsiElement element) {
+  public static String getContainerTextStatic(final PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)file).getPackageName();

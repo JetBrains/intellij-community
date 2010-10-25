@@ -3,7 +3,7 @@ class Foo {
  def void foo(String... foo, bar="bar") {}
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public void foo(java.lang.String... foo) {
     return ;
   }

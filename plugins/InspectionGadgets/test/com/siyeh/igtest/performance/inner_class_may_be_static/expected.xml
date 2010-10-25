@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+    <problem>
+        <file>InnerClassMayBeStaticInspection.java</file>
+        <line>6</line>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Inner class may be 'static'</problem_class>
+        <description>Inner class &lt;code&gt;Nested&lt;/code&gt; may be 'static' #loc</description>
+    </problem>
+</problems>

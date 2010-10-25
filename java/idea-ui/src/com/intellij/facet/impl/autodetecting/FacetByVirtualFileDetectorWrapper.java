@@ -26,7 +26,6 @@ import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FacetByVirtualFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> extends FacetDetectorWrapper<VirtualFile, C, F, U> {
   public FacetByVirtualFileDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType,
-                                           final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
+                                           final AutodetectionFilter autodetectionFilter, final FileContentFilter fileContentFilter,
                                            final FacetDetector<VirtualFile, C> facetDetector,
                                            final UnderlyingFacetSelector<VirtualFile, U> selector) {
-    super(projectFacetSet, facetType, autodetectionFilter, virtualFileFilter, facetDetector, selector);
+    super(projectFacetSet, facetType, autodetectionFilter, fileContentFilter, facetDetector, selector);
   }
 
   @Nullable

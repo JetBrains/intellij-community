@@ -16,7 +16,9 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +28,11 @@ public class JspSupportProxyImpl extends JspSupportProxy {
   @NotNull
   @Override
   public String[] getPossibleTldUris(Module module) {
-    return JspManager.getInstance(module.getProject()).getPossibleTldUris(module);
+    try {
+      return JspManager.getInstance(module.getProject()).getPossibleTldUris(module);
+    }
+    catch (IndexNotReadyException e) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
   }
 }

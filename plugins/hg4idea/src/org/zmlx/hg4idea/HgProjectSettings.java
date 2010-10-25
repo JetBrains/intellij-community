@@ -24,24 +24,17 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
   private boolean myCheckIncoming = true;
   private boolean myCheckOutgoing = true;
-  private HgGlobalSettings myGlobalSettings;
-
-  public HgProjectSettings(HgGlobalSettings globalSettings) {
-    myGlobalSettings = globalSettings;
-  }
 
   public State getState() {
     final State s = new State();
     s.myCheckIncoming = myCheckIncoming;
     s.myCheckOutgoing = myCheckOutgoing;
-    s.myGlobalSettings = myGlobalSettings;
     return s;
   }
 
   public void loadState(State state) {
     myCheckIncoming = state.myCheckIncoming;
     myCheckOutgoing = state.myCheckOutgoing;
-    myGlobalSettings = state.myGlobalSettings;
   }
 
   public boolean isCheckIncoming() {
@@ -61,24 +54,23 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public String getHgExecutable() {
-    return myGlobalSettings.getHgExecutable();
+    return HgGlobalSettings.getInstance().getHgExecutable();
   }
 
   public boolean isAutodetectHg() {
-    return myGlobalSettings.isAutodetectHg();
+    return HgGlobalSettings.getInstance().isAutodetectHg();
   }
 
   public void enableAutodetectHg() {
-    myGlobalSettings.enableAutodetectHg();
+    HgGlobalSettings.getInstance().enableAutodetectHg();
   }
 
   public void setHgExecutable(String text) {
-    myGlobalSettings.setHgExecutable(text);
+    HgGlobalSettings.getInstance().setHgExecutable(text);
   }
 
   public static class State {
     private boolean myCheckIncoming;
     private boolean myCheckOutgoing;
-    private HgGlobalSettings myGlobalSettings;
   }
 }

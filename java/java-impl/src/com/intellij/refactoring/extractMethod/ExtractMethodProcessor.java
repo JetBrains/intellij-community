@@ -68,6 +68,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -1191,7 +1192,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return false;
   }
 
-  @NotNull
+  @Nullable
   public String getConfirmDuplicatePrompt(Match match) {
     final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());
     final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
@@ -1201,7 +1202,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (needToBeStatic && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
-    return RefactoringBundle.message("replace.this.code.fragment");
+    return null;
   }
 
   public InputVariables getInputVariables() {

@@ -441,8 +441,6 @@
 
   <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider"/>
 
-  <extensionPoint name="langScriptingContextProvider" interface="com.intellij.ide.scriptingContext.LangScriptingContextProvider"/>
-
   <extensionPoint name="semContributor"
                   beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT"/>
 
@@ -459,4 +457,6 @@
   <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean"/>
 
   <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper"/>
+
+  <extensionPoint name="sourceRootFinder" interface="com.intellij.ide.util.newProjectWizard.SourceRootFinder"/>
 </extensionPoints>

@@ -233,20 +233,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
         };
-        PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly, session);
-        synchronized (init) {
-          init.add(Trinity.create(tool, holder, elementVisitor));
-        }
-        //noinspection ConstantConditions
-        if(elementVisitor == null) {
-          LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-        }
-        tool.inspectionStarted(session);
-        for (PsiElement element : elements) {
-          indicator.checkCanceled();
-          element.accept(elementVisitor);
-        }
+        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, indicator);
 
+        synchronized (init) {
+          init.add(Trinity.create(tool, holder, visitor));
+        }
         advanceProgress(1);
 
         if (holder.hasResults()) {
@@ -259,6 +250,28 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, session);
   }
 
+  private static PsiElementVisitor createVisitorAndAcceptElements(LocalInspectionTool tool,
+                                                                  ProblemsHolder holder,
+                                                                  boolean isOnTheFly,
+                                                                  LocalInspectionToolSession session,
+                                                                  List<PsiElement> elements,
+                                                                  ProgressIndicator indicator) {
+    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    //noinspection ConstantConditions
+    if(visitor == null) {
+      LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+    }
+    assert !(visitor instanceof PsiRecursiveElementVisitor || visitor instanceof PsiRecursiveElementWalkingVisitor)
+      : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
+
+    tool.inspectionStarted(session);
+    for (PsiElement element : elements) {
+      indicator.checkCanceled();
+      element.accept(visitor);
+    }
+    return visitor;
+  }
+
   private void visitRestElementsAndCleanup(
                             List<LocalInspectionTool> tools,
                             final boolean isOnTheFly,
@@ -269,22 +282,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                             List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
     boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(init, new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
       @Override
-      public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> i) {
-        LocalInspectionTool tool = i.first;
+      public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
+        LocalInspectionTool tool = trinity.first;
         indicator.checkCanceled();
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
-        ProblemsHolder holder = i.second;
-        PsiElementVisitor elementVisitor = i.third;
-        for (PsiElement element : elements) {
+        ProblemsHolder holder = trinity.second;
+        PsiElementVisitor elementVisitor = trinity.third;
+        for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+          PsiElement element = elements.get(i);
           indicator.checkCanceled();
           element.accept(elementVisitor);
         }
 
         advanceProgress(1);
 
-        tool.inspectionFinished(session);
+        tool.inspectionFinished(session, holder);
 
         if (holder.hasResults()) {
           appendDescriptors(myFile, holder.getResults(), tool);
@@ -312,6 +326,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }, false);
     }
+    if (injected.isEmpty()) return;
     if (!JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         doInspectInjectedPsi(injectedPsi, tools, onTheFly, ignoreSuppressed, indicator, session);
@@ -559,16 +574,36 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  public static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
+  private static List<PsiElement> getElementsFrom(PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+      @Override public void visitElement(PsiElement element) {
+        ProgressManager.checkCanceled();
+        PsiElement child = element.getFirstChild();
+        if (child == null) {
+          // leaf element
+        }
+        else {
+          // composite element
+          while (child != null) {
+            child.accept(this);
+            result.add(child);
+
+            child = child.getNextSibling();
+          }
+        }
+      }
+    };
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      if (HighlightLevelUtil.shouldInspect(psiRoot)) {
-        result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+      if (!HighlightLevelUtil.shouldInspect(psiRoot)) {
+        continue;
       }
+      psiRoot.accept(visitor);
+      result.add(psiRoot);
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return new ArrayList<PsiElement>(result);
   }
 
   List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
@@ -584,8 +619,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionManager iManager  = InspectionManager.getInstance(injectedPsi.getProject());
     final PsiElement host = injectedPsi.getContext();
 
-    final PsiElement[] elements = getElementsIntersectingRange(injectedPsi, 0, injectedPsi.getTextLength());
-    if (elements.length == 0) {
+    final List<PsiElement> elements = getElementsFrom(injectedPsi);
+    if (elements.isEmpty()) {
       return;
     }
     for (final LocalInspectionTool tool : tools) {
@@ -603,11 +638,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       };
 
-      final PsiElementVisitor visitor = tool.buildVisitor(holder, true, session);
-      assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
-      for (PsiElement element : elements) {
-        element.accept(visitor);
-      }
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, indicator);
+      tool.inspectionFinished(session,holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (problems != null && !problems.isEmpty()) {
         InspectionResult res = new InspectionResult(tool, problems);

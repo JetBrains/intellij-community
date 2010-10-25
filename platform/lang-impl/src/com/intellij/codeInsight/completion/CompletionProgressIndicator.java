@@ -40,7 +40,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -58,8 +57,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
@@ -76,8 +73,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private boolean myDisposed;
-  private boolean myInitialized;
-  private int myCount;
+  private boolean myShownLookup;
+  private volatile int myCount;
   private final Update myUpdate = new Update("update") {
     public void run() {
       updateLookup();
@@ -85,6 +82,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private LightweightHint myHint;
   private final Semaphore myFreezeSemaphore;
+  private boolean myToRestart;
 
   private boolean myModifiersReleased;
 
@@ -124,16 +122,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
+    myShownLookup = lookup.isShown();
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isShown()) {
       scheduleAdvertising();
     }
 
@@ -194,7 +193,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isOutdated()) {
                   return;
                 }
-                if (isAutopopupCompletion() && !myInitialized) {
+                if (isAutopopupCompletion() && !myShownLookup) {
                   return;
                 }
                 if (!isBackgrounded()) {
@@ -217,6 +216,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void trackModifiers() {
+    if (isAutopopupCompletion()) {
+      return;
+    }
+
     final JComponent contentComponent = myEditor.getContentComponent();
     contentComponent.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
@@ -307,8 +310,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myInitialized) {
-      myInitialized = true;
+    if (!myShownLookup) {
+      myShownLookup = true;
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
@@ -320,10 +323,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.show();
     }
     myLookup.refreshUi();
-  }
-
-  public int getCount() {
-    return myCount;
   }
 
   final boolean isInsideIdentifier() {
@@ -410,7 +409,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     unregisterItself();
   }
 
-  private void unregisterItself() {
+  private static void unregisterItself() {
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
@@ -474,45 +473,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private volatile Throwable cancelTrace;
-
-  @Nullable
-  public String getCancelTrace() {
-    Throwable t = cancelTrace;
-    if (t == null) return null;
-    final StringWriter writer = new StringWriter();
-    t.printStackTrace(new PrintWriter(writer));
-    return writer.toString();
+  public void cancelByWriteAction() {
+    myToRestart = true;
+    cancel();
   }
 
   @Override
   public void cancel() {
-    if (cancelTrace == null) {
-      cancelTrace = new Throwable();
-    }
     super.cancel();
-  }
-
-  @Override
-  public void start() {
-    if (isCanceled()) {
-      throw new AssertionError("Restarting completion process is prohibited: trace=" + getCancelTrace());
-    }
-
-    super.start();
-  }
-
-  @Override
-  public void initStateFrom(@NotNull ProgressIndicatorEx indicator) {
-    if (isCanceled()) {
-      throw new AssertionError("Re-init-ting completion process is prohibited: trace=" + getCancelTrace());
-    }
-
-    if (indicator.isCanceled()) {
-      LOG.error("initStateFrom canceled: " + indicator);
-    }
-
-    super.initStateFrom(indicator);
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
@@ -534,10 +502,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }.execute().getResultObject();
     return aBoolean.booleanValue();
-  }
-
-  public boolean isInitialized() {
-    return myInitialized;
   }
 
   public void restorePrefix() {
@@ -590,6 +554,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void prefixUpdated() {
+    if (myToRestart) {
+      restartCompletion();
+      return;
+    }
+
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {

@@ -32,7 +32,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -85,13 +88,16 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
   public static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
     List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
-    int offset = editor.getSelectionModel().getSelectionStart();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if (template.supportsWrapping() && template.isApplicable(file, offset)) {
+      if (template.supportsWrapping() && isApplicable(template, editor, file)) {
         result.add(template);
       }
     }
     return result;
+  }
+
+  public static boolean isApplicable(CustomLiveTemplate template, Editor editor, PsiFile file) {
+    return template.isApplicable(file, editor.getSelectionModel().getSelectionStart());
   }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {

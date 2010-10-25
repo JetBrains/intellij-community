@@ -1066,10 +1066,10 @@ public class GenericsHighlightUtil {
   }
 
   static void checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, final HighlightInfoHolder holder) {
-    PsiClass containingClass = enumConstant.getContainingClass();
-    if (enumConstant.getInitializingClass() == null) {
+    PsiClass containingClass = enumConstant.getContainingClass();                      if (enumConstant.getInitializingClass() == null) {
       HighlightInfo highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
       if (highlightInfo != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createImplementMethodsFix(enumConstant));
         holder.add(highlightInfo);
         return;
       }

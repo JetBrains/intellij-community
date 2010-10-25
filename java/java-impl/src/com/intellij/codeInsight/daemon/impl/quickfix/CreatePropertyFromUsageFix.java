@@ -206,85 +206,79 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-    try {
+    if (field == null) {
+      field = factory.createField(fieldName, type);
+      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic);
+    }
+    PsiMethod accessor;
+    PsiElement fieldReference;
+    PsiElement typeReference;
+    PsiCodeBlock body;
+    if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
+      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
+      body = accessor.getBody();
+      LOG.assertTrue(body != null, accessor.getText());
+      fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
+      typeReference = accessor.getReturnTypeElement();
+    }
+    else {
+      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
+      body = accessor.getBody();
+      LOG.assertTrue(body != null, accessor.getText());
+      PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();
+      fieldReference = ((PsiReferenceExpression)expr.getLExpression()).getReferenceNameElement();
+      typeReference = accessor.getParameterList().getParameters()[0].getTypeElement();
+    }
+    accessor.setName(callText);
+    PsiUtil.setModifierProperty(accessor, PsiModifier.STATIC, isStatic);
 
-      if (field == null) {
-        field = factory.createField(fieldName, type);
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic);
-      }
-      PsiMethod accessor;
-      PsiElement fieldReference;
-      PsiElement typeReference;
-      PsiCodeBlock body;
-      if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
-        body = accessor.getBody();
-        LOG.assertTrue(body != null, accessor.getText());
-        fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
-        typeReference = accessor.getReturnTypeElement();
-      }
-      else {
-        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
-        body = accessor.getBody();
-        LOG.assertTrue(body != null, accessor.getText());
-        PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();
-        fieldReference = ((PsiReferenceExpression)expr.getLExpression()).getReferenceNameElement();
-        typeReference = accessor.getParameterList().getParameters()[0].getTypeElement();
-      }
-      accessor.setName(callText);
-      PsiUtil.setModifierProperty(accessor, PsiModifier.STATIC, isStatic);
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(accessor);
+    builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);
+    builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
+    builder.setEndVariableAfter(body.getLBrace());
 
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(accessor);
-      builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);
-      builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
-      builder.setEndVariableAfter(body.getLBrace());
+    accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
+    targetClass = accessor.getContainingClass();
+    LOG.assertTrue(targetClass != null);
+    Template template = builder.buildTemplate();
+    TextRange textRange = accessor.getTextRange();
+    final PsiFile file = targetClass.getContainingFile();
+    final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
+    editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+    editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
-      accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
-      targetClass = accessor.getContainingClass();
-      LOG.assertTrue(targetClass != null);
-      Template template = builder.buildTemplate();
-      TextRange textRange = accessor.getTextRange();
-      final PsiFile file = targetClass.getContainingFile();
-      final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
-      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-      editor.getCaretModel().moveToOffset(textRange.getStartOffset());
+    final boolean isStatic1 = isStatic;
+    startTemplate(editor, template, project, new TemplateEditingAdapter() {
+      public void beforeTemplateFinished(final TemplateState state, Template template) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
+            if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
+            String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
 
-      final boolean isStatic1 = isStatic;
-      startTemplate(editor, template, project, new TemplateEditingAdapter() {
-        public void beforeTemplateFinished(final TemplateState state, Template template) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
-              if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
-              String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
-
-              PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-              PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-              if (aClass == null) return;
-              if (aClass.findFieldByName(fieldName, true) != null) return;
-              PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+            PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+            PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+            if (aClass == null) return;
+            if (aClass.findFieldByName(fieldName, true) != null) return;
+            PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+            try {
+              PsiType type = factory.createTypeFromText(fieldType, aClass);
               try {
-                PsiType type = factory.createTypeFromText(fieldType, aClass);
-                try {
-                  PsiField field = factory.createField(fieldName, type);
-                  field = (PsiField)aClass.add(field);
-                  PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
-                  positionCursor(project, field.getContainingFile(), field);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
+                PsiField field = factory.createField(fieldName, type);
+                field = (PsiField)aClass.add(field);
+                PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
+                positionCursor(project, field.getContainingFile(), field);
               }
               catch (IncorrectOperationException e) {
+                LOG.error(e);
               }
             }
-          });
-        }
-      });
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+            catch (IncorrectOperationException e) {
+            }
+          }
+        });
+      }
+    });
   }
 
   private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {

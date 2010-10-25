@@ -168,7 +168,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
-    myJdksTreeModel.setProjectSdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
+    myJdksTreeModel.setProjectSdk(ProjectRootManager.getInstance(myProject).getProjectSdk());
   }
 
   public boolean isModified() {

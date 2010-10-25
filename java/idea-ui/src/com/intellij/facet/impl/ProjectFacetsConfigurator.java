@@ -357,7 +357,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
       super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
-      myContainer = LibrariesContainerFactory.createContainer(facet.getModule().getProject(), myContext);
+      myContainer = LibrariesContainerFactory.createContainer(myContext);
     }
 
     public LibrariesContainer getContainer() {

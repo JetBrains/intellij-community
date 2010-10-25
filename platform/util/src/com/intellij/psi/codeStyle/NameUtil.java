@@ -87,10 +87,15 @@ public class NameUtil {
   }
 
   public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false);
+    return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, false);
   }
 
-  public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
+  public static String buildRegexp(String pattern,
+                                   int exactPrefixLen,
+                                   boolean allowToUpper,
+                                   boolean allowToLower,
+                                   boolean lowerCaseWords,
+                                   boolean forCompletion) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -102,8 +107,10 @@ public class NameUtil {
     @NonNls final StringBuffer buffer = new StringBuffer();
     boolean lastIsUppercase = false;
     boolean prevIsUppercase = false;
-    final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
-    pattern = pattern.trim();
+    final boolean endsWithSpace = !forCompletion && StringUtil.endsWithChar(pattern, ' ');
+    if (!forCompletion) {
+      pattern = pattern.trim();
+    }
     exactPrefixLen = Math.min(exactPrefixLen, pattern.length());
     /*final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern.substring(exactPrefixLen));
     if (uppercaseOnly) {
@@ -369,12 +376,16 @@ public class NameUtil {
     boolean matches(String name);
   }
 
+  public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true));
+  }
+
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower));
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords));
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false));
   }
 
   private static Matcher buildMatcher(String pattern, String regexp) {

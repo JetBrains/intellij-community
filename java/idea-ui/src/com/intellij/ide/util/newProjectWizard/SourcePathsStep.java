@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,15 +29,19 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -49,26 +52,26 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
  */
-public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, String>>> {
+public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<String, String, Collection<String>>>> {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.SourcePathsStep");
 
   private String myCurrentMode;
   @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
   @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
 
-  private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
+  private static final List<Trinity<String, String, Collection<String>>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private final SourcePathsBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
-  private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
+  private ElementsChooser<Trinity<String, String, Collection<String>>> mySourcePathsChooser;
   private String myCurrentContentEntryPath = null;
   private JRadioButton myRbCreateSource;
   private JRadioButton myRbNoSource;
@@ -161,10 +164,19 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
 
   private JComponent createComponentForChooseSources() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySourcePathsChooser = new ElementsChooser<Pair<String, String>>(true) {
-      public String getItemText(@NotNull Pair<String, String> pair) {
-        if ("".equals(pair.second)) return pair.first;
-        return pair.first + " (" + pair.second + ")";
+    mySourcePathsChooser = new ElementsChooser<Trinity<String, String, Collection<String>>>(true) {
+      public String getItemText(@NotNull Trinity<String, String, Collection<String>> pair) {
+        StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        builder.append(pair.first);
+        if (!"".equals(pair.second)) {
+          builder.append(" (").append(pair.second).append(")");
+        }
+        builder.append(" [");
+        for (String name : pair.third) {
+          builder.append(name).append(", ");
+        }
+        builder.replace(builder.length() - 2, builder.length(), "]");
+        return builder.toString();
       }
     };
     final String text = IdeBundle.message("label.java.source.files.have.been.found");
@@ -200,11 +212,11 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   public void updateDataModel() {
     List<Pair<String,String>> paths = null;
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-      final List<Pair<String, String>> selectedElements = mySourcePathsChooser.getMarkedElements();
+      final List<Trinity<String, String, Collection<String>>> selectedElements = mySourcePathsChooser.getMarkedElements();
       if (selectedElements.size() > 0) {
         paths = new ArrayList<Pair<String, String>>(selectedElements.size());
 
-        for (final Pair<String, String> path : selectedElements) {
+        for (final Trinity<String, String, Collection<String>> path : selectedElements) {
           paths.add(Pair.create(path.first.replace(File.separatorChar, '/'), path.second));
         }
       }
@@ -281,7 +293,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
     return isContentEntryChanged();
   }
 
-  protected void onFinished(final List<Pair<String, String>> foundPaths, final boolean canceled) {
+  protected void onFinished(final List<Trinity<String, String, Collection<String>>> foundPaths, final boolean canceled) {
     if (foundPaths.size() > 0) {
       myCurrentMode = CHOOSE_SOURCE_PANEL;
       mySourcePathsChooser.setElements(foundPaths, true);
@@ -310,7 +322,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
-  protected List<Pair<String,String>> calculate() {
+  protected List<Trinity<String, String, Collection<String>>> calculate() {
     String contentEntryPath = getContentRootPath();
     if (contentEntryPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
@@ -323,13 +335,26 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
     if (children == null || children.length == 0) {
       return EMPTY_STRING_STRING_ARRAY;
     }
-    final List<Pair<File,String>> suggestedRoots = JavaUtil.suggestRoots(entryFile);
-    final List<Pair<String,String>> paths = new ArrayList<Pair<String, String>>();
-    for (final Pair<File, String> suggestedRoot : suggestedRoots) {
+
+    final Map<File, String> skippedPackages = new HashMap<File, String>();
+    final MultiMap<File, String> foundLanguages = new MultiMap<File, String>();
+
+    for (SourceRootFinder finder : SourceRootFinder.EP_NAME.getExtensions()) {
+      final List<Pair<File, String>> roots = finder.findRoots(entryFile);
+      final String name = finder.getName();
+      for (Pair<File, String> root : roots) {
+        if (!skippedPackages.containsKey(root.first)) {
+          skippedPackages.put(root.first, root.second);
+        }
+        foundLanguages.putValue(root.first, name);
+      }
+    }
+    final List<Trinity<String, String, Collection<String>>> paths = new ArrayList<Trinity<String, String, Collection<String>>>();
+    for (final File suggestedRoot : skippedPackages.keySet()) {
       try {
-        if (FileUtil.isAncestor(entryFile, suggestedRoot.first, false)) {
-          final String path = FileUtil.resolveShortWindowsName(suggestedRoot.first.getPath());
-          paths.add(Pair.create(path, suggestedRoot.second));
+        if (FileUtil.isAncestor(entryFile, suggestedRoot, false)) {
+          final String path = FileUtil.resolveShortWindowsName(suggestedRoot.getPath());
+          paths.add(Trinity.create(path, skippedPackages.get(suggestedRoot), foundLanguages.get(suggestedRoot)));
         }
       }
       catch (IOException e) {

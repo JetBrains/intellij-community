@@ -42,11 +42,11 @@ public class RootConfigurationAccessor {
   }
 
   public Sdk getProjectSdk(Project project) {
-    return ProjectRootManager.getInstance(project).getProjectJdk();
+    return ProjectRootManager.getInstance(project).getProjectSdk();
   }
 
   @Nullable
   public String getProjectSdkName(final Project project) {
-    return ProjectRootManager.getInstance(project).getProjectJdkName();
+    return ProjectRootManager.getInstance(project).getProjectSdkName();
   }
 }

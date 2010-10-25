@@ -41,9 +41,9 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private CheckBoxList myFilesList;
   private TextFieldWithBrowseButton myDirectoryField;
   private JCheckBox myDownloadSourcesCheckBox;
+  private JCheckBox myDownloadJavadocsCheckBox;
   private JLabel myFilesToDownloadLabel;
   private JLabel myCopyDownloadedFilesToLabel;
-  private JCheckBox myDownloadJavadocsCheckBox;
   private JPanel myNameWrappingPanel;
   private final LibraryDownloadSettings mySettings;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
@@ -70,6 +70,10 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     myCopyDownloadedFilesToLabel.setLabelFor(myDirectoryField);
     myDirectoryField.setText(FileUtil.toSystemDependentName(settings.getDirectoryForDownloadedLibrariesPath()));
+
+    //todo[nik] show when downloading sources/javadocs will be supported
+    myDownloadSourcesCheckBox.setVisible(false);
+    myDownloadJavadocsCheckBox.setVisible(false);
 
     myDownloadSourcesCheckBox.setSelected(settings.isDownloadSources());
     myDownloadJavadocsCheckBox.setSelected(settings.isDownloadJavadocs());

@@ -19,7 +19,7 @@ import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import org.jetbrains.annotations.Nls;
 
@@ -28,32 +28,19 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class LangScriptingContextConfigurable implements Configurable {
+public abstract class LangScriptingContextConfigurable implements Configurable {
   private ScriptingLibrariesPanel myPanel;
-  private LangScriptingContextProvider myProvider;
   private ScriptingLibraryManager myLibManager;
 
-  public LangScriptingContextConfigurable(ScriptingLibraryManager libManager, LangScriptingContextProvider provider) {
-    LibraryTable libTable = libManager.getLibraryTable();
-    myPanel = new ScriptingLibrariesPanel(provider, libManager.getProject(), libTable);
-    myProvider = provider;
-    myLibManager = libManager;
+  public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
+    myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
+    myPanel = new ScriptingLibrariesPanel(provider, project, myLibManager);
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return myProvider.getLanguage().getDisplayName();
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return "Libraries";
   }
 
   @Override
@@ -71,16 +58,16 @@ public class LangScriptingContextConfigurable implements Configurable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        myLibManager.commitModel();
-        myPanel.resetTable(myLibManager.getLibraryTable());
+        myLibManager.commitChanges();
+        myPanel.resetTable();
       }
     });
   }
 
   @Override
   public void reset() {
-    myLibManager.resetModel();
-    myPanel.resetTable(myLibManager.getLibraryTable());
+    myLibManager.dropChanges();
+    myPanel.resetTable();
   }
 
   @Override

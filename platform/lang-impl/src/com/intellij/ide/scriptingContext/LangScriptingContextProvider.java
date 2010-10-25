@@ -18,6 +18,7 @@ package com.intellij.ide.scriptingContext;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,16 +26,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LangScriptingContextProvider {
 
-  public static final ExtensionPointName<LangScriptingContextProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langScriptingContextProvider");
-
   @NotNull
   public abstract Language getLanguage();
 
+  public abstract LibraryType getLibraryType();
+
   public abstract boolean acceptsExtension(String fileExt);
 
-  @NotNull
-  public static LangScriptingContextProvider[] getProviders() {
-    return Extensions.getExtensions(EP_NAME);
-  }
 }

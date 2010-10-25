@@ -9,7 +9,7 @@ class Derived {
   }
 }
 -----
-public class Foo implements groovy.lang.GroovyObject {
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public Foo(java.lang.String... s) {
 
   }
@@ -39,7 +39,7 @@ public class Foo implements groovy.lang.GroovyObject {
   }
 }
 ---
-public class Derived implements groovy.lang.GroovyObject {
+public class Derived extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public Derived(java.lang.String... s) {
     super();
   }

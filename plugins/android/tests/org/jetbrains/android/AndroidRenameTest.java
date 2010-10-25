@@ -69,6 +69,20 @@ public class AndroidRenameTest extends AndroidTestCase {
     assertNotNull(myFixture.findFileInTempDir("res/drawable/pic1.png"));
   }
 
+  public void testXmlReferenceToFileResource1() throws Throwable {
+    createManifest();
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout1.xml", "res/layout/layout1.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.copyFileToProject(BASE_PATH + "pic.png", "res/drawable/pic.9.png");
+    myFixture.copyFileToProject(BASE_PATH + "styles.xml", "res/values/styles.xml");
+    myFixture.copyFileToProject(BASE_PATH + "R1.java", R_JAVA_PATH);
+    renameElementWithTextOccurences("pic1.9.png");
+    myFixture.checkResultByFile(BASE_PATH + "layout_file_after.xml");
+    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_file_after.java", true);
+    myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + "styles_after.xml", true);
+    assertNotNull(myFixture.findFileInTempDir("res/drawable/pic1.9.png"));
+  }
+
   private void renameElementWithTextOccurences(final String newName) throws Throwable {
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override

@@ -159,7 +159,7 @@ public class AndroidCompileUtil {
         Project project = module.getProject();
         if (project.isDisposed()) return;
         CompilerTask task = new CompilerTask(project, true, "", true);
-        CompileScope scope = new ModuleCompileScope(module, true);
+        CompileScope scope = new ModuleCompileScope(module, false);
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }
     });
@@ -221,7 +221,7 @@ public class AndroidCompileUtil {
     if (resourcesDir != null) {
       result.add(resourcesDir.getPath());
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depFacet.getModule(), facet);
       if (depResourceDir != null) {
         result.add(depResourceDir.getPath());

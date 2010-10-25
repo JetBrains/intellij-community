@@ -82,8 +82,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private AppListener myApplicationListener;
 
-  private String myProjectJdkName;
-  private String myProjectJdkType;
+  private String myProjectSdkName;
+  private String myProjectSdkType;
 
   private final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
   private final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
@@ -327,28 +327,28 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  public Sdk getProjectJdk() {
-    if (myProjectJdkName != null) {
-      return ProjectJdkTable.getInstance().findJdk(myProjectJdkName, myProjectJdkType);
+  public Sdk getProjectSdk() {
+    if (myProjectSdkName != null) {
+      return ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
     }
     else {
       return null;
     }
   }
 
-  public String getProjectJdkName() {
-    return myProjectJdkName;
+  public String getProjectSdkName() {
+    return myProjectSdkName;
   }
 
-  public void setProjectJdk(Sdk projectJdk) {
+  public void setProjectSdk(Sdk projectSdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (projectJdk != null) {
-      myProjectJdkName = projectJdk.getName();
-      myProjectJdkType = projectJdk.getSdkType().getName();
+    if (projectSdk != null) {
+      myProjectSdkName = projectSdk.getName();
+      myProjectSdkType = projectSdk.getSdkType().getName();
     }
     else {
-      myProjectJdkName = null;
-      myProjectJdkType = null;
+      myProjectSdkName = null;
+      myProjectSdkType = null;
     }
     mergeRootsChangesDuring(new Runnable() {
       public void run() {
@@ -357,9 +357,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     });
   }
 
-  public void setProjectJdkName(String name) {
+  public void setProjectSdkName(String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myProjectJdkName = name;
+    myProjectSdkName = name;
 
     mergeRootsChangesDuring(new Runnable() {
       public void run() {
@@ -409,8 +409,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.readExternal(element);
     }
-    myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
-    myProjectJdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
+    myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
+    myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -418,11 +418,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.writeExternal(element);
     }
-    if (myProjectJdkName != null) {
-      element.setAttribute(PROJECT_JDK_NAME_ATTR, myProjectJdkName);
+    if (myProjectSdkName != null) {
+      element.setAttribute(PROJECT_JDK_NAME_ATTR, myProjectSdkName);
     }
-    if (myProjectJdkType != null) {
-      element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectJdkType);
+    if (myProjectSdkType != null) {
+      element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectSdkType);
     }
   }
 
@@ -946,11 +946,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           myDispatcher.getMulticaster().jdkNameChanged(jdk, previousName);
         }
       });
-      String currentName = getProjectJdkName();
+      String currentName = getProjectSdkName();
       if (previousName != null && previousName.equals(currentName)) {
         // if already had jdk name and that name was the name of the jdk just changed
-        myProjectJdkName = jdk.getName();
-        myProjectJdkType = jdk.getSdkType().getName();
+        myProjectSdkName = jdk.getName();
+        myProjectSdkType = jdk.getSdkType().getName();
       }
     }
 

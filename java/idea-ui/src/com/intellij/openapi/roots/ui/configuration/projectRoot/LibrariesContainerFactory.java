@@ -68,8 +68,8 @@ public class LibrariesContainerFactory {
     return new LibrariesContainerImpl(null, null, null);
   }
 
-  public static LibrariesContainer createContainer(@NotNull Project project, StructureConfigurableContext context) {
-    return new StructureConfigurableLibrariesContainer(project, context);
+  public static LibrariesContainer createContainer(StructureConfigurableContext context) {
+    return new StructureConfigurableLibrariesContainer(context);
   }
 
   public static Library createLibrary(@Nullable LibrariesContainer container1, @NotNull LibrariesContainer container2,
@@ -243,11 +243,9 @@ public class LibrariesContainerFactory {
   }
 
   private static class StructureConfigurableLibrariesContainer extends LibrariesContainerBase {
-    private final Project myProject;
     private final StructureConfigurableContext myContext;
 
-    public StructureConfigurableLibrariesContainer(final Project project, final StructureConfigurableContext context) {
-      myProject = project;
+    public StructureConfigurableLibrariesContainer(final StructureConfigurableContext context) {
       myContext = context;
     }
 
@@ -280,7 +278,7 @@ public class LibrariesContainerFactory {
 
     @Nullable
     public Project getProject() {
-      return myProject;
+      return myContext.getProject();
     }
 
     @NotNull

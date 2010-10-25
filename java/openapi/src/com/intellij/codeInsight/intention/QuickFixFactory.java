@@ -42,7 +42,11 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass);
   public abstract IntentionAction createAddMethodFix(@NotNull String methodText, @NotNull PsiClass toClass, String... exceptions);
 
-  public abstract IntentionAction createImplementMethodsFix(@NotNull PsiClass aClass);
+  /**
+   * @param psiElement psiClass or enum constant without class initializer
+   */
+  public abstract IntentionAction createImplementMethodsFix(@NotNull PsiElement psiElement);
+  public abstract IntentionAction createImplementMethodsFix(@NotNull PsiClass psiElement);
   public abstract IntentionAction createMethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionClass, boolean shouldThrow, boolean showContainingClass);
   public abstract IntentionAction createAddDefaultConstructorFix(@NotNull PsiClass aClass);
   public abstract IntentionAction createMethodParameterTypeFix(@NotNull PsiMethod method, int index, @NotNull PsiType newType, boolean fixWholeHierarchy);

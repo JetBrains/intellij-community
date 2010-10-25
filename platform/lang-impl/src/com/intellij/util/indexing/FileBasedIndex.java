@@ -571,6 +571,9 @@ public class FileBasedIndex implements ApplicationComponent {
   private void flushAllIndices() {
     IndexingStamp.flushCache();
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        return;
+      }
       try {
         final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
         if (index != null) {

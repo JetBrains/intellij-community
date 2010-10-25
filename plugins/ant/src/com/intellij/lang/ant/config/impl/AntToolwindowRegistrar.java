@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -112,7 +113,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     }
     if (myAntExplorer != null) {
       myToolWindowManager.unregisterToolWindow(ToolWindowId.ANT_BUILD);
-      myAntExplorer.dispose();
+      Disposer.dispose(myAntExplorer);
       myAntExplorer = null;
     }
   }

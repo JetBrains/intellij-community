@@ -52,6 +52,11 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
     return !getText().startsWith("\"\"\"");
   }
 
+  @Override
+  public GrStringInjection[] getInjections() {
+    return findChildrenByClass(GrStringInjection.class);
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitGStringExpression(this);
   }

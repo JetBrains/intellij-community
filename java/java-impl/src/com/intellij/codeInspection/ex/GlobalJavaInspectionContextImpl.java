@@ -120,7 +120,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       if (isBadSdk(project, modules)) {
         System.err.println(InspectionsBundle.message("inspection.no.jdk.error.message"));
         System.err.println(
-          InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectJdkName()));
+          InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
         return false;
       }
       for (Module module : modules) {
@@ -152,7 +152,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private static boolean isBadSdk(final Project project, final Module[] modules) {
     boolean anyModuleAcceptsSdk = false;
     boolean anyModuleUsesProjectSdk = false;
-    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     for (Module module : modules) {
       if (ModuleRootManager.getInstance(module).isSdkInherited()) {
         anyModuleUsesProjectSdk = true;

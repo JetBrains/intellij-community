@@ -29,4 +29,5 @@ public interface FrameworkSupportModelListener extends EventListener {
 
   void frameworkUnselected(@NotNull FrameworkSupportProvider provider);
 
+  void wizardStepUpdated();
 }

@@ -62,7 +62,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
 
     if (selection != null) {
       selection = selection.trim();
-      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile, true));
     }
   }
 }

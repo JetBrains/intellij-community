@@ -29,47 +29,26 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.util.ObjectUtils.NULL;
 
 public abstract class PsiParameterizedCachedValue<T,P> extends PsiCachedValue<T> implements ParameterizedCachedValue<T,P> {
-
   private final ParameterizedCachedValueProvider<T,P> myProvider;
 
-  public PsiParameterizedCachedValue(PsiManager manager, @NotNull ParameterizedCachedValueProvider<T, P> provider) {
+  public PsiParameterizedCachedValue(@NotNull PsiManager manager, @NotNull ParameterizedCachedValueProvider<T, P> provider) {
     super(manager);
     myProvider = provider;
   }
 
-  @Nullable
+  @Override
   public T getValue(P param) {
-    T value = getUpToDateOrNull();
-    if (value != null) {
-      return value == NULL ? null : value;
-    }
-
-    w.lock();
-
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == NULL ? null : value;
-      }
-
-      CachedValueProvider.Result<T> result = myProvider.compute(param);
-      value = result == null ? null : result.getValue();
-
-      setValue(value, result);
-
-      return value;
-    }
-    finally {
-      w.unlock();
-    }
+    return getValueWithLock(param);
   }
 
   public ParameterizedCachedValueProvider<T,P> getValueProvider() {
     return myProvider;
+  }
+
+  @Override
+  protected <X> CachedValueProvider.Result<T> doCompute(X param) {
+    return myProvider.compute((P)param);
   }
 }

@@ -31,8 +31,7 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion()) {
+    if (parameters.getInvocationCount() == 0) {
       return;
     }
 

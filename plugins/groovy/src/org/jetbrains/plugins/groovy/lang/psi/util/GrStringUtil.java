@@ -267,4 +267,12 @@ public class GrStringUtil {
   public static boolean isPlainString(@NotNull GrLiteral literal) {
     return literal.getText().startsWith("'");
   }
+
+  public static String getStartQuote(String text) {
+    if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
+    if (text.startsWith(QUOTE)) return QUOTE;
+    if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
+    if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    return "";
+  }
 }

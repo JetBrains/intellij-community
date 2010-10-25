@@ -52,6 +52,7 @@ public class CopyAbstractMethodImplementationHandler {
   private final PsiMethod myMethod;
   private PsiClass mySourceClass;
   private final List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
+  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<PsiEnumConstant>();
   private final List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
 
   public CopyAbstractMethodImplementationHandler(final Project project, final Editor editor, final PsiMethod method) {
@@ -121,6 +122,17 @@ public class CopyAbstractMethodImplementationHandler {
         targetClassIterator.remove();
       }
     }
+    if (mySourceClass.isEnum()) {
+      for (PsiField field : mySourceClass.getFields()) {
+        if (field instanceof PsiEnumConstant){
+          final PsiEnumConstant enumConstant = (PsiEnumConstant)field;
+          final PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
+          if (initializingClass == null) {
+            myTargetEnumConstants.add(enumConstant);
+          }
+        }
+      }
+    }
   }
 
   private boolean containsAnySuperClass(final PsiClass targetClass) {
@@ -136,6 +148,13 @@ public class CopyAbstractMethodImplementationHandler {
     final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       protected void run(final Result result) throws Throwable {
+        for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
+          PsiClass initializingClass = enumConstant.getInitializingClass();
+          if (initializingClass == null) {
+            initializingClass = ImplementAbstractMethodHandler.addClassInitializer(enumConstant);
+          }
+          myTargetClasses.add(initializingClass);
+        }
         for(PsiClass psiClass: myTargetClasses) {
           final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
           PsiMethod overriddenMethod = methods.iterator().next();

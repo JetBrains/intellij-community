@@ -31,7 +31,9 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
   public void testShowClassMembers() throws IncorrectOperationException, IOException {
     myShowMembers = true;
     useStandardProviders();
-    PsiClass aClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory())[1];
+    final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
+    sortClassesByName(classes);
+    PsiClass aClass = classes[1];
     PsiClass innerClass1 = aClass.getInnerClasses()[0];
     PsiClass innerClass12 = innerClass1.getInnerClasses()[0];
     PsiClass innerClass13 = innerClass12.getInnerClasses()[0];
@@ -51,29 +53,29 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 
     IdeaTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                             " -PsiDirectory: showClassMembers\n" +
-                                             "  -PsiDirectory: src\n" +
-                                             "   -PsiDirectory: com\n" +
-                                             "    -PsiDirectory: package1\n" +
-                                             "     +Class1\n" +
-                                             "     -Class2\n" +
-                                             "      +InnerClass1\n" +
-                                             "      -InnerClass2\n" +
-                                             "       -InnerClass22\n" +
-                                             "        -InnerClass23\n" +
-                                             "         -InnerClass24\n" +
-                                             "          +InnerClass25\n" +
-                                             "          myFieldToSelect:int\n" +
-                                             "         myInnerClassField:int\n" +
-                                             "        myInnerClassField:int\n" +
-                                             "       myInnerClassField:int\n" +
-                                             "      getValue():int\n" +
-                                             "      myField1:boolean\n" +
-                                             "      myField2:boolean\n" +
-                                             "      myField3:boolean\n" +
-                                             "      myField4:boolean\n" +
-                                             getRootFiles() +
-                                             " +External Libraries\n"
+                                                 " -PsiDirectory: showClassMembers\n" +
+                                                 "  -PsiDirectory: src\n" +
+                                                 "   -PsiDirectory: com\n" +
+                                                 "    -PsiDirectory: package1\n" +
+                                                 "     +Class1\n" +
+                                                 "     -Class2\n" +
+                                                 "      +InnerClass1\n" +
+                                                 "      -InnerClass2\n" +
+                                                 "       -InnerClass22\n" +
+                                                 "        -InnerClass23\n" +
+                                                 "         -InnerClass24\n" +
+                                                 "          +InnerClass25\n" +
+                                                 "          myFieldToSelect:int\n" +
+                                                 "         myInnerClassField:int\n" +
+                                                 "        myInnerClassField:int\n" +
+                                                 "       myInnerClassField:int\n" +
+                                                 "      getValue():int\n" +
+                                                 "      myField1:boolean\n" +
+                                                 "      myField2:boolean\n" +
+                                                 "      myField3:boolean\n" +
+                                                 "      myField4:boolean\n" +
+                                                 getRootFiles() +
+                                                 " +External Libraries\n"
     );
 
     assertFalse(isExpanded(innerClass15.getFields()[0], pane));

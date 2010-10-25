@@ -36,63 +36,26 @@ import java.util.List;
     id = "ws",
     file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
-  /**
-   * Default SSH policy
-   */
-  private static final SshExecutable DEFAULT_SSH = SshExecutable.IDEA_SSH;
-  /**
-   * The git application settings
-   */
-  private final GitVcsApplicationSettings myAppSettings;
-  /**
-   * The default executable for GIT
-   */
-  private String myGitExecutable;
-  /**
-   * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-   */
-  private List<String> myCommitAuthors = new ArrayList<String>();
-  /**
-   * Limit for previous commit authors
-   */
-  public static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
-  /**
-   * Checkout includes tags
-   */
-  private boolean myCheckoutIncludesTags = false;
-  /**
-   * IDEA SSH should be used instead of native SSH.
-   */
-  private SshExecutable mySshExecutable = DEFAULT_SSH;
-  /**
-   * The policy that specifies how files are saved before update or rebase
-   */
-  private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH;
-  /**
-   * The type of update operation to perform
-   */
-  private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT;
-  /**
-   * The crlf conversion policy
-   */
-  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.PROJECT_LINE_SEPARATORS;
-  /**
-   * If true, the dialog is shown with conversion options
-   */
-  private boolean myAskBeforeLineSeparatorConversion = true;
-  /**
-   * The policy used in push active branches dialog
-   */
-  private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH;
 
-  /**
-   * The constructor
-   *
-   * @param appSettings the application settings instance
-   */
+  public static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
+  private static final SshExecutable DEFAULT_SSH = SshExecutable.IDEA_SSH; // Default SSH policy
+
+  private final GitVcsApplicationSettings myAppSettings;
+  private final List<String> myCommitAuthors = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
+  private boolean myCheckoutIncludesTags = false;
+  private SshExecutable mySshExecutable = DEFAULT_SSH; // IDEA SSH should be used instead of native SSH.
+  private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
+  private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT; // The type of update operation to perform
+  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.PROJECT_LINE_SEPARATORS; // The crlf conversion policy
+  private boolean myAskBeforeLineSeparatorConversion = true; // If true, the dialog is shown with conversion options
+  private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH; // The policy used in push active branches dialog
+
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
     myAppSettings = appSettings;
-    myGitExecutable = myAppSettings.defaultGit();
+  }
+
+  public GitVcsApplicationSettings getAppSettings() {
+    return myAppSettings;
   }
 
   /**
@@ -177,24 +140,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myCheckoutIncludesTags = value;
   }
 
-
-  /**
-   * Set git executable path
-   *
-   * @param path the path to git
-   */
-  public void setGitExecutable(String path) {
-    myGitExecutable = path;
-    myAppSettings.setPathToGit(path);
-  }
-
-  /**
-   * @return the path to git executable
-   */
-  public String getGitExecutable() {
-    return myGitExecutable;
-  }
-
   /**
    * @return get (a possibly converted value) of update stash policy
    */
@@ -238,7 +183,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public State getState() {
     State s = new State();
     s.CHECKOUT_INCLUDE_TAGS = myCheckoutIncludesTags;
-    s.GIT_EXECUTABLE = myGitExecutable;
     s.LINE_SEPARATORS_CONVERSION = myLineSeparatorsConversion;
     s.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeLineSeparatorConversion;
     s.PREVIOUS_COMMIT_AUTHORS = getCommitAuthors();
@@ -255,7 +199,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    */
   public void loadState(State s) {
     myCheckoutIncludesTags = s.CHECKOUT_INCLUDE_TAGS == null ? false : s.CHECKOUT_INCLUDE_TAGS;
-    myGitExecutable = s.GIT_EXECUTABLE == null ? myAppSettings.defaultGit() : s.GIT_EXECUTABLE;
     myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
     myAskBeforeLineSeparatorConversion = s.LINE_SEPARATORS_CONVERSION_ASK;
     myCommitAuthors.clear();
@@ -311,10 +254,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    */
   public static class State {
 
-    /**
-     * The default executable for GIT. Do not set this field directly. Use {@link #setGitExecutable(String)} method instead.
-     */
-    public String GIT_EXECUTABLE;
     /**
      * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
      */

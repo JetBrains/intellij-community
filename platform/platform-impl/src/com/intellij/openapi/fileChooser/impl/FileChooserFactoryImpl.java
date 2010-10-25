@@ -80,4 +80,8 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
     return new FileSaverDialogImpl(descriptor, project);
   }
+
+  public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Component parent) {
+    return new FileSaverDialogImpl(descriptor, parent);
+  }
 }

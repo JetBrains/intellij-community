@@ -125,7 +125,7 @@ public class ClasspathStorage implements StateStorage {
         }
       }
       
-      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
+      final boolean macrosOk = ProjectMacrosUtil.checkNonIgnoredMacros(module.getProject(), macros);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);

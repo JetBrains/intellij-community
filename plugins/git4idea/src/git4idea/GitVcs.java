@@ -54,9 +54,7 @@ import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.branches.GitBranchConfigurations;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitVcsConfigurable;
-import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersion;
+import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
@@ -83,6 +81,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
+  public static final String NOTIFICATION_GROUP_ID = "Git";
   /**
    * the logger
    */
@@ -130,7 +129,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * project vcs settings
    */
-  private final GitVcsSettings mySettings;
+  private final GitVcsApplicationSettings myAppSettings;
   /**
    * configuration support
    */
@@ -211,6 +210,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * If true, the vcs was activated
    */
   private boolean isActivated;
+  private final GitVcsSettings myProjectSettings;
 
 
   public static GitVcs getInstance(@NotNull Project project) {
@@ -225,10 +225,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitDiffProvider gitDiffProvider,
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
-                @NotNull final GitVcsSettings gitSettings) {
+                @NotNull final GitVcsApplicationSettings gitSettings,
+                @NotNull final GitVcsSettings gitProjectSettings) {
     super(project, NAME);
     myVcsManager = gitVcsManager;
-    mySettings = gitSettings;
+    myAppSettings = gitSettings;
+    myProjectSettings = gitProjectSettings;
     myChangeProvider = gitChangeProvider;
     myCheckinEnvironment = gitCheckinEnvironment;
     myAnnotationProvider = gitAnnotationProvider;
@@ -236,8 +238,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(mySettings, myProject);
-    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, mySettings);
+    myConfigurable = new GitVcsConfigurable(myProjectSettings, myProject);
+    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, myProjectSettings);
     myMergeProvider = new GitMergeProvider(myProject);
     myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
@@ -501,6 +503,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
+    GitExecutableValidator.getInstance(myProject).checkExecutableAndNotifyIfNeeded();
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -603,8 +606,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @return vcs settings for the current project
    */
   @NotNull
-  public GitVcsSettings getSettings() {
-    return mySettings;
+  public GitVcsApplicationSettings getAppSettings() {
+    return myAppSettings;
   }
 
   /**
@@ -621,7 +624,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * Check version and report problem
    */
   public void checkVersion() {
-    final String executable = mySettings.getGitExecutable();
+    final String executable = myAppSettings.getPathToGit();
     synchronized (myCheckingVersion) {
       if (myVersion != null && myVersionCheckExcecutable.equals(executable)) {
         return;

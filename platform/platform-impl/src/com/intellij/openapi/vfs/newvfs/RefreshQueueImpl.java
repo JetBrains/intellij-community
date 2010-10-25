@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -69,11 +70,12 @@ public class RefreshQueueImpl extends RefreshQueue {
       public void run() {
         try {
           myRefreshIndicator.start();
-
+          HeavyProcessLatch.INSTANCE.processStarted();
           try {
             session.scan();
           }
           finally {
+            HeavyProcessLatch.INSTANCE.processFinished();
             myRefreshIndicator.stop();
           }
         }

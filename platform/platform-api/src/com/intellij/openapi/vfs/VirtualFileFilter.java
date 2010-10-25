@@ -22,11 +22,19 @@ public interface VirtualFileFilter {
     public boolean accept(VirtualFile file) {
       return true;
     }
+
+    public String toString() {
+      return "ALL";
+    }
   };
 
   VirtualFileFilter NONE = new VirtualFileFilter() {
     public boolean accept(VirtualFile file) {
       return false;
+    }
+
+    public String toString() {
+      return "NONE";
     }
   };
 }

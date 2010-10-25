@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
@@ -283,21 +284,21 @@ public class CustomAntElementsRegistry {
       clazz = loader.loadClass(classname);
     }
     catch (ClassNotFoundException e) {
-      error = e.getMessage();
+      error = "Class not found " + e.getMessage();
       if (error == null) {
         error = "";
       }
       clazz = null;
     }
     catch (NoClassDefFoundError e) {
-      error = e.getMessage();
+      error = "Class definition not found " + e.getMessage();
       if (error == null) {
         error = "";
       }
       clazz = null;
     }
     catch (UnsupportedClassVersionError e) {
-      error = e.getMessage();
+      error = "Unsupported class version " + e.getMessage();
       if (error == null) {
         error = "";
       }
@@ -309,7 +310,7 @@ public class CustomAntElementsRegistry {
   private void addCustomDefinition(@NotNull AntDomNamedElement declaringTag, String customTagName, String nsUri, Class clazz, String error) {
     final XmlName xmlName = new XmlName(customTagName, nsUri == null? "" : nsUri);
     if (error != null) {
-      myErrors.put(xmlName, customTagName);
+      myErrors.put(xmlName, error);
     }
     myCustomElements.put(xmlName, clazz);
     myDeclarations.put(xmlName, declaringTag);
@@ -421,24 +422,29 @@ public class CustomAntElementsRegistry {
       }
       myElementsOnThePath.add(element);
       try {
-        final String uri = element.getXmlElementNamespace();
-        if (!processedAntlibs.contains(uri)) {
-          processedAntlibs.add(uri);
-          final String antLibResource = AntDomAntlib.toAntlibResource(uri);
-          if (antLibResource != null) {
-            final XmlElement xmlElement = element.getXmlElement();
-            if (xmlElement != null) {
-              final ClassLoader loader = myAntProject.getClassLoader();
-              final InputStream stream = loader.getResourceAsStream(antLibResource);
-              if (stream != null) {
-                try {
-                  final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
-                  if (xmlFile != null) {
-                    loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+        final XmlTag tag = element.getXmlTag();
+        if (tag != null) {
+          final String[] uris = tag.knownNamespaces();
+          for (String uri : uris) {
+            if (!processedAntlibs.contains(uri)) {
+              processedAntlibs.add(uri);
+              final String antLibResource = AntDomAntlib.toAntlibResource(uri);
+              if (antLibResource != null) {
+                final XmlElement xmlElement = element.getXmlElement();
+                if (xmlElement != null) {
+                  final ClassLoader loader = myAntProject.getClassLoader();
+                  final InputStream stream = loader.getResourceAsStream(antLibResource);
+                  if (stream != null) {
+                    try {
+                      final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
+                      if (xmlFile != null) {
+                        loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+                      }
+                    }
+                    catch (IOException e) {
+                      LOG.info(e);
+                    }
                   }
-                }
-                catch (IOException e) {
-                  LOG.info(e);
                 }
               }
             }

@@ -213,11 +213,11 @@ public class AndroidApkBuilder {
 
   private static void writeNativeLibraries(SignedJarBuilder builder, VirtualFile nativeLibsFolder, VirtualFile child) throws IOException {
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-    collectNativeLibraries(nativeLibsFolder, child, list);
-    String relativePath = VfsUtil.getRelativePath(child, nativeLibsFolder, File.separatorChar);
-    String libsDirPathInApk = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
+    collectNativeLibraries(child, list);
     for (VirtualFile file : list) {
-      builder.writeFile(toIoFile(file), libsDirPathInApk);
+      String relativePath = VfsUtil.getRelativePath(file, nativeLibsFolder, File.separatorChar);
+      String path = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
+      builder.writeFile(toIoFile(file), path);
     }
   }
 
@@ -228,7 +228,7 @@ public class AndroidApkBuilder {
     return result;
   }
 
-  public static void collectNativeLibraries(@NotNull VirtualFile libsDir, @NotNull VirtualFile file, @NotNull List<VirtualFile> result) {
+  public static void collectNativeLibraries(@NotNull VirtualFile file, @NotNull List<VirtualFile> result) {
     if (!file.isDirectory()) {
       String ext = file.getExtension();
       if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext)) {
@@ -237,7 +237,7 @@ public class AndroidApkBuilder {
     }
     else if (JavaResourceFilter.checkFolderForPackaging(file.getName())) {
       for (VirtualFile child : file.getChildren()) {
-        collectNativeLibraries(libsDir, child, result);
+        collectNativeLibraries(child, result);
       }
     }
   }

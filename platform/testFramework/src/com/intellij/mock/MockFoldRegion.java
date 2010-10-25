@@ -103,6 +103,10 @@ public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
   }
 
   @Override
+  public void dispose() {
+  }
+
+  @Override
   public String toString() {
     return myStartOffset + "-" + myEndOffset;
   }

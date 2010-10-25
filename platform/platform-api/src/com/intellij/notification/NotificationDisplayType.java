@@ -22,7 +22,8 @@ public enum NotificationDisplayType {
 
   NONE("Ignore"),
   BALLOON("Balloon"),
-  STICKY_BALLOON("Sticky balloon");
+  STICKY_BALLOON("Sticky balloon"),
+  BALLOON_ONLY("Balloon only");
 
   private final String myTitle;
 

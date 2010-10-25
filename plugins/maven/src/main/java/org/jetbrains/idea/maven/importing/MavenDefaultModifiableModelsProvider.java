@@ -27,11 +27,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
@@ -100,23 +101,26 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   public void commit() {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
-        processExternalArtifactDependencies();
-        // all rootChanges will be merged and postponed until writeAction finishes.
-        for (Library.ModifiableModel each : myLibraryModels.values()) {
-          each.commit();
-        }
-        myLibrariesModel.commit();
-        Collection<ModifiableRootModel> rootModels = myRootModels.values();
+        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
+          public void run() {
+            processExternalArtifactDependencies();
+            for (Library.ModifiableModel each : myLibraryModels.values()) {
+              each.commit();
+            }
+            myLibrariesModel.commit();
+            Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
-        ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
-                                                              rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+            ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
+                                                                  rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
 
-        for (ModifiableFacetModel each : myFacetModels.values()) {
-          each.commit();
-        }
-        if (myArtifactModel != null) {
-          myArtifactModel.commit();
-        }
+            for (ModifiableFacetModel each : myFacetModels.values()) {
+              each.commit();
+            }
+            if (myArtifactModel != null) {
+              myArtifactModel.commit();
+            }
+          }
+        });
       }
     });
   }

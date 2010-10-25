@@ -80,7 +80,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
 
         if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.containsMethodCalls(expression)) {
           final CompletionService service = CompletionService.getCompletionService();
-          if (service.getAdvertisementText() == null) {
+          if (service.getAdvertisementText() == null && parameters.getInvocationCount() == 1) {
             service.setAdvertisementText("Invoke completion once more to see runtime type variants");
           }
           return null;
@@ -101,7 +101,10 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
               }
             };
           debuggerContext.getDebugProcess().getManagerThread().invoke(worker);
-          semaphore.waitFor(1000);
+          for (int i = 0; i < 50; i++) {
+            ProgressManager.checkCanceled();
+            if (semaphore.waitFor(20)) break;
+          }
           final String className = nameRef.get();
           if (className != null) {
             final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));

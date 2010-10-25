@@ -78,6 +78,11 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   }
 
   @Override
+  public boolean isValid() {
+    return myClass.retrieve() != null;
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof JavaPsiClassReferenceElement)) return false;

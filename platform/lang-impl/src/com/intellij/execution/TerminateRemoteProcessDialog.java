@@ -25,9 +25,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class TerminateRemoteProcessDialog extends DialogWrapper {
+  private static final int ICON_TEXT_GAP = 7;
   private JCheckBox myTerminateCheckBox;
   private final String mySessionName;
   private final boolean myDetachIsDefault;
@@ -55,7 +57,7 @@ public class TerminateRemoteProcessDialog extends DialogWrapper {
     final Icon icon = UIUtil.getOptionPanelWarningIcon();
     if (icon != null) {
       label.setIcon(icon);
-      label.setIconTextGap(7);
+      label.setIconTextGap(ICON_TEXT_GAP);
     }
     return panel;
   }
@@ -64,7 +66,19 @@ public class TerminateRemoteProcessDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     myTerminateCheckBox = new JCheckBox(ExecutionBundle.message("terminate.after.disconnect.checkbox"));
     myTerminateCheckBox.setSelected(!myDetachIsDefault);
-    panel.add(myTerminateCheckBox, BorderLayout.EAST);
+    final Icon icon = UIUtil.getOptionPanelWarningIcon();
+    if (icon != null) {
+      final Border border = myTerminateCheckBox.getBorder();
+      if (border != null) {
+        final Insets insets = border.getBorderInsets(myTerminateCheckBox);
+        final Border emptyBorder = BorderFactory.createEmptyBorder(0, icon.getIconWidth()+ICON_TEXT_GAP-insets.left, 0, 0);
+        myTerminateCheckBox.setBorder(BorderFactory.createCompoundBorder(emptyBorder, border));
+      }
+      else {
+        myTerminateCheckBox.setBorder(BorderFactory.createEmptyBorder(0, icon.getIconWidth()+ICON_TEXT_GAP, 0, 0));
+      }
+    }
+    panel.add(myTerminateCheckBox, BorderLayout.WEST);
     return panel;
   }
 

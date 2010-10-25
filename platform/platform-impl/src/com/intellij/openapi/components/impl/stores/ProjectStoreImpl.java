@@ -276,7 +276,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         if (nameFile != null && nameFile.isValid()) {
           BufferedReader in = null;
           try {
-            in = new BufferedReader(new InputStreamReader(nameFile.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), "UTF-8"));
             final String name = in.readLine();
             if (name != null && name.length() > 0) return name.trim();
           }

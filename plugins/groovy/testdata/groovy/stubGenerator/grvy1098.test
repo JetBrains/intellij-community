@@ -6,7 +6,7 @@ class B extends A {
   static final def TEST
 }
 -----
-public class A implements groovy.lang.GroovyObject {
+public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public static final java.lang.Object getTEST() {
     return null;
   }

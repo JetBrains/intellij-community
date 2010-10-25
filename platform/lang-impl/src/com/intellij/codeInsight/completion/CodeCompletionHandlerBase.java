@@ -29,6 +29,7 @@ import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -56,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -95,7 +95,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Please don't invoke completion inside write action";
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
 
     try {
@@ -199,7 +199,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
     if (editor.isOneLineMode()) {
-      lookup.setForceShowAsPopup(true);
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
       lookup.setResizable(false);
@@ -242,6 +241,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
                                                                         final CompletionProgressIndicator indicator) {
+
+    final ApplicationAdapter listener = new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        indicator.cancelByWriteAction();
+      }
+    };
+    ApplicationManager.getApplication().addApplicationListener(listener);
+
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
@@ -250,17 +258,22 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-              startSemaphore.up();
-              data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
-                public void consume(final LookupElement lookupElement) {
-                  indicator.addItem(lookupElement);
+              startSemaphore.up(); //todo move inside read action
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  ProgressManager.checkCanceled();
+                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
+                    public void consume(final LookupElement lookupElement) {
+                      indicator.addItem(lookupElement);
+                    }
+                  }));
                 }
-              }));
-            }
-            catch (PsiInvalidElementAccessException e) {
-              throw new RuntimeException("PIEAE: canceled=" + indicator.isCanceled() + "; trace=" + indicator.getCancelTrace(), e);
+              });
             }
             catch (ProcessCanceledException ignored) {
+            }
+            finally {
+              ApplicationManager.getApplication().removeApplicationListener(listener);
             }
           }
         }, indicator);

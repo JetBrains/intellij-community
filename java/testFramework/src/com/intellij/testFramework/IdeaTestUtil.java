@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,8 +36,21 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 public class IdeaTestUtil extends PlatformTestUtil {
+  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
+    return new Comparator<AbstractTreeNode>() {
+      @Override
+      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
+        String displayText1 = o1.toTestString(printInfo);
+        String displayText2 = o2.toTestString(printInfo);
+        return displayText1.compareTo(displayText2);
+      }
+    };
+  }
 
-
+  /**
+   * Use {@link #createComparator(com.intellij.openapi.ui.Queryable.PrintInfo)} instead.
+   */
+  @Deprecated
   public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
     @Override
     public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
@@ -48,7 +62,9 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
-  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, VirtualFileFilter filter) {
+  private static HashMap<String, VirtualFile> buildNameToFileMap
+    (VirtualFile[] files, VirtualFileFilter
+      filter) {
     HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;

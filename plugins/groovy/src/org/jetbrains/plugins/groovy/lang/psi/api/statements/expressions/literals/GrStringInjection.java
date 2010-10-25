@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author Maxim.Medvedev
  */
 public interface GrStringInjection extends GroovyPsiElement {
+  GrStringInjection[] EMPTY_ARRAY = new GrStringInjection[0];
   @Nullable
   GrClosableBlock getClosableBlock();
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,13 +74,14 @@ public class EditLibraryDialog extends DialogWrapper {
         updateSelection();
       }
     });
+    myFilesPanel.setMinimumSize(new Dimension(600, myFilesPanel.getY()));
     init();
   }
 
   public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, Library lib) {
     this(title, provider, project);
     myLibName.setText(lib.getName());
-    myFileTableModel.setFiles(lib.getFiles(OrderRootType.CLASSES));
+    myFileTableModel.setFiles(lib.getFiles(OrderRootType.SOURCES));
   }
 
   @Override
@@ -197,6 +198,6 @@ public class EditLibraryDialog extends DialogWrapper {
   }
 
   private static boolean isLibNameValid(String libName) {
-    return libName != null && libName.matches("\\w[\\w\\d\\._]*");
+    return libName != null && libName.matches("\\w[\\w\\d\\._\\-\\d]*");
   }
 }

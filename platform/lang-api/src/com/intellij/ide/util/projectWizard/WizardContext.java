@@ -56,7 +56,7 @@ public class WizardContext {
   public WizardContext(Project project) {
     myProject = project;
     if (myProject != null){
-      myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
+      myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
   }
 

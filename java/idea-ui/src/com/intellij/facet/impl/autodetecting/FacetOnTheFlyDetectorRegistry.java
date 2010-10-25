@@ -20,9 +20,8 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +30,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FacetOnTheFlyDetectorRegistry<C extends FacetConfiguration> {
   <U extends FacetConfiguration>
-  void register(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter,
+  void register(@NotNull FileType fileType, @NotNull FileContentFilter virtualFileFilter,
                 @NotNull FacetDetector<VirtualFile, C> detector, UnderlyingFacetSelector<VirtualFile, U> selector);
 
   <U extends FacetConfiguration>
-  void register(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter,
+  void register(@NotNull FileType fileType, @NotNull FileContentFilter virtualFileFilter,
                 @NotNull Condition<PsiFile> psiFileFilter, @NotNull FacetDetector<PsiFile, C> detector,
                 UnderlyingFacetSelector<VirtualFile, U> selector);
 }

@@ -23,7 +23,7 @@ package com.intellij.application.options.editor;
 import com.intellij.openapi.options.SearchableConfigurable;
 
 /**
- * Register implementation of this interface in the plugin.xml:
+ * Register implementation of this interface in the plugin.xml to provide sub-section of Editor section in the Settings dialog:
  * <p/>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;editorOptionsProvider instance="class-name"/&gt;<br>

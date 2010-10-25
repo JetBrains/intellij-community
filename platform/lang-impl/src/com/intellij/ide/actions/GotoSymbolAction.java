@@ -17,9 +17,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
-import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,14 +35,18 @@ public class GotoSymbolAction extends GotoActionBase {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoSymbolModel2(project), getPsiContext(e));
+    final GotoSymbolModel2 model = new GotoSymbolModel2(project);
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e));
+    final ChooseByNameFilter filterUI = new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project),
+                                                                       project);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      public void onClose ()
-      {
-        if (GotoSymbolAction.class.equals (myInAction)) {
+      public void onClose() {
+        if (GotoSymbolAction.class.equals(myInAction)) {
           myInAction = null;
         }
+        filterUI.close();
       }
+
       public void elementChosen(Object element) {
         ((NavigationItem)element).navigate(true);
       }

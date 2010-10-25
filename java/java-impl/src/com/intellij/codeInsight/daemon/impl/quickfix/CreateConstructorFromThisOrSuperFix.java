@@ -26,6 +26,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -85,8 +86,8 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       constructor = (PsiMethod)targetClass.add(constructor);
 
       final TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(constructor);
-      CreateFromUsageUtils
-        .setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
+      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(),
+                                                  getTargetSubstitutor(myMethodCall));
 
       final PsiFile psiFile = myMethodCall.getContainingFile();
 
@@ -96,16 +97,16 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
 
       targetClass = constructor.getContainingClass();
-      myMethodCall =
-        CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
-
+      myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
+      ((RangeMarkerEx)rangeMarker).dispose();
 
       Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
-      TextRange textRange = constructor.getTextRange();
+      final TextRange textRange = constructor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
+
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template, boolean brokenOff) {

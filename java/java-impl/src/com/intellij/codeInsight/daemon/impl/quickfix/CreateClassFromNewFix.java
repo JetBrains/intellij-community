@@ -47,65 +47,53 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
+    assert ApplicationManager.getApplication().isWriteAccessAllowed();
+
     PsiNewExpression newExpression = getNewExpression();
 
-    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(newExpression),
-                                                               CreateClassKind.CLASS,
-                                                               null);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
+    final PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
     setupClassFromNewExpression(psiClass, newExpression);
   }
 
   protected static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
+    assert ApplicationManager.getApplication().isWriteAccessAllowed();
+
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          try {
-            PsiClass aClass = psiClass;
-            if (aClass == null) return;
+    PsiClass aClass = psiClass;
+    if (aClass == null) return;
 
-            final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-            if (classReference != null) {
-              classReference.bindToElement(aClass);
-            }
-            setupInheritance(newExpression, aClass);
-            setupGenericParameters(newExpression, aClass);
+    final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+    if (classReference != null) {
+      classReference.bindToElement(aClass);
+    }
+    setupInheritance(newExpression, aClass);
+    setupGenericParameters(newExpression, aClass);
 
-            PsiExpressionList argList = newExpression.getArgumentList();
-            Project project = aClass.getProject();
-            if (argList != null && argList.getExpressions().length > 0) {
-              PsiMethod constructor = elementFactory.createConstructor();
-              constructor = (PsiMethod) aClass.add(constructor);
+    PsiExpressionList argList = newExpression.getArgumentList();
+    Project project = aClass.getProject();
+    if (argList != null && argList.getExpressions().length > 0) {
+      PsiMethod constructor = elementFactory.createConstructor();
+      constructor = (PsiMethod) aClass.add(constructor);
 
-              TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
-              CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
+      TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
+      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
 
-              setupSuperCall(aClass, constructor, templateBuilder);
+      setupSuperCall(aClass, constructor, templateBuilder);
 
-              getReferenceElement(newExpression).bindToElement(aClass);
-              aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
-              Template template = templateBuilder.buildTemplate();
+      getReferenceElement(newExpression).bindToElement(aClass);
+      aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
+      Template template = templateBuilder.buildTemplate();
 
-              Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
-              TextRange textRange = aClass.getTextRange();
-              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+      Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+      TextRange textRange = aClass.getTextRange();
+      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
-              startTemplate(editor, template, project);
-            }
-            else {
-              positionCursor(project, aClass.getContainingFile(), aClass);
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    );
-  }
-
-  public boolean startInWriteAction() {
-    return false;
+      startTemplate(editor, template, project);
+    }
+    else {
+      positionCursor(project, aClass.getContainingFile(), aClass);
+    }
   }
 
   public static void setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)

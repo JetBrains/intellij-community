@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,62 +19,70 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JDBCResourceInspection extends ResourceInspection{
+public class JDBCResourceInspection extends ResourceInspection {
 
     private static final String[] creationMethodClassName =
-            new String[]{
-                "java.sql.Driver",
-                "java.sql.DriverManager",
-                "javax.sql.DataSource",
-                "java.sql.Connection",
-                "java.sql.Connection",
-                "java.sql.Connection",
-                "java.sql.Statement",
-                "java.sql.Statement",
-                "java.sql.Statement",
+            {
+                    "java.sql.Driver",
+                    "java.sql.DriverManager",
+                    "javax.sql.DataSource",
+                    "java.sql.Connection",
+                    "java.sql.Connection",
+                    "java.sql.Connection",
+                    "java.sql.Statement",
+                    "java.sql.Statement",
+                    "java.sql.Statement",
             };
-    @NonNls private static final String[] creationMethodName =
-            new String[]{
-                "connect",
-                "getConnection",
-                "getConnection",
-                "createStatement",
-                "prepareStatement",
-                "prepareCall",
-                "executeQuery",
-                "getResultSet",
-                "getGeneratedKeys"
+    @NonNls
+    private static final String[] creationMethodName =
+            {
+                    "connect",
+                    "getConnection",
+                    "getConnection",
+                    "createStatement",
+                    "prepareStatement",
+                    "prepareCall",
+                    "executeQuery",
+                    "getResultSet",
+                    "getGeneratedKeys"
             };
 
-    /**
-     * @noinspection StaticCollection
-     */
+    @SuppressWarnings({"StaticCollection"})
     private static final Set<String> creationMethodNameSet =
             new HashSet<String>(9);
 
+    @SuppressWarnings({"PublicField"})
+    public boolean insideTryAllowed = false;
+
     static {
-      ContainerUtil.addAll(creationMethodNameSet, creationMethodName);
+        ContainerUtil.addAll(creationMethodNameSet, creationMethodName);
     }
 
+    @Override
     @NotNull
-    public String getID(){
+    public String getID() {
         return "JDBCResourceOpenedButNotSafelyClosed";
     }
 
+    @Override
     @NotNull
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "jdbc.resource.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
         assert type != null;
@@ -83,60 +91,83 @@ public class JDBCResourceInspection extends ResourceInspection{
                 "jdbc.resource.opened.not.closed.problem.descriptor", text);
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    @Override
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+        final CheckBox checkBox = new CheckBox(
+                InspectionGadgetsBundle.message(
+                        "allow.resource.to.be.opened.inside.a.try.block"),
+                this, "insideTryAllowed");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+        return panel;
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
         return new JDBCResourceVisitor();
     }
 
-    private static class JDBCResourceVisitor extends BaseInspectionVisitor{
+    private class JDBCResourceVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
+        @Override
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if(!isJDBCResourceCreation(expression)){
+            if (!isJDBCResourceCreation(expression)) {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if(parent instanceof PsiReturnStatement){
+            if (parent instanceof PsiReturnStatement) {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);
-            if(isSafelyClosed(boundVariable, expression)){
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
                 return;
             }
-            if(isResourceEscapedFromMethod(boundVariable, expression)){
+            if (isResourceEscapedFromMethod(boundVariable, expression)) {
                 return;
             }
             registerError(expression, expression);
         }
 
-        private static boolean isJDBCResourceCreation(
-                PsiMethodCallExpression expression){
+        private boolean isJDBCResourceCreation(
+                PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-            if(name == null){
+            if (name == null) {
                 return false;
             }
-            if(!creationMethodNameSet.contains(name)){
+            if (!creationMethodNameSet.contains(name)) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
-            if(method == null){
+            if (method == null) {
                 return false;
             }
-            for(int i = 0; i < creationMethodName.length; i++){
-                if(!name.equals(creationMethodName[i])){
+            for (int i = 0; i < creationMethodName.length; i++) {
+                if (!name.equals(creationMethodName[i])) {
                     continue;
                 }
                 final PsiClass containingClass = method.getContainingClass();
-                if(containingClass == null){
+                if (containingClass == null) {
                     return false;
                 }
                 final String className = containingClass.getQualifiedName();
-                if(className == null){
+                if (className == null) {
                     return false;
                 }
-                if(className.equals(creationMethodClassName[i])){
+                if (className.equals(creationMethodClassName[i])) {
                     return true;
                 }
             }

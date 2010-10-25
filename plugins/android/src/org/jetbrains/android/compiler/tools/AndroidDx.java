@@ -18,6 +18,7 @@ package org.jetbrains.android.compiler.tools;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.OSProcessHandler;
@@ -74,13 +75,16 @@ public final class AndroidDx {
     parameters.setMainClass(DEX_MAIN);
     ParametersList params = parameters.getProgramParametersList();
     //params.add("--verbose");
+    params.add("--no-strict");
     params.add("--output=" + outFile);
     params.addAll(compileTargets);
     parameters.getVMParametersList().add("-Xmx1024M");
     parameters.getClassPath().add(dxJar);
     Process process = null;
     try {
-      process = CommandLineBuilder.createFromJavaParameters(parameters, true).createProcess();
+      GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters, true);
+      LOG.info(commandLine.getCommandLineString());
+      process = commandLine.createProcess();
     }
     catch (ExecutionException e) {
       messages.get(CompilerMessageCategory.ERROR).add("ExecutionException: " + e.getMessage());

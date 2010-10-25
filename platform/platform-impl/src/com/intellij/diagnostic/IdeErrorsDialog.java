@@ -43,10 +43,12 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
@@ -54,8 +56,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -68,17 +72,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeErrorsDialog");
   private JTextPane myDetailsPane;
+  private JTextPane myMoreInfoPane;
   private List<AbstractMessage> myFatalErrors;
   private final List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
   private final MessagePool myMessagePool;
   private JLabel myCountLabel;
   private JLabel myInfoLabel;
   private JCheckBox myImmediatePopupCheckbox;
+  private JLabel myCredentialsLabel;
   private final BlameAction myBlameAction = new BlameAction();
   private final DisablePluginAction myDisablePluginAction = new DisablePluginAction();
 
   private int myIndex = 0;
   @NonNls public static final String IMMEDIATE_POPUP_OPTION = "IMMEDIATE_FATAL_ERROR_POPUP";
+  private Box myCredentialsPane;
 
   public IdeErrorsDialog(MessagePool messagePool) {
     super(JOptionPane.getRootFrame(), false);
@@ -168,8 +175,36 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     updateCountLabel();
     updateInfoLabel();
     updateDetailsPane();
+    updateCredentialsPane();
     myBlameAction.update();
     myDisablePluginAction.update();
+    final AbstractMessage selectedMessage = getSelectedMessage();
+    if (selectedMessage == null) {
+      myMoreInfoPane.setEditable(false);
+      myMoreInfoPane.setText("");
+    }
+    else {
+      myMoreInfoPane.setText(selectedMessage.getAdditionalInfo());
+      myMoreInfoPane.setEditable(true);
+    }
+  }
+
+  private void updateCredentialsPane() {
+    final AbstractMessage message = getSelectedMessage();
+    final ErrorReportSubmitter submitter = message == null ? null : getSubmitter(message.getThrowable());
+    if (submitter instanceof ITNReporter) {
+      myCredentialsPane.setVisible(true);
+      String userName = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+      if (StringUtil.isEmpty(userName)) {
+        myCredentialsLabel.setText("Submit report anonymously");
+      }
+      else {
+        myCredentialsLabel.setText("Submit report as " + userName);
+      }
+    }
+    else {
+      myCredentialsPane.setVisible(false);
+    }
   }
 
   private void updateInfoLabel() {
@@ -305,8 +340,48 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     gapPanel.add(myInfoLabel);
     infoPanel.add(gapPanel, BorderLayout.NORTH);
     infoPanel.add(ScrollPaneFactory.createScrollPane(myDetailsPane), BorderLayout.CENTER);
+
+    myMoreInfoPane = new JTextPane();
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMoreInfoPane);
+    scrollPane.setPreferredSize(new Dimension(100, 50));
+    final LabeledComponent<JScrollPane> labeledComponent =
+      LabeledComponent.create(scrollPane, "Additional information (steps to reproduce, what were you doing when the exception occurred):");
+    labeledComponent.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+    infoPanel.add(labeledComponent, BorderLayout.SOUTH);
+
+    myMoreInfoPane.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        if (myMoreInfoPane.isEditable()) {
+          final AbstractMessage message = getSelectedMessage();
+          if (message != null) {
+            message.setAdditionalInfo(myMoreInfoPane.getText());
+          }
+        }
+      }
+    });
+
     root.add(infoPanel, BorderLayout.CENTER);
-    root.add(myImmediatePopupCheckbox, BorderLayout.SOUTH);
+
+    JPanel controlsPane = new JPanel(new BorderLayout());
+
+    myCredentialsPane = Box.createHorizontalBox();
+    myCredentialsLabel = new JLabel("Submit report anonymously");
+    myCredentialsPane.add(myCredentialsLabel);
+    myCredentialsPane.add(Box.createHorizontalGlue());
+    JButton specifyCredentialsButton = new JButton("Use JetBrains Account");
+    specifyCredentialsButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        new JetBrainsAccountDialog(getRootPane()).show();
+      }
+    });
+    myCredentialsPane.add(specifyCredentialsButton);
+    controlsPane.add(myCredentialsPane, BorderLayout.CENTER);
+    myCredentialsPane.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+
+    controlsPane.add(myImmediatePopupCheckbox, BorderLayout.SOUTH);
+    root.add(controlsPane, BorderLayout.SOUTH);
 
     root.setPreferredSize(new Dimension(600, 550));
 
@@ -453,6 +528,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     public void actionPerformed(ActionEvent e) {
+      final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      int rc = Messages.showYesNoDialog(getRootPane(), "Are you sure you would like to " + (canRestart ? "restart" : "shutdown") +
+                                                       " " + ApplicationNamesInfo.getInstance().getFullProductName() + "?",
+                                        "Confirm", Messages.getQuestionIcon());
+      if (rc != 0) return;
       myMessagePool.setJvmIsShuttingDown();
       LaterInvocator.invokeLater(new Runnable() {
         public void run() {
@@ -514,7 +594,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (submitter != null) {
         logMessage.setSubmitting(true);
         updateControls();
-        submitter.submitAsync(getEvents(logMessage), getContentPane(), new Consumer<SubmittedReportInfo>() {
+        submitter.submitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), getContentPane(), new Consumer<SubmittedReportInfo>() {
           @Override
           public void consume(SubmittedReportInfo submittedReportInfo) {
             logMessage.setSubmitting(false);
@@ -589,6 +669,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super.doCancelAction();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myMoreInfoPane;
+  }
+
   protected class CloseAction extends AbstractAction {
     public CloseAction() {
       putValue(NAME, DiagnosticBundle.message("error.list.close.action"));
@@ -657,9 +742,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         PluginManager.disablePlugin(pluginId.toString());
         final Application app = ApplicationManager.getApplication();
         final String pluginName = app.getPlugin(pluginId).getName();
+        int rc = Messages.showYesNoDialog(getRootPane(), "Are you sure you would like to disable the plugin " + pluginName +
+                                                         "? The features provided by the plugin will no longer be available.",
+                                          "Disable Plugin", Messages.getQuestionIcon());
+        if (rc != 0) return;
         final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         if (app.isRestartCapable()) {
-          int rc = Messages.showYesNoDialog(getRootPane(), pluginName + " has been disabled. Would you like to restart " + productName + " so that the changes would take effect?",
+          rc = Messages.showYesNoDialog(getRootPane(), pluginName + " has been disabled. Would you like to restart " + productName + " so that the changes would take effect?",
                                             "Disable Plugin", Messages.getInformationIcon());
           if (rc == 0) {
             app.restart();

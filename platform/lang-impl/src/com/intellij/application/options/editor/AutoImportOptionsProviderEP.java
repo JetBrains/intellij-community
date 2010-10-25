@@ -19,6 +19,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.AbstractConfigurableEP;
 
 /**
+ * Register implementation of {@link AutoImportOptionsProvider} in the plugin.xml to provide additional options in Editor | Auto Import section:
+ * <p/>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;autoImportOptionsProvider instance="class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ * <p>
+ * A new instance of the specified class will be created each time then the Settings dialog is opened
+ *
  * @author nik
  */
 public class AutoImportOptionsProviderEP extends AbstractConfigurableEP<AutoImportOptionsProvider> {

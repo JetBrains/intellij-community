@@ -52,6 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -326,7 +327,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return myDuplicates.isEmpty();
     }
 
-    @NotNull
+    @Nullable
     public String getConfirmDuplicatePrompt(final Match match) {
       final PsiElement matchStart = match.getMatchStart();
       @Modifier String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
@@ -345,7 +346,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       if (shouldBeStatic) {
         return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
       }
-      return RefactoringBundle.message("replace.this.code.fragment");
+      return null;
     }
   }
 }

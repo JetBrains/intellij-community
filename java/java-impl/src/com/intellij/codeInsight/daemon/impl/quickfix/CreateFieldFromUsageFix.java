@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +48,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
       return;
     }
@@ -57,76 +56,72 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-
     PsiMember enclosingContext = null;
     PsiClass parentClass;
     do {
       enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? myReferenceExpression : enclosingContext, PsiMethod.class,
-                                                     PsiField.class, PsiClassInitializer.class);
+                                    PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
 
     PsiFile targetFile = targetClass.getContainingFile();
 
-    try {
-      ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
+    ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
-      String fieldName = myReferenceExpression.getReferenceName();
-      PsiField field;
-      if (!createConstantField()) {
-        field = factory.createField(fieldName, PsiType.INT);
-      } else {
-        PsiClass aClass = factory.createClassFromText("int i = 0;", null);
-        field = aClass.getFields()[0];
-        field.setName(fieldName);
-      }
-      if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
-          && (enclosingContext instanceof PsiField)) {
-        field = (PsiField)targetClass.addBefore(field, enclosingContext);
-      }
-      else if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
-          && (enclosingContext instanceof PsiClassInitializer)) {
-        field = (PsiField)targetClass.addBefore(field, enclosingContext);
-        targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
-      }
-      else {
-        field = (PsiField)targetClass.add(field);
-      }
-
-      setupVisibility(parentClass, targetClass, field.getModifierList());
-
-      if (shouldCreateStaticMember(myReferenceExpression, targetClass)) {
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-      }
-
-      if (createConstantField()) {
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-      }
-
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
-      PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
-      new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression),
-                                                        builder, context, targetClass);
-
-      if (createConstantField()) {
-        builder.replaceElement(field.getInitializer(), new EmptyExpression());
-      }
-
-      builder.setEndVariableAfter(field.getNameIdentifier());
-      field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
-      Template template = builder.buildTemplate();
-
-      Editor newEditor = positionCursor(project, targetFile, field);
-      TextRange range = field.getTextRange();
-      newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-      startTemplate(newEditor, template, project);
+    String fieldName = myReferenceExpression.getReferenceName();
+    PsiField field;
+    if (!createConstantField()) {
+      field = factory.createField(fieldName, PsiType.INT);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else {
+      PsiClass aClass = factory.createClassFromText("int i = 0;", null);
+      field = aClass.getFields()[0];
+      field.setName(fieldName);
     }
+    if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
+        && enclosingContext instanceof PsiField) {
+      field = (PsiField)targetClass.addBefore(field, enclosingContext);
+    }
+    else if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
+             && enclosingContext instanceof PsiClassInitializer) {
+      field = (PsiField)targetClass.addBefore(field, enclosingContext);
+      targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
+    }
+    else {
+      field = (PsiField)targetClass.add(field);
+    }
+
+    setupVisibility(parentClass, targetClass, field.getModifierList());
+
+    if (shouldCreateStaticMember(myReferenceExpression, targetClass)) {
+      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+    }
+
+    if (createConstantField()) {
+      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+    }
+
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
+    PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
+    new GuessTypeParameters(factory)
+      .setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression),
+                        builder, context, targetClass);
+
+    if (createConstantField()) {
+      builder.replaceElement(field.getInitializer(), new EmptyExpression());
+    }
+
+    builder.setEndVariableAfter(field.getNameIdentifier());
+    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
+    Template template = builder.buildTemplate();
+
+    Editor newEditor = positionCursor(project, targetFile, field);
+    TextRange range = field.getTextRange();
+    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+
+    startTemplate(newEditor, template, project);
   }
 
   @NotNull

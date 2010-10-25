@@ -86,7 +86,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myFreeze = true;
     final Sdk projectJdk = myJdksModel.getProjectSdk();
     myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
-    final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectJdkName() : projectJdk.getName();
+    final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectSdkName() : projectJdk.getName();
     if (sdkName != null) {
       final Sdk jdk = myJdksModel.findSdk(sdkName);
       if (jdk != null) {
@@ -135,18 +135,18 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public boolean isModified() {
-    final Sdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     return !Comparing.equal(projectJdk, getSelectedProjectJdk());
   }
 
   public void apply() throws ConfigurationException {
-    ProjectRootManager.getInstance(myProject).setProjectJdk(getSelectedProjectJdk());
+    ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
   }
 
   public void reset() {
     reloadModel();
 
-    final String sdkName = ProjectRootManager.getInstance(myProject).getProjectJdkName();
+    final String sdkName = ProjectRootManager.getInstance(myProject).getProjectSdkName();
     if (sdkName != null) {
       final Sdk jdk = myJdksModel.findSdk(sdkName);
       if (jdk != null) {

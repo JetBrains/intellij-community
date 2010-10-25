@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -149,12 +150,14 @@ import java.util.Map;
   @Override
   public void closeAllFiles() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    for (Editor editor : myVirtualFile2Editor.values()) {
+    Iterator<Editor> it = myVirtualFile2Editor.values().iterator();
+    while (it.hasNext()) {
+      Editor editor = it.next();
+      it.remove();
       if (editor != null && !editor.isDisposed()){
         editorFactory.releaseEditor(editor);
       }
     }
-    myVirtualFile2Editor.clear();
   }
 
   public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
@@ -284,6 +287,7 @@ import java.util.Map;
 
   @Override
   public void projectClosed() {
+    closeAllFiles();
   }
 
   @Override
@@ -292,10 +296,9 @@ import java.util.Map;
 
   @Override
   public void closeFile(@NotNull VirtualFile file) {
-    Editor editor = myVirtualFile2Editor.get(file);
+    Editor editor = myVirtualFile2Editor.remove(file);
     if (editor != null){
       EditorFactory.getInstance().releaseEditor(editor);
-      myVirtualFile2Editor.remove(file);
     }
     if (file == myActiveFile) myActiveFile = null;
   }

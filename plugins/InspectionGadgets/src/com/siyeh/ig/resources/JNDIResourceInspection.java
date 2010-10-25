@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,34 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class JNDIResourceInspection extends ResourceInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean insideTryAllowed = false;
+
+    @Override
     @NotNull
-    public String getID(){
+    public String getID() {
         return "JNDIResourceOpenedButNotSafelyClosed";
     }
 
+    @Override
     @NotNull
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "jndi.resource.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
         assert type != null;
@@ -45,41 +55,46 @@ public class JNDIResourceInspection extends ResourceInspection {
                 "resource.opened.not.closed.problem.descriptor", text);
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    @Override
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+        final CheckBox checkBox = new CheckBox(
+                InspectionGadgetsBundle.message(
+                        "allow.resource.to.be.opened.inside.a.try.block"),
+                this, "insideTryAllowed");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+        return panel;
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
         return new JNDIResourceVisitor();
     }
 
-    private static class JNDIResourceVisitor extends BaseInspectionVisitor{
+    private class JNDIResourceVisitor extends BaseInspectionVisitor {
 
-        @NonNls private static final String LIST = "list";
-        @NonNls private static final String LIST_BINDING = "listBindings";
-        @NonNls private static final String GET_ALL = "getAll";
+        @NonNls
+        private static final String LIST = "list";
+        @NonNls
+        private static final String LIST_BINDING = "listBindings";
+        @NonNls
+        private static final String GET_ALL = "getAll";
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
+        @Override
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if(!isJNDIFactoryMethod(expression)){
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if(parent instanceof PsiReturnStatement){
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if(isSafelyClosed(boundVariable, expression)){
-                return;
-            }
-            if(isResourceEscapedFromMethod(boundVariable, expression)){
-                return;
-            }
-            registerError(expression, expression);
-        }
-
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression){
-            super.visitNewExpression(expression);
-            if(!isJNDIResource(expression)){
+            if (!isJNDIFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
@@ -87,22 +102,44 @@ public class JNDIResourceInspection extends ResourceInspection {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression)) {
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
                 return;
             }
-            if(isResourceEscapedFromMethod(boundVariable, expression)){
+            if (isResourceEscapedFromMethod(boundVariable, expression)) {
                 return;
             }
             registerError(expression, expression);
         }
 
-        private static boolean isJNDIResource(PsiNewExpression expression){
-            return TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "javax.naming.InitialContext");
+
+        @Override
+        public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+            if (!isJNDIResource(expression)) {
+                return;
+            }
+            final PsiElement parent = getExpressionParent(expression);
+            if (parent instanceof PsiReturnStatement) {
+                return;
+            }
+            final PsiVariable boundVariable = getVariable(parent);
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+                return;
+            }
+            if (isResourceEscapedFromMethod(boundVariable, expression)) {
+                return;
+            }
+            registerError(expression, expression);
         }
 
-        private static boolean isJNDIFactoryMethod(
-                PsiMethodCallExpression expression){
+        private boolean isJNDIResource(PsiNewExpression expression) {
+            return TypeUtils.expressionHasTypeOrSubtype(expression,
+                    "javax.naming.InitialContext");
+        }
+
+        private boolean isJNDIFactoryMethod(
+                PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

@@ -16,28 +16,32 @@
 
 package com.intellij.facet.impl.autodetecting;
 
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
-import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.patterns.VirtualFilePattern;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.xml.XmlFileHeader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -55,6 +59,37 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
 
   public void customizeDetectedFacetPresentation(@NotNull final DetectedFacetPresentation presentation) {
     myPresentation = presentation;
+  }
+
+  public void registerUniversalDetectorByRootTag(@NotNull final String rootTag, @NotNull final FacetDetector<VirtualFile, C> detector) {
+    registerUniversalDetector(StdFileTypes.XML, new VirtualFileFilter() {
+      @Override
+      public boolean accept(VirtualFile file) {
+        try {
+          return rootTag.equals(NanoXmlUtil.parseHeaderWithException(file).getRootTagLocalName());
+        }
+        catch (IOException e) {
+          return false;
+        }
+      }
+    }, new FileContentFilter() {
+      @Override
+      public boolean accept(FileContent fileContent) {
+        try {
+          return rootTag.equals(parseHeaderWithException(fileContent).getRootTagLocalName());
+        }
+        catch (IOException e) {
+          return false;
+        }
+      }
+    }, detector);
+  }
+
+  @NotNull
+  private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
+    final CharSequence contentText = CacheUtil.getContentText(fileContent);
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    return NanoXmlUtil.parseHeaderWithException(new CharSequenceReader(contentText));
   }
 
   public <U extends FacetConfiguration> void registerUniversalDetectorByFileNameAndRootTag(@NotNull @NonNls String fileName,
@@ -101,7 +136,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
                                                                       @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                                                       @Nullable UnderlyingFacetSelector<VirtualFile, U> selector) {
     if (myOnTheFlyDelegate != null) {
-      myOnTheFlyDelegate.register(fileType, virtualFileFilter, psiFileFilter, facetDetector, selector);
+      myOnTheFlyDelegate.register(fileType, new MyFileContentFilter(virtualFileFilter), psiFileFilter, facetDetector, selector);
     }
   }
 
@@ -136,11 +171,16 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public void registerUniversalDetector(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
+    registerUniversalDetector(fileType, virtualFileFilter, new MyFileContentFilter(virtualFileFilter), facetDetector);
+  }
+
+  private void registerUniversalDetector(@NotNull final FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull final FileContentFilter fileContentFilter,
+                                         @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
     if (myForWizardDelegate != null) {
       myForWizardDelegate.register(fileType, virtualFileFilter, facetDetector);
     }
     if (myOnTheFlyDelegate != null) {
-      myOnTheFlyDelegate.register(fileType, virtualFileFilter, facetDetector, null);
+      myOnTheFlyDelegate.register(fileType, fileContentFilter, facetDetector, null);
     }
   }
 
@@ -149,7 +189,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
                                                                                final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
     registerSubFacetDetectorForWizard(fileType, virtualFilePattern, facetDetector, underlyingFacetSelector);
     if (myOnTheFlyDelegate != null) {
-      myOnTheFlyDelegate.register(fileType, new MyPatternFilter(virtualFilePattern), facetDetector, underlyingFacetSelector);
+      myOnTheFlyDelegate.register(fileType, new MyFileContentFilter(new MyPatternFilter(virtualFilePattern)), facetDetector, underlyingFacetSelector);
     }
   }
 
@@ -188,5 +228,18 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
     facetType.registerDetectors(registry);
     DetectedFacetPresentation presentation = registry.myPresentation;
     return presentation != null ? presentation : DefaultDetectedFacetPresentation.INSTANCE;
+  }
+
+  private static class MyFileContentFilter implements FileContentFilter {
+    private final VirtualFileFilter myVirtualFileFilter;
+
+    public MyFileContentFilter(VirtualFileFilter virtualFileFilter) {
+      myVirtualFileFilter = virtualFileFilter;
+    }
+
+    @Override
+    public boolean accept(FileContent fileContent) {
+      return myVirtualFileFilter.accept(fileContent.getVirtualFile());
+    }
   }
 }

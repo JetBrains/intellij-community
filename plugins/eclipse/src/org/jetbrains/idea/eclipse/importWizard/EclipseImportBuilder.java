@@ -16,6 +16,7 @@
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -170,7 +171,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       return false;
     }
 
-    if (!ProjectMacrosUtil.checkMacros(dstProject, variables)) {
+    if (!ProjectMacrosUtil.checkNonIgnoredMacros(dstProject, variables)) {
       return false;
     }
 

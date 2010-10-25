@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.scriptingContext.ui;
+package com.intellij.facet.impl.autodetecting;
 
-import javax.swing.*;
+import com.intellij.ide.caches.FileContent;
 
 /**
- * @author Rustam Vishnyakov
+ * @author nik
  */
-public class MainScriptingContextsPanel {
-  private JPanel myTopPanel;
-
-  private void createUIComponents() {
-    // TODO: place custom component creation code here 
-  }
-
-  public JPanel getTopPanel() {
-    return myTopPanel;
-  }
+public interface FileContentFilter {
+  boolean accept(FileContent fileContent);
 }

@@ -243,11 +243,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
-        int caretOffset = editor.getCaretModel().getOffset();
-        if (customLiveTemplate.isApplicable(file, caretOffset)) {
-          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+        if (isApplicable(customLiveTemplate, editor, file)) {
+          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
           String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
+            int caretOffset = editor.getCaretModel().getOffset();
             int offsetBeforeKey = caretOffset - key.length();
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
@@ -259,6 +259,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return startNonCustomTemplates(template2argument, editor, processor);
+  }
+
+  public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    return customLiveTemplate.isApplicable(file, caretOffset > 0 ? caretOffset - 1 : 0);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {

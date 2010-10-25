@@ -170,11 +170,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
             new NameSuggestionsGenerator() {
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-                final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
-                final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
-                final SuggestedNameInfo.Delegate delegate = new SuggestedNameInfo.Delegate(strings, nameInfo);
-                return codeStyleManager.suggestUniqueVariableName(delegate, myExpression, true);
+                return IntroduceVariableBase.getSuggestedName(type, myExpression);
               }
             });
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);

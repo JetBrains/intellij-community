@@ -470,7 +470,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
             jdk = ModuleRootManager.getInstance(module).getSdk();
         }
         if (jdk == null) {
-            jdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+            jdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
         }
         return jdk;
     }

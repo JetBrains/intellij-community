@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.ide.actions;
+package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 
@@ -29,33 +23,26 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Configuration for file type filtering popup in "Go to | File" action.
- *
- * @author Constantine.Plotnikov
+ * @author yole
  */
-@State(
-    name = "GotoFileConfiguration",
-    storages = {@Storage(
-        id = "other",
-        file = "$WORKSPACE_FILE$")})
-public class GotoFileConfiguration implements PersistentStateComponent<GotoFileConfiguration.FileTypes> {
+public abstract class ChooseByNameFilterConfiguration<T> implements PersistentStateComponent<ChooseByNameFilterConfiguration.Items>  {
   /**
    * state object for the configuration
    */
-  private FileTypes fileTypes = new FileTypes();
+  private Items items = new Items();
 
   /**
    * {@inheritDoc}
    */
-  public FileTypes getState() {
-    return fileTypes;
+  public Items getState() {
+    return items;
   }
 
   /**
    * {@inheritDoc}
    */
-  public void loadState(final FileTypes state) {
-    fileTypes = state;
+  public void loadState(final Items state) {
+    items = state;
   }
 
   /**
@@ -64,14 +51,16 @@ public class GotoFileConfiguration implements PersistentStateComponent<GotoFileC
    * @param type  a type of the file to duptate
    * @param value if false, a file type will be filtered out
    */
-  public void setFileTypeVisible(FileType type, boolean value) {
+  public void setVisible(T type, boolean value) {
     if (value) {
-      fileTypes.getFilteredOutFileTypeNames().remove(type.getName());
+      items.getFilteredOutFileTypeNames().remove(nameForElement(type));
     }
     else {
-      fileTypes.getFilteredOutFileTypeNames().add(type.getName());
+      items.getFilteredOutFileTypeNames().add(nameForElement(type));
     }
   }
+
+  protected abstract String nameForElement(T type);
 
   /**
    * Check if file type should be filtered out
@@ -79,24 +68,14 @@ public class GotoFileConfiguration implements PersistentStateComponent<GotoFileC
    * @param type a file type to check
    * @return false if file of the sepecified type should be filtered out
    */
-  public boolean isFileTypeVisible(FileType type) {
-    return !fileTypes.getFilteredOutFileTypeNames().contains(type.getName());
-  }
-
-  /**
-   * Get configuration instance
-   *
-   * @param project a project instance
-   * @return a configuration instance
-   */
-  public static GotoFileConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, GotoFileConfiguration.class);
+  public boolean isFileTypeVisible(T type) {
+    return !items.getFilteredOutFileTypeNames().contains(nameForElement(type));
   }
 
   /**
    * A state for this configuraiton
    */
-  public static class FileTypes {
+  public static class Items {
     /**
      * a set of file types
      */

@@ -56,6 +56,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
@@ -175,6 +176,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myState = new DebuggerSessionState(STATE_STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
+    ValueLookupManager.getInstance(getProject()).startListening();
   }
 
   public DebuggerStateManager getContextManager() {

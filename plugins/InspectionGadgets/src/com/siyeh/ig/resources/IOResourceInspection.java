@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.RemoveAction;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -24,9 +26,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.TreeClassChooserAction;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,16 +39,24 @@ import java.util.List;
 
 public class IOResourceInspection extends ResourceInspection {
 
+    private static final String[] IO_TYPES = {
+            "java.io.InputStream", "java.io.OutputStream",
+            "java.io.Reader", "java.io.Writer",
+            "java.io.RandomAccessFile", "java.util.zip.ZipFile"};
+
     @NonNls
     @SuppressWarnings({"PublicField"})
     public String ignoredTypesString = "java.io.ByteArrayOutputStream" +
-                                       ',' + "java.io.ByteArrayInputStream" +
-                                       ',' + "java.io.StringBufferInputStream" +
-                                       ',' + "java.io.CharArrayWriter" +
-                                       ',' + "java.io.CharArrayReader" +
-                                       ',' + "java.io.StringWriter" +
-                                       ',' + "java.io.StringReader";
+            ',' + "java.io.ByteArrayInputStream" +
+            ',' + "java.io.StringBufferInputStream" +
+            ',' + "java.io.CharArrayWriter" +
+            ',' + "java.io.CharArrayReader" +
+            ',' + "java.io.StringWriter" +
+            ',' + "java.io.StringReader";
     final List<String> ignoredTypes = new ArrayList();
+
+    @SuppressWarnings({"PublicField"})
+    public boolean insideTryAllowed = false;
 
     public IOResourceInspection() {
         parseString(ignoredTypesString, ignoredTypes);
@@ -55,20 +64,20 @@ public class IOResourceInspection extends ResourceInspection {
 
     @Override
     @NotNull
-    public String getID(){
+    public String getID() {
         return "IOResourceOpenedButNotSafelyClosed";
     }
 
     @Override
     @NotNull
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "i.o.resource.opened.not.closed.display.name");
     }
 
     @Override
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
         assert type != null;
@@ -80,36 +89,43 @@ public class IOResourceInspection extends ResourceInspection {
     @Override
     public JComponent createOptionsPanel() {
         final JComponent panel = new JPanel(new GridBagLayout());
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.gridheight = 2;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.BOTH;
+
         final ListTable table =
                 new ListTable(new ListWrappingTableModel(ignoredTypes,
                         InspectionGadgetsBundle.message(
                                 "ignored.io.resource.types")));
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-        panel.add(scrollPane, constraints);
-        constraints.gridx = 1;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-        constraints.gridheight = 1;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        final JButton addButton =
-                new JButton(new TreeClassChooserAction(table,
+        final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
                         InspectionGadgetsBundle.message(
-                                "choose.io.resource.type.to.ignore"),
-                        "java.io.InputStream", "java.io.OutputStream",
-                        "java.io.Reader", "java.io.Writer",
-                        "java.io.RandomAccessFile"));
-        panel.add(addButton, constraints);
+                                "choose.io.resource.type.to.ignore"), IO_TYPES);
+
+        final CheckBox checkBox = new CheckBox(
+                InspectionGadgetsBundle.message(
+                        "allow.resource.to.be.opened.inside.a.try.block"),
+                this, "insideTryAllowed");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
         constraints.gridy = 1;
-        final JButton removeButton = new JButton(new RemoveAction(table));
-        panel.add(removeButton, constraints);
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        constraints.gridy = 2;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+        
         return panel;
     }
 
@@ -126,28 +142,28 @@ public class IOResourceInspection extends ResourceInspection {
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor(){
+    public BaseInspectionVisitor buildVisitor() {
         return new IOResourceVisitor();
     }
 
-    private class IOResourceVisitor extends BaseInspectionVisitor{
+    private class IOResourceVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression){
+        @Override
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if(!isIOResource(expression)){
+            if (!isIOResource(expression)) {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if(parent instanceof PsiReturnStatement){
+            if (parent instanceof PsiReturnStatement) {
                 return;
-            } if (parent instanceof PsiExpressionList){
+            } else if (parent instanceof PsiExpressionList) {
                 PsiElement grandParent = parent.getParent();
-                if(grandParent instanceof PsiAnonymousClass){
+                if (grandParent instanceof PsiAnonymousClass) {
                     grandParent = grandParent.getParent();
                 }
-                if(grandParent instanceof PsiNewExpression &&
-                        isIOResource((PsiNewExpression) grandParent)){
+                if (grandParent instanceof PsiNewExpression &&
+                        isIOResource((PsiNewExpression) grandParent)) {
                     return;
                 }
             }
@@ -157,10 +173,10 @@ public class IOResourceInspection extends ResourceInspection {
             if (containingBlock == null) {
                 return;
             }
-            if(isArgumentOfResourceCreation(boundVariable, containingBlock)){
+            if (isArgumentOfResourceCreation(boundVariable, containingBlock)) {
                 return;
             }
-            if (isSafelyClosed(boundVariable, expression)) {
+            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
                 return;
             }
             if (isResourceEscapedFromMethod(boundVariable, expression)) {
@@ -171,11 +187,9 @@ public class IOResourceInspection extends ResourceInspection {
 
     }
 
-    public boolean isIOResource(PsiExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.InputStream", "java.io.Writer", "java.io.Reader",
-                "java.io.RandomAccessFile", "java.io.OutputStream", "java.util.zip.ZipFile") != null &&
-               !isIgnoredType(expression);
+    public boolean isIOResource(PsiExpression expression) {
+        return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) !=
+                null && !isIgnoredType(expression);
     }
 
     private boolean isIgnoredType(PsiExpression expression) {
@@ -183,54 +197,55 @@ public class IOResourceInspection extends ResourceInspection {
     }
 
     private boolean isArgumentOfResourceCreation(
-            PsiVariable boundVariable, PsiElement scope){
+            PsiVariable boundVariable, PsiElement scope) {
         final UsedAsIOResourceArgumentVisitor visitor =
                 new UsedAsIOResourceArgumentVisitor(boundVariable);
         scope.accept(visitor);
-        return visitor.usedAsArgumentToResourceCreation();
+        return visitor.isUsedAsArgumentToResourceCreation();
     }
 
     private class UsedAsIOResourceArgumentVisitor
-            extends JavaRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor {
 
         private boolean usedAsArgToResourceCreation = false;
         private final PsiVariable ioResource;
 
-        private UsedAsIOResourceArgumentVisitor(PsiVariable ioResource){
+        private UsedAsIOResourceArgumentVisitor(PsiVariable ioResource) {
             this.ioResource = ioResource;
         }
 
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression){
-            if(usedAsArgToResourceCreation){
+        @Override
+        public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
+            if (usedAsArgToResourceCreation) {
                 return;
             }
             super.visitNewExpression(expression);
-            if(!isIOResource(expression)){
+            if (!isIOResource(expression)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null){
+            if (argumentList == null) {
                 return;
             }
             final PsiExpression[] arguments = argumentList.getExpressions();
-            if(arguments.length == 0){
+            if (arguments.length == 0) {
                 return;
             }
             final PsiExpression argument = arguments[0];
-            if(argument == null ||
-                    !(argument instanceof PsiReferenceExpression)){
+            if (argument == null ||
+                    !(argument instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) argument).resolve();
-            if(referent == null || !referent.equals(ioResource)){
+            final PsiReference reference = (PsiReference) argument;
+            final PsiElement target = reference.resolve();
+            if (target == null || !target.equals(ioResource)) {
                 return;
             }
             usedAsArgToResourceCreation = true;
         }
 
-        public boolean usedAsArgumentToResourceCreation(){
+        public boolean isUsedAsArgumentToResourceCreation() {
             return usedAsArgToResourceCreation;
         }
     }

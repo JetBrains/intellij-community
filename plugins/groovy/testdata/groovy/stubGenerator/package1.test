@@ -5,7 +5,7 @@ class D {
 -----
 package a.b;
 
-public class D implements groovy.lang.GroovyObject {
+public class D extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
   public groovy.lang.MetaClass getMetaClass() {
     return null;
   }

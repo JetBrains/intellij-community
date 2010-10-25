@@ -260,8 +260,8 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void inspectionFinished(LocalInspectionToolSession session) {
-    super.inspectionFinished(session);
+  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
+    super.inspectionFinished(session, problemsHolder);
     if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
       if (timeStamp < 0) {
         System.out.println("finish reported without corresponding start");

@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.impl;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -177,7 +178,7 @@ public class NewProjectUtil {
     if (versionString == null) return;
 
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
-    rootManager.setProjectJdk(jdk);
+    rootManager.setProjectSdk(jdk);
     LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
     LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
     if (level.compareTo(ext.getLanguageLevel()) < 0) {
@@ -188,13 +189,16 @@ public class NewProjectUtil {
   public static void closePreviousProject(final Project projectToClose) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
-      int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
-                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1, 0,
-                                         Messages.getQuestionIcon());
+      final GeneralSettings settings = GeneralSettings.getInstance();
+      int exitCode = settings.getConfirmOpenNewProject();
+      if (exitCode < 0) {
+        exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
+                                           new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1, 0,
+                                           Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+      }
       if (exitCode == 1) { // "No" option
         ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
       }
     }
   }
-
 }
