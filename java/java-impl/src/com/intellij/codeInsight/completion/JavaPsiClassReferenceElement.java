@@ -65,7 +65,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = PsiAnchor.create(psiClass);
+    myClass = PsiAnchor.create(JavaCompletionUtil.getOriginalElement(psiClass));
     myQualifiedName = psiClass.getQualifiedName();
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
