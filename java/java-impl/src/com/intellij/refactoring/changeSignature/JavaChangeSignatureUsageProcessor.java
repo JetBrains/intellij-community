@@ -496,6 +496,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final VariablesProcessor processor = new VariablesProcessor(false) {
         protected boolean check(PsiVariable var, ResolveState state) {
           if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
+          if (var instanceof PsiLocalVariable && list.getTextRange().getStartOffset() <= var.getTextRange().getStartOffset()) return false;
+          if (PsiTreeUtil.isAncestor(var, list, false)) return false;
           final PsiType varType = state.get(PsiSubstitutor.KEY).substitute(var.getType());
           return type.isAssignableFrom(varType);
         }
