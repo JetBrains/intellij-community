@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -88,9 +89,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerExtensionPoint(final DomExtensionsRegistrar registrar, final ExtensionPoint extensionPoint, final PsiManager manager, String prefix, @Nullable String pluginId) {
-    String epName = extensionPoint.getName().getStringValue();
+    final XmlTag tag = extensionPoint.getXmlTag();
+    String epName = tag.getAttributeValue("name");
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
-    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
+    if (epName == null) epName = tag.getAttributeValue("qualifiedName");
     if (epName == null) return;
     if (!epName.startsWith(prefix)) return;
 
