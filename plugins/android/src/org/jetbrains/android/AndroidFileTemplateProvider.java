@@ -15,19 +15,20 @@
  */
 package org.jetbrains.android;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.android.sdklib.SdkConstants;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Properties;
 
@@ -35,16 +36,22 @@ import java.util.Properties;
  * @author yole
  */
 public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorFactory {
-  public static final String REMOTE_INTERFACE_TEMPLATE = "Android Remote Interface.aidl";
-  public static final String ANDROID_MANIFEST_TEMPLATE = SdkConstants.FN_ANDROID_MANIFEST_XML;
-  public static final String VALUE_RESOURCE_FILE_TEMPLATE = "valueResourceFile.xml";
-  public static final String RESOURCE_FILE_TEMPLATE = "resourceFile.xml";
+  @NonNls public static final String REMOTE_INTERFACE_TEMPLATE = "Remote Interface.aidl";
+  @NonNls public static final String ANDROID_MANIFEST_TEMPLATE = SdkConstants.FN_ANDROID_MANIFEST_XML;
+  @NonNls public static final String VALUE_RESOURCE_FILE_TEMPLATE = "valueResourceFile.xml";
+  @NonNls public static final String RESOURCE_FILE_TEMPLATE = "resourceFile.xml";
+  @NonNls public static final String ACTIVITY = "Activity.java";
+  @NonNls public static final String SERVICE = "Service.java";
+  @NonNls public static final String BROADCAST_RECEIVER = "Broadcast Receiver.java";
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Android", AndroidUtils.ANDROID_ICON);
     group.addTemplate(new FileTemplateDescriptor(ANDROID_MANIFEST_TEMPLATE, StdFileTypes.XML.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(VALUE_RESOURCE_FILE_TEMPLATE, StdFileTypes.XML.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(RESOURCE_FILE_TEMPLATE, StdFileTypes.XML.getIcon()));
+    group.addTemplate(new FileTemplateDescriptor(ACTIVITY, StdFileTypes.JAVA.getIcon()));
+    group.addTemplate(new FileTemplateDescriptor(SERVICE, StdFileTypes.JAVA.getIcon()));
+    group.addTemplate(new FileTemplateDescriptor(BROADCAST_RECEIVER, StdFileTypes.JAVA.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(REMOTE_INTERFACE_TEMPLATE, AndroidIdlFileType.ourFileType.getIcon()));
     return group;
   }

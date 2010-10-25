@@ -31,7 +31,7 @@
     </component>
   </application-components>
   <actions>
-    <group>
+    <!--<group>
       <action id="NewActivity" class="org.jetbrains.android.actions.CreateActivityAction"/>
       <action id="NewService" class="org.jetbrains.android.actions.CreateServiceAction"/>
       <action id="NewReceiver" class="org.jetbrains.android.actions.CreateReceiverAction"/>
@@ -39,7 +39,10 @@
       <action id="Android.CreateResourcesActionGroup" class="org.jetbrains.android.actions.CreateResourceFileActionGroup"/>
       <separator/>
       <add-to-group group-id="NewGroup" anchor="first"/>
-    </group>
+    </group>-->
+    <action id="NewAndroidComponent" class="org.jetbrains.android.actions.NewAndroidComponentAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
     <group id="AndroidToolsGroup" popup="true" text="Android" icon="/icons/android.png"
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
