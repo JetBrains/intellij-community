@@ -25,6 +25,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
   private String myScriptName = "";
   private String myMethodName = "";
   private String myFolderName = "";
+  private String myPattern = ""; // pattern for modules in folder to match against
   private TestType myTestType = TestType.TEST_SCRIPT;
 
   protected PythonUnitTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
@@ -42,6 +43,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
     myClassName = JDOMExternalizerUtil.readField(element, "CLASS_NAME");
     myMethodName = JDOMExternalizerUtil.readField(element, "METHOD_NAME");
     myFolderName = JDOMExternalizerUtil.readField(element, "FOLDER_NAME");
+    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
 
     try {
       myTestType = TestType.valueOf(JDOMExternalizerUtil.readField(element, "TEST_TYPE"));
@@ -54,10 +56,12 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
+
     JDOMExternalizerUtil.writeField(element, "SCRIPT_NAME", myScriptName);
     JDOMExternalizerUtil.writeField(element, "CLASS_NAME", myClassName);
     JDOMExternalizerUtil.writeField(element, "METHOD_NAME", myMethodName);
     JDOMExternalizerUtil.writeField(element, "FOLDER_NAME", myFolderName);
+    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
     JDOMExternalizerUtil.writeField(element, "TEST_TYPE", myTestType.toString());
   }
 
@@ -75,6 +79,14 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
 
   public void setClassName(String className) {
     myClassName = className;
+  }
+
+  public String getPattern() {
+    return myPattern;
+  }
+
+  public void setPattern(String pattern) {
+    myPattern = pattern;
   }
 
   public String getFolderName() {
@@ -188,5 +200,6 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
     target.setFolderName(source.getFolderName());
     target.setMethodName(source.getMethodName());
     target.setTestType(source.getTestType());
+    target.setPattern(source.getPattern());
   }
 }

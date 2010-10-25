@@ -30,11 +30,13 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JRadioButton myTestClassRB;
   private JRadioButton myTestMethodRB;
   private JPanel myCommonOptionsPlaceholder;
+  private LabeledComponent myPatternComponent;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
   private JTextField myTestMethodTextField;
   private JTextField myTestClassTextField;
+  private JTextField myPatternTextField;
 
   private final Project myProject;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
@@ -72,6 +74,14 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
 
   public void setClassName(String className) {
     myTestClassTextField.setText(className);
+  }
+
+  public String getPattern() {
+    return myPatternTextField.getText().trim();
+  }
+
+  public void setPattern(String pattern) {
+    myPatternTextField.setText(pattern);
   }
 
   public String getFolderName() {
@@ -129,6 +139,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myTestScriptComponent.setEnabled(testType != TestType.TEST_FOLDER);
     myTestClassComponent.setEnabled(testType == TestType.TEST_CLASS || testType == TestType.TEST_METHOD);
     myTestMethodComponent.setEnabled(testType == TestType.TEST_METHOD);
+    myPatternComponent.setEnabled(testType == TestType.TEST_FOLDER);
   }
 
   public JComponent getPanel() {
@@ -182,6 +193,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private void createUIComponents() {
     myTestClassComponent = createTestClassComponent();
     myTestMethodComponent = createTestMethodComponent();
+    myPatternComponent = createPatternComponent();
 
     final Ref<TextFieldWithBrowseButton> testsFolderTextFieldWrapper = new Ref<TextFieldWithBrowseButton>();
     myTestFolderComponent = createTestFolderComponent(testsFolderTextFieldWrapper);
@@ -194,6 +206,16 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myTestScriptTextField = testScriptTextFieldWrapper.get();
     title = PyBundle.message("runcfg.unittest.dlg.select.script.path");
     PythonRunConfigurationFormUtil.addFileChooser(title, myTestScriptTextField, myProject);
+  }
+
+  private LabeledComponent createPatternComponent() {
+    myPatternTextField = new JTextField();
+
+    LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
+    myComponent.setComponent(myPatternTextField);
+    myComponent.setText(PyBundle.message("runcfg.unittest.dlg.pattern"));
+
+    return myComponent;
   }
 }
 

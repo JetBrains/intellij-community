@@ -3,8 +3,18 @@ import os
 import imp
 import sys
 import types
+import re
 from pycharm.tcmessages import TeamcityServiceMessages
 from pycharm.tcunittest import TeamcityTestRunner
+
+try:
+  import unittest2 as unittest
+except:
+  # python version doesn't have unittest2
+  pass
+
+PYTHON_VERSION_MAJOR = sys.version_info[0]
+PYTHON_VERSION_MINOR = sys.version_info[1]
 
 ENABLE_DEBUG_LOGGING = False
 if os.getenv("UTRUNNER_ENABLE_DEBUG_LOGGING"):
@@ -39,8 +49,27 @@ def walkModules(modules, dirname, names):
 
 def loadModulesFromFolderRec(folder):
   modules = []
-  os.path.walk(folder, walkModules, modules)
+  if PYTHON_VERSION_MAJOR == 3:
+    for root, dirs, files in os.walk(folder, walkModules, modules):
+      for name in files:
+        if name.endswith(".py"):
+          modules.append(loadSource(os.path.join(root, name)))
+  else:
+    os.path.walk(folder, walkModules, modules)
+
   return modules
+
+def loadModulesFromFolderUsingPattern(folder, pattern):
+  ''' loads modules from folder ,
+      check if module name matches given pattern'''
+  modules = loadModulesFromFolderRec(folder)
+  result = []
+  prog = re.compile(pattern)
+
+  for module in modules:
+    if prog.match(module.__name__):
+      result.append(module)
+  return result
 
 testLoader = unittest.TestLoader()
 
@@ -53,12 +82,19 @@ for arg in sys.argv[1:]:
   a = arg.split("::")
   if len(a) == 1:
     # From module or folder
-    if a[0].endswith("/"):
-      debug("/ from folder " + a[0])
-      modules = loadModulesFromFolderRec(a[0])
+    a_splitted = a[0].split(";")
+    if len(a_splitted) != 1:
+      # means we have pattern to match against
+      if a_splitted[0].endswith("/"):
+        debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
+        modules = loadModulesFromFolderUsingPattern(a_splitted[0], a_splitted[1])
     else:
-      debug("/ from module " + a[0])
-      modules = [loadSource(a[0])]
+      if a[0].endswith("/"):
+        debug("/ from folder " + a[0])
+        modules = loadModulesFromFolderRec(a[0])
+      else:
+        debug("/ from module " + a[0])
+        modules = [loadSource(a[0])]
 
     for module in modules:
       all.addTests(testLoader.loadTestsFromModule(module)._tests)
