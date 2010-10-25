@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -115,8 +116,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return false;
     }
 
+    // We check that current thread is EDT because attempt to retrieve information about visible area width may fail otherwise
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread()) {
+      return false;
+    }
+
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    if (!ApplicationManager.getApplication().isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
+    if (!application.isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
       return false;
     }
 
