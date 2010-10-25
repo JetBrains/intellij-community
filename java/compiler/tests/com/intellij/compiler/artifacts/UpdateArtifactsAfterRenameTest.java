@@ -64,7 +64,13 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
 
   public void testRenameModule() throws Exception {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    final Module module = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA);
+    final Module module = new WriteAction<Module>() {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA);
+        result.setResult(res);
+      }
+    }.execute().getResultObject();
     final Artifact artifact = addArtifact(root().module(module));
 
     assertLayout(artifact, "<root>\n" +

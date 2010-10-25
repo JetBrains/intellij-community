@@ -1,8 +1,6 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.*;
@@ -20,6 +18,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 
 import java.io.File;
@@ -69,7 +68,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
                                    final boolean forceCompile) throws Exception {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         semaphore.down();
@@ -102,15 +101,18 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
           compilerManager.make(scope, filter, callback);
         }
       }
-    }, ModalityState.NON_MODAL);
-    semaphore.waitFor(60 * 1000);
+    });
+
+    long start = System.currentTimeMillis();
+    while (!semaphore.waitFor(10)) {
+      //if (System.currentTimeMillis() - start > 60 * 1000) {
+      //  throw new Exception("timeout");
+      //}
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    UIUtil.dispatchAllInvocationEvents();
 
     return result.get();
-  }
-
-  @Override
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
-    runnable.run();
   }
 
   private Set<String> getRelativePaths(String[] paths) {
@@ -240,5 +242,10 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         fail("'" + actual.iterator().next() + "' must not be " + name);
       }
     }
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

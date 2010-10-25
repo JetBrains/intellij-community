@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.apache.log4j.Level;
 import org.jdom.Document;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -63,7 +63,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected void setUp() throws Exception {
     mySemaphore = new Semaphore();
     final Exception[] ex = {null};
-    SwingUtilities.invokeAndWait(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
