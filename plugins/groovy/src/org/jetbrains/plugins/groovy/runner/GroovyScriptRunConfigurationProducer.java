@@ -28,19 +28,80 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
  * @author ilyas
  */
 public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-  private PsiElement mySourceElement;
+  protected PsiElement mySourceElement;
 
   public GroovyScriptRunConfigurationProducer() {
     super(GroovyScriptRunConfigurationType.getInstance());
+  }
+
+  @Nullable
+  static PsiMethod findRun(PsiElement element) {
+    PsiMethod method;
+    while ((method = PsiTreeUtil.getParentOfType(element, PsiMethod.class)) != null) {
+      if (isRun(method)) {
+        return method;
+      }
+      else {
+        element = method.getParent();
+      }
+    }
+    return null;
+  }
+
+  static boolean isRun(PsiMethod method) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    return "run".equals(method.getName()) &&
+           parameters.length == 0 &&
+           !method.hasModifierProperty(GrModifier.STATIC) &&
+           method.hasModifierProperty(GrModifier.PUBLIC) &&
+           (method.getModifierList().hasExplicitModifier(GrModifier.DEF) && ((GrMethod)method).getReturnTypeElementGroovy() == null ||
+            PsiType.VOID.equals(method.getReturnType()));
+  }
+
+  public static boolean isRunnable(final PsiClass psiClass) {
+    if (!(psiClass instanceof GrTypeDefinition)) return false;
+    if (psiClass instanceof PsiAnonymousClass) return false;
+    if (psiClass.isInterface()) return false;
+    final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Runnable", psiClass.getResolveScope());
+    if (runnable == null) return false;
+    final PsiMethod runMethod = runnable.getMethods()[0];
+    final PsiMethod[] runImplementations = psiClass.findMethodsBySignature(runMethod, false);
+    if (runImplementations.length == 1 &&
+        runImplementations[0] instanceof GrMethod &&
+        ((GrMethod)runImplementations[0]).getBlock() != null) {
+      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
+    }
+    return false;
+  }
+
+  @Nullable
+  public static PsiClass getRunnableClass(PsiElement element) {
+    while (element != null) {
+      if (element instanceof GrTypeDefinition) {
+        if (isRunnable((PsiClass)element)) return (PsiClass)element;
+      }
+      else if (element instanceof GroovyFile) {
+        final PsiClass[] classes = ((GroovyFile)element).getClasses();
+        for (PsiClass aClass : classes) {
+          if (isRunnable(aClass)) return aClass;
+        }
+      }
+      element = element.getParent();
+    }
+    return null;
   }
 
   public PsiElement getSourceElement() {
@@ -67,7 +128,20 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       }
     }
 
-    return null;
+    PsiElement currentElement = element;
+    PsiMethod method;
+    while ((method = findRun(currentElement)) != null) {
+      final PsiClass aClass = method.getContainingClass();
+      if (isRunnable(aClass)) {
+        mySourceElement = method;
+        return createConfiguration(aClass);
+      }
+      currentElement = method.getParent();
+    }
+    final PsiClass aClass = getRunnableClass(element);
+    if (aClass == null) return null;
+    mySourceElement = aClass;
+    return createConfiguration(aClass);
   }
 
   @Override
