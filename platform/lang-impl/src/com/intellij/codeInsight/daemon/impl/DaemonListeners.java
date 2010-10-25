@@ -81,7 +81,6 @@ import java.util.List;
 class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
-  private final ApplicationListener myApplicationListener = new MyApplicationListener();
   private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
 
@@ -160,7 +159,7 @@ class DaemonListeners implements Disposable {
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
       }
     };
-    EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener,this);
+    EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, EditorFactory.getInstance(),connection,
@@ -206,7 +205,8 @@ class DaemonListeners implements Disposable {
     });
 
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
-    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
+    ApplicationListener applicationListener = new MyApplicationListener();
+    ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
     EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
     InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
@@ -282,7 +282,6 @@ class DaemonListeners implements Disposable {
   public void dispose() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
 
