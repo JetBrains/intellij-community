@@ -21,25 +21,33 @@ import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.ComparisonFailure;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @noinspection HardCodedStringLiteral
  */
 public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
-  private static Field EXPECTED_FIELD = null;
-  private static Field ACTUAL_FIELD = null;
+  private static Map EXPECTED = new HashMap();
+  private static Map ACTUAL = new HashMap();
   protected String myActual = "";
   protected String myExpected = "";
 
   static {
     try {
-      Class exceptionClass = ComparisonFailure.class;
-      exceptionClass.getDeclaredField("fExpected");
-      EXPECTED_FIELD = exceptionClass.getDeclaredField("fExpected");
-      EXPECTED_FIELD.setAccessible(true);
-      ACTUAL_FIELD = exceptionClass.getDeclaredField("fActual");
-      ACTUAL_FIELD.setAccessible(true);
+      init(ComparisonFailure.class);
+      init(org.junit.ComparisonFailure.class);
     } catch (Throwable e) {}
+  }
+
+  private static void init(Class exceptionClass) throws NoSuchFieldException {
+    final Field expectedField = exceptionClass.getDeclaredField("fExpected");
+    expectedField.setAccessible(true);
+    EXPECTED.put(exceptionClass, expectedField);
+
+    final Field actualField = exceptionClass.getDeclaredField("fActual");
+    actualField.setAccessible(true);
+    ACTUAL.put(exceptionClass, actualField);
   }
 
   public ComparisonDetailsExtractor(Throwable assertion, String expected, String actual) {
@@ -58,27 +66,27 @@ public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
   }
 
   public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, ACTUAL, "fActual");
+  }
+
+  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, EXPECTED, "fExpected");
+  }
+
+  private static String get(final Throwable assertion, final Map staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
     String actual;
     if (assertion instanceof ComparisonFailure) {
-      actual = (String)ACTUAL_FIELD.get(assertion);
+      actual = (String)((Field)staticMap.get(ComparisonFailure.class)).get(assertion);
+    }
+    else if (assertion instanceof org.junit.ComparisonFailure) {
+      actual = (String)((Field)staticMap.get(org.junit.ComparisonFailure.class)).get(assertion);
     }
     else {
-      Field field = assertion.getClass().getDeclaredField("fActual");
+      Field field = assertion.getClass().getDeclaredField(fieldName);
       field.setAccessible(true);
       actual = (String)field.get(assertion);
     }
     return actual;
-  }
-
-  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-    if (assertion instanceof ComparisonFailure) {
-      return (String)EXPECTED_FIELD.get(assertion);
-    }
-    else {
-      Field field = assertion.getClass().getDeclaredField("fExpected");
-      field.setAccessible(true);
-      return (String)field.get(assertion);
-    }
   }
 
   public static ExceptionPacketFactory create(Throwable assertion, final String expected, String actual) {
