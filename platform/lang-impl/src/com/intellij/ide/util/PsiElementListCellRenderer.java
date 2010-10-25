@@ -56,18 +56,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myModuleName = moduleName;
     }
 
-    protected void customizeCellRenderer(
-      JList list,
-      Object value,
-      int index,
-      boolean selected,
-      boolean hasFocus
-      ) {
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
+      Color color = list.getForeground();
       if (value instanceof PsiElement) {
         T element = (T)value;
-        String name = getElementText((T)element);
-        Color color = list.getForeground();
+        String name = getElementText(element);
         PsiFile psiFile = element.getContainingFile();
         boolean isProblemFile = false;
 
@@ -101,14 +95,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
 
         if (isProblemFile) {
-          attributes = TextAttributes.merge(new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN),attributes);
+          attributes = TextAttributes.merge(new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN), attributes);
         }
 
         SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
-        if (nameAttributes == null)  nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+        if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
-        assert name != null: "Null name for PSI element " + element;
+        assert name != null : "Null name for PSI element " + element;
         append(name, nameAttributes);
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
@@ -117,32 +111,25 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
         }
       }
-      else {
+      else if (!customizeLeftRenderer(this, list, value, index, selected, hasFocus)) {
         setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
+
   }
 
-  public Component getListCellRendererComponent(JList list,
-                                                Object value,
-                                                int index,
-                                                boolean isSelected,
-                                                boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     removeAll();
-    String moduleName = null;
     DefaultListCellRenderer rightRenderer = getRightCellRenderer();
+    ListCellRenderer leftRenderer = new LeftRenderer(null);
+    final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (rightRenderer != null) {
-      moduleName = rightRenderer.getText();
-    }
-    final Component leftCellRendererComponent =
-      new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (rightRenderer != null) {
-      final Component rightCellRendererComponent =
-        rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      rightCellRendererComponent.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
+      final Component rightCellRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      rightCellRendererComponent
+        .setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
       add(rightCellRendererComponent, BorderLayout.EAST);
       final JPanel spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
@@ -152,6 +139,15 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     add(leftCellRendererComponent, BorderLayout.WEST);
     setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
     return this;
+  }
+
+  protected boolean customizeLeftRenderer(ColoredListCellRenderer renderer,
+                                          JList list,
+                                          Object value,
+                                          int index,
+                                          boolean selected,
+                                          boolean hasFocus) {
+    return false;
   }
 
   @Nullable
@@ -203,7 +199,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (o instanceof PsiElement) {
           final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
           if (includeContainerText) {
-            return elementText + " " + getContainerText((T) o, elementText);
+            return elementText + " " + getContainerText((T)o, elementText);
           }
           return elementText;
         }
@@ -223,7 +219,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       protected String getElementText(Object o) {
         if (o instanceof PsiElement) {
           final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
-          return elementText + " " + getContainerText((T) o, elementText);
+          return elementText + " " + getContainerText((T)o, elementText);
         }
         else {
           return o.toString();
