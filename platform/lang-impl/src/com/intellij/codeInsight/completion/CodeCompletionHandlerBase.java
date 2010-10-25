@@ -28,6 +28,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -186,8 +187,22 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     doComplete(offset1, offset2, context, initializationContext[0].getFileCopyPatcher(), editor, time, offsetMap);
   }
 
+  private boolean shouldFocusLookup(CompletionParameters parameters) {
+    if (myFocusLookup) {
+      return true;
+    }
+
+    final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
+    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+      if (confidence.shouldFocusLookup(parameters)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
-  private LookupImpl obtainLookup(Editor editor) {
+  private LookupImpl obtainLookup(Editor editor, CompletionParameters parameters) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null) {
       existing.markReused();
@@ -204,7 +219,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       lookup.setResizable(false);
       lookup.setForceLightweightPopup(false);
     }
-    lookup.setFocused(myFocusLookup);
+    lookup.setFocused(shouldFocusLookup(parameters));
     return lookup;
   }
 
@@ -217,7 +232,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     freezeSemaphore.down();
 
     final CompletionParameters parameters = createCompletionParameters(context, patcher, invocationCount);
-    final LookupImpl lookup = obtainLookup(editor);
+    final LookupImpl lookup = obtainLookup(editor, parameters);
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, offsetMap, lookup);
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator);
