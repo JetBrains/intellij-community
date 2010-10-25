@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,12 +61,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     }
   };
 
-  private final PsiAnchor myClass;
+  private final Object myClass;
   private final String myQualifiedName;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = PsiAnchor.create(JavaCompletionUtil.getOriginalElement(psiClass));
+    myClass = psiClass.getContainingFile().getVirtualFile() instanceof LightVirtualFile ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
@@ -74,12 +75,19 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @NotNull
   @Override
   public PsiClass getObject() {
-    return (PsiClass)myClass.retrieve();
+    if (myClass instanceof PsiAnchor) {
+      return (PsiClass)((PsiAnchor)myClass).retrieve();
+    }
+    return (PsiClass)myClass;
   }
 
   @Override
   public boolean isValid() {
-    return myClass.retrieve() != null;
+    if (myClass instanceof PsiClass) {
+      return ((PsiClass)myClass).isValid();
+    }
+
+    return ((PsiAnchor)myClass).retrieve() != null;
   }
 
   @Override
