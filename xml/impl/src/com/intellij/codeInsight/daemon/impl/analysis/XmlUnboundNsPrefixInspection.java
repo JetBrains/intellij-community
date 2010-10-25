@@ -111,8 +111,9 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     if (namespaceByPrefix.length() != 0) {
       return;
     }
-
-    final XmlFile containingFile = (XmlFile)context.getContainingFile();
+    PsiFile psiFile = context.getContainingFile();
+    if (!(psiFile instanceof XmlFile)) return;
+    final XmlFile containingFile = (XmlFile)psiFile;
     if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
 
     final XmlExtension extension = XmlExtension.getExtension(containingFile);
