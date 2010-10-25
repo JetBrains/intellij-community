@@ -224,6 +224,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
   }
 
+  public void testRemoveFirstParameter() throws Exception {
+    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1)}, false);
+  }
+
   public void testReplaceVarargWithArray() throws Exception {
     doTest(null, null, null, new GenParams() {
       @Override
