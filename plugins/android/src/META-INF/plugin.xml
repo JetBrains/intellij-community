@@ -36,12 +36,14 @@
       <action id="NewService" class="org.jetbrains.android.actions.CreateServiceAction"/>
       <action id="NewReceiver" class="org.jetbrains.android.actions.CreateReceiverAction"/>
       <action id="NewRemoteInterface" class="org.jetbrains.android.actions.CreateRemoteInterfaceAction"/>
-      <action id="Android.CreateResourcesActionGroup" class="org.jetbrains.android.actions.CreateResourceFileActionGroup"/>
       <separator/>
       <add-to-group group-id="NewGroup" anchor="first"/>
     </group>-->
     <action id="NewAndroidComponent" class="org.jetbrains.android.actions.NewAndroidComponentAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+    <action id="Android.CreateResourcesActionGroup" class="org.jetbrains.android.actions.CreateResourceFileActionGroup">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
     <group id="AndroidToolsGroup" popup="true" text="Android" icon="/icons/android.png"
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
