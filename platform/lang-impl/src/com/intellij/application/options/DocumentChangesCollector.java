@@ -123,7 +123,7 @@ public class DocumentChangesCollector implements DocumentListener {
         // Stored change region's start is covered by the current change.
         else {
           int deleteStart = change.getStart() - start;
-          deleteStart = Math.max(0, deleteStart);
+          deleteStart = Math.min(oldText.length(), Math.max(0, deleteStart));
 
           int deleteEnd = oldText.length();
           deleteEnd = Math.min(oldText.length(), Math.max(0, deleteEnd));
