@@ -273,6 +273,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
       appendProperty(destination, "ant.file", antFilePath);
       if (projectName != null) {
         appendProperty(destination, "ant.file." + projectName, antFilePath);
+        appendProperty(destination, "ant.file.type." + projectName, "file");
       }
     }
     return destination;
