@@ -16,33 +16,61 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 
-/**
+ /**
  * @author peter
  */
 class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
-    super.setUp()
+    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+                                 @Override
+                                 void run() {
+                                   superSetUp()
+                                 }
+
+                                 })
     CompletionAutoPopupHandler.ourTestingAutopopup = true
+  }
+  void superSetUp() {
+    super.setUp()
+  }
+  void superTearDown() {
+    super.tearDown()
   }
 
   @Override protected void tearDown() {
     CompletionAutoPopupHandler.ourTestingAutopopup = false
-    super.tearDown()
+    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+                                 @Override
+                                 void run() {
+                                   superTearDown()
+                                 }
+
+                                 })
   }
 
   private type(String s) {
     myFixture.type(s)
-    ApplicationManager.application.invokeAndWait(({} as Runnable), ModalityState.current())
+    UIUtil.invokeAndWaitIfNeeded(({} as Runnable))
   }
 
   @Override protected void runTest() {
     runTestBare()
   }
+
+  @Override
+  void runBare() {
+    superRunBare()
+  }
+
+
+  @Override protected void invokeTestRunnable(Runnable runnable) {
+    runnable.run()
+  }
+
 
   public void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """

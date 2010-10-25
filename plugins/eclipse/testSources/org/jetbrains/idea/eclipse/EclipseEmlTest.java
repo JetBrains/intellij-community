@@ -78,11 +78,16 @@ public class EclipseEmlTest extends IdeaTestCase {
 
     final EclipseClasspathStorageProvider.EclipseClasspathConverter converter =
       new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
 
     final Element classpathElement = JDOMUtil.loadDocument(new String(FileUtil.loadFileText(new File(path, EclipseXml.DOT_CLASSPATH_EXT)))).getRootElement();
     converter.getClasspath(rootModel, classpathElement);
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        rootModel.commit();
+      }
+    });
+
 
     checkModule(path, module);
   }

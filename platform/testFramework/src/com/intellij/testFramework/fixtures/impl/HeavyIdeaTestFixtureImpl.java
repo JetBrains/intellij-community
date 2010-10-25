@@ -132,26 +132,31 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
 
   private void setUpProject() throws Exception {
-    File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
-    myFilesToDelete.add(projectFile);
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
+        myFilesToDelete.add(projectFile);
 
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-    myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+        myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
 
-    for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
-      moduleFixtureBuilder.getFixture().setUp();
-    }
+        for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
+          moduleFixtureBuilder.getFixture().setUp();
+        }
 
-    //PropertiesReferenceManager.getInstance(myProject).projectOpened();
+        //PropertiesReferenceManager.getInstance(myProject).projectOpened();
 
-    StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
-    sm.runStartupActivities();
-    sm.runPostStartupActivities();
+        StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
+        sm.runStartupActivities();
+        sm.runPostStartupActivities();
 
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
+        ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).clearUncommitedDocuments();
+      }
+    }.execute().throwException();
   }
 
   private void initApplication() throws Exception {
@@ -179,6 +184,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         return myProject;
       }
       else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+        if (myProject == null) return null;
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {

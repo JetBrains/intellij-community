@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.*;
 
 /**
@@ -50,10 +51,20 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public void testNothing(){}
 
   @Test(dataProvider = "data")
-  public void test(String path, String... results) throws Throwable {
-    myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
-    myFixture.addClass("package org.testng.annotations; public @interface Test {}");
-    myFixture.testCompletionVariants(path + "provider.java", results);
+  public void test(final String path, final String... results) throws Throwable {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
+          myFixture.addClass("package org.testng.annotations; public @interface Test {}");
+          myFixture.testCompletionVariants(path + "provider.java", results);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @Override

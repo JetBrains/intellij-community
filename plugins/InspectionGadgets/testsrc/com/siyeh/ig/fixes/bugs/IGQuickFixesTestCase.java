@@ -22,18 +22,17 @@ package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 
-public abstract class IGQuickFixesTestCase {
+public abstract class IGQuickFixesTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
-  @Before
   public void setUp() throws Exception {
+    super.setUp();
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
@@ -47,10 +46,10 @@ public abstract class IGQuickFixesTestCase {
     myFixture.setUp();
   }
 
-  @After
   public void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
+    super.tearDown();
   }
 
   protected void doTest(String testName, String hint) throws Throwable {

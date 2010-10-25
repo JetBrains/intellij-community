@@ -92,7 +92,12 @@ public class EclipseClasspathTest extends IdeaTestCase {
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
                      classpathElement);
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        rootModel.commit();
+      }
+    });
+
     return module;
   }
 

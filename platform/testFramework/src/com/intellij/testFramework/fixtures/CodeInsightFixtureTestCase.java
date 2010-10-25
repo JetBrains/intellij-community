@@ -24,7 +24,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.io.File;
 
 /**
@@ -90,10 +89,5 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
 
   protected PsiFile getFile() {
     return myFixture.getFile();
-  }
-
-  @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
-    SwingUtilities.invokeAndWait(runnable);
   }
 }

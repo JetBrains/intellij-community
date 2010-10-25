@@ -623,18 +623,22 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       return add(element);
     }
     final GrTypeDefinitionBody body = getBody();
-    assert anchor.getParent() == body;
+    if (anchor.getParent() == body) {
 
-    final PsiElement nextChild = anchor.getNextSibling();
-    if (nextChild == null) {
-      add(element);
-      return element;
+      final PsiElement nextChild = anchor.getNextSibling();
+      if (nextChild == null) {
+        add(element);
+        return element;
+      }
+
+      ASTNode node = element.getNode();
+      assert node != null;
+      //body.getNode().addLeaf(GroovyElementTypes.mNLS, "\n", nextChild.getNode());
+      return body.addBefore(element, nextChild);
     }
-
-    ASTNode node = element.getNode();
-    assert node != null;
-    //body.getNode().addLeaf(GroovyElementTypes.mNLS, "\n", nextChild.getNode());
-    return body.addBefore(element, nextChild);
+    else {
+      return super.addAfter(element, anchor);
+    }
   }
 
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {

@@ -36,6 +36,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -175,10 +176,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
     final File projectFile = File.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+    new WriteCommandAction.Simple(null) {
       @Override
-      @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-      public void run() {
+      protected void run() throws Throwable {
         if (ourProject != null) {
           closeAndDeleteProject();
         }
@@ -258,7 +259,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           }
 
           @Override
-          public void rootsChanged(ModuleRootEvent event) {}
+          public void rootsChanged(ModuleRootEvent event) {
+          }
         });
 
         connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
@@ -268,17 +270,22 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           }
 
           @Override
-          public void beforeModuleRemoved(Project project, Module module) {}
+          public void beforeModuleRemoved(Project project, Module module) {
+          }
+
           @Override
-          public void moduleRemoved(Project project, Module module) {}
+          public void moduleRemoved(Project project, Module module) {
+          }
+
           @Override
-          public void modulesRenamed(Project project, List<Module> modules) {}
+          public void modulesRenamed(Project project, List<Module> modules) {
+          }
         });
 
 
-        ((StartupManagerImpl)StartupManager.getInstance(getProject())).runStartupActivities();
+        ((StartupManagerImpl)StartupManager.getInstance(ourProject)).runStartupActivities();
       }
-    });
+    }.execute().throwException();
   }
 
   protected static Module createMainModule(final ModuleType moduleType) {
@@ -411,9 +418,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
-    if (project != null) {
-      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    }
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
 
@@ -425,9 +430,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction.Simple(getProject()) {
       @Override
-      public void run() {
+      protected void run() throws Throwable {
         if (ourSourceRoot != null) {
           try {
             final VirtualFile[] children = ourSourceRoot.getChildren();
@@ -451,7 +456,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
         manager.saveAllDocuments();
       }
-    });
+    }.execute().throwException();
+
     assertFalse(PsiManager.getInstance(project).isDisposed());
     if (!ourAssertionsInTestDetected) {
       if (IdeaLogger.ourErrorsOccurred != null) {

@@ -1,5 +1,6 @@
 package com.intellij.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -68,19 +69,24 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
     return root;
   }
 
-  protected VirtualFile setModuleOutput(Module module, boolean test) throws IOException {
+  protected VirtualFile setModuleOutput(final Module module, final boolean test) throws IOException {
     final VirtualFile output = getVirtualFile(createTempDir(module.getName() + (test ? "Test" : "Prod") + "Output"));
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
-    assertNotNull(extension);
-    extension.inheritCompilerOutputPath(false);
-    if (test) {
-      extension.setCompilerOutputPathForTests(output);
-    }
-    else {
-      extension.setCompilerOutputPath(output);
-    }
-    model.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+        assertNotNull(extension);
+        extension.inheritCompilerOutputPath(false);
+        if (test) {
+          extension.setCompilerOutputPathForTests(output);
+        }
+        else {
+          extension.setCompilerOutputPath(output);
+        }
+        model.commit();
+      }
+    });
+
     return output;
   }
 
@@ -88,24 +94,32 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
     addLibraryDependency(module, dependency, DependencyScope.COMPILE, false);
   }
 
-  protected void addLibraryDependency(Module module, Library dependency, DependencyScope scope, boolean exported) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final LibraryOrderEntry entry = model.addLibraryEntry(dependency);
-    entry.setScope(scope);
-    entry.setExported(exported);
-    model.commit();
+  protected void addLibraryDependency(final Module module, final Library dependency, final DependencyScope scope, final boolean exported) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final LibraryOrderEntry entry = model.addLibraryEntry(dependency);
+        entry.setScope(scope);
+        entry.setExported(exported);
+        model.commit();
+      }
+    });
   }
 
   protected void addModuleDependency(Module module, Module dependency) {
     addModuleDependency(module, dependency, DependencyScope.COMPILE, false);
   }
 
-  protected void addModuleDependency(Module module, Module dependency, DependencyScope scope, boolean exported) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final ModuleOrderEntry entry = model.addModuleOrderEntry(dependency);
-    entry.setScope(scope);
-    entry.setExported(exported);
-    model.commit();
+  protected void addModuleDependency(final Module module, final Module dependency, final DependencyScope scope, final boolean exported) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final ModuleOrderEntry entry = model.addModuleOrderEntry(dependency);
+        entry.setScope(scope);
+        entry.setExported(exported);
+        model.commit();
+      }
+    });
   }
 
   protected Library createLibrary(final String name, final VirtualFile classesRoot) {

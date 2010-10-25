@@ -26,8 +26,9 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.openapi.command.CommandProcessor
 
- /**
+/**
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -54,8 +55,13 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   public void doTest(boolean force) throws Exception {
     addClassToProject("a", "FooBar");
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.CLASS_NAME);
-    if (force) forceCompletion();
+    CommandProcessor.getInstance().executeCommand(new Runnable(){
+                                                  @Override
+                                                  void run() {
+                                                    myFixture.complete(CompletionType.CLASS_NAME);
+                                                    if (force) forceCompletion();
+                                                  }
+                                                  },"xxx", this);
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 

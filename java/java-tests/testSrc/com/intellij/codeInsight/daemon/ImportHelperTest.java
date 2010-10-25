@@ -10,6 +10,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -50,7 +51,10 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     super.tearDown();
   }
 
-  public void testImportsInsertedAlphabetically() throws Exception {
+  public void testImportsInsertedAlphabetically() throws Throwable {
+    @NonNls String text = "class I {}";
+    final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
+    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
       @Override
@@ -59,10 +63,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
           @Override
           public void run() {
             try {
-              @NonNls String text = "class I {}";
-              PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
-              assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
-
               checkAddImport(file, "java.util.List", "java.util.List");
               checkAddImport(file, "java.util.ArrayList", "java.util.ArrayList","java.util.List");
               checkAddImport(file, "java.util.HashMap", "java.util.ArrayList","java.util.HashMap","java.util.List");
@@ -82,7 +82,21 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       }
     }, "", "");
   }
-  public void testStaticImportsGrouping() throws Exception {
+  public void testStaticImportsGrouping() throws Throwable {
+    @NonNls String text = "import static java.lang.Math.max;\n" +
+                          "import java.util.Map;\n" +
+                          "\n" +
+                          "import static java.lang.Math.min;\n" +
+                          "\n" +
+                          "import java.awt.Component;\n" +
+                          "\n" +
+                          "\n" +
+                          "\n" +
+                          "import static javax.swing.SwingConstants.CENTER;\n" +
+                          "class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}";
+
+    final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
+    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
       @Override
@@ -91,20 +105,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
           @Override
           public void run() {
             try {
-              @NonNls String text = "import static java.lang.Math.max;\n" +
-                                    "import java.util.Map;\n" +
-                                    "\n" +
-                                    "import static java.lang.Math.min;\n" +
-                                    "\n" +
-                                    "import java.awt.Component;\n" +
-                                    "\n" +
-                                    "\n" +
-                                    "\n" +
-                                    "import static javax.swing.SwingConstants.CENTER;\n" +
-                                    "class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}";
-
-              PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
-              assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
 
               CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
               settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
@@ -175,7 +175,12 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     try {
-      JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile());
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile());
+        }
+      }.execute().throwException();
     }
     finally {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();

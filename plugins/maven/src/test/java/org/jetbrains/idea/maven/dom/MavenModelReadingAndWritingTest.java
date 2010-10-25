@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -49,13 +50,17 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        MavenDomProjectModel model = getDomModel();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            MavenDomProjectModel model = getDomModel();
 
-        model.getGroupId().setStringValue("foo");
-        model.getArtifactId().setStringValue("bar");
-        model.getVersion().setStringValue("baz");
+            model.getGroupId().setStringValue("foo");
+            model.getArtifactId().setStringValue("bar");
+            model.getVersion().setStringValue("baz");
 
-        formatAndSaveProjectPomDocument();
+            formatAndSaveProjectPomDocument();
+          }
+        });
       }
     }, null, null);
 
@@ -74,14 +79,18 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        MavenDomProjectModel model = getDomModel();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            MavenDomProjectModel model = getDomModel();
 
-        MavenDomDependency d = model.getDependencies().addDependency();
-        d.getGroupId().setStringValue("group");
-        d.getArtifactId().setStringValue("artifact");
-        d.getVersion().setStringValue("version");
+            MavenDomDependency d = model.getDependencies().addDependency();
+            d.getGroupId().setStringValue("group");
+            d.getArtifactId().setStringValue("artifact");
+            d.getVersion().setStringValue("version");
 
-        formatAndSaveProjectPomDocument();
+            formatAndSaveProjectPomDocument();
+          }
+        });
       }
     }, null, null);
 

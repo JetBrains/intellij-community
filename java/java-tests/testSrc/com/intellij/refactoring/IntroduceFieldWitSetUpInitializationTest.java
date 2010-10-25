@@ -9,6 +9,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -38,13 +39,18 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   @Override
   protected Module createModule(final String name) {
     final Module module = super.createModule(name);
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
-    final Library library = modifiableModel.createLibrary("junit");
-    final Library.ModifiableModel libModel = library.getModifiableModel();
-    libModel.addRoot(VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class))), OrderRootType.CLASSES);
-    libModel.commit();
-    model.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
+        final Library library = modifiableModel.createLibrary("junit");
+        final Library.ModifiableModel libModel = library.getModifiableModel();
+        libModel.addRoot(VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class))), OrderRootType.CLASSES);
+        libModel.commit();
+        model.commit();
+      }
+    });
+
     return module;
   }
 

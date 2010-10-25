@@ -302,7 +302,7 @@ public class CreateFromUsageUtils {
     final Module module = ModuleUtil.findModuleForPsiElement(sourceFile);
     PsiPackage aPackage = null;
     if (qualifierElement instanceof PsiPackage) {
-      aPackage = ((PsiPackage)qualifierElement);
+      aPackage = (PsiPackage)qualifierElement;
     }
     else {
       final PsiDirectory directory = sourceFile.getContainingDirectory();

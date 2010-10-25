@@ -36,9 +36,15 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     VirtualFile root = dir.createChildDirectory(null, "root");
     String url = root.getUrl();
 
-    ModifiableRootModel m = getRootManager().getModifiableModel();
-    m.addContentEntry(root);
-    m.commit();
+    final VirtualFile finalRoot = root;
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel m = getRootManager().getModifiableModel();
+        m.addContentEntry(finalRoot);
+        m.commit();
+      }
+    });
+
 
     assertSame(root, findContentEntry(url).getFile());
 
@@ -51,12 +57,17 @@ public class ManagingContentRootsTest extends IdeaTestCase {
 
   public void testCreationOfContentRootWithUrl() throws IOException {
     VirtualFile root = dir.createChildDirectory(null, "root");
-    String url = root.getUrl();
+    final String url = root.getUrl();
     root.delete(null);
 
-    ModifiableRootModel m = getRootManager().getModifiableModel();
-    m.addContentEntry(url);
-    m.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel m = getRootManager().getModifiableModel();
+        m.addContentEntry(url);
+        m.commit();
+      }
+    });
+
 
     assertNotNull(findContentEntry(url));
 
@@ -66,25 +77,34 @@ public class ManagingContentRootsTest extends IdeaTestCase {
 
   public void testCreationOfContentRootWithUrlWhenFileExists() throws IOException {
     VirtualFile root = dir.createChildDirectory(null, "root");
-    String url = root.getUrl();
+    final String url = root.getUrl();
 
-    ModifiableRootModel m = getRootManager().getModifiableModel();
-    m.addContentEntry(url);
-    m.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel m = getRootManager().getModifiableModel();
+        m.addContentEntry(url);
+        m.commit();
+      }
+    });
+
 
     assertSame(root, findContentEntry(url).getFile());
   }
 
   public void testGettingMofifiableModelCorrectlySetsRootModelForContentEntries() throws Exception {
-    ModifiableRootModel m = getRootManager().getModifiableModel();
-    m.addContentEntry(dir);
-    m.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel m = getRootManager().getModifiableModel();
+        m.addContentEntry(dir);
+        m.commit();
 
-    m = getRootManager().getModifiableModel();
-    ContentEntry e = findContentEntry(dir.getUrl(), m);
+        m = getRootManager().getModifiableModel();
+        ContentEntry e = findContentEntry(dir.getUrl(), m);
 
-    assertSame(m, ((ContentEntryImpl)e).getRootModel());
-    m.dispose();
+        assertSame(m, ((ContentEntryImpl)e).getRootModel());
+        m.dispose();
+      }
+    });
   }
 
   private ContentEntry findContentEntry(String url) {

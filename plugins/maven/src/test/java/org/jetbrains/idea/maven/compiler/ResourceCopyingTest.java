@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -164,7 +166,7 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testDeletingFilesThatWasCopiedAndThenDeleted() throws Exception {
-    VirtualFile file = createProjectSubFile("res/file.properties");
+    final VirtualFile file = createProjectSubFile("res/file.properties");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -181,7 +183,13 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     compileModules("project");
     assertCopied("target/classes/file.properties");
 
-    file.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        file.delete(this);
+      }
+    }.execute().throwException();
+
 
     compileModules("project");
     assertNotCopied("target/classes/file.properties");
@@ -326,7 +334,13 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     compileModules("project");
     assertCopied("target/classes/file.properties");
-    myProjectPom.getParent().findFileByRelativePath("target").delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        myProjectPom.getParent().findFileByRelativePath("target").delete(this);
+      }
+    }.execute().throwException();
+
 
     compileModules("project");
     assertCopied("target/classes/file.properties");
@@ -342,12 +356,17 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                              getModule("project"),
-                                                              new MavenDefaultModifiableModelsProvider(myProject));
-    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
-    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
-    adapter.getRootModel().commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                  getModule("project"),
+                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
+        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
+        adapter.getRootModel().commit();
+      }
+    });
+
 
     assertSources("project", "src/main/resources", "src/main/ideaRes");
 
@@ -455,7 +474,13 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
                     "</build>");
     importProject();
 
-    setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+      }
+    }.execute().throwException();
+
 
     compileModules("project", "m1", "m2");
     assertCopied("output/file.xxx");
@@ -470,13 +495,17 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     assertCopied("output/file.xxx");
   }
 
-  private void setModulesOutput(VirtualFile output, String... moduleNames) {
-    for (String each : moduleNames) {
-      ModifiableRootModel model = ModuleRootManager.getInstance(getModule(each)).getModifiableModel();
-      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(output);
-      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(output);
-      model.commit();
-    }
+  private void setModulesOutput(final VirtualFile output, final String... moduleNames) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (String each : moduleNames) {
+          ModifiableRootModel model = ModuleRootManager.getInstance(getModule(each)).getModifiableModel();
+          model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(output);
+          model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(output);
+          model.commit();
+        }
+      }
+    });
   }
 
   public void testWebResources() throws Exception {

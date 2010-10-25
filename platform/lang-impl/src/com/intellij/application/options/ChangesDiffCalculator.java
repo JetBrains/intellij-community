@@ -123,6 +123,9 @@ public class ChangesDiffCalculator {
    */
   private static void handleBeforeChangeAfterCurrentChange(Context context, List<TextRange> storage) {
     storage.add(new TextRange(context.currentChange.getStart(), context.currentChange.getEnd()));
+    while (context.beforeChange != null && context.beforeOriginalEnd <= context.currentOriginalEnd) {
+      context.proceedToNextChange(Context.ChangeType.BEFORE);
+    }
     context.beforeShiftToCurrent -= getDiff(context.currentChange);
     context.proceedToNextChange(Context.ChangeType.CURRENT);
   }
@@ -134,23 +137,39 @@ public class ChangesDiffCalculator {
    * @param context   processing context
    * @param storage   collection to store processing diff results
    */
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private static void handleChangesSharingStartOffset(Context context, List<TextRange> storage) {
     int lengthDiff = getLength(context.currentChange) - getLength(context.beforeChange);
     int originTextDiff = context.beforeChange.getText().length() - context.currentChange.getText().length();
 
-    //if (lengthDiff != 0 && tryMatchScatteredChanges(context)) {
-    //  return;
-    //}
-
     int oldSize = storage.size();
 
     if (lengthDiff > 0) {
-      storage.add(new TextRange(
-        context.beforeChange.getEnd() + context.beforeShiftToCurrent, context.currentChange.getEnd() + originTextDiff
-      ));
+      // There is a possible case that two changes differ in a middle (e.g. 'abc2def' vc 'abc333def'). Hence, we need to find
+      // the right offset to use.
+      int diffLength = (context.currentChange.getEnd() + originTextDiff) - (context.beforeChange.getEnd() + context.beforeShiftToCurrent);
+      int commonPrefixLength = StringUtil.commonPrefixLength(
+        context.beforeText.subSequence(context.beforeChange.getStart(), context.beforeChange.getEnd()),
+        context.currentText.subSequence(context.currentChange.getStart(), context.currentChange.getStart() + getLength(context.beforeChange))
+      );
+
+      int offsetToUse = context.beforeChange.getEnd() + context.beforeShiftToCurrent;
+      offsetToUse = Math.min(offsetToUse, context.currentChange.getStart() + commonPrefixLength);
+      storage.add(new TextRange(offsetToUse, offsetToUse + diffLength));
     }
     else if (lengthDiff < 0) {
-      storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd()));
+      // There is a possible case that two changes differ in a middle (e.g. 'abc222def' vc 'abc3def'). Hence, we need to find
+      // the right offset to use.
+      int offsetToUse = context.currentChange.getEnd();
+      for (
+        int beforeOffset = context.beforeChange.getStart(), currentOffset = context.currentChange.getStart();
+        currentOffset < context.currentChange.getEnd(); beforeOffset++, currentOffset++) {
+        if (context.beforeText.charAt(beforeOffset) != context.currentText.charAt(currentOffset)) {
+          offsetToUse = currentOffset;
+          break;
+        }
+      }
+      storage.add(new TextRange(offsetToUse, offsetToUse));
     }
     else if (context.beforeChange.getText().length() != context.currentChange.getText().length()) {
       if (StringUtil.equals(context.textForChangeRange(Context.ChangeType.BEFORE), context.textForChangeRange(Context.ChangeType.CURRENT)))
@@ -191,20 +210,24 @@ public class ChangesDiffCalculator {
     StringBuilder beforeOriginalText = new StringBuilder(beforeChange.getText());
     int matchedChangesNumber = 0;
     int beforeUnchangedTailSymbolsNumber = 0;
+    int beforeShiftToOriginalChange = 0;
     while (context.beforeChange != null && context.beforeChange.getStart() < beforeEnd) {
       if (offset >= 0) {
         CharSequence text = context.beforeText.subSequence(offset, context.beforeChange.getStart());
         beforeOriginalText.append(text);
-        beforeOriginalText.append(context.beforeChange.getText());
+        beforeOriginalText.append(text);
       }
       offset = context.beforeChange.getEnd();
       if (context.beforeChange.getEnd() <= beforeEnd) {
         beforeUnchangedTailSymbolsNumber = beforeEnd - context.beforeChange.getEnd();
+        beforeShiftToOriginalChange += getDiff(context.beforeChange);
         context.proceedToNextChange(Context.ChangeType.BEFORE);
         matchedChangesNumber++;
       }
       else {
-        context.beforeChange = new TextChangeImpl(context.beforeChange.getText(), beforeEnd, context.beforeChange.getEnd());
+        beforeShiftToOriginalChange += context.beforeChange.getStart() - beforeEnd;
+        context.beforeShiftToOriginal += context.beforeChange.getStart() - beforeEnd;
+        beforeOriginalText.append(context.beforeChange.getText());
         beforeUnchangedTailSymbolsNumber = 0;
         break;
       }
@@ -216,21 +239,25 @@ public class ChangesDiffCalculator {
     matchedChangesNumber = matchedChangesNumber < 2 ? 0 : matchedChangesNumber;
     offset = -1;
     StringBuilder currentOriginalText = new StringBuilder(currentChange.getText());
+    int currentShiftToOriginalChange = 0;
     while (context.currentChange != null && context.currentChange.getStart() < currentEnd) {
+      CharSequence changeText = context.currentChange.getText();
       if (offset >= 0) {
         CharSequence text = context.currentText.subSequence(offset, context.currentChange.getStart());
         currentOriginalText.append(text);
         if (context.currentChange.getEnd() < currentEnd) {
-          currentOriginalText.append(context.currentChange.getText());
+          currentOriginalText.append(changeText);
         }
       }
       offset = context.currentChange.getEnd();
       if (context.currentChange.getEnd() <= currentEnd) {
+        currentShiftToOriginalChange += getDiff(context.currentChange);
         context.proceedToNextChange(Context.ChangeType.CURRENT);
         matchedChangesNumber++;
       }
       else {
         context.currentShiftToOriginal += context.currentChange.getStart() - currentEnd + beforeUnchangedTailSymbolsNumber;
+        currentShiftToOriginalChange += context.currentChange.getStart() - currentEnd + beforeUnchangedTailSymbolsNumber;
         context.currentChange = new TextChangeImpl(
           context.currentChange.getText(), currentEnd - beforeUnchangedTailSymbolsNumber, context.currentChange.getEnd()
         );
@@ -241,8 +268,7 @@ public class ChangesDiffCalculator {
       currentOriginalText.append(context.currentText.subSequence(offset, currentEnd));
     }
 
-    context.beforeShiftToCurrent += contextCopy.currentShiftToOriginal - context.currentShiftToOriginal
-                                    - (contextCopy.beforeShiftToOriginal - context.beforeShiftToOriginal);
+    context.beforeShiftToCurrent += currentShiftToOriginalChange - beforeShiftToOriginalChange;
 
     if (matchedChangesNumber < 2 || !StringUtil.equals(beforeOriginalText, currentOriginalText)) {
       contextCopy.copyTo(context);
@@ -265,6 +291,7 @@ public class ChangesDiffCalculator {
       for (; context.beforeIndex < context.beforeChanges.size(); context.beforeIndex++) {
         TextChange change = context.beforeChanges.get(context.beforeIndex);
         int offset = change.getStart() + context.beforeShiftToCurrent;
+        context.beforeShiftToCurrent += getDiff(change);
         storage.add(new TextRange(offset, offset + change.getText().length()));
       }
     }
@@ -338,20 +365,12 @@ public class ChangesDiffCalculator {
     void update() {
       if (beforeChange != null) {
         beforeOriginalStart = beforeChange.getStart() + beforeShiftToOriginal;
-        //TODO den check
-        //if (getDiff(beforeChange) > 0) {
-        //  beforeOriginalStart += getDiff(beforeChange);
-        //}
         beforeCurrentStart = beforeChange.getStart() + beforeShiftToCurrent;
         beforeOriginalEnd = beforeOriginalStart + beforeChange.getText().length();
       }
 
       if (currentChange != null) {
         currentOriginalStart = currentChange.getStart() + currentShiftToOriginal;
-        //TODO den check
-        //if (getDiff(currentChange) > 0) {
-        //  currentOriginalStart += getDiff(currentChange);
-        //}
         currentOriginalEnd = currentOriginalStart + currentChange.getText().length();
       }
     }

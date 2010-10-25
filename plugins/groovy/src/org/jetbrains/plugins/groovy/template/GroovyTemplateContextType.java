@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy;
+package org.jetbrains.plugins.groovy.template;
 
 import com.intellij.codeInsight.template.FileTypeBasedContextType;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author peter

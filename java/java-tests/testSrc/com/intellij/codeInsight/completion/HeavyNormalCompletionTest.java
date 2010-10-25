@@ -8,6 +8,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -24,9 +25,15 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
 
   public void testPackagePrefix() throws Throwable {
     configureByFileNoCompletion("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    model.getContentEntries()[0].getSourceFolders()[0].setPackagePrefix("foo.bar.goo");
-    model.commit();
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        model.getContentEntries()[0].getSourceFolders()[0].setPackagePrefix("foo.bar.goo");
+        model.commit();
+      }
+    }.execute().throwException();
+
     complete();
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
     assertTrue(JavaPsiFacade.getInstance(myProject).findPackage("foo").isValid());

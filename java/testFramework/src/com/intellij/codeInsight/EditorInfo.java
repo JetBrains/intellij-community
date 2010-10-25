@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -32,11 +33,15 @@ public class EditorInfo {
   RangeMarker selStartMarker = null;
   RangeMarker selEndMarker = null;
 
-  public EditorInfo(String fileText) {
-    updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
+  public EditorInfo(final String fileText) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
+      }
+    });
   }
 
-  public boolean updateCaretAndSelection(final Document document) {
+  private boolean updateCaretAndSelection(final Document document) {
     newFileText = document.getText();
 
     int caretIndex = newFileText.indexOf(CARET_MARKER);

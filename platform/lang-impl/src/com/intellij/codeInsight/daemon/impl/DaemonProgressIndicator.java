@@ -31,6 +31,23 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   }
 
   public synchronized void stopIfRunning() {
-    if (isRunning()) stop();
+    if (isRunning()) {
+      stop();
+    }
+    else {
+      cancel();
+    }
+  }
+
+  public boolean waitFor(int millisTimeout) {
+    synchronized (this) {
+      try {
+        // we count on ProgressManagerImpl doing progress.notifyAll() on finish
+        wait(millisTimeout);
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
+    return isCanceled();
   }
 }

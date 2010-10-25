@@ -258,6 +258,7 @@ public class EditTemplateDialog extends DialogWrapper {
     panel.add(myCbReformat, gbConstraints);
 
     for(TemplateOptionalProcessor processor: myOptions.keySet()) {
+      if (!processor.isVisible(myTemplate)) continue;
       gbConstraints.gridy++;
       JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);

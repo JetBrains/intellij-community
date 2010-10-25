@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -84,13 +85,14 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     vcsDirtyScopeManager.retrieveScopes();
     vcsDirtyScopeManager.changesProcessed();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction.Simple(myProject) {
       @Override
-      public void run() {
+      protected void run() throws Throwable {
         vcsDirtyScopeManager.fileDirty(file);
         vcsDirtyScopeManager.fileDirty(fileB);
       }
-    });
+    }.execute().throwException();
+
 
     final FilePathImpl fp = new FilePathImpl(file);
     final FilePathImpl fpB = new FilePathImpl(fileB);

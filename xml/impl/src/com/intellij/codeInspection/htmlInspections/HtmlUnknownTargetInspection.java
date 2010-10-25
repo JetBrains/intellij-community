@@ -57,8 +57,8 @@ public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
         PsiReference[] refs = valueElement.getReferences();
         for (PsiReference ref : refs) {
           if (ref instanceof EmptyResolveMessageProvider && XmlHighlightVisitor.hasBadResolve(ref, false)) {
-            String description;
             String messagePattern = ((EmptyResolveMessageProvider)ref).getUnresolvedMessagePattern();
+            String description;
             try {
               description = MessageFormat.format(messagePattern, ref.getCanonicalText());
             }

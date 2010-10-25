@@ -25,12 +25,10 @@ import org.junit.Test;
 public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
 
 
-  @Test
   public void testReplaceCastInDeclaration() throws Throwable {
     doTest("replaceCastInDeclaration", "Replace cast");
   }
 
-  @Test
   public void testReplaceInstaneOf() throws Throwable {
     doTest("replaceInstanceOf", "Replace instanceof");
   }

@@ -265,17 +265,26 @@ public class PsiUtil {
   }
 
   public static void shortenReferences(GroovyPsiElement element) {
-    doShorten(element);
+    final TextRange textRange = element.getTextRange();
+    doShorten(element, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
-  private static void doShorten(PsiElement element) {
+  public static void shortenReferences(GroovyPsiElement element, int start, int end) {
+    doShorten(element, start, end);
+  }
+
+  private static void doShorten(PsiElement element, int start, int end) {
     PsiElement child = element.getFirstChild();
     while (child != null) {
-      if (child instanceof GrCodeReferenceElement) {
-        shortenReference((GrCodeReferenceElement)child);
-      }
+      final TextRange range = child.getTextRange();
 
-      doShorten(child);
+      if (start < range.getEndOffset() && range.getStartOffset() < end) {
+        if (child instanceof GrReferenceElement) {
+          shortenReference((GrReferenceElement)child);
+        }
+
+        doShorten(child, start, end);
+      }
       child = child.getNextSibling();
     }
   }

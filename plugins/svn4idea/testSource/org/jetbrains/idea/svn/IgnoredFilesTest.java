@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,44 +38,64 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
 
   @Before
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    myTempDirFixture = fixtureFactory.createTempDirTestFixture();
-    myTempDirFixture.setUp();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+          myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+          myTempDirFixture.setUp();
 
-    myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
-    myClientRoot.mkdir();
+          myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
+          myClientRoot.mkdir();
 
-    initProject(myClientRoot);
+          initProject(myClientRoot);
 
-    ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
+          ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
 
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-    myVcs = SvnVcs.getInstance(myProject);
-    myVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-    myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
+          myChangeListManager = ChangeListManager.getInstance(myProject);
+          myVcs = SvnVcs.getInstance(myProject);
+          myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+          myVcsManager.registerVcs(myVcs);
+          myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
 
-    ((ProjectComponent) myChangeListManager).projectOpened();
-    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    ((ProjectComponent)myVcsDirtyScopeManager).projectOpened();
-    myLocalFileSystem = LocalFileSystem.getInstance();
+          ((ProjectComponent)myChangeListManager).projectOpened();
+          myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+          ((ProjectComponent)myVcsDirtyScopeManager).projectOpened();
+          myLocalFileSystem = LocalFileSystem.getInstance();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @After
   public void tearDown() throws Exception {
-    myVcsManager.unregisterVcs(myVcs);
-    myVcsManager = null;
-    myVcs = null;
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myVcsManager.unregisterVcs(myVcs);
+          myVcsManager = null;
+          myVcs = null;
 
-    ((ProjectComponent) myChangeListManager).projectClosed();
-    ((ProjectComponent) myVcsDirtyScopeManager).projectClosed();
+          ((ProjectComponent)myChangeListManager).projectClosed();
+          ((ProjectComponent)myVcsDirtyScopeManager).projectClosed();
 
-    tearDownProject();
-    if (myTempDirFixture != null) {
-      myTempDirFixture.tearDown();
-      myTempDirFixture = null;
-    }
-    FileUtil.delete(myClientRoot);
+          tearDownProject();
+          if (myTempDirFixture != null) {
+            myTempDirFixture.tearDown();
+            myTempDirFixture = null;
+          }
+          FileUtil.delete(myClientRoot);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   // they all blink now

@@ -27,47 +27,25 @@ package com.intellij.util;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class CachedValueImpl<T> extends CachedValueBase<T> implements CachedValue<T> {
-
   private final CachedValueProvider<T> myProvider;
 
   public CachedValueImpl(@NotNull CachedValueProvider<T> provider) {
-    super();
     myProvider = provider;
   }
 
-  @Nullable
-  public T getValue() {
-
-    T value = getUpToDateOrNull();
-    if (value != null) {
-      return value == ObjectUtils.NULL ? null : value;
-    }
-
-    w.lock();
-
-    try {
-      value = getUpToDateOrNull();
-      if (value != null) {
-        return value == ObjectUtils.NULL ? null : value;
-      }
-
-      CachedValueProvider.Result<T> result = myProvider.compute();
-      value = result == null ? null : result.getValue();
-
-      setValue(value, result);
-
-      return value;
-    }
-    finally {
-      w.unlock();
-    }
+  @Override
+  protected <P> CachedValueProvider.Result<T> doCompute(P param) {
+    return myProvider.compute();
   }
 
   public CachedValueProvider<T> getValueProvider() {
     return myProvider;
   }
 
+  @Override
+  public T getValue() {
+    return getValueWithLock(null);
+  }
 }
