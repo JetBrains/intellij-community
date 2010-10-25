@@ -196,12 +196,7 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   }
 
   public void testEmptyFile() {  // PY-1845
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByText(PythonFileType.INSTANCE, "");
-      }
-    });
+    myFixture.configureByText(PythonFileType.INSTANCE, "");
     myFixture.completeBasic();
     final List<String> elements = myFixture.getLookupElementStrings();
     assertTrue(elements.contains("import"));
