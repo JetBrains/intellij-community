@@ -95,7 +95,7 @@ public class AutoPopupController implements Disposable {
           if (!file.isValid()) return;
 
           if (condition != null && !condition.value(file)) return;
-          new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(myProject, editor, file);
+          new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(myProject, editor, file);
         }
       };
 

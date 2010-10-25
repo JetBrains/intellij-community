@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.completion;
 
-package com.intellij.codeInsight.template.macro;
+import org.jetbrains.annotations.NotNull;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.openapi.application.ApplicationManager;
-
-public class CompleteMacro extends BaseCompleteMacro {
-  public CompleteMacro() {
-    super("complete");
-  }
-
-  CodeInsightActionHandler getCompletionHandler() {
-    return new CodeCompletionHandlerBase(CompletionType.BASIC, ApplicationManager.getApplication().isUnitTestMode(), false);
+/**
+ * @author peter
+ */
+public class AlwaysFocusLookup extends CompletionConfidence {
+  @Override
+  public Boolean shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    return true;
   }
 }

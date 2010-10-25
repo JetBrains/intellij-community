@@ -125,4 +125,31 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
     assertNull LookupManager.getActiveLookup(myFixture.getEditor())
   }
 
+  public void testGenerallyFocusLookupInJavaMethod() {
+        myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String iterable) {
+          return it<caret>;
+        }
+      }
+    """)
+    type 'e'
+    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
+    assertNotNull lookup
+    assertTrue lookup.focused
+  }
+
+  public void testNoLookupFocusInJavaVariable() {
+        myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String st<caret>) {
+        }
+      }
+    """)
+    type 'r'
+    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
+    assertNotNull lookup
+    assertFalse lookup.focused
+  }
+
 }
