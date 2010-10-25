@@ -141,6 +141,18 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testUseThisAsAnyVariable() throws Exception {
+    doTest(null, null, null, new GenParams() {
+      @Override
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(-1, "l", factory.createTypeFromText("List", method), "null", true)
+        };
+      }
+    }, false);
+  }
+
   public void testRemoveVarargParameter() throws Exception {
     doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
   }

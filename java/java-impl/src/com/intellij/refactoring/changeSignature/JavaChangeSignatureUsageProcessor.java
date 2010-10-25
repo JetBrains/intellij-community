@@ -510,6 +510,23 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final PsiVariable result = processor.getResult(0);
         return factory.createExpressionFromText(result.getName(), list);
       }
+      if (processor.size() == 0) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(list, PsiClass.class);
+        if (parentClass != null) {
+          PsiClass containingClass = parentClass;
+          final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+          while (containingClass != null) {
+            if (type.isAssignableFrom(factory.createType(containingClass, PsiSubstitutor.EMPTY))) {
+              containingClasses.add(containingClass);
+            }
+            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+          }
+          if (containingClasses.size() == 1) {
+            return RefactoringUtil.createThisExpression(parentClass.getManager(), containingClasses.contains(parentClass) ? null
+                                                                                                                          : containingClasses.iterator().next());
+          }
+        }
+      }
     }
     final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(list, PsiCallExpression.class);
     final String defaultValue = info.getDefaultValue();
