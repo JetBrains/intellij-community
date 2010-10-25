@@ -2306,13 +2306,15 @@ public void testSCR260() throws Exception {
 
     getSettings().PREFER_PARAMETERS_WRAP = true;
 
-    doTextTest("public class Foo { \n" +
-               "    public static void main() { \n" +
-               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
-               "                                                    \"fox jumped over\", \n" +
-               "                                                    \"the lazy\", \"dog\"); \n" +
-               "    } \n" +
-"}", "public class Foo {\n" +
+    doTextTest(
+     "public class Foo { \n" +
+     "    public static void main() { \n" +
+     "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
+     "                                                    \"fox jumped over\", \n" +
+     "                                                    \"the lazy\", \"dog\"); \n" +
+     "    } \n" +
+    "}",
+     "public class Foo {\n" +
      "    public static void main() {\n" +
      "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\",\n" +
      "                                                    \"fox jumped over\",\n" +
@@ -2322,18 +2324,20 @@ public void testSCR260() throws Exception {
 
     getSettings().PREFER_PARAMETERS_WRAP = false;
 
-    doTextTest("public class Foo { \n" +
-               "    public static void main() { \n" +
-               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
-               "                                                    \"fox jumped over\", \n" +
-               "                                                    \"the lazy\", \"dog\"); \n" +
-               "    } \n" +
-"}", "public class Foo {\n" +
-     "    public static void main() {\n" +
-     "        foo.foobelize().foobelize().foobelize()\n" +
-     "                .bar(\"The quick brown\", \"fox jumped over\", \"the lazy\", \"dog\");\n" +
-     "    }\n" +
-     "}");
+    doTextTest(
+      "public class Foo { \n" +
+      "    public static void main() { \n" +
+      "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
+      "                                                    \"fox jumped over\", \n" +
+      "                                                    \"the lazy\", \"dog\"); \n" +
+      "    } \n" +
+      "}",
+      "public class Foo {\n" +
+      "    public static void main() {\n" +
+      "        foo.foobelize().foobelize().foobelize()\n" +
+      "                .bar(\"The quick brown\", \"fox jumped over\", \"the lazy\", \"dog\");\n" +
+      "    }\n" +
+      "}");
 
   }
 

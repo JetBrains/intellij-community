@@ -566,11 +566,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkReferences(PsiElement value) {
     if (value == null) return;
 
-    doCheckRefs(value, value.getReferences());
-  }
-
-  private void doCheckRefs(final PsiElement value, final PsiReference[] references) {
-    doCheckRefs(value, references, 0);
+    doCheckRefs(value, value.getReferences(), 0);
   }
 
   private void doCheckRefs(final PsiElement value, final PsiReference[] references, int start) {
@@ -580,41 +576,42 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (reference == null) {
         continue;
       }
-      if(hasBadResolve(reference, false)) {
-        String description = getErrorDescription(reference);
+      if (!hasBadResolve(reference, false)) {
+        continue;
+      }
+      String description = getErrorDescription(reference);
 
-        final int startOffset = reference.getElement().getTextRange().getStartOffset();
-        final TextRange referenceRange = reference.getRangeInElement();
+      final int startOffset = reference.getElement().getTextRange().getStartOffset();
+      final TextRange referenceRange = reference.getRangeInElement();
 
-        // logging for IDEADEV-29655
-        if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
-          LOG.error("Reference range start offset > end offset:  " + reference +
-          ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
-        }
+      // logging for IDEADEV-29655
+      if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
+        LOG.error("Reference range start offset > end offset:  " + reference +
+        ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
+      }
 
-        HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
-        if (value instanceof XmlAttributeValue) {
-          PsiElement parent = value.getParent();
-          if (parent instanceof XmlAttribute) {
-            String name = ((XmlAttribute)parent).getName().toLowerCase();
-            if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
-              type = HighlightInfoType.WARNING;
-            }
-            else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
-              continue;
-            }
+      HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
+      if (value instanceof XmlAttributeValue) {
+        PsiElement parent = value.getParent();
+        if (parent instanceof XmlAttribute) {
+          String name = ((XmlAttribute)parent).getName().toLowerCase();
+          if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
+            type = HighlightInfoType.WARNING;
+          }
+          else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
+            continue;
           }
         }
-        HighlightInfo info = HighlightInfo.createHighlightInfo(
-          type,
-          startOffset + referenceRange.getStartOffset(),
-          startOffset + referenceRange.getEndOffset(),
-          description
-        );
-        addToResults(info);
-        if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
       }
+      HighlightInfo info = HighlightInfo.createHighlightInfo(
+        type,
+        startOffset + referenceRange.getStartOffset(),
+        startOffset + referenceRange.getEndOffset(),
+        description
+      );
+      addToResults(info);
+      if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
     }
   }
 
@@ -631,10 +628,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     String description;
     try {
       description = MessageFormat.format(message, reference.getCanonicalText());
-    } catch(IllegalArgumentException ex) {
+    }
+    catch (IllegalArgumentException ex) {
       // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
       description = message;
-      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem",reference.getClass().getName(),message));
+      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem", reference.getClass().getName(), message));
     }
     return description;
   }

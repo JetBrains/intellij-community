@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
@@ -500,13 +501,24 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount();
     assertEquals(0, parametersCount);
-    getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
+      @Override
+      protected void run() throws Throwable {
+        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }.execute().throwException();
+
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testCompletionInsideClassLiteral() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
+      @Override
+      protected void run() throws Throwable {
+        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }.execute().throwException();
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
@@ -599,7 +611,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
-    getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
+      @Override
+      protected void run() throws Throwable {
+        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }.execute().throwException();
     checkResultByFile(getTestName(false) + "_after.java");
   }
 

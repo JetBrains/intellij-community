@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
@@ -1200,7 +1201,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   private void buildSiblings(final Node node, final int start, final int end, final Runnable eachRunnable, final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
-    SwingUtilities.invokeAndWait(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         for (int i = start; i <= end; i++) {

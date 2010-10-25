@@ -15,6 +15,9 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -84,17 +87,22 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return createFile(module, vDir, fileName, text);
   }
 
-  protected PsiFile createFile(Module module, VirtualFile vDir, String fileName, String text) throws IOException {
-    if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-      addSourceContentToRoots(module, vDir);
-    }
+  protected PsiFile createFile(final Module module, final VirtualFile vDir, final String fileName, final String text) throws IOException {
+    return new WriteAction<PsiFile>() {
+      @Override
+      protected void run(Result<PsiFile> result) throws Throwable {
+        if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
+          addSourceContentToRoots(module, vDir);
+        }
 
-    final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-    VfsUtil.saveText(vFile, text);
-    assertNotNull(vFile);
-    final PsiFile file = myPsiManager.findFile(vFile);
-    assertNotNull(file);
-    return file;
+        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+        VfsUtil.saveText(vFile, text);
+        assertNotNull(vFile);
+        final PsiFile file = myPsiManager.findFile(vFile);
+        assertNotNull(file);
+        result.setResult(file);
+      }
+    }.execute().getResultObject();
   }
 
   protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {
@@ -141,8 +149,8 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
     final List nodes = documentElement.getChildren("data");
 
-    for (int i = 0; i < nodes.size(); i++) {
-      Element node = (Element)nodes.get(i);
+    for (Object node1 : nodes) {
+      Element node = (Element)node1;
       String value = node.getAttributeValue("name");
 
       if (value.equals(dataName)) {
@@ -208,13 +216,17 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected static void addLibraryToRoots(final Module module, final VirtualFile jarFile, final OrderRootType rootType) {
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = manager.getModifiableModel();
-    final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-    final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-    libraryModel.addRoot(jarFile, rootType);
-    libraryModel.commit();
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel rootModel = manager.getModifiableModel();
+        final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
+        final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
+        libraryModel.addRoot(jarFile, rootType);
+        libraryModel.commit();
+        rootModel.commit();
+      }
+    });
   }
 
 

@@ -97,7 +97,9 @@ public class CompilerPaths {
       return project.getName();
     }
 
-    String projectName = FileUtil.toSystemIndependentName(project.getLocation());
+    String location = project.getLocation();
+    if (location == null) return null;
+    String projectName = FileUtil.toSystemIndependentName(location);
     if (projectName.endsWith("/")) {
       projectName = projectName.substring(0, projectName.length() - 1);
     }

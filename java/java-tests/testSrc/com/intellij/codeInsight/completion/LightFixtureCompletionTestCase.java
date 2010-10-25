@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -43,11 +44,16 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     myFixture.checkResultByFile(path);
   }
 
-  protected void selectItem(LookupElement item, char completionChar) {
+  protected void selectItem(LookupElement item, final char completionChar) {
     final LookupImpl lookup = getLookup();
     lookup.setCurrentItem(item);
     if (completionChar == 0 || completionChar == '\n' || completionChar == '\t') {
-      lookup.finishLookup(completionChar);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          lookup.finishLookup(completionChar);
+        }
+      }.execute().throwException();
     } else {
       type(completionChar);
     }

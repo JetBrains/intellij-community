@@ -14,9 +14,9 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import junit.framework.TestCase;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,7 +24,7 @@ import org.jdom.JDOMException;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class InspectionProfileTest extends TestCase {
+public class InspectionProfileTest extends UsefulTestCase {
   private static final String PROFILE = "ToConvert";
   private final IdeaTestFixture myFixture = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 

@@ -296,6 +296,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
     highligtClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
+
+    checkReferenceList(myHolder, typeDefinition.getExtendsClause(), true, GroovyBundle.message("no.interface.expected.here"),
+                       ExtendsImplementsFix.MOVE_TO_IMPLEMENTS_LIST);
+    checkReferenceList(myHolder, typeDefinition.getImplementsClause(), false, GroovyBundle.message("no.class.expected.here"),
+                       ExtendsImplementsFix.MOVE_TO_EXTENDS_LIST);
+  }
+
+  private static void checkReferenceList(AnnotationHolder holder,
+                                         GrReferenceList list,
+                                         boolean isInterface,
+                                         String message,
+                                         IntentionAction fix) {
+    if (list == null) return;
+    for (GrCodeReferenceElement refElement : list.getReferenceElements()) {
+      final PsiElement psiClass = refElement.resolve();
+      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() == isInterface) {
+        holder.createErrorAnnotation(refElement, message).registerFix(fix);
+      }
+    }
   }
 
   private static void checkConstructors(AnnotationHolder holder, GrTypeDefinition typeDefinition) {

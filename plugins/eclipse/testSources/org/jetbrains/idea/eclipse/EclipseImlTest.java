@@ -96,7 +96,12 @@ public class EclipseImlTest extends IdeaTestCase {
     classpathReader.init(rootModel);
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        rootModel.commit();
+      }
+    });
+
     final RootModelImpl model = (RootModelImpl)ModuleRootManager.getInstance(module).getModifiableModel();
     final Element actualImlElement = new Element("root");
     model.writeExternal(actualImlElement);

@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
@@ -113,7 +115,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doAssertContentFolders(getContentRoot(moduleName), isSource, isTest, expected);
   }
 
-  private void doAssertContentFolders(ContentEntry e, boolean isSource, boolean isTest, String... expected) {
+  private static void doAssertContentFolders(ContentEntry e, boolean isSource, boolean isTest, String... expected) {
     List<String> actual = new ArrayList<String>();
     for (ContentFolder f : isSource ? e.getSourceFolders() : e.getExcludeFolders()) {
       if (isSource && (isTest != ((SourceFolder)f).isTestSource())) continue;
@@ -140,7 +142,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()));
   }
 
-  private String getAbsolutePath(String path) {
+  private static String getAbsolutePath(String path) {
     path = VfsUtil.urlToPath(path);
     path = PathUtil.getCanonicalPath(path);
     return FileUtil.toSystemIndependentName(path);
@@ -320,7 +322,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(String xml) throws IOException {
+  protected void importProject(@NonNls String xml) throws IOException {
     createProjectPom(xml);
     importProject();
   }
@@ -454,15 +456,20 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
   }
 
-  protected Sdk setupJdkForModule(String moduleName) {
-    ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
-    Sdk sdk = createJdk("Java 1.5");
-    m.setSdk(sdk);
-    m.commit();
+  protected Sdk setupJdkForModule(final String moduleName) {
+    final Sdk sdk = createJdk("Java 1.5");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
+        m.setSdk(sdk);
+        m.commit();
+      }
+    });
+
     return sdk;
   }
 
-  protected Sdk createJdk(String versionName) {
+  protected static Sdk createJdk(String versionName) {
     return JavaSdkImpl.getMockJdk17(versionName);
   }
 
@@ -491,7 +498,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
   }
 
-  private String collectMessages(CompileContext compileContext, CompilerMessageCategory messageType) {
+  private static String collectMessages(CompileContext compileContext, CompilerMessageCategory messageType) {
     String result = "";
     for (CompilerMessage each : compileContext.getMessages(messageType)) {
       VirtualFile file = each.getVirtualFile();
@@ -500,7 +507,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return result;
   }
 
-  protected AtomicInteger configConfirmationForYesAnswer() {
+  protected static AtomicInteger configConfirmationForYesAnswer() {
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
       @Override
@@ -512,7 +519,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return counter;
   }
 
-  protected AtomicInteger configConfirmationForNoAnswer() {
+  protected static AtomicInteger configConfirmationForNoAnswer() {
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
       @Override

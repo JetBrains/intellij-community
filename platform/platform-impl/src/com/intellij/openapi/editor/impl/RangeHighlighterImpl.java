@@ -163,4 +163,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public int getAffectedAreaEndOffset() {
     return data.getAffectedAreaEndOffset();
   }
+
+  @Override
+  public String toString() {
+    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer="+getLayer();
+  }
 }

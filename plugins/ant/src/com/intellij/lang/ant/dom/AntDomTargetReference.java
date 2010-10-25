@@ -22,8 +22,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -103,18 +101,6 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     return selfElement.getParentOfType(AntDomElement.class, false);
   }
   
-  @Nullable 
-  public static DomElement toDomElement(PsiElement resolve) {
-    if (resolve instanceof PomTargetPsiElement) {
-      final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
-      if(target instanceof DomTarget) {
-        return ((DomTarget)target).getDomElement();
-      }
-      return null;
-    }
-    return DomUtil.getDomElement(resolve);
-  }
-
   @NotNull
   public Object[] getVariants() {
     final TargetResolver.Result result = doResolve(getCanonicalText());

@@ -16,7 +16,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,21 +31,9 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          try{
-            String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
-            myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
   public void testSCR10930() throws Exception {
@@ -95,14 +82,14 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
         assertNotNull("Package anotherBla not found", aPackage);
-        try {
-          aPackage.getDirectories()[0].delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            aPackage.getDirectories()[0].delete();
+          }
+        });
+
         VirtualFileManager.getInstance().refresh(false);
       }
     };

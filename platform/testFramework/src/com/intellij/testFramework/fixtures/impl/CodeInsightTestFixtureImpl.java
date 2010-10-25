@@ -297,16 +297,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                final boolean checkWeakWarnings,
                                final String... filePaths) {
     final Ref<Long> duration = new Ref<Long>();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-
-      @Override
-      protected void run() throws Exception {
-        if (filePaths.length > 0) {
-          configureByFilesInner(filePaths);
-        }
-        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
-      }
-    }.execute().throwException();
+    if (filePaths.length > 0) {
+      configureByFilesInner(filePaths);
+    }
+    try {
+      collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     return duration.get().longValue();
   }
 
@@ -328,13 +327,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                final boolean checkWeakWarnings,
                                @NonNls final VirtualFile... files) {
     final Ref<Long> duration = new Ref<Long>();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-
-      @Override
-      protected void run() throws Exception {
-        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration, files);
-      }
-    }.execute().throwException();
+    collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration, files);
     return duration.get().longValue();
   }
 
@@ -360,12 +353,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     final Ref<Long> duration = new Ref<Long>();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      @Override
-      protected void run() throws Exception {
-        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
-      }
-    }.execute().throwException();
+    try {
+      collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     return duration.get().longValue();
   }
 
@@ -382,13 +375,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public long testHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final VirtualFile file) {
     final Ref<Long> duration = new Ref<Long>();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      @Override
-      protected void run() throws Exception {
-        openFileInEditor(file);
-        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
-      }
-    }.execute().throwException();
+    openFileInEditor(file);
+    try {
+      collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     return duration.get().longValue();
   }
 
@@ -414,12 +407,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String... filePaths) {
-    new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
-      @Override
-      protected void run(final Result<PsiReference> result) throws Exception {
-        configureByFilesInner(filePaths);
-      }
-    }.execute().throwException();
+    configureByFilesInner(filePaths);
     return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
   }
 
@@ -434,35 +422,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @NotNull
   public List<IntentionAction> getAvailableIntentions(final String... filePaths) {
-
-    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
-      @Override
-      protected void run(final Result<List<IntentionAction>> result) throws Exception {
-        if (filePaths.length > 0) {
-          configureByFilesInner(filePaths);
-        }
-        result.setResult(getAvailableIntentions());
-      }
-    }.execute().throwException().getResultObject();
+    if (filePaths.length > 0) {
+      configureByFilesInner(filePaths);
+    }
+    return getAvailableIntentions();
   }
 
   @Override
   @NotNull
   public List<IntentionAction> getAllQuickFixes(@NonNls final String... filePaths) {
-    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
-      @Override
-      protected void run(final Result<List<IntentionAction>> result) throws Exception {
-        configureByFilesInner(filePaths);
-        List<HighlightInfo> infos = doHighlighting();
-        ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
-        for (HighlightInfo info : infos) {
-          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-            actions.add(pair.getFirst().getAction());
-          }
-        }
-        result.setResult(actions);
+    configureByFilesInner(filePaths);
+    List<HighlightInfo> infos = doHighlighting();
+    ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
+    for (HighlightInfo info : infos) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+        actions.add(pair.getFirst().getAction());
       }
-    }.execute().throwException().getResultObject();
+    }
+    return actions;
   }
 
   @Override
@@ -738,28 +715,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public GutterIconRenderer findGutter(final String filePath) {
     assertInitialized();
-    final Project project = myProjectFixture.getProject();
     final Ref<GutterIconRenderer> result = new Ref<GutterIconRenderer>();
-    new WriteCommandAction.Simple(project) {
+    configureByFilesInner(filePath);
+    int offset = myEditor.getCaretModel().getOffset();
 
-      @Override
-      protected void run() throws Exception {
-        configureByFilesInner(filePath);
-        int offset = myEditor.getCaretModel().getOffset();
-
-        final Collection<HighlightInfo> infos = doHighlighting();
-        for (HighlightInfo info :infos) {
-          if (info.endOffset >= offset && info.startOffset <= offset) {
-            final GutterIconRenderer renderer = info.getGutterIconRenderer();
-            if (renderer != null) {
-              result.set(renderer);
-              return;
-            }
-          }
+    final Collection<HighlightInfo> infos = doHighlighting();
+    for (HighlightInfo info :infos) {
+      if (info.endOffset >= offset && info.startOffset <= offset) {
+        final GutterIconRenderer renderer = info.getGutterIconRenderer();
+        if (renderer != null) {
+          result.set(renderer);
+          break;
         }
-
       }
-    }.execute().throwException();
+    }
     return result.get();
   }
 
@@ -769,33 +738,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     final Project project = myProjectFixture.getProject();
     final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
-    new WriteCommandAction.Simple(project) {
+    configureByFilesInner(filePath);
 
-      @Override
-      protected void run() throws Exception {
-        configureByFilesInner(filePath);
+    for (HighlightInfo info : doHighlighting()) {
+      addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset, result);
+    }
 
-        for (HighlightInfo info : doHighlighting()) {
-          addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset);
-        }
-
-        for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
-          addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset());
-        }
-      }
-
-      private void addGutterIconRenderer(final GutterIconRenderer renderer, final int offset) {
-        if (renderer == null) return;
-
-        List<GutterIconRenderer> renderers = result.get(offset);
-        if (renderers == null) {
-          result.put(offset, renderers = new SmartList<GutterIconRenderer>());
-        }
-        renderers.add(renderer);
-      }
-
-    }.execute().throwException();
+    for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
+      addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
+    }
     return ContainerUtil.concat(result.values());
+  }
+  private static void addGutterIconRenderer(final GutterIconRenderer renderer,
+                                            final int offset,
+                                            SortedMap<Integer, List<GutterIconRenderer>> result) {
+    if (renderer == null) return;
+
+    List<GutterIconRenderer> renderers = result.get(offset);
+    if (renderers == null) {
+      result.put(offset, renderers = new SmartList<GutterIconRenderer>());
+    }
+    renderers.add(renderer);
   }
 
 
@@ -1082,23 +1045,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByFile(final String file) {
     assertInitialized();
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Exception {
-        configureByFilesInner(file);
-      }
-    }.execute();
+    configureByFilesInner(file);
     return myFile;
   }
 
   @Override
   public void configureByFiles(@NonNls final String... files) {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Exception {
-        configureByFilesInner(files);
-      }
-    }.execute();
+    configureByFilesInner(files);
   }
 
   @Override
@@ -1184,30 +1137,37 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private PsiFile configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
-    try {
-      copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    myFile = myPsiManager.findFile(copy);
-    setContext(myFile, myFileContext);
-    myEditor = createEditor(copy);
-    assert myEditor != null : "Editor couldn't be created for file: " + copy.getPath() + ", use copyFileToProject(..) method for this file instead of configureByFile(..)" ;
-    if (loader.caretMarker != null) {
-      int offset = loader.caretMarker.getStartOffset();
-      myEditor.getCaretModel().moveToOffset(offset);
-    }
-    if (loader.selStartMarker != null && loader.selEndMarker != null) {
-      myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
-    }
+    new WriteCommandAction.Simple(getProject()) {
+      public void run() {
+        try {
+          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        myFile = myPsiManager.findFile(copy);
+        setContext(myFile, myFileContext);
+        myEditor = createEditor(copy);
+        assert myEditor != null : "Editor couldn't be created for file: " +
+                                  copy.getPath() +
+                                  ", use copyFileToProject(..) method for this file instead of configureByFile(..)";
+        if (loader.caretMarker != null) {
+          int offset = loader.caretMarker.getStartOffset();
+          myEditor.getCaretModel().moveToOffset(offset);
+        }
+        if (loader.selStartMarker != null && loader.selEndMarker != null) {
+          myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
+        }
 
-    Module module = getModule();
-    if (module != null) {
-      for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-        module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+        Module module = getModule();
+        if (module != null) {
+          for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+            module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+          }
+        }
       }
-    }
+    }.execute().throwException();
+
 
     return myFile;
   }
@@ -1302,7 +1262,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<HighlightInfo> doHighlighting() {
     final Project project = myProjectFixture.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
+    }.execute().throwException();
+
 
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
@@ -1319,7 +1285,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, new DaemonProgressIndicator(), toIgnore, allowDirt, true);
+    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, new DaemonProgressIndicator(), toIgnore, allowDirt);
   }
 
   public static void ensureIndexesUpToDate(Project project) {

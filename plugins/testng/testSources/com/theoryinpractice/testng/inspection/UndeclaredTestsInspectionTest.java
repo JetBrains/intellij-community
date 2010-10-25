@@ -22,6 +22,7 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -37,12 +38,32 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @BeforeMethod
   protected void setUp() throws Exception {
-    super.setUp();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          UndeclaredTestsInspectionTest.super.setUp();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @AfterMethod
   protected void tearDown() throws Exception {
-    super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          UndeclaredTestsInspectionTest.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @NonNls
@@ -56,8 +77,18 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
   }
 
   @Test(dataProvider = "data")
-  public void doTest(String name) throws Exception {
-    doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
+  public void doTest(final String name) throws Exception {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   /**

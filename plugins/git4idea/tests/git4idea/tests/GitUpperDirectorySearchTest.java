@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +49,17 @@ public class GitUpperDirectorySearchTest {
 
   @After
   public void tearDown() throws Exception {
-    myProjectFixture.tearDown();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myProjectFixture.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @Test

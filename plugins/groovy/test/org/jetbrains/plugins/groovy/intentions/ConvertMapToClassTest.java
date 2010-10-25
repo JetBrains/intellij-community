@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,9 +79,15 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     final GrTypeDefinition foo = ConvertMapToClassIntention.createClass(getProject(), map.getNamedArguments(), "", "Foo");
     myFixture.addFileToProject(getTestName(true) + "/Foo.groovy", foo.getContainingFile().getText());
     final PsiClass psiClass = myFixture.findClass("Foo");
-    ConvertMapToClassIntention.replaceMapWithClass(getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),
-                                                   ConvertMapToClassIntention.checkForVariableDeclaration(map),
-                                                   ConvertMapToClassIntention.checkForMethodParameter(map));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ConvertMapToClassIntention
+          .replaceMapWithClass(getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),
+                               ConvertMapToClassIntention.checkForVariableDeclaration(map),
+                               ConvertMapToClassIntention.checkForMethodParameter(map));
+      }
+    });
+
     myFixture.checkResultByFile(getTestName(true) + "/Foo.groovy", getTestName(true) + "/Expected.groovy", true);
     myFixture.checkResultByFile(getTestName(true) + "/Test_after.groovy", true);
   }

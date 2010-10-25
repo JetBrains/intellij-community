@@ -102,6 +102,12 @@ public class ChangesDiffCalculatorTest {
 
   @Test
   public void twoUnmatchedBeforeChangesAndMatchedAfterThat() {
+    myInitialText =
+      "0123456789ABC";
+
+    myBeforeText = "234a7bc89defABC";
+    myCurrentText = "01234567bc89defABC";
+
     doTest(
       new ChangeListBuilder().add("01", 0, 0).add("56", 3, 4).add(5, 7).add(9, 12),
       new ChangeListBuilder().add(8, 10).add(12, 15),
@@ -141,7 +147,7 @@ public class ChangesDiffCalculatorTest {
     doTest(
       new ChangeListBuilder().add(313, 314).add(318, 320).add(342, 344).add(372, 375).add(595, 597),
       new ChangeListBuilder().add(313, 317).add(321, 323).add(345, 347).add(375, 378).add(598, 600).add(603, 607),
-      new TextRange(314, 317), new TextRange(603, 607)
+      new TextRange(313, 316), new TextRange(603, 607)
     );
   }
 
@@ -150,7 +156,7 @@ public class ChangesDiffCalculatorTest {
     doTest(
       new ChangeListBuilder().add(31, 35).add(37, 41).add(55, 59).add(61, 65),
       new ChangeListBuilder().add(31, 32).add(48, 49),
-      new TextRange(32, 32), new TextRange(34, 34), new TextRange(49, 49), new TextRange(51, 51)
+      new TextRange(31, 31), new TextRange(34, 34), new TextRange(48, 48), new TextRange(51, 51)
     );
   }
 
@@ -159,7 +165,7 @@ public class ChangesDiffCalculatorTest {
     doTest(
       new ChangeListBuilder().add(21, 23).add(49, 49).add(61, 97).add(105, 106),
       new ChangeListBuilder().add(21, 22).add(48, 48).add(60, 95).add(103, 104),
-      new TextRange(22, 22), new TextRange(95, 95)
+      new TextRange(21, 21), new TextRange(60, 60)
     );
   }
 
@@ -168,7 +174,7 @@ public class ChangesDiffCalculatorTest {
     doTest(
       new ChangeListBuilder().add(21, 22).add(48, 48).add(60, 95).add(103, 104),
       new ChangeListBuilder().add(21, 23).add(49, 49).add(61, 97).add(105, 106),
-      new TextRange(22, 23), new TextRange(96, 97)
+      new TextRange(21, 22), new TextRange(61, 62)
     );
   }
 
@@ -202,6 +208,14 @@ public class ChangesDiffCalculatorTest {
 
   @Test
   public void changeIndentFromTwoToFour() {
+    myInitialText =
+      "public class Foo {\n" +
+      "  public void foo() {\n" +
+      "      int i;    label1: do {\n" +
+      "    }while (true)\n" +
+      "  }\n" +
+      "}";
+
     String beforeText =
       "public class Foo {\n" +
       "  public void foo()\n" +
@@ -235,6 +249,15 @@ public class ChangesDiffCalculatorTest {
 
   @Test
   public void changeIndentFromOneToTwo() {
+
+    myInitialText =
+      "public class Foo {\n" +
+      "  public int[] X = new int[] { 1, 3, 5\n" +
+      "  7, 9, 11};\n" +
+      "  public void foo() {\n" +
+      "  }\n" +
+      "}";
+
     String beforeText =
       "public class Foo {\n" +
       " public int[] X = new int[]{ 1, 3, 5\n" +
@@ -265,6 +288,15 @@ public class ChangesDiffCalculatorTest {
 
   @Test
   public void changeIndentFromOneToThree() {
+
+    myInitialText =
+      "public class Foo {\n" +
+      "  public int[] X = new int[] { 1, 3, 5\n" +
+      "  7, 9, 11};\n" +
+      "  public void foo() {\n" +
+      "  }\n" +
+      "}";
+
     String beforeText =
       "public class Foo {\n" +
       " public int[] X = new int[]{ 1, 3, 5\n" +
@@ -293,7 +325,7 @@ public class ChangesDiffCalculatorTest {
     );
   }
 
-  //@Test
+  @Test
   public void changeLabelIndentFromThreeToOne() {
     myInitialText =
       "public class Foo {\n" +
@@ -337,6 +369,289 @@ public class ChangesDiffCalculatorTest {
       new ChangeListBuilder().add(21, 23).add(40, 44).add("   ", 48, 48).add(55, 63).add(75, 79).add("     ", 92, 92)
         .add(99, 111).add(123, 127).add(131, 133), currentText,
       new TextRange(48, 48), new TextRange(92, 92)
+    );
+  }
+
+  @Test
+  public void changeIndentFromThreeToTwo() {
+    myInitialText =
+      "public class Foo {\n" +
+      "  public int[] X = new int[] { 1, 3, 5,\n" +
+      "  7, 9, 11};\n" +
+      "  public void foo() {\n" +
+      "  }\n" +
+      "}";
+
+    String beforeText =
+      "public class Foo {\n" +
+      "   public int[] X = new int[]{ 1, 3, 5,\n" +
+      "                                     7, 9, 11 };\n" +
+      "\n" +
+      "   public void foo()\n" +
+      "   {\n" +
+      "   }\n" +
+      "}";
+
+    String currentText =
+      "public class Foo {\n" +
+      "  public int[] X = new int[]{ 1, 3, 5,\n" +
+      "                                    7, 9, 11 };\n" +
+      "\n" +
+      "  public void foo()\n" +
+      "  {\n" +
+      "  }\n" +
+      "}";
+
+    doTest(
+      new ChangeListBuilder().add(21, 22).add(" ", 48, 48).add(61, 96).add(104, 105).add(108, 110).add(129, 132).add(137, 138), beforeText,
+      new ChangeListBuilder().add(" ", 47, 47).add(60, 94).add(102, 103).add(106, 107).add(126, 128), currentText,
+      new TextRange(21, 21), new TextRange(94, 94), new TextRange(107, 107), new TextRange(128, 128), new TextRange(133, 133)
+    );
+  }
+
+  @Test
+  public void changeIndentFromOneToTwoWithInnerClass() {
+    myInitialText =
+      "public class Foo {\n" +
+      "  private class InnerClass {\n" +
+      "    public void bar() {\n" +
+      "    }\n" +
+      "  }\n" +
+      "}";
+
+    String beforeText =
+      "public class Foo {\n" +
+      " private class InnerClass {\n" +
+      "  public void bar()\n" +
+      "  {\n" +
+      "  }\n" +
+      " }\n" +
+      "}";
+
+    String currentText =
+      "public class Foo {\n" +
+      "  private class InnerClass {\n" +
+      "    public void bar()\n" +
+      "    {\n" +
+      "    }\n" +
+      "  }\n" +
+      "}";
+
+    doTest(
+      new ChangeListBuilder().add(" ", 20, 20).add("  ", 49, 49).add(66, 68).add("  ", 73, 73).add(" ", 76, 76), beforeText,
+      new ChangeListBuilder().add(69, 73), currentText,
+      new TextRange(20, 21), new TextRange(50, 52), new TextRange(71, 73), new TextRange(78, 80), new TextRange(83, 84)
+    );
+  }
+
+  @Test
+  public void changeIndentFromOneToTwoWithWrappedXmlElement() {
+    myInitialText =
+      "<idea-plugin>\n" +
+      "\n" +
+      "  <application-components>\n" +
+      "\n" +
+      "    <description>ReSharper makes C# development a real pleasure. It decreases the time you spend on routine,  repetitive\n" +
+      "    handwork, giving you more time to focus on the task at hand. Its robust set of features for automatic error-checking\n" +
+      "    and code correction cuts development time and increases  your  efficiency.  You'll find that ReSharper quickly\n" +
+      "    pays back it's cost in increased developer productivity and improved code quality.\n" +
+      "    </description>\n" +
+      "\n" +
+      "  </application-components>\n" +
+      "\n" +
+      "</idea-plugin>";
+
+    String beforeText =
+      "<idea-plugin>\n" +
+      "\n" +
+      " <application-components>\n" +
+      "\n" +
+      "  <description>ReSharper makes C# development a real pleasure. It decreases the time you spend on routine, repetitive\n" +
+      "   handwork, giving you more time to focus on the task at hand. Its robust set of features for automatic error-checking\n" +
+      "   and code correction cuts development time and increases your efficiency. You'll find that ReSharper quickly\n" +
+      "   pays back it's cost in increased developer productivity and improved code quality.\n" +
+      "  </description>\n" +
+      "\n" +
+      " </application-components>\n" +
+      "\n" +
+      "</idea-plugin>";
+
+    String currentText =
+      "<idea-plugin>\n" +
+      "\n" +
+      "  <application-components>\n" +
+      "\n" +
+      "    <description>ReSharper makes C# development a real pleasure. It decreases the time you spend on routine, repetitive\n" +
+      "      handwork, giving you more time to focus on the task at hand. Its robust set of features for automatic\n" +
+      "      error-checking\n" +
+      "      and code correction cuts development time and increases your efficiency. You'll find that ReSharper quickly\n" +
+      "      pays back it's cost in increased developer productivity and improved code quality.\n" +
+      "    </description>\n" +
+      "\n" +
+      "  </application-components>\n" +
+      "\n" +
+      "</idea-plugin>";
+
+    doTest(
+      new ChangeListBuilder().add(" ", 16, 16).add("  ", 44, 44).add(" ", 149, 149).add(" ", 163, 163).add(" ", 283, 283)
+        .add(" ", 339, 339).add(" ", 344, 344).add(" ", 356, 356).add(" ", 394, 394).add("  ", 479, 479).add(" ", 496, 496), beforeText,
+      new ChangeListBuilder().add(" ", 152, 152).add(167, 169).add(270, 276).add(296, 298).add(" ", 354, 354).add(" ", 359, 359)
+        .add(" ", 371, 371).add(410, 412), currentText,
+      new TextRange(16, 17), new TextRange(45, 47), new TextRange(166, 169), new TextRange(270, 276), new TextRange(295, 298),
+      new TextRange(409, 412), new TextRange(497, 499), new TextRange(516, 517)
+    );
+  }
+
+  @Test
+  public void useBlankLineAfterJavadocDescription() {
+    myInitialText =
+      "public class Sample {\n" +
+      "  /**\n" +
+      "   * Description1.\n" +
+      "   *\n" +
+      "   * Description2.\n" +
+      "   * @param i parameter\n" +
+      "   */\n" +
+      "   public void foo() {}\n" +
+      "}";
+
+    String beforeText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * Description1.\n" +
+      "     * <p/>\n" +
+      "     * Description2.\n" +
+      "     * @param i parameter\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    String currentText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * Description1.\n" +
+      "     * <p/>\n" +
+      "     * Description2.\n" +
+      "     *\n" +
+      "     * @param i parameter\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    doTest(
+      new ChangeListBuilder().add(24, 26)
+        .add(   "* Description1.\n" +
+             "   *\n" +
+             "   * Description2.\n" +
+             "   * @param i parameter\n", 33, 111)
+        .add(114, 115).add(121, 122).add(139, 143), beforeText,
+      new ChangeListBuilder().add(24, 26)
+        .add(   "* Description1.\n" +
+             "   *\n" +
+             "   * Description2.\n" +
+             "   * @param i parameter\n", 33, 118)
+        .add(121, 122).add(128, 129).add(146, 150), currentText,
+      new TextRange(90, 97)
+    );
+  }
+
+  @Test
+  public void notUseBlankLineAfterJavadocDescription() {
+    myInitialText =
+      "public class Sample {\n" +
+      "  /**\n" +
+      "   * Description1.\n" +
+      "   *\n" +
+      "   * Description2.\n" +
+      "   * @param i parameter\n" +
+      "   */\n" +
+      "   public void foo() {}\n" +
+      "}";
+
+    String beforeText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * Description1.\n" +
+      "     * <p/>\n" +
+      "     * Description2.\n" +
+      "     *\n" +
+      "     * @param i parameter\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    String currentText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * Description1.\n" +
+      "     * <p/>\n" +
+      "     * Description2.\n" +
+      "     * @param i parameter\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    doTest(
+      new ChangeListBuilder().add(24, 26)
+        .add(   "* Description1.\n" +
+                "   *\n" +
+                "   * Description2.\n" +
+                "   * @param i parameter\n", 33, 118)
+        .add(121, 122).add(128, 129).add(146, 150), beforeText,
+      new ChangeListBuilder().add(24, 26)
+        .add(   "* Description1.\n" +
+                "   *\n" +
+                "   * Description2.\n" +
+                "   * @param i parameter\n", 33, 111)
+        .add(114, 115).add(121, 122).add(139, 143), currentText,
+      new TextRange(90, 90)
+    );
+  }
+
+  @Test
+  public void keepEmptyParamAtJavadoc() {
+    myInitialText =
+      "public class Sample {\n" +
+      "  /**\n" +
+      " * @param asdf\n" +
+      "* @invalidTag\n" +
+      "   */\n" +
+      "   public void foo() {}\n" +
+      "}";
+
+    String beforeText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * @invalidTag\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    String currentText =
+      "public class Sample {\n" +
+      "    /**\n" +
+      "     * @param asdf\n" +
+      "     * @invalidTag\n" +
+      "     */\n" +
+      "    public void foo()\n" +
+      "    {}\n" +
+      "}";
+
+    doTest(
+      new ChangeListBuilder().add(24, 26)
+        .add("* @param asdf\n" +
+             "* @invalidTag\n", 31, 50)
+        .add(53, 54).add(60, 61).add(78, 82), beforeText,
+      new ChangeListBuilder().add(24, 26)
+        .add("* @param asdf\n" +
+             "* @invalidTag\n", 31, 69)
+        .add(72, 73).add(79, 80).add(97, 101), currentText,
+      new TextRange(38, 57)
     );
   }
 

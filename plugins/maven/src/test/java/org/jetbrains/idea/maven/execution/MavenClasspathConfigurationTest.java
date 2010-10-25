@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -383,16 +384,22 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     assertModules("m1", "m2");
 
-    Module user = createModule("user");
+    final Module user = createModule("user");
 
-    ModifiableRootModel model = ModuleRootManager.getInstance(user).getModifiableModel();
-    model.addModuleOrderEntry(getModule("m1"));
-    VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
-    VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
-    model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(out);
-    model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOut);
-    model.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
-    model.commit();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        ModifiableRootModel model = ModuleRootManager.getInstance(user).getModifiableModel();
+        model.addModuleOrderEntry(getModule("m1"));
+        VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
+        VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
+        model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(out);
+        model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOut);
+        model.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
+        model.commit();
+      }
+    }.execute().throwException();
+
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");

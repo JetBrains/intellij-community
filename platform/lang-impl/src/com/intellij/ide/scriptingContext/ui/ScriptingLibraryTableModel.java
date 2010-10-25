@@ -84,7 +84,7 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
         if (lib != null) {
           Library.ModifiableModel libModel = lib.getModifiableModel();
           for (VirtualFile file : files) {
-            libModel.addRoot(file, OrderRootType.CLASSES);
+            libModel.addRoot(file, OrderRootType.SOURCES);
           }
           libModel.commit();
           fireLibTableChanged();

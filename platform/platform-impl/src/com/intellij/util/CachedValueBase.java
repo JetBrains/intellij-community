@@ -44,15 +44,14 @@ public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
-  protected final JBLock r;
-  protected final JBLock w;
+  private final JBLock r;
+  private final JBLock w;
 
   public CachedValueBase() {
     JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
     r = rw.readLock();
     w = rw.writeLock();
   }
-
 
   protected Data<T> computeData(T value, Object[] dependencies) {
     if (dependencies == null) {
@@ -68,12 +67,7 @@ public abstract class CachedValueBase<T> {
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
     myData.setData(computeData(value == null ? (T)NULL : value, getDependencies(result)));
-    if (result != null) {
-      myData.setIsLocked(result.isLockValue());
-    }
-    else {
-      myData.setIsLocked(false);
-    }
+    myData.setIsLocked(result != null && result.isLockValue());
   }
 
   @Nullable
@@ -101,11 +95,11 @@ public abstract class CachedValueBase<T> {
   }
 
   public boolean hasUpToDateValue() {
-    return getUpToDateOrNull() != null;
+    return getUpToDateOrNull(false) != null;
   }
 
   @Nullable
-  protected T getUpToDateOrNull() {
+  private T getUpToDateOrNull(boolean dispose) {
     final Data<T> data = myData.getData();
 
     if (data != null) {
@@ -113,7 +107,7 @@ public abstract class CachedValueBase<T> {
       if (isUpToDate(data)) {
         return value;
       }
-      if (value instanceof Disposable) {
+      if (dispose && value instanceof Disposable) {
         Disposer.dispose((Disposable)value);
       }
     }
@@ -151,7 +145,6 @@ public abstract class CachedValueBase<T> {
   }
 
   protected long getTimeStamp(Object dependency) {
-
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }
@@ -206,6 +199,40 @@ public abstract class CachedValueBase<T> {
       }
     }
   }
+
+  @Nullable
+  protected <P> T getValueWithLock(P param) {
+    r.lock();
+    try {
+      T value = getUpToDateOrNull(true);
+      if (value != null) {
+        return value == NULL ? null : value;
+      }
+    }
+    finally {
+      r.unlock();
+    }
+
+    // compute outside lock to avoid deadlock
+    CachedValueProvider.Result<T> result = doCompute(param);
+    T computed = result == null ? null : result.getValue();
+
+    w.lock();
+    try {
+      //T value = getUpToDateOrNull(false);
+      //if (value != null) {
+      //  return value == NULL ? null : value;
+      //}
+
+      setValue(computed, result);
+      return computed;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
 
   private static class MyTimedReference<T> extends TimedReference<SoftReference<Data<T>>> {
     private boolean myIsLocked;

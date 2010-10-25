@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -92,7 +93,13 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(myProjectPom, true);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        ReadOnlyAttributeUtil.setReadOnlyAttribute(myProjectPom, true);
+      }
+    }.execute().throwException();
+
 
     // shouldn't throw 'File is read-only' exception.
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),

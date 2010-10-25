@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 public class ShortenFQNamesProcessor implements TemplateOptionalProcessor {
@@ -58,5 +58,10 @@ public class ShortenFQNamesProcessor implements TemplateOptionalProcessor {
 
   public void setEnabled(final Template template, final boolean value) {
     template.setToShortenLongNames(value);
+  }
+
+  @Override
+  public boolean isVisible(Template template) {
+    return true;
   }
 }

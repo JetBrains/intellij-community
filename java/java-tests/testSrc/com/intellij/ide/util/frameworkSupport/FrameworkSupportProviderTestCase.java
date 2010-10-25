@@ -8,6 +8,7 @@ import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -43,28 +44,33 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
   }
 
   protected void addSupport() throws IOException {
-    final VirtualFile root = getVirtualFile(createTempDir("contentRoot"));
-    PsiTestUtil.addContentRoot(myModule, root);
-    final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    try {
-      List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
-      for (FrameworkSupportNode node : myNodes.values()) {
-        if (node.isChecked()) {
-          final FrameworkSupportConfigurable configurable = getOrCreateConfigurable(node.getProvider());
-          configurable.addSupport(myModule, model, null);
-          selectedConfigurables.add(configurable);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final VirtualFile root = getVirtualFile(createTempDir("contentRoot"));
+        PsiTestUtil.addContentRoot(myModule, root);
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        try {
+          List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
+          for (FrameworkSupportNode node : myNodes.values()) {
+            if (node.isChecked()) {
+              final FrameworkSupportConfigurable configurable = getOrCreateConfigurable(node.getProvider());
+              configurable.addSupport(myModule, model, null);
+              selectedConfigurables.add(configurable);
+            }
+          }
+          for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
+            communicator.onFrameworkSupportAdded(myModule, model, selectedConfigurables, myFrameworkSupportModel);
+          }
+        }
+        finally {
+          model.commit();
+        }
+        for (FrameworkSupportConfigurable configurable : myConfigurables.values()) {
+          Disposer.dispose(configurable);
         }
       }
-      for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
-        communicator.onFrameworkSupportAdded(myModule, model, selectedConfigurables, myFrameworkSupportModel);
-      }
-    }
-    finally {
-      model.commit();
-    }
-    for (FrameworkSupportConfigurable configurable : myConfigurables.values()) {
-      Disposer.dispose(configurable);
-    }
+    }.execute().throwException();
   }
 
   protected FrameworkSupportConfigurable selectFramework(@NotNull FacetTypeId<?> id) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.ui;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -80,6 +81,12 @@ public class PathEditor {
     myDisplayName = displayName;
     myOrderRootType = orderRootType;
     myDescriptor = descriptor;
+    myModel = createListModel();
+  }
+
+
+  protected void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   protected boolean isShowUrlButton() {
@@ -99,6 +106,10 @@ public class PathEditor {
 
   public boolean isModified() {
     return myModified;
+  }
+
+  public OrderRootType getOrderRootType() {
+    return myOrderRootType;
   }
 
   public void apply(SdkModificator sdkModificator) {
@@ -123,10 +134,10 @@ public class PathEditor {
     return roots;
   }
 
-  public void setPaths(@NotNull List<VirtualFile> paths) {
+  public void resetPath(@NotNull List<VirtualFile> paths) {
     keepSelectionState();
     clearList();
-    myEnabled = true;
+    setEnabled(true);
     for (VirtualFile file : paths) {
       addElement(file);
     }
@@ -135,32 +146,26 @@ public class PathEditor {
   }
 
   public void reset(@Nullable SdkModificator modificator) {
-    keepSelectionState();
-    clearList();
-    myEnabled = modificator != null;
-    if (myEnabled) {
-      VirtualFile[] files = modificator.getRoots(myOrderRootType);
-      for (VirtualFile file : files) {
-        addElement(file);
-      }
+    if (modificator != null) {
+      resetPath(Lists.newArrayList(modificator.getRoots(myOrderRootType)));
     }
-    setModified(false);
-    updateButtons();
+    else {
+      setEnabled(false);
+    }
   }
 
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout());
+
+    myList = createList(myPanel, getListModel());
+
+    createButtons(myPanel);
+
+    return myPanel;
+  }
+
+  protected void createButtons(@NotNull JPanel panel) {
     Insets anInsets = new Insets(2, 2, 2, 2);
-
-    myModel = new DefaultListModel();
-    myList = new JBList(myModel);
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-    myList.setCellRenderer(new MyCellRenderer());
-
     myRemoveButton = new JButton(ProjectBundle.message("button.remove"));
     myAddButton = new JButton(ProjectBundle.message("button.add"));
     mySpecifyUrlButton = new JButton(ProjectBundle.message("sdk.paths.specify.url.button"));
@@ -180,8 +185,8 @@ public class PathEditor {
     });
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        List removedItems = ListUtil.removeSelectedItems(myList);
-        itemsRemoved(removedItems);
+        int[] idxs = myList.getSelectedIndices();
+        doRemoveItems(idxs, myList);
       }
     });
     mySpecifyUrlButton.addActionListener(new ActionListener() {
@@ -190,22 +195,49 @@ public class PathEditor {
       }
     });
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-    scrollPane.setPreferredSize(new Dimension(500, 500));
-    myPanel
-      .add(scrollPane, new GridBagConstraints(0, 0, 1, 8, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, anInsets, 0, 0));
-    myPanel.add(myAddButton,
-                new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    myPanel.add(myRemoveButton,
-                new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    myPanel.add(mySpecifyUrlButton,
-                new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
-    myPanel.add(Box.createRigidArea(new Dimension(mySpecifyUrlButton.getPreferredSize().width, 4)),
-                new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, anInsets, 0, 0));
-    return myPanel;
+
+    panel.add(myAddButton,
+              new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
+    panel.add(myRemoveButton,
+              new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
+    panel.add(mySpecifyUrlButton,
+              new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
+    panel.add(Box.createRigidArea(new Dimension(mySpecifyUrlButton.getPreferredSize().width, 4)),
+              new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, anInsets, 0, 0));
   }
 
-  private void itemsRemoved(List removedItems) {
+  protected void doRemoveItems(int[] idxs, JList list) {
+    List removedItems = ListUtil.removeIndices(list, idxs);
+    itemsRemoved(removedItems);
+  }
+
+  protected DefaultListModel createListModel() {
+    return new DefaultListModel();
+  }
+
+  protected JBList createList(JPanel panel, DefaultListModel listModel) {
+    Insets anInsets = new Insets(2, 2, 2, 2);
+
+    JBList list = new JBList(listModel);
+    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
+    list.setCellRenderer(createListCellRenderer(list));
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
+    scrollPane.setPreferredSize(new Dimension(500, 500));
+    panel
+      .add(scrollPane, new GridBagConstraints(0, 0, 1, 8, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, anInsets, 0, 0));
+    return list;
+  }
+
+  protected ListCellRenderer createListCellRenderer(JBList list) {
+    return new MyCellRenderer();
+  }
+
+  protected void itemsRemoved(List removedItems) {
     myAllFiles.removeAll(removedItems);
     if (removedItems.size() > 0) {
       setModified(true);
@@ -250,7 +282,7 @@ public class PathEditor {
 
   private boolean isUrlInserted() {
     if (getRowCount() > 0) {
-      return ((VirtualFile)myModel.lastElement()).getFileSystem() instanceof HttpFileSystem;
+      return ((VirtualFile)getListModel().lastElement()).getFileSystem() instanceof HttpFileSystem;
     }
     return false;
   }
@@ -300,13 +332,17 @@ public class PathEditor {
       return false;
     }
     if (isUrlInserted()) {
-      myModel.insertElementAt(item, myModel.size() - 1);
+      getListModel().insertElementAt(item, getRowCount() - 1);
     }
     else {
-      myModel.addElement(item);
+      getListModel().addElement(item);
     }
     myAllFiles.add(item);
     return true;
+  }
+
+  protected DefaultListModel getListModel() {
+    return myModel;
   }
 
   protected void setSelectedRoots(Object[] roots) {
@@ -317,9 +353,9 @@ public class PathEditor {
       }
     }
     myList.getSelectionModel().clearSelection();
-    int rowCount = myModel.getSize();
+    int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
-      Object currObject = myModel.get(i);
+      Object currObject = getValueAt(i);
       LOG.assertTrue(currObject != null);
       if (rootsList.contains(currObject)) {
         myList.getSelectionModel().addSelectionInterval(i, i);
@@ -344,15 +380,15 @@ public class PathEditor {
   }
 
   private int getRowCount() {
-    return myModel.getSize();
+    return getListModel().getSize();
   }
 
   private VirtualFile getValueAt(int row) {
-    return (VirtualFile)myModel.get(row);
+    return (VirtualFile)getListModel().get(row);
   }
 
   public void clearList() {
-    myModel.clear();
+    getListModel().clear();
     myAllFiles.clear();
     setModified(true);
   }
@@ -371,7 +407,6 @@ public class PathEditor {
           return Boolean.valueOf(FileTypeManager.getInstance().getFileTypeByFile(tempFile).equals(FileTypes.ARCHIVE));
         }
         return Boolean.FALSE;
-
       }
     }).booleanValue();
   }

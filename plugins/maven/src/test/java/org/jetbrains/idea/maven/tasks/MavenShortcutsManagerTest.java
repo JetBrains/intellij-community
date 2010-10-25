@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -149,7 +150,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
   }
 
   public void testDeletingActionOnProjectRemoval() throws Exception {
-    VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
+    final VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
                                            "<artifactId>p1</artifactId>" +
                                            "<version>1</version>");
 
@@ -162,7 +163,13 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");
 
-    p1.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        p1.delete(this);
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertKeymapDoesNotContain(p1, "clean");

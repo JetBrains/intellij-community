@@ -28,13 +28,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class PsiCachedValue<T> extends CachedValueBase<T> {
-
+public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private final PsiManager myManager;
   protected long myLastPsiTimeStamp = -1;
 
-  public PsiCachedValue(PsiManager manager) {
-    super();
+  public PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
