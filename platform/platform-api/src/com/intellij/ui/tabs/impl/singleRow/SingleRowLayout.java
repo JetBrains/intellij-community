@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 
@@ -353,6 +354,17 @@ public class SingleRowLayout extends TabLayout {
     if (c instanceof TabLabel) {
       TabInfo info = ((TabLabel)c).getInfo();
       return myLastSingRowLayout.myVisibleInfos.indexOf(info);
+    } else if (c instanceof GhostComponent) {
+      GhostComponent ghost = (GhostComponent)c;
+      TabInfo info = ghost.myInfo;
+      if (info != null) {
+        int index = myLastSingRowLayout.myVisibleInfos.indexOf(info);
+        index += myLeftGhost == ghost ? -1 : 1;
+        return index >= 0 && index < myLastSingRowLayout.myVisibleInfos.size() ? index : -1;
+      } else {
+        if (myLastSingRowLayout.myVisibleInfos.size() == 0) return 0;
+        return myLeftGhost == ghost ? 0 : myLastSingRowLayout.myVisibleInfos.size() - 1;
+      }
     }
 
     return -1;
