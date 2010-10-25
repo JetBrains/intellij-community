@@ -44,6 +44,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,12 +161,17 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
         if (files.length == 0) {
           return new ActionCallback.Rejected();
         }
-        if (libraries.size() == 1) {
+        final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<Library, LibraryOrderEntry>();
+        for (LibraryOrderEntry library : libraries) {
+          librariesToAppendSourcesTo.put(library.getLibrary(), library);
+        }
+        if (librariesToAppendSourcesTo.size() == 1) {
           appendSources(firstLibrary, files);
         } else {
-          final List<LibraryOrderEntry> librariesToAppendSourcesTo = new ArrayList<LibraryOrderEntry>(libraries);
-          librariesToAppendSourcesTo.add(null);
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryOrderEntry>("<html><body>Multiple libraries contain file.<br> Choose libraries to attach sources to</body></html>", librariesToAppendSourcesTo){
+          librariesToAppendSourcesTo.put(null, null);
+          final Collection<LibraryOrderEntry> orderEntries = librariesToAppendSourcesTo.values();
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryOrderEntry>("<html><body>Multiple libraries contain file.<br> Choose libraries to attach sources to</body></html>",
+                                                                                                orderEntries.toArray(new LibraryOrderEntry[orderEntries.size()])){
             @Override
             public ListSeparator getSeparatorAbove(LibraryOrderEntry value) {
               return value == null ? new ListSeparator() : null;
@@ -186,8 +193,8 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
               if (libraryOrderEntry != null) {
                 appendSources(libraryOrderEntry.getLibrary(), files);
               } else {
-                for (LibraryOrderEntry libOrderEntry : libraries) {
-                  appendSources(libOrderEntry.getLibrary(), files);
+                for (Library libOrderEntry : librariesToAppendSourcesTo.keySet()) {
+                  appendSources(libOrderEntry, files);
                 }
               }
               return FINAL_CHOICE;
