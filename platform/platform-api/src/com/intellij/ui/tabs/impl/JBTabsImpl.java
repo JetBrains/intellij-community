@@ -416,6 +416,10 @@ public class JBTabsImpl extends JComponent
     return myDropInfo != null && myDropInfo == info;
   }
 
+  public void setDropInfoIndex(int dropInfoIndex) {
+    myDropInfoIndex = dropInfoIndex;
+  }
+
   class TabActionsAutoHideListener extends MouseMotionAdapter {
 
     private TabLabel myCurrentOverLabel;
@@ -1229,8 +1233,8 @@ public class JBTabsImpl extends JComponent
       visible.addAll(myVisibleInfos);
 
       if (myDropInfo != null && !visible.contains(myDropInfo)) {
-        if (myDropInfoIndex >= 0 && myDropInfoIndex < visible.size()) {
-          visible.add(myDropInfoIndex, myDropInfo);
+        if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
+          visible.add(getDropInfoIndex(), myDropInfo);
         } else {
           visible.add(myDropInfo);
         }
@@ -2968,6 +2972,7 @@ public class JBTabsImpl extends JComponent
     if (myDropInfo != null) {
       TabInfo dropInfo = myDropInfo;
       myDropInfo = null;
+      setDropInfoIndex(-1);
       removeTab(dropInfo, null, false, true);
     }
   }
@@ -2976,8 +2981,9 @@ public class JBTabsImpl extends JComponent
   public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
     myDropInfo = tabInfo;
 
-    addTab(myDropInfo, -1, true);
-    myDropInfoIndex = myLayout.getDropIndexFor(point.getPoint(this));
+    int index = myLayout.getDropIndexFor(point.getPoint(this));
+    setDropInfoIndex(index);
+    addTab(myDropInfo, index, true);
 
     TabLabel label = myInfo2Label.get(myDropInfo);
     Dimension size = label.getPreferredSize();
@@ -2996,8 +3002,8 @@ public class JBTabsImpl extends JComponent
   @Override
   public void processDropOver(TabInfo over, RelativePoint point) {
     int index = myLayout.getDropIndexFor(point.getPoint(this));
-    if (index != myDropInfoIndex) {
-      myDropInfoIndex = index;
+    if (index != getDropInfoIndex()) {
+      setDropInfoIndex(index);
       relayout(true, false);
     }
   }
