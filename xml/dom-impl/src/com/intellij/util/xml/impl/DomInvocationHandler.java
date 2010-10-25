@@ -70,7 +70,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
       final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
       LOG.assertTrue(parameter != null, type + " " + myType);
-      Converter converter = getConverter(method, parameter);
+      Converter converter = getConverter(new AnnotatedElement() {
+        @Override
+        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+          return myInvocationCache.getMethodAnnotation(method, annotationClass);
+        }
+      }, parameter);
       if (converter == null && type instanceof TypeVariable) {
         converter = getConverter(DomInvocationHandler.this, DomUtil.getGenericValueParameter(myType));
       }
@@ -88,11 +93,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     protected Invocation create(Method signature) {
       final JavaMethod method = JavaMethod.getMethod(getRawType(), signature);
 
-      if (DomImplUtil.isTagValueGetter(method)) {
+      if (myInvocationCache.isTagValueGetter(method)) {
         return new GetInvocation(getScalarConverter(method));
       }
 
-      if (DomImplUtil.isTagValueSetter(method)) {
+      if (myInvocationCache.isTagValueSetter(method)) {
         return new SetInvocation(getScalarConverter(method));
       }
       return null;
@@ -442,7 +447,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (annotation != null) return annotation;
     }
 
-    return getRawType().getAnnotation(annotationClass);
+    return getClassAnnotation(annotationClass);
+  }
+
+  protected <T extends Annotation> T getClassAnnotation(Class<T> annotationClass) {
+    return myInvocationCache.getClassAnnotation(annotationClass);
   }
 
   @Nullable

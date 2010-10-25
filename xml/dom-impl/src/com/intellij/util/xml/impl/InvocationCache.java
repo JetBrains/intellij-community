@@ -27,6 +27,36 @@ public class InvocationCache {
       return ourCoreInvocations.get(new JavaMethodSignature(key));
     }
   };
+  private final Map<JavaMethod, Boolean> myGetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
+    @Override
+    protected Boolean create(JavaMethod key) {
+      return DomImplUtil.isTagValueGetter(key);
+    }
+  };
+  private final Map<JavaMethod, Boolean> mySetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
+    @Override
+    protected Boolean create(JavaMethod key) {
+      return DomImplUtil.isTagValueSetter(key);
+    }
+  };
+  private final Map<JavaMethod, Map<Class, Object>> myMethodAnnotations = new ConcurrentFactoryMap<JavaMethod, Map<Class, Object>>() {
+    @Override
+    protected Map<Class, Object> create(final JavaMethod method) {
+      return new ConcurrentFactoryMap<Class, Object>() {
+        @Override
+        protected Object create(Class annoClass) {
+          return method.getAnnotation(annoClass);
+        }
+      };
+    }
+  };
+  private final Map<Class, Object> myClassAnnotations = new ConcurrentFactoryMap<Class, Object>() {
+    @Override
+    protected Object create(Class annoClass) {
+      return myType.getAnnotation(annoClass);
+    }
+  };
+  private final Class myType;
 
   static {
     addCoreInvocations(DomElement.class);
@@ -132,6 +162,9 @@ public class InvocationCache {
     }
   }
 
+  public InvocationCache(Class type) {
+    myType = type;
+  }
 
   @Nullable
   public Invocation getInvocation(Method method) {
@@ -142,4 +175,21 @@ public class InvocationCache {
     myInvocations.put(method, invocation);
   }
 
+  public boolean isTagValueGetter(JavaMethod method) {
+    return myGetters.get(method);
+  }
+
+  public boolean isTagValueSetter(JavaMethod method) {
+    return mySetters.get(method);
+  }
+
+  @Nullable
+  public <T extends Annotation> T getMethodAnnotation(JavaMethod method, Class<T> annoClass) {
+    return (T)myMethodAnnotations.get(method).get(annoClass);
+  }
+
+  @Nullable
+  public <T extends Annotation> T getClassAnnotation(Class<T> annoClass) {
+    return (T)myClassAnnotations.get(annoClass);
+  }
 }
