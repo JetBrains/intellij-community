@@ -16,6 +16,7 @@
 package org.jetbrains.generate.tostring;
 
 import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.Disposable;
@@ -87,6 +88,10 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         }
 
         PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
+        if (dialogMembers.length == 0) {
+          HintManager.getInstance().showErrorHint(editor, "No members to include in toString() have been found");
+          return;
+        }
 
         final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);

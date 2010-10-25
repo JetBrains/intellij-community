@@ -18,16 +18,17 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,8 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     super("");
   }
 
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  @Override
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
     myEqualsFields = null;
     myHashCodeFields = null;
     myNonNullFields = PsiField.EMPTY_ARRAY;
@@ -89,6 +91,17 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
       } else {
         return null;
       }
+    }
+    boolean hasNonStaticFields = false;
+    for (PsiField field : aClass.getFields()) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)){
+        hasNonStaticFields = true;
+        break;
+      }
+    }
+    if (!hasNonStaticFields) {
+      HintManager.getInstance().showErrorHint(editor, "No fields to include in equals/hashCode have been found");
+      return null;
     }
 
     GenerateEqualsWizard wizard = new GenerateEqualsWizard(project, aClass, needEquals, needHashCode);
