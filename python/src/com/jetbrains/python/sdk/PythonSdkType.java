@@ -536,7 +536,11 @@ public class PythonSdkType extends SdkType {
 
   private static String getSkeletonsPath(String bin_path) {
     String sep = File.separator;
-    return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + FileUtil.toSystemIndependentName(bin_path).hashCode() + sep;
+    return getSkeletonsRootPath() + sep + FileUtil.toSystemIndependentName(bin_path).hashCode() + sep;
+  }
+
+  public static String getSkeletonsRootPath() {
+    return PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME;
   }
 
   @Nullable
