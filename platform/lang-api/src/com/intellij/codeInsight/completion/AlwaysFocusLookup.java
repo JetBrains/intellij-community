@@ -16,15 +16,13 @@
 package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class CompletionConfidence {
-
-  @Nullable
-  public abstract Boolean shouldFocusLookup(@NotNull CompletionParameters parameters);
-
-
+public class AlwaysFocusLookup extends CompletionConfidence {
+  @Override
+  public Boolean shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    return true;
+  }
 }

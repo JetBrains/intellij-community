@@ -15,16 +15,21 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class CompletionConfidence {
-
-  @Nullable
-  public abstract Boolean shouldFocusLookup(@NotNull CompletionParameters parameters);
-
-
+public class UnfocusedNameIdentifier extends CompletionConfidence {
+  @Override
+  public Boolean shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    final PsiElement position = parameters.getPosition();
+    final PsiElement parent = position.getParent();
+    if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == position) {
+      return false;
+    }
+    return null;
+  }
 }

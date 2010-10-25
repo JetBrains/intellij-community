@@ -147,6 +147,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myModel.setArranger(arranger);
   }
 
+  @Override
   public boolean isFocused() {
     return myFocused;
   }

@@ -78,16 +78,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
-  private final boolean myFocusLookup;
+  final boolean autopopup;
 
   public CodeCompletionHandlerBase(final CompletionType completionType) {
-    this(completionType, true, true);
+    this(completionType, true, false);
   }
 
-  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean focusLookup) {
+  public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean autopopup) {
     myCompletionType = completionType;
     this.invokedExplicitly = invokedExplicitly;
-    this.myFocusLookup = focusLookup;
+    this.autopopup = autopopup;
   }
 
   public final void invoke(final Project project, final Editor editor) {
@@ -100,7 +100,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     try {
-      invokeCompletion(project, editor, psiFile, myFocusLookup ? 1 : 0);
+      invokeCompletion(project, editor, psiFile, autopopup ? 0 : 1);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
@@ -173,7 +173,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
     };
-    if (!myFocusLookup) {
+    if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
@@ -188,14 +188,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private boolean shouldFocusLookup(CompletionParameters parameters) {
-    if (myFocusLookup) {
+    if (!autopopup) {
       return true;
     }
 
     final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      if (confidence.shouldFocusLookup(parameters)) {
-        return true;
+      final Boolean result = confidence.shouldFocusLookup(parameters);
+      if (result != null) {
+        return result;
       }
     }
     return false;
@@ -206,7 +207,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null) {
       existing.markReused();
-      if (myFocusLookup) {
+      if (!autopopup) {
         existing.setFocused(true);
       }
       return existing;
