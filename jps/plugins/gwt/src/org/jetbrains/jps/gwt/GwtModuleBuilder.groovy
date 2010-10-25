@@ -4,8 +4,10 @@ import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleBuilder
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.artifacts.LayoutElement
+import org.jetbrains.jps.artifacts.ArtifactLayoutElement
 
- /**
+/**
  * @author nik
  */
 class GwtModuleBuilder implements ModuleBuilder {
@@ -28,6 +30,11 @@ class GwtModuleBuilder implements ModuleBuilder {
   }
 
   def compileGwtFacet(GwtFacet facet, Project project, ModuleBuildState state) {
+    if (!isIncludedInArtifact(facet, project)) {
+      project.info("GWT Facet in module '${facet.module.name}' isn't included in artifacts so GWT compiler won't be called")
+      return
+    }
+
     if (facet.tempOutputDir != null) return
 
     if (!new File(facet.sdkPath).exists()) {
@@ -73,5 +80,17 @@ class GwtModuleBuilder implements ModuleBuilder {
         arg(value: moduleName)
       }
     }
+  }
+
+  private boolean isIncludedInArtifact(GwtFacet gwtFacet, Project project) {
+    boolean included = false
+    project.artifacts.values()*.rootElement*.process(project) {LayoutElement element ->
+      if (element instanceof GwtCompilerOutputElement
+          && ((GwtCompilerOutputElement)element).findFacet(project) == gwtFacet) {
+        included = true
+      }
+      return !(element instanceof ArtifactLayoutElement)
+    }
+    return included
   }
 }

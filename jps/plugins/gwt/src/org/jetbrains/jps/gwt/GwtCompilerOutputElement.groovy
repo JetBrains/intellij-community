@@ -15,13 +15,16 @@ class GwtCompilerOutputElement extends ComplexLayoutElement {
 
   @Override
   List<LayoutElement> getSubstitution(Project project) {
-    Facet facet = IdeaProjectLoadingUtil.findFacetById(project, facetId)
+    Facet facet = IdeaProjectLoadingUtil.findFacetByIdWithAssertion(project, facetId)
     if (!(facet instanceof GwtFacet)) {
-      project.error("$facetId is not GWT facet!")
+      project.error("'$facetId' is not GWT facet!")
     }
 
     GwtFacet gwtFacet = (GwtFacet)facet
     return [new DirectoryCopyElement(dirPath: gwtFacet.tempOutputDir)]
   }
 
+  Facet findFacet(Project project) {
+    return IdeaProjectLoadingUtil.findFacetById(project, facetId)
+  }
 }

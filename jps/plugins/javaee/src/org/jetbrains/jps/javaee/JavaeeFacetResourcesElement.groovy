@@ -12,7 +12,7 @@ class JavaeeFacetResourcesElement extends ComplexLayoutElement {
   String facetId
 
   List<LayoutElement> getSubstitution(Project project) {
-    Facet facet = IdeaProjectLoadingUtil.findFacetById(project, facetId)
+    Facet facet = IdeaProjectLoadingUtil.findFacetByIdWithAssertion(project, facetId)
 
     if (!(facet instanceof JavaeeFacet)) {
       project.error("$facetId facet is not JavaEE facet")
