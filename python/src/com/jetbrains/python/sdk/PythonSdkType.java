@@ -287,6 +287,9 @@ public class PythonSdkType extends SdkType {
   }
 
   public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
+    if (additionalData instanceof PythonSdkAdditionalData ) {
+      ((PythonSdkAdditionalData)additionalData).save(additional);
+    }
   }
 
   @Override
@@ -321,7 +324,7 @@ public class PythonSdkType extends SdkType {
     // Don't fix skeletons here, PythonSdkUpdater will take care of that (see PY-1226 - no progress will be displayed if skeletons
     // generation is invoked from here
 
-    return null;
+    return PythonSdkAdditionalData.load(additional);
   }
 
   private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {

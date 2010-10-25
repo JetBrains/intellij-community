@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -17,9 +18,14 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -61,12 +67,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor) throws ExecutionException {
+  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
+    throws ExecutionException {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilters) {
       consoleBuilder.addFilter(filter);
     }
-    
+
     final ConsoleView consoleView = consoleBuilder.getConsole();
     consoleView.attachToProcess(processHandler);
     return consoleView;
@@ -78,6 +85,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   /**
    * Patches the command line parameters applying patchers from first to last, and then runs it.
+   *
    * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    * @throws ExecutionException
@@ -93,7 +101,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine();
     if (patchers != null) {
-      for (CommandLinePatcher patcher: patchers) {
+      for (CommandLinePatcher patcher : patchers) {
         if (patcher != null) patcher.patchCommandLine(commandLine);
       }
     }
@@ -121,7 +129,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   /**
    * Creates a number of parameter groups in the command line:
    * GROUP_EXE_OPTIONS, GROUP_DEBUGGER, GROUP_SCRIPT.
-   * These are necessary for command line patchers to work properly. 
+   * These are necessary for command line patchers to work properly.
+   *
    * @param commandLine
    */
   public static void createStandardGroupsIn(GeneralCommandLine commandLine) {
@@ -133,10 +142,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void initEnvironment(GeneralCommandLine commandLine) {
     Map<String, String> envs = myConfig.getEnvs();
-    if (envs == null)
+    if (envs == null) {
       envs = new HashMap<String, String>();
-    else
+    }
+    else {
       envs = new HashMap<String, String>(envs);
+    }
 
     addPredefinedEnvironmentVariables(envs, myConfig.isPassParentEnvs());
     addCommonEnvironmentVariables(envs);
@@ -154,6 +165,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);
     }
+
+    Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+    VirtualFile[] paths = pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    List<String> pathList = Lists.newArrayList();
+    for (VirtualFile file : paths) {
+      pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+    }
+    PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
