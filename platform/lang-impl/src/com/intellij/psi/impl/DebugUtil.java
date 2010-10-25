@@ -40,6 +40,8 @@ import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
 
@@ -368,6 +370,13 @@ public class DebugUtil {
     text = StringUtil.replace(text, "\r", "\\r");
     text = StringUtil.replace(text, "\t", "\\t");
     return text;
+  }
+
+  public static String currentStackTrace() {
+    final Throwable throwable = new Throwable();
+    final StringWriter out = new StringWriter();
+    throwable.printStackTrace(new PrintWriter(out));
+    return out.toString();
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {
