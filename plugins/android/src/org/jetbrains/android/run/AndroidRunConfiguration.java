@@ -180,22 +180,18 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       return super.isReadyForDebugging(data);
     }
 
-    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) {
+    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException {
       if (myActivityName == null) return true;
       final String activityPath = state.getPackageName() + '/' + myActivityName;
       ProcessHandler processHandler = state.getProcessHandler();
+      if (state.isStopped()) return false;
       processHandler.notifyTextAvailable("Launching application: " + activityPath + ".\n", STDOUT);
-      AndroidRunningState.MyReceiver receiver = new AndroidRunningState.MyReceiver();
+      AndroidRunningState.MyReceiver receiver = state.new MyReceiver();
       boolean debug = state.isDebugMode();
       while (true) {
         if (state.isStopped()) return false;
-        try {
-          String command = "am start " + (debug ? "-D " : "") + "-n \"" + activityPath + "\"";
-          state.executeDeviceCommandAndWriteToConsole(device, command, receiver);
-        }
-        catch (IOException e) {
-          processHandler.notifyTextAvailable("Can't launch application (I/O error).\n", STDERR);
-        }
+        String command = "am start " + (debug ? "-D " : "") + "-n \"" + activityPath + "\"";
+        state.executeDeviceCommandAndWriteToConsole(device, command, receiver);
         if (receiver.getErrorType() != 2) {
           break;
         }
@@ -207,9 +203,9 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
           catch (InterruptedException e) {
           }
         }
-        receiver = new AndroidRunningState.MyReceiver();
+        receiver = state.new MyReceiver();
       }
-      boolean success = receiver.getErrorType() == AndroidRunningState.MyReceiver.NO_ERROR;
+      boolean success = receiver.getErrorType() == AndroidRunningState.NO_ERROR;
       if (success) {
         processHandler.notifyTextAvailable(receiver.getOutput().toString(), STDOUT);
       }

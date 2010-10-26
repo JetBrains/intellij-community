@@ -15,7 +15,10 @@
  */
 package org.jetbrains.android.util;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.ShellCommandUnresponsiveException;
+import com.android.ddmlib.TimeoutException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -330,10 +333,19 @@ public class AndroidUtils {
     return (c.isInterface() || c.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
-  public static void executeCommand(IDevice device, String command, AndroidOutputReceiver receiver, boolean infinite) throws IOException {
+  @SuppressWarnings({"DuplicateThrows"})
+  public static void executeCommand(IDevice device, String command, AndroidOutputReceiver receiver, boolean infinite) throws IOException,
+                                                                                                                             TimeoutException,
+                                                                                                                             AdbCommandRejectedException,
+                                                                                                                             ShellCommandUnresponsiveException {
     int attempt = 0;
     while (attempt < 5) {
-      device.executeShellCommand(command, receiver);
+      if (infinite) {
+        device.executeShellCommand(command, receiver, 0);
+      }
+      else {
+        device.executeShellCommand(command, receiver);
+      }
       if (infinite && !receiver.isCancelled()) {
         attempt++;
       }
