@@ -121,7 +121,13 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
            "  public abstract String sampleMethod(int i, int longParameterName, int missingDescription) throws XXXException, YException, ZException;\n" +
            "\n" +
            "  /** One-line comment */\n" +
-           "  public abstract String sampleMethod2();\n";
+           "  public abstract String sampleMethod2();\n" +
+           "\n" +
+           "  /**\n" +
+           "   * Simple method description\n" +
+           "   * @return\n" +
+           "   */\n" +
+           "  public abstract String sampleMethod3();\n";
   }
 
 

@@ -43,10 +43,14 @@ public class JavaIndentOptionsProvider implements FileTypeIndentOptionsProvider 
   @NonNls
   public String getPreviewText() {
     return "public class Foo {\n" +
-         "  public int[] X = new int[] { 1, 3, 5\n" +
+         "  public int[] X = new int[] { 1, 3, 5,\n" +
          "  7, 9, 11};\n" +
          "  public void foo(boolean a, int x,\n" +
          "    int y, int z) {\n" +
+         "      a = x == 0 &&\n" +
+         "      (y == 0 ||\n" +
+         "        z <= 4) &&\n" +
+         "      z >= 0;" +
          "    label1: do {\n" +
          "      try {\n" +
          "        if(x > 0) {\n" +
