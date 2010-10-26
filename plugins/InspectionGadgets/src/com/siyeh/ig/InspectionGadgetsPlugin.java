@@ -357,7 +357,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(LoggerInitializedWithForeignClassInspection.class);
         m_inspectionClasses.add(LogStatementGuardedByLogConditionInspection.class);
         m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
-        //m_inspectionClasses.add(PublicMethodWithoutLoggingInspection.class);
+        m_inspectionClasses.add(PublicMethodWithoutLoggingInspection.class);
     }
 
     private void registerSecurityInspections() {
@@ -1071,7 +1071,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
     }
 
-    @Override
     public void disposeComponent() {
     }
 
