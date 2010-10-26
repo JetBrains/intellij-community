@@ -144,6 +144,22 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     return super.handleElementRename(newElementName);
   }
 
+  public boolean isReferenceTo(PsiElement element) {
+    // optimization to exclude obvious variants
+    final DomElement domElement = AntDomReferenceBase.toDomElement(element);
+    if (domElement instanceof AntDomProperty) {
+      final AntDomProperty prop = (AntDomProperty)domElement;
+      final String propName = prop.getName().getRawText();
+      if (propName != null && prop.getPrefix().getRawText() == null && prop.getEnvironment().getRawText() == null) {
+        // if only 'name' attrib is specified  
+        if (!propName.equalsIgnoreCase(getCanonicalText())) {
+          return false;
+        }
+      }
+    }
+    return super.isReferenceTo(element);
+  }
+
   private static class MyResolveResult implements ResolveResult {
 
     private final PsiElement myElement;
