@@ -87,6 +87,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       return PsiReference.EMPTY_ARRAY;
     }
     final List<PsiReference> refs = new ArrayList<PsiReference>();
+    final AntDomTargetReference.ReferenceGroup group = new AntDomTargetReference.ReferenceGroup();
     final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
     final StringTokenizer tokenizer = new StringTokenizer(refsString, ",", false);
     while (tokenizer.hasMoreTokens()) {
@@ -103,7 +104,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
           }
         }
       }
-      refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length())));
+      refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), group));
     }
     return refs.toArray(new PsiReference[refs.size()]);
   }
