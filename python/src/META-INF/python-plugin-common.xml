@@ -166,7 +166,7 @@
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
 
     <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.jetbrains.python.configuration.PyLanguageCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>

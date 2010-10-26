@@ -260,11 +260,11 @@ public class PyBlock implements ASTBlock {
         return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
       }
       if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
-        return getSpacingForOption(getPySettings().SPACE_AFTER_COLON);
+        return getSpacingForOption(getPySettings().SPACE_AFTER_PY_COLON);
       }
     }
     if (type2 == PyTokenTypes.COLON) {
-      return getSpacingForOption(getPySettings().SPACE_BEFORE_COLON);
+      return getSpacingForOption(getPySettings().SPACE_BEFORE_PY_COLON);
     }
 
     if (type1 == PyTokenTypes.COMMA) {
