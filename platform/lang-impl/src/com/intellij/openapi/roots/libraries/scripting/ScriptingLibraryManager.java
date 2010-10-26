@@ -58,33 +58,8 @@ public class ScriptingLibraryManager {
       LibraryTable libTable = getLibraryTable();
       if (libTable != null) {
         LibraryTable.ModifiableModel libTableModel = libTable.getModifiableModel();
-        for (Library library : libTableModel.getLibraries()) {
-          ScriptingLibraryTable.LibraryModel scriptingLibModel = myLibTable.getLibraryByName(library.getName());
-          if (scriptingLibModel == null) {
-            libTableModel.removeLibrary(library);
-          }
-          else {
-            Library.ModifiableModel libModel = library.getModifiableModel();
-            for (VirtualFile libRoot : libModel.getFiles(OrderRootType.SOURCES)) {
-              libModel.removeRoot(libRoot.getUrl(), OrderRootType.SOURCES);
-            }
-            for (VirtualFile newRoot : scriptingLibModel.getSourceFiles()) {
-              libModel.addRoot(newRoot, OrderRootType.SOURCES);
-            }
-            libModel.commit();
-          }
-        }
-        for (ScriptingLibraryTable.LibraryModel scriptingLibModel : myLibTable.getLibraries()) {
-          Library library = libTableModel.getLibraryByName(scriptingLibModel.getName());
-          if (library == null && libTableModel instanceof LibraryTableBase.ModifiableModelEx) {
-            library = ((LibraryTableBase.ModifiableModelEx)libTableModel).createLibrary(scriptingLibModel.getName(), myLibraryType);
-            Library.ModifiableModel libModel = library.getModifiableModel();
-            for (VirtualFile newRoot : scriptingLibModel.getSourceFiles()) {
-              libModel.addRoot(newRoot, OrderRootType.SOURCES);
-            }
-            libModel.commit();
-          }
-        }
+        updateLibraries(libTableModel, OrderRootType.SOURCES);
+        updateLibraries(libTableModel, OrderRootType.CLASSES);
         libTableModel.commit();
       }
     }
@@ -93,14 +68,44 @@ public class ScriptingLibraryManager {
     }
   }
 
+  private void updateLibraries(LibraryTable.ModifiableModel libTableModel, OrderRootType rootType) {
+    for (Library library : libTableModel.getLibraries()) {
+      ScriptingLibraryTable.LibraryModel scriptingLibModel = myLibTable.getLibraryByName(library.getName());
+      if (scriptingLibModel == null) {
+        libTableModel.removeLibrary(library);
+      }
+      else {
+        Library.ModifiableModel libModel = library.getModifiableModel();
+        for (VirtualFile libRoot : libModel.getFiles(rootType)) {
+          libModel.removeRoot(libRoot.getUrl(), rootType);
+        }
+        for (VirtualFile newRoot : scriptingLibModel.getFiles(rootType)) {
+          libModel.addRoot(newRoot, rootType);
+        }
+        libModel.commit();
+      }
+    }
+    for (ScriptingLibraryTable.LibraryModel scriptingLibModel : myLibTable.getLibraries()) {
+      Library library = libTableModel.getLibraryByName(scriptingLibModel.getName());
+      if (library == null && libTableModel instanceof LibraryTableBase.ModifiableModelEx) {
+        library = ((LibraryTableBase.ModifiableModelEx)libTableModel).createLibrary(scriptingLibModel.getName(), myLibraryType);
+        Library.ModifiableModel libModel = library.getModifiableModel();
+        for (VirtualFile newRoot : scriptingLibModel.getFiles(rootType)) {
+          libModel.addRoot(newRoot, rootType);
+        }
+        libModel.commit();
+      }
+    }
+  }
+
   public void dropChanges() {
     myLibTable = null;
   }
 
   @Nullable
-  public ScriptingLibraryTable.LibraryModel createLibrary(String name, VirtualFile[] sourceFiles) {
+  public ScriptingLibraryTable.LibraryModel createLibrary(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
     if (ensureModel()) {
-      return myLibTable.createLibrary(name, sourceFiles);
+      return myLibTable.createLibrary(name, sourceFiles, compactFiles);
     }
     return null;
   }
@@ -129,12 +134,13 @@ public class ScriptingLibraryManager {
     }
   }
 
-  public void updateLibrary(String oldName, String name, VirtualFile[] files) {
+  public void updateLibrary(String oldName, String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
     if (ensureModel()) {
       ScriptingLibraryTable.LibraryModel libModel = myLibTable.getLibraryByName(oldName);
       if (libModel != null) {
         libModel.setName(name);
-        libModel.setSourceFiles(files);
+        libModel.setSourceFiles(sourceFiles);
+        libModel.setCompactFiles(compactFiles);
       }
     }
   }

@@ -75,11 +75,11 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     return "?";
   }
 
-  public void createLibrary(final String name, final VirtualFile[] files) {
+  public void createLibrary(final String name, final VirtualFile[] sourceFiles, final VirtualFile[] compactFiles) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ScriptingLibraryTable.LibraryModel lib = myLibraryManager.createLibrary(name, files);
+        ScriptingLibraryTable.LibraryModel lib = myLibraryManager.createLibrary(name, sourceFiles, compactFiles);
         if (lib != null) {
           fireLibTableChanged();
         }
@@ -100,11 +100,11 @@ public class ScriptingLibraryTableModel extends AbstractTableModel {
     }
   }
 
-  public void updateLibrary(final String oldName, final String name, final VirtualFile[] files) {
+  public void updateLibrary(final String oldName, final String name, final VirtualFile[] sourceFiles, final VirtualFile[] compactFiles) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        myLibraryManager.updateLibrary(oldName, name, files);
+        myLibraryManager.updateLibrary(oldName, name, sourceFiles, compactFiles);
         fireLibTableChanged();
       }
     });
