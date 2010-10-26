@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,12 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldStaticFinalFix;
+import com.siyeh.ig.ui.TextField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
 import java.awt.*;
 
 public class NonStaticFinalLoggerInspection extends BaseInspection {
@@ -71,45 +68,21 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
                 InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
-        final JTextField loggerClassNameField = new JTextField();
-        final Font panelFont = panel.getFont();
-        loggerClassNameField.setFont(panelFont);
-        loggerClassNameField.setText(loggerClassName);
-        loggerClassNameField.setColumns(100);
-        loggerClassNameField.setInputVerifier(new RegExInputVerifier());
-        final DocumentListener listener = new DocumentListener() {
-
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                loggerClassName = loggerClassNameField.getText();
-            }
-        };
-        final Document loggerClassNameDocument =
-                loggerClassNameField.getDocument();
-        loggerClassNameDocument.addDocumentListener(listener);
+        final TextField loggerClassNameField =
+                new TextField(this, "loggerClassName");
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.EAST;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.ipady = 10;
+        constraints.weighty = 1.0;
+        constraints.anchor = GridBagConstraints.NORTHEAST;
         panel.add(classNameLabel, constraints);
 
         constraints.gridx = 1;
-        constraints.gridy = 0;
-        constraints.anchor = GridBagConstraints.WEST;
+        constraints.ipady = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.weightx = 1.0;
         panel.add(loggerClassNameField, constraints);
 
         return panel;
