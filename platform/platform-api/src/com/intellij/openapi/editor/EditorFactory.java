@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -161,14 +162,25 @@ public abstract class EditorFactory implements ApplicationComponent {
    * and released.
    *
    * @param listener the listener instance.
+   * @deprecated use the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener);
+
+  /**
+   * Registers a listener for receiving notifications when editor instances are created and released
+   * and removes the listener when {@link parentDisposable} get disposed.
+   *
+   * @param listener the listener instance.
+   * @param parentDisposable the Disposable which triggers the removal of the listener
+   */
+  public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Unregisters a listener for receiving notifications when editor instances are created
    * and released.
    *
    * @param listener the listener instance.
+   * @deprecated you should have used the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   public abstract void removeEditorFactoryListener(@NotNull EditorFactoryListener listener);
 

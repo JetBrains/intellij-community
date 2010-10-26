@@ -48,12 +48,17 @@ import java.util.*;
 */
 class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiReference{
 
+  private final ReferenceGroup myGroup;
+
   public AntDomTargetReference(PsiElement element) {
     super(element, true);
+    myGroup = null;
   }
 
-  public AntDomTargetReference(PsiElement element, TextRange range) {
+  public AntDomTargetReference(PsiElement element, TextRange range, ReferenceGroup group) {
     super(element, range, true);
+    myGroup = group;
+    group.addReference(this);
   }
 
   public PsiElement resolve() {
@@ -70,21 +75,40 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
           if (result != null) {
             final Map<String, AntDomTarget> variants = result.getVariants();
             String newName = null;
-            for (Map.Entry<String, AntDomTarget> entry : variants.entrySet()) {
-              if (pointingToTarget.equals(entry.getValue())) {
-                final String candidate = entry.getKey();
-                if (newName == null) {
-                  newName = candidate;
+            if (!variants.isEmpty()) {
+              List<Pair<String, String>> prefixNamePairs = null;
+              for (Map.Entry<String, AntDomTarget> entry : variants.entrySet()) {
+                final AntDomTarget candidateTarget = entry.getValue();
+                if (pointingToTarget.equals(candidateTarget)) {
+                  final String candidateName = entry.getKey();
+                  final String candidateTargetName = candidateTarget.getName().getRawText();
+                  if (candidateName.endsWith(candidateTargetName)) {
+                    final String prefix = candidateName.substring(0, candidateName.length() - candidateTargetName.length());
+                    if (prefixNamePairs == null) {
+                      prefixNamePairs = new ArrayList<Pair<String, String>>(); // lazy init
+                    }
+                    prefixNamePairs.add(new Pair<String, String>(prefix, candidateName));
+                  }
                 }
-                else {
-                  if (candidate.length() < newName.length()) {
-                    newName = candidate; // prefer shorter names
+              }
+              final String currentRefText = getCanonicalText();
+              for (Pair<String, String> pair : prefixNamePairs) {
+                final String prefix = pair.getFirst();
+                final String effectiveName = pair.getSecond();
+                if (currentRefText.startsWith(prefix)) {
+                  if (newName == null || effectiveName.length() > newName.length()) {
+                    // this candidate's prefix matches current reference text and this name is longer 
+                    // than the previous candidate, then prefer this name
+                    newName = effectiveName;
                   }
                 }
               }
             }
             if (newName != null) {
               handleElementRename(newName);
+              if (myGroup != null) {
+                myGroup.textChanged(this, newName);
+              }
             }
           }
       }
@@ -183,6 +207,29 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
       final Pair<AntDomTarget,String> pair = result.getResolvedTarget(psiReference.getCanonicalText());
       final DomTarget domTarget = pair != null && pair.getFirst() != null ? DomTarget.getTarget(pair.getFirst()) : null;
       return domTarget != null? PomService.convertToPsi(domTarget) : null;
+    }
+  }
+  
+  public static class ReferenceGroup {
+    private List<AntDomTargetReference> myRefs = new ArrayList<AntDomTargetReference>();
+    
+    public void addReference(AntDomTargetReference ref) {
+      myRefs.add(ref);
+    }
+    
+    public void textChanged(AntDomTargetReference ref, String newText) {
+      Integer lengthDelta = null;
+      for (AntDomTargetReference r : myRefs) {
+        if (lengthDelta != null) {
+          r.setRangeInElement(r.getRangeInElement().shiftRight(lengthDelta));
+        }
+        else if (r.equals(ref)) {
+          final TextRange range = r.getRangeInElement();
+          final int oldLength = range.getLength();
+          lengthDelta = new Integer(newText.length() - oldLength);
+          r.setRangeInElement(range.grown(lengthDelta));
+        }
+      }
     }
   }
 }

@@ -68,7 +68,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     LOG.assertTrue(aClass.getContainingFile() != null);
 
     try {
-      final ClassMember[] members = chooseOriginalMembers(aClass, project);
+      final ClassMember[] members = chooseOriginalMembers(aClass, project, editor);
       if (members == null) return;
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -166,6 +166,11 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
     return chooseMembers(allMembers, false, false, project);
+  }
+
+  @Nullable
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+    return chooseOriginalMembers(aClass, project);
   }
 
   @Nullable

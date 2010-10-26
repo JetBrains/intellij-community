@@ -660,9 +660,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         myAlarm.cancelAllRequests();
         DaemonProgressIndicator progress;
         synchronized (DaemonCodeAnalyzerImpl.this) {
-          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-          indicator.start();
-          myUpdateProgress = progress = indicator;
+          progress = new DaemonProgressIndicator();
+          progress.start();
+          myUpdateProgress = progress;
         }
         myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
       }

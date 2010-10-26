@@ -81,11 +81,8 @@ import java.util.List;
 class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
-  private final ApplicationListener myApplicationListener = new MyApplicationListener();
   private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
-
-  private final EditorFactoryListener myEditorFactoryListener;
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -97,7 +94,6 @@ class DaemonListeners implements Disposable {
 
   private volatile boolean cutOperationJustHappened;
   private final EditorTracker myEditorTracker;
-  private final EditorTrackerListener myEditorTrackerListener;
 
   public DaemonListeners(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, EditorTracker editorTracker) {
     myProject = project;
@@ -137,20 +133,23 @@ class DaemonListeners implements Disposable {
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(), this);
 
     myEditorTracker = editorTracker;
-    myEditorTrackerListener = new EditorTrackerListener() {
+    EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
       private List<Editor> myActiveEditors = Collections.emptyList();
-
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
         List<Editor> activeEditors = myEditorTracker.getActiveEditors();
         if (!myActiveEditors.equals(activeEditors)) {
           myActiveEditors = activeEditors;
           stopDaemon(true);  // do not stop daemon if idea loses/gains focus
+          if (LaterInvocator.isInModalContext()) {
+            // editor appear in modal context, reenable the daemon
+            myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+          }
         }
       }
     };
-    myEditorTracker.addEditorTrackerListener(myEditorTrackerListener);
+    myEditorTracker.addEditorTrackerListener(editorTrackerListener, this);
 
-    myEditorFactoryListener = new EditorFactoryAdapter() {
+    EditorFactoryListener editorFactoryListener = new EditorFactoryAdapter() {
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
@@ -160,7 +159,7 @@ class DaemonListeners implements Disposable {
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
       }
     };
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
+    EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, EditorFactory.getInstance(),connection,
@@ -206,7 +205,8 @@ class DaemonListeners implements Disposable {
     });
 
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
-    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
+    ApplicationListener applicationListener = new MyApplicationListener();
+    ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
     EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
     InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
@@ -282,13 +282,10 @@ class DaemonListeners implements Disposable {
   public void dispose() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
-    myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);
     LaterInvocator.removeModalityStateListener(myModalityStateListener);
   }
 

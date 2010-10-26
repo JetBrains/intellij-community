@@ -29,7 +29,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,10 +40,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
@@ -70,7 +68,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final EdtAlarm myIdleAlarm;
-  private final Set<Runnable> myIdleRequests = new com.intellij.util.containers.HashSet<Runnable>();
+  private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
       if (isFocusTransferReady() && !isIdleQueueEmpty()) {
@@ -82,15 +80,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   };
 
-  private final WindowManager myWindowManager;
-
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
   private final Map<IdeFrame, WeakReference<Component>> myLastFocusedAtDeactivation = new HashMap<IdeFrame, WeakReference<Component>>();
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
-    myWindowManager = wm;
 
     myFocusedComponentAlaram = new EdtAlarm(this);
     myForcedFocusRequestsAlarm = new EdtAlarm(this);
@@ -126,11 +121,13 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   }
 
-  public ActionCallback requestFocus(final Component c, final boolean forced) {
+  @NotNull
+  public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return requestFocus(new FocusCommand.ByComponent(c), forced);
   }
 
-  public ActionCallback requestFocus(final FocusCommand command, final boolean forced) {
+  @NotNull
+  public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
@@ -247,7 +244,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
 
     boolean doNotExecuteBecauseAppIsInactive =
-      !myApp.isActive() && (!canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive"));
+      !myApp.isActive() && !canExecuteOnInactiveApplication(cmd) && Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
 
     if (doNotExecuteBecauseAppIsInactive) {
       if (myCallbackOnActivation != null) {
@@ -325,11 +322,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private class KeyProcessorConext implements KeyEventProcessor.Context {
-    public java.util.List<KeyEvent> getQueue() {
+    public List<KeyEvent> getQueue() {
       return myToDispatchOnDone;
     }
 
-    public void dispatch(final java.util.List<KeyEvent> events) {
+    public void dispatch(final List<KeyEvent> events) {
       doWhenFocusSettlesDown(new Runnable() {
         public void run() {
           myToDispatchOnDone.addAll(events);
@@ -426,7 +423,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void invalidateFocusRequestsQueue() {
-    if (myFocusRequests.size() == 0) return;
+    if (myFocusRequests.isEmpty()) return;
 
     FocusCommand[] requests = myFocusRequests.toArray(new FocusCommand[myFocusRequests.size()]);
     boolean wasChanged = false;
@@ -437,7 +434,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
 
-    if (wasChanged && myFocusRequests.size() == 0) {
+    if (wasChanged && myFocusRequests.isEmpty()) {
       restartIdleAlarm();
     }
   }
@@ -476,7 +473,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
-  public void suspendKeyProcessingUntil(final ActionCallback done) {
+  public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
     requestFocus(new FocusCommand(done) {
       public ActionCallback run() {
         return done;
@@ -500,9 +497,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private static class FurtherRequestor implements FocusRequestor {
-
-    private IdeFocusManager myManager;
-    private Expirable myExpirable;
+    private final IdeFocusManager myManager;
+    private final Expirable myExpirable;
 
     private FurtherRequestor(IdeFocusManager manager, Expirable expirable) {
       myManager = manager;
@@ -618,7 +614,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
 
-    java.util.List<JBPopup> popups = FocusTrackback.getChildPopups(comp);
+    List<JBPopup> popups = FocusTrackback.getChildPopups(comp);
     for (JBPopup each : popups) {
       if (each.isFocused()) return focused;
     }

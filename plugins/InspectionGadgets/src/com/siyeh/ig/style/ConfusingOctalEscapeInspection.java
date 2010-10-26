@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,23 +24,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ConfusingOctalEscapeSequence";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "confusing.octal.escape.sequence.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "confusing.octal.escape.sequence.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConfusingOctalEscapeVisitor();
     }
@@ -51,7 +55,7 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
         @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
-            if (!TypeUtils.expressionHasType("java.lang.String", expression)) {
+            if (!TypeUtils.expressionHasType(expression, "java.lang.String")) {
                 return;
             }
             final String text = expression.getText();

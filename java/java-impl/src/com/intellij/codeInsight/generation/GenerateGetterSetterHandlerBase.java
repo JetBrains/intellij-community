@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
@@ -50,6 +53,18 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
   public GenerateGetterSetterHandlerBase(String chooserTitle) {
     super(chooserTitle);
   }
+
+  @Override
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+    final ClassMember[] allMembers = getAllOriginalMembers(aClass);
+    if (allMembers.length == 0) {
+      HintManager.getInstance().showErrorHint(editor, getNothingFoundMessage());
+      return null;
+    }
+    return chooseMembers(allMembers, false, false, project);
+  }
+
+  protected abstract String getNothingFoundMessage();
 
   protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);

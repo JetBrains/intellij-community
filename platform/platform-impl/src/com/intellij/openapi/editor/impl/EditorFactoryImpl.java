@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -210,6 +211,11 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.addListener(listener);
+  }
+
+  @Override
+  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
+    myEditorFactoryEventDispatcher.addListener(listener,parentDisposable);
   }
 
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {

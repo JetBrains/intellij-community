@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharacterComparisonInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "CharacterComparison";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "character.comparison.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "character.comparison.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CharacterComparisonVisitor();
     }
@@ -78,9 +82,9 @@ public class CharacterComparisonInspection extends BaseInspection {
             registerError(expression);
         }
 
-        private static boolean isCharacter(PsiExpression lhs) {
-            return  TypeUtils.expressionHasType(PsiKeyword.CHAR, lhs) ||
-                    TypeUtils.expressionHasType("java.lang.Character", lhs);
+        private static boolean isCharacter(PsiExpression expression) {
+            return  TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
+                    TypeUtils.expressionHasType(expression, "java.lang.Character");
         }
     }
 }

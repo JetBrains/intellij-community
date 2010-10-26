@@ -264,8 +264,11 @@ public class HighlightUtil {
         minModifier = PsiModifier.PUBLIC;
       }
       String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
-      PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
-
+      PsiClass accessObjectClass = null;
+      PsiElement qualifier = place.getQualifier();
+      if (qualifier instanceof PsiExpression) {
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
+      }
       for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
         @Modifier String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);

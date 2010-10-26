@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 public class SimpleDateFormatWithoutLocaleInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instantiating.simpledateformat.without.locale.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "instantiating.simpledateformat.without.locale.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SimpleDateFormatWithoutLocaleVisitor();
     }
@@ -48,8 +51,8 @@ public class SimpleDateFormatWithoutLocaleInspection
 
         @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if(!TypeUtils.expressionHasType("java.text.SimpleDateFormat",
-                    expression)) {
+            if(!TypeUtils.expressionHasType(expression,
+                    "java.text.SimpleDateFormat")) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -58,7 +61,7 @@ public class SimpleDateFormatWithoutLocaleInspection
             }
             final PsiExpression[] args = argumentList.getExpressions();
             for(PsiExpression arg : args){
-                if(TypeUtils.expressionHasType("java.util.Locale", arg)){
+                if(TypeUtils.expressionHasType(arg, "java.util.Locale")){
                     return;
                 }
             }

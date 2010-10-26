@@ -141,6 +141,30 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testUseThisAsAnyVariable() throws Exception {
+    doTest(null, null, null, new GenParams() {
+      @Override
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(-1, "l", factory.createTypeFromText("List", method), "null", true)
+        };
+      }
+    }, false);
+  }
+
+  public void testUseAnyVariableAndDefault() throws Exception {
+    doTest(null, null, null, new GenParams() {
+      @Override
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(-1, "c", factory.createTypeFromText("C", method), "null", true)
+        };
+      }
+    }, false);
+  }
+
   public void testRemoveVarargParameter() throws Exception {
     doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
   }
@@ -222,6 +246,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
   public void testReorderMultilineMethodParameters() throws Exception {
     // Inspired by IDEA-54902
     doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+  }
+
+  public void testRemoveFirstParameter() throws Exception {
+    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1)}, false);
   }
 
   public void testReplaceVarargWithArray() throws Exception {

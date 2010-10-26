@@ -114,7 +114,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     fsManager.addFileStatusListener(fileStatusListener, myProject);
 
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.addEditorFactoryListener(editorFactoryListener);
+    editorFactory.addEditorFactoryListener(editorFactoryListener,myProject);
 
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     virtualFileManager.addVirtualFileListener(virtualFileListener,myProject);
@@ -126,7 +126,6 @@ public class LineStatusTrackerManager implements ProjectComponent {
       public void dispose() {
         trackAwtThread();
         fsManager.removeFileStatusListener(fileStatusListener);
-        editorFactory.removeEditorFactoryListener(editorFactoryListener);
         virtualFileManager.removeVirtualFileListener(virtualFileListener);
         editorColorsManager.removeEditorColorsListener(editorColorsListener);
       }

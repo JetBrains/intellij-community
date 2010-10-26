@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,22 +42,26 @@ public class MalformedXPathInspection extends BaseInspection {
       xpathMethodNames.add("evaluate");
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.xpath.expression.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "malformed.xpath.expression.problem.description");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MalformedXPathVisitor();
     }
@@ -73,7 +77,7 @@ public class MalformedXPathInspection extends BaseInspection {
                 return;
             }
             final PsiExpression xpathArgument = arguments[0];
-            if(!TypeUtils.expressionHasType("java.lang.String", xpathArgument)){
+            if(!TypeUtils.expressionHasType(xpathArgument, "java.lang.String")){
                 return;
             }
             if(!PsiUtil.isConstantExpression(xpathArgument)){

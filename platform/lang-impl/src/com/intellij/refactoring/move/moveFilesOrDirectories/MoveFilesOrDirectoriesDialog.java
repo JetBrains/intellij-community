@@ -170,15 +170,16 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
             }
           }
         };
+
         ApplicationManager.getApplication().runWriteAction(action);
+        if (myTargetDirectory == null) {
+          CommonRefactoringUtil.showErrorMessage(getTitle(),
+                                                 RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
+          return;
+        }
+        myCallback.run(MoveFilesOrDirectoriesDialog.this);
       }
-    }, RefactoringBundle.message("create.directory"), null);
-    if (myTargetDirectory == null){
-      CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                              RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-      return;
-    }
-    myCallback.run(this);
+    }, RefactoringBundle.message("move.title"), null);
   }
 
   public PsiDirectory getTargetDirectory() {
