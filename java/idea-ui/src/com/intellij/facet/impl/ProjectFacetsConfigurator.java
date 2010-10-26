@@ -103,12 +103,28 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     return removed;
   }
 
-  public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
-    final Facet facet = FacetManager.getInstance(module).createFacet(type, name, myInfo2Facet.get(underlyingFacet));
+  public Facet createAndAddFacet(Module module, FacetType<?, ?> type, final @Nullable Facet underlying) {
+    final Collection<? extends Facet> facets = getFacetsByType(module, type.getId());
+    String facetName = type.getDefaultFacetName();
+    int i = 2;
+    while (facetExists(facetName, facets)) {
+      facetName = type.getDefaultFacetName() + i;
+      i++;
+    }
+    final Facet facet = FacetManager.getInstance(module).createFacet(type, facetName, underlying);
     myCreatedFacets.add(facet);
     addFacetInfo(facet);
     getOrCreateModifiableModel(module).addFacet(facet);
     return facet;
+  }
+
+  private boolean facetExists(final String facetName, final Collection<? extends Facet> facets) {
+    for (Facet facet : facets) {
+      if (getFacetName(facet).equals(facetName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void addFacetInfo(final Facet facet) {
@@ -336,6 +352,17 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     return myProjectData;
   }
 
+  public String getFacetName(Facet facet) {
+    final ModifiableFacetModel model = myModifiableModels.get(facet.getModule());
+    if (model != null) {
+      final String newName = model.getNewName(facet);
+      if (newName != null) {
+        return newName;
+      }
+    }
+    return facet.getName();
+  }
+
   public List<Facet> removeAllFacets(final Module module) {
     List<Facet> facets = new ArrayList<Facet>();
     FacetModel facetModel = getOrCreateModifiableModel(module);
@@ -349,6 +376,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     mySharedModuleData.remove(module);
     myModifiableModels.remove(module);
     return facets;
+  }
+
+  public boolean hasFacetOfType(Module module, @Nullable Facet parent, FacetTypeId<?> typeId) {
+    final FacetTreeModel treeModel = getTreeModel(module);
+    final FacetInfo parentInfo = getFacetInfo(parent);
+    return treeModel.hasFacetOfType(parentInfo, typeId);
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {

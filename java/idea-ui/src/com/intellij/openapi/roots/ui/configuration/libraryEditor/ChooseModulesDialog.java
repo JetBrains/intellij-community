@@ -40,6 +40,10 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
     super(project, items, title, description, true);
   }
 
+  public void setSingleSelectionMode() {
+    myChooser.setSingleSelectionMode();
+  }
+
   protected Icon getItemIcon(final Module item) {
     return item.getModuleType().getNodeIcon(false);
   }

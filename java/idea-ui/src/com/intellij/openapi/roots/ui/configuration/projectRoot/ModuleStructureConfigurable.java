@@ -19,7 +19,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.CommonBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
+import com.intellij.facet.impl.ui.actions.AddFacetAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -646,8 +646,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   protected AbstractAddGroup createAddAction() {
-    final AddFacetActionGroup addFacetGroup = new AddFacetActionGroup("", true, myFacetEditorFacade);
-
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
@@ -656,7 +654,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(module);
 
-        final AnAction[] facets = addFacetGroup.getChildren(e);
+        final AnAction[] facets = AddFacetAction.createAddFacetActions(myFacetEditorFacade, myProject);
         if (facets.length > 0) {
           result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
           ContainerUtil.addAll(result, facets);

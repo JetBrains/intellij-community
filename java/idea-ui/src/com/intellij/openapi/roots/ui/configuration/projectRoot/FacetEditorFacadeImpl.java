@@ -59,6 +59,12 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return facetsExist;
   }
 
+  private void addFacetNode(Facet facet) {
+    addFacetNode(facet, myStructureConfigurable.findModuleNode(facet.getModule()));
+    final FacetStructureConfigurable facetStructureConfigurable = FacetStructureConfigurable.getInstance(myStructureConfigurable.getProject());
+    facetStructureConfigurable.addFacetNode(facetStructureConfigurable.findFacetTypeNode(facet.getType()), facet, this);
+  }
+
   private MasterDetailsComponent.MyNode addFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
     final MasterDetailsComponent.MyNode existing = findFacetNode(facet, moduleNode);
     if (existing != null) return existing;
@@ -113,12 +119,14 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return facetTreeModel.hasFacetOfType(facet, typeId);
   }
 
-  public void createFacet(final FacetInfo parent, FacetType type, final String name) {
-    Module module = getSelectedModule();
+  public Facet createFacet(final FacetInfo parent, FacetType type) {
+    return createAndAddFacet(type, getSelectedModule(), getFacetConfigurator().getFacet(parent));
+  }
 
-    final Facet facet = getFacetConfigurator().createAndAddFacet(module, type, name, parent);
-    final MasterDetailsComponent.MyNode node = addFacetNode(facet, myStructureConfigurable.findModuleNode(module));
-    myStructureConfigurable.selectNodeInTree(node);
+  public Facet createAndAddFacet(FacetType type, Module module, final Facet underlying) {
+    final Facet facet = getFacetConfigurator().createAndAddFacet(module, type, underlying);
+    addFacetNode(facet);
+    return facet;
   }
 
   public Collection<FacetInfo> getFacetsByType(final FacetType<?,?> type) {

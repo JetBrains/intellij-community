@@ -81,11 +81,19 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
         Collection<? extends Facet> facets = FacetManager.getInstance(module).getFacetsByType(facetType.getId());
         for (Facet facet : facets) {
           FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
-          FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
-          addNode(new FacetConfigurableNode(facetConfigurable), facetTypeNode);
+          addFacetNode(facetTypeNode, facet, editorFacade);
         }
       }
     }
+  }
+
+  public MyNode findFacetTypeNode(FacetType facetType) {
+    return findNodeByObject(myRoot, facetType);
+  }
+
+  public void addFacetNode(MyNode facetTypeNode, Facet facet, FacetEditorFacadeImpl editorFacade) {
+    FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
+    addNode(new FacetConfigurableNode(facetConfigurable), facetTypeNode);
   }
 
   @Nullable
@@ -144,6 +152,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    actions.add(new AddFacetOfTypeAction(this));
     if (fromPopup) {
       actions.add(new MyNavigateAction());
     }

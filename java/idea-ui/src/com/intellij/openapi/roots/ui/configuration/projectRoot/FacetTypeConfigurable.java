@@ -58,6 +58,10 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
     return myFacetType.getIcon();
   }
 
+  public FacetType getFacetType() {
+    return myFacetType;
+  }
+
   public String getHelpTopic() {
     final FacetTypeEditor editor = myFacetStructureConfigurable.getFacetTypeEditor(myFacetType);
     return editor != null ? editor.getHelpTopic() : null;
