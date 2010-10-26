@@ -60,6 +60,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -258,15 +259,19 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(mergeSourceGutter);
     }
 
-    final Map<String, Color> revNumbers = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
+    final Map<String, Color> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
+    final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
     
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation);
       gutters.add(gutter);
-      gutter.setAspectValueToBgColorMap(revNumbers);
+      gutter.setAspectValueToBgColorMap(bgColorMap);
     }
     gutters.add(new MyHighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting));
+    if (historyIds != null) {
+      gutters.add(new MyHistoryIdAdditionalColumn(fileAnnotation, editor, null, presentation, historyIds));
+    }
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
@@ -278,6 +283,37 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
       annotations.add(gutter);
     }
+  }
+
+  @Nullable
+  private static Map<String, Integer> computeLineNumbers(FileAnnotation fileAnnotation) {
+    final SortedList<VcsFileRevision> revisions = new SortedList<VcsFileRevision>(new Comparator<VcsFileRevision>() {
+      @Override
+      public int compare(VcsFileRevision o1, VcsFileRevision o2) {
+        try {
+          return o1.getRevisionDate().compareTo(o2.getRevisionDate());
+        }
+        catch (Exception e) {
+          return 0;
+        }
+      }
+    });
+    final Map<String, Integer> numbers = new HashMap<String, Integer>();
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    if (fileRevisionList != null) {
+      revisions.addAll(fileRevisionList);
+      for (VcsFileRevision revision : fileRevisionList) {
+        final String revNumber = revision.getRevisionNumber().asString();
+
+        if (!numbers.containsKey(revNumber)) {
+          final int num = revisions.indexOf(revision);
+          if (num != -1) {
+            numbers.put(revNumber, num + 1);
+          }
+        }
+      }
+    }
+    return numbers.size() < 2 ? null : numbers;
   }
 
   @Nullable
@@ -317,6 +353,37 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     @Override
     public String getLineText(int line, Editor editor) {
       return myHighlighting.isLineBold(line) ? "*" : "";
+    }
+  }
+
+  private static class MyHistoryIdAdditionalColumn extends AnnotationFieldGutter {
+    private final Map<String, Integer> myHistroyIds;
+
+    MyHistoryIdAdditionalColumn(FileAnnotation annotation,
+                                Editor editor,
+                                LineAnnotationAspect aspect,
+                                final TextAnnotationPresentation presentation,
+                                Map<String, Integer> ids) {
+      super(annotation, editor, aspect, presentation);
+      myHistroyIds = ids;
+    }
+
+    @Override
+    public String getLineText(int line, Editor editor) {
+      final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(line);
+      if (revisionNumber != null) {
+        final Integer num = myHistroyIds.get(revisionNumber.asString());
+        if (num != null) {
+          final String size = String.valueOf(myHistroyIds.size());
+          String value = num.toString() + "/" + size;
+          final int len = 2 * String.valueOf(myHistroyIds.size()).length() + 1;
+          while (value.length() < len) {
+            value = " " + value;
+          }
+          return value;
+        }
+      }
+      return "";
     }
   }
 
