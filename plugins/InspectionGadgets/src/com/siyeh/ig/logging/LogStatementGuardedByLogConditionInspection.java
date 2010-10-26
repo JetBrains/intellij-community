@@ -15,36 +15,35 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.RemoveAction;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.codeInspection.ui.AddAction;
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.TextField;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jdom.Element;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.JButton;
-import javax.swing.text.Document;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.DocumentEvent;
-import java.util.*;
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class LogStatementGuardedByLogConditionInspection
         extends BaseInspection {
@@ -81,7 +80,47 @@ public class LogStatementGuardedByLogConditionInspection
 
     @Override
     public JComponent createOptionsPanel() {
-        return new Form().getContentPanel();
+        final GridBagLayout layout = new GridBagLayout();
+        final JPanel panel = new JPanel(layout);
+
+        final JLabel classNameLabel = new JLabel(
+                InspectionGadgetsBundle.message("logger.name.option"));
+        classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+        final TextField loggerClassNameField =
+                new TextField(this, "loggerClassName");
+        final ListTable table = new ListTable(new ListWrappingTableModel(
+                Arrays.asList(logMethodNameList, logConditionMethodNameList),
+                InspectionGadgetsBundle.message("log.method.name"),
+                InspectionGadgetsBundle.message("log.condition.text")));
+        final JScrollPane scrollPane =
+                ScrollPaneFactory.createScrollPane(table);
+        final ActionToolbar toolbar = UiUtils.createAddRemoveToolbar(table);
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 2;
+        constraints.ipady = 10;
+
+        constraints.anchor = GridBagConstraints.NORTHEAST;
+        panel.add(classNameLabel, constraints);
+
+        constraints.gridx = 1;
+        constraints.ipady = 0;
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(loggerClassNameField, constraints);
+
+        constraints.gridwidth = 2;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.weighty = 1.0;
+        constraints.gridy = 1;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        return panel;
     }
 
     @Override
@@ -93,7 +132,6 @@ public class LogStatementGuardedByLogConditionInspection
     private class LogStatementGuardedByLogConditionFix
             extends InspectionGadgetsFix {
 
-        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
@@ -255,32 +293,47 @@ public class LogStatementGuardedByLogConditionInspection
             registerMethodCallError(expression);
         }
 
-        private boolean isSurroundedByLogGuard(
-                PsiMethodCallExpression expression) {
-            final PsiIfStatement ifStatement =
-                    PsiTreeUtil.getParentOfType(expression,
-                            PsiIfStatement.class);
-            if (ifStatement == null) {
-                return false;
+        private boolean isSurroundedByLogGuard(PsiElement element) {
+            while (true) {
+                final PsiIfStatement ifStatement =
+                        PsiTreeUtil.getParentOfType(element,
+                                PsiIfStatement.class);
+                if (ifStatement == null) {
+                    return false;
+                }
+                final PsiExpression condition = ifStatement.getCondition();
+                if (isLogGuardCheck(condition)) {
+                    return true;
+                }
             }
-            final PsiExpression condition = ifStatement.getCondition();
-            if (!(condition instanceof PsiMethodCallExpression)) {
-                return false;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) condition;
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return false;
-            }
-            final PsiType qualifierType = qualifier.getType();
-            return qualifierType != null && qualifierType.equalsToText(
-                    loggerClassName);
         }
 
+        private boolean isLogGuardCheck(PsiExpression expression) {
+            if (expression instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) expression;
+                final PsiReferenceExpression methodExpression =
+                        methodCallExpression.getMethodExpression();
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (qualifier == null) {
+                    return false;
+                }
+                final PsiType qualifierType = qualifier.getType();
+                return !(qualifierType == null ||
+                        !qualifierType.equalsToText(loggerClassName));
+            } else if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) expression;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                if (isLogGuardCheck(lhs)) {
+                    return true;
+                }
+                final PsiExpression rhs = binaryExpression.getROperand();
+                return isLogGuardCheck(rhs);
+            }
+            return false;
+        }
     }
 
     @Override
@@ -295,51 +348,5 @@ public class LogStatementGuardedByLogConditionInspection
         loggerMethodAndconditionMethodNames = formatString(logMethodNameList,
                 logConditionMethodNameList);
         super.writeSettings(element);
-    }
-
-    class Form {
-
-        private JPanel contentPanel;
-        private JTextField loggerClassNameTextField;
-        private ListTable table;
-        private JButton addButton;
-        private JButton removeButton;
-
-        Form() {
-            loggerClassNameTextField.setText(loggerClassName);
-            final DocumentListener listener = new DocumentListener() {
-
-                public void changedUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void insertUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void removeUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                private void textChanged() {
-                    loggerClassName =  loggerClassNameTextField.getText();
-                }
-            };
-            final Document document = loggerClassNameTextField.getDocument();
-            document.addDocumentListener(listener);
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        public JPanel getContentPanel() {
-            return contentPanel;
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(new ListWrappingTableModel(
-                    Arrays.asList(logMethodNameList, logConditionMethodNameList),
-                    "log method name",
-                    "log condition text"));
-        }
     }
 }
