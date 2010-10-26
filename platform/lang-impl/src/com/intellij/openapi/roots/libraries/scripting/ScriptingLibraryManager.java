@@ -62,6 +62,7 @@ public class ScriptingLibraryManager {
         updateLibraries(libTableModel, OrderRootType.CLASSES);
         libTableModel.commit();
       }
+      myLibTable = null;
     }
     if (myLibLevel == LibraryLevel.GLOBAL) {
       ModuleManager.getInstance(myProject).getModifiableModel().commit();
@@ -189,6 +190,12 @@ public class ScriptingLibraryManager {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean isCompactFile(VirtualFile file) {
+    ensureModel();
+    assert myLibTable != null;
+    return myLibTable.isCompactFile(file);
   }
 
 }

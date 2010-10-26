@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public class ScriptingLibraryTable {
   private final static OrderRootType COMPACT_ROOT_TYPE = OrderRootType.CLASSES;
 
   private ArrayList<LibraryModel> myLibraryModels = new ArrayList<LibraryModel>();
+  private HashSet<VirtualFile> myCompactFilesCache;
 
   public ScriptingLibraryTable(@NotNull LibraryTable libraryTable, LibraryType libraryType) {
     LibraryTable.ModifiableModel tableModel = libraryTable.getModifiableModel();
@@ -52,6 +54,20 @@ public class ScriptingLibraryTable {
     }
   }
 
+  public boolean isCompactFile(VirtualFile file) {
+    if (myCompactFilesCache == null) {
+      myCompactFilesCache = new HashSet<VirtualFile>();
+      for (LibraryModel libraryModel : myLibraryModels) {
+        myCompactFilesCache.addAll(Arrays.asList(libraryModel.getCompactFiles()));
+      }
+    }
+    return myCompactFilesCache.contains(file);
+  }
+
+  private void invalidateCache() {
+    myCompactFilesCache = null;
+  }
+
   @Nullable
   public LibraryModel getLibraryByName(@NotNull String libName) {
     for (LibraryModel libraryModel : myLibraryModels) {
@@ -62,17 +78,20 @@ public class ScriptingLibraryTable {
 
   public void removeLibrary(LibraryModel libraryModel) {
     myLibraryModels.remove(libraryModel);
+    invalidateCache();
   }
 
   public LibraryModel createLibrary(String libName) {
     LibraryModel libModel = new LibraryModel(libName);
     myLibraryModels.add(libModel);
+    invalidateCache();
     return libModel;
   }
 
   public LibraryModel createLibrary(String libName, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
     LibraryModel libModel = new LibraryModel(libName, sourceFiles, compactFiles);
     myLibraryModels.add(libModel);
+    invalidateCache();
     return libModel;
   }
 
@@ -90,7 +109,7 @@ public class ScriptingLibraryTable {
     return myLibraryModels.get(index);
   }
 
-  public static class LibraryModel {
+  public class LibraryModel {
     private String myName;
     private ArrayList<VirtualFile> mySourceFiles = new ArrayList<VirtualFile>();
     private ArrayList<VirtualFile> myCompactFiles = new ArrayList<VirtualFile>();
@@ -115,6 +134,7 @@ public class ScriptingLibraryTable {
     }
 
     public void setCompactFiles(VirtualFile[] files) {
+      invalidateCache();
       myCompactFiles.clear();
       myCompactFiles.addAll(Arrays.asList(files));
     }
