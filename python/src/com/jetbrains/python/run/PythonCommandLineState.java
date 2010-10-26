@@ -167,12 +167,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
 
     Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
-    VirtualFile[] paths = pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    List<String> pathList = Lists.newArrayList();
-    for (VirtualFile file : paths) {
-      pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+    if (pythonSdk != null) {
+      VirtualFile[] paths = pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+      List<String> pathList = Lists.newArrayList();
+      for (VirtualFile file : paths) {
+        pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+      }
+      PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
     }
-    PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
