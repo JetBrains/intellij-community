@@ -80,7 +80,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
 
   @Override
   public Icon getIcon() {
-    return BuildoutFacetType.ourIcon;
+    return BuildoutFacetType.BUILDOUT_ICON;
   }
 
   @Override

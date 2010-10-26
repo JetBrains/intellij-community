@@ -1,5 +1,6 @@
 package com.jetbrains.python.run;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.module.Module;
@@ -33,7 +34,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
   private boolean myPassParentEnvs = true;
-  private Map<String, String> myEnvs = new HashMap<String, String>();
+  private Map<String, String> myEnvs = Maps.newHashMap();
   private boolean myUseModuleSdk;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
@@ -65,7 +66,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     else {
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
           if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }

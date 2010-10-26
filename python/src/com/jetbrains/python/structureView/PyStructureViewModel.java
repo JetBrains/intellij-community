@@ -28,4 +28,9 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
     return element.getValue() instanceof PyTargetExpression;
   }
+
+  @Override
+  public boolean shouldEnterElement(Object element) {
+    return element instanceof PyClass;
+  }
 }

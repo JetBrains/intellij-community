@@ -31,7 +31,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PyArgumentList.class,
     PyParameterList.class,
     PyFunction.class,
-    PySliceExpression.class
+    PySliceExpression.class,
+    PySubscriptionExpression.class
   };
 
   @Override

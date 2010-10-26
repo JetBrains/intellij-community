@@ -48,11 +48,11 @@ each command has a format:
     120      CMD_GET_COMPLETIONS      JAVA
     
 500 series diagnostics/ok
-    901      VERSION                  either      Version string (1.0)        Currently just used at startup
-    902      RETURN                   either      Depends on caller    -
+    501      VERSION                  either      Version string (1.0)        Currently just used at startup
+    502      RETURN                   either      Depends on caller    -
     
 900 series: errors
-    501      ERROR                    either      -                           This is reserved for unexpected errors.
+    901      ERROR                    either      -                           This is reserved for unexpected errors.
                                   
     * JAVA - remote debugger, the java end
     * PYDB - pydevd, the python end
@@ -755,7 +755,7 @@ class InternalGetCompletions(InternalThreadCommand):
         except:
             exc = GetExceptionTracebackStr()
             sys.stderr.write('%s\n' % (exc,))
-            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error getting completion " + exc)
             dbg.writer.addCommand(cmd)
 
 

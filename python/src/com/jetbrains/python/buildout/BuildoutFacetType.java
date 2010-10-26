@@ -4,11 +4,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +48,10 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
     return (BuildoutFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
-  public final static Icon ourIcon = IconLoader.getIcon("/com/jetbrains/python/icons/buildout/buildout.png");
+  public final static Icon BUILDOUT_ICON = IconLoader.getIcon("/com/jetbrains/python/icons/buildout/buildout.png");
 
   @Override
   public Icon getIcon() {
-    return ourIcon;
+    return BUILDOUT_ICON;
   }
 }

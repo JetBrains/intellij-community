@@ -78,6 +78,12 @@ public class PythonSdkType extends SdkType {
     return PythonFileType.INSTANCE.getIcon();
   }
 
+  @NotNull
+  @Override
+  public String getHelpTopic() {
+    return "reference.project.structure.sdk.python";
+  }
+
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
   }
@@ -281,6 +287,9 @@ public class PythonSdkType extends SdkType {
   }
 
   public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
+    if (additionalData instanceof PythonSdkAdditionalData ) {
+      ((PythonSdkAdditionalData)additionalData).save(additional);
+    }
   }
 
   @Override
@@ -315,7 +324,7 @@ public class PythonSdkType extends SdkType {
     // Don't fix skeletons here, PythonSdkUpdater will take care of that (see PY-1226 - no progress will be displayed if skeletons
     // generation is invoked from here
 
-    return null;
+    return PythonSdkAdditionalData.load(additional);
   }
 
   private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {
@@ -396,7 +405,7 @@ public class PythonSdkType extends SdkType {
     final ProgressManager progman = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
-    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
+    final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
@@ -412,7 +421,7 @@ public class PythonSdkType extends SdkType {
         }
       }
     };
-    progman.run(setup_task);
+    progman.run(setupTask);
     return success.get();
   }
 

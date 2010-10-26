@@ -25,7 +25,7 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   }
 
   public String getDescription() {
-    return "Provides facilities for developing Python applications";
+    return "Provides facilities for developing Python and Django applications";
   }
 
   public Icon getBigIcon() {

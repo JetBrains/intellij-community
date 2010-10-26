@@ -41,7 +41,7 @@
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
-    <typedHandler implementation="com.jetbrains.django.codeInsight.InterpolationTypedHandler" id="pyDjangoBraceInterpolation"/>
+    <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler" id="pyDjangoBraceInterpolation"/>
     <typedHandler implementation="com.jetbrains.python.editor.ColonTypedHandler" id="pyColonUnindent"/>
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
@@ -150,6 +150,8 @@
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyClassNameCompletionContributor"/>
+    <typedHandler implementation="com.jetbrains.python.console.PydevCompletionAutopopupBlockingHandler" id="pydevBlockAutoPopup"
+                  order="before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
@@ -274,6 +276,8 @@
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoParameterProcessor"/>
     <elementDescriptionProvider implementation="com.jetbrains.django.refactoring.DjangoElementDescriptionProvider"/>
 
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.lang.template.DjangoUrlsCompletionContributor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
@@ -363,6 +367,7 @@
         id="Devmode.DumpPsi"
         class="com.jetbrains.python.devmode.DumpPsiToClipboardAction"
         text="Dump PSI to clipboard"
+        internal="true"
         >
       <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Macros"/>
     </action>

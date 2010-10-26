@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class PyDebuggerEvaluator extends XDebuggerEvaluator {
@@ -18,7 +20,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   }
 
   @Override
-  public void evaluate(@NotNull String expression, final XEvaluationCallback callback) {
+  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
     expression = expression.trim();
     if ("".equals(expression)) {
       callback.evaluated(NONE);

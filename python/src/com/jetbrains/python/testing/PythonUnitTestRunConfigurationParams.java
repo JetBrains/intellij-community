@@ -22,4 +22,8 @@ public interface PythonUnitTestRunConfigurationParams {
 
   PythonUnitTestRunConfiguration.TestType getTestType();
   void setTestType(PythonUnitTestRunConfiguration.TestType testType);
+
+  String getPattern();
+  void setPattern(String pattern);
+
 }

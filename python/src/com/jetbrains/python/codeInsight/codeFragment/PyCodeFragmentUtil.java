@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -81,6 +82,10 @@ public class PyCodeFragmentUtil {
           }
           // We ignore except blocks
           if (nextElement instanceof PyExceptPart){
+            continue;
+          }
+          // We allow raise statements in code
+          if (nextElement == null && PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null){
             continue;
           }
           if (!CodeFragmentUtil.elementFit(nextElement, start, end)){

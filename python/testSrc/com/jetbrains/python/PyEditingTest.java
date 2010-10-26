@@ -146,6 +146,10 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("a = some_list[<caret>slice_start:slice_end]", "a = some_list[\n    slice_start:slice_end]");
   }
 
+  public void testEnterInSubscriptionExpression() {  // PY-1992
+    doTestEnter("a = some_list[<caret>slice_start]", "a = some_list[\n    slice_start]");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

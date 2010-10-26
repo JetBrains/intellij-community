@@ -325,6 +325,11 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         del attrList[0] # globals are special, and they get a single dummy unused attribute
     else:
         var = frame.f_locals
+        type, _typeName, resolver = getType(var)
+        try:
+          resolver.resolve(var, attrList[0])
+        except:
+          var = frame.f_globals
 
     for k in attrList:
         type, _typeName, resolver = getType(var)
@@ -423,7 +428,7 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
             #default way (only works for changing it in the topmost frame)
             result = eval(expression, frame.f_globals, frame.f_locals)
             exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
-            return result;
+            return result
 
 
     except Exception:

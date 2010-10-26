@@ -159,5 +159,10 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
   public void testForIfReturn() throws Exception {
     doTest();
   }
+
+  public void testRaise2102() throws Exception {
+    doTest();
+  }
+
 }
 

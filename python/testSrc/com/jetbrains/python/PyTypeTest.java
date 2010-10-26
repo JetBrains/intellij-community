@@ -107,12 +107,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
   }
 
   private PyType doTest(final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByText(PythonFileType.INSTANCE, text);
-        }
-      });
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     return expr.getType(TypeEvalContext.slow());
   }

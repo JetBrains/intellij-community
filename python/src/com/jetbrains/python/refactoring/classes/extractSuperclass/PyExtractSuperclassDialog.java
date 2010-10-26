@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
@@ -69,9 +70,9 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
     }
     boolean found_root = false;
     try {
-      String target_dir = new File(myTargetDirField.getText()).getCanonicalPath();
+      String target_dir = FileUtil.toSystemIndependentName(new File(myTargetDirField.getText()).getCanonicalPath());
       for (VirtualFile file : ProjectRootManager.getInstance(myClass.getProject()).getContentRoots()) {
-        if (target_dir.startsWith(file.getPath())) {
+        if (StringUtil.startsWithIgnoreCase(target_dir, file.getPath())) {
           found_root = true;
           break;
         }
