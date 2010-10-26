@@ -190,12 +190,15 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
         myBuf.append(PsiKeyword.NEW).append(" ").append(reference.getText());
 
         final PsiExpression[] arrayDimensions = expr.getArrayDimensions();
+        final PsiType type = expr.getType();
+        final int dimensions = type != null ? type.getArrayDimensions() : arrayDimensions.length;
         if (arrayDimensions.length > 0) myBuf.append("[");
-        boolean first = true;
-        for (PsiExpression dimension : arrayDimensions) {
-          if (!first) myBuf.append(", ");
-          first = false;
-          dimension.accept(this);
+        for (int i = 0, arrayDimensionsLength = arrayDimensions.length; i < dimensions; i++) {
+          final PsiExpression dimension = i < arrayDimensionsLength ? arrayDimensions[i] : null;
+          if (i > 0) myBuf.append("][");
+          if (dimension != null) {
+            dimension.accept(this);
+          }
         }
         if (arrayDimensions.length > 0) myBuf.append("]");
 
