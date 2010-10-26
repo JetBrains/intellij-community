@@ -181,7 +181,7 @@ public class JavaParserUtil {
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final LanguageLevel level = LanguageLevel.HIGHEST;
     final Lexer lexer = JavaParserDefinition.createLexer(level);
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, psi.getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, StdLanguages.JAVA, chameleon.getChars());
     setLanguageLevel(builder, level);
 
     final PsiBuilder.Marker root = builder.mark();
