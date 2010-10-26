@@ -241,13 +241,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     PyCallExpression call = getCallExpression();
     if (call != null) {
       PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(context);
-      if (resolved_callee != null) {
-        PsiFile psifile = getContainingFile();
-        LanguageLevel level;
-        if (psifile instanceof PyFile) level = ((PyFile)psifile).getLanguageLevel();
-        else level = LanguageLevel.PYTHON24; // lowest common
-        ret.mapArguments(arguments, resolved_callee, context);
-      }
+      if (resolved_callee != null) ret.mapArguments(arguments, resolved_callee, context);
     }
     return ret;
   }
