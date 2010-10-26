@@ -16,11 +16,9 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.XmlInspectionGroupNames;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
@@ -38,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
-  public static final Key<String> DO_NOT_VALIDATE_KEY = XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
-  
   @Nls
   @NotNull
   public String getGroupDisplayName() {

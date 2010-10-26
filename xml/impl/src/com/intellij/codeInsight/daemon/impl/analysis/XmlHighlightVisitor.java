@@ -70,7 +70,7 @@ import java.util.StringTokenizer;
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-  public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  private static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
 
   private static boolean ourDoJaxpTesting;
@@ -145,7 +145,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     if (myResult == null) {
-      if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+      if (!skipValidation(tag)) {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
 
         if (tag instanceof HtmlTag &&
@@ -243,7 +243,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
       if (parentDescriptor != null &&
           elementDescriptor == null &&
-          parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null &&
+          !skipValidation(parentTag) &&
           !XmlUtil.tagFromTemplateFramework(tag)
       ) {
         if (tag instanceof HtmlTag) {
@@ -387,7 +387,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return context != null && skipValidation(context);
   }
 
-  private static boolean skipValidation(PsiElement context) {
+  public static boolean skipValidation(PsiElement context) {
     return context.getUserData(DO_NOT_VALIDATE_KEY) != null;
   }
 
@@ -548,7 +548,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;
 
-    if (attributeDescriptor != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+    if (attributeDescriptor != null && !skipValidation(value)) {
       String error = attributeDescriptor.validateValue(value, attribute.getValue());
 
       if (error != null) {
@@ -709,7 +709,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       parent = parent.getParent();
     }
 
-    parent.putUserData(DO_NOT_VALIDATE_KEY, "");
+    setSkipValidation(parent);
   }
 
   public boolean suitableForFile(final PsiFile file) {

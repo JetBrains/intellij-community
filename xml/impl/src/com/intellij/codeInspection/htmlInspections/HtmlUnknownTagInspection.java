@@ -18,6 +18,7 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -193,41 +194,38 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
   }
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
-      final XmlElementDescriptor descriptor = tag.getDescriptor();
-      if (tag instanceof HtmlTag && (descriptor instanceof AnyXmlElementDescriptor || descriptor == null)) {
-        final String name = tag.getName();
+    if (XmlHighlightVisitor.skipValidation(tag)) {
+      return;
+    }
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (tag instanceof HtmlTag && (descriptor instanceof AnyXmlElementDescriptor || descriptor == null)) {
+      final String name = tag.getName();
 
-        if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-          final AddCustomTagOrAttributeIntentionAction action =
-            new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
-          final String message = XmlErrorMessages.message("unknown.html.tag", name);
+      if (!isCustomValuesEnabled() || !isCustomValue(name)) {
+        final AddCustomTagOrAttributeIntentionAction action =
+          new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
+        final String message = XmlErrorMessages.message("unknown.html.tag", name);
 
-          final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
-          final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
+        final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
+        final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-          List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
-          quickfixes.add(action);
-          if (isOnTheFly) {
-            quickfixes.add(new CreateNSDeclarationIntentionFix(startTagName, ""));
-          }
-          if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
-            quickfixes.add(new SwitchToHtml5Action());
-          }
-          ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ? 
-                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING : 
-                                               ProblemHighlightType.INFORMATION;
-          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
+        List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
+        quickfixes.add(action);
+        if (isOnTheFly) {
+          quickfixes.add(new CreateNSDeclarationIntentionFix(startTagName, ""));
+        }
+        if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
+          quickfixes.add(new SwitchToHtml5Action());
+        }
+        ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+                                             ProblemHighlightType.INFORMATION;
+        holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
 
-          if (endTagName != null) {
-            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
-          }
+        if (endTagName != null) {
+          holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
         }
       }
-
-      // TODO:
-      //checkReferences(tag, QuickFixProvider.NULL);
     }
-
   }
 }
