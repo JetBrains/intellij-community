@@ -57,10 +57,14 @@ public class AndroidEnableDdmsAction extends ToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
+    Project project = e.getData(DataKeys.PROJECT);
+    setDdmsEnabled(project, state);
+  }
+
+  public static void setDdmsEnabled(Project project, boolean state) {
     boolean oldState = isDdmsEnabled();
     PropertiesComponent.getInstance().setValue(ENABLE_DDMS_PROPERTY_NAME, Boolean.toString(state));
     if (oldState != state) {
-      Project project = e.getData(DataKeys.PROJECT);
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
       boolean hidden = false;
       if (toolWindow != null && toolWindow.isVisible()) {
