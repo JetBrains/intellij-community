@@ -255,8 +255,13 @@ public class PyBlock implements ASTBlock {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
     }
 
-    if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
-      return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
+    if (type1 == PyTokenTypes.COLON) {
+      if (type2 == PyElementTypes.STATEMENT_LIST) {
+        return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
+      }
+      if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
+        return getSpacingForOption(getPySettings().SPACE_AFTER_COLON);
+      }
     }
     if (type2 == PyTokenTypes.COLON) {
       return getSpacingForOption(getPySettings().SPACE_BEFORE_COLON);
