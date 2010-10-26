@@ -11,9 +11,9 @@ import org.jetbrains.jps.artifacts.ArtifactLayoutElement
  * @author nik
  */
 class GwtModuleBuilder implements ModuleBuilder {
-  def processModule(ModuleChunk chunk, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     List<GwtFacet> facets = []
-    chunk.modules.each {
+    moduleChunk.modules.each {
       it.facets.values().each {
         if (it instanceof GwtFacet) {
           facets << it
@@ -23,7 +23,6 @@ class GwtModuleBuilder implements ModuleBuilder {
 
     if (facets.isEmpty()) return
 
-    def project = chunk.project
     facets.each {GwtFacet facet ->
       compileGwtFacet(facet, project, state)
     }

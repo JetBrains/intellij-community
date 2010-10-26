@@ -1,19 +1,19 @@
 package org.jetbrains.jps
 
 import org.codehaus.gant.GantBinding
+import org.jetbrains.jps.idea.OwnServiceLoader
 import org.jetbrains.jps.listeners.BuildInfoPrinter
 import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
-import org.jetbrains.jps.idea.OwnServiceLoader
 
-/**
+ /**
  * @author max
  */
 class ProjectBuilder {
-  private final Map<ModuleChunk, String> outputs = [:]
-  private final Map<ModuleChunk, String> testOutputs = [:]
+  private final Set<ModuleChunk> compiledChunks = [] as Set
+  private final Set<ModuleChunk> compiledTestChunks = [] as Set
   private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> cachedClasspaths = [:]
   private ProjectChunks productionChunks
   private ProjectChunks testChunks
@@ -33,6 +33,7 @@ class ProjectBuilder {
   BuildInfoPrinter buildInfoPrinter = new DefaultBuildInfoPrinter()
   boolean useInProcessJavac
   boolean compressJars = true
+  boolean arrangeModuleCyclesOutputs
 
   private final TempFileContainer tempFileContainer
 
@@ -60,8 +61,8 @@ class ProjectBuilder {
   }
 
   public def clean() {
-    outputs.clear()
-    testOutputs.clear()
+    compiledChunks.clear()
+    compiledTestChunks.clear()
     cachedClasspaths.clear();
   }
 
@@ -133,80 +134,115 @@ class ProjectBuilder {
   }
 
   private def buildChunk(ModuleChunk chunk, boolean tests) {
-    Map outputsMap = tests ? testOutputs : outputs
-    String currentOutput = outputsMap[chunk]
-    if (currentOutput != null) return currentOutput
+    Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks
+    if (compiledSet.contains(chunk)) return
+    compiledSet.add(chunk)
 
     project.stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
-    if (project.targetFolder == null && chunk.modules.size() > 1) {
+    if (project.targetFolder == null && !arrangeModuleCyclesOutputs && chunk.modules.size() > 1) {
       project.warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
     }
 
-    def dst = folderForChunkOutput(chunk, tests)
-    outputsMap[chunk] = dst
-    compile(chunk, dst, tests)
-
-    return dst
+    compile(chunk, tests)
   }
 
   private String getModuleOutputFolder(Module module, boolean tests) {
-    return folderForChunkOutput(chunkForModule(module, tests), tests)
+    if (arrangeModuleCyclesOutputs) {
+      return outputFolder(module.name, module, tests)
+    }
+    ModuleChunk chunk = chunkForModule(module, tests)
+    return outputFolder(chunk.name, chunk.representativeModule(), tests)
   }
 
-  private String folderForChunkOutput(ModuleChunk chunk, boolean tests) {
+  private String outputFolder(String name, Module module, boolean tests) {
     if (tests) {
-      def customOut = chunk.customOutput
+      def customOut = module.props["destDir"]
       if (customOut != null) return customOut
     }
 
     String targetFolder = project.targetFolder
     if (targetFolder != null) {
       def basePath = tests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
-      return new File(basePath, chunk.name).absolutePath
+      return new File(basePath, name).absolutePath
     }
     else {
-      def module = chunk.modules.toList().first()
       return tests ? module.testOutputPath : module.outputPath
     }
   }
 
-  private def compile(ModuleChunk chunk, String dst, boolean tests) {
-    List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
-
-    if (sources.isEmpty()) return
-
-    if (dst == null) {
-      project.error("${tests ? 'Test output' : 'Output'} path for module $chunk is not specified")
-    }
-    def ant = binding.ant
-    ant.mkdir dir: dst
-
-    def state = new ModuleBuildState
-    (
-            sourceRoots: sources,
-            excludes: chunk.excludes,
-            classpath: moduleClasspath(chunk, getCompileClasspathKind(tests)),
-            targetFolder: dst,
-            moduleDependenciesSourceRoots: transitiveModuleDependenciesSourcePaths(chunk, tests),
-            tempRootsToDelete: []
-    )
+  private def compile(ModuleChunk chunk, boolean tests) {
+    List chunkSources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
+    if (chunkSources.isEmpty()) return
 
     if (!project.dryRun) {
-      listeners*.onCompilationStarted(chunk)
-      builders().each {
-        listeners*.onModuleBuilderStarted(it, chunk)
-        it.processModule(chunk, state)
-        listeners*.onModuleBuilderFinished(it, chunk)
+
+      List<String> chunkClasspath = moduleClasspath(chunk, getCompileClasspathKind(tests))
+      List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
+      Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
+      def chunkState = new ModuleBuildState(
+          sourceRoots: chunkSources,
+          excludes: chunk.excludes,
+          classpath: chunkClasspath,
+          moduleDependenciesSourceRoots: chunkDependenciesSourceRoots,
+      )
+      if (arrangeModuleCyclesOutputs) {
+        chunk.modules.each {
+          def state = new ModuleBuildState(
+              sourceRoots: tests ? it.testRoots : it.sourceRoots,
+              excludes: it.excludes,
+              classpath: chunkClasspath,
+              targetFolder: createOutputFolder(it.name, it, tests),
+              moduleDependenciesSourceRoots: chunkDependenciesSourceRoots
+          )
+          states[state] = new ModuleChunk(it)
+        }
       }
-      state.tempRootsToDelete.each {
+      else {
+        chunkState.targetFolder = createOutputFolder(chunk.name, chunk.representativeModule(), tests)
+        states[chunkState] = chunk
+      }
+
+      listeners*.onCompilationStarted(chunk)
+      builders().each {ModuleBuilder builder ->
+        listeners*.onModuleBuilderStarted(builder, chunk)
+        if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
+          if (chunkState.targetFolder == null) {
+            chunkState.targetFolder = createOutputFolder(chunk.name, chunk.representativeModule(), tests)
+            chunkState.tempRootsToDelete << chunkState.targetFolder
+            chunkClasspath << chunkState.targetFolder
+          }
+          ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, project)
+        }
+        states.keySet().each {
+          builder.processModule(it, states[it], project)
+        }
+        listeners*.onModuleBuilderFinished(builder, chunk)
+      }
+
+      states.keySet().each {
+        it.tempRootsToDelete.each {
+          binding.ant.delete(dir: it)
+        }
+      }
+      chunkState.tempRootsToDelete.each {
         binding.ant.delete(dir: it)
       }
       listeners*.onCompilationFinished(chunk)
     }
 
     chunk.modules.each {
-      project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", dst)
+      project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
+  }
+
+  private String createOutputFolder(String name, Module module, boolean tests) {
+    def dst = outputFolder(name, module, tests)
+    if (dst == null) {
+      project.error("${tests ? 'Test output' : 'Output'} path for module $name is not specified")
+    }
+    def ant = binding.ant
+    ant.mkdir(dir: dst)
+    return dst
   }
 
   private ClasspathKind getCompileClasspathKind(boolean tests) {

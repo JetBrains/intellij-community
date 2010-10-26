@@ -6,9 +6,16 @@ import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 /**
  * @author max
  */
-class JavacBuilder implements ModuleBuilder {
+class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
+  def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    doBuildModule(moduleChunk, state)
+  }
 
-  def processModule(ModuleChunk module, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
+    doBuildModule(moduleChunk, state)
+  }
+
+  def doBuildModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
     String sourceLevel = module["sourceLevel"]
@@ -81,16 +88,15 @@ class JavacBuilder implements ModuleBuilder {
 
 class ResourceCopier implements ModuleBuilder {
 
-  def processModule(ModuleChunk chunk, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     if (state.sourceRoots.isEmpty()) return;
 
-    def project = chunk.project
     def ant = project.binding.ant
 
     state.sourceRoots.each {String root ->
       if (new File(root).exists()) {
         def target = state.targetFolder
-        def prefix = chunk.modules.collect { it.sourceRootPrefixes[root] }.find {it != null}
+        def prefix = moduleChunk.modules.collect { it.sourceRootPrefixes[root] }.find {it != null}
         if (prefix != null) {
           if (!(target.endsWith("/") || target.endsWith("\\"))) {
             target += "/"
@@ -100,7 +106,7 @@ class ResourceCopier implements ModuleBuilder {
 
         ant.copy(todir: target) {
           fileset(dir: root) {
-            patternset(refid: chunk["compiler.resources.id"])
+            patternset(refid: moduleChunk["compiler.resources.id"])
             type(type: "file")
           }
         }
@@ -117,10 +123,9 @@ class GroovycBuilder implements ModuleBuilder {
     project.taskdef (name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
   }
 
-  def processModule(ModuleChunk module, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
-    def project = module.project
     def ant = project.binding.ant
 
     final String destDir = state.targetFolder
@@ -162,10 +167,9 @@ class GroovyStubGenerator implements ModuleBuilder {
     project.taskdef (name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
   }
 
-  def processModule(ModuleChunk module, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
-    def project = module.project
     def ant = project.binding.ant
 
     String targetFolder = project.targetFolder
@@ -201,8 +205,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
   }
 
-  def processModule(ModuleChunk module, ModuleBuildState state) {
-    def project = module.project
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     def ant = project.binding.ant
 
     ant.jb_instrumentations(destdir: state.targetFolder, failonerror: "false", includeAntRuntime: "false") {
@@ -228,7 +231,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 class CustomTasksBuilder implements ModuleBuilder {
   List<ModuleBuildTask> tasks = []
 
-  def processModule(ModuleChunk moduleChunk, ModuleBuildState state) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     moduleChunk.modules.each {Module module ->
       tasks*.perform(module, state.targetFolder)
     }

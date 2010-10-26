@@ -6,6 +6,15 @@ import org.jetbrains.jps.dag.DagNode
  * @author max
  */
 class ModuleChunk extends DagNode<Module> {
+
+  ModuleChunk() {
+  }
+
+  ModuleChunk(Module module) {
+    elements << module
+  }
+
+
   def String getName() {
     if (elements.size() == 1) return elements.iterator().next().getName();
 
@@ -57,7 +66,7 @@ class ModuleChunk extends DagNode<Module> {
     return representativeModule().project
   }
 
-  private Module representativeModule() {
+  public Module representativeModule() {
     return elements.iterator().next()
   }
 
@@ -68,9 +77,4 @@ class ModuleChunk extends DagNode<Module> {
   def getAt(String key) {
     representativeModule().getAt(key)
   }
-
-  def String getCustomOutput() {
-    representativeModule().props["destDir"] // TODO traverse all modules instead
-  }
-
 }
