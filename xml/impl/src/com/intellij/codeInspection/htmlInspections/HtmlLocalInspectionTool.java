@@ -51,11 +51,11 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   }
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    // should be overriden
+    // should be overridden
   }
 
   protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    // should be overriden
+    // should be overridden
   }
 
   @NotNull

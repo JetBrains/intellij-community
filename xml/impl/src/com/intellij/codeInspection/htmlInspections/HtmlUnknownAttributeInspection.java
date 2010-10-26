@@ -75,7 +75,7 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
   }
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    // does nothing! this method should be overriden empty!
+    // does nothing! this method should be overridden empty!
   }
 
   protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
