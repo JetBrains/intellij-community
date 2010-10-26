@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
@@ -27,7 +24,10 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
-public class IStubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T>{
+/*
+ * @author max
+ */
+public class IStubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T> {
   public IStubFileElementType(final Language language) {
     super(language);
   }
@@ -48,8 +48,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
     return "psi.file";
   }
 
-  public void serialize(final T stub, final StubOutputStream dataStream)
-      throws IOException {
+  public void serialize(final T stub, final StubOutputStream dataStream) throws IOException {
   }
 
   public T deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
