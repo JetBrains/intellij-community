@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends BaseInspection{
@@ -83,8 +85,8 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             if(type.getArrayDimensions() == 0){
                 return;
             }
-            final boolean written = arrayContentsAreWritten(field,
-                                                            containingClass);
+            final boolean written =
+                    arrayContentsAreWritten(field, containingClass);
             final boolean read = arrayContentsAreRead(field, containingClass);
             if (written == read){
                 return;
@@ -165,12 +167,26 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
 
         private static boolean isDefaultArrayInitializer(
                 PsiExpression initializer){
-            if(!(initializer instanceof PsiNewExpression)){
-                return false;
+            if (initializer instanceof PsiNewExpression) {
+                final PsiNewExpression newExpression =
+                        (PsiNewExpression) initializer;
+                return newExpression.getArrayInitializer() == null;
+            } else if (initializer instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) initializer;
+                final PsiReferenceExpression methodExpression =
+                        methodCallExpression.getMethodExpression();
+                final String methodName = methodExpression.getReferenceName();
+                if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
+                    return false;
+                }
+                final PsiExpressionList argumentList =
+                        methodCallExpression.getArgumentList();
+                final PsiExpression[] expressions =
+                        argumentList.getExpressions();
+                return expressions.length == 0;
             }
-            final PsiNewExpression newExpression =
-                    (PsiNewExpression) initializer;
-            return newExpression.getArrayInitializer() == null;
+            return false;
         }
 
         public static boolean variableIsWrittenAsMethodArgument(
@@ -236,7 +252,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
                     PsiMethodCallExpression call){
                 final PsiReferenceExpression methodExpression =
                         call.getMethodExpression();
-                final String name =
+                @NonNls final String name =
                         methodExpression.getReferenceName();
                 if(!"arraycopy".equals(name)){
                     return false;
