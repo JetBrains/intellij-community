@@ -19,7 +19,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,11 +131,11 @@ public class CommandMerger {
         DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(new DocumentReference[myAdditionalAffectedDocuments.size()]);
         myCurrentActions.add(new BasicUndoableAction(refs) {
           @Override
-          public void undo() throws UnexpectedUndoException {
+          public void undo() {
           }
 
           @Override
-          public void redo() throws UnexpectedUndoException {
+          public void redo() {
           }
         });
       }
