@@ -53,7 +53,7 @@
   <problem>
     <file>badarglist.py</file>
     <line>45</line>
-    <description>Cannot appear past keyword arguments</description>
+    <description>Cannot appear past keyword arguments or *arg or **kwarg</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
@@ -63,12 +63,12 @@
   <problem>
     <file>badarglist.py</file>
     <line>55</line>
-    <description>Cannot appear past keyword arguments</description>
+    <description>Cannot appear past keyword arguments or *arg or **kwarg</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
     <line>55</line> <!-- yes, two identical problems on same line -->
-    <description>Cannot appear past keyword arguments</description>
+    <description>Cannot appear past keyword arguments or *arg or **kwarg</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
@@ -122,7 +122,72 @@
   </problem>
   <problem>
     <file>badarglist.py</file>
+    <line>145</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
     <line>158</line>
     <description>Function 'baddeco' lacks a positional argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>172</line>
+    <description>This argument list cannot be analyzed</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>211</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>212</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>213</line>
+    <description>Expected a sequence, got int</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>214</line>
+    <description>Parameter 'c' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>227</line>
+    <description>Cannot appear past keyword arguments or *arg or **kwarg</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>232</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>233</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>236</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>237</line>
+    <description>More arguments than positional parameters left</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>238</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>243</line>
+    <description>More arguments than positional parameters left</description>
   </problem>
 </problems>

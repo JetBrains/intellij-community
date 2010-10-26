@@ -34,7 +34,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
+      PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.slow());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
@@ -66,7 +66,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       return;
     }
     // align offset to nearest expression; context may point to a space, etc.
-    List<PyExpression> flat_args = PyUtil.flattenedParens(arglist.getArguments());
+    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
     PsiFile file = context.getFile();
     CharSequence chars = file.getViewProvider().getContents();
@@ -153,7 +153,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     // highlight current param(s)
-    final List<PyExpression> args = PyUtil.flattenedParens(arglist.getArguments());
+    final List<PyExpression> args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     for (PyExpression arg : args) {
       if (arg.getTextRange().contains(current_param_offset)) {
         PyNamedParameter param = result.getPlainMappedParams().get(arg);

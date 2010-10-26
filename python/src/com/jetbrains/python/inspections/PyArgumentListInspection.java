@@ -110,7 +110,7 @@ public class PyArgumentListInspection extends PyInspection {
             holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
           }
           if (flags.contains(PyArgumentList.ArgFlag.IS_TOO_LONG)) {
-            holder.registerProblem(arg, "More arguments than positional parameters left");
+            holder.registerProblem(arg, PyBundle.message("INSP.more.args.that.pos.params"));
           }
         }
       }
@@ -133,12 +133,12 @@ public class PyArgumentListInspection extends PyInspection {
         if (inside_type != null) {
           if (((PyStarArgument)arg).isKeyword()) {
             if (! isMappingType(inside_type)) {
-              holder.registerProblem(arg, "Expected a dictionary, got " + inside_type.getName());
+              holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
             }
           }
           else { // * arg
             if (! isSequenceType(inside_type)) {
-              holder.registerProblem(arg, "Expected a sequence, got " + inside_type.getName());
+              holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
             }
           }
         }
