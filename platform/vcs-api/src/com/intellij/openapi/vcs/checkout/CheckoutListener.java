@@ -29,4 +29,6 @@ public interface CheckoutListener {
   ExtensionPointName<CheckoutListener> COMPLETED_EP_NAME = ExtensionPointName.create("com.intellij.checkoutCompletedListener");
   
   boolean processCheckedOutDirectory(Project project, File directory);
+
+  void processOpenedProject(Project lastOpenedProject);
 }

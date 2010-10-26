@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -72,10 +73,17 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
   }
 
   private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
-    CheckoutListener[] listeners = Extensions.getExtensions(epName);
-    for(CheckoutListener listener: listeners) {
+    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
+    for (CheckoutListener listener: listeners) {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) break;
+    }
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length > 0){
+      final Project lastOpenedProject = openProjects[openProjects.length - 1];
+      for (CheckoutListener listener: listeners) {
+        listener.processOpenedProject(lastOpenedProject);
+      }
     }
   }
 

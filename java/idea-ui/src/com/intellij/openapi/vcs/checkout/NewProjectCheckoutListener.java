@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ide.impl.NewProjectUtil;
 
 import java.io.File;
 
@@ -34,5 +34,9 @@ public class NewProjectCheckoutListener implements CheckoutListener {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public void processOpenedProject(Project lastOpenedProject) {
   }
 }
