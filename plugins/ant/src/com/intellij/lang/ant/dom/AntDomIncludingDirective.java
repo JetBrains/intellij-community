@@ -19,7 +19,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.converters.values.BooleanValueConverter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +33,7 @@ public abstract class AntDomIncludingDirective extends AntDomElement {
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Attribute("optional")
-  @Convert(value = BooleanValueConverter.class)
+  @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isOptional();
 
   @Attribute("as")

@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -152,7 +151,7 @@ public class CodeFormatterFacade {
               RangeMarker marker = markers[i];
               if (marker != null) {
                 range.setTextRange(new TextRange(marker.getStartOffset(), marker.getEndOffset()));
-                ((RangeMarkerEx)marker).dispose();
+                marker.dispose();
               }
               i++;
             }
@@ -243,8 +242,8 @@ public class CodeFormatterFacade {
 
   private void doWrapLongLinesIfNecessary(@NotNull Editor editor, @NotNull Document document, int startOffset, int endOffset) {
     // Normalization.
-    int startOffsetToUse = Math.max(0, startOffset);
-    int endOffsetToUse = Math.min(document.getTextLength(), endOffset);
+    int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
+    int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
 
     LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
     CharSequence text = document.getCharsSequence();
