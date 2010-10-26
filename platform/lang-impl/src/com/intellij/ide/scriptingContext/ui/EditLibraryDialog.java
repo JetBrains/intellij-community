@@ -38,7 +38,6 @@ import java.util.Arrays;
 public class EditLibraryDialog extends DialogWrapper {
   private JPanel contentPane;
   private JTextField myLibName;
-  private JPanel myFilesPanel;
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
@@ -67,13 +66,12 @@ public class EditLibraryDialog extends DialogWrapper {
       }
     });
     myProject = project;
-    myFileTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+    myFileTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         updateSelection();
       }
     });
-    myFilesPanel.setMinimumSize(new Dimension(600, myFilesPanel.getY()));
     init();
   }
 
@@ -121,6 +119,16 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private static class FileTableModel extends AbstractTableModel {
 
+    private static final int FILE_COLUMN = 0;
+
+    @Override
+    public String getColumnName(int column) {
+      if (column == FILE_COLUMN) {
+        return "Path";
+      }
+      return "";
+    }
+
     private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
 
     public void addFile(VirtualFile file) {
@@ -145,7 +153,7 @@ public class EditLibraryDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      if (columnIndex == 0) {
+      if (columnIndex == FILE_COLUMN) {
         return myFiles.get(rowIndex);
       }
       return "";
