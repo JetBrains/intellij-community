@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -454,5 +455,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   public void putInfo(Map<String, String> info) {
     PsiFileImpl.putInfo(this, info);
+  }
+
+  public FileASTNode getNode() {
+    return null;
   }
 }

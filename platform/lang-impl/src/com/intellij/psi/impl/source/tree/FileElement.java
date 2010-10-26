@@ -17,15 +17,18 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
-public class FileElement extends LazyParseableElement {
+public class FileElement extends LazyParseableElement implements FileASTNode {
   private volatile CharTable myCharTable = new CharTableImpl();
 
+  @NotNull
   public CharTable getCharTable() {
     return myCharTable;
   }
