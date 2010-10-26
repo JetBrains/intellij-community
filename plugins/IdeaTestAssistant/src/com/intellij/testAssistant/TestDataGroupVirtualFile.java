@@ -86,7 +86,7 @@ public class TestDataGroupVirtualFile extends DeprecatedVirtualFile {
 
   @Override
   public boolean isValid() {
-    return true;
+    return myBeforeFile.isValid() && myAfterFile.isValid();
   }
 
   @Override
