@@ -416,7 +416,6 @@ public class SingleRowLayout extends TabLayout {
       }
     }
 
-    System.out.println(result + "   " + myLastSingRowLayout.myVisibleInfos + " c=" + c);
     return result;
   }
 }

@@ -16,8 +16,10 @@
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,6 +51,13 @@ public interface DockContainer extends Disposable {
 
 
   boolean isDisposeWhenEmpty();
+
+  interface Persistent extends DockContainer {
+
+    Element getState();
+    String getLoadStateMethod();
+
+  }
 
   interface Listener {
     void contentAdded(Object key);

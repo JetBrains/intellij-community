@@ -17,6 +17,9 @@ package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.ActionCallback;
@@ -29,6 +32,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +46,13 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 
-public class DockManagerImpl extends DockManager {
+@State(
+  name = "DockManager",
+  storages = {@Storage(
+    id = "other",
+    file = "$WORKSPACE_FILE$")})
+
+public class DockManagerImpl extends DockManager implements PersistentStateComponent<Element>{
 
   private Project myProject;
 
@@ -57,6 +67,8 @@ public class DockManagerImpl extends DockManager {
       return myCurrentDragSession == null;
     }
   };
+
+  private int myWindowIdCounter = 1;
 
   public DockManagerImpl(Project project) {
     myProject = project;
@@ -267,7 +279,7 @@ public class DockManagerImpl extends DockManager {
   private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
     DockContainer container = content.getContainerFactory().createContainer();
     register(container);
-    DockWindow window = new DockWindow(myProject, container);
+    DockWindow window = new DockWindow(String.valueOf(myWindowIdCounter++), myProject, container);
     myWindows.put(container, window);
     window.show();
 
@@ -286,9 +298,11 @@ public class DockManagerImpl extends DockManager {
 
   private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
 
+    private String myId;
     private DockContainer myContainer;
 
-    private DockWindow(Project project, DockContainer container) {
+    private DockWindow(String id, Project project, DockContainer container) {
+      myId = id;
       myContainer = container;
       setProject(project);
       setComponent(myContainer.getComponent());
@@ -350,5 +364,31 @@ public class DockManagerImpl extends DockManager {
       });
       return frame;
     }
+  }
+
+  @Override
+  public Element getState() {
+    Element root = new Element("DockManager");
+    for (DockContainer each : myContainers) {
+      DockWindow eachWindow = myWindows.get(each);
+      if (eachWindow != null) {
+        if (each instanceof DockContainer.Persistent) {
+          DockContainer.Persistent eachContainer = (DockContainer.Persistent)each;
+          Element eachWindowElement = new Element("window");
+          eachWindowElement.setAttribute("id", eachWindow.myId);
+          Element content = new Element("content");
+          content.setAttribute("loadMethod", eachContainer.getLoadStateMethod());
+          content.addContent(eachContainer.getState());
+          eachWindowElement.addContent(content);
+
+          root.addContent(eachWindowElement);
+        }
+      }
+    }
+    return root;
+  }
+
+  @Override
+  public void loadState(Element state) {
   }
 }

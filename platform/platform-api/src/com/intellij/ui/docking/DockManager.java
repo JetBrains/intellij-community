@@ -16,7 +16,10 @@
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 

@@ -30,12 +30,13 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-class DockableEditorTabbedContainer implements DockContainerFactory, DockContainer {
+class DockableEditorTabbedContainer implements DockContainerFactory, DockContainer.Persistent {
 
   private EditorsSplitters mySplitters;
   private Project myProject;
@@ -56,6 +57,18 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
     myProject = project;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
+  }
+
+  @Override
+  public Element getState() {
+    Element editors = new Element("editors");
+    mySplitters.writeExternal(editors);
+    return editors;
+  }
+
+  @Override
+  public String getLoadStateMethod() {
+    return getClass().getCanonicalName() + "." + "loadState";
   }
 
   @Override
