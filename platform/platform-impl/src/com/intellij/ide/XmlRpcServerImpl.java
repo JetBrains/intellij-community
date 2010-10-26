@@ -91,7 +91,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
       for (int i = 0; i < PORTS_COUNT; i++) {
         int port = firstPort + i;
         try {
-          socket = new ServerSocket(port);
+          socket = new ServerSocket(port, 10, InetAddress.getLocalHost());
           detectedPortNumber = port;
           return true;
         }
@@ -101,7 +101,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
 
       try {
         // try any port
-        socket = new ServerSocket(0);
+        socket = new ServerSocket(0, 10, InetAddress.getLocalHost());
         detectedPortNumber = socket.getLocalPort();
         return true;
       }
