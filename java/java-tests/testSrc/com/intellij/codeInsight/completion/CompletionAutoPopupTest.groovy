@@ -81,7 +81,7 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
       }
     """)
     type('i')
-    assertSameElements myFixture.lookupElementStrings, "iterable", "int"
+    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
     type('t')
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
     type('er')

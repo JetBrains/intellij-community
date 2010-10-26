@@ -795,4 +795,30 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertOneElement myFixture.completeBasic()
   }
 
+  public void testStatementKeywords() {
+    myFixture.configureByText("a.java", """
+      class Bar {{
+        <caret>xxx
+      }}
+    """)
+    myFixture.completeBasic()
+    final def strings = myFixture.lookupElementStrings
+    assertTrue 'if' in strings
+    assertTrue 'while' in strings
+    assertTrue 'do' in strings
+    assertTrue 'new' in strings
+    assertTrue 'try' in strings
+  }
+
+  public void testExpressionKeywords() {
+    myFixture.configureByText("a.java", """
+      class Bar {{
+        foo(<caret>xxx)
+      }}
+    """)
+    myFixture.completeBasic()
+    final def strings = myFixture.lookupElementStrings
+    assertTrue 'new' in strings
+  }
+
 }
