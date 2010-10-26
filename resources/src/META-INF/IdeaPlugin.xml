@@ -803,8 +803,10 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
              order="after expectedType, before stats"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAbstractWeigher" id="abstract"
              order="after prefix"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
+             order="after abstract"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"
              order="after nonGeneric"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferSimpleWeigher" id="simple"
