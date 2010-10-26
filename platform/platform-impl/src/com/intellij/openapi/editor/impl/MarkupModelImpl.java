@@ -83,7 +83,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true);
   }
 
-  static int getFirstNonspaceCharOffset(Document doc, int lineNumber) {
+  private static int getFirstNonspaceCharOffset(Document doc, int lineNumber) {
     int lineStart = doc.getLineStartOffset(lineNumber);
     int lineEnd = doc.getLineEndOffset(lineNumber);
     CharSequence text = doc.getCharsSequence();
@@ -101,7 +101,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     if (myCachedHighlighters == null) {
-      ArrayList<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
       myHighlighterTree.process(new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
@@ -220,6 +220,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     return myHighlighterTree.sweep(start, end, sweepProcessor);
   }
+
   public void normalize() {
     myHighlighterTree.normalize();
   }
