@@ -76,7 +76,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @Override
   public PsiClass getObject() {
     if (myClass instanceof PsiAnchor) {
-      return (PsiClass)((PsiAnchor)myClass).retrieve();
+      final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
+      assert retrieve != null : myQualifiedName;
+      return retrieve;
     }
     return (PsiClass)myClass;
   }
