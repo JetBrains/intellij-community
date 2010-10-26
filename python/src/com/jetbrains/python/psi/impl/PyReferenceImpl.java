@@ -478,14 +478,22 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return;
       }
       PyNamedParameter namedParam = par.getAsNamed();
-      assert namedParam != null;
-      if (!namedParam.isKeywordContainer() && !namedParam.isPositionalContainer()) {
-        final LookupElement item = PyUtil.createNamedParameterLookup(namedParam.getName());
-        myRet.add(item);
+      if (namedParam != null) {
+        if (!namedParam.isKeywordContainer() && !namedParam.isPositionalContainer()) {
+          final LookupElement item = PyUtil.createNamedParameterLookup(namedParam.getName());
+          myRet.add(item);
+        }
+        else if (namedParam.isKeywordContainer()) {
+          myHasKwArgs = true;
+          kwArgsParam = namedParam;
+        }
       }
-      else if (namedParam.isKeywordContainer()) {
-        myHasKwArgs = true;
-        kwArgsParam = namedParam;
+      else {
+        PyTupleParameter nestedTupleParam = par.getAsTuple();
+        if (nestedTupleParam != null) {
+          nestedTupleParam.acceptChildren(this);
+        }
+        // else it's a lone star parameter, it can't contribute to completion
       }
     }
 
