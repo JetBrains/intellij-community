@@ -1,5 +1,5 @@
 import org.jetbrains.jps.Module
-import static org.jetbrains.jps.idea.IdeaProjectLoader.*
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
@@ -191,6 +191,8 @@ def layoutFull(String home, String targetDirectory) {
       layoutPlugin("git4idea") {
         fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
       }
+
+      layoutPlugin("github")
 
       layoutPlugin("svn4idea") {
         fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
