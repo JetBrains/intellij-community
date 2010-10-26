@@ -124,12 +124,14 @@ public class AndroidLogcatUtil {
             return super.ready();
           }
           catch (IOException e) {
+            LOG.info(e);
             return false;
           }
         }
       };
     }
     catch (IOException e) {
+      LOG.info(e);
       console.writeToConsole("Unable to run logcat. IOException: " + e.getMessage() + '\n', ProcessOutputTypes.STDERR);
       return null;
     }
@@ -144,6 +146,7 @@ public class AndroidLogcatUtil {
               startLogging(device, receiver);
             }
             catch (final IOException e) {
+              LOG.info(e);
               console.writeToConsole(e.getMessage() + '\n', ProcessOutputTypes.STDERR);
             }
           }
