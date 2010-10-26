@@ -111,6 +111,10 @@ public class PyStatementEffectInspection extends PyInspection {
         PyConditionalExpression conditionalExpression = (PyConditionalExpression)expression;
         return hasEffect(conditionalExpression.getTruePart()) || hasEffect(conditionalExpression.getFalsePart());
       }
+      else if (expression instanceof PyParenthesizedExpression) {
+        PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)expression;
+        return hasEffect(parenthesizedExpression.getContainedExpression());
+      }
       return false;
     }
   }
