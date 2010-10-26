@@ -187,14 +187,18 @@ class ProjectBuilder {
       )
       if (arrangeModuleCyclesOutputs) {
         chunk.modules.each {
-          def state = new ModuleBuildState(
-              sourceRoots: tests ? it.testRoots : it.sourceRoots,
-              excludes: it.excludes,
-              classpath: chunkClasspath,
-              targetFolder: createOutputFolder(it.name, it, tests),
-              moduleDependenciesSourceRoots: chunkDependenciesSourceRoots
-          )
-          states[state] = new ModuleChunk(it)
+          List<String> sourceRoots = tests ? it.testRoots : it.sourceRoots
+          if (!sourceRoots.isEmpty()) {
+            def state = new ModuleBuildState(
+                sourceRoots: sourceRoots,
+                excludes: it.excludes,
+                classpath: chunkClasspath,
+                targetFolder: createOutputFolder(it.name, it, tests),
+                moduleDependenciesSourceRoots: chunkDependenciesSourceRoots
+            )
+            states[state] = new ModuleChunk(it)
+          }
+
         }
       }
       else {
