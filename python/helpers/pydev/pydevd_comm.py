@@ -336,7 +336,7 @@ def StartClient(host, port):
     """ connects to a host/port """
     PydevdLog(1, "Connecting to ", host, ":", str(port))
     try:
-        s = socket(AF_INET, SOCK_STREAM);
+        s = socket(AF_INET, SOCK_STREAM)
 
         s.connect((host, port))
         PydevdLog(1, "Connected.")
