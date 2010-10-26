@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,7 +65,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = psiClass.getContainingFile().getVirtualFile() instanceof LightVirtualFile ? psiClass : PsiAnchor.create(psiClass);
+    myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
