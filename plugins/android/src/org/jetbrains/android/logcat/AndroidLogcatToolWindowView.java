@@ -22,6 +22,7 @@ import com.intellij.diagnostic.logging.LogFilterModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -34,12 +35,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidPlatformsComboBox;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -185,8 +188,11 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       }
     };
     mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.addAll(myLogConsole.getToolbarActions());
+    group.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
     final JComponent tbComp =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myLogConsole.getToolbarActions(), false).getComponent();
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent();
     myConsoleWrapper.add(tbComp, BorderLayout.WEST);
     myConsoleWrapper.add(myLogConsole.getComponent(), BorderLayout.CENTER);
     Disposer.register(this, myLogConsole);

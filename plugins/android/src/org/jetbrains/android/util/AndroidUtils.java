@@ -93,6 +93,7 @@ public class AndroidUtils {
   public static final String CLASSES_FILE_NAME = "classes.dex";
 
   public static final Icon ANDROID_ICON = IconLoader.getIcon("/icons/android.png");
+  public static final Icon DDMS_ICON = IconLoader.getIcon("/icons/ddms.png");
   public static final String NAMESPACE_KEY = "android";
   public static final String SYSTEM_RESOURCE_PACKAGE = "android";
   public static final String R_JAVA_FILENAME = "R.java";

@@ -37,7 +37,7 @@ import javax.swing.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condition<Project> {
-  private static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
+  public static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
 
   public void createToolWindowContent(Project project, final ToolWindow toolWindow) {
     toolWindow.setIcon(AndroidUtils.ANDROID_ICON);
