@@ -727,7 +727,7 @@ class InternalGetCompletions(InternalThreadCommand):
                 #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
                 #(Names not resolved in generator expression in method)
                 #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-                updated_globals = dict()
+                updated_globals = {}
                 updated_globals.update(frame.f_globals)
                 updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
             
