@@ -350,7 +350,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
 
-  // TODO: add method tests with decorators when a mock SDK is available
+  public void testStaticmethod() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a,b", new String[]{"a,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a,b", new String[]{"b"});
+  }
 
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
