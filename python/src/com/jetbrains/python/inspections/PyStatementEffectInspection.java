@@ -30,6 +30,11 @@ public class PyStatementEffectInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
+  @Override
+  protected boolean isSuppressForCodeFragment() {
+    return true;
+  }
+
   private static class Visitor extends PyInspectionVisitor {
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {

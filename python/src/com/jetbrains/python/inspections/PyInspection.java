@@ -65,7 +65,16 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
   public boolean isSuppressedFor(PsiElement element) {
     return isSuppressedForParent(element, PyStatement.class) ||
            isSuppressedForParent(element, PyFunction.class) ||
-           isSuppressedForParent(element, PyClass.class);
+           isSuppressedForParent(element, PyClass.class) ||
+           isSuppressForCodeFragment(element);
+  }
+
+  private boolean isSuppressForCodeFragment(PsiElement element) {
+    return isSuppressForCodeFragment() && PsiTreeUtil.getParentOfType(element, PyExpressionCodeFragment.class) != null;
+  }
+
+  protected boolean isSuppressForCodeFragment() {
+    return false;
   }
 
   private boolean isSuppressedForParent(PsiElement element, final Class<? extends PyElement> parentClass) {
