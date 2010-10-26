@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "big.decimal.equals.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "big.decimal.equals.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new BigDecimalEqualsFix();
     }
@@ -52,6 +55,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
                     "big.decimal.equals.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiIdentifier name =
@@ -75,6 +79,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new BigDecimalEqualsVisitor();
     }
@@ -90,18 +95,18 @@ public class BigDecimalEqualsInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length == 0) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length == 0) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            if (!TypeUtils.expressionHasType("java.math.BigDecimal", arg)) {
+            final PsiExpression arg = arguments[0];
+            if (!TypeUtils.expressionHasType(arg, "java.math.BigDecimal")) {
                 return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasType("java.math.BigDecimal",
-                    qualifier)) {
+            if (!TypeUtils.expressionHasType(qualifier, "java.math.BigDecimal"
+            )) {
                 return;
             }
             final PsiElement context = expression.getParent();

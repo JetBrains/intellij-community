@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResultSetIndexZeroInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "UseOfIndexZeroInJDBCResultSet";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.0index.in.jdbc.resultset.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "use.0index.in.jdbc.resultset.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ResultSetIndexZeroVisitor();
     }
@@ -71,7 +75,7 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
                 return;
             }
             final PsiExpression argument = arguments[0];
-            if (!TypeUtils.expressionHasType(PsiKeyword.INT, argument)) {
+            if (!TypeUtils.expressionHasType(argument, PsiKeyword.INT)) {
                 return;
             }
             if(!PsiUtil.isConstantExpression(argument)) {
@@ -86,7 +90,7 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, 
-		            "java.sql.ResultSet")) {
+                    "java.sql.ResultSet")) {
                 return;
             }
             registerError(argument);

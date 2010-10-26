@@ -29,8 +29,7 @@ public class TypeUtils {
     private TypeUtils() {}
 
     public static boolean expressionHasType(
-            @NonNls @NotNull String typeName,
-            @Nullable PsiExpression expression) {
+            @Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
         if (expression == null) {
             return false;
         }
@@ -44,7 +43,7 @@ public class TypeUtils {
     }
 
     public static PsiClassType getType(@NotNull String fqName,
-                                  @NotNull PsiElement context) {
+                                       @NotNull PsiElement context) {
         final Project project = context.getProject();
         final PsiElementFactory factory =
                 JavaPsiFacade.getInstance(project).getElementFactory();
