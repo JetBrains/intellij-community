@@ -575,8 +575,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void restartCompletion() {
     closeAndFinish(false);
 
-    final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false,
-                                                                               !isAutopopupCompletion());
+    final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
     final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, getProject());
     newHandler.invokeCompletion(getProject(), myEditor, psiFileInEditor, myParameters.getInvocationCount());
   }
