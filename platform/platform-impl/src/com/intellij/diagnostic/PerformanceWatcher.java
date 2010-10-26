@@ -202,7 +202,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     return name.toString();
   }
 
-  private void dumpThreads() {
+  public void dumpThreads() {
     File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + ".txt");
     FileOutputStream fos;
     try {

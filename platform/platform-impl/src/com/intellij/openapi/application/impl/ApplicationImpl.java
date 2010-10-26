@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.ApplicationLoadListener;
@@ -103,6 +104,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile boolean myDisposeInProgress = false;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
+  private static boolean ourDumpThreadsOnLongWriteActionWaiting = "true".equals(System.getProperty("dump.threads.on.long.write.action.waiting"));
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -752,6 +754,25 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     ActivityTracker.getInstance().inc();
     fireBeforeWriteActionStart(action);
+    final AtomicBoolean stopped = new AtomicBoolean(false);
+
+    if (ourDumpThreadsOnLongWriteActionWaiting) {
+      executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          while (!stopped.get()) {
+            try {
+              Thread.sleep(239);
+              if (!stopped.get()) {
+                getComponent(PerformanceWatcher.class).dumpThreads();
+              }
+            }
+            catch (InterruptedException e) {
+            }
+          }
+        }
+      });
+    }
 
     LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
     try {
@@ -760,6 +781,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
     }
+    stopped.set(true);
 
     try {
       myWriteActionsStack.push(action);
