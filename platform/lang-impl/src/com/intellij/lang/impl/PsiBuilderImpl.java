@@ -20,9 +20,7 @@ import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -59,6 +57,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: max
@@ -91,6 +90,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private MyTreeStructure myParentLightTree = null;
 
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
+
+  private Map<Key, Object> myUserData = null;
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     public StartMarker create() {
@@ -1439,5 +1440,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         LOG.error(e);
       }
     }
+  }
+
+  @Override
+  public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
+    //noinspection unchecked
+    return myUserData != null ? (T)myUserData.get(key) : null;
+  }
+
+  @Override
+  public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
+    if (myUserData == null) myUserData = CollectionFactory.hashMap();
+    myUserData.put(key, value);
   }
 }
