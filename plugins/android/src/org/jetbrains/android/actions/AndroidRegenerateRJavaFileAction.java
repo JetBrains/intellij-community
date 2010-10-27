@@ -46,7 +46,9 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
   public void update(AnActionEvent e) {
     final Module module = e.getData(DataKeys.MODULE);
     final Project project = e.getData(DataKeys.PROJECT);
-    e.getPresentation().setEnabled(isAvailable(module, project));
+    boolean visible = project != null && ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID).size() > 0;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && isAvailable(module, project));
   }
 
   private static boolean isAvailable(Module module, Project project) {
