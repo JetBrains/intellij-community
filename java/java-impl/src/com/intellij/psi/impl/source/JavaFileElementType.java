@@ -44,7 +44,7 @@ import com.intellij.util.io.StringRef;
 import java.io.IOException;
 
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static boolean USE_NEW_STUB_BUILDER = false & JavaParserDefinition.USE_NEW_PARSER;
+  public static boolean USE_NEW_STUB_BUILDER = true & JavaParserDefinition.USE_NEW_PARSER;
 
   public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? USE_NEW_STUB_BUILDER ? 6 : 5 : 4;
 
