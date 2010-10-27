@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -93,7 +92,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
@@ -603,66 +601,28 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
 
   private void showDifferences(Project project, VcsFileRevision revision1, VcsFileRevision revision2) {
+    VcsFileRevision left = revision1;
+    VcsFileRevision right = revision2;
+    if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
+      left = revision2;
+      right = revision1;
+    }
 
     try {
-      revision1.loadContent();
-      revision2.loadContent();
-
-      VcsFileRevision left = revision1;
-      VcsFileRevision right = revision2;
-      if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
-        left = revision2;
-        right = revision1;
-      }
-      final byte[] content1 = left.getContent();
-      if (content1 == null) throw new VcsException("Failed to load content for revision " + left.getRevisionNumber().asString());
-      final byte[] content2 = right.getContent();
-      if (content2 == null) throw new VcsException("Failed to load content for revision " + right.getRevisionNumber().asString());
-
-
-      SimpleDiffRequest diffData = new SimpleDiffRequest(myVcs.getProject(), myFilePath.getPresentableUrl());
-
-      diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-
-      Document doc = myFilePath.getDocument();
-
-      Charset charset = myFilePath.getCharset();
-      FileType fileType = myFilePath.getFileType();
-      diffData.setContentTitles(left.getRevisionNumber().asString(), right.getRevisionNumber().asString());
-      diffData.setContents(createContent(project, content1, left, doc, charset, fileType),
-                           createContent(project, content2, right, doc, charset, fileType));
-      DiffManager.getInstance().getDiffTool().show(diffData);
-    }
-    catch (final VcsException e) {
+      VcsHistoryUtil.showDiff(project, myFilePath, left, right);
+    } catch (final VcsException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
                                    VcsBundle.message("message.title.show.differences"));
         }
       });
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       LOG.error(e);
+    } catch (ProcessCanceledException ex) {
+      LOG.info(ex);
     }
-    catch (ProcessCanceledException ex) {
-      return;
-    }
   }
-
-  private static DiffContent createContent(Project project,
-                                           byte[] content1,
-                                           VcsFileRevision revision,
-                                           Document doc,
-                                           Charset charset,
-                                           FileType fileType) {
-    if (isCurrent(revision) && (doc != null)) return new DocumentContent(project, doc);
-    return new BinaryContent(content1, charset, fileType);
-  }
-
-  private static boolean isCurrent(VcsFileRevision revision) {
-    return revision instanceof CurrentRevision;
-  }
-
 
   protected JComponent createCenterPanel() {
     mySplitter = new Splitter(true, getSplitterProportion());
