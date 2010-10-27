@@ -15,6 +15,9 @@
  */
 package git4idea.actions;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -61,18 +64,18 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     // get basic information
     final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDisposed()) {
-      LOG.info("Project is null. " + event.getPlace() + ", " + event.getDataContext());
+      notifyError(project, "Project is null. " + event.getPlace() + ", " + event.getDataContext(), null);
       return;
     }
     final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (vFiles == null || vFiles.length != 1 || vFiles[0] == null) {
-      LOG.info("Selected incorrect virtual files array: " + Arrays.toString(vFiles));
+      notifyError(project, "Selected incorrect virtual files array: " + Arrays.toString(vFiles), null);
       return;
     }
     final VirtualFile file = vFiles[0];
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
     if (vcsRoot == null) {
-      LOG.info("The file " + file + " is not under Git version control.");
+      notifyError(project, "The file " + file + " is not under Git version control.", null);
       return;
     }
 
@@ -83,10 +86,10 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       GitBranch.listAsStrings(project, vcsRoot, true, true, branches, null); // make it return current branch not to call the command twice.
       curBranch = GitBranch.current(project, vcsRoot);
     } catch (VcsException e) {
-      LOG.info("Couldn't get information about current branch", e);
+      notifyError(project, "Couldn't get information about current branch", e);
     }
     if (curBranch == null) {
-      LOG.info("Current branch is null.");
+      notifyError(project, "Current branch is null.", null);
       return;
     }
 
@@ -103,7 +106,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
               showDiffWithBranch(project, file, currentBranch, selectedValue);
               popup.get().cancel();
             } catch (Exception e) {
-              LOG.info("Couldn't compare file [" + file + "] with selected branch [" + selectedValue + "]", e);
+              notifyError(project, "Couldn't compare file [" + file + "] with selected branch [" + selectedValue + "]", e);
             }
           }
         });
@@ -111,6 +114,15 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     };
     popup.set(new ListPopupImpl(branchesStep));
     popup.get().showInBestPositionFor(event.getDataContext());
+  }
+
+  private static void notifyError(Project project, String message, Throwable t) {
+    if (t != null) {
+      LOG.info(message, t);
+    } else {
+      LOG.info(message);
+    }
+    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Couldn't compare with branch", message, NotificationType.WARNING), project);
   }
 
   private static void showDiffWithBranch(Project project, VirtualFile file, String currentBranch, String compareBranch) throws VcsException, IOException {
