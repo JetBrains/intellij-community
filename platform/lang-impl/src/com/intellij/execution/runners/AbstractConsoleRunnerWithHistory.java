@@ -245,15 +245,18 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected void runExecuteActionInner() {
     // Process input and add to history
-    final Document document = getLanguageConsole().getCurrentEditor().getDocument();
+    final LanguageConsoleImpl console = getLanguageConsole();
+    final Document document = console.getCurrentEditor().getDocument();
     final String text = document.getText();
     final TextRange range = new TextRange(0, document.getTextLength());
-    getLanguageConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-    getLanguageConsole().addCurrentToHistory(range, false);
-    getLanguageConsole().setInputText("");
+    console.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    console.addCurrentToHistory(range, false);
+    console.setInputText("");
     if (!StringUtil.isEmptyOrSpaces(text)){
       myHistory.addToHistory(text);
     }
+    // Scroll output to the end automatically
+    EditorUtil.scrollToTheEnd(console.getHistoryViewer());
     // Send to interpreter / server
     processLine(text);
   }
