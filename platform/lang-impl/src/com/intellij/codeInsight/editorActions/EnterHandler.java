@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -140,7 +141,7 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final DoEnterAction action = new DoEnterAction(file, editor, document, caretOffset, !insertSpace, caretAdvanceRef.get());
+    final DoEnterAction action = new DoEnterAction(file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get());
     action.setForceIndent(forceIndent);
     action.run();
   }
@@ -200,6 +201,8 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   private static class DoEnterAction implements Runnable {
+    
+    private final DataContext myDataContext;
     private final PsiFile myFile;
     private int myOffset;
     private final Document myDocument;
@@ -210,9 +213,12 @@ public class EnterHandler extends BaseEnterHandler {
     private boolean myForceIndent = false;
     private static final String LINE_SEPARATOR = "\n";
 
-    public DoEnterAction(PsiFile file, Editor view, Document document, int offset, boolean insertSpace, int caretAdvance) {
+    public DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
+                         int caretAdvance) 
+    {
       myEditor = view;
       myFile = file;
+      myDataContext = dataContext;
       myOffset = offset;
       myDocument = document;
       myInsertSpace = insertSpace;
@@ -366,21 +372,39 @@ public class EnterHandler extends BaseEnterHandler {
       if(docCommentLinePrefix==null){
         return;
       }
-
-      boolean leadingAsterisksEnabled = CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED;
       
+      // There are at least two approaches for completing javadoc in case there is a text between current caret position and line end:
+      //     1. Move that tail text below the javadoc. Use-case:
+      //         Before:
+      //             /**<caret>public void foo() {}
+      //         After:
+      //             /**
+      //              */
+      //             public void foo() {}
+      //     2. Move the tail text inside the javadoc. Use-case:
+      //          Before:
+      //             /**This is <caret>javadoc description
+      //          After:
+      //             /** This is
+      //              * javadoc description
+      //              */
+      // The later is most relevant when we have 'auto wrap when typing reaches right margin' option set, i.e. user starts javadoc
+      // and types until right margin is reached. We want the wrapped text tail to be located inside javadoc and continue typing
+      // inside it. So, we have a control flow branch below that does the trick.
       buffer.append(docCommentLinePrefix);
-      if (leadingAsterisksEnabled) {
-        buffer.append(" ");
+      if (DataManager.getInstance().loadFromDataContext(myDataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) == Boolean.TRUE) {
+        myDocument.insertString(myOffset, buffer);
+
+        // We create new buffer here because the one referenced by current 'buffer' variable value may be already referenced at another
+        // place (e.g. 'undo' processing stuff).
+        buffer = new StringBuilder(LINE_SEPARATOR).append(commenter.getDocumentationCommentSuffix());
+        int line = myDocument.getLineNumber(myOffset);
+        myOffset = myDocument.getLineEndOffset(line);
       }
-      myDocument.insertString(myOffset, buffer);
-      int caretOffset = myOffset + buffer.length();
-      
-      // We create new buffer here because the one referenced by current 'buffer' variable value may be already referenced at another
-      // place (e.g. 'undo' processing stuff).
-      buffer = new StringBuilder(LINE_SEPARATOR).append(commenter.getDocumentationCommentSuffix());
-      int line = myDocument.getLineNumber(myOffset);
-      myOffset = myDocument.getLineEndOffset(line);
+      else {
+        buffer.append(LINE_SEPARATOR);
+        buffer.append(commenter.getDocumentationCommentSuffix());
+      }
       
       PsiComment comment = createComment(buffer, settings);
       if(comment == null){
@@ -391,18 +415,17 @@ public class EnterHandler extends BaseEnterHandler {
       CharSequence text = myDocument.getCharsSequence();
       myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, LINE_SEPARATOR);
       myOffset = CharArrayUtil.shiftForward(text, myOffset, LINE_SEPARATOR);
-      myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, LINE_SEPARATOR);
+      myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, docCommentLinePrefix) + 1;
       removeTrailingSpaces(myDocument, myOffset);
-      myOffset = caretOffset;
 
-      //if (!leadingAsterisksEnabled) {
-      //  LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
-      //  myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
-      //  myOffset--;
-      //} else {
-      //  myDocument.insertString(myOffset, " ");
-      //  myOffset++;
-      //}
+      if (!CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
+        myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
+        myOffset--;
+      } else {
+        myDocument.insertString(myOffset, " ");
+        myOffset++;
+      }
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
