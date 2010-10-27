@@ -36,8 +36,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -69,8 +70,22 @@ import java.util.StringTokenizer;
  * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
-  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-  private static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
+    "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
+  private static final Condition<XmlText> CONDITION = new Condition<XmlText>() {
+    @Override
+    public boolean value(XmlText xmlText) {
+      return PsiTreeUtil.getChildOfType(xmlText, OuterLanguageElement.class) != null;
+    }
+  };
+  private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
+    new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
+    @Override
+    protected Boolean compute(PsiElement parent, Object p) {
+      OuterLanguageElement element = PsiTreeUtil.getChildOfType(parent, OuterLanguageElement.class);
+      return element != null && element.getLanguage() != parent.getLanguage();
+    }
+  };
   private List<HighlightInfo> myResult;
 
   private static boolean ourDoJaxpTesting;
@@ -280,6 +295,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
 
+    checkRequiredAttributes(tag, name, elementDescriptor);
+
+    if (elementDescriptor instanceof Validator) {
+      //noinspection unchecked
+      ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
+    }
+  }
+
+  private void checkRequiredAttributes(XmlTag tag, String name, XmlElementDescriptor elementDescriptor) {
     XmlAttributeDescriptor[] attributeDescriptors = elementDescriptor.getAttributesDescriptors(tag);
     Set<String> requiredAttributes = null;
 
@@ -317,11 +341,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-    }
-
-    if (elementDescriptor instanceof Validator) {
-      //noinspection unchecked
-      ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
     }
   }
 
@@ -388,11 +407,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static boolean skipValidation(PsiElement context) {
-    return context.getUserData(DO_NOT_VALIDATE_KEY) != null;
+    boolean aBoolean = DO_NOT_VALIDATE.get(context, null);
+    return aBoolean;
   }
 
   public static void setSkipValidation(@NotNull PsiElement element) {
-    element.putUserData(DO_NOT_VALIDATE_KEY, "");
+    DO_NOT_VALIDATE.put(element, Boolean.TRUE);
   }
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {}
@@ -700,16 +720,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addToResults(highlightInfo);
       }
     }
-  }
-
-  public static void visitJspElement(OuterLanguageElement text) {
-    PsiElement parent = text.getParent();
-
-    if (parent instanceof XmlText) {
-      parent = parent.getParent();
-    }
-
-    setSkipValidation(parent);
   }
 
   public boolean suitableForFile(final PsiFile file) {

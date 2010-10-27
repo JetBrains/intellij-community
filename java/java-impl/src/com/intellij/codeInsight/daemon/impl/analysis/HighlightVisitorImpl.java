@@ -39,7 +39,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -662,11 +661,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
-  }
-
-  @Override public void visitOuterLanguageElement(OuterLanguageElement element) {
-    XmlHighlightVisitor.visitJspElement(element);
-    super.visitOuterLanguageElement(element);
   }
 
   @Override public void visitPackageStatement(PsiPackageStatement statement) {
