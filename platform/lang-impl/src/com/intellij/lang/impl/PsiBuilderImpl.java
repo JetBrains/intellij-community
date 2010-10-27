@@ -953,9 +953,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    final boolean allTokensInserted = myCurrentLexeme >= myLexemeCount;
-    if (!allTokensInserted) {
-      LOG.error("Not all of the tokens inserted to the tree, parsed text:\n" + myText);
+    if (myCurrentLexeme < myLexemeCount) {
+      final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, myCurrentLexeme, myLexemeCount);
+      LOG.error("Tokens " + missed + " were not inserted into the tree. Text:\n" + myText);
     }
 
     if (myLexStarts.length <= myCurrentLexeme + 1) {
