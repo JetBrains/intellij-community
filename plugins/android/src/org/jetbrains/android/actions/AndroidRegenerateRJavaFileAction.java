@@ -15,22 +15,21 @@
  */
 package org.jetbrains.android.actions;
 
+import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +46,9 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
   public void update(AnActionEvent e) {
     final Module module = e.getData(DataKeys.MODULE);
     final Project project = e.getData(DataKeys.PROJECT);
-    e.getPresentation().setEnabled(isAvailable(module, project));
+    boolean visible = project != null && ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID).size() > 0;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && isAvailable(module, project));
   }
 
   private static boolean isAvailable(Module module, Project project) {
@@ -70,53 +71,34 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Module module = e.getData(DataKeys.MODULE);
-    final Project project = e.getData(DataKeys.PROJECT);
-    ApplicationManager.getApplication().saveAll();
-    ProgressManager.getInstance().run(
-      new Task.Backgroundable(project, AndroidBundle.message("android.compile.messages.generating.r.java"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          doRun(indicator, module, project);
-        }
-      });
-  }
-
-  private static void doRun(ProgressIndicator indicator, Module module, Project project) {
+    Project project = e.getData(DataKeys.PROJECT);
+    Module module = e.getData(DataKeys.MODULE);
     if (module != null) {
-      if (indicator.isCanceled()) {
-        return;
-      }
-      AndroidCompileUtil.generate(module, new AndroidAptCompiler(), false);
+      generate(project, module);
       return;
     }
     assert project != null;
     List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
     List<Module> modulesToProcess = new ArrayList<Module>();
     for (AndroidFacet facet : facets) {
-      if (indicator.isCanceled()) {
-        return;
-      }
       module = facet.getModule();
       if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
         modulesToProcess.add(module);
       }
     }
-    if (modulesToProcess.size() == 0) {
-      return;
+    if (modulesToProcess.size() > 0) {
+      generate(project, modulesToProcess.toArray(new Module[modulesToProcess.size()]));
     }
-    if (modulesToProcess.size() == 1) {
-      AndroidCompileUtil.generate(modulesToProcess.get(0), new AndroidAptCompiler(), false);
-      return;
-    }
-    double step = 1.0 / modulesToProcess.size();
-    double progress = 0.0;
-    indicator.setText(AndroidBundle.message("android.compile.messages.generating.r.java"));
-    indicator.setFraction(progress);
-    for (int i = 0, n = modulesToProcess.size(); i < n; i++) {
-      AndroidCompileUtil.generate(modulesToProcess.get(i), new AndroidAptCompiler(), false);
-      progress = i < n - 1 ? progress + step : 1.0;
-      indicator.setFraction(progress);
-    }
+  }
+
+  private static void generate(Project project, final Module... modules) {
+    CompilerManager.getInstance(project).executeTask(new CompileTask() {
+      @Override
+      public boolean execute(CompileContext context) {
+        AndroidCompileUtil.generate(new AndroidAptCompiler(), context);
+        return true;
+      }
+    }, new ModuleCompileScope(project, modules, false), AndroidBundle.message("android.compile.messages.generating.r.java.content.name"),
+                                                     null);
   }
 }

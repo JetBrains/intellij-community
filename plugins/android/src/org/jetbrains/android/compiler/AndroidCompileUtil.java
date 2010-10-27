@@ -163,10 +163,13 @@ public class AndroidCompileUtil {
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }
     });
-    CompileContext context = contextWrapper[0];
+    generate(compiler, contextWrapper[0]);
+  }
+
+  public static void generate(GeneratingCompiler compiler, CompileContext context) {
     if (context != null) {
       GeneratingCompiler.GenerationItem[] items = compiler.getGenerationItems(context);
-      compiler.generate(contextWrapper[0], items, null);
+      compiler.generate(context, items, null);
     }
   }
 

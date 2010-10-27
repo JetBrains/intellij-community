@@ -1285,7 +1285,8 @@ public class StringUtil {
 
   public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int i;
-    for (i = 0; i < s1.length() && i < s2.length(); i++) {
+    int minLength = Math.min(s1.length(), s2.length());
+    for (i = 0; i < minLength; i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
         break;
       }
@@ -1299,10 +1300,12 @@ public class StringUtil {
   }
 
   public static int commonSuffixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
-    if (s1.length() == 0 || s2.length() == 0) return 0;
+    int s1Length = s1.length();
+    int s2Length = s2.length();
+    if (s1Length == 0 || s2Length == 0) return 0;
     int i;
-    for (i = 0; i < s1.length() && i < s2.length(); i++) {
-      if (s1.charAt(s1.length() - i - 1) != s2.charAt(s2.length() - i - 1)) {
+    for (i = 0; i < s1Length && i < s2Length; i++) {
+      if (s1.charAt(s1Length - i - 1) != s2.charAt(s2Length - i - 1)) {
         break;
       }
     }
