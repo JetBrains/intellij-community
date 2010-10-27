@@ -147,7 +147,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   private static class ChooseParentFacetDialog extends ChooseElementsDialog<Facet> {
     private ChooseParentFacetDialog(Project project, List<? extends Facet> items, String title, String description) {
-      super(project, items, title, description);
+      super(project, items, title, description, true);
       myChooser.setSingleSelectionMode();
     }
 
