@@ -343,6 +343,11 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  public void testSuperTwoClasses() {  // PY-2133
+    final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "my_call");
+    assertEquals("Base2", pyFunction.getContainingClass().getName());
+  }
+
   public void testLambdaDefaultParameter() {
     final PsiElement element = doResolve();
     assertInstanceOf(element, PyTargetExpression.class);
