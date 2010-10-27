@@ -609,7 +609,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     try {
-      VcsHistoryUtil.showDiff(project, myFilePath, left, right);
+      VcsHistoryUtil.showDiff(project, myFilePath, left, right, left.getRevisionNumber().asString(), right.getRevisionNumber().asString());
     } catch (final VcsException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {

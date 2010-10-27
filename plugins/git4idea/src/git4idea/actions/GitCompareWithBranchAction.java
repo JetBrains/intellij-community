@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -119,9 +120,10 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     if (currentRevisionNumber == null || compareRevisionNumber == null) {
       throw new VcsException("Null revision number. Current: [" + currentRevisionNumber + "], compare: [" + compareRevisionNumber + "]");
     }
-    final VcsFileRevision currentRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)currentRevisionNumber);
     final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber);
-    VcsHistoryUtil.showDiff(project, filePath, currentRevision, compareRevision);
+    VcsHistoryUtil.showDiff(project, filePath, new CurrentRevision(file, currentRevisionNumber), compareRevision,
+                            ((GitRevisionNumber)currentRevisionNumber).getShortRev() + " on " + currentBranch,
+                            ((GitRevisionNumber)compareRevisionNumber).getShortRev() + " on " + compareBranch);
   }
 
   @Override

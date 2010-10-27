@@ -63,7 +63,7 @@ public class VcsHistoryUtil {
    * @throws com.intellij.openapi.vcs.VcsException
    * @throws java.io.IOException
    */
-  public static void showDiff(Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2) throws VcsException, IOException {
+  public static void showDiff(Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2, String title1, String title2) throws VcsException, IOException {
     revision1.loadContent();
     final byte[] content1 = revision1.getContent();
     if (content1 == null) throw new VcsException("Failed to load content for revision " + revision1.getRevisionNumber().asString());
@@ -78,7 +78,7 @@ public class VcsHistoryUtil {
     final Document doc = filePath.getDocument();
     final Charset charset = filePath.getCharset();
     final FileType fileType = filePath.getFileType();
-    diffData.setContentTitles(revision1.getRevisionNumber().asString(), revision2.getRevisionNumber().asString());
+    diffData.setContentTitles(title1, title2);
     diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
                          createContent(project, content2, revision2, doc, charset, fileType));
     DiffManager.getInstance().getDiffTool().show(diffData);
