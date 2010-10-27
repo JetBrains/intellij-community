@@ -134,6 +134,9 @@
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
+    <projectService serviceInterface="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"
+                    serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>
+    <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
   </extensions>
 
   <extensionPoints>

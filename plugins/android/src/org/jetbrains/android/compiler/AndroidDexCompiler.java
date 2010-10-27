@@ -271,8 +271,8 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             }
           }
 
-          Map<CompilerMessageCategory, List<String>> messages = dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath,
-                                                                               files);
+          Map<CompilerMessageCategory, List<String>> messages =
+            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files);
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(dexItem);
