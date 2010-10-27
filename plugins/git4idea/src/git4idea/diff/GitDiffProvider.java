@@ -80,7 +80,7 @@ public class GitDiffProvider implements DiffProvider {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()));
+      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), null);
     }
     catch (VcsException e) {
       return null;

@@ -219,17 +219,17 @@ public class GitFileUtils {
    *
    * @param project      the project
    * @param root         the vcs root
-   * @param revision     the revision to find path in
+   * @param revisionOrBranch     the revision to find path in or branch 
    * @param relativePath
    * @return the content of file if file is found, null if the file is missing in the revision
    * @throws VcsException if there is a problem with running git
    */
   @Nullable
-  public static byte[] getFileContent(Project project, VirtualFile root, String revision, String relativePath) throws VcsException {
+  public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters(revision + ":" + relativePath);
+    h.addParameters(revisionOrBranch + ":" + relativePath);
     byte[] result;
     try {
       result = h.run();
@@ -245,4 +245,24 @@ public class GitFileUtils {
     }
     return result;
   }
+
+  /**
+   * Returns the GitFileRevision for given parameters.
+   * @param revisionOrBranch full hash of the revision, or branch name, or tag name - any will do.
+   * @param loadContent should the content be preloaded in the returned VcsFileRevision.
+   * @return VcsFileRevision for the given parameters.
+   */
+  //@Nullable
+  //public static VcsFileRevision getFileRevision(Project project, VirtualFile vcsRoot, String revisionOrBranch, String relativePath, boolean loadContent) {
+  //  GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitCommand.SHOW);
+  //  h.setNoSSH(true);
+  //  h.setSilent(true);
+  //  h.addParameters(revisionOrBranch + ":" + relativePath);
+  //
+  //  if (!loadContent) {
+  //    h.addParameters("--name-only");
+  //  }
+  //
+  //}
+  
 }
