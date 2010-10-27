@@ -15,24 +15,46 @@
  */
 package com.siyeh.ig.initialization;
 
-import com.intellij.psi.*;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.*;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.UninitializedReadCollector;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InstanceVariableUninitializedUseInspection
         extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
+
+    /** @noinspection PublicField*/
+    @NonNls
+    public String annotationNamesString = "";
+    private final List<String> annotationNames = new ArrayList();
+
+    public InstanceVariableUninitializedUseInspection() {
+        parseString(annotationNamesString, annotationNames);
+    }
 
     @Override
     @NotNull
@@ -55,9 +77,51 @@ public class InstanceVariableUninitializedUseInspection
     }
 
     @Override
+    public void readSettings(Element element) throws InvalidDataException {
+        super.readSettings(element);
+        parseString(annotationNamesString, annotationNames);
+    }
+
+    @Override
+    public void writeSettings(Element element) throws WriteExternalException {
+        annotationNamesString = formatString(annotationNames);
+        super.writeSettings(element);
+    }
+
+    @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+        final JComponent panel = new JPanel(new GridBagLayout());
+
+        final ListTable table = new ListTable(new ListWrappingTableModel(
+                annotationNames, InspectionGadgetsBundle.message("ignore.if.annotated.by")));
+        final JScrollPane scrollPane =
+                ScrollPaneFactory.createScrollPane(table);
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeAnnotationChooserToolbar(table,
+                        InspectionGadgetsBundle.message("choose.annotation.class"));
+        final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
                 "primitive.fields.ignore.option"), this, "m_ignorePrimitives");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        constraints.gridy = 2;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+
+        return panel;
     }
 
     @Override
@@ -73,6 +137,11 @@ public class InstanceVariableUninitializedUseInspection
                 return;
             }
             if (field.getInitializer() != null) {
+                return;
+            }
+            final PsiAnnotation annotation =
+                    AnnotationUtil.findAnnotation(field, annotationNames);
+            if (annotation != null) {
                 return;
             }
             if (m_ignorePrimitives) {

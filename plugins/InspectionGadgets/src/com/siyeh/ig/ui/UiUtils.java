@@ -27,6 +27,7 @@ import com.intellij.util.Icons;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -49,8 +50,32 @@ public class UiUtils {
     public static ActionToolbar createAddRemoveTreeClassChooserToolbar(
             ListTable table, String chooserTitle,
             @NonNls String... ancestorClasses) {
+        final TreeClassChooser.ClassFilter filter;
+        if (ancestorClasses.length == 0) {
+            filter = TreeClassChooser.ClassFilter.ALL;
+        } else {
+            filter = new SubclassFilter(ancestorClasses);
+        }
         final AnAction addAction = new TreeClassChooserAction(table,
-                chooserTitle, ancestorClasses);
+                chooserTitle, filter);
+        final AnAction removeAction = new RemoveAction(table);
+        final ActionGroup group =
+                new DefaultActionGroup(addAction, removeAction);
+        final ActionManager actionManager = ActionManager.getInstance();
+        return actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
+                group, true);
+    }
+
+    public static ActionToolbar createAddRemoveTreeAnnotationChooserToolbar(
+            ListTable table, String chooserTitle) {
+        final TreeClassChooser.ClassFilter filter =
+                new TreeClassChooser.ClassFilter() {
+                    public boolean isAccepted(PsiClass psiClass) {
+                        return psiClass.isAnnotationType();
+                    }
+                };
+        final AnAction addAction = new TreeClassChooserAction(table,
+                chooserTitle, filter);
         final AnAction removeAction = new RemoveAction(table);
         final ActionGroup group =
                 new DefaultActionGroup(addAction, removeAction);
@@ -63,17 +88,19 @@ public class UiUtils {
 
         private final ListTable table;
         private final String chooserTitle;
-        private final String[] ancestorClasses;
+        private final TreeClassChooser.ClassFilter filter;
 
-        public TreeClassChooserAction(ListTable table, String chooserTitle,
-                                      @NonNls String... ancestorClasses) {
+        public TreeClassChooserAction(
+                @NotNull ListTable table, @NotNull String chooserTitle,
+                @NotNull TreeClassChooser.ClassFilter filter) {
             super(InspectionGadgetsBundle.message("button.add"), "",
                     Icons.ADD_ICON);
             this.table = table;
             this.chooserTitle = chooserTitle;
-            this.ancestorClasses = ancestorClasses;
+            this.filter = filter;
         }
 
+        @Override
         public void actionPerformed(AnActionEvent e) {
             final DataContext dataContext = e.getDataContext();
             final Project project = DataKeys.PROJECT.getData(dataContext);
@@ -82,21 +109,6 @@ public class UiUtils {
             }
             final TreeClassChooserFactory chooserFactory =
                     TreeClassChooserFactory.getInstance(project);
-            final TreeClassChooser.ClassFilter filter;
-            if (ancestorClasses.length == 0) {
-                filter = TreeClassChooser.ClassFilter.ALL;
-            } else {
-                filter = new TreeClassChooser.ClassFilter() {
-                    public boolean isAccepted(PsiClass aClass) {
-                        for (String ancestorClass : ancestorClasses) {
-                            if (ClassUtils.isSubclass(aClass, ancestorClass)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                };
-            }
             final TreeClassChooser classChooser =
                     chooserFactory.createWithInnerClassesScopeChooser(chooserTitle,
                             GlobalSearchScope.allScope(project), filter, null);
@@ -225,6 +237,24 @@ public class UiUtils {
                     }
                 }
             });
+        }
+    }
+
+    private static class SubclassFilter implements TreeClassChooser.ClassFilter {
+
+        private final String[] ancestorClasses;
+
+        private SubclassFilter(String[] ancestorClasses) {
+            this.ancestorClasses = ancestorClasses;
+        }
+
+        public boolean isAccepted(PsiClass aClass) {
+            for (String ancestorClass : ancestorClasses) {
+                if (ClassUtils.isSubclass(aClass, ancestorClass)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
