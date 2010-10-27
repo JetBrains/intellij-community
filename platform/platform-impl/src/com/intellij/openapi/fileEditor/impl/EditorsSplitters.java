@@ -65,20 +65,22 @@ public class EditorsSplitters extends JPanel {
   private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
+  private DockManager myDockManager;
 
-  public EditorsSplitters(final FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
+  public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
     myManager = manager;
+    myDockManager = dockManager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
-      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      DockManager.getInstance(myManager.getProject()).register(dockable);
+      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), dockManager, this, false);
+      myDockManager.register(dockable);
     }
   }
 

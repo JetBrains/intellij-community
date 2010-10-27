@@ -70,10 +70,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
   private TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
+  private DockManager myDockManager;
 
-  EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement) {
+  EditorTabbedContainer(final EditorWindow window, Project project, DockManager dockManager, int tabPlacement) {
     myWindow = window;
     myProject = project;
+    myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
@@ -539,7 +541,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myImg = img;
         myFile = file;
         myPresentation = presentation;
-        myContainer = new DockableEditorTabbedContainer(myProject);
+        myContainer = new DockableEditorTabbedContainer(myProject, myDockManager);
         myEditorWindow = window;
       }
 
@@ -559,8 +561,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       }
 
       @Override
-      public DockContainerFactory getContainerFactory() {
-        return myContainer;
+      public String getDockContainerType() {
+        return DockableEditorContainerFactory.TYPE;
       }
 
       public EditorWindow getEditorWindow() {

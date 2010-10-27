@@ -25,7 +25,7 @@ public interface DockableContent<T> {
 
   Image getPreviewImage();
 
-  DockContainerFactory getContainerFactory();
+  String getDockContainerType();
 
   Dimension getPreferredSize();
 

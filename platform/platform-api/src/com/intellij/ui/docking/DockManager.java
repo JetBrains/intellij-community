@@ -29,6 +29,7 @@ import java.util.Set;
 public abstract class DockManager implements ProjectComponent {
 
   public abstract void register(DockContainer container);
+  public abstract void register(String id, DockContainerFactory factory);
 
   public static DockManager getInstance(Project project) {
     return project.getComponent(DockManager.class);

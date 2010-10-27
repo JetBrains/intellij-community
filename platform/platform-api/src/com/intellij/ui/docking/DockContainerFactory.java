@@ -15,8 +15,17 @@
  */
 package com.intellij.ui.docking;
 
-public interface DockContainerFactory {
+import com.intellij.openapi.Disposable;
+import org.jdom.Element;
+
+public interface DockContainerFactory extends Disposable {
 
   DockContainer createContainer();
+
+  interface Persistent extends DockContainerFactory {
+
+    void loadState(Element element);
+
+  }
 
 }

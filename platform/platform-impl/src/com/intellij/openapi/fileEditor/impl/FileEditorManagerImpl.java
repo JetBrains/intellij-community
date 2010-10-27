@@ -103,11 +103,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    * Removes invalid myEditor and updates "modified" status.
    */
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
+  private DockManager myDockManager;
 
-  public FileEditorManagerImpl(final Project project) {
+  public FileEditorManagerImpl(final Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
+    myDockManager = dockManager;
     myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    DockableEditorContainerFactory contentFactory = new DockableEditorContainerFactory(myProject, this, dockManager);
+    myDockManager.register(DockableEditorContainerFactory.TYPE, contentFactory);
+    Disposer.register(project, contentFactory);
   }
 
   public static boolean isDumbAware(FileEditor editor) {
@@ -172,11 +178,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (myPanels == null) {
           myPanels = new JPanel(new BorderLayout());
           myPanels.setBorder(new MyBorder());
-          mySplitters = new EditorsSplitters(this, true);
+          mySplitters = new EditorsSplitters(this, myDockManager, true);
           myPanels.add(mySplitters, BorderLayout.CENTER);
         }
       }
     }
+  }
+
+  public DockManager getDockManager() {
+    return myDockManager;
   }
 
   private class MyBorder implements Border {
@@ -1098,7 +1108,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return "FileEditorManager";
   }
 
-  public void initComponent() { /* really do nothing */ }
+  public void initComponent() {
+
+  }
 
   public void disposeComponent() { /* really do nothing */  }
 

@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.docking.DragSession;
+import com.intellij.ui.docking.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +53,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private Project myProject;
 
+  private Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
+
   private Set<DockContainer> myContainers = new HashSet<DockContainer>();
   private Map<DockContainer, DockWindow> myWindows = new HashMap<DockContainer, DockWindow>();
 
@@ -70,6 +69,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private int myWindowIdCounter = 1;
 
+  private Element myLoadedState;
+
   public DockManagerImpl(Project project) {
     myProject = project;
   }
@@ -80,6 +81,17 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       @Override
       public void dispose() {
         myContainers.remove(container);
+      }
+    });
+  }
+
+  @Override
+  public void register(final String id, DockContainerFactory factory) {
+    myFactories.put(id, factory);
+    Disposer.register(factory, new Disposable() {
+      @Override
+      public void dispose() {
+        myFactories.remove(id);
       }
     });
   }
@@ -276,8 +288,15 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     return null;
   }
 
+
+
+  private DockContainerFactory getFactory(String type) {
+    assert myFactories.containsKey(type) : "No factory for content type=" + type;
+    return myFactories.get(type);
+  }
+
   private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
-    DockContainer container = content.getContainerFactory().createContainer();
+    DockContainer container = getFactory(content.getDockContainerType()).createContainer();
     register(container);
     DockWindow window = new DockWindow(String.valueOf(myWindowIdCounter++), myProject, container);
     myWindows.put(container, window);
@@ -286,7 +305,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     Dimension size = content.getPreferredSize();
     Point showPoint = point.getScreenPoint();
     showPoint.x -= size.width / 2;
-    showPoint.y -= size.width / 2;
+    showPoint.y -= size.height / 2;
 
     window.show();
 
@@ -306,9 +325,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myContainer = container;
       setProject(project);
       setComponent(myContainer.getComponent());
+      addDisposable(container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
-      Disposer.register(myContainer, this);
 
       myContainer.addListener(new DockContainer.Listener.Adapter() {
         @Override
@@ -317,7 +336,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
             @Override
             public void run() {
               if (myContainer.isEmpty()) {
-                Disposer.dispose(myContainer);
+                close();
               }
             }
           });
@@ -338,9 +357,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     @Override
     public void dispose() {
       super.dispose();
-
       myWindows.remove(myContainer);
-      Disposer.dispose(myContainer);
     }
 
     @Override
@@ -377,7 +394,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
           Element eachWindowElement = new Element("window");
           eachWindowElement.setAttribute("id", eachWindow.myId);
           Element content = new Element("content");
-          content.setAttribute("loadMethod", eachContainer.getLoadStateMethod());
+          content.setAttribute("type", eachContainer.getDockContainerType());
           content.addContent(eachContainer.getState());
           eachWindowElement.addContent(content);
 
@@ -390,5 +407,6 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public void loadState(Element state) {
+    myLoadedState = state;
   }
 }

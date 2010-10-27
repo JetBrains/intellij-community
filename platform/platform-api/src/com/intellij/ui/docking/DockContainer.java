@@ -54,8 +54,8 @@ public interface DockContainer extends Disposable {
 
   interface Persistent extends DockContainer {
 
+    String getDockContainerType();
     Element getState();
-    String getLoadStateMethod();
 
   }
 

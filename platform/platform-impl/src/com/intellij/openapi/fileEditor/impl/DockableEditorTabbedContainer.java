@@ -26,6 +26,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -36,7 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-class DockableEditorTabbedContainer implements DockContainerFactory, DockContainer.Persistent {
+class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   private EditorsSplitters mySplitters;
   private Project myProject;
@@ -48,15 +49,22 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
   private TabInfo myCurrentOverInfo;
 
   private boolean myDisposeWhenEmpty;
+  private DockManager myDockManager;
 
-  DockableEditorTabbedContainer(Project project) {
-    this(project, null, true);
+  DockableEditorTabbedContainer(Project project, DockManager dockManager) {
+    this(project, dockManager, null, true);
   }
 
-  DockableEditorTabbedContainer(Project project, EditorsSplitters splitters, boolean disposeWhenEmpty) {
+  DockableEditorTabbedContainer(Project project, DockManager dockManager, EditorsSplitters splitters, boolean disposeWhenEmpty) {
     myProject = project;
+    myDockManager = dockManager;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
+  }
+
+  @Override
+  public String getDockContainerType() {
+    return DockableEditorContainerFactory.TYPE;
   }
 
   @Override
@@ -66,37 +74,13 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
     return editors;
   }
 
-  @Override
-  public String getLoadStateMethod() {
-    return getClass().getCanonicalName() + "." + "loadState";
-  }
-
-  @Override
-  public DockContainer createContainer() {
-    if (mySplitters == null) {
-      mySplitters = new EditorsSplitters((FileEditorManagerImpl)FileEditorManager.getInstance(myProject), false) {
-        @Override
-        protected void afterFileClosed(VirtualFile file) {
-          fireContentClosed(file);
-        }
-
-        @Override
-        protected void afterFileOpen(VirtualFile file) {
-          fireContentOpen(file);
-        }
-      };
-      mySplitters.createCurrentWindow();
-    }
-    return this;
-  }
-
-  private void fireContentClosed(VirtualFile file) {
+  void fireContentClosed(VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentRemoved(file);
     }
   }
 
-  private void fireContentOpen(VirtualFile file) {
+  void fireContentOpen(VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentAdded(file);
     }
@@ -220,6 +204,7 @@ class DockableEditorTabbedContainer implements DockContainerFactory, DockContain
 
   @Override
   public void dispose() {
+    closeAll();
   }
 
   @Override
