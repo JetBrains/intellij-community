@@ -215,5 +215,10 @@
       <interface-class>com.intellij.facet.FacetManager</interface-class>
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
+      <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
+    </component>
   </module-components>
 </components>
