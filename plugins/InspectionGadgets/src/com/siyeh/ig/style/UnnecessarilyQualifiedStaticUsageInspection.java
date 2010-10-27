@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,17 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if(!(qualifierElement instanceof PsiJavaCodeReferenceElement)){
                 return false;
             }
+            final PsiJavaCodeReferenceElement qualifier =
+                    (PsiJavaCodeReferenceElement)qualifierElement;
+            final PsiReferenceParameterList qualifierParameterList =
+                    qualifier.getParameterList();
+            if (qualifierParameterList != null) {
+                final PsiTypeElement[] typeParameterElements =
+                        qualifierParameterList.getTypeParameterElements();
+                if (typeParameterElements.length > 0) {
+                    return false;
+                }
+            }
             final PsiReferenceParameterList parameterList =
                     referenceElement.getParameterList();
             if (parameterList != null) {
@@ -173,8 +184,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if(referenceName == null) {
                 return false;
             }
-            final PsiReference reference = (PsiReference)qualifierElement;
-            final PsiElement resolvedQualifier = reference.resolve();
+            final PsiElement resolvedQualifier = qualifier.resolve();
             if (!(resolvedQualifier instanceof PsiClass)) {
                 return false;
             }
