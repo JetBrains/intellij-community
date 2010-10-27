@@ -91,9 +91,9 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static class FileDescriptor {
-    public final VirtualFile myFile;
+    public final PsiFile myFile;
 
-    public FileDescriptor(VirtualFile file) {
+    public FileDescriptor(PsiFile file) {
       myFile = file;
     }
   }
@@ -105,7 +105,7 @@ public class ImplementationViewComponent extends JPanel {
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
-      files.add(new FileDescriptor(file.getVirtualFile()));
+      files.add(new FileDescriptor(file));
       candidates.add(element.getNavigationElement());
     }
     myElements = candidates.toArray(new PsiElement[candidates.size()]);
@@ -173,10 +173,11 @@ public class ImplementationViewComponent extends JPanel {
       myFileChooser.setRenderer(new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-          VirtualFile file = ((FileDescriptor)value).myFile;
-          setIcon(file.getIcon());
-          setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-          setText(file.getPresentableName());
+          PsiFile file = ((FileDescriptor)value).myFile;
+          setIcon(getIconForFile(file));
+          final VirtualFile vFile = file.getVirtualFile();
+          setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
+          setText(vFile.getPresentableName());
           return this;
         }
       });
@@ -198,7 +199,7 @@ public class ImplementationViewComponent extends JPanel {
       final JLabel label = new JLabel();
       VirtualFile file = psiFile.getVirtualFile();
       if (file != null) {
-        label.setIcon(file.getIcon());
+        label.setIcon(getIconForFile(psiFile));
         label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
         label.setText(file.getPresentableName());
         label.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
@@ -214,6 +215,10 @@ public class ImplementationViewComponent extends JPanel {
     setPreferredSize(new Dimension(600, 400));
 
     updateControls();
+  }
+
+  private static Icon getIconForFile(PsiFile psiFile) {
+    return psiFile.getNavigationElement().getIcon(0);
   }
 
   public JComponent getPrefferedFocusableComponent() {
