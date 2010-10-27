@@ -19,13 +19,11 @@ import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.ApplicationLoadListener;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeRepaintManager;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -54,9 +52,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -203,6 +204,26 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
+
+      StartupUtil.addExternalInstanceListener(new Consumer<List<String>>() {
+        @Override
+        public void consume(final List<String> args) {
+          invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final Project project = CommandLineProcessor.processExternalCommandLine(args);
+              final IdeFrame frame;
+              if (project != null) {
+                frame = WindowManager.getInstance().getIdeFrame(project);
+              }
+              else {
+                frame = WindowManager.getInstance().getAllFrames() [0];
+              }
+              ((IdeFrameImpl)frame).requestFocus();
+            }
+          });
+        }
+      });
     }
   }
 

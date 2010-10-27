@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiJavaFile;
@@ -27,24 +24,21 @@ import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 
+/*
+ * @author max
+ */
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
   private StringRef myPackageName;
   private final boolean myCompiled;
 
-  public PsiJavaFileStubImpl(final PsiJavaFile file, boolean compiled) {
+  public PsiJavaFileStubImpl(final PsiJavaFile file, final StringRef packageName, final boolean compiled) {
     super(file);
-    myPackageName = StringRef.fromString(file.getPackageName());
-    myCompiled = compiled;
-  }
-
-  public PsiJavaFileStubImpl(final String packageName, boolean compiled) {
-    this(StringRef.fromString(packageName), compiled);
-  }
-
-  public PsiJavaFileStubImpl(final StringRef packageName, boolean compiled) {
-    super(null);
     myPackageName = packageName;
     myCompiled = compiled;
+  }
+
+  public PsiJavaFileStubImpl(final String packageName, final boolean compiled) {
+    this(null, StringRef.fromString(packageName), compiled);
   }
 
   public String getPackageName() {

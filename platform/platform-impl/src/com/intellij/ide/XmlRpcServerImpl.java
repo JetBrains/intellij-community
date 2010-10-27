@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 
 /**
@@ -50,7 +52,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     final int currentPriority = thread.getPriority();
     try {
       thread.setPriority(Thread.NORM_PRIORITY - 2);
-      myWebServer = new IdeaAwareWebServer(getPortNumber(), null, new IdeaAwareXmlRpcServer());
+      myWebServer = new IdeaAwareWebServer(getPortNumber(), InetAddress.getLocalHost(), new IdeaAwareXmlRpcServer());
       myWebServer.start();
     }
     catch (Exception e) {
@@ -59,6 +61,17 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
     finally {
       thread.setPriority(currentPriority);
+    }
+    for(XmlRpcHandlerBean handlerBean: Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
+      final Object handler;
+      try {
+        handler = handlerBean.instantiate();
+      }
+      catch (ClassNotFoundException e) {
+        LOG.error(e);
+        continue;
+      }
+      addHandler(handlerBean.name, handler);
     }
   }
 
@@ -78,7 +91,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
       for (int i = 0; i < PORTS_COUNT; i++) {
         int port = firstPort + i;
         try {
-          socket = new ServerSocket(port);
+          socket = new ServerSocket(port, 10, InetAddress.getLocalHost());
           detectedPortNumber = port;
           return true;
         }
@@ -88,7 +101,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
 
       try {
         // try any port
-        socket = new ServerSocket(0);
+        socket = new ServerSocket(0, 10, InetAddress.getLocalHost());
         detectedPortNumber = socket.getLocalPort();
         return true;
       }

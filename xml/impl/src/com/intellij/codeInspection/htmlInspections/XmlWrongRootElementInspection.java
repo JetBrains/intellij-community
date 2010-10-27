@@ -19,6 +19,7 @@ package com.intellij.codeInspection.htmlInspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -76,7 +77,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
       }
 
       XmlProlog prolog = document.getProlog();
-      if (prolog == null || prolog.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      if (prolog == null || XmlHighlightVisitor.skipValidation(prolog)) {
         return;
       }
 

@@ -53,7 +53,7 @@ public class MainImpl {
       }
     }
 
-    if (!StartupUtil.checkStartupPossible()) {   // It uses config folder!
+    if (!StartupUtil.checkStartupPossible(args)) {   // It uses config folder!
       System.exit(-1);
     }
 

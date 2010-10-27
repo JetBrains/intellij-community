@@ -33,6 +33,10 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
     return get(myKey, owner, parameter);
   }
 
+  public void put(final Owner owner, final T value) {
+    putValue(value, owner, myKey);
+  }
+
   protected final T getValue(final Owner owner, final Key<T> key) {
     return owner.getUserData(key);
   }

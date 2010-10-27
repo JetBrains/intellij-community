@@ -361,42 +361,56 @@ public class EnterHandler extends BaseEnterHandler {
 
     private void generateJavadoc(CodeDocumentationAwareCommenter commenter) throws IncorrectOperationException {
       CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       final String docCommentLinePrefix = commenter.getDocumentationCommentLinePrefix();
       if(docCommentLinePrefix==null){
         return;
       }
-      buffer.append(docCommentLinePrefix);
-      buffer.append(LINE_SEPARATOR);
-      buffer.append(commenter.getDocumentationCommentSuffix());
 
+      boolean leadingAsterisksEnabled = CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED;
+      
+      buffer.append(docCommentLinePrefix);
+      if (leadingAsterisksEnabled) {
+        buffer.append(" ");
+      }
+      myDocument.insertString(myOffset, buffer);
+      int caretOffset = myOffset + buffer.length();
+      
+      // We create new buffer here because the one referenced by current 'buffer' variable value may be already referenced at another
+      // place (e.g. 'undo' processing stuff).
+      buffer = new StringBuilder(LINE_SEPARATOR).append(commenter.getDocumentationCommentSuffix());
+      int line = myDocument.getLineNumber(myOffset);
+      myOffset = myDocument.getLineEndOffset(line);
+      
       PsiComment comment = createComment(buffer, settings);
-      if(comment==null){
+      if(comment == null){
         return;
       }
-
+      
       myOffset = comment.getTextRange().getStartOffset();
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-      myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+      CharSequence text = myDocument.getCharsSequence();
+      myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, LINE_SEPARATOR);
+      myOffset = CharArrayUtil.shiftForward(text, myOffset, LINE_SEPARATOR);
+      myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, LINE_SEPARATOR);
       removeTrailingSpaces(myDocument, myOffset);
+      myOffset = caretOffset;
 
-      if (!CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED) {
-        LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
-        myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
-        myOffset--;
-      } else {
-        myDocument.insertString(myOffset, " ");
-        myOffset++;
-      }
+      //if (!leadingAsterisksEnabled) {
+      //  LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
+      //  myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
+      //  myOffset--;
+      //} else {
+      //  myDocument.insertString(myOffset, " ");
+      //  myOffset++;
+      //}
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
 
     @Nullable
-    private PsiComment createComment(final StringBuffer buffer, final CodeInsightSettings settings)
+    private PsiComment createComment(final CharSequence buffer, final CodeInsightSettings settings)
       throws IncorrectOperationException {
-      myDocument.insertString(myOffset, buffer.toString());
+      myDocument.insertString(myOffset, buffer);
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset + buffer.length() - 2);

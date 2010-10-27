@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
 import com.intellij.psi.impl.source.PsiImportListImpl;
@@ -30,6 +29,9 @@ import com.intellij.psi.stubs.StubOutputStream;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
     super("IMPORT_LIST");
@@ -48,12 +50,14 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
     return new PsiImportListStubImpl(parentStub);
   }
 
-  public void serialize(final PsiImportListStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  public PsiImportListStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    return new PsiImportListStubImpl(parentStub);
   }
 
-  public PsiImportListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+  public void serialize(final PsiImportListStub stub, final StubOutputStream dataStream) throws IOException {
+  }
+
+  public PsiImportListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiImportListStubImpl(parentStub);
   }
 

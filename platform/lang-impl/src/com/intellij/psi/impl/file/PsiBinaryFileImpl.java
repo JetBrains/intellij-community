@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.file;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.Queryable;
@@ -149,12 +149,12 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public String getText() {
-    return ""; // TODO throw new InsupportedOperationException()
+    return ""; // TODO[max] throw new UnsupportedOperationException()
   }
 
   @NotNull
   public char[] textToCharArray() {
-    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO[max] throw new UnsupportedOperationException()
   }
 
   public boolean textMatches(@NotNull CharSequence text) {
@@ -254,8 +254,8 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myViewProvider;
   }
 
-  public ASTNode getNode() {
-    return null; // TODO throw new InsupportedOperationException()
+  public FileASTNode getNode() {
+    return null; // TODO[max] throw new UnsupportedOperationException()
   }
 
   public void subtreeChanged() {

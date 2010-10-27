@@ -37,7 +37,7 @@ public class CvsFileAnnotation implements FileAnnotation{
   private final VirtualFile myFile;
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
 
-  private final LineAnnotationAspect USER = new CvsAnnotationAspect() {
+  private final LineAnnotationAspect USER = new CvsUserAnnotationAspect() {
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -177,5 +177,8 @@ public class CvsFileAnnotation implements FileAnnotation{
     protected void showAffectedPaths(int lineNum) {
       //todo
     }
+  }
+
+  private abstract class CvsUserAnnotationAspect extends CvsAnnotationAspect implements MajorLineAnnotationAspect {
   }
 }

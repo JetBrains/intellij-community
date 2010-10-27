@@ -96,7 +96,7 @@ public class GitFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAuthorAnnotationAspect() {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
       final String author = lineInfo.getAuthor();
@@ -299,6 +299,9 @@ public class GitFileAnnotation implements FileAnnotation {
         }
       }
     }
+  }
+
+  private abstract class GitAuthorAnnotationAspect extends GitAnnotationAspect implements MajorLineAnnotationAspect {
   }
 
   /**

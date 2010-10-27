@@ -15,16 +15,22 @@
  */
 package com.intellij.psi.impl.cache;
 
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.StringRef;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +47,12 @@ import java.util.List;
 public class TypeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.TypeInfo");
 
+  private static final TIntObjectHashMap<String> ourIndexFrequentType = new TIntObjectHashMap<String>();
+  private static final TObjectIntHashMap<String> ourFrequentTypeIndex = new TObjectIntHashMap<String>();
+
   public final StringRef text;
   public final byte arrayCount;
   public final boolean isEllipsis;
-  public static final TIntObjectHashMap<String> ourIndexFrequentType = new TIntObjectHashMap<String>();
-  private static final TObjectIntHashMap<String> ourFrequentTypeIndex = new TObjectIntHashMap<String>();
-
   private final List<PsiAnnotationStub> myAnnotationStubs;
 
   private static void registerFrequentType(String typeText) {
@@ -79,6 +85,7 @@ public class TypeInfo {
     isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
+
   public TypeInfo(@NotNull TypeInfo typeInfo) {
     this.text = typeInfo.text;
     this.arrayCount = typeInfo.arrayCount;
@@ -120,7 +127,61 @@ public class TypeInfo {
         list.add(stub);
       }
     }
+
     return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, list);
+  }
+
+  @NotNull
+  public static TypeInfo create(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
+    final String text;
+    int arrayCount = 0;
+    boolean isEllipsis = false;
+
+    if (element.getTokenType() == JavaElementType.ENUM_CONSTANT) {
+      text = ((PsiClassStub)parentStub).getName();
+    }
+    else {
+      LighterASTNode typeElement = null;
+
+      for (final LighterASTNode child : tree.getChildren(element)) {
+        final IElementType type = child.getTokenType();
+        if (type == JavaElementType.TYPE) {
+          typeElement = child;
+        }
+        else if (type == JavaTokenType.LBRACKET) {
+          arrayCount++;  // C-style array
+        }
+      }
+
+      if (typeElement == null) {
+        if (element.getTokenType() == JavaElementType.METHOD) {
+          return NULL;  // constructor
+        }
+        else if (element.getTokenType() == JavaElementType.FIELD) {
+          final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, element.getParent(), JavaElementType.FIELD);
+          final int idx = fields.indexOf(element);
+          for (int i = idx - 1; i >= 0 && typeElement == null; i--) {  // int i, j
+            typeElement = LightTreeUtil.firstChildOfType(tree, fields.get(i), JavaElementType.TYPE);
+          }
+        }
+      }
+      assert typeElement != null : element + " in " + parentStub;
+
+      isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
+
+      while (true) {
+        final LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
+        if (nested == null) break;
+        typeElement = nested;
+        arrayCount++;  // Java-style array
+      }
+
+      text = LightTreeUtil.toFilteredString(tree, typeElement, null);
+    }
+
+    final List<PsiAnnotationStub> annotations = Collections.emptyList();  // todo[r.sh] JDK 8 type annotations
+
+    return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, annotations);
   }
 
   @NotNull
