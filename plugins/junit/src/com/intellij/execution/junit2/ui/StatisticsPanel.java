@@ -100,7 +100,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
 
   public Object getData(final String dataId) {
     if (myModel == null) return null;
-    final TestProxy selectedTest = myChildInfo.getTestAt(myTable.getSelectedRow());
+    final TestProxy selectedTest = myChildInfo.getTestAt(myTable.convertRowIndexToModel(myTable.getSelectedRow()));
     if (TestContext.DATA_KEY.is(dataId)) {
       return new TestContext(myModel, selectedTest);
     }

@@ -150,7 +150,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
 
   private static TestProxy getTestAtRow(final JTable table, final int row) {
     final StatisticsTable tableModel = (StatisticsTable)table.getModel();
-    return tableModel.getTestAt(row);
+    return tableModel.getTestAt(table.convertRowIndexToModel(row));
   }
 
   private static class TestInfoRenderer extends ColoredTableCellRenderer {
@@ -202,7 +202,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
 
     private void customizeCellRenderer(final JTable table, final int row) {
       final StatisticsTable model = (StatisticsTable)table.getModel();
-      final TestProxy test = model.getTestAt(row);
+      final TestProxy test = model.getTestAt(table.convertRowIndexToModel(row));
       if (test == null) {
         return;
       }
