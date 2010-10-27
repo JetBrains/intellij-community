@@ -166,7 +166,7 @@ public class AutoHardWrapHandler {
     DocumentListener listener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
-        if (event.getOffset() <= baseCaretOffset + caretOffsetDiff[0]) {
+        if (event.getOffset() < baseCaretOffset + caretOffsetDiff[0]) {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
