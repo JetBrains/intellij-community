@@ -36,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,12 +71,6 @@ import java.util.StringTokenizer;
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
     "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-  private static final Condition<XmlText> CONDITION = new Condition<XmlText>() {
-    @Override
-    public boolean value(XmlText xmlText) {
-      return PsiTreeUtil.getChildOfType(xmlText, OuterLanguageElement.class) != null;
-    }
-  };
   private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
     new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
     @Override
@@ -407,8 +400,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static boolean skipValidation(PsiElement context) {
-    boolean aBoolean = DO_NOT_VALIDATE.get(context, null);
-    return aBoolean;
+    return DO_NOT_VALIDATE.get(context, null);
   }
 
   public static void setSkipValidation(@NotNull PsiElement element) {
