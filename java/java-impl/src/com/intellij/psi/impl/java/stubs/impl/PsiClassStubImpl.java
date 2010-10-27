@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -27,6 +24,9 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 
+/*
+ * @author max
+ */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
   private final StringRef myQualifiedName;
   private final StringRef myName;
@@ -191,6 +191,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
     if (isDeprecated()) {
       builder.append("deprecated ");
+    }
+
+    if (hasDeprecatedAnnotation()) {
+      builder.append("deprecatedA ");
     }
 
     builder.

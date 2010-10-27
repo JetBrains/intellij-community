@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNameHelper;
@@ -28,18 +27,25 @@ import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
+/*
+ * @author max
+ */
 public class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
   public JavaClassReferenceListElementType(@NotNull @NonNls String id) {
     super(id, true);
@@ -70,6 +76,14 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     return new PsiClassReferenceListStubImpl(roleToElementType(psi.getRole()), parentStub, getTexts(psi), psi.getRole());
   }
 
+  @Override
+  public PsiClassReferenceListStub createStub(final LighterAST tree,
+                                              final LighterASTNode node,
+                                              final StubElement parentStub) {
+    final JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
+    return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node), elementTypeToRole(type));
+  }
+
   private static JavaClassReferenceListElementType roleToElementType(final PsiReferenceList.Role role) {
     switch (role) {
       case EXTENDS_BOUNDS_LIST:
@@ -85,12 +99,30 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     throw new RuntimeException("Unknown role: " + role);
   }
 
+  private static PsiReferenceList.Role elementTypeToRole(final IElementType type) {
+    if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
+    else if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
+    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
+    else if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
+
+    throw new RuntimeException("Unknown element type: " + type);
+  }
+
   private static String[] getTexts(PsiReferenceList psi) {
     final PsiJavaCodeReferenceElement[] refs = psi.getReferenceElements();
     String[] texts = ArrayUtil.newStringArray(refs.length);
     for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
+      final PsiJavaCodeReferenceElement ref = refs[i];
       texts[i] = ref instanceof PsiCompiledElement ? ref.getCanonicalText() : ref.getText();
+    }
+    return texts;
+  }
+
+  private static String[] getTexts(final LighterAST tree, final LighterASTNode node) {
+    final List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
+    final String[] texts = ArrayUtil.newStringArray(refs.size());
+    for (int i = 0; i < refs.size(); i++) {
+      texts[i] = LightTreeUtil.toFilteredString(tree, refs.get(i), null);
     }
     return texts;
   }
@@ -104,8 +136,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     }
   }
 
-  public PsiClassReferenceListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+  public PsiClassReferenceListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte role = dataStream.readByte();
     int len = dataStream.readVarInt();
     StringRef[] names = StringRef.createArray(len);

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterAST;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.compiled.ClsTypeParametersListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
@@ -31,6 +30,9 @@ import com.intellij.psi.stubs.StubOutputStream;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList> {
   public JavaTypeParameterListElementType() {
     super("TYPE_PARAMETER_LIST", true);
@@ -53,12 +55,17 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
     return new PsiTypeParameterListStubImpl(parentStub);
   }
 
-  public void serialize(final PsiTypeParameterListStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  @Override
+  public PsiTypeParameterListStub createStub(final LighterAST tree,
+                                             final LighterASTNode node,
+                                             final StubElement parentStub) {
+    return new PsiTypeParameterListStubImpl(parentStub);
   }
 
-  public PsiTypeParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+  public void serialize(final PsiTypeParameterListStub stub, final StubOutputStream dataStream) throws IOException {
+  }
+
+  public PsiTypeParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiTypeParameterListStubImpl(parentStub);
   }
 

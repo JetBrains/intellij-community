@@ -14,27 +14,31 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
 import com.intellij.psi.impl.source.PsiParameterImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
   public JavaParameterElementType() {
     super("PARAMETER");
@@ -58,15 +62,23 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     return new PsiParameterStubImpl(parentStub, psi.getName(), type, psi.isVarArgs());
   }
 
-  public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  @Override
+  public PsiParameterStub createStub(final LighterAST tree,
+                                     final LighterASTNode node,
+                                     final StubElement parentStub) {
+    final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
+    final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
+    final String name = RecordUtil.intern(tree.getCharTable(), id);
+    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis);
+  }
+
+  public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
-  public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+  public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
     boolean isEll = dataStream.readBoolean();
@@ -74,8 +86,12 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   }
 
   public boolean shouldCreateStub(final ASTNode node) {
-    final IElementType type = node.getTreeParent().getElementType();
-    return type == JavaElementType.PARAMETER_LIST;
+    return node.getTreeParent().getElementType() == JavaElementType.PARAMETER_LIST;
+  }
+
+  @Override
+  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    return node.getParent().getTokenType() == JavaElementType.PARAMETER_LIST;
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {

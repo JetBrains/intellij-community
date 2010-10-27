@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
 import com.intellij.psi.impl.source.PsiImportStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaImportStatementElementType extends JavaStubElementType<PsiImportStatementStub, PsiImportStatementBase> {
   public JavaImportStatementElementType(@NonNls @NotNull final String id) {
     super(id);
@@ -69,16 +73,35 @@ public class JavaImportStatementElementType extends JavaStubElementType<PsiImpor
     return new PsiImportStatementStubImpl(parentStub, ref != null ? ref.getCanonicalText() : null, flags);
   }
 
-  public void serialize(final PsiImportStatementStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  public PsiImportStatementStub createStub(final LighterAST tree,
+                                           final LighterASTNode node,
+                                           final StubElement parentStub) {
+    boolean isOnDemand = false;
+    String refText = null;
+
+    for (final LighterASTNode child : tree.getChildren(node)) {
+      final IElementType type = child.getTokenType();
+      if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.IMPORT_STATIC_REFERENCE) {
+        refText = SourceUtil.getTextSkipWhiteSpaceAndComments(tree, child);
+      }
+      else if (type == JavaTokenType.ASTERISK) {
+        isOnDemand = true;
+      }
+    }
+
+    final byte flags = PsiImportStatementStubImpl.packFlags(isOnDemand, node.getTokenType() == JavaElementType.IMPORT_STATIC_STATEMENT);
+    return new PsiImportStatementStubImpl(parentStub, refText, flags);
+  }
+
+  public void serialize(final PsiImportStatementStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiImportStatementStubImpl)stub).getFlags());
     dataStream.writeName(stub.getImportReferenceText());
   }
 
   public PsiImportStatementStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    byte flags = dataStream.readByte();
-    StringRef reftext = dataStream.readName();
-    return new PsiImportStatementStubImpl(parentStub, reftext, flags);
+    final byte flags = dataStream.readByte();
+    final StringRef refText = dataStream.readName();
+    return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 
   public void indexStub(final PsiImportStatementStub stub, final IndexSink sink) {

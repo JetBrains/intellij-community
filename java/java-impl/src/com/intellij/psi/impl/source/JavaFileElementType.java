@@ -19,9 +19,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -38,14 +36,17 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
-public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? 5 : 4;
+public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
+  public static boolean USE_NEW_STUB_BUILDER = false & JavaParserDefinition.USE_NEW_PARSER;
+
+  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? USE_NEW_STUB_BUILDER ? 6 : 5 : 4;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
@@ -53,7 +54,7 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
 
   @Override
   public StubBuilder getBuilder() {
-    return new JavaFileStubBuilder();
+    return USE_NEW_STUB_BUILDER ? new JavaLightStubBuilder() : new JavaFileStubBuilder();
   }
 
   @Override
@@ -68,14 +69,17 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
   }
 
   @Override
+  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(final ASTNode chameleon) {
+    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    doParse(builder);
+    return builder.getLightTree();
+  }
+
+  @Override
   public ASTNode parseContents(final ASTNode chameleon) {
     if (JavaParserDefinition.USE_NEW_PARSER) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-
-      final PsiBuilder.Marker root = builder.mark();
-      FileParser.parse(builder);
-      root.done(this);
-
+      doParse(builder);
       return builder.getTreeBuilt().getFirstChildNode();
     }
 
@@ -85,6 +89,12 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     final PsiManager manager = node.getManager();
     final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(node.getPsi()));
     return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
+  }
+
+  private void doParse(final PsiBuilder builder) {
+    final PsiBuilder.Marker root = builder.mark();
+    FileParser.parse(builder);
+    root.done(this);
   }
 
   @Override
@@ -103,7 +113,7 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
   public PsiJavaFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     StringRef packName = dataStream.readName();
-    return new PsiJavaFileStubImpl(packName, compiled);
+    return new PsiJavaFileStubImpl(null, packName, compiled);
   }
 
   @Override

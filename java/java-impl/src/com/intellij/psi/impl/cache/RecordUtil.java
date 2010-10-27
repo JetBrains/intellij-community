@@ -16,14 +16,27 @@
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiFieldStub;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +63,20 @@ public class RecordUtil {
     return false;
   }
 
+  public static boolean isDeprecatedByAnnotation(final LighterAST tree, final LighterASTNode modList) {
+    for (final LighterASTNode child : tree.getChildren(modList)) {
+      if (child.getTokenType() == JavaElementType.ANNOTATION) {
+        final LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, child, JavaElementType.JAVA_CODE_REFERENCE);
+        if (ref != null) {
+          final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, ref, JavaTokenType.IDENTIFIER);
+          final String name = intern(tree.getCharTable(), id);
+          if (DEPRECATED_ANNOTATION_NAME.equals(name)) return true;
+        }
+      }
+    }
+
+    return false;
+  }
 
   public static int packModifierList(final PsiModifierList psiModifierList) {
     int packed = 0;
@@ -90,10 +117,116 @@ public class RecordUtil {
     if (psiModifierList.hasModifierProperty(PsiModifier.STRICTFP)) {
       packed |= ModifierFlags.STRICTFP_MASK;
     }
+
     return packed;
   }
 
-  public static boolean isDeprecatedByDocComment(PsiElement psiElement) {
+  public static int packModifierList(final LighterAST tree, final LighterASTNode modList, final StubElement parent) {
+    int packed = 0;
+
+    if (hasModifierProperty(tree, modList, JavaTokenType.ABSTRACT_KEYWORD, parent)) {
+      packed |= ModifierFlags.ABSTRACT_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.FINAL_KEYWORD, parent)) {
+      packed |= ModifierFlags.FINAL_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.NATIVE_KEYWORD, parent)) {
+      packed |= ModifierFlags.NATIVE_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.STATIC_KEYWORD, parent)) {
+      packed |= ModifierFlags.STATIC_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.SYNCHRONIZED_KEYWORD, parent)) {
+      packed |= ModifierFlags.SYNCHRONIZED_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.TRANSIENT_KEYWORD, parent)) {
+      packed |= ModifierFlags.TRANSIENT_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.VOLATILE_KEYWORD, parent)) {
+      packed |= ModifierFlags.VOLATILE_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.PRIVATE_KEYWORD, parent)) {
+      packed |= ModifierFlags.PRIVATE_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.PROTECTED_KEYWORD, parent)) {
+      packed |= ModifierFlags.PROTECTED_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.PUBLIC_KEYWORD, parent)) {
+      packed |= ModifierFlags.PUBLIC_MASK;
+    }
+    if (hasModifierProperty(tree, modList, null, parent)) {
+      packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
+    }
+    if (hasModifierProperty(tree, modList, JavaTokenType.STRICTFP_KEYWORD, parent)) {
+      packed |= ModifierFlags.STRICTFP_MASK;
+    }
+
+    return packed;
+  }
+
+  private static boolean hasModifierProperty(final LighterAST tree, final LighterASTNode modList, final IElementType type, final StubElement parent) {
+    final LighterASTNode modListOwner = modList.getParent();
+    if (modListOwner.getTokenType() == parent.getStubType()) {
+      final StubElement grandParent = parent.getParentStub();
+      if (parent instanceof PsiClassStub) {
+        if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
+          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD) return true;
+          else if (type == null) return false;
+        }
+        if (((PsiClassStub)parent).isInterface()) {
+          if (type == JavaTokenType.ABSTRACT_KEYWORD) return true;
+          else if (type == JavaTokenType.STATIC_KEYWORD) {
+            if (grandParent instanceof PsiClassStub) return true;
+          }
+        }
+        if (((PsiClassStub)parent).isEnum()) {
+          if (type == JavaTokenType.STATIC_KEYWORD) {
+            if (!(grandParent instanceof PsiFileStub)) return true;
+          }
+          else if (type == JavaTokenType.FINAL_KEYWORD) {
+            final List<LighterASTNode> enumConstants = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.ENUM_CONSTANT);
+            for (final LighterASTNode constant : enumConstants) {
+              if (LightTreeUtil.firstChildOfType(tree, constant, JavaElementType.ENUM_CONSTANT_INITIALIZER) != null) return false;
+            }
+            return true;
+          }
+          else if (type == JavaTokenType.ABSTRACT_KEYWORD) {
+            final List<LighterASTNode> methods = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.METHOD);
+            for (final LighterASTNode method : methods) {
+              final LighterASTNode mods = LightTreeUtil.requiredChildOfType(tree, method, JavaElementType.MODIFIER_LIST);
+              if (LightTreeUtil.firstChildOfType(tree, mods, JavaTokenType.ABSTRACT_KEYWORD) != null) return true;
+            }
+            return false;
+          }
+        }
+      }
+      else if (parent instanceof PsiMethodStub) {
+        if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
+          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return true;
+          else if (type == null) return false;
+        }
+      }
+      else if (parent instanceof PsiFieldStub) {
+        if (parent.getStubType() == JavaElementType.ENUM_CONSTANT) {
+          return type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD;
+        }
+        else if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
+          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return true;
+          else if (type == null) return false;
+        }
+      }
+    }
+
+    if (type == null) {
+      return !hasModifierProperty(tree, modList, JavaTokenType.PUBLIC_KEYWORD, parent) &&
+             !hasModifierProperty(tree, modList, JavaTokenType.PROTECTED_KEYWORD, parent) &&
+             !hasModifierProperty(tree, modList, JavaTokenType.PRIVATE_KEYWORD, parent);
+    }
+
+    return LightTreeUtil.firstChildOfType(tree, modList, type) != null;
+  }
+
+  public static boolean isDeprecatedByDocComment(final PsiElement psiElement) {
     if (!(psiElement instanceof PsiDocCommentOwner)) return false;
 
     final PsiDocCommentOwner owner = (PsiDocCommentOwner)psiElement;
@@ -102,24 +235,26 @@ public class RecordUtil {
     }
 
     final ASTNode node = psiElement.getNode();
-    final ASTNode docNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
-    if (docNode == null || docNode.getText().indexOf(DEPRECATED_TAG) < 0) return false;
+    if (node != null) {
+      final ASTNode docNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
+      if (docNode == null || docNode.getText().indexOf(DEPRECATED_TAG) < 0) return false;
+    }
 
-    PsiDocComment docComment = owner.getDocComment();
+    final PsiDocComment docComment = owner.getDocComment();
     return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
+  public static boolean isDeprecatedByDocComment(final LighterAST tree, final LighterASTNode comment) {
+    // todo[r.sh] parse doc comments, implement tree lookup
+    final String text = LightTreeUtil.toFilteredString(tree, comment, null);
+    return text != null && text.contains(DEPRECATED_TAG);
+  }
 
   private static final TObjectIntHashMap<String> ourModifierNameToFlagMap;
 
   static {
     ourModifierNameToFlagMap = new TObjectIntHashMap<String>();
 
-    initMaps();
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initMaps() {
     ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);
     ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, ModifierFlags.PROTECTED_MASK);
     ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, ModifierFlags.PRIVATE_MASK);
@@ -143,6 +278,7 @@ public class RecordUtil {
     return (ourModifierNameToFlagMap.get(psiModifier) & packed) != 0;
   }
 
+  @SuppressWarnings({"unchecked"})
   private static final Set<String>[] SET_INSTANCES = new Set[8 * 4];
 
   private static final String[] VISIBILITY_MODIFIERS = {null, PsiModifier.PUBLIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED};
@@ -198,4 +334,8 @@ public class RecordUtil {
     return res;
   }
 
+  public static String intern(final CharTable table, final LighterASTNode node) {
+    assert node instanceof LighterASTTokenNode;
+    return table.intern(((LighterASTTokenNode)node).getText()).toString();
+  }
 }

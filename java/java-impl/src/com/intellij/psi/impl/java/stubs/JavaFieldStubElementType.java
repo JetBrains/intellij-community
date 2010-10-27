@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterAST;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -29,11 +28,16 @@ import com.intellij.psi.impl.java.stubs.impl.PsiFieldStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
   public JavaFieldStubElementType(@NotNull @NonNls final String id) {
     super(id);
@@ -74,6 +81,42 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     return new PsiFieldStubImpl(parentStub, psi.getName(), type, encodeInitializer(initializer), flags);
   }
 
+  @Override
+  public PsiFieldStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
+
+    boolean isDeprecatedByComment = false;
+    boolean hasDeprecatedAnnotation = false;
+    String name = null;
+    String initializer = null;
+
+    boolean expectingInit = false;
+    for (final LighterASTNode child : tree.getChildren(node)) {
+      final IElementType type = child.getTokenType();
+      if (type == JavaDocElementType.DOC_COMMENT) {
+        isDeprecatedByComment = RecordUtil.isDeprecatedByDocComment(tree, child);
+      }
+      else if (type == JavaElementType.MODIFIER_LIST) {
+        hasDeprecatedAnnotation = RecordUtil.isDeprecatedByAnnotation(tree, child);
+      }
+      else if (type == JavaTokenType.IDENTIFIER) {
+        name = RecordUtil.intern(tree.getCharTable(), child);
+      }
+      else if (type == JavaTokenType.EQ) {
+        expectingInit = true;
+      }
+      else if (expectingInit && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type) && type != JavaTokenType.SEMICOLON) {
+        initializer = encodeInitializer(tree, child);
+        break;
+      }
+    }
+
+    final boolean isEnumConst = node.getTokenType() == JavaElementType.ENUM_CONSTANT;
+    final byte flags = PsiFieldStubImpl.packFlags(isEnumConst, isDeprecatedByComment, hasDeprecatedAnnotation);
+
+    return new PsiFieldStubImpl(parentStub, name, typeInfo, initializer, flags);
+  }
+
   @Nullable
   private static String encodeInitializer(PsiExpression initializer) {
     if (initializer == null) return null;
@@ -85,8 +128,16 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     return initializer.getText();
   }
 
-  public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  private static String encodeInitializer(final LighterAST tree, final LighterASTNode initializer) {
+    final IElementType type = initializer.getTokenType();
+    if (type == JavaElementType.NEW_EXPRESSION || type == JavaElementType.METHOD_CALL_EXPRESSION) {
+      return PsiFieldStub.INITIALIZER_NOT_STORED;
+    }
+
+    return LightTreeUtil.toFilteredString(tree, initializer, null);
+  }
+
+  public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeName(stub.getInitializerText());
@@ -94,12 +145,10 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   }
 
   public PsiFieldStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
-
+    final StringRef name = dataStream.readName();
     final TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
-
-    StringRef initializerText = dataStream.readName();
-    byte flags = dataStream.readByte();
+    final StringRef initializerText = dataStream.readName();
+    final byte flags = dataStream.readByte();
     return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
   }
 
