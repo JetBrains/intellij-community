@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -62,7 +64,21 @@ public class GitTestCase extends AbstractVcsTestCase {
     myRepo.config("user.email", CONFIG_USER_EMAIL);
     myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
 
-    initProject(myProjectDir);
+    if (EventQueue.isDispatchThread()) {
+      initProject(myProjectDir);
+    } else {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            initProject(myProjectDir);
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      });
+    }
     activateVCS(GitVcs.NAME);
 
     myTraceClient = true;
