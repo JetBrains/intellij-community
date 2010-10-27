@@ -27,11 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.psi.UpdateCopyright;
-import com.maddyhome.idea.copyright.psi.UpdateCopyrightInstanceFactory;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import com.maddyhome.idea.copyright.psi.UpdateJavaFileCopyright;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-public class UpdateGroovyCopyrightInstanceFactory implements UpdateCopyrightInstanceFactory {
+public class UpdateGroovyCopyrightsProvider extends UpdateCopyrightsProvider {
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
     return new UpdateJavaFileCopyright(project, module, file, options) {
       protected boolean accept() {

@@ -428,7 +428,11 @@ public class FileTypeUtil
         }
     }
 
-    public static class SortByName implements Comparator<FileType>
+  public FileType getFileTypeByName(String name) {
+    return types.get(name);
+  }
+
+  public static class SortByName implements Comparator<FileType>
     {
         public int compare(FileType a, FileType b)
         {
