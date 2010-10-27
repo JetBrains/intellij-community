@@ -25,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class FileChooser {
+  private static final boolean NATIVE_MAC_FILE_CHOOSER_ENABLED =
+    Boolean.valueOf(System.getProperty("native.mac.file.chooser.enabled", "true"));
+
   private FileChooser() {}
 
   @NotNull
@@ -63,7 +66,7 @@ public class FileChooser {
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> onChosenCallback
   ) {
-    if (SystemInfo.isMac) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
+    if (SystemInfo.isMac && NATIVE_MAC_FILE_CHOOSER_ENABLED) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
     final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     if (dialog instanceof MacFileChooserDialog) {
       ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
