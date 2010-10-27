@@ -129,13 +129,14 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     final FilePath filePath = new FilePathImpl(file);
     final VcsRevisionNumber currentRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, currentBranch);
     final VcsRevisionNumber compareRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, compareBranch);
-    if (currentRevisionNumber == null || compareRevisionNumber == null) {
-      throw new VcsException("Null revision number. Current: [" + currentRevisionNumber + "], compare: [" + compareRevisionNumber + "]");
+    if (compareRevisionNumber == null) {
+      Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "File doesn't exist in branch", "File " + file.getPresentableUrl() + " doesn't exist in branch [" + compareBranch + "]", NotificationType.INFORMATION), project);
+      return;
     }
     final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber);
-    VcsHistoryUtil.showDiff(project, filePath, new CurrentRevision(file, currentRevisionNumber), compareRevision,
-                            ((GitRevisionNumber)currentRevisionNumber).getShortRev() + " on " + currentBranch,
-                            ((GitRevisionNumber)compareRevisionNumber).getShortRev() + " on " + compareBranch);
+    final String currentTitle = currentRevisionNumber != null ? ((GitRevisionNumber)currentRevisionNumber).getShortRev() + " on " + currentBranch : "Local changes on " + currentBranch;
+    final String compareTitle = ((GitRevisionNumber)compareRevisionNumber).getShortRev() + " on " + compareBranch;
+    VcsHistoryUtil.showDiff(project, filePath, new CurrentRevision(file, currentRevisionNumber), compareRevision, currentTitle, compareTitle);
   }
 
   @Override
