@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,12 +74,21 @@ public final class AndroidDx {
 
     parameters.setJdk(sdk);
     parameters.setMainClass(DEX_MAIN);
-    ParametersList params = parameters.getProgramParametersList();
+    ParametersList programParamList = parameters.getProgramParametersList();
     //params.add("--verbose");
-    params.add("--no-strict");
-    params.add("--output=" + outFile);
-    params.addAll(compileTargets);
-    parameters.getVMParametersList().add("-Xmx1024M");
+    programParamList.add("--no-strict");
+    programParamList.add("--output=" + outFile);
+    programParamList.addAll(compileTargets);
+    ParametersList vmParamList = parameters.getVMParametersList();
+
+    AndroidDexCompilerConfiguration configuration = AndroidDexCompilerConfiguration.getInstance(module.getProject());
+    String additionalVmParams = configuration.VM_OPTIONS;
+    if (additionalVmParams.length() > 0) {
+      vmParamList.addParametersString(additionalVmParams);
+    }
+    if (!hasXmxParam(vmParamList)) {
+      vmParamList.add("-Xmx" + configuration.MAX_HEAP_SIZE + "M");
+    }
     parameters.getClassPath().add(dxJar);
     Process process = null;
     try {
@@ -120,5 +130,14 @@ public final class AndroidDx {
     handler.waitFor();
 
     return messages;
+  }
+
+  private static boolean hasXmxParam(ParametersList paramList) {
+    for (String param : paramList.getParameters()) {
+      if (param.startsWith("-Xmx")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

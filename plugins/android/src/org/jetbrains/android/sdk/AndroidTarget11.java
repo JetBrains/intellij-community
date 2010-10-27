@@ -161,24 +161,26 @@ public class AndroidTarget11 implements IAndroidTarget {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Nullable
   @Override
   public String getProperty(String name) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
   public Integer getProperty(String name, Integer defaultValue) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return defaultValue;
   }
 
   @Override
   public Boolean getProperty(String name, Boolean defaultValue) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return defaultValue;
   }
 
+  @Nullable
   @Override
   public Map<String, String> getProperties() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public int getUsbVendorId() {
