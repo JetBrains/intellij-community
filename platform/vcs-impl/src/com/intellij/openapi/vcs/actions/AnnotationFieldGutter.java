@@ -20,10 +20,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +43,15 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final boolean myIsGutterAction;
   private Map<String, Color> myColorScheme;
   private boolean myShowBg = true;
+  private boolean myShowAdditionalInfo = false;
 
-  AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation) {
+  AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation, Map<String, Color> colorScheme) {
     myAnnotation = annotation;
     myEditor = editor;
     myAspect = aspect;
     myPresentation = presentation;
     myIsGutterAction = myAspect instanceof EditorGutterAction;
+    myColorScheme = colorScheme;
 
     myListener = new AnnotationListener() {
       public void onAnnotationChanged() {
@@ -67,12 +67,13 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public String getLineText(int line, Editor editor) {
-    return myAspect.getValue(line);
+    return isAvailable() ? myAspect.getValue(line) : "";
   }
 
   @Nullable
   public String getToolTip(final int line, final Editor editor) {
-    return XmlStringUtil.escapeString(myAnnotation.getToolTip(line));
+    return isAvailable() ?
+    XmlStringUtil.escapeString(myAnnotation.getToolTip(line)) : null;
   }
 
   public void doAction(int line) {
@@ -116,8 +117,9 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   public Color getBgColor(int line, Editor editor) {
     if (myColorScheme == null || !myShowBg) return null;
     final String s = getLineText(line, editor);
-    if (s == null) return null;
-    final Color bg = myColorScheme.get(s);
+    final VcsRevisionNumber number = myAnnotation.getLineRevisionNumber(line);
+    if (number == null) return null;
+    final Color bg = myColorScheme.get(number.asString());
     return bg == null ? findBgColor(s) : bg;
   }
 
@@ -139,5 +141,13 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   public void setShowBg(boolean show) {
     myShowBg = show;
+  }
+
+  public void setShowAdditionalInfo(boolean show) {
+    myShowAdditionalInfo = show;
+  }
+
+  private boolean isAvailable() {
+    return myShowAdditionalInfo || myAspect instanceof MajorLineAnnotationAspect;
   }
 }

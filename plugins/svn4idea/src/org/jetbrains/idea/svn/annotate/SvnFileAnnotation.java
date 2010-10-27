@@ -92,7 +92,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new SvnAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new SvnAuthorAnnotationAspect() {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -304,6 +304,9 @@ public class SvnFileAnnotation implements FileAnnotation {
         }
       }
     }
+  }
+
+  private abstract class SvnAuthorAnnotationAspect extends SvnAnnotationAspect implements MajorLineAnnotationAspect {
   }
 
   private static class MyPartiallyCreatedInfos {

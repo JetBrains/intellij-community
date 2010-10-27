@@ -128,6 +128,12 @@ public class HgAnnotation implements FileAnnotation {
     }
   }
 
+  class HgUserAnnotationAspect extends HgLineAnnotationAspect implements MajorLineAnnotationAspect {
+    public HgUserAnnotationAspect(FIELD aspectType) {
+      super(aspectType);
+    }
+  }
+
   public boolean revisionsNotEmpty() {
     return true;
   }
