@@ -171,7 +171,7 @@ class ProjectBuilder {
   }
 
   private def compile(ModuleChunk chunk, boolean tests) {
-    List chunkSources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
+    List<String> chunkSources = filterNonExistingFiles(tests ? chunk.testRoots : chunk.sourceRoots, true)
     if (chunkSources.isEmpty()) return
 
     if (!project.dryRun) {
@@ -187,7 +187,7 @@ class ProjectBuilder {
       )
       if (arrangeModuleCyclesOutputs) {
         chunk.modules.each {
-          List<String> sourceRoots = tests ? it.testRoots : it.sourceRoots
+          List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
                 sourceRoots: sourceRoots,
@@ -359,13 +359,13 @@ class ProjectBuilder {
     return getModuleOutputFolder(module, true)
   }
 
-  List<String> validatePaths(List<String> list) {
+  List<String> filterNonExistingFiles(List<String> list, boolean showWarnings) {
     List<String> answer = new ArrayList<String>()
     for (path in list) {
       if (new File(path).exists()) {
         answer.add(path)
       }
-      else {
+      else if (showWarnings) {
         project.warning("'$path' does not exist!")
       }
     }
