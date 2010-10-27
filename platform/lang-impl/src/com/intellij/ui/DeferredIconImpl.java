@@ -89,7 +89,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
             target.set(table);
           }
           else {
-            target.set(c);
+            final Container box = SwingUtilities.getAncestorOfClass(JComboBox.class, c);
+            if (box != null) {
+              target.set(box);
+            }
+            else {
+              target.set(c);
+            }
           }
         }
       }
