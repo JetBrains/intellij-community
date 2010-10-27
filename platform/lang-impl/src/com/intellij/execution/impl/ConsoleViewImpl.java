@@ -1462,17 +1462,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       @Override
-<<<<<<< HEAD
       public void setSelected(final AnActionEvent e, final boolean state) {
         super.setSelected(e, state);
         // Scroll to the end
         if (state) {
-          scrollToTheEnd();
+          EditorUtil.scrollToTheEnd(myEditor);
         }
-=======
-      public void actionPerformed(final AnActionEvent e) {
-        EditorUtil.scrollToTheEnd(myEditor);
->>>>>>> e76d461... RUBY-6987 Tools/Run Rails Console doesn't scroll/can't resize
       }
     };
 
