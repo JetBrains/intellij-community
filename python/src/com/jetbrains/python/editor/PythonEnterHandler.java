@@ -32,7 +32,7 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PyParameterList.class,
     PyFunction.class,
     PySliceExpression.class,
-    PySubscriptionExpression.class
+    PySubscriptionExpression.class,
   };
 
   @Override
@@ -64,8 +64,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
       return Result.Continue;
     }
+    if (statementBefore == null) {  // empty file
+      return Result.Continue;
+    }
 
-    if (statementBefore != null && PsiTreeUtil.hasErrorElements(statementBefore)) {
+    if (PsiTreeUtil.hasErrorElements(statementBefore)) {
       final Boolean autoWrapping = DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
       if (autoWrapping == null) {
         // code is already bad, don't mess it up even further
