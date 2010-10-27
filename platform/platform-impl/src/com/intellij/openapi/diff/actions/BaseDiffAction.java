@@ -93,6 +93,8 @@ abstract class BaseDiffAction extends AnAction implements PreloadableAction, Dum
   }
 
   public void preload() {
-    DiffManager.getInstance();
+    if (!ApplicationManager.getApplication().isDisposed()) {
+      DiffManager.getInstance();
+    }
   }
 }
