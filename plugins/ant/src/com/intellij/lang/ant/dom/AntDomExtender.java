@@ -78,6 +78,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("exec", AntDomExecTask.class);
     TAG_MAPPING.put("buildnumber", AntDomBuildnumberTask.class);
     TAG_MAPPING.put("tstamp", AntDomTimestampTask.class);
+    TAG_MAPPING.put("format", AntDomTimestampTaskFormat.class);
     TAG_MAPPING.put("input", AntDomInputTask.class);
   }
 
