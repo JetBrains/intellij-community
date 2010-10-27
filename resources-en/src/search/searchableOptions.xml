@@ -7961,7 +7961,6 @@
     <option name="dx" hit="Android DX Compiler"/>
     <option name="dex" hit="Android DX Compiler"/>
     <option name="compiler" hit="Android DX Compiler"/>
-    <option name="android compiler" hit="Android DX Compiler"/>
   </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.Scope Based" configurable_name="Scope Based">
     <option name="background" hit="Background" />
