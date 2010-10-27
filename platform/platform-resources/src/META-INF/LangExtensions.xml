@@ -184,7 +184,8 @@
 
   <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
                   serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
-
+  <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
+                  serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
                   serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"/>
 
