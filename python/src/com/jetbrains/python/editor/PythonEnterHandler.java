@@ -76,19 +76,23 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
 
     PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
     PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
-    while (wrappableBefore != null) {
-      PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
-      if (next == null) {
-        break;
+    if (!(wrappableBefore instanceof PsiComment)) {
+      while (wrappableBefore != null) {
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
+        if (next == null) {
+          break;
+        }
+        wrappableBefore = next;
       }
-      wrappableBefore = next;
     }
-    while (wrappableAfter != null) {
-      PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, IMPLICIT_WRAP_CLASSES);
-      if (next == null) {
-        break;
+    if (!(wrappableAfter instanceof PsiComment)) {
+      while (wrappableAfter != null) {
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, IMPLICIT_WRAP_CLASSES);
+        if (next == null) {
+          break;
+        }
+        wrappableAfter = next;
       }
-      wrappableAfter = next;
     }
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
       return Result.Continue;
