@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -543,7 +544,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     if (isAtEndOfDocument) {
-      scrollToTheEnd();
+      EditorUtil.scrollToTheEnd(myEditor);
     }
   }
 
@@ -1458,7 +1459,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        scrollToTheEnd();
+        EditorUtil.scrollToTheEnd(myEditor);
       }
     };
 
@@ -1472,12 +1473,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       consoleActions[i + 4] = customActions.get(i);
     }
     return consoleActions;
-  }
-
-  private void scrollToTheEnd() {
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-    myEditor.getSelectionModel().removeSelection();
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public void setEditorEnabled(boolean enabled) {
