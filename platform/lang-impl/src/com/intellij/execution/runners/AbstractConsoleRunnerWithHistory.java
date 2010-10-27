@@ -33,7 +33,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -185,6 +187,12 @@ public abstract class AbstractConsoleRunnerWithHistory {
     };
     EmptyAction.setupAction(myRunAction, "Console.Execute", null);
     toolbarActions.add(myRunAction);
+    toolbarActions.add(new ScrollToTheEndToolbarAction(){
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        EditorUtil.scrollToTheEnd(myConsoleView.getConsole().getHistoryViewer());
+      }
+    });
 
 // Help
     toolbarActions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
