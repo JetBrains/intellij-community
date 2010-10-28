@@ -98,7 +98,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private volatile boolean myCalculating;
   private final JLabel myAdComponent;
   private volatile String myAdText;
-  private volatile int myLookupWidth = 50;
+  private volatile int myLookupTextWidth = 50;
   private static final int LOOKUP_HEIGHT = Integer.getInteger("idea.lookup.height", 11).intValue();
   private boolean myReused;
   private boolean myChangeGuard;
@@ -204,7 +204,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void updateLookupWidth(LookupElement item) {
     final LookupElementPresentation presentation = renderItemApproximately(item);
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation);
-    myLookupWidth = Math.max(maxWidth, myLookupWidth);
+    myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
 
     myModel.setItemPresentation(item, presentation);
 
@@ -312,7 +312,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     if (hasItems) {
-      myList.setFixedCellWidth(Math.max(myLookupWidth, myAdComponent.getPreferredSize().width));
+      myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
 
       if (isFocused() && !hasExactPrefixes) {
         restoreSelection(oldSelected, hasPreselectedItem, oldInvariant);
@@ -371,7 +371,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
     item.setPrefixMatcher(new CamelHumpMatcher(""));
     if (!myCalculating) {
-      myList.setFixedCellWidth(Math.max(myCellRenderer.updateMaximumWidth(renderItemApproximately(item)), myLookupWidth));
+      myList.setFixedCellWidth(Math.max(myCellRenderer.updateMaximumWidth(renderItemApproximately(item)), myLookupTextWidth));
     }
 
     model.addElement(item);
