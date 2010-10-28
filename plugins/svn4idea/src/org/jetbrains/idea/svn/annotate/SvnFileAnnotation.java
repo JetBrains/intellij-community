@@ -23,6 +23,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -40,7 +41,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
   private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
 
-  private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect() {
+  private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect(SvnAnnotationAspect.DATE, true) {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -52,7 +53,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect REVISION_ASPECT = new SvnAnnotationAspect() {
+  private final LineAnnotationAspect REVISION_ASPECT = new SvnAnnotationAspect(SvnAnnotationAspect.REVISION, false) {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -64,7 +65,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect ORIGINAL_REVISION_ASPECT = new SvnAnnotationAspect() {
+  private final LineAnnotationAspect ORIGINAL_REVISION_ASPECT = new SvnAnnotationAspect(SvnBundle.message("annotation.original.revision"), false) {
     @Override
     public String getValue(int lineNumber) {
       final long value = myInfos.originalRevision(lineNumber);
@@ -92,7 +93,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new SvnAuthorAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new SvnAnnotationAspect(SvnAnnotationAspect.AUTHOR, true) {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -290,6 +291,10 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {
+    public SvnAnnotationAspect(String id, boolean showByDefault) {
+      super(id, showByDefault);
+    }
+
     protected long getRevision(final int lineNum) {
       final LineInfo lineInfo = myInfos.get(lineNum);
       return (lineInfo == null) ? -1 : lineInfo.getRevision();
@@ -304,9 +309,6 @@ public class SvnFileAnnotation implements FileAnnotation {
         }
       }
     }
-  }
-
-  private abstract class SvnAuthorAnnotationAspect extends SvnAnnotationAspect implements MajorLineAnnotationAspect {
   }
 
   private static class MyPartiallyCreatedInfos {

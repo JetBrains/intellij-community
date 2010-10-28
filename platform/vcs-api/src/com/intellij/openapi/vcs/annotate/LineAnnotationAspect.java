@@ -15,26 +15,51 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents one part of a line annotation which is shown in the editor when the "Annotate"
  * action is invoked. Classes implementing this interface can also implement
- * {@link com.intellij.openapi.editor.EditorGutterAction} to handle clicks on the annotation. 
+ * {@link com.intellij.openapi.editor.EditorGutterAction} to handle clicks on the annotation.
  *
+ * @author Konstantin Bulenkov
  * @see FileAnnotation#getAspects()
  */
 public interface LineAnnotationAspect {
+  String AUTHOR = VcsBundle.message("line.annotation.aspect.author");
+  String DATE = VcsBundle.message("line.annotation.aspect.date");
+  String REVISION = VcsBundle.message("line.annotation.aspect.revision");
   /**
-   * Get annotation text for the spcific line number
-   * @param lineNumber the line number to query
-   * @return the annotation text 
+   * Get annotation text for the specific line number
+   *
+   * @param line the line number to query
+   * @return the annotation text
    */
-  String getValue(int lineNumber);
+  String getValue(int line);
 
   /**
-   * used if return value is not null
+   * Used to show a tooltip for specific line or group of lines
+   *
+   * @param line the line number to query
+   * @return the tooltip text for the line
    */
   @Nullable
-  String getTooltipText(int lineNumber);
+  String getTooltipText(int line);
+
+  /**
+   * Returns unique identifier, that will be used to show/hide some aspects
+   * If <code>null</code> this line aspect won't be configurable in annotation settings
+   *
+   * @return unique id
+   */
+  @Nullable
+  String getId();
+
+  /**
+   * Returns <code>true</code> if this aspect will be shown on Annotate action
+   *
+   * @return <code>true</code> if this aspect will be shown on Annotate action
+   */
+  boolean isShowByDefault();
 }
