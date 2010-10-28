@@ -46,7 +46,7 @@ import static org.testng.Assert.*;
  *
  * @author Kirill Likhodedov
  */
-public class GitHistoryUtilsTestCase extends GitTestCase {
+public class GitHistoryUtilsTestCase extends GitSingleUserTestCase {
 
   private VirtualFile afile;
   private FilePath bfilePath;
@@ -124,7 +124,7 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
         parents = ArrayUtil.EMPTY_STRING_ARRAY;
       }
       final GitTestRevision revision = new GitTestRevision(details[0], details[1], parents, commitMessages[i],
-                                                           String.format("%s <%s>", CONFIG_USER_NAME, CONFIG_USER_EMAIL), null,
+                                                           CONFIG_USER_NAME, CONFIG_USER_EMAIL, CONFIG_USER_NAME, CONFIG_USER_EMAIL, null,
                                                            contents[i]);
       myRevisions.add(revision);
       if (i > RENAME_COMMIT_INDEX) {
@@ -280,14 +280,17 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
     assertEquals(((GitRevisionNumber) actual.getRevisionNumber()).getTimestamp(), expected.myDate);
     // TODO: whitespaces problem is known, remove convertWhitespaces... when it's fixed
     assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(actual.getCommitMessage()), convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage));
-    assertEquals(actual.getAuthor(), expected.myAuthor);
+    assertEquals(actual.getAuthor(), expected.myAuthorName);
     assertEquals(actual.getBranchName(), expected.myBranchName);
     assertEquals(actual.getContent(), expected.myContent);
   }
 
   private static void assertCommitEqualToTestRevision(GitCommit commit, GitTestRevision expected) throws IOException {
     assertEquals(commit.getHash().toString(), expected.myHash);
-    assertEquals( String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail()), expected.myAuthor);
+    assertEquals(commit.getAuthor(), expected.myAuthorName);
+    assertEquals(commit.getAuthorEmail(), expected.myAuthorEmail);
+    assertEquals(commit.getCommitter(), expected.myCommitterName);
+    assertEquals(commit.getCommitterEmail(), expected.myCommitterEmail);
     assertEquals(commit.getDate(), expected.myDate);
     assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(commit.getDescription()), convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage));
     assertEqualHashes(commit.getParentsHashes(), Arrays.asList(expected.myParents));
@@ -317,17 +320,23 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
     final String myHash;
     final Date myDate;
     final String myCommitMessage;
-    final String myAuthor;
+    final String myAuthorName;
+    final String myAuthorEmail;
+    final String myCommitterName;
+    final String myCommitterEmail;
     final String myBranchName;
     final byte[] myContent;
     private String[] myParents;
 
-    public GitTestRevision(String hash, String gitTimestamp, String[] parents, String commitMessage, String author, String branch, String content) {
+    public GitTestRevision(String hash, String gitTimestamp, String[] parents, String commitMessage, String authorName, String authorEmail, String committerName, String committerEmail, String branch, String content) {
       myHash = hash;
       myDate = gitTimeStampToDate(gitTimestamp);
       myParents = parents;
       myCommitMessage = commitMessage;
-      myAuthor = author;
+      myAuthorName = authorName;
+      myAuthorEmail = authorEmail;
+      myCommitterName = committerName;
+      myCommitterEmail = committerEmail;
       myBranchName = branch;
       myContent = content.getBytes();
     }

@@ -386,8 +386,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   }
 
   @Nullable
-  public static AndroidFacet getInstance(@NotNull PsiElement element) {
-    Module module = ModuleUtil.findModuleForPsiElement(element);
+  public static AndroidFacet getInstance(@NotNull final PsiElement element) {
+    Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+      @Nullable
+      @Override
+      public Module compute() {
+        return ModuleUtil.findModuleForPsiElement(element);
+      }
+    });
     if (module == null) return null;
     return getInstance(module);
   }

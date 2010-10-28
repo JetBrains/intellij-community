@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.annotate;
+package com.intellij.ui.docking;
 
-/**
- * Markup interface for aspects always visible in the gutter. Other aspects will be visible only after
- * Show Details action
- *
- * @author Konstantin Bulenkov
- */
-public interface MajorLineAnnotationAspect extends LineAnnotationAspect {
+import java.awt.event.MouseEvent;
+
+public interface DragSession {
+
+  void process(MouseEvent e);
+
 }

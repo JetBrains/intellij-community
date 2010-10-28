@@ -64,6 +64,8 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
@@ -477,7 +479,22 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   new VariableInplaceRenamer(elementToRename, editor)
-                    .performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), exprMarker);
+                    .performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>(){
+                      @Override
+                      public void consume(Boolean apply) {
+                        if (apply) {
+                          int startOffset = exprMarker.getStartOffset();
+                          final PsiReference referenceAt = file.findReferenceAt(startOffset);
+                          if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
+                            startOffset = referenceAt.getElement().getTextRange().getEndOffset();
+                          } else {
+                            startOffset = editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(startOffset));
+                          }
+                          editor.getCaretModel().moveToOffset(startOffset);
+                        }
+                        exprMarker.dispose();
+                      }
+                    });
                 }
               }
             }

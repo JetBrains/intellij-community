@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public abstract class FileEditorManagerEx extends FileEditorManager {
   protected final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
@@ -70,6 +73,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    * @return current window in splitters
    */
   public abstract EditorWindow getCurrentWindow();
+
+  public abstract AsyncResult<EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 
@@ -152,9 +157,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public void refreshIcons() {
     if (this instanceof FileEditorManagerImpl) {
       final FileEditorManagerImpl mgr = (FileEditorManagerImpl)this;
-      final EditorsSplitters splitters = mgr.getSplitters();
-      for (VirtualFile file : mgr.getOpenFiles()) {
-        splitters.updateFileIcon(file);
+      Set<EditorsSplitters> splitters = mgr.getAllSplitters();
+      for (Iterator<EditorsSplitters> iterator = splitters.iterator(); iterator.hasNext();) {
+        EditorsSplitters each = iterator.next();
+        for (VirtualFile file : mgr.getOpenFiles()) {
+          each.updateFileIcon(file);
+        }
       }
     }
   }

@@ -36,7 +36,8 @@ public class TablePassInfo extends LayoutPassInfo {
 
   JBTabsImpl myTabs;
 
-  TablePassInfo(final JBTabsImpl tabs) {
+  TablePassInfo(final JBTabsImpl tabs, java.util.List<TabInfo> visibleInfos) {
+    super(visibleInfos);
     myTabs = tabs;
   }
 

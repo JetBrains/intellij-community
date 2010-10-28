@@ -565,11 +565,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole1 == ChildRole.LOOP_BODY || myChild2.getElementType() == JavaElementType.CODE_BLOCK) {
-      processOnNewLineCondition(mySettings.WHILE_ON_NEW_LINE);
+      processOnNewLineCondition(mySettings.WHILE_ON_NEW_LINE, mySettings.SPACE_BEFORE_WHILE_KEYWORD);
     }
   }
 
   private void processOnNewLineCondition(final boolean onNewLine) {
+    processOnNewLineCondition(onNewLine, true);
+  }
+  
+  private void processOnNewLineCondition(final boolean onNewLine, final boolean createSpaceInline) {
     if (onNewLine) {
       if (!mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -580,7 +584,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else {
-      createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      createSpaceProperty(createSpaceInline, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
 
@@ -597,7 +601,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (putRightChildOnNewLine) {
         processOnNewLineCondition(true);
       } else {
-        createSpaceProperty(true, false, 0);
+        boolean useSpace = (myRole2 == ChildRole.CATCH_SECTION && mySettings.SPACE_BEFORE_CATCH_KEYWORD) 
+                           || (myRole2 == ChildRole.FINALLY_KEYWORD && mySettings.SPACE_BEFORE_FINALLY_KEYWORD);
+        createSpaceProperty(useSpace, false, 0);
       }
       return;
     }
@@ -747,7 +753,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         }
         else {
-          createSpaceProperty(true, false, 0);
+          createSpaceProperty(mySettings.SPACE_BEFORE_ELSE_KEYWORD, false, 0);
         }
       }
     }

@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
-
-import org.jetbrains.annotations.Nullable;
+package git4idea.tests;
 
 /**
- * User: spLeaner
+ * @author Kirill Likhodedov
  */
-public interface StatusBarInfo {
+public class GitSingleUserTestCase extends GitTestCase {
+  public static final String CONFIG_USER_NAME = "John Smith";
+  public static final String CONFIG_USER_EMAIL = "john.smith@email.com";
 
-  /**
-   * Set status bar text
-   * @param s text to be shown in the status bar
-   */
-  void setInfo(@Nullable String s);
+  protected GitTestRepository myRepo;
 
-  void setInfo(@Nullable String s, @Nullable String requestor);
-  
-  String getInfo();
+  @Override
+  protected GitTestRepository initRepositories() throws Exception {
+    myRepo = GitTestRepository.create(this);
+    myRepo.setName(CONFIG_USER_NAME, CONFIG_USER_EMAIL);
+    return myRepo;
+  }
+
+  @Override
+  protected void tearDownRepositories() throws Exception {
+    myRepo.getDirFixture().tearDown();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lexer;
+package com.intellij.ui.docking;
 
-/**
- * @author yole
- */
-public class JavaDocLexer extends DocCommentLexer {
-  public JavaDocLexer(final boolean isJdk15Enabled) {
-    super(JavaDocTokenTypes.INSTANCE, isJdk15Enabled);
+import com.intellij.openapi.Disposable;
+import org.jdom.Element;
+
+public interface DockContainerFactory extends Disposable {
+
+  DockContainer createContainer();
+
+  interface Persistent extends DockContainerFactory {
+
+    DockContainer loadContainerFrom(Element element);
+
   }
+
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,12 +30,14 @@ public class CloseEditorAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
-    final FileEditorManagerEx editorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
+    final FileEditorManagerImpl editorManager = getEditorManager(project);
     EditorWindow window = e.getData(EditorWindow.DATA_KEY);
-    VirtualFile file;
+    VirtualFile file = null;
     if (window == null) {
-      window = editorManager.getCurrentWindow();
-      file = window.getSelectedFile();
+      window = editorManager.getActiveWindow().getResult();
+      if (window != null) {
+        file = window.getSelectedFile();
+      }
     }
     else {
       file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
@@ -42,6 +45,10 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     if (file != null) {
       editorManager.closeFile(file, window);
     }
+  }
+
+  private FileEditorManagerImpl getEditorManager(Project project) {
+    return ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
   }
 
   public void update(final AnActionEvent event){
@@ -56,7 +63,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     }
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     if (window == null) {
-      window = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentWindow();
+      window = getEditorManager(project).getActiveWindow().getResult();
     }
     presentation.setEnabled(window != null && window.getTabCount() > 0);
   }
