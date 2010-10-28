@@ -27,6 +27,8 @@ public interface StatusBarInfo {
    * @param s text to be shown in the status bar
    */
   void setInfo(@Nullable String s);
+
+  void setInfo(@Nullable String s, @Nullable String requestor);
   
   String getInfo();
 }
