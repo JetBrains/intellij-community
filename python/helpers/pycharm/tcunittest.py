@@ -5,6 +5,8 @@ import datetime
 from pycharm.tcmessages import TeamcityServiceMessages
 
 def strclass(cls):
+    if not cls.__name__:
+        return cls.__module__
     return "%s.%s" % (cls.__module__, cls.__name__)
 
 class TeamcityTestResult(TestResult):
@@ -21,6 +23,8 @@ class TeamcityTestResult(TestResult):
     
     def getTestName(self, test):
         if hasattr(test, '_testMethodName'):
+            if test._testMethodName == "runTest":
+                return str(test)
             return test._testMethodName
         else:
             return str(test)
