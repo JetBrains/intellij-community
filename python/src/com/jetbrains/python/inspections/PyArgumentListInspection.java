@@ -144,12 +144,14 @@ public class PyArgumentListInspection extends PyInspection {
         }
       }
     }
+    /*
     // did we succeed at all?
     if (result.getMarkedCallee() == null) {
       PsiElement marked = node;
       while (marked != null && marked.getTextRange().isEmpty()) marked = marked.getParent();
       if (marked != null) holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
     }
+    */
   }
 
   private static boolean isSequenceType(PyType a_type) {
