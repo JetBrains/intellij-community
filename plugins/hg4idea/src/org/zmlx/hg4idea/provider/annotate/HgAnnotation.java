@@ -105,10 +105,24 @@ public class HgAnnotation implements FileAnnotation {
     return result;
   }
 
+  private static String id(FIELD field) {
+    switch (field) {
+      case USER: return LineAnnotationAspect.AUTHOR;
+      case REVISION: return LineAnnotationAspect.REVISION;
+      case DATE: return LineAnnotationAspect.DATE;
+      default: return null;
+    }
+  }
+
+  private static boolean isShowByDefault(FIELD aspectType) {
+    return aspectType == FIELD.DATE || aspectType == FIELD.USER;
+  }
+
   class HgLineAnnotationAspect extends LineAnnotationAspectAdapter {
     private final FIELD aspectType;
 
     public HgLineAnnotationAspect(FIELD aspectType) {
+      super(id(aspectType), HgAnnotation.isShowByDefault(aspectType));
       this.aspectType = aspectType;
     }
 
@@ -125,12 +139,6 @@ public class HgAnnotation implements FileAnnotation {
     @Override
     protected void showAffectedPaths(int lineNum) {
       // todo 
-    }
-  }
-
-  class HgUserAnnotationAspect extends HgLineAnnotationAspect implements MajorLineAnnotationAspect {
-    public HgUserAnnotationAspect(FIELD aspectType) {
-      super(aspectType);
     }
   }
 

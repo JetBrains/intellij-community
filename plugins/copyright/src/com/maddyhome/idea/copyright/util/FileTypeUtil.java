@@ -20,6 +20,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -27,6 +28,7 @@ import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 public class FileTypeUtil
 {
@@ -158,6 +160,9 @@ public class FileTypeUtil
             String[] lines = template.split("\n", -1);
             for (String line : lines)
             {
+                line = StringUtil.trimStart(StringUtil.trimStart(line.trim(), pre.toString()), open);
+                line = StringUtil.trimEnd(line, close);
+                if (line.isEmpty()) continue;
                 preview.append(leader).append(pre);
                 int len = 0;
                 if (pre.length() > 0 && line.length() > 0)
@@ -428,7 +433,11 @@ public class FileTypeUtil
         }
     }
 
-    public static class SortByName implements Comparator<FileType>
+  public FileType getFileTypeByName(String name) {
+    return types.get(name);
+  }
+
+  public static class SortByName implements Comparator<FileType>
     {
         public int compare(FileType a, FileType b)
         {

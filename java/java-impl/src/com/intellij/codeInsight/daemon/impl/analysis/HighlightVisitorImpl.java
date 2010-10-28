@@ -418,7 +418,29 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       myHolder.add(HighlightNamesUtil.highlightMethodName(method, identifier, true, colorsScheme));
     }
+    else {
+      visitParentReference(parent);
+    }
     super.visitIdentifier(identifier);
+  }
+
+  private void visitParentReference(PsiElement parent) {
+    if (parent instanceof PsiJavaCodeReferenceElement && !(parent.getParent() instanceof PsiJavaCodeReferenceElement) &&
+             !((PsiJavaCodeReferenceElement)parent).isQualified()) {
+      PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
+      JavaResolveResult result;
+      try {
+        result = ref.advancedResolve(true);
+      }
+      catch (IndexNotReadyException e) {
+        return;
+      }
+      PsiElement resolved = result.getElement();
+      myHolder.add(HighlightUtil.checkReference(ref, result, resolved));
+      if (myRefCountHolder != null) {
+        myRefCountHolder.registerReference(ref, result);
+      }
+    }
   }
 
   @Override public void visitImportStatement(PsiImportStatement statement) {
@@ -480,27 +502,31 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitKeyword(PsiKeyword keyword) {
     super.visitKeyword(keyword);
     PsiElement parent = keyword.getParent();
+    String text = keyword.getText();
     if (parent instanceof PsiModifierList) {
       PsiModifierList psiModifierList = (PsiModifierList)parent;
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkNotAllowedModifier(keyword, psiModifierList));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalModifierCombination(keyword, psiModifierList));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPublicClassInRightFile(keyword, psiModifierList));
-      if (PsiModifier.ABSTRACT.equals(keyword.getText()) && psiModifierList.getParent() instanceof PsiMethod) {
+      if (PsiModifier.ABSTRACT.equals(text) && psiModifierList.getParent() instanceof PsiMethod) {
         if (!myHolder.hasErrorResults()) {
           myHolder.add(HighlightMethodUtil.checkAbstractMethodInConcreteClass((PsiMethod)psiModifierList.getParent(), keyword));
         }
       }
     }
-    else if (keyword.getText().equals(PsiKeyword.CONTINUE) && parent instanceof PsiContinueStatement) {
+    else if (PsiKeyword.CONTINUE.equals(text) && parent instanceof PsiContinueStatement) {
       PsiContinueStatement statement = (PsiContinueStatement)parent;
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkContinueOutsideLoop(statement));
     }
-    else if (keyword.getText().equals(PsiKeyword.BREAK) && parent instanceof PsiBreakStatement) {
+    else if (PsiKeyword.BREAK.equals(text) && parent instanceof PsiBreakStatement) {
       PsiBreakStatement statement = (PsiBreakStatement)parent;
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkBreakOutsideLoop(statement));
     }
-    else if (PsiKeyword.INTERFACE.equals(keyword.getText()) && parent instanceof PsiClass) {
+    else if (PsiKeyword.INTERFACE.equals(text) && parent instanceof PsiClass) {
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkInterfaceCannotBeLocal((PsiClass)parent));
+    }
+    else {
+      visitParentReference(parent);
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkStaticDeclarationInInnerClass(keyword));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalVoidType(keyword));
@@ -719,11 +745,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
-    if (myRefCountHolder != null) {
-      myRefCountHolder.registerReference(ref, result);
-    }
 
-    myHolder.add(HighlightUtil.checkReference(ref, result, resolved));
+    if (parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) {
+      if (myRefCountHolder != null) {
+        myRefCountHolder.registerReference(ref, result);
+      }
+      myHolder.add(HighlightUtil.checkReference(ref, result, resolved));
+    }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAbstractInstantiation(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExceptionAlreadyCaught(ref, resolved));
@@ -852,7 +880,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitThisExpression(PsiThisExpression expr) {
     myHolder.add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier()));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr));
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null));
+    }
     if (!myHolder.hasErrorResults()) {
       visitExpression(expr);
     }

@@ -255,7 +255,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     checkValid(aClass);
     PsiModifierList modifierList = aClass.getModifierList();
     assertTrue(modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertTrue(modifierList.hasModifierProperty(PsiModifier.STATIC));
+    assertFalse(modifierList.hasModifierProperty(PsiModifier.STATIC));
     assertEquals(modifierList.getParent(), aClass);
 
     PsiField field = aClass.getFields()[0];

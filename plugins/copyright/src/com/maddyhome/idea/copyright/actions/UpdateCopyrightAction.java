@@ -134,8 +134,8 @@ public class UpdateCopyrightAction extends AnAction {
         return;
       }
 
-      if (psielement instanceof PsiPackage) {
-        dir = ((PsiPackage)psielement).getDirectories()[0];
+      if (psielement instanceof PsiDirectoryContainer) {
+        dir = ((PsiDirectoryContainer)psielement).getDirectories()[0];
       }
       else if (psielement instanceof PsiDirectory) {
         dir = (PsiDirectory)psielement;

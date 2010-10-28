@@ -55,6 +55,10 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
               libFile.putUserData(getIndexKey(), "");
               libFiles.add(libFile);
             }
+            for (VirtualFile libFile : lib.getFiles(OrderRootType.CLASSES)) {
+              libFile.putUserData(getIndexKey(), "");
+              libFiles.add(libFile);
+            }
           }
         }
       }

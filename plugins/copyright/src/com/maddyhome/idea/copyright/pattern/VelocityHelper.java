@@ -19,6 +19,7 @@ package com.maddyhome.idea.copyright.pattern;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import org.apache.commons.collections.ExtendedProperties;
@@ -43,10 +44,15 @@ public class VelocityHelper
 
         try
         {
-            StringWriter sw = new StringWriter();
-            engine.evaluate(vc, sw, CopyrightManager.class.getName(), template);
-
-            return sw.getBuffer().toString();
+          StringWriter sw = new StringWriter();
+          boolean stripLineBreak = false;
+          if (template.endsWith("$")) {
+              template += getVelocitySuffix();
+              stripLineBreak = true;
+          }
+          engine.evaluate(vc, sw, CopyrightManager.class.getName(), template);
+          final String result = sw.getBuffer().toString();
+          return stripLineBreak ? StringUtil.trimEnd(result, getVelocitySuffix()) : result;
         }
         catch (Exception e)
         {
@@ -54,13 +60,20 @@ public class VelocityHelper
         }
     }
 
-    public static void verify(String text) throws Exception
+  private static String getVelocitySuffix() {
+    return "\n";
+  }
+
+  public static void verify(String text) throws Exception
     {
         VelocityEngine engine = getEngine();
 
         VelocityContext vc = new VelocityContext();
         vc.put("today", new DateInfo());
         StringWriter sw = new StringWriter();
+        if (text.endsWith("$")) {
+            text += getVelocitySuffix();
+        }
         engine.evaluate(vc, sw, CopyrightManager.class.getName(), text);
     }
 

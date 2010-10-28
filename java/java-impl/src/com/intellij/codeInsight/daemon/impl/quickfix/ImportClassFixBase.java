@@ -64,6 +64,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   @Nullable
   protected abstract String getReferenceName(T reference);
+  protected abstract PsiElement getReferenceNameElement(T reference);
 
   protected abstract boolean hasTypeParameters(T reference);
 
@@ -208,8 +209,10 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     }
   }
 
-  private static boolean isCaretNearRef(Editor editor, PsiElement ref) {
-    TextRange range = ref.getTextRange();
+  private boolean isCaretNearRef(Editor editor, T ref) {
+    PsiElement nameElement = getReferenceNameElement(ref);
+    if (nameElement == null) return false;
+    TextRange range = nameElement.getTextRange();
     int offset = editor.getCaretModel().getOffset();
 
     return offset == range.getEndOffset();
@@ -230,7 +233,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     });
   }
 
-  protected void bindReference(T reference, PsiClass targetClass) {
+  protected void bindReference(PsiReference reference, PsiClass targetClass) {
     reference.bindToElement(targetClass);
   }
 
@@ -238,7 +241,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
       protected void bindReference(PsiReference ref, PsiClass targetClass) {
-        ImportClassFixBase.this.bindReference((T)ref, targetClass);
+        ImportClassFixBase.this.bindReference(ref, targetClass);
       }
     };
   }

@@ -115,8 +115,8 @@ class JavaChangeSignatureUsageSearcher {
     for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
       final int oldParameterIndex = parameterInfo.getOldIndex();
       final String newName = parameterInfo.getName();
-      if (oldParameterIndex >= 0 && oldParameterIndex < parameters.length) {
-        if (isOriginal) {   //Name changes take place only in primary method
+      if (oldParameterIndex >= 0 ) {
+        if (isOriginal&& oldParameterIndex < parameters.length) {   //Name changes take place only in primary method
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
             JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(

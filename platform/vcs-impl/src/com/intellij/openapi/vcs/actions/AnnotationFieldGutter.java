@@ -20,8 +20,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationListener;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,6 +152,6 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   private boolean isAvailable() {
-    return myShowAdditionalInfo || myAspect instanceof MajorLineAnnotationAspect;
+    return myShowAdditionalInfo || VcsUtil.isAspectAvailableByDefault(myAspect);
   }
 }

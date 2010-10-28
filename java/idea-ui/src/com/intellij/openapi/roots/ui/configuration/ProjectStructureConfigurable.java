@@ -229,7 +229,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addFacetsConfig() {
-    if (FacetStructureConfigurable.isEnabled()) {
+    if (myFacetStructureConfigurable.isVisible()) {
       addConfigurable(myFacetStructureConfigurable);
     }
   }

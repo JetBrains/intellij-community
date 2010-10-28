@@ -74,6 +74,7 @@ public class FacetUtil {
   public static Element saveFacetConfiguration(final FacetConfiguration configuration) throws WriteExternalException {
     if (configuration instanceof PersistentStateComponent) {
       Object state = ((PersistentStateComponent)configuration).getState();
+      if (state instanceof Element) return ((Element)state);
       return XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters());
     }
     else {

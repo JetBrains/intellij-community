@@ -78,8 +78,8 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
       return true;
     }
     else {
-      return element.getElementType() instanceof JavaStubElementType &&
-          (element.getPsi()) instanceof PsiDocCommentOwner;
+      return true;//element.getElementType() instanceof JavaStubElementType &&
+          //(element.getPsi()) instanceof PsiDocCommentOwner;
     }
   }
 

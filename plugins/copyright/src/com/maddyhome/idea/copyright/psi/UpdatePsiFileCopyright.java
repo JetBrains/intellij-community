@@ -92,6 +92,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void collectComments(PsiElement first, PsiElement last, List<PsiComment> comments) {
+    if (first == last && first instanceof PsiComment) {
+      comments.add((PsiComment)first);
+      return;
+    }
     PsiElement elem = first;
     while (elem != last && elem != null) {
       if (elem instanceof PsiComment) {
