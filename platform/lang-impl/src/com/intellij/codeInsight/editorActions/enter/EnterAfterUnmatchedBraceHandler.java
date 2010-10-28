@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions.enter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,10 +32,14 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -44,32 +49,103 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
   public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvance,
                                 final DataContext dataContext, final EditorActionHandler originalHandler) {
     Document document = editor.getDocument();
-    CharSequence text = document.getText();
+    CharSequence text = document.getCharsSequence();
     Project project = file.getProject();
     int caretOffset = caretOffsetRef.get().intValue();
-    if (CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER && isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
-      int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-      if (offset < document.getTextLength()) {
-        char c = text.charAt(offset);
-        if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<' && c != '?') {
-          offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
-        }
-      }
-      offset = Math.min(offset, document.getTextLength());
-
-      document.insertString(offset, "\n}");
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      try {
-        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      return Result.DefaultForceIndent;
+    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER || !isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
+      return Result.Continue;
     }
-    return Result.Continue;
+    
+    int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
+    if (offset < document.getTextLength()) {
+      char c = text.charAt(offset);
+      if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<' && c != '?') {
+        offset = calculateOffsetToInsertClosingBrace(file, text, offset);
+        //offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
+      }
+    }
+    offset = Math.min(offset, document.getTextLength());
+
+    // We need to adjust indents of the text that will be moved, hence, need to insert preliminary line feed.
+    // Example:
+    //     if (test1()) {
+    //     } else {<caret> if (test2()) {
+    //         foo();
+    //     }
+    // We insert here '\n}' after 'foo();' and have the following:
+    //     if (test1()) {
+    //     } else { if (test2()) {
+    //         foo();
+    //         }
+    //     }
+    // That is formatted incorrectly because line feed between 'else' and 'if' is not inserted yet (whole 'if' block is indent anchor
+    // to 'if' code block('{}')). So, we insert temporary line feed between 'if' and 'else', correct indent and remove that temporary
+    // line feed.
+    document.insertString(offset, "\n}");
+    document.insertString(caretOffset, "\n");
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    try {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, offset + 2));
+      //CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    finally {
+      document.deleteString(caretOffset, caretOffset + 1);
+    }
+    return Result.DefaultForceIndent;
   }
 
+  /**
+   * Current handler inserts closing curly brace (right brace) if necessary. There is a possible case that it should be located
+   * more than one line forward.
+   * <p/>
+   * <b>Example</b> 
+   * <pre>
+   *     if (test1()) {
+   *     } else {<caret> if (test2()) {
+   *         foo();
+   *     }
+   * </pre>
+   * <p/>
+   * We want to get this after the processing:
+   * <pre>
+   *     if (test1()) {
+   *     } else {
+   *         if (test2()) {
+   *             foo();
+   *         }
+   *     }
+   * </pre>
+   * I.e. closing brace should be inserted two lines below current caret line. Hence, we need to calculate correct offset
+   * to use for brace inserting. This method is responsible for that.
+   * <p/>
+   * In essence it inspects PSI structure and finds PSE elements with the max length that starts at caret offset. End offset
+   * of that element is used as an insertion point.
+   * 
+   * @param file    target PSI file
+   * @param text    text from the given file
+   * @param offset  target offset where line feed will be inserted
+   * @return        offset to use for inserting closing brace
+   */
+  private static int calculateOffsetToInsertClosingBrace(PsiFile file, CharSequence text, final int offset) {
+    PsiElement element = PsiUtilBase.getElementAtOffset(file, offset);
+    ASTNode node = element.getNode();
+    if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
+      return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
+    }
+    for (PsiElement parent = element.getParent(); parent != null && parent.getTextOffset() == offset; parent = parent.getParent()) {
+      element = parent;
+    }
+    if (element.getTextOffset() != offset) {
+      return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
+    }
+    else {
+      return element.getTextRange().getEndOffset();
+    }
+  }
+  
   public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {
     if (offset == 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
