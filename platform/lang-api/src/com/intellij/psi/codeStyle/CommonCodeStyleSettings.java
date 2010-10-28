@@ -618,8 +618,6 @@ public class CommonCodeStyleSettings {
 
   //----------------- WRAPPING ---------------------------
   
-  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MAGIN = false;
-
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
   public static final int WRAP_ALWAYS = 0x02;
