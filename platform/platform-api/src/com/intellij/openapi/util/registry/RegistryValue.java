@@ -37,6 +37,7 @@ public class RegistryValue {
 
   private String myStringCachedValue;
   private Integer myIntCachedValue;
+  private Double myDoubleCachedValue;
   private Boolean myBooleanCachedValue;
 
   RegistryValue(Registry registry, String key) {
@@ -69,6 +70,14 @@ public class RegistryValue {
     }
 
     return myIntCachedValue.intValue();
+  }
+
+  public double asDouble() {
+    if (myDoubleCachedValue == null) {
+      myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
+    }
+
+    return myDoubleCachedValue.doubleValue();
   }
 
   public Color asColor(Color defaultValue) {

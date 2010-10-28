@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Getter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NotNull;
@@ -116,4 +117,12 @@ public interface JBTabs extends SwitchProvider {
   boolean isDisposed();
 
   JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate);
+
+  Image getComponentImage(TabInfo info);
+
+  void resetDropOver(TabInfo tabInfo);
+  Image startDropOver(TabInfo tabInfo, RelativePoint point);
+  void processDropOver(TabInfo over, RelativePoint point);
+
+  boolean isEmptyVisible();
 }

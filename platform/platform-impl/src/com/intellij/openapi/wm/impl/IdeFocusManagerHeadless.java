@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
@@ -86,5 +87,15 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   public FocusRequestor getFurtherRequestor() {
     return this;
+  }
+
+  @Override
+  public Component getFocusOwner() {
+    return null;
+  }
+
+  @Override
+  public void runOnOwnContext(DataContext context, Runnable runnable) {
+    runnable.run();
   }
 }

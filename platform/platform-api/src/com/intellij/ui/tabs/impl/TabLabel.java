@@ -110,7 +110,14 @@ public class TabLabel extends JPanel {
     myCentered = toCenter;
   }
 
+  public void paintOffscreen(Graphics g) {
+    validateTree();
+    doPaint(g);
+  }
+
   public void paint(final Graphics g) {
+    if (myTabs.isDropTarget(myInfo)) return;
+
     if (myTabs.getSelectedInfo() != myInfo) {
       myImage = null;
       doPaint(g);
@@ -167,18 +174,22 @@ public class TabLabel extends JPanel {
         break;
     }
 
-    if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(dX, dY);
-    } else {
-      g.translate(dXs, dYs);
+    if (!myTabs.isDropTarget(myInfo)) {
+      if (myTabs.getSelectedInfo() != myInfo) {
+        g.translate(dX, dY);
+      } else {
+        g.translate(dXs, dYs);
+      }
     }
 
     super.paint(g);
 
-    if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(-dX, -dY);
-    } else {
-      g.translate(-dXs, -dYs);
+    if (!myTabs.isDropTarget(myInfo)) {
+      if (myTabs.getSelectedInfo() != myInfo) {
+        g.translate(-dX, -dY);
+      } else {
+        g.translate(-dXs, -dYs);
+      }
     }
   }
 

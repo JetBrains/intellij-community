@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.docking.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
@@ -68,9 +69,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
-  EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement) {
+  private TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
+  private DockManager myDockManager;
+
+  EditorTabbedContainer(final EditorWindow window, Project project, DockManager dockManager, int tabPlacement) {
     myWindow = window;
     myProject = project;
+    myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
@@ -267,7 +272,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
-      .setTabColor(calcTabColor(myProject, file));
+      .setTabColor(calcTabColor(myProject, file))
+      .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -275,6 +281,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTab(tab, indexToInsert);
+  }
+
+  public boolean isEmptyVisible() {
+    return myTabs.isEmptyVisible();
   }
 
   private class MyQueryable implements Queryable {
@@ -382,6 +392,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }
       }
 
+      if (EditorWindow.DATA_KEY.is(dataId)) {
+        return myWindow;
+      }
+
       return null;
     }
   }
@@ -390,14 +404,20 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     TabInfo selected = myTabs.getSelectedInfo();
     if (selected == null) return;
 
-    VirtualFile file = (VirtualFile)selected.getObject();
+    final VirtualFile file = (VirtualFile)selected.getObject();
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
-    EditorWindow wnd = mgr.getCurrentWindow();
-    if (wnd != null) {
-      if (wnd.findFileComposite(file) != null) {
-        mgr.closeFile(file, wnd);
+
+    AsyncResult<EditorWindow> window = mgr.getActiveWindow();
+    window.doWhenDone(new AsyncResult.Handler<EditorWindow>() {
+      @Override
+      public void run(EditorWindow wnd) {
+        if (wnd != null) {
+          if (wnd.findFileComposite(file) != null) {
+            mgr.closeFile(file, wnd);
+          }
+        }
       }
-    }
+    });
   }
 
   private class TabMouseListener extends MouseAdapter {
@@ -474,4 +494,95 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       return false;
     }
   }
+
+  class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+
+    private VirtualFile myFile;
+    private DragSession mySession;
+
+    @Override
+    public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+      final Image img = myTabs.getComponentImage(info);
+      info.setHidden(true);
+
+      myFile = (VirtualFile)info.getObject();
+      Presentation presentation = new Presentation(info.getText());
+      presentation.setIcon(info.getIcon());
+      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile, presentation, myWindow));
+    }
+
+    private DockManager getDockManager() {
+      return DockManager.getInstance(myProject);
+    }
+
+    @Override
+    public void processDragOut(MouseEvent event, TabInfo source) {
+      mySession.process(event);
+    }
+
+    @Override
+    public void dragOutFinished(MouseEvent event, TabInfo source) {
+      FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
+
+      mySession.process(event);
+
+      myFile = null;
+      mySession = null;
+    }
+
+    class DockableEditor implements DockableContent<VirtualFile> {
+      final Image myImg;
+      private DockableEditorTabbedContainer myContainer;
+      private Presentation myPresentation;
+      private EditorWindow myEditorWindow;
+
+
+      public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
+        myImg = img;
+        myFile = file;
+        myPresentation = presentation;
+        myContainer = new DockableEditorTabbedContainer(myProject, myDockManager);
+        myEditorWindow = window;
+      }
+
+      @Override
+      public VirtualFile getKey() {
+        return myFile;
+      }
+
+      @Override
+      public Image getPreviewImage() {
+        return myImg;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(myImg.getWidth(null), myImg.getHeight(null));
+      }
+
+      @Override
+      public String getDockContainerType() {
+        return DockableEditorContainerFactory.TYPE;
+      }
+
+      public EditorWindow getEditorWindow() {
+        return myEditorWindow;
+      }
+
+      @Override
+      public Presentation getPresentation() {
+        return myPresentation;
+      }
+
+      @Override
+      public void close() {
+        myContainer.close(myFile);
+      }
+
+      public VirtualFile getFile() {
+        return myFile;
+      }
+    }
+  }
+
 }

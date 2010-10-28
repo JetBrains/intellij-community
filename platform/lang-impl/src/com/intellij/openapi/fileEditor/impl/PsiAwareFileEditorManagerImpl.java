@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -47,8 +48,8 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
-  public PsiAwareFileEditorManagerImpl(final Project project, final PsiManager psiManager, final WolfTheProblemSolver problemSolver) {
-    super(project);
+  public PsiAwareFileEditorManagerImpl(final Project project, final PsiManager psiManager, final WolfTheProblemSolver problemSolver, DockManager dockManager) {
+    super(project, dockManager);
     myPsiManager = psiManager;
     myProblemSolver = problemSolver;
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();

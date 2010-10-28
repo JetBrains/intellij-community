@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -81,6 +82,7 @@ public final class TabInfo implements Queryable {
   private Color myTabColor = null;
 
   private Queryable myQueryable;
+  private DragOutDelegate myDragOutDelegate;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -353,4 +355,25 @@ public final class TabInfo implements Queryable {
       myQueryable.putInfo(info);
     }
   }
+
+  public TabInfo setDragOutDelegate(DragOutDelegate delegate) {
+    myDragOutDelegate = delegate;
+    return this;
+  }
+
+  public boolean canBeDraggedOut() {
+    return myDragOutDelegate != null;
+  }
+
+  public DragOutDelegate getDragOutDelegate() {
+    return myDragOutDelegate;
+  }
+
+  public interface DragOutDelegate {
+
+    void dragOutStarted(MouseEvent mouseEvent, TabInfo info);
+    void processDragOut(MouseEvent event, TabInfo source);
+    void dragOutFinished(MouseEvent event, TabInfo source);
+  }
+
 }
