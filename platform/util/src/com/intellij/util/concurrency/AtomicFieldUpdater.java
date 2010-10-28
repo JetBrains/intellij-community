@@ -20,7 +20,7 @@
  * Date: Jul 26, 2007
  * Time: 3:52:05 PM
  */
-package com.intellij.util;
+package com.intellij.util.concurrency;
 
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
