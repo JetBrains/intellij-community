@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,6 +43,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
@@ -993,5 +995,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   boolean isDisposed() {
     return myDisposed;
+  }
+
+  @Override
+  public void showItemPopup(JBPopup hint) {
+    final Rectangle bounds = getCurrentItemBounds();
+    hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width,
+                                                                 bounds.y)));
   }
 }
