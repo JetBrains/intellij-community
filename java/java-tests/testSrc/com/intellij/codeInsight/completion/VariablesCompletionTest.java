@@ -129,18 +129,24 @@ public class VariablesCompletionTest extends CompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + "ArrayMethodName-result.java");
   }
 
+  public void testNoKeywordsInForLoopVariableName() throws Throwable {
+    configureByFile(FILE_PREFIX + getTestName(false) + ".java");
+    assertStringItems("stringBuffer", "buffer");
+  }
+
   protected void compareLookup(String fileName) throws IOException{
     String fullPath = getTestDataPath() + fileName;
     VirtualFile result = LocalFileSystem.getInstance().findFileByPath(fullPath);
     assertNotNull("file " + fullPath + " not found", result);
 
 
-    String[] strings = LineTokenizer.tokenize(FileDocumentManager.getInstance().getDocument(result).getCharsSequence(), false);
+    assertStringItems(LineTokenizer.tokenize(FileDocumentManager.getInstance().getDocument(result).getCharsSequence(), false));
+  }
 
+  private void assertStringItems(String... strings) {
     assertNotNull(myItems);
     for (int i = 0; i < myItems.length; i++) {
       assertEquals(strings[i], myItems[i].toString());
     }
   }
-
 }
