@@ -90,7 +90,7 @@ public class StatusBarUpdater implements Disposable {
     if (statusBar instanceof StatusBarEx) {
       StatusBarEx barEx = (StatusBarEx)statusBar;
       if (!text.equals(barEx.getInfo())){
-        statusBar.setInfo(text);
+        statusBar.setInfo(text, "updater");
       }
     }
   }

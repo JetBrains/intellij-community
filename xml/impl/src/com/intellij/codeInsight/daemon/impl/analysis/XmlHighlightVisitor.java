@@ -76,7 +76,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     @Override
     protected Boolean compute(PsiElement parent, Object p) {
       OuterLanguageElement element = PsiTreeUtil.getChildOfType(parent, OuterLanguageElement.class);
-      return element != null && element.getLanguage() != parent.getLanguage();
+      if (element == null) return false;
+      PsiFile containingFile = parent.getContainingFile();
+      return containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
     }
   };
   private List<HighlightInfo> myResult;

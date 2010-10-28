@@ -105,6 +105,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
   public void testSuperMethodCallTypeParameterList() { doParserTest("super()"); }
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
+  public void testChainedClassObjectAccess() { doParserTest("A.class.B.class"); }
 
   private void doParserTest(final String text) {
     doParserTest(text, new TestParser() {

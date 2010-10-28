@@ -59,6 +59,8 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -99,7 +101,7 @@ public class VariableInplaceRenamer {
     return performInplaceRename(true, null, null);
   }
 
-  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions, final RangeMarker offsetAfter) {
+  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions, final Consumer<Boolean> moveOffsetAfterr) {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
@@ -217,21 +219,15 @@ public class VariableInplaceRenamer {
                 if (myNewName != null) {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
-                if (offsetAfter != null) {
-                  int startOffset = offsetAfter.getStartOffset();
-                  final PsiReference referenceAt = containingFile.findReferenceAt(startOffset);
-                  if (referenceAt != null) {
-                    startOffset = referenceAt.getElement().getTextRange().getEndOffset();
-                  }
-                  myEditor.getCaretModel().moveToOffset(startOffset);
-                  offsetAfter.dispose();
+                if (moveOffsetAfterr != null) {
+                  moveOffsetAfterr.consume(true);
                 }
               }
 
               public void templateCancelled(Template template) {
                 finish();
-                if (offsetAfter != null) {
-                  offsetAfter.dispose();
+                if (moveOffsetAfterr != null) {
+                  moveOffsetAfterr.consume(false);
                 }
               }
             });

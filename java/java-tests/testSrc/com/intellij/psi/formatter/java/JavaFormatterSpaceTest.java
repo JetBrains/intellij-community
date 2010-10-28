@@ -176,4 +176,102 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int[] i2 = new int[]{1}"
     );
   }
+  
+  public void testSpaceBeforeElse() throws Exception {
+    // Inspired by IDEA-58068
+    getSettings().ELSE_ON_NEW_LINE = false;
+    
+    getSettings().SPACE_BEFORE_ELSE_KEYWORD = false;
+    doMethodTest(
+      "if (true) {\n" +
+      "} else {\n" +
+      "}",
+      "if (true) {\n" +
+      "}else {\n" +
+      "}"
+    );
+
+    getSettings().SPACE_BEFORE_ELSE_KEYWORD = true;
+    doMethodTest(
+      "if (true) {\n" +
+      "}else {\n" +
+      "}",
+      "if (true) {\n" +
+      "} else {\n" +
+      "}"
+    );
+  }
+
+  public void testSpaceBeforeWhile() throws Exception {
+    // Inspired by IDEA-58068
+    getSettings().WHILE_ON_NEW_LINE = false;
+
+    getSettings().SPACE_BEFORE_WHILE_KEYWORD = false;
+    doMethodTest(
+      "do {\n" +
+      "} while (true);",
+      "do {\n" +
+      "}while (true);"
+    );
+
+    getSettings().SPACE_BEFORE_WHILE_KEYWORD = true;
+    doMethodTest(
+      "do {\n" +
+      "}while (true);",
+      "do {\n" +
+      "} while (true);"
+    );
+  }
+
+  
+  public void testSpaceBeforeCatch() throws Exception {
+    // Inspired by IDEA-58068
+    getSettings().CATCH_ON_NEW_LINE = false;
+
+    getSettings().SPACE_BEFORE_CATCH_KEYWORD = false;
+    doMethodTest(
+      "try {\n" +
+      "} catch (Exception e) {\n" +
+      "}",
+      "try {\n" +
+      "}catch (Exception e) {\n" +
+      "}"
+    );
+
+    getSettings().SPACE_BEFORE_CATCH_KEYWORD = true;
+    doMethodTest(
+      "try {\n" +
+      "}catch (Exception e) {\n" +
+      "}",
+      "try {\n" +
+      "} catch (Exception e) {\n" +
+      "}"
+    );
+  }
+
+  public void testSpaceBeforeFinally() throws Exception {
+    // Inspired by IDEA-58068
+    getSettings().FINALLY_ON_NEW_LINE = false;
+
+    getSettings().SPACE_BEFORE_FINALLY_KEYWORD = false;
+    doMethodTest(
+      "try {\n" +
+      "} finally {\n" +
+      "}",
+      "try {\n" +
+      "}finally {\n" +
+      "}"
+    );
+
+    getSettings().SPACE_BEFORE_FINALLY_KEYWORD = true;
+    doMethodTest(
+      "try {\n" +
+      "}finally {\n" +
+      "}",
+      "try {\n" +
+      "} finally {\n" +
+      "}"
+    );
+  }
+
 }

@@ -41,6 +41,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 
+import static com.intellij.lang.PsiBuilderUtil.expect;
+
 public interface JavaElementType {
   IElementType CLASS = JavaStubElementTypes.CLASS;
   IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;
@@ -252,6 +254,7 @@ public interface JavaElementType {
                                             new JavaParserUtil.ParserWrapper() {
                                               public void parse(final PsiBuilder builder) {
                                                 ReferenceParser.parseType(builder);
+                                                expect(builder, JavaTokenType.ELLIPSIS);
                                               }
                                             });
       }
