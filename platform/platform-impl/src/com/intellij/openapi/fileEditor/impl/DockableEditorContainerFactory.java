@@ -21,8 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
+import org.jdom.Element;
 
-public class DockableEditorContainerFactory implements DockContainerFactory {
+public class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
 
   public static final String TYPE = "file-editors";
 
@@ -53,6 +54,14 @@ public class DockableEditorContainerFactory implements DockContainerFactory {
     splitters.createCurrentWindow();
     container.set(new DockableEditorTabbedContainer(myProject, myDockManager, splitters, true));
     return container.get();
+  }
+
+  @Override
+  public DockContainer loadContainerFrom(Element element) {
+    DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer();
+    container.getSplitters().readExternal(element.getChild("state"));
+    container.getSplitters().openFiles();
+    return container;
   }
 
   @Override

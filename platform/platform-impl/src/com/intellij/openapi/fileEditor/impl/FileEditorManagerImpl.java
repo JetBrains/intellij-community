@@ -104,16 +104,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    */
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
   private DockManager myDockManager;
+  private DockableEditorContainerFactory myContentFactory;
 
   public FileEditorManagerImpl(final Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
     myDockManager = dockManager;
     myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+  }
 
-    DockableEditorContainerFactory contentFactory = new DockableEditorContainerFactory(myProject, this, dockManager);
-    myDockManager.register(DockableEditorContainerFactory.TYPE, contentFactory);
-    Disposer.register(project, contentFactory);
+  private void initDockableContentFactory() {
+    if (myContentFactory != null) return;
+
+    myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
+    myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
+    Disposer.register(myProject, myContentFactory);
   }
 
   public static boolean isDumbAware(FileEditor editor) {
@@ -1073,6 +1078,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               public void run() {
                 setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
                 getMainSplitters().openFiles();
+                initDockableContentFactory();
+
                 LaterInvocator.invokeLater(new Runnable() {
                   public void run() {
                     long currentTime = System.nanoTime();

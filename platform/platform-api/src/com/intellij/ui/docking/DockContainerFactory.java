@@ -24,7 +24,7 @@ public interface DockContainerFactory extends Disposable {
 
   interface Persistent extends DockContainerFactory {
 
-    void loadState(Element element);
+    DockContainer loadContainerFrom(Element element);
 
   }
 

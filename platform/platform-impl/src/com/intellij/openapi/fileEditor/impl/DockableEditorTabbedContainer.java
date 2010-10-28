@@ -69,7 +69,7 @@ class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public Element getState() {
-    Element editors = new Element("editors");
+    Element editors = new Element("state");
     mySplitters.writeExternal(editors);
     return editors;
   }

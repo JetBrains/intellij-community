@@ -42,6 +42,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
+import java.util.List;
 
 @State(
   name = "DockManager",
@@ -94,6 +95,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         myFactories.remove(id);
       }
     });
+
+    readStateFor(id);
   }
 
   @Override
@@ -298,9 +301,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   private void createNewDockContainerFor(DockableContent content, RelativePoint point) {
     DockContainer container = getFactory(content.getDockContainerType()).createContainer();
     register(container);
-    DockWindow window = new DockWindow(String.valueOf(myWindowIdCounter++), myProject, container);
-    myWindows.put(container, window);
-    window.show();
+
+    DockWindow window = createWindowFor(null, container);
 
     Dimension size = content.getPreferredSize();
     Point showPoint = point.getScreenPoint();
@@ -313,6 +315,14 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     window.setSize(size);
 
     container.add(content, new RelativePoint(showPoint));
+  }
+
+  private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
+    DockWindow window = new DockWindow(id != null ? id : String.valueOf(myWindowIdCounter++) , myProject, container);
+    window.setDimensionKey("dock-window-" + id);
+    myWindows.put(container, window);
+    window.show();
+    return window;
   }
 
   private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
@@ -408,5 +418,32 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   @Override
   public void loadState(Element state) {
     myLoadedState = state;
+  }
+
+  private void readStateFor(String type) {
+    if (myLoadedState == null) return;
+
+    List windows = myLoadedState.getChildren("window");
+    for (int i = 0; i < windows.size(); i++) {
+      Element eachWindow = (Element)windows.get(i);
+      if (eachWindow == null) continue;
+
+      String eachId = eachWindow.getAttributeValue("id");
+
+      Element eachContent = eachWindow.getChild("content");
+      if (eachContent == null) continue;
+
+      String eachType = eachContent.getAttributeValue("type");
+      if (eachType == null || !type.equals(eachType) || !myFactories.containsKey(eachType)) continue;
+
+      DockContainerFactory factory = myFactories.get(eachType);
+      if (!(factory instanceof DockContainerFactory.Persistent)) continue;
+
+      DockContainerFactory.Persistent persistentFactory = (DockContainerFactory.Persistent)factory;
+      DockContainer container = persistentFactory.loadContainerFrom(eachContent);
+      register(container);
+
+      createWindowFor(eachId, container);
+    }
   }
 }
