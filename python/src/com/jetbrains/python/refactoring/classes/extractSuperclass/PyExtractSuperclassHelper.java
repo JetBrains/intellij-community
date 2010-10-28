@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -156,6 +157,7 @@ public class PyExtractSuperclassHelper {
     PsiDirectory ret = null;
 
     // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
+    target = FileUtil.toSystemIndependentName(target);
     for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
       final String root_path = file.getPath();
       if (target.startsWith(root_path)) {
@@ -183,7 +185,6 @@ public class PyExtractSuperclassHelper {
           }
         }
         else subdir = the_root.createChildDirectory(lfs, dirs[i]);
-        ret = psi_mgr.findDirectory(subdir);
         VirtualFile init_vfile = subdir.findChild(PyNames.INIT_DOT_PY);
         if (init_vfile == null) init_vfile = subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
         /*
@@ -201,6 +202,7 @@ public class PyExtractSuperclassHelper {
         the_root = subdir;
         i += 1;
       }
+      ret = psi_mgr.findDirectory(the_root);
     }
     return ret;
   }

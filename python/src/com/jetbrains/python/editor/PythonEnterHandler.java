@@ -32,7 +32,7 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     PyParameterList.class,
     PyFunction.class,
     PySliceExpression.class,
-    PySubscriptionExpression.class
+    PySubscriptionExpression.class,
   };
 
   @Override
@@ -64,8 +64,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
       return Result.Continue;
     }
+    if (statementBefore == null) {  // empty file
+      return Result.Continue;
+    }
 
-    if (statementBefore != null && PsiTreeUtil.hasErrorElements(statementBefore)) {
+    if (PsiTreeUtil.hasErrorElements(statementBefore)) {
       final Boolean autoWrapping = DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
       if (autoWrapping == null) {
         // code is already bad, don't mess it up even further
@@ -76,19 +79,23 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
 
     PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
     PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
-    while (wrappableBefore != null) {
-      PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
-      if (next == null) {
-        break;
+    if (!(wrappableBefore instanceof PsiComment)) {
+      while (wrappableBefore != null) {
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
+        if (next == null) {
+          break;
+        }
+        wrappableBefore = next;
       }
-      wrappableBefore = next;
     }
-    while (wrappableAfter != null) {
-      PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, IMPLICIT_WRAP_CLASSES);
-      if (next == null) {
-        break;
+    if (!(wrappableAfter instanceof PsiComment)) {
+      while (wrappableAfter != null) {
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, IMPLICIT_WRAP_CLASSES);
+        if (next == null) {
+          break;
+        }
+        wrappableAfter = next;
       }
-      wrappableAfter = next;
     }
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
       return Result.Continue;

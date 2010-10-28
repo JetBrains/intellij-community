@@ -130,15 +130,17 @@
     <line>158</line>
     <description>Function 'baddeco' lacks a positional argument</description>
   </problem>
+  <!--
   <problem>
     <file>badarglist.py</file>
     <line>172</line>
     <description>This argument list cannot be analyzed</description>
   </problem>
+  -->
   <problem>
     <file>badarglist.py</file>
     <line>211</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
@@ -163,22 +165,22 @@
   <problem>
     <file>badarglist.py</file>
     <line>232</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
     <line>233</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
     <line>236</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
     <line>237</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
   <problem>
     <file>badarglist.py</file>
@@ -188,6 +190,6 @@
   <problem>
     <file>badarglist.py</file>
     <line>243</line>
-    <description>More arguments than positional parameters left</description>
+    <description>Duplicate argument</description>
   </problem>
 </problems>

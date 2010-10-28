@@ -372,12 +372,19 @@ public class PyCallExpressionHelper {
 
     /**
      * Maps arguments of a call to parameters of a callee.
-     * must contain already resolved callee with flags set appropriately
+     * must contain already resolved callee with flags set appropriately.
+     * <br/>
+     * <i>NOTE:</i> <tt>*arg</tt> of unknown length is considered to be long just enough to fill appropriate
+     * positional paramaters, but at least one item long.
      * @param arguments what to map, get if from call site
-     * @param resolved_callee
-     * @param type_context
+     * @param resolved_callee what to map parameters of
+     * @param type_context optional shared type evaluator / cache.
      */
-    void mapArguments(PyExpression[] arguments, PyCallExpression.PyMarkedCallee resolved_callee, TypeEvalContext type_context) {
+    void mapArguments(
+      PyExpression[] arguments,
+      PyCallExpression.PyMarkedCallee resolved_callee,
+      @Nullable TypeEvalContext type_context
+    ) {
       if (type_context == null) type_context = TypeEvalContext.fast();
       myMarkedCallee = resolved_callee;
       List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -528,27 +535,39 @@ public class PyCallExpressionHelper {
       }
       // map *arg to positional params if possible
       boolean tuple_arg_not_exhausted = false;
+      boolean tuple_dup_found = false;
       if (cnt < parameters.length && cnt < positional_index && myTupleArg != null) {
         // check length of myTupleArg
         PyType tuple_arg_type = null;
         if (type_context != null) {
           tuple_arg_type = type_context.getType(PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class));
         }
-        int tuple_length = -1;
-        boolean tuple_length_known = false;
+        int tuple_length;
+        boolean tuple_length_known;
         if (tuple_arg_type instanceof PyTupleType) {
           tuple_length = ((PyTupleType)tuple_arg_type).getElementCount();
           tuple_length_known = true;
         }
-        i = 1;
-        while (cnt < parameters.length && cnt < positional_index) {
+        else {
+          tuple_length = 2000000; // no practical function will have so many positional params
+          tuple_length_known = false;
+        }
+        int mapped_params_count = 0;
+        while (cnt < parameters.length && cnt < positional_index && mapped_params_count < tuple_length) {
           PyParameter par = parameters[cnt];
           if (par instanceof PySingleStarParameter) break;
           PyNamedParameter n_par = par.getAsNamed();
           if (slots.containsKey(n_par)) {
             final PyExpression arg_here = slots.get(n_par);
-            final boolean over_tuple_length = tuple_length_known && i > tuple_length;
-            if (over_tuple_length || arg_here != null) {
+            if (arg_here != null) {
+              if (tuple_length_known) {
+                final EnumSet<PyArgumentList.ArgFlag> flags = myArgFlags.get(arg_here);
+                if (flags == null || flags.isEmpty()) {
+                  markArgument(arg_here, PyArgumentList.ArgFlag.IS_DUP);
+                  tuple_dup_found = true;
+                }
+              }
+              // else: unknown tuple length is just enough
               // the spree is over
               break;
             }
@@ -559,14 +578,17 @@ public class PyCallExpressionHelper {
             }
           }
           cnt += 1;
-          i += 1;
+          mapped_params_count += 1;
         }
-        if (tuple_length_known && i <= tuple_length) {
+        if (
+          tuple_length_known && (mapped_params_count < tuple_length) || // not exhausted
+          mapped_params_count == 0 // unknown length must consume at least first param
+        ) {
           tuple_arg_not_exhausted = true;
         }
       }
       // map *param to the leftmost chunk of unmapped positional args
-      // NOTE: will fail on nested-tuple params!
+      // NOTE: ignores the structure of nested-tuple params!
       if (tuple_par != null) {
         i = 0;
         while (i < arguments.length && mapped_args.contains(arguments[i]) && isPositionalArg(arguments[i])) {
@@ -593,7 +615,9 @@ public class PyCallExpressionHelper {
           tuple_arg_not_exhausted = false;
         }
       }
-      if (tuple_arg_not_exhausted) markArgument(myTupleArg, PyArgumentList.ArgFlag.IS_TOO_LONG);
+      if (tuple_arg_not_exhausted && ! tuple_dup_found) {
+        markArgument(myTupleArg, PyArgumentList.ArgFlag.IS_TOO_LONG);
+      }
       // map unmapped named params to **kwarg
       if (myKwdArg != null) {
         for (PyParameter par : parameters) {

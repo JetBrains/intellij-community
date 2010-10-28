@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -46,7 +47,7 @@ public class TypeEvalContext {
   }
 
   @Nullable
-  public PyType getType(PyExpression expr) {
+  public PyType getType(@NotNull PyExpression expr) {
     synchronized (myEvaluated) {
       if (myEvaluated.containsKey(expr)) {
         return myEvaluated.get(expr);

@@ -3,8 +3,7 @@ package com.jetbrains.python.refactoring.introduce.constant;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,15 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
     PsiElement anchor;
     anchor = expression.getContainingFile();
     assert anchor instanceof PyFile;
-    return anchor.addBefore(declaration, ((PyFile)anchor).getStatements().get(0));
+    final List<PyStatement> statements = ((PyFile)anchor).getStatements();
+    int targetIndex = 0;
+    while(targetIndex < statements.size() && statements.get(targetIndex) instanceof PyImportStatementBase) {
+      targetIndex++;
+    }
+    if (targetIndex == statements.size()) {
+      return anchor.add(declaration);
+    }
+    return anchor.addBefore(declaration, statements.get(targetIndex));
   }
 
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {

@@ -8,9 +8,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
@@ -18,12 +18,15 @@ import java.util.List;
 public class PyOverrideTest extends PyLightFixtureTestCase {
   private void doTest() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFile file = (PyFile) myFixture.getFile();
-    List<PyClass> classes = file.getTopLevelClasses();
-    PyFunction toOverride = classes.get(0).getMethods() [0];
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), classes.get(1),
+    PyFunction toOverride = getTopLevelClass(0).getMethods() [0];
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toOverride)));
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+  }
+
+  private PyClass getTopLevelClass(int index) {
+    PyFile file = (PyFile) myFixture.getFile();
+    return file.getTopLevelClasses().get(index);
   }
 
   public void testSimple() {
@@ -48,6 +51,17 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
 
   public void testIndent() {  // PY-1796
     doTest();
+  }
+
+  public void testQualified() {  // PY-2171
+    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    PyClass dateClass = PyClassNameIndex.findClass("datetime.tmxxx", myFixture.getProject());
+    assertNotNull(dateClass);
+    PyFunction initMethod = dateClass.findMethodByName(PyNames.INIT, false);
+    assertNotNull(initMethod);
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
+                                            Collections.singletonList(new PyMethodMember(initMethod)));
+    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
 
   public void testPy3k() {

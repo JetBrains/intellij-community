@@ -1,5 +1,6 @@
 package com.jetbrains.python.console;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.console.LanguageConsoleImpl;
@@ -19,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -32,15 +33,12 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
-import com.jetbrains.python.sdk.JythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -105,7 +103,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return Collections.emptyMap();
+        return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
       }
     };
 
@@ -134,9 +132,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
     return server;
   }
+
   protected PyConsoleProcessHandler createProcessHandler(final Process process) {
-    final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), outputEncoding);
+    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), CharsetToolkit.UTF8_CHARSET);
   }
 
   public void initAndRun(final String ... statements2execute) throws ExecutionException {
