@@ -413,7 +413,19 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                                                                int row,
                                                                int column) {
                     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                    setText(value == null ? "" : ((NamedScope) value).getName());
+                    if (value == null) {
+                      setText("");
+                    }
+                    else {
+                      final String scopeName = ((NamedScope)value).getName();
+                      if (!isSelected) {
+                        final NamedScope scope = DependencyValidationManager.getScope(myProject, scopeName);
+                        if (scope == null) {
+                          setForeground(Color.red);
+                        }
+                      }
+                      setText(scopeName);
+                    }
                     return this;
                 }
             };
