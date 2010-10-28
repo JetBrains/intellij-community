@@ -8,31 +8,35 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * @author yole
  */
 public class PyOptimizeImportsTest extends PyLightFixtureTestCase {
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testOneOfMultiple() throws Exception {
+  public void testOneOfMultiple() {
     doTest();
   }
 
-  public void testImportStar() throws Exception {
+  public void testImportStar() {
     doTest();
   }
 
-  public void testImportStarOneOfMultiple() throws Exception {
+  public void testImportStarOneOfMultiple() {
     doTest();
   }
 
-  public void testTryExcept() throws Exception {
+  public void testTryExcept() {
     doTest();
   }
 
-  public void testFromFuture() throws Exception {
+  public void testFromFuture() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  public void testUnresolved() {  // PY-2201
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.configureByFile("optimizeImports/" + getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
     myFixture.checkResultByFile("optimizeImports/" + getTestName(true) + ".after.py");
