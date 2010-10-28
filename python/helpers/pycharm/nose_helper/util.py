@@ -4,10 +4,16 @@ import inspect
 import os
 import sys
 import types
-from types import ClassType, TypeType
-from compiler.consts import CO_GENERATOR
+try:
+    # for python 3
+    from types import ClassType, TypeType
+    class_types = (ClassType, TypeType)
+    from compiler.consts import CO_GENERATOR
+except:
+    class_types = (type, )
 
-class_types = (ClassType, TypeType)
+PYTHON_VERSION_MAJOR = sys.version_info[0]
+PYTHON_VERSION_MINOR = sys.version_info[1]
 
 def cmp_lineno(a, b):
     """Compare functions by their line numbers.
@@ -21,6 +27,8 @@ def func_lineno(func):
         return func.compat_co_firstlineno
     except AttributeError:
         try:
+            if PYTHON_VERSION_MAJOR == 3:
+                return func.__code__.co_firstlineno
             return func.func_code.co_firstlineno
         except AttributeError:
             return -1
@@ -30,6 +38,8 @@ def isclass(obj):
     return obj_type in class_types or issubclass(obj_type, type)
 
 def isgenerator(func):
+    if PYTHON_VERSION_MAJOR == 3:
+        return inspect.isgeneratorfunction(func)
     try:
         return func.func_code.co_flags & CO_GENERATOR != 0
     except AttributeError:

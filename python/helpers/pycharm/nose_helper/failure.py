@@ -4,10 +4,9 @@ class Failure(unittest.TestCase):
     """Unloadable or unexecutable test.
     """
     __test__ = False # do not collect
-    def __init__(self, exc_class, exc_val, tb=None):
+    def __init__(self, exc_class, exc_val):
         self.exc_class = exc_class
         self.exc_val = exc_val
-        self.tb = tb
         unittest.TestCase.__init__(self)
 
     def __str__(self):
@@ -15,7 +14,4 @@ class Failure(unittest.TestCase):
             getattr(self.exc_class, '__name__', self.exc_class), self.exc_val)
 
     def runTest(self):
-        if self.tb is not None:            
-            raise self.exc_class, self.exc_val, self.tb
-        else:
-            raise self.exc_class(self.exc_val)
+        raise self.exc_class(self.exc_val)

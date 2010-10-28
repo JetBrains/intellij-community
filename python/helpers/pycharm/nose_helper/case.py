@@ -8,7 +8,7 @@ class Test(unittest.TestCase):
     """
     __test__ = False # do not collect
     def __init__(self, test, config=None):
-        if not callable(test):
+        if not hasattr(test, '__call__'):
             raise TypeError("nose_helper.case.Test called with argument %r that "
                             "is not callable. A callable is required."
                             % test)

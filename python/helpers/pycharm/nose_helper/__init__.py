@@ -1,2 +1,2 @@
-from suite import ContextSuite
-from loader import TestLoader
+from nose_helper.suite import ContextSuite
+from nose_helper.loader import TestLoader

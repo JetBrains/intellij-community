@@ -12,12 +12,15 @@ from nose_helper.case import FunctionTestCase, MethodTestCase
 from nose_helper.failure import Failure
 from nose_helper.config import Config
 from nose_helper.selector import defaultSelector
-from nose_helper.util import cmp_lineno, isclass, isgenerator, add_path
+from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, add_path
 from nose_helper.util import transplant_class
 from nose_helper.suite import ContextSuiteFactory, ContextList
 
 op_normpath = os.path.normpath
 op_abspath = os.path.abspath
+
+PYTHON_VERSION_MAJOR = sys.version_info[0]
+PYTHON_VERSION_MINOR = sys.version_info[1]
 
 class TestLoader(unittest.TestLoader):
     """Test loader that extends unittest.TestLoader to support nosetests
@@ -46,7 +49,7 @@ class TestLoader(unittest.TestLoader):
             try:
                 for test in g():
                     test_func, arg = self.parseGeneratedTest(test)
-                    if not callable(test_func):
+                    if not hasattr(test_func, '__call__'):
                         test_func = getattr(m, test_func)
                     yield FunctionTestCase(test_func, arg=arg, descriptor=g)
             except KeyboardInterrupt:
@@ -61,8 +64,8 @@ class TestLoader(unittest.TestLoader):
         them.
         """
         tests = []
-        test_classes = []
         test_funcs = []
+        test_classes = []
         if self.selector.wantModule(module):
             for item in dir(module):
                 test = getattr(module, item, None)
@@ -71,10 +74,17 @@ class TestLoader(unittest.TestLoader):
                         test_classes.append(test)
                 elif isfunction(test) and self.selector.wantFunction(test):
                     test_funcs.append(test)
-            test_classes.sort(lambda a, b: cmp(a.__name__, b.__name__))
-            test_funcs.sort(cmp_lineno)
-            tests = map(lambda t: self.makeTest(t, parent=module),
+            if PYTHON_VERSION_MAJOR != 3:
+                test_classes.sort(lambda a, b: cmp(a.__name__, b.__name__))
+                test_funcs.sort(cmp_lineno)
+                tests = map(lambda t: self.makeTest(t, parent=module),
                         test_classes + test_funcs)
+            else:
+                test_classes.sort(key = lambda a: a.__name__)
+                test_funcs.sort(key = func_lineno)
+                tests = [self.makeTest(t, parent=module) for t in
+                                        test_classes + test_funcs]
+
         return self.suiteClass(ContextList(tests, context=module))
 
 
@@ -98,7 +108,7 @@ class TestLoader(unittest.TestLoader):
             raise
         except:
             exc = sys.exc_info()
-            return Failure(exc[0], exc[1], exc[2])
+            return Failure(exc[0], exc[1])
     
     def _makeTest(self, obj, parent=None):
         """Given a test object and its parent, return a test case

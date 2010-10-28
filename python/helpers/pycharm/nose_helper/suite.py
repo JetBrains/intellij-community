@@ -48,7 +48,7 @@ class LazySuite(unittest.TestSuite):
     def _set_tests(self, tests):
         self._precache = []
         is_suite = isinstance(tests, unittest.TestSuite)
-        if callable(tests) and not is_suite:
+        if hasattr(tests, '__call__') and not is_suite:
             self.test_generator = tests()
         elif is_suite:
             self.addTests([tests])
@@ -258,7 +258,7 @@ class ContextSuiteFactory(object):
             ancestors.pop()
 
     def findContext(self, tests):
-        if callable(tests) or isinstance(tests, unittest.TestSuite):
+        if hasattr(tests, '__call__') or isinstance(tests, unittest.TestSuite):
             return None
         context = None
         for test in tests:
@@ -282,7 +282,7 @@ class ContextSuiteFactory(object):
         return suite
 
     def wrapTests(self, tests):
-        if callable(tests) or isinstance(tests, unittest.TestSuite):
+        if hasattr(tests, '__call__') or isinstance(tests, unittest.TestSuite):
             return tests
         wrapped = []
         for test in tests:
