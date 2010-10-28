@@ -3,6 +3,8 @@
  */
 package com.jetbrains.python.console.pydev;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -45,7 +47,7 @@ public class ThreadStreamReader extends Thread {
 
     public void run() {
         try {
-            InputStreamReader in = new InputStreamReader(is);
+            InputStreamReader in = new InputStreamReader(is, CharsetToolkit.UTF8);
             int c;
             while ((c = in.read()) != -1) {
                 synchronized(lock){

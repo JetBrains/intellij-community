@@ -60,10 +60,4 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
       }
     }
   }
-
-  @Override
-  public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
-    final String encoding = EncodingManager.getInstance().getDefaultCharset().name();
-    envs.put("PYTHONIOENCODING", encoding);
-  }
 }

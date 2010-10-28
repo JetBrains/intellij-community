@@ -8,12 +8,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyReturnTypeReference;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -164,7 +164,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             }
           }
           else if (((PyFile)getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
-            return getFirstSuperClassType(containingClass);
+            return getSuperClassUnionType(containingClass);
           }
         }
       }
@@ -182,7 +182,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         PyClass second_class = ((PyClassType)second_type).getPyClass();
         assert second_class != null;
         if (first_class == second_class) {
-          return getFirstSuperClassType(first_class);
+          return getSuperClassUnionType(first_class);
         }
         if (second_class.isSubclass(first_class)) {
           // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
@@ -194,11 +194,20 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Nullable
-  private static PyType getFirstSuperClassType(@NotNull PyClass first_class) {
+  private static PyType getSuperClassUnionType(@NotNull PyClass pyClass) {
+    // TODO: this is closer to being correct than simply taking first superclass type but still not entirely correct;
+    // super can also delegate to sibling types
     // TODO handle __mro__ here
-    final PyClass[] supers = first_class.getSuperClasses();
+    final PyClass[] supers = pyClass.getSuperClasses();
     if (supers.length > 0) {
-      return new PyClassType(supers[0], false);
+      if (supers.length == 1) {
+        return new PyClassType(supers [0], false);
+      }
+      List<PyType> superTypes = new ArrayList<PyType>();
+      for (PyClass aSuper : supers) {
+        superTypes.add(new PyClassType(aSuper, false));
+      }
+      return new PyUnionType(superTypes);
     }
     return null;
   }
