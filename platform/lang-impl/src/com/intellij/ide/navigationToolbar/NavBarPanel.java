@@ -1124,6 +1124,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
       }
       append(name, nameAttributes);
+      // manually set icon opaque to prevent background artifacts
+      setIconOpaque(false);
       setIcon(NavBarPanel.getIcon(value, false));
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
