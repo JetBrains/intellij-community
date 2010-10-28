@@ -31,7 +31,6 @@ import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement> {
-
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
     super(element);
   }
@@ -42,7 +41,12 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected void bindReference(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {
+  protected PsiElement getReferenceNameElement(PsiJavaCodeReferenceElement reference) {
+    return reference.getReferenceNameElement();
+  }
+
+  @Override
+  protected void bindReference(PsiReference ref, PsiClass targetClass) {
     if (ref instanceof PsiImportStaticReferenceElement) {
       ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
     }
