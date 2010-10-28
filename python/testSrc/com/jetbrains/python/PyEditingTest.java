@@ -150,6 +150,14 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter("a = some_list[<caret>slice_start]", "a = some_list[\n    slice_start]");
   }
 
+  public void testEnterBeforeComment() { // PY-2138
+    doTestEnter("def x():\n    if foo():<caret>\n        #bar\n        baz()", "def x():\n    if foo():\n        \n        #bar\n        baz()");
+  }
+
+  public void testEnterInEmptyFile() {  // PY-2194
+    doTestEnter(" <caret>\n", " \n \n");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

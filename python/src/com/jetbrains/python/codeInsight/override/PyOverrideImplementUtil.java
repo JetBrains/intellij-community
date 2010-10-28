@@ -187,7 +187,7 @@ public class PyOverrideImplementUtil {
         startIndex = 1;
       }
       else {
-        statementBody.append(baseClass.getName()).append(".").append(baseFunction.getName()).append("(");
+        statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(baseFunction.getName()).append("(");
       }
       statementBody.append(StringUtil.join(paramTexts, startIndex, paramTexts.length, ", "));
       statementBody.append(")");
@@ -195,6 +195,20 @@ public class PyOverrideImplementUtil {
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
+  }
+
+  // TODO find a better place for this logic
+  private static String getReferenceText(PyClass fromClass, PyClass toClass) {
+    final PyExpression[] superClassExpressions = fromClass.getSuperClassExpressions();
+    for (PyExpression expression : superClassExpressions) {
+      if (expression instanceof PyReferenceExpression) {
+        PsiElement target = ((PyReferenceExpression) expression).getReference().resolve();
+        if (target == toClass) {
+          return expression.getText();
+        }
+      }
+    }
+    return toClass.getName();
   }
 
   @NotNull
