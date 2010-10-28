@@ -27,8 +27,16 @@ public class UnfocusedNameIdentifier extends CompletionConfidence {
   public Boolean shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final PsiElement parent = position.getParent();
-    if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == position) {
-      return false;
+    if (parent instanceof PsiNameIdentifierOwner) {
+      final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)parent).getNameIdentifier();
+      if (nameIdentifier == position) {
+        return false;
+      }
+
+      if (nameIdentifier != null && position.getTextRange().equals(nameIdentifier.getTextRange())) {
+        //sometimes name identifiers are non-physical (e.g. Groovy)
+        return false;
+      }
     }
     return null;
   }
