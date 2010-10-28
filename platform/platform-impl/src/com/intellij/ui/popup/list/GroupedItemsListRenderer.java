@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,11 +46,6 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
                            myDescriptor.getCaptionAboveOf(value), -1);
 
     customizeComponent(list, value, isSelected);
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      final Color background = isSelected ? UIUtil.getListSelectionBackground() : Color.WHITE;
-      UIUtil.changeBackGround(result, background);
-    }
     return result;
   }
 
