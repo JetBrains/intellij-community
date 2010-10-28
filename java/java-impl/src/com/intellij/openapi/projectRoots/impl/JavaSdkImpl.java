@@ -201,6 +201,9 @@ public class JavaSdkImpl extends JavaSdk {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
       if (commonDocs == null) {
         commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
+        if (commonDocs == null) {
+          commonDocs = findInJar(new File(jdkHome, "docs.jar"), "docs/api");
+        }
       }
       if (commonDocs != null) {
         sdkModificator.addRoot(commonDocs, JavadocOrderRootType.getInstance());
