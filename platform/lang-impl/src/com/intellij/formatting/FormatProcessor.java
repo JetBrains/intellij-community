@@ -58,9 +58,16 @@ class FormatProcessor {
    * increases offset of <code>'i3'</code> that, in turn, causes backward shift of <code>'i1'</code> etc.
    * <p/>
    * This map remembers such backward shifts in order to be able to break such infinite cycles.
+   * <p/>
+   * <b>Note:</b> we already have a protection against backward alignment-implied problems
+   * (see {@link #allowBackwardAlignment(LeafBlockWrapper)}), processing based on current collection is left just as
+   * an additional defense.
    */
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
     = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
+
+  private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings 
+    = new HashMap<AbstractBlockWrapper, Set<AbstractBlockWrapper>>();
 
   private LeafBlockWrapper myWrapCandidate           = null;
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
@@ -154,6 +161,7 @@ class FormatProcessor {
 
   private void reset() {
     myBackwardShiftedAlignedBlocks.clear();
+    myAlignmentMappings.clear();
     myPreviousDependencies.clear();
     myWrapCandidate = null;
     if (myRootBlockWrapper != null) {
@@ -499,12 +507,14 @@ class FormatProcessor {
 
     if (whiteSpace.containsLineFeeds()) {
       whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
+      storeAlignmentMapping();
       return true;
     }
 
     IndentData indentBeforeBlock = myCurrentBlock.getNumberOfSymbolsBeforeBlock();
     int diff = alignOffset.getTotalSpaces() - indentBeforeBlock.getTotalSpaces();
     if (diff == 0) {
+      storeAlignmentMapping();
       return true;
     }
 
@@ -515,6 +525,7 @@ class FormatProcessor {
       if (!whiteSpace.containsLineFeeds()) {
         whiteSpace.setForceSkipTabulationsUsage(true);
       }
+      storeAlignmentMapping();
       return true;
     }
     AlignmentImpl alignment = myCurrentBlock.getAlignmentAtStartOffset();
@@ -539,6 +550,16 @@ class FormatProcessor {
       return true;
     }
 
+    if (!allowBackwardAlignment(offsetResponsibleBlock)) {
+      if (whiteSpace.containsLineFeeds()) {
+        adjustSpacingByIndentOffset();
+      }
+      else {
+        whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
+      }
+      return true;
+    }
+    
     // There is a possible case that alignment options are defined incorrectly. Consider the following example:
     //     int i1;
     //     int i2, i3;
@@ -560,6 +581,7 @@ class FormatProcessor {
     myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment = new HashSet<LeafBlockWrapper>());
     blocksCausedRealignment.add(myCurrentBlock);
 
+    storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
     WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
     previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces() - diff, previousWhiteSpace.getIndentOffset());
     // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
@@ -572,6 +594,131 @@ class FormatProcessor {
     return false;
   }
 
+  /**
+   * We need to track blocks which white spaces are modified because of alignment rules.
+   * <p/>
+   * This method encapsulates the logic of storing such information.
+   * 
+   * @see #allowBackwardAlignment(LeafBlockWrapper)
+   */
+  private void storeAlignmentMapping() {
+    AlignmentImpl alignment = null;
+    AbstractBlockWrapper block = myCurrentBlock;
+    while (alignment == null && block != null) {
+      alignment = block.getAlignment();
+      block = block.getParent();
+    }
+    if (alignment != null) {
+      block = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+      if (block != null) {
+        storeAlignmentMapping(myCurrentBlock, block);
+      }
+    }
+  }
+
+  private void storeAlignmentMapping(AbstractBlockWrapper block1, AbstractBlockWrapper block2) {
+    doStoreAlignmentMapping(block1, block2);
+    doStoreAlignmentMapping(block2, block1);
+  }
+
+  private void doStoreAlignmentMapping(AbstractBlockWrapper key, AbstractBlockWrapper value) {
+    Set<AbstractBlockWrapper> wrappers = myAlignmentMappings.get(key);
+    if (wrappers == null) {
+      myAlignmentMappings.put(key, wrappers = new HashSet<AbstractBlockWrapper>());
+    }
+    wrappers.add(value);
+  }
+
+  /**
+   * It's possible to configure alignment in a way to allow {@link AlignmentFactory#createAlignment(boolean) backward shift}.
+   * <p/>
+   * <b>Example:</b>
+   * <pre>
+   *     class Test {
+   *         int i;
+   *         StringBuilder buffer;
+   *     } 
+   * </pre>
+   * <p/>
+   * It's possible that blocks <code>'i'</code> and <code>'buffer'</code> should be aligned. As formatter processes document from
+   * start to end that means that requirement to shift block <code>'i'</code> to the right is discovered only during
+   * <code>'buffer'</code> block processing. I.e. formatter returns to the previously processed block (<code>'i'</code>), modifies
+   * its white space and continues from that location (performs 'backward' shift).
+   * <p/>
+   * Here is one very important moment - there is a possible case that formatting blocks are configured in a way that they are
+   * combined in explicit graph loop.
+   * <p/>
+   * <b>Example:</b>
+   * <pre>
+   *     blah(bleh(blih,
+   *       bloh), bluh);
+   * </pre>
+   * <p/>
+   * Consider that pairs of blocks <code>'blih'; 'bloh'</code> and <code>'bleh', 'bluh'</code> share should be aligned
+   * and backward shift is possible for them. Here is how formatter works:
+   * <ol>
+   *   <li>
+   *      Processing reaches <b>'bloh'</b> block. It's aligned to <code>'blih'</code> block. Current document state:
+   *      <p/>
+   *      <pre>
+   *          blah(bleh(blih,
+   *                    bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>
+   *      Processing reaches <b>'bluh'</b> block. It's aligned to <code>'blih'</code> block and backward shift is allowed, hence,
+   *      <code>'blih'</code> block is moved to the right and processing contnues from it. Current document state:
+   *      <pre>
+   *          blah(            bleh(blih,
+   *                    bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>
+   *      Processing reaches <b>'bloh'</b> block. It's configured to be aligned to <code>'blih'</code> block, hence, it's moved
+   *      to the right:
+   *      <pre>
+   *          blah(            bleh(blih,
+   *                                bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>We have endless loop then;</li>
+   * </ol>
+   * So, that implies that we can't use backward alignment if the blocks are configured in a way that backward alignment
+   * appliance produces endless loop. This method encapsulates the logic for checking if backward alignment can be applied.
+   * 
+   * @param backwardTarget    block that is located before the {@link #myCurrentBlock currently processed block} and that is
+   *                          a candidate for backward alignment
+   * @return                  <code>true</code> if backward alignment is possible; <code>false</code> otherwise
+   */
+  private boolean allowBackwardAlignment(LeafBlockWrapper backwardTarget) {
+    Set<AbstractBlockWrapper> blocksBeforeCurrent = new HashSet<AbstractBlockWrapper>();
+    for (
+      LeafBlockWrapper previousBlock = myCurrentBlock.getPreviousBlock(); 
+      previousBlock != null;
+      previousBlock = previousBlock.getPreviousBlock()) 
+    {
+      Set<AbstractBlockWrapper> blocks = myAlignmentMappings.get(previousBlock);
+      if (blocks != null) {
+        blocksBeforeCurrent.addAll(blocks);
+      }
+      
+      if (previousBlock.getWhiteSpace().containsLineFeeds()) {
+        break;
+      }
+    }
+    
+    for (
+      LeafBlockWrapper next = backwardTarget.getNextBlock();
+      next != null && !next.getWhiteSpace().containsLineFeeds();
+      next = next.getNextBlock()) 
+    {
+      if (blocksBeforeCurrent.contains(next)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
   /**
    * Applies indent to the white space of {@link #myCurrentBlock currently processed wrapped block}. Both indentation
    * and alignment options are took into consideration here.
