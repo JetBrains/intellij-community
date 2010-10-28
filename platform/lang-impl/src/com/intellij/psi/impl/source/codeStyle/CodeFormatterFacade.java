@@ -134,7 +134,7 @@ public class CodeFormatterFacade {
         try {
           final PsiElement startElement = file.findElementAt(textRanges.get(0).getTextRange().getStartOffset());
           final PsiElement endElement = file.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1);
-          final PsiElement commonParent = PsiTreeUtil.findCommonParent(startElement, endElement);
+          final PsiElement commonParent = startElement != null && endElement != null ? PsiTreeUtil.findCommonParent(startElement, endElement) : null;
           ASTNode node = null;
           if (commonParent != null) {
             node = commonParent.getNode();
