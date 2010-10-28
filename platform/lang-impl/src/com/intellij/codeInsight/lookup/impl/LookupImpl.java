@@ -496,7 +496,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
-    if (myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 42 && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (justShown()) {
       return;
     }
 
@@ -538,6 +538,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     });
 
     fireItemSelected(item, completionChar);
+  }
+
+  public boolean justShown() {
+    return myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 42 && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public int getLookupStart() {
