@@ -17,7 +17,7 @@ package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.tree.LanguagePerFileConfigurable;
 import org.jetbrains.annotations.Nls;
@@ -28,15 +28,16 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<Library> {
+public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<ScriptingLibraryTable.LibraryModel> {
 
   public ScriptingContextsConfigurable(final Project project, final LangScriptingContextProvider provider) {
-    super(project, Library.class, provider.getLibraryMappings(project),
-          "Specify which libraries are used in specific files and/or directories.", "Library", "Override?", "Override");
+    super(project, ScriptingLibraryTable.LibraryModel.class, provider.getLibraryMappings(project),
+          "Specify which libraries are used in specific files and/or directories.", "Library",
+          "Override library settings for child directories and files?", "Override Library Settings");
   }
 
   @Override
-  protected String visualize(@NotNull Library library) {
+  protected String visualize(@NotNull ScriptingLibraryTable.LibraryModel library) {
     return library.getName();
   }
 

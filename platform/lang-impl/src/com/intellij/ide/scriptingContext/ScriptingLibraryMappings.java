@@ -15,51 +15,47 @@
  */
 package com.intellij.ide.scriptingContext;
 
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.InjectableLanguage;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePerFileMappings;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
-import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingLibraryMappings extends LanguagePerFileMappings<Library> {
+public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> {
 
-  public ScriptingLibraryMappings(final Project project) {
+  private final ScriptingLibraryManager myLibraryManager;
+
+  public ScriptingLibraryMappings(final Project project, final LibraryType libraryType) {
     super(project);
+    myLibraryManager = new ScriptingLibraryManager(project, libraryType);
   }
 
-  protected String serialize(final Library library) {
+  protected String serialize(final ScriptingLibraryTable.LibraryModel library) {
     return library.getName();
   }
 
-  public List<Library> getAvailableValues() {
+  public List<ScriptingLibraryTable.LibraryModel> getAvailableValues() {
     return getLibraries();
   }
 
   @Override
-  protected Library getDefaultMapping(@Nullable VirtualFile file) {
+  protected ScriptingLibraryTable.LibraryModel getDefaultMapping(@Nullable VirtualFile file) {
     return null;
   }
 
-  public static List<Library> getLibraries() {
-    return Arrays.asList(Library.EMPTY_ARRAY);
+  public List<ScriptingLibraryTable.LibraryModel> getLibraries() {
+    ArrayList<ScriptingLibraryTable.LibraryModel> libraryModels = new ArrayList<ScriptingLibraryTable.LibraryModel>();
+    libraryModels.addAll(Arrays.asList(myLibraryManager.getLibraries()));
+    return libraryModels;
   }
 
 }
