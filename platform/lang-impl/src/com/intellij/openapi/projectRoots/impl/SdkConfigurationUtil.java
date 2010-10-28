@@ -65,6 +65,9 @@ public class SdkConfigurationUtil {
       return;
     }
     final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
+    if (SystemInfo.isMac) {
+      descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED, Boolean.TRUE);
+    }
     String suggestedPath = sdkTypes [0].suggestHomePath();
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
