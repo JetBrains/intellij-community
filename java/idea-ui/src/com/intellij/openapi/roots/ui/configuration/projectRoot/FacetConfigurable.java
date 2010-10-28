@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -38,7 +39,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   private String myFacetName;
 
   public FacetConfigurable(final Facet facet, final ModulesConfigurator modulesConfigurator, final Runnable updateTree) {
-    super(!facet.getType().isOnlyOneFacetAllowed(), updateTree);
+    super(!facet.getType().isOnlyOneFacetAllowed() && !(facet instanceof InvalidFacet), updateTree);
     myFacet = facet;
     myModulesConfigurator = modulesConfigurator;
     myFacetName = myFacet.getName();

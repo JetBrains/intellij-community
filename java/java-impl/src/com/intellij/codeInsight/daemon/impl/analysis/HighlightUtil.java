@@ -1337,12 +1337,11 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(PsiElement expression) {
+  public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(PsiElement expression, PsiElement resolved) {
     PsiClass referencedClass;
     @NonNls String resolvedName;
     PsiType type;
     if (expression instanceof PsiJavaCodeReferenceElement) {
-      PsiElement resolved = ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
       // redirected ctr
       if (PsiKeyword.THIS.equals(((PsiJavaCodeReferenceElement)expression).getReferenceName())
           && resolved instanceof PsiMethod
@@ -1838,7 +1837,7 @@ public class HighlightUtil {
     PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
-    HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref);
+    HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref, resolved);
     if (highlightInfo != null) return highlightInfo;
 
     PsiElement refParent = ref.getParent();

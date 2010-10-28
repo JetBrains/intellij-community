@@ -1,6 +1,6 @@
 PsiJavaFileStub [java.util]
   PsiClassStub[name=Collections fqn=java.util.Collections]
-    PsiModifierListStub[mask=9]
+    PsiModifierListStub[mask=1]
     PsiTypeParameterListStub
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:]
