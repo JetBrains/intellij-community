@@ -163,6 +163,9 @@ class ProjectBuilder {
     String targetFolder = project.targetFolder
     if (targetFolder != null) {
       def basePath = tests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
+      if (name.length() > 100) {
+        name = name.substring(0, 100) + "_etc"
+      }
       return new File(basePath, name).absolutePath
     }
     else {
@@ -198,7 +201,12 @@ class ProjectBuilder {
             )
             states[state] = new ModuleChunk(it)
           }
-
+        }
+        if (chunk.modules.size() > 1) {
+          chunkState.targetFolder = getTempDirectoryPath(chunk.name + (tests ? "_tests" : ""))
+          binding.ant.mkdir(dir: chunkState.targetFolder)
+          chunkClasspath.add(0, chunkState.targetFolder)
+          chunkState.tempRootsToDelete << chunkState.targetFolder
         }
       }
       else {
@@ -210,11 +218,6 @@ class ProjectBuilder {
       builders().each {ModuleBuilder builder ->
         listeners*.onModuleBuilderStarted(builder, chunk)
         if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
-          if (chunkState.targetFolder == null) {
-            chunkState.targetFolder = createOutputFolder(chunk.name, chunk.representativeModule(), tests)
-            chunkState.tempRootsToDelete << chunkState.targetFolder
-            chunkClasspath << chunkState.targetFolder
-          }
           ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, project)
         }
         states.keySet().each {

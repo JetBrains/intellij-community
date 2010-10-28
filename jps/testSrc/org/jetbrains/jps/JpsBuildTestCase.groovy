@@ -34,6 +34,7 @@ abstract class JpsBuildTestCase extends TestCase {
     project.clean()
     project.makeAll()
     project.buildArtifacts()
+    project.deleteTempFiles()
     return project
   }
 
