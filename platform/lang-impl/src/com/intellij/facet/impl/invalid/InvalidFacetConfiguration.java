@@ -20,17 +20,14 @@ import com.intellij.facet.impl.FacetState;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.util.List;
-
 /**
  * @author nik
  */
-public class InvalidFacetConfiguration implements FacetConfiguration, PersistentStateComponent<Element> {
+public class InvalidFacetConfiguration implements FacetConfiguration {
   private FacetState myFacetState;
   private final String myErrorMessage;
 
@@ -39,14 +36,14 @@ public class InvalidFacetConfiguration implements FacetConfiguration, Persistent
     myErrorMessage = errorMessage;
   }
 
-  public List<FacetState> getSubFacetsStates() {
-    return myFacetState.getSubFacets();
+  public FacetState getFacetState() {
+    return myFacetState;
   }
 
   @Override
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
-      new InvalidFacetEditor(myErrorMessage)
+      new InvalidFacetEditor(editorContext, myErrorMessage)
     };
   }
 
@@ -60,15 +57,5 @@ public class InvalidFacetConfiguration implements FacetConfiguration, Persistent
 
   public String getErrorMessage() {
     return myErrorMessage;
-  }
-
-  @Override
-  public Element getState() {
-    return myFacetState.getConfiguration();
-  }
-
-  @Override
-  public void loadState(Element state) {
-    myFacetState.setConfiguration(state);
   }
 }

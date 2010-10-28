@@ -15,7 +15,9 @@
  */
 package com.intellij.facet.impl.invalid;
 
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
 
@@ -27,10 +29,16 @@ import javax.swing.*;
 public class InvalidFacetEditor extends FacetEditorTab {
   private final String myErrorMessage;
   private JPanel myMainPanel;
-  private JLabel myErrorLabel;
+  private MultiLineLabel myDescriptionLabel;
+  private JCheckBox myIgnoreCheckBox;
+  private JLabel myIconLabel;
+  private InvalidFacetManager myInvalidFacetManager;
+  private InvalidFacet myFacet;
 
-  public InvalidFacetEditor(String errorMessage) {
+  public InvalidFacetEditor(FacetEditorContext context, String errorMessage) {
     myErrorMessage = errorMessage;
+    myFacet = (InvalidFacet)context.getFacet();
+    myInvalidFacetManager = InvalidFacetManager.getInstance(context.getProject());
   }
 
   @Nls
@@ -39,20 +47,31 @@ public class InvalidFacetEditor extends FacetEditorTab {
     return "";
   }
 
+  public JCheckBox getIgnoreCheckBox() {
+    return myIgnoreCheckBox;
+  }
+
   @Override
   public JComponent createComponent() {
-    myErrorLabel.setText(myErrorMessage);
-    myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+    myIconLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+    myDescriptionLabel.setText(myErrorMessage);
     return myMainPanel;
   }
 
   @Override
   public boolean isModified() {
-    return false;
+    return myIgnoreCheckBox.isSelected() != myInvalidFacetManager.isIgnored(myFacet);
   }
 
   @Override
   public void reset() {
+    myIgnoreCheckBox.setSelected(myInvalidFacetManager.isIgnored(myFacet));
+  }
+
+  @Override
+  public void apply() {
+    myInvalidFacetManager.setIgnored(myFacet, myIgnoreCheckBox.isSelected());
+
   }
 
   @Override

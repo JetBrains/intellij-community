@@ -19,6 +19,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -27,6 +29,8 @@ public abstract class InvalidFacetManager {
     return ServiceManager.getService(project, InvalidFacetManager.class);
   }
 
-  @NotNull
-  public abstract InvalidFacetType getOrCreateType(@NotNull String typeId);
+  public abstract boolean isIgnored(@NotNull InvalidFacet facet);
+  public abstract void setIgnored(@NotNull InvalidFacet facet, boolean ignored);
+
+  public abstract List<InvalidFacet> getInvalidFacets();
 }

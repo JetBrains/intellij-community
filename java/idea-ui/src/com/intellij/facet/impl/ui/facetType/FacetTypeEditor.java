@@ -21,6 +21,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
+import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
@@ -62,10 +63,12 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
       myInitialConfigurables.add(new FacetAutodetectionConfigurable(project, context, facetType));
     }
 
-    C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
-    DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
-    if (defaultSettingsEditor != null) {
-      myInitialConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
+    if (!(facetType instanceof InvalidFacetType)) {
+      C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
+      DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
+      if (defaultSettingsEditor != null) {
+        myInitialConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
+      }
     }
 
     for (Configurable configurable : myInitialConfigurables) {

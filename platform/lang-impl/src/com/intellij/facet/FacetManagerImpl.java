@@ -212,13 +212,16 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   private void addInvalidFacet(final FacetState state, ModifiableFacetModel model, final Facet underlyingFacet, final String errorMessage) {
+    final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final String typeId = StringUtil.notNullize(state.getFacetType());
-    final InvalidFacetType type = InvalidFacetManager.getInstance(myModule.getProject()).getOrCreateType(typeId);
+    final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
     final InvalidFacet facet = createFacet(type, StringUtil.notNullize(state.getName()), configuration, underlyingFacet);
     model.addFacet(facet);
-    FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
-    ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
+    if (!invalidFacetManager.isIgnored(facet)) {
+      FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
+      ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
+    }
   }
 
   private <C extends FacetConfiguration> void addFacet(final FacetType<?, C> type, final FacetState state, final Facet underlyingFacet,
@@ -263,25 +266,28 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final List<FacetState> parent = states.get(underlyingFacet);
 
-      FacetState facetState = new FacetState();
-      facetState.setFacetType(facet.getType().getStringId());
-      facetState.setName(facet.getName());
-      final Element config;
-      try {
-        FacetConfiguration configuration = facet.getConfiguration();
-        config = FacetUtil.saveFacetConfiguration(configuration);
-        if (configuration instanceof InvalidFacetConfiguration) {
-          facetState.getSubFacets().addAll(((InvalidFacetConfiguration)configuration).getSubFacetsStates());
-        }
-        if (facet instanceof JDOMExternalizable) {
-          //todo[nik] remove
-          ((JDOMExternalizable)facet).writeExternal(config);
-        }
+      FacetState facetState;
+      if (facet instanceof InvalidFacet) {
+        facetState = ((InvalidFacet)facet).getConfiguration().getFacetState();
       }
-      catch (WriteExternalException e) {
-        continue;
+      else {
+        facetState = new FacetState();
+        facetState.setFacetType(facet.getType().getStringId());
+        facetState.setName(facet.getName());
+        final Element config;
+        try {
+          FacetConfiguration configuration = facet.getConfiguration();
+          config = FacetUtil.saveFacetConfiguration(configuration);
+          if (facet instanceof JDOMExternalizable) {
+            //todo[nik] remove
+            ((JDOMExternalizable)facet).writeExternal(config);
+          }
+        }
+        catch (WriteExternalException e) {
+          continue;
+        }
+        facetState.setConfiguration(config);
       }
-      facetState.setConfiguration(config);
 
       parent.add(facetState);
       states.put(facet, facetState.getSubFacets());

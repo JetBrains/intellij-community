@@ -18,8 +18,12 @@ package com.intellij.facet.impl.invalid;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ui.FacetEditor;
+import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +34,15 @@ import javax.swing.*;
  * @author nik
  */
 public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
+  public static final FacetTypeId<InvalidFacet> TYPE_ID = new FacetTypeId<InvalidFacet>("invalid");
+  public static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
 
-  public InvalidFacetType(String typeId) {
-    super(new FacetTypeId<InvalidFacet>("invalid:" + typeId), typeId, typeId, null);
+  public static InvalidFacetType getInstance() {
+    return ServiceManager.getService(InvalidFacetType.class);
+  }
+
+  public InvalidFacetType() {
+    super(TYPE_ID, "invalid", "Invalid", null);
   }
 
   @Override
@@ -57,6 +66,11 @@ public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfig
   @Override
   public boolean isOnlyOneFacetAllowed() {
     return false;
+  }
+
+  @Override
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
+    return new MultipleInvalidFacetEditor(editors);
   }
 
   @Override

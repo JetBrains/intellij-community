@@ -21,6 +21,8 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
+import com.intellij.facet.impl.invalid.InvalidFacetManager;
+import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
@@ -65,24 +67,31 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return ServiceManager.getService(project, FacetStructureConfigurable.class);
   }
 
-  public static boolean isEnabled() {
-    return FacetTypeRegistry.getInstance().getFacetTypes().length > 0;
+  public boolean isVisible() {
+    return FacetTypeRegistry.getInstance().getFacetTypes().length > 0 || !InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty();
   }
 
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(this, facetType);
-      MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
-      addNode(facetTypeNode, myRoot);
+      addFacetTypeNode(facetType);
+    }
+    if (!InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty()) {
+      addFacetTypeNode(InvalidFacetType.getInstance());
+    }
+  }
 
-      for (Module module : myModuleManager.getModules()) {
-        Collection<? extends Facet> facets = FacetManager.getInstance(module).getFacetsByType(facetType.getId());
-        for (Facet facet : facets) {
-          FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
-          addFacetNode(facetTypeNode, facet, editorFacade);
-        }
+  private void addFacetTypeNode(FacetType<?, ?> facetType) {
+    FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(this, facetType);
+    MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
+    addNode(facetTypeNode, myRoot);
+
+    for (Module module : myModuleManager.getModules()) {
+      Collection<? extends Facet> facets = FacetManager.getInstance(module).getFacetsByType(facetType.getId());
+      FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
+      for (Facet facet : facets) {
+        addFacetNode(facetTypeNode, facet, editorFacade);
       }
     }
   }

@@ -15,25 +15,79 @@
  */
 package com.intellij.facet.impl.invalid;
 
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.facet.ProjectFacetManager;
+import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
  */
-public class InvalidFacetManagerImpl extends InvalidFacetManager {
-  private Map<String, InvalidFacetType> myTypes = new FactoryMap<String, InvalidFacetType>() {
-    @Override
-    protected InvalidFacetType create(String key) {
-      return new InvalidFacetType(key);
+@State(
+    name = "InvalidFacetManager",
+    storages = {
+        @Storage(
+            id = "other",
+            file = "$WORKSPACE_FILE$"
+        )
     }
-  };
+)
+public class InvalidFacetManagerImpl extends InvalidFacetManager implements PersistentStateComponent<InvalidFacetManagerImpl.InvalidFacetManagerState> {
+  private InvalidFacetManagerState myState = new InvalidFacetManagerState();
+  private final Project myProject;
 
-  @NotNull
+  public InvalidFacetManagerImpl(Project project) {
+    myProject = project;
+  }
+
   @Override
-  public InvalidFacetType getOrCreateType(@NotNull String typeId) {
-    return myTypes.get(typeId);
+  public boolean isIgnored(@NotNull InvalidFacet facet) {
+    return myState.getIgnoredFacets().contains(FacetPointersManager.constructId(facet));
+  }
+
+  public InvalidFacetManagerState getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(InvalidFacetManagerState state) {
+    myState = state;
+  }
+
+  @Override
+  public void setIgnored(@NotNull InvalidFacet facet, boolean ignored) {
+    final String id = FacetPointersManager.constructId(facet);
+    if (ignored) {
+      myState.getIgnoredFacets().add(id);
+    }
+    else {
+      myState.getIgnoredFacets().remove(id);
+    }
+  }
+
+  @Override
+  public List<InvalidFacet> getInvalidFacets() {
+    return ProjectFacetManager.getInstance(myProject).getFacets(InvalidFacetType.TYPE_ID);
+  }
+
+  public static class InvalidFacetManagerState {
+    private Set<String> myIgnoredFacets = new HashSet<String>();
+
+    @Tag("ignored-facets")
+    @AbstractCollection(surroundWithTag = false, elementTag = "facet", elementValueAttribute = "id")
+    public Set<String> getIgnoredFacets() {
+      return myIgnoredFacets;
+    }
+
+    public void setIgnoredFacets(Set<String> ignoredFacets) {
+      myIgnoredFacets = ignoredFacets;
+    }
   }
 }
