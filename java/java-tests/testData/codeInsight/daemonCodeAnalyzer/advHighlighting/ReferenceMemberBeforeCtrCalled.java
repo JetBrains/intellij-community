@@ -2,45 +2,49 @@
 import java.io.*;
 import java.net.*;
 
-class a {
- a(int i) {}
- a(a a) {}
+class A {
+ A(int i) {}
+ A(A a) {}
  int f() { return 0; }
  int fi;
 } 	
 
-class b extends a {
+class B extends A {
   int bi;
-  b(int h) {
-    super(<error descr="Cannot reference 'b.bi' before supertype constructor has been called">bi</error>);
+  B(int h) {
+    super(<error descr="Cannot reference 'B.bi' before supertype constructor has been called">bi</error>);
   }
-  b() {
-    this(<error descr="Cannot reference 'b.bi' before supertype constructor has been called">bi</error>);
-  }
-
-  b(String s) {
-    super(<error descr="Cannot reference 'b.db' before supertype constructor has been called">db</error>(1) );
+  B() {
+    this(<error descr="Cannot reference 'B.bi' before supertype constructor has been called">bi</error>);
   }
 
-  b(int i, int j) {
-    super(<error descr="Cannot reference 'a.f' before supertype constructor has been called">f</error>());
-  }
-  b(int i, int j, int k) {
-    super(<error descr="Cannot reference 'a.f' before supertype constructor has been called">super.f</error>());
+  B(String s) {
+    super(<error descr="Cannot reference 'B.db' before supertype constructor has been called">db</error>(1) );
   }
 
-  b(String s, int i) {
+  B(int i, int j) {
+    super(<error descr="Cannot reference 'A.f' before supertype constructor has been called">f</error>());
+  }
+  B(int i, int j, int k) {
+    super(<error descr="Cannot reference 'A.f' before supertype constructor has been called">super.f</error>());
+  }
+
+  B(String s, int i) {
     super(s.length());
   }
 
-  b(int s, int i, char j) {
-    super(<error descr="Cannot reference 'a.fi' before supertype constructor has been called">super.fi</error> );
+  B(int s, int i, char j) {
+    super(<error descr="Cannot reference 'A.fi' before supertype constructor has been called">super.fi</error> );
   }
 
-  b(double d) {
-    super(new <error descr="Cannot reference 'inner' before supertype constructor has been called">inner</error>() );
+  B(double d) {
+    super(new <error descr="Cannot reference 'Inner' before supertype constructor has been called">Inner</error>() );
   }
-  class inner extends a {inner(){super(1);}}
+  class Inner extends A {
+    Inner(){
+      super(1);
+    }
+  }
 
   int db(int j) { 
    return 0;
@@ -48,54 +52,51 @@ class b extends a {
 }
 
 
-class enc {
+class Enc {
   int ienc;
-  class bb extends a {
+  class Bb extends A {
     int ibb;
-    bb() { super(ienc); }
-    bb(int i) {
+    Bb() { super(ienc); }
+    Bb(int i) {
       super(i);
     }
 
-    bb(int i, int j) {
-      super(<error descr="Cannot reference 'bb.this' before supertype constructor has been called">enc.bb.this</error>.ibb );
+    Bb(int i, int j) {
+      super(<error descr="Cannot reference 'Bb.this' before supertype constructor has been called">Enc.Bb.this</error>.ibb );
     }
 
-    bb(int i, String s) {
-      super(enc.this.ienc);
+    Bb(int i, String s) {
+      super(Enc.this.ienc);
     }
 
-    bb(int i, char j) {
+    Bb(int i, char j) {
       super(<error descr="Cannot reference 'this' before supertype constructor has been called">this</error> );
     }
-
-
   }
 
-  enc() {
-    this(new <error descr="Cannot reference 'bb' before supertype constructor has been called">bb</error>());
+  Enc() {
+    this(new <error descr="Cannot reference 'Bb' before supertype constructor has been called">Bb</error>());
   }
-  enc(bb b) {}
+  Enc(Bb b) {}
 }
 
 // static are OK
-class c2 extends a {
+class C2 extends A {
   static final int fi = 4;
-  c2() {
+  C2() {
     super(fi);
   }
-  c2(int i) {
+  C2(int i) {
     super(sf());
   }
   static int sf() { return 0; }
 
-  c2(int i, int j) {
-    super(new sc().i);
+  C2(int i, int j) {
+    super(new Sc().i);
   }
-  static class sc {
+  static class Sc {
     int i;
   }
-
 }
 
 interface Callback {
@@ -111,7 +112,6 @@ class Base {
 }
 
 class YellinBug extends Base {
-
     public YellinBug() {
         super(new Callback() {
 

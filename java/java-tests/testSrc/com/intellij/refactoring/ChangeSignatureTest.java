@@ -3,13 +3,18 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -312,6 +317,31 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
                                  newName != null ? newName : method.getName(),
                                  newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
+    @NonNls String after = basePath + "_after.java";
+    checkResultByFile(after);
+  }
+
+  public void testPropagateParameter() throws Exception {
+    String basePath = "/refactoring/changeSignature/" + getTestName(false);
+    @NonNls final String filePath = basePath + ".java";
+    configureByFile(filePath);
+    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
+    PsiMethod method = (PsiMethod) targetElement;
+    final PsiClass containingClass = method.getContainingClass();
+    assertTrue(containingClass != null);
+    final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
+    assertTrue(callers.length > 0);
+    final PsiMethod caller = callers[0];
+    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<PsiMethod>();
+    propagateParametersMethods.add(caller);
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    new ChangeSignatureProcessor(getProject(), method, false, null,
+                                 method.getName(),
+                                 CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
+        new ParameterInfoImpl(0, parameters[0].getName(), parameters[0].getType()),
+        new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true")}, null,
+                                 propagateParametersMethods, null).run();
     @NonNls String after = basePath + "_after.java";
     checkResultByFile(after);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maddyhome.idea.copyright.psi;
+package com.intellij.facet.impl.invalid;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.facet.Facet;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileType;
-import com.maddyhome.idea.copyright.CopyrightProfile;
 
 /**
- * @author yole
+ * @author nik
  */
-public interface UpdateCopyrightInstanceFactory {
-  UpdateCopyright createInstance(Project project, Module module, VirtualFile file,
-        FileType base, CopyrightProfile options);  
+public class InvalidFacet extends Facet<InvalidFacetConfiguration> {
+  public InvalidFacet(InvalidFacetType invalidFacetType,
+                      Module module,
+                      String name,
+                      InvalidFacetConfiguration configuration,
+                      Facet underlyingFacet) {
+    super(invalidFacetType, module, name, configuration, underlyingFacet);
+  }
+
+  public String getErrorMessage() {
+    return getConfiguration().getErrorMessage();
+  }
 }

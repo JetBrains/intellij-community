@@ -206,7 +206,7 @@ public class ClassInnerStuffCache {
     for (final PsiMethod method : methods) {
       List<PsiMethod> list = cachedMethods.get(method.getName());
       if (list == null) {
-        cachedMethods.put(method.getName(), (list = new ArrayList<PsiMethod>(1)));
+        cachedMethods.put(method.getName(), list = new ArrayList<PsiMethod>(1));
       }
       list.add(method);
     }

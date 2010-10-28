@@ -19,9 +19,38 @@ import com.intellij.openapi.editor.EditorGutterAction;
 
 import java.awt.*;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
+  private final String myId;
+  private final boolean myShowByDefault;
+
+  protected LineAnnotationAspectAdapter() {
+    this(null, false);
+  }
+
+  protected LineAnnotationAspectAdapter(String id) {
+    this(id, false);
+  }
+
+  public LineAnnotationAspectAdapter(String id, boolean showByDefault) {
+    myId = id;
+    myShowByDefault = showByDefault;
+  }
+
   public String getTooltipText(int lineNumber) {
     return null;
+  }
+
+  @Override
+  public String getId() {
+    return myId;
+  }
+
+  @Override
+  public boolean isShowByDefault() {
+    return myShowByDefault;
   }
 
   public Cursor getCursor(final int lineNum) {

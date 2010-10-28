@@ -73,10 +73,10 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
       public void actionPerformed(ActionEvent e) {
         try {
           VelocityHelper.verify(myCopyrightPane.getText());
-          Messages.showInfoMessage(myProject, "Velocity template valid.", "Validation");
+          Messages.showInfoMessage(myProject, "Velocity template is valid.", "Validation");
         }
         catch (Exception e1) {
-          Messages.showInfoMessage(myProject, "Velocity template error:\n" + e1.getMessage(), "Validation");
+          Messages.showInfoMessage(myProject, "Velocity template contains error:\n" + e1.getMessage(), "Validation");
         }
       }
     });

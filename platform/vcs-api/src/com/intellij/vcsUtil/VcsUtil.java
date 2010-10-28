@@ -15,6 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -578,5 +580,16 @@ public class VcsUtil {
     }
 
     return (! s1Trimmed.equals(s2Trimmed)) && s1Trimmed.equalsIgnoreCase(s2Trimmed);
+  }
+
+  private static String ANNO_ASPECT = "show.vcs.annotation.aspect.";
+  public static boolean isAspectAvailableByDefault(LineAnnotationAspect aspect) {
+    if (aspect.getId() == null) return aspect.isShowByDefault();
+    return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + aspect.getId(), aspect.isShowByDefault());
+  }
+
+  public static void setAspectAvailability(LineAnnotationAspect aspect, boolean showByDefault) {
+    if (aspect.getId() == null) throw new IllegalArgumentException("Aspect should have not null ID");
+    PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspect.getId(), String.valueOf(showByDefault));
   }
 }

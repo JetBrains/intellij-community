@@ -17,11 +17,11 @@ package com.intellij.openapi.roots.libraries.scripting;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,26 +34,38 @@ import java.util.Arrays;
 public class ScriptingLibraryTable {
 
   private final static OrderRootType SOURCE_ROOT_TYPE = OrderRootType.SOURCES;
+  private final static OrderRootType COMPACT_ROOT_TYPE = OrderRootType.CLASSES;
 
   private ArrayList<LibraryModel> myLibraryModels = new ArrayList<LibraryModel>();
-  private LibraryTableBase.ModifiableModelEx myBaseTableModel;
-  private LibraryType myLibraryType;
+  private HashSet<VirtualFile> myCompactFilesCache;
 
   public ScriptingLibraryTable(@NotNull LibraryTable libraryTable, LibraryType libraryType) {
-    myLibraryType = libraryType;
     LibraryTable.ModifiableModel tableModel = libraryTable.getModifiableModel();
     for (Library library : tableModel.getLibraries()) {
       if (library instanceof LibraryEx) {
         LibraryType libType = ((LibraryEx)library).getType();
         if (libType != null && libType.equals(libraryType)) {
           LibraryModel libModel = new LibraryModel(library.getName());
-          for (VirtualFile file : library.getFiles(SOURCE_ROOT_TYPE)) {
-            libModel.addSourceFile(file);
-          }
+          libModel.setSourceFiles(library.getFiles(SOURCE_ROOT_TYPE));
+          libModel.setCompactFiles(library.getFiles(COMPACT_ROOT_TYPE));
           myLibraryModels.add(libModel);
         }
       }
     }
+  }
+
+  public boolean isCompactFile(VirtualFile file) {
+    if (myCompactFilesCache == null) {
+      myCompactFilesCache = new HashSet<VirtualFile>();
+      for (LibraryModel libraryModel : myLibraryModels) {
+        myCompactFilesCache.addAll(Arrays.asList(libraryModel.getCompactFiles()));
+      }
+    }
+    return myCompactFilesCache.contains(file);
+  }
+
+  private void invalidateCache() {
+    myCompactFilesCache = null;
   }
 
   @Nullable
@@ -66,17 +78,20 @@ public class ScriptingLibraryTable {
 
   public void removeLibrary(LibraryModel libraryModel) {
     myLibraryModels.remove(libraryModel);
+    invalidateCache();
   }
 
   public LibraryModel createLibrary(String libName) {
     LibraryModel libModel = new LibraryModel(libName);
     myLibraryModels.add(libModel);
+    invalidateCache();
     return libModel;
   }
 
-  public LibraryModel createLibrary(String libName, VirtualFile[] sourceFiles) {
-    LibraryModel libModel = new LibraryModel(libName, sourceFiles);
+  public LibraryModel createLibrary(String libName, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
+    LibraryModel libModel = new LibraryModel(libName, sourceFiles, compactFiles);
     myLibraryModels.add(libModel);
+    invalidateCache();
     return libModel;
   }
 
@@ -94,13 +109,15 @@ public class ScriptingLibraryTable {
     return myLibraryModels.get(index);
   }
 
-  public static class LibraryModel {
+  public class LibraryModel {
     private String myName;
     private ArrayList<VirtualFile> mySourceFiles = new ArrayList<VirtualFile>();
+    private ArrayList<VirtualFile> myCompactFiles = new ArrayList<VirtualFile>();
 
-    public LibraryModel(String name, VirtualFile[] sourceFiles) {
+    public LibraryModel(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
       this(name);
       mySourceFiles.addAll(Arrays.asList(sourceFiles));
+      myCompactFiles.addAll(Arrays.asList(compactFiles));
     }
 
     public LibraryModel(String name) {
@@ -111,17 +128,31 @@ public class ScriptingLibraryTable {
       myName = name;
     }
 
-    public void addSourceFile(VirtualFile file) {
-      mySourceFiles.add(file);
-    }
-
     public void setSourceFiles(VirtualFile[] files) {
       mySourceFiles.clear();
       mySourceFiles.addAll(Arrays.asList(files));
     }
 
+    public void setCompactFiles(VirtualFile[] files) {
+      invalidateCache();
+      myCompactFiles.clear();
+      myCompactFiles.addAll(Arrays.asList(files));
+    }
+
     public VirtualFile[] getSourceFiles() {
       return mySourceFiles.toArray(new VirtualFile[mySourceFiles.size()]);
+    }
+
+    public VirtualFile[] getCompactFiles() {
+      return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
+    }
+
+    @NotNull
+    public VirtualFile[] getFiles(OrderRootType rootType) {
+      if (rootType == COMPACT_ROOT_TYPE) {
+        return getCompactFiles();
+      }
+      return getSourceFiles();
     }
 
     public String getName() {

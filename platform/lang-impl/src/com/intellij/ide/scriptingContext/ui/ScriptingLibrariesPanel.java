@@ -97,7 +97,7 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
     }
   }
 
@@ -129,7 +129,7 @@ public class ScriptingLibrariesPanel {
       EditLibraryDialog editLibDialog = new EditLibraryDialog("Edit Library", myProvider, myProject, lib);
       editLibDialog.show();
       if (editLibDialog.isOK()) {
-        myLibTableModel.updateLibrary(libName, editLibDialog.getLibName(), editLibDialog.getFiles());
+        myLibTableModel.updateLibrary(libName, editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
       }
     }
   }

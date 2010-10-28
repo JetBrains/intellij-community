@@ -51,27 +51,7 @@ public class UpdateCopyrightFactory
         logger.debug("file=" + file);
         logger.debug("type=" + type.getName());
 
-        if (type.equals(StdFileTypes.JAVA))
-        {
-            return new UpdateJavaFileCopyright(project, module, file, options);
-        }
-        else if (type.equals(StdFileTypes.XML))
-        {
-            return new UpdateXmlFileCopyright(project, module, file, options);
-        }
-        else if (type.equals(StdFileTypes.HTML))
-        {
-            return new UpdateXmlFileCopyright(project, module, file, options);
-        }
-        else if (type.equals(StdFileTypes.JSP))
-        {
-            return new UpdateJspFileCopyright(project, module, file, options);
-        }
-        else if (type.equals(StdFileTypes.JSPX))
-        {
-            return new UpdateJspxFileCopyright(project, module, file, options);
-        }
-        else if (type.equals(StdFileTypes.PROPERTIES))
+        if (type.equals(StdFileTypes.PROPERTIES))
         {
             return new UpdatePropertiesFileCopyright(project, module, file, options);
         }

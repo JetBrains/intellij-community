@@ -49,7 +49,7 @@ public interface CodeStyleSettingsCustomizable {
   String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
   String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
   String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("wrapping.assignment.variables.groups");
+  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
   String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
   String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
