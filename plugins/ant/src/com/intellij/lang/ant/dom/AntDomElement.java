@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -89,6 +90,9 @@ public abstract class AntDomElement implements DomElement {
 
   public final Iterator<AntDomElement> getAntChildrenIterator() {
     final List<DomElement> children = DomUtil.getDefinedChildren(this, true, false);
+    if (children.size() == 0) {
+      return Collections.<AntDomElement>emptyList().iterator();
+    }
     final Iterator<DomElement> it = children.iterator();
     return new Iterator<AntDomElement>() {
       private DomElement myUnprocessedElement;

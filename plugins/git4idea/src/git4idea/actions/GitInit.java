@@ -87,36 +87,40 @@ public class GitInit extends DumbAwareAction {
     if (rc != 0) {
       return;
     }
+    final String path = root.equals(baseDir) ? "" : root.getPath();
     GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        root.refresh(false, false);
-        final String path = root.equals(baseDir) ? "" : root.getPath();
-        ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
-        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
-        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
-        for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-          final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-          if (m.getDirectory().equals(path)) {
-            if (m.getVcs().length() == 0) {
-              vcsDirectoryMappings.set(i, mapping);
-              mapping = null;
-              break;
-            }
-            else if (m.getVcs().equals(mapping.getVcs())) {
-              mapping = null;
-              break;
-            }
-          }
-        }
-        if (mapping != null) {
-          vcsDirectoryMappings.add(mapping);
-        }
-        vcs.setDirectoryMappings(vcsDirectoryMappings);
-        vcs.updateActiveVcss();
-        GitUtil.refreshFiles(project, Collections.singleton(root));
+        refreshAndConfigureVcsMappings(project, root, path);
       }
     });
+  }
+
+  public static void refreshAndConfigureVcsMappings(final Project project, final VirtualFile root, final String path) {
+    root.refresh(false, false);
+    ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
+    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
+    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
+    for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
+      final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
+      if (m.getDirectory().equals(path)) {
+        if (m.getVcs().length() == 0) {
+          vcsDirectoryMappings.set(i, mapping);
+          mapping = null;
+          break;
+        }
+        else if (m.getVcs().equals(mapping.getVcs())) {
+          mapping = null;
+          break;
+        }
+      }
+    }
+    if (mapping != null) {
+      vcsDirectoryMappings.add(mapping);
+    }
+    vcs.setDirectoryMappings(vcsDirectoryMappings);
+    vcs.updateActiveVcss();
+    GitUtil.refreshFiles(project, Collections.singleton(root));
   }
 
   /**

@@ -60,12 +60,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     }
   };
 
-  private final PsiAnchor myClass;
+  private final Object myClass;
   private final String myQualifiedName;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = PsiAnchor.create(psiClass);
+    myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
@@ -74,12 +74,21 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @NotNull
   @Override
   public PsiClass getObject() {
-    return (PsiClass)myClass.retrieve();
+    if (myClass instanceof PsiAnchor) {
+      final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
+      assert retrieve != null : myQualifiedName;
+      return retrieve;
+    }
+    return (PsiClass)myClass;
   }
 
   @Override
   public boolean isValid() {
-    return myClass.retrieve() != null;
+    if (myClass instanceof PsiClass) {
+      return ((PsiClass)myClass).isValid();
+    }
+
+    return ((PsiAnchor)myClass).retrieve() != null;
   }
 
   @Override

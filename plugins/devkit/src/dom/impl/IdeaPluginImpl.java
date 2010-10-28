@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /*
@@ -24,10 +25,13 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 */
 public abstract class IdeaPluginImpl implements IdeaPlugin {
   public String getPluginId() {
-    final String id = getId().getStringValue();
-    if (id != null) {
-      return id;
+    final XmlTag tag = getXmlTag();
+    final XmlTag idTag = tag.findFirstSubTag("id");
+    if (idTag != null) {
+      return idTag.getValue().getTrimmedText();
     }
-    return getName().getStringValue();
+
+    final XmlTag name = tag.findFirstSubTag("name");
+    return name != null ? name.getValue().getTrimmedText() : null;
   }
 }

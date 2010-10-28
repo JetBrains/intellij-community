@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -2129,8 +2130,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(Arrays.asList("one", "two"), myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
 
-    m.delete(this);
-    deleteProject(m);
+    final VirtualFile finalM = m;
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        finalM.delete(this);
+        deleteProject(finalM);
+      }
+    }.execute().throwException();
+
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one");
 
     m = createModulePom("m",

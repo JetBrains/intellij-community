@@ -15,403 +15,119 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.editor.TextChange;
-import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.actions.MergeOperations;
+import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.fragments.Fragment;
+import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
+import com.intellij.openapi.diff.impl.fragments.LineFragment;
+import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
+import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
- * Allows to calculate difference between two set of changes applied to the same document.
+ * Allows to calculate difference between two versions of document (before and after code style setting value change).
  * <p/>
- * <b>Note:</b> current class doesn't provide precise diff for changes sets at the moment, i.e. there is a number of use-cases where
- * it's processing should be revised. However, it works fine at its main usage scenario (at the moment) -
- * <code>'code style preview'</code> panel. Feel free to revise it as necessary and add corresponding unit tests to
- * <code>'ChangesDiffCalculatorTest'</code> class.
- * <p/>
- * Thread-safe.
+ * Not thread-safe.
  *
  * @author Denis Zhdanov
  * @since 10/14/10 2:44 PM
  */
 public class ChangesDiffCalculator {
 
-  /**
-   * Allows to calculate diff between the given document changes assuming the following:
-   * <pre>
-   * <ul>
-   *   <li>
-   *      <code>'before changes'</code> contains information about changes after modifying document at past at particular manner;
-   *   </li>
-   *   <li>
-   *      <code>'after changes'</code> contains information about changes after modifying active document at particular manner;
-   *   </li>
-   *   <li>
-   *      every {@link TextChange document change} defines target document offset and initial document text located there;
-   *   </li>
-   * </ul>
-   * </pre>
-   *
-   * @param beforeChanges   contains information about changes after modifying document at past at particular manner.
-   *                        Is assumed to be sorted by change start offset in ascending order
-   * @param beforeText      document text after applying given <code>'before changes'</code>
-   * @param currentChanges  contains information about changes after modifying active document at particular manner.
-   *                        Is assumed to be sorted by change start offset in ascending order
-   * @param currentText     document text after applying given <code>'current changes'</code>
-   * @return                information about diff ranges between the given changes against the <b>current</b> document
-   */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  public Collection<TextRange> calculateDiff(@NotNull List<? extends TextChange> beforeChanges, @NotNull CharSequence beforeText,
-                                             @NotNull List<? extends TextChange> currentChanges, @NotNull CharSequence currentText)
-  {
-    List<TextRange> result = new ArrayList<TextRange>();
-    Context context = new Context(beforeChanges, beforeText, currentChanges, currentText);
+  private final BaseMarkup myOldMarkup = new BaseMarkup(FragmentSide.SIDE1);
+  private final ChangesCollector myNewMarkup = new ChangesCollector();
+  private final TextCompareProcessor myCompareProcessor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
 
-    while (context.beforeChange != null && context.currentChange != null) {
-      if (tryMatchScatteredChanges(context)) {
-        continue;
-      }
+  public Collection<TextRange> calculateDiff(@NotNull final Document beforeDocument, @NotNull final Document currentDocument) {
+    myNewMarkup.ranges.clear();
+    myOldMarkup.document = beforeDocument;
+    myNewMarkup.document = currentDocument;
 
-      // 'Before' change starts before 'current' change
-      if (context.beforeOriginalStart < context.currentOriginalStart) {
-        handleBeforeChangeBeforeCurrentChange(context, result);
-      }
-      else if (context.beforeOriginalStart > context.currentOriginalStart) {
-        handleBeforeChangeAfterCurrentChange(context, result);
-      }
-      else {
-        handleChangesSharingStartOffset(context, result);
-      }
+    List<LineFragment> lineFragments = myCompareProcessor.process(beforeDocument.getText(), currentDocument.getText());
+
+    for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext();) {
+      LineFragment fragment = iterator.next();
+      final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myOldMarkup, myNewMarkup, !iterator.hasNext());
+      fragment.highlight(fragmentHighlighter);
     }
 
-    registerTailChanges(context, result);
-
-    return result;
+    return new ArrayList<TextRange>(myNewMarkup.ranges);
   }
 
   /**
-   * Manages situation when {@link Context#beforeChange 'before' change} targets original document offset that is located
-   * strictly before original document offset targeted by {@link Context#currentChange 'current' change}.
-   *
-   * @param context   processing context
-   * @param storage   collection to store processing diff results
+   * Base {@link DiffMarkup} implementation that does nothing.
    */
-  private static void handleBeforeChangeBeforeCurrentChange(Context context, List<TextRange> storage) {
-    if (context.beforeOriginalEnd < context.currentOriginalStart) {
-      storage.add(new TextRange(context.beforeCurrentStart, context.beforeCurrentStart + context.beforeChange.getText().length()));
-    }
-    else {
-      storage.add(new TextRange(context.beforeCurrentStart, context.currentChange.getEnd()));
-      context.beforeShiftToCurrent -= getDiff(context.currentChange);
-      context.proceedToNextChange(Context.ChangeType.CURRENT);
-    }
+  @SuppressWarnings({"ConstantConditions"})
+  private static class BaseMarkup extends DiffMarkup {
 
-    context.beforeShiftToCurrent += getDiff(context.beforeChange);
-    context.proceedToNextChange(Context.ChangeType.BEFORE);
-  }
+    public Document document;
+    private final FragmentSide mySide;
 
-  /**
-   * Manages situation when {@link Context#beforeChange 'before' change} targets original document offset that is located
-   * strictly after original document offset targeted by {@link Context#currentChange 'current' change}.
-   *
-   * @param context   processing context
-   * @param storage   collection to store processing diff results
-   */
-  private static void handleBeforeChangeAfterCurrentChange(Context context, List<TextRange> storage) {
-    storage.add(new TextRange(context.currentChange.getStart(), context.currentChange.getEnd()));
-    while (context.beforeChange != null && context.beforeOriginalEnd <= context.currentOriginalEnd) {
-      context.proceedToNextChange(Context.ChangeType.BEFORE);
-    }
-    context.beforeShiftToCurrent -= getDiff(context.currentChange);
-    context.proceedToNextChange(Context.ChangeType.CURRENT);
-  }
-
-  /**
-   * Manages situation when {@link Context#beforeChange 'before' change} and {@link Context#currentChange 'current'} changes target
-   * the same original document offset.
-   *
-   * @param context   processing context
-   * @param storage   collection to store processing diff results
-   */
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
-  private static void handleChangesSharingStartOffset(Context context, List<TextRange> storage) {
-    int lengthDiff = getLength(context.currentChange) - getLength(context.beforeChange);
-    int originTextDiff = context.beforeChange.getText().length() - context.currentChange.getText().length();
-
-    int oldSize = storage.size();
-
-    if (lengthDiff > 0) {
-      // There is a possible case that two changes differ in a middle (e.g. 'abc2def' vc 'abc333def'). Hence, we need to find
-      // the right offset to use.
-      int diffLength = (context.currentChange.getEnd() + originTextDiff) - (context.beforeChange.getEnd() + context.beforeShiftToCurrent);
-      int commonPrefixLength = StringUtil.commonPrefixLength(
-        context.beforeText.subSequence(context.beforeChange.getStart(), context.beforeChange.getEnd()),
-        context.currentText.subSequence(context.currentChange.getStart(), context.currentChange.getStart() + getLength(context.beforeChange))
-      );
-
-      int offsetToUse = context.beforeChange.getEnd() + context.beforeShiftToCurrent;
-      offsetToUse = Math.min(offsetToUse, context.currentChange.getStart() + commonPrefixLength);
-      storage.add(new TextRange(offsetToUse, offsetToUse + diffLength));
-    }
-    else if (lengthDiff < 0) {
-      // There is a possible case that two changes differ in a middle (e.g. 'abc222def' vc 'abc3def'). Hence, we need to find
-      // the right offset to use.
-      int offsetToUse = context.currentChange.getEnd();
-      for (
-        int beforeOffset = context.beforeChange.getStart(), currentOffset = context.currentChange.getStart();
-        currentOffset < context.currentChange.getEnd(); beforeOffset++, currentOffset++) {
-        if (context.beforeText.charAt(beforeOffset) != context.currentText.charAt(currentOffset)) {
-          offsetToUse = currentOffset;
-          break;
-        }
-      }
-      storage.add(new TextRange(offsetToUse, offsetToUse));
-    }
-    else if (context.beforeChange.getText().length() != context.currentChange.getText().length()) {
-      if (StringUtil.equals(context.textForChangeRange(Context.ChangeType.BEFORE), context.textForChangeRange(Context.ChangeType.CURRENT)))
-      {
-        if (originTextDiff < 0) {
-          storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd()));
-        }
-        else {
-          storage.add(new TextRange(context.currentChange.getEnd(), context.currentChange.getEnd() + originTextDiff));
-        }
-      }
+    BaseMarkup(FragmentSide side) {
+      super(null);
+      mySide = side;
     }
 
-    if (storage.size() != oldSize) {
-      context.beforeShiftToCurrent += getDiff(context.beforeChange) - getDiff(context.currentChange);
+    @Override
+    public FragmentSide getSide() {
+      return mySide;
     }
 
-    context.proceedToNextChange(Context.ChangeType.BEFORE);
-    context.proceedToNextChange(Context.ChangeType.CURRENT);
-  }
-
-  private static boolean tryMatchScatteredChanges(Context context) {
-    TextChange currentChange = context.currentChange;
-    TextChange beforeChange = context.beforeChange;
-    CharSequence beforeTail = context.beforeText.subSequence(beforeChange.getStart(), context.beforeText.length());
-    CharSequence currentTail = context.currentText.subSequence(currentChange.getStart(), context.currentText.length());
-    int matchedSymbolsNumber = StringUtil.commonPrefixLength(beforeTail, currentTail);
-    if (matchedSymbolsNumber <= 0) {
-      return false;
+    @Override
+    public DiffContent getContent() {
+      return null;
     }
 
-    int beforeEnd = beforeChange.getStart() + matchedSymbolsNumber;
-    int currentEnd = currentChange.getStart() + matchedSymbolsNumber;
-    Context contextCopy = new Context();
-    context.copyTo(contextCopy);
-
-    int offset = -1;
-    StringBuilder beforeOriginalText = new StringBuilder(beforeChange.getText());
-    int matchedChangesNumber = 0;
-    int beforeUnchangedTailSymbolsNumber = 0;
-    int beforeShiftToOriginalChange = 0;
-    while (context.beforeChange != null && context.beforeChange.getStart() < beforeEnd) {
-      if (offset >= 0) {
-        CharSequence text = context.beforeText.subSequence(offset, context.beforeChange.getStart());
-        beforeOriginalText.append(text);
-        beforeOriginalText.append(text);
-      }
-      offset = context.beforeChange.getEnd();
-      if (context.beforeChange.getEnd() <= beforeEnd) {
-        beforeUnchangedTailSymbolsNumber = beforeEnd - context.beforeChange.getEnd();
-        beforeShiftToOriginalChange += getDiff(context.beforeChange);
-        context.proceedToNextChange(Context.ChangeType.BEFORE);
-        matchedChangesNumber++;
-      }
-      else {
-        beforeShiftToOriginalChange += context.beforeChange.getStart() - beforeEnd;
-        context.beforeShiftToOriginal += context.beforeChange.getStart() - beforeEnd;
-        beforeOriginalText.append(context.beforeChange.getText());
-        beforeUnchangedTailSymbolsNumber = 0;
-        break;
-      }
-    }
-    if (offset >= 0 && offset < beforeEnd) {
-      beforeOriginalText.append(context.beforeText.subSequence(offset, beforeEnd));
+    @Override
+    public EditorEx getEditor() {
+      return null;
     }
 
-    matchedChangesNumber = matchedChangesNumber < 2 ? 0 : matchedChangesNumber;
-    offset = -1;
-    StringBuilder currentOriginalText = new StringBuilder(currentChange.getText());
-    int currentShiftToOriginalChange = 0;
-    while (context.currentChange != null && context.currentChange.getStart() < currentEnd) {
-      CharSequence changeText = context.currentChange.getText();
-      if (offset >= 0) {
-        CharSequence text = context.currentText.subSequence(offset, context.currentChange.getStart());
-        currentOriginalText.append(text);
-        if (context.currentChange.getEnd() < currentEnd) {
-          currentOriginalText.append(changeText);
-        }
-      }
-      offset = context.currentChange.getEnd();
-      if (context.currentChange.getEnd() <= currentEnd) {
-        currentShiftToOriginalChange += getDiff(context.currentChange);
-        context.proceedToNextChange(Context.ChangeType.CURRENT);
-        matchedChangesNumber++;
-      }
-      else {
-        context.currentShiftToOriginal += context.currentChange.getStart() - currentEnd + beforeUnchangedTailSymbolsNumber;
-        currentShiftToOriginalChange += context.currentChange.getStart() - currentEnd + beforeUnchangedTailSymbolsNumber;
-        context.currentChange = new TextChangeImpl(
-          context.currentChange.getText(), currentEnd - beforeUnchangedTailSymbolsNumber, context.currentChange.getEnd()
-        );
-        break;
-      }
-    }
-    if (offset >= 0 && offset < currentEnd) {
-      currentOriginalText.append(context.currentText.subSequence(offset, currentEnd));
+    @Override
+    public Document getDocument() {
+      return document;
     }
 
-    context.beforeShiftToCurrent += currentShiftToOriginalChange - beforeShiftToOriginalChange;
-
-    if (matchedChangesNumber < 2 || !StringUtil.equals(beforeOriginalText, currentOriginalText)) {
-      contextCopy.copyTo(context);
-      return false;
+    @Override
+    public void addLineMarker(int line, TextAttributesKey type) {
     }
 
-    context.update();
-    return true;
-  }
-
-  /**
-   * There is a possible case that we process all {@link Context#beforeChanges 'before'} or {@link Context#currentChanges 'current'}
-   * changes but not all changes of another type are processed yet. Hence, we need to store them too. This method handles that.
-   *
-   * @param context   processing context
-   * @param storage   collection to store processing diff results
-   */
-  private static void registerTailChanges(Context context, List<TextRange> storage) {
-    if (context.beforeChange != null) {
-      for (; context.beforeIndex < context.beforeChanges.size(); context.beforeIndex++) {
-        TextChange change = context.beforeChanges.get(context.beforeIndex);
-        int offset = change.getStart() + context.beforeShiftToCurrent;
-        context.beforeShiftToCurrent += getDiff(change);
-        storage.add(new TextRange(offset, offset + change.getText().length()));
-      }
+    @Override
+    public void addAction(MergeOperations.Operation operation, int lineStartOffset) {
     }
 
-    if (context.currentChange != null) {
-      for (; context.currentIndex < context.currentChanges.size(); context.currentIndex++) {
-        TextChange change = context.currentChanges.get(context.currentIndex);
-        storage.add(new TextRange(change.getStart(), change.getEnd()));
-      }
+    @Override
+    public void highlightText(Fragment fragment, boolean drawBorder) {
     }
   }
 
-  private static int getDiff(TextChange change) {
-    return change.getText().length() - getLength(change);
-  }
+  private static class ChangesCollector extends BaseMarkup {
 
-  private static int getLength(TextChange change) {
-    return change.getEnd() - change.getStart();
-  }
+    private static final Set<TextDiffTypeEnum> INTERESTED_DIFF_TYPES
+      = EnumSet.of(TextDiffTypeEnum.INSERT, TextDiffTypeEnum.DELETED, TextDiffTypeEnum.CHANGED);
 
-  /**
-   * Utility class to hold stack-local processing state
-   */
-  private static class Context {
+    public final List<TextRange> ranges = new ArrayList<TextRange>();
 
-    enum ChangeType { BEFORE, CURRENT }
-
-    private List<TextChange> beforeChanges = new ArrayList<TextChange>();
-    private List<TextChange> currentChanges = new ArrayList<TextChange>();
-    private CharSequence beforeText;
-    private CharSequence currentText;
-
-    /** Shift to apply to 'before' change start offset in order to get offset within original document. */
-    int beforeShiftToOriginal;
-    /** Shift to apply to 'before' change start offset in order to get offset within current document. */
-    int beforeShiftToCurrent = 0;
-    /** Shift to apply to 'current' change start offset in order to get offset within original document. */
-    int currentShiftToOriginal = 0;
-
-    int beforeIndex = 0;
-    TextChange beforeChange;
-    int currentIndex = 0;
-    TextChange currentChange;
-
-    int beforeOriginalStart;
-    int beforeCurrentStart;
-    int beforeOriginalEnd;
-    int currentOriginalStart;
-    int currentOriginalEnd;
-
-    Context() {
+    ChangesCollector() {
+      super(FragmentSide.SIDE2);
     }
 
-    Context(List<? extends TextChange> beforeChanges, CharSequence beforeText, List<? extends TextChange> currentChanges,
-            CharSequence currentText)
-    {
-      this.beforeChanges.addAll(beforeChanges);
-      this.beforeText = beforeText;
-      this.currentChanges.addAll(currentChanges);
-      this.currentText = currentText;
-      beforeChange = beforeChanges.isEmpty() ? null : beforeChanges.get(0);
-      currentChange = currentChanges.isEmpty() ? null : currentChanges.get(0);
-      update();
-    }
-
-    /**
-     * Updates current context state.
-     * <p/>
-     * Is assumed to be called on {@link #beforeChange} or {@link #currentChange} change.
-     */
-    void update() {
-      if (beforeChange != null) {
-        beforeOriginalStart = beforeChange.getStart() + beforeShiftToOriginal;
-        beforeCurrentStart = beforeChange.getStart() + beforeShiftToCurrent;
-        beforeOriginalEnd = beforeOriginalStart + beforeChange.getText().length();
-      }
-
-      if (currentChange != null) {
-        currentOriginalStart = currentChange.getStart() + currentShiftToOriginal;
-        currentOriginalEnd = currentOriginalStart + currentChange.getText().length();
+    @Override
+    public void highlightText(Fragment fragment, boolean drawBorder) {
+      TextRange currentRange = fragment.getRange(FragmentSide.SIDE2);
+      if (INTERESTED_DIFF_TYPES.contains(fragment.getType())) {
+        ranges.add(currentRange);
       }
     }
 
-    void proceedToNextChange(ChangeType changeType) {
-      if (changeType == ChangeType.BEFORE) {
-        beforeShiftToOriginal += getDiff(beforeChange);
-        beforeChange = ++beforeIndex < beforeChanges.size() ? beforeChanges.get(beforeIndex) : null;
-      }
-      else {
-        currentShiftToOriginal += getDiff(currentChange);
-        currentChange = ++currentIndex < currentChanges.size() ? currentChanges.get(currentIndex) : null;
-      }
-      update();
-    }
-
-    CharSequence textForChangeRange(ChangeType changeType) {
-      CharSequence text = changeType == ChangeType.BEFORE ? beforeText : currentText;
-      TextChange change = changeType == ChangeType.BEFORE ? beforeChange : currentChange;
-      return text.subSequence(change.getStart(), change.getEnd());
-    }
-
-    void copyTo(Context context) {
-      context.beforeChanges.clear();
-      context.beforeChanges.addAll(beforeChanges);
-      context.currentChanges.clear();
-      context.currentChanges.addAll(currentChanges);
-      context.beforeText = beforeText;
-      context.currentText = currentText;
-      context.beforeShiftToOriginal = beforeShiftToOriginal;
-      context.beforeShiftToCurrent = beforeShiftToCurrent;
-      context.currentShiftToOriginal = currentShiftToOriginal;
-      context.beforeIndex = beforeIndex;
-      context.beforeChange = beforeChange;
-      context.currentIndex = currentIndex;
-      context.currentChange = currentChange;
-      context.beforeOriginalStart = beforeOriginalStart;
-      context.beforeCurrentStart = beforeCurrentStart;
-      context.beforeOriginalEnd = beforeOriginalEnd;
-      context.currentOriginalStart = currentOriginalStart;
-      context.currentOriginalEnd = currentOriginalEnd;
-    }
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
@@ -69,6 +70,12 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   @NotNull
   public Module getModule() {
     return myModule;
+  }
+
+  @NotNull
+  @Override
+  public ModuleRootModel getRootModel() {
+    return myModuleConfigurationState.getModulesProvider().getRootModel(myModule);
   }
 
   @NotNull

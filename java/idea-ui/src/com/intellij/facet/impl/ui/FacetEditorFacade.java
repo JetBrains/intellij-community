@@ -16,6 +16,7 @@
 
 package com.intellij.facet.impl.ui;
 
+import com.intellij.facet.Facet;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetInfo;
@@ -37,7 +38,7 @@ public interface FacetEditorFacade {
   @Nullable
   ModuleType getSelectedModuleType();
 
-  void createFacet(final FacetInfo parent, final FacetType type, final String name);
+  Facet createFacet(final FacetInfo parent, final FacetType type);
 
   Collection<FacetInfo> getFacetsByType(FacetType<?,?> type);
 

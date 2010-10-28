@@ -23,12 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +32,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 /**
  * @author Anton Katilin
@@ -49,7 +42,7 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  private Application myApp;
+  private final Application myApp;
   private IdeFrame myFrame;
 
   public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
@@ -107,8 +100,7 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
       GraphicsConfiguration targetGraphicsConfiguration = null;
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       GraphicsDevice[] devices = env.getScreenDevices();
-      for (int i = 0; i < devices.length; i++) {
-        GraphicsDevice device = devices[i];
+      for (GraphicsDevice device : devices) {
         GraphicsConfiguration graphicsConfiguration = device.getDefaultConfiguration();
         Rectangle r = graphicsConfiguration.getBounds();
         if (r.x <= _x && _x <= r.x + r.width && r.y <= _y && _y <= r.y + r.height) {

@@ -34,8 +34,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -627,37 +629,42 @@ public class XmlUtil {
       return true;
     }
 
+    private static final Key<Trinity<XmlFile, String, CachedValue<PsiElement[]>>> COPY_CACHE = Key.create("XInclude.CopyCache");
+
     private static CachedValueProvider.Result<PsiElement[]> computeInclusion(final XmlTag xincludeTag) {
-      List<Object> deps = new ArrayList<Object>();
-      deps.add(xincludeTag.getContainingFile());
+      final PsiFile containingFile = xincludeTag.getContainingFile();
 
-      final XmlFile xmlFile = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
-
-      PsiElement[] result = null;
-      if (xmlFile != null) {
-        deps.add(xmlFile);
-        final XmlDocument document = xmlFile.getDocument();
-        if (document != null) {
-          XmlTag rootTag = document.getRootTag();
-          if (rootTag != null) {
-            final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
-            result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
-              public PsiElement fun(final XmlTag xmlTag) {
+      final XmlFile included = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
+      final XmlDocument document = included != null ? included.getDocument() : null;
+      final XmlTag rootTag = document != null ? document.getRootTag() : null;
+      if (rootTag != null) {
+        final String xpointer = xincludeTag.getAttributeValue("xpointer", XINCLUDE_URI);
+        Trinity<XmlFile, String, CachedValue<PsiElement[]>> cached = xincludeTag.getUserData(COPY_CACHE);
+        if (cached == null || !cached.first.equals(included) || !Comparing.equal(cached.second, xpointer)) {
+          cached = Trinity.create(included, xpointer, CachedValuesManager.getManager(xincludeTag.getProject()).createCachedValue(new CachedValueProvider<PsiElement[]>() {
+            @Override
+            public Result<PsiElement[]> compute() {
+              final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
+              PsiElement[] result = new PsiElement[includeTag.length];
+              for (int i = 0; i < includeTag.length; i++) {
+                XmlTag xmlTag = includeTag[i];
                 final PsiElement psiElement = PsiUtilBase.copyElementPreservingOriginalLinks(xmlTag, XmlElement.ORIGINAL_ELEMENT);
                 psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
                 psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xmlTag);
-                return psiElement;
+                result[i] = psiElement;
               }
-            }, new PsiElement[includeTag.length]);
-          }
+              return Result.create(result, included);
+            }
+          }, false));
+          xincludeTag.putUserData(COPY_CACHE, cached);
         }
+        return new CachedValueProvider.Result<PsiElement[]>(cached.third.getValue(), containingFile);
       }
 
-      return new CachedValueProvider.Result<PsiElement[]>(result, deps.toArray());
+      return new CachedValueProvider.Result<PsiElement[]>(null, containingFile);
     }
 
-    private static XmlTag[] extractXpointer(XmlTag rootTag, final XmlTag xincludeTag) {
-      final String xpointer = xincludeTag.getAttributeValue("xpointer", XINCLUDE_URI);
+    private static XmlTag[] extractXpointer(XmlTag rootTag, @Nullable final String xpointer) {
 
       if (xpointer != null) {
         Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(xpointer);

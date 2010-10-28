@@ -638,8 +638,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       };
 
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, indicator);
-      tool.inspectionFinished(session,holder);
+      LocalInspectionToolSession injSession = new LocalInspectionToolSession(injectedPsi, 0, injectedPsi.getTextLength());
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, indicator);
+      tool.inspectionFinished(injSession,holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (problems != null && !problems.isEmpty()) {
         InspectionResult res = new InspectionResult(tool, problems);

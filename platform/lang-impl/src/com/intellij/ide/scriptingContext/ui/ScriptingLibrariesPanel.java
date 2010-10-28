@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
+import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class ScriptingLibrariesPanel {
     EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
     }
   }
 
@@ -123,13 +124,12 @@ public class ScriptingLibrariesPanel {
 
   private void editLibrary(String libName) {
     if (libName == null) return;
-    Library lib = myLibTableModel.getLibrary(libName);
+    ScriptingLibraryTable.LibraryModel lib = myLibTableModel.getLibrary(libName);
     if (lib != null) {
       EditLibraryDialog editLibDialog = new EditLibraryDialog("Edit Library", myProvider, myProject, lib);
       editLibDialog.show();
       if (editLibDialog.isOK()) {
-        removeLibrary(lib.getName());
-        myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getFiles());
+        myLibTableModel.updateLibrary(libName, editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
       }
     }
   }

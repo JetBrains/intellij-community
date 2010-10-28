@@ -32,7 +32,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/ddmlib.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -43,7 +43,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/sdklib.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -54,7 +54,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/androidprefs.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -40,23 +40,10 @@ public class SrcRepositoryUseTest extends PsiTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-
-        @Override
-        public void run() {
-          try {
-            LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
-            String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
-            PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
   public void testGetClasses(){

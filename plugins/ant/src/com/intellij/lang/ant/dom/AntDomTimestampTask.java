@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.SubTagList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,9 +33,6 @@ public abstract class AntDomTimestampTask extends AntDomPropertyDefiningElement 
   
   @Attribute("prefix")
   public abstract GenericAttributeValue<String> getPrefix();
-
-  @SubTagList("format")
-  public abstract List<AntDomTimestampTaskFormat> getFormats();
 
   protected List<String> getImplicitPropertyNames() {
     String prefix = getPrefix().getStringValue();

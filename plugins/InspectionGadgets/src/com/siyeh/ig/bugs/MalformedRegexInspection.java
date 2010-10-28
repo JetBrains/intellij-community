@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ import java.util.regex.PatternSyntaxException;
 
 public class MalformedRegexInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.regular.expression.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         if (infos.length == 0) {
@@ -51,10 +53,12 @@ public class MalformedRegexInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MalformedRegexVisitor();
     }
@@ -64,26 +68,25 @@ public class MalformedRegexInspection extends BaseInspection {
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiExpressionList argList = expression.getArgumentList();
-            if(argList == null){
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if(argumentList == null){
                 return;
             }
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0){
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if(arguments.length == 0){
                 return;
             }
-            final PsiExpression regexArg = args[0];
-            if(!TypeUtils.expressionHasType("java.lang.String", regexArg)){
+            final PsiExpression argument = arguments[0];
+            if(!TypeUtils.expressionHasType(argument, "java.lang.String")){
                 return;
             }
-            if(!PsiUtil.isConstantExpression(regexArg)){
+            if(!PsiUtil.isConstantExpression(argument)){
                 return;
             }
-            final PsiType regexType = regexArg.getType();
-            final String value =
-                    (String) ConstantExpressionUtil.computeCastTo(regexArg,
-                            regexType);
-            if(value == null){
+            final PsiType regexType = argument.getType();
+            final String value = (String)
+                    ConstantExpressionUtil.computeCastTo(argument, regexType);
+            if (value == null){
                 return;
             }
             if(!MethodCallUtils.isCallToRegexMethod(expression)){
@@ -93,9 +96,9 @@ public class MalformedRegexInspection extends BaseInspection {
             try{
                 Pattern.compile(value);
             } catch(PatternSyntaxException e){
-                registerError(regexArg, e.getDescription());
+                registerError(argument, e.getDescription());
             } catch(NullPointerException e){
-                registerError(regexArg); // due to a bug in the sun regex code
+                registerError(argument); // due to a bug in the sun regex code
             }
         }
     }

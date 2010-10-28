@@ -21,7 +21,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
@@ -30,8 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.RegExp;
@@ -62,37 +61,32 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
-            final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
-            final File ioFile = new File(testFullPath);
-            try {
-              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)));
-              quickFixTestCase.configureFromFileText(ioFile.getName(), contents);
-              quickFixTestCase.bringRealEditorBack();
-              final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
-              final String text = pair.getFirst();
-              final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+        final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
+        final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
+        final File ioFile = new File(testFullPath);
+        try {
+          String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)));
+          quickFixTestCase.configureFromFileText(ioFile.getName(), contents);
+          quickFixTestCase.bringRealEditorBack();
+          final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
+          final String text = pair.getFirst();
+          final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
-              quickFixTestCase.beforeActionStarted(testName, contents);
+          quickFixTestCase.beforeActionStarted(testName, contents);
 
-              try {
-                myWrapper = quickFixTestCase;
-                quickFixTestCase.doAction(text, actionShouldBeAvailable, testFullPath, testName);
-              }
-              finally {
-                myWrapper = null;
-                quickFixTestCase.afterActionCompleted(testName, contents);
-              }
-            }
-            catch (Throwable e) {
-              e.printStackTrace();
-              fail(testName);
-            }
+          try {
+            myWrapper = quickFixTestCase;
+            quickFixTestCase.doAction(text, actionShouldBeAvailable, testFullPath, testName);
           }
-        });
+          finally {
+            myWrapper = null;
+            quickFixTestCase.afterActionCompleted(testName, contents);
+          }
+        }
+        catch (Throwable e) {
+          e.printStackTrace();
+          fail(testName);
+        }
       }
     }, "", "");
     System.out.print(testName + " ");

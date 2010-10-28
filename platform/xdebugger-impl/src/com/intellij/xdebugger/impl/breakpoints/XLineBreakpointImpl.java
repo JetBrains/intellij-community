@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -403,7 +404,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     @Override
     public boolean equals(Object obj) {
       return obj.getClass() == getClass()
-        && getXLineBreakpoint() == ((BreakpointGutterIconRenderer)obj).getXLineBreakpoint();
+             && getXLineBreakpoint() == ((BreakpointGutterIconRenderer)obj).getXLineBreakpoint()
+             && Comparing.equal(getIcon(), ((BreakpointGutterIconRenderer)obj).getIcon())
+        ;
     }
 
     @Override

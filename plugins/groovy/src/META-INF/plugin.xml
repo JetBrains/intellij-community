@@ -113,7 +113,8 @@
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
+    <renamePsiElementProcessor id="groovyPropertyRenameProcessor"
+                               implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedClassProcessor" order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor" order="first"/>
@@ -143,8 +144,8 @@
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringBackspaceHandlerDelegate"/>
 
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.GroovyTemplateContextType"/>
-
+    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType"/>
+    <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
 
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
     <lang.refactoringSupport language="Groovy"

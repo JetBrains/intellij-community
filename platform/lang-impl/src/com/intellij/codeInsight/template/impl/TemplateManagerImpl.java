@@ -78,12 +78,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         editor.putUserData(TEMPLATE_STATE_KEY, null);
       }
     };
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-      }
-    });
+    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
   public void setTemplateTesting(final boolean templateTesting) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.util.AndroidUtils;
@@ -47,7 +48,9 @@ import static org.jetbrains.android.util.AndroidUtils.ADB;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidSdk {
-  private static boolean myDdmLibInitialized = false;
+  private static volatile boolean myDdmLibInitialized = false;
+
+  private static final Object myDdmsLock = new Object();
 
   @NotNull
   public abstract String getLocation();
@@ -138,14 +141,24 @@ public abstract class AndroidSdk {
   }
 
   public void initializeDdmlib() {
-    String adbPath = getLocation() + File.separator + AndroidUtils.toolPath(ADB);
-    if (!myDdmLibInitialized) {
-      myDdmLibInitialized = true;
-      AndroidDebugBridge.init(true);
-      AndroidDebugBridge.createBridge(adbPath, true);
+    synchronized (myDdmsLock) {
+      String adbPath = getLocation() + File.separator + AndroidUtils.toolPath(ADB);
+      if (!myDdmLibInitialized) {
+        myDdmLibInitialized = true;
+        AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
+        AndroidDebugBridge.createBridge(adbPath, true);
+      }
+      else {
+        AndroidDebugBridge.createBridge(adbPath, false);
+      }
     }
-    else {
-      AndroidDebugBridge.createBridge(adbPath, false);
+  }
+
+  public static void terminateDdmlib() {
+    synchronized (myDdmsLock) {
+      AndroidDebugBridge.disconnectBridge();
+      AndroidDebugBridge.terminate();
+      myDdmLibInitialized = false;
     }
   }
 

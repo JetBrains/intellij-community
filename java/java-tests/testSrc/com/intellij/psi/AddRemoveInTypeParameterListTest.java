@@ -1,5 +1,6 @@
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -33,28 +34,33 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
   }
 
   public void testRemove() throws IncorrectOperationException {
-    PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type<A, B, C, D> {\n}");
+    final PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type<A, B, C, D> {\n}");
     PsiClass aClass = file.getClasses()[0];
     PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
     PsiReferenceParameterList list = ref.getParameterList();
-    PsiTypeElement[] parms = list.getTypeParameterElements();
+    final PsiTypeElement[] parms = list.getTypeParameterElements();
 
-    parms[0].delete();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        parms[0].delete();
 
-    assertEquals("class Test extends Type< B, C, D> {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+        assertEquals("class Test extends Type< B, C, D> {\n}", file.getText());
+        PsiTestUtil.checkFileStructure(file);
 
-    parms[2].delete();
+        parms[2].delete();
 
-    assertEquals("class Test extends Type< B,  D> {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+        assertEquals("class Test extends Type< B,  D> {\n}", file.getText());
+        PsiTestUtil.checkFileStructure(file);
 
-    parms[3].delete();
+        parms[3].delete();
 
-    assertEquals("class Test extends Type< B  > {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+        assertEquals("class Test extends Type< B  > {\n}", file.getText());
+        PsiTestUtil.checkFileStructure(file);
 
-    parms[1].delete();
+        parms[1].delete();
+      }
+    });
+
 
     assertEquals("class Test extends Type {\n}", file.getText());
     PsiTestUtil.checkFileStructure(file);

@@ -75,6 +75,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public static final int WAITING_TIME = 5;
 
+  private static final Pattern FAILURE = Pattern.compile("Failure\\s+\\[(.*)\\]");
+  private static final Pattern TYPED_ERROR = Pattern.compile("Error\\s+[Tt]ype\\s+(\\d+).*");
+  private static final String ERROR_PREFIX = "Error";
+
+  static final int NO_ERROR = -2;
+  private static final int UNTYPED_ERROR = -1;
+
   private final String myPackageName;
   private String myTargetPackageName;
   private final AndroidFacet myFacet;
@@ -195,14 +202,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return myFacet;
   }
 
-  public static class MyReceiver extends AndroidOutputReceiver {
-    static final Pattern FAILURE = Pattern.compile("Failure\\s+\\[(.*)\\]");
-    static final Pattern TYPED_ERROR = Pattern.compile("Error\\s+[Tt]ype\\s+(\\d+).*");
-    static final String ERROR_PREFIX = "Error";
-
-    static final int NO_ERROR = -2;
-    static final int UNTYPED_ERROR = -1;
-
+  public class MyReceiver extends AndroidOutputReceiver {
     private int errorType = NO_ERROR;
     private String failureMessage = null;
     private final StringBuilder output = new StringBuilder();
@@ -230,7 +230,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
 
     public boolean isCancelled() {
-      return false;
+      return myStopped;
     }
 
     public StringBuilder getOutput() {
@@ -493,7 +493,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           public void run() {
             if (!installed && isMyDevice(device) && device.isOnline()) {
               if (myTargetDeviceSerialNumbers.length == 0) {
-                myTargetDeviceSerialNumbers = new String[] {device.getSerialNumber()};
+                myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
               }
               getProcessHandler().notifyTextAvailable("Device is online.\n", STDOUT);
               installed = true;
@@ -522,22 +522,33 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean prepareAndStartApp(IDevice device) {
+    StringBuilder deviceMessageBuilder = new StringBuilder("Target device: ");
+    deviceMessageBuilder.append(device.getSerialNumber());
+    if (device.getAvdName() != null) {
+      deviceMessageBuilder.append(" (").append(device.getAvdName()).append(')');
+    }
+    deviceMessageBuilder.append('\n');
+    getProcessHandler().notifyTextAvailable(deviceMessageBuilder.toString(), STDOUT);
+    Module module = myFacet.getModule();
     try {
-      StringBuilder deviceMessageBuilder = new StringBuilder("Target device: ");
-      deviceMessageBuilder.append(device.getSerialNumber());
-      if (device.getAvdName() != null) {
-        deviceMessageBuilder.append(" (").append(device.getAvdName()).append(')');
-      }
-      deviceMessageBuilder.append('\n');
-      getProcessHandler().notifyTextAvailable(deviceMessageBuilder.toString(), STDOUT);
-      Module module = myFacet.getModule();
       if (!uploadAndInstall(device, myPackageName, module)) return false;
       if (!uploadAndInstallDependentModules(device)) return false;
       return myApplicationLauncher.launch(this, device);
     }
+    catch (TimeoutException e) {
+      LOG.info(e);
+      getProcessHandler().notifyTextAvailable("Error: Connection to ADB failed with a timeout\n", STDERR);
+      return false;
+    }
+    catch (AdbCommandRejectedException e) {
+      LOG.info(e);
+      getProcessHandler().notifyTextAvailable("Error: Adb refused a command\n", STDERR);
+      return false;
+    }
     catch (IOException e) {
       LOG.info(e);
-      getProcessHandler().notifyTextAvailable("IOException: " + e.getMessage(), STDERR);
+      String message = e.getMessage();
+      getProcessHandler().notifyTextAvailable("I/O Error" + (message != null ? ": " + message : "") + '\n', STDERR);
       return false;
     }
   }
@@ -576,29 +587,33 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return true;
   }
 
-  public void executeDeviceCommandAndWriteToConsole(IDevice device, String command, AndroidOutputReceiver receiver) throws IOException {
+  @SuppressWarnings({"DuplicateThrows"})
+  public void executeDeviceCommandAndWriteToConsole(IDevice device, String command, AndroidOutputReceiver receiver) throws IOException,
+                                                                                                                           TimeoutException,
+                                                                                                                           AdbCommandRejectedException,
+                                                                                                                           ShellCommandUnresponsiveException {
     getProcessHandler().notifyTextAvailable("DEVICE SHELL COMMAND: " + command + "\n", STDOUT);
     AndroidUtils.executeCommand(device, command, receiver, false);
   }
 
   private static boolean isSuccess(MyReceiver receiver) {
-    return receiver.errorType == MyReceiver.NO_ERROR && receiver.failureMessage == null;
+    return receiver.errorType == NO_ERROR && receiver.failureMessage == null;
   }
 
-  private boolean installApp(IDevice device, String remotePath, @NotNull String packageName) {
+  private boolean installApp(IDevice device, String remotePath, @NotNull String packageName) throws IOException {
     getProcessHandler().notifyTextAvailable("Installing " + packageName + ".\n", STDOUT);
     MyReceiver receiver = new MyReceiver();
     while (true) {
       if (myStopped) return false;
+      boolean deviceNotResponding = false;
       try {
         executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + "\"", receiver);
       }
-      catch (IOException e) {
+      catch (ShellCommandUnresponsiveException e) {
         LOG.info(e);
-        getProcessHandler().notifyTextAvailable(e.getMessage() + '\n', STDERR);
-        return false;
+        deviceNotResponding = true;
       }
-      if (receiver.errorType != 1 && receiver.errorType != MyReceiver.UNTYPED_ERROR) {
+      if (!deviceNotResponding && receiver.errorType != 1 && receiver.errorType != UNTYPED_ERROR) {
         break;
       }
       getProcessHandler().notifyTextAvailable("Device is not ready. Waiting for " + WAITING_TIME + " sec.\n", STDOUT);
@@ -616,26 +631,15 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myStopped) return false;
       receiver = new MyReceiver();
       getProcessHandler().notifyTextAvailable("Application is already installed. Reinstalling.\n", STDOUT);
-      try {
-        executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        getProcessHandler().notifyTextAvailable(e.getMessage() + '\n', STDERR);
-        return false;
-      }
+      executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
+      if (myStopped) return false;
     }
     if (!isSuccess(receiver)) {
       getProcessHandler().notifyTextAvailable("Can't reinstall application. Installing from scratch.\n", STDOUT);
-      try {
-        executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
-        executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + '\"', receiver);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        getProcessHandler().notifyTextAvailable(e.getMessage() + '\n', STDERR);
-        return false;
-      }
+      executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
+      if (myStopped) return false;
+      executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + '\"', receiver);
+      if (myStopped) return false;
     }
     boolean success = isSuccess(receiver);
     getProcessHandler().notifyTextAvailable(receiver.output.toString(), success ? STDOUT : STDERR);

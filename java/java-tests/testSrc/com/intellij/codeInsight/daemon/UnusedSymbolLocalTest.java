@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -23,12 +24,17 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
 
   public void testChangeInsideCodeBlock() throws Exception {
     doTest();
-    Document document = myEditor.getDocument();
+    final Document document = myEditor.getDocument();
     Collection<HighlightInfo> collection = filter(doHighlighting(), HighlightSeverity.WARNING);
     assertEquals(0, collection.size());
 
-    int offset = myEditor.getCaretModel().getOffset();
-    document.insertString(offset, "//");
+    final int offset = myEditor.getCaretModel().getOffset();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        document.insertString(offset, "//");
+      }
+    });
+
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
 
     Collection<HighlightInfo> infos = filter(doHighlighting(), HighlightSeverity.WARNING);

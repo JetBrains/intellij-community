@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,10 +51,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   /**
    * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
    */
-  @SuppressWarnings({"UnusedDeclaration"}) public static final String DEBUG_PROPERTY_NAME = "idea.editor.wrap.soft.debug";
+  public static final String DEBUG_PROPERTY_NAME = "idea.editor.wrap.soft.debug";
+
+  private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
 
   /** Upper boundary of time interval to check editor settings. */
   private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
+
+  private final OffsetToLogicalTask myOffsetToLogicalTask = new OffsetToLogicalTask();
+  private final VisualToLogicalTask myVisualToLogicalTask = new VisualToLogicalTask();
+  private final LogicalToVisualTask myLogicalToVisualTask = new LogicalToVisualTask();
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
@@ -115,8 +124,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return false;
     }
 
+    // We check that current thread is EDT because attempt to retrieve information about visible area width may fail otherwise
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread()) {
+      return false;
+    }
+
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    if (!ApplicationManager.getApplication().isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
+    if (!application.isUnitTestMode() && (visibleArea.width <= 0 || visibleArea.height <= 0)) {
       return false;
     }
 
@@ -268,7 +283,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
     myActive++;
     try {
-      return myDataMapper.visualToLogical(visual);
+      myVisualToLogicalTask.input = visual;
+      performMapping(myVisualToLogicalTask);
+      return myVisualToLogicalTask.output;
     } finally {
       myActive--;
     }
@@ -282,7 +299,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
     myActive++;
     try {
-      return myDataMapper.offsetToLogicalPosition(offset);
+      myOffsetToLogicalTask.input = offset;
+      performMapping(myOffsetToLogicalTask);
+      return myOffsetToLogicalTask.output;
     } finally {
       myActive--;
     }
@@ -296,7 +315,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     myActive++;
     try {
-      return myDataMapper.offsetToLogicalPosition(offset);
+      myOffsetToLogicalTask.input = offset;
+      performMapping(myOffsetToLogicalTask);
+      return myOffsetToLogicalTask.output;
     } finally {
       myActive--;
     }
@@ -310,7 +331,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     myActive++;
     try {
-      return myDataMapper.logicalToVisualPosition(logical, defaultVisual);
+      myLogicalToVisualTask.input = logical;
+      myLogicalToVisualTask.defaultOutput = defaultVisual;
+      performMapping(myLogicalToVisualTask);
+      return myLogicalToVisualTask.output;
     }
     finally {
       myActive--;
@@ -504,5 +528,104 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   public SoftWrapApplianceManager getApplianceManager() {
     return myApplianceManager;
+  }
+
+  /**
+   * We know that there are problems with incremental soft wraps cache update at the moment. Hence, we may implement full cache
+   * reconstruction when the problem is encountered in order to avoid customer annoyance.
+   * <p/>
+   * However, the problems still should be fixed, hence, we report them only if dedicated flag is set.
+   * <p/>
+   * Current method encapsulates the logic mentioned above.
+   *
+   * @param task    object that encapsulates data and entry point for document dimension mapping algorithm
+   */
+  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
+  private void performMapping(SoftWrapAwareMappingTask task) {
+    try {
+      task.performMapping(true);
+    } catch (Exception e) {
+      if (Boolean.getBoolean(DEBUG_PROPERTY_NAME)) {
+        LOG.error(String.format(
+          "Unexpected exception occurred during performing document dimension mapping '%s'. Current soft wraps cache: %n"
+          + "%s%nDocument:%n%s%nFold regions: %s",
+          task, myDataMapper, myEditor.getDocument().getText(), Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e);
+      }
+      myDataMapper.release();
+      myApplianceManager.release();
+      try {
+        task.performMapping(true);
+      }
+      catch (Exception e1) {
+        LOG.error(String.format(
+          "Can't perform document dimension mapping %s even with complete soft wraps cache re-parsing. Current soft wraps cache: %n"
+          + "%s. Document:%n%s%nFold regions: %s", task, myDataMapper, myEditor.getDocument().getText(),
+          Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e1
+        );
+        myEditor.getSettings().setUseSoftWraps(false);
+        task.performMapping(false);
+      }
+    }
+  }
+
+  /**
+   * Defines generic interface to encapsulate task of mapping one document dimension to another.
+   */
+  private interface SoftWrapAwareMappingTask {
+
+    /**
+     * Asks current task to perform the mapping.
+     * <p/>
+     * It's assumed that input data is already stored at the task object. Mapping result is assumed to be stored there as well
+     * for further retrieval for task in implementation-specific manner.
+     *
+     * @param softWrapAware             flag that indicates if soft wraps-aware mapping should be performed
+     * @throws IllegalStateException    in case of inability to perform the mapping
+     */
+    void performMapping(boolean softWrapAware) throws IllegalStateException;
+  }
+
+  private class OffsetToLogicalTask implements SoftWrapAwareMappingTask {
+
+    public int             input;
+    public LogicalPosition output;
+
+    @Override
+    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+      if (softWrapAware) {
+        output = myDataMapper.offsetToLogicalPosition(input);
+      }
+      else {
+        output = myEditor.offsetToLogicalPosition(input, false);
+      }
+    }
+  }
+
+  private class VisualToLogicalTask implements SoftWrapAwareMappingTask {
+
+    public VisualPosition  input;
+    public LogicalPosition output;
+
+    @Override
+    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+      if (softWrapAware) {
+        output = myDataMapper.visualToLogical(input);
+      }
+      else {
+        output = myEditor.visualToLogicalPosition(input, false);
+      }
+    }
+  }
+
+  private class LogicalToVisualTask implements SoftWrapAwareMappingTask {
+
+    public LogicalPosition input;
+    public VisualPosition  defaultOutput;
+    public VisualPosition  output;
+
+    @Override
+    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+      output = softWrapAware ? myDataMapper.logicalToVisualPosition(input, defaultOutput) : defaultOutput;
+    }
   }
 }

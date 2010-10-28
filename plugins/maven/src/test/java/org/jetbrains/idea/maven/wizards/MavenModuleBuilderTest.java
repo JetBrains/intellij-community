@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -282,8 +283,14 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     if (!hasMavenInstallation()) return;
 
     Module module = createModule("project");
-    VirtualFile dir = module.getModuleFile().getParent();
-    dir.createChildData(this, "pom.xml");
+    final VirtualFile dir = module.getModuleFile().getParent();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        dir.createChildData(this, "pom.xml");
+      }
+    }.execute().throwException();
+
 
     setModuleNameAndRoot("module", dir.getPath() + "/module");
 

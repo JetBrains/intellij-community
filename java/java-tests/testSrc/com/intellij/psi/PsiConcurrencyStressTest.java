@@ -29,23 +29,10 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-
-        @Override
-        public void run() {
-          try {
-            LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
-            String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
-            PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
   private PsiJavaFile myFile;
@@ -127,7 +114,11 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          psiMethods[random.nextInt(psiMethods.length)].delete();
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              psiMethods[random.nextInt(psiMethods.length)].delete();
+            }
+          });
         }
         break;
     }

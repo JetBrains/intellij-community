@@ -17,14 +17,13 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.ApplicationLoadListener;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeRepaintManager;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -53,9 +52,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -103,6 +105,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile boolean myDisposeInProgress = false;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
+  private static boolean ourDumpThreadsOnLongWriteActionWaiting = "true".equals(System.getProperty("dump.threads.on.long.write.action.waiting"));
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -201,6 +204,26 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
+
+      StartupUtil.addExternalInstanceListener(new Consumer<List<String>>() {
+        @Override
+        public void consume(final List<String> args) {
+          invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final Project project = CommandLineProcessor.processExternalCommandLine(args);
+              final IdeFrame frame;
+              if (project != null) {
+                frame = WindowManager.getInstance().getIdeFrame(project);
+              }
+              else {
+                frame = WindowManager.getInstance().getAllFrames() [0];
+              }
+              ((IdeFrameImpl)frame).requestFocus();
+            }
+          });
+        }
+      });
     }
   }
 
@@ -752,6 +775,25 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     ActivityTracker.getInstance().inc();
     fireBeforeWriteActionStart(action);
+    final AtomicBoolean stopped = new AtomicBoolean(false);
+
+    if (ourDumpThreadsOnLongWriteActionWaiting) {
+      executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          while (!stopped.get()) {
+            try {
+              Thread.sleep(239);
+              if (!stopped.get()) {
+                getComponent(PerformanceWatcher.class).dumpThreads();
+              }
+            }
+            catch (InterruptedException e) {
+            }
+          }
+        }
+      });
+    }
 
     LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
     try {
@@ -760,6 +802,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
     }
+    stopped.set(true);
 
     try {
       myWriteActionsStack.push(action);
@@ -853,7 +896,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     */
   }
 
-  private void assertCanRunWriteAction() {
+  private static void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
 
   }
@@ -862,8 +905,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private void assertIsDispatchThread(String message) {
-    if (myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
+  private static void assertIsDispatchThread(String message) {
+    if (ShutDownTracker.isShutdownHookRunning()) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 

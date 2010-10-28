@@ -323,8 +323,9 @@ public class HighlightInfo implements Segment {
     }
     if (text != null) s += " text='" + text + "'";
     if (description != null) s+= ", description='" + description + "'";
-    if (toolTip != null) s+= ", toolTip='" + toolTip + "'";
+    //if (toolTip != null) s+= ", toolTip='" + toolTip + "'";
     s += " severity=" + severity;
+    s += " group=" + group;
     return s;
   }
 

@@ -45,7 +45,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,7 +71,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -172,17 +170,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public List<HighlightInfo> runPasses(@NotNull PsiFile file,
                                        @NotNull Document document,
                                        @NotNull TextEditor textEditor,
-                                       @NotNull final ProgressIndicator progress,
+                                       @NotNull final DaemonProgressIndicator progress,
                                        @NotNull int[] toIgnore,
-                                       boolean allowDirt,
-                                       final boolean apply) {
+                                       boolean allowDirt) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+
     // pump first so that queued event do not interfere
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    else {
-      UIUtil.pump();
-    }
+    UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
@@ -191,27 +186,35 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       fileStatusMap.markFileUpToDate(document, file, ignoreId);
     }
     fileStatusMap.allowDirt(allowDirt);
-    try {
-      TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
-      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        public void run() {
-          for (TextEditorHighlightingPass pass : passes) {
-            pass.collectInformation(progress);
-            if (apply) {
-              // apply incremental highlights scheduled for AWT thread
-              if (SwingUtilities.isEventDispatchThread()) {
-                UIUtil.dispatchAllInvocationEvents();
-              }
-              else {
-                UIUtil.pump();
-              }
-              pass.applyInformationToEditor();
-            }
-          }
-        }
-      }, progress);
 
+    TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
+    final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
+    HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
+
+    myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
+
+    while (!progress.isCanceled()) {
+      progress.waitFor(100);
+      try {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      catch (RuntimeException e) {
+        e.printStackTrace();
+        throw e;
+      }
+      catch (Error e) {
+        e.printStackTrace();
+        throw e;
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+    }
+    UIUtil.dispatchAllInvocationEvents();
+    UIUtil.dispatchAllInvocationEvents();
+
+    try {
       return getHighlights(document, null, project);
     }
     finally {
@@ -530,12 +533,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     stripWarningsCoveredByErrors(project, markup, toAdd);
-    
-    //DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    //if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
-    //  ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
-    //}
-    
   }
 
   private static void stripWarningsCoveredByErrors(Project project, MarkupModel markup, final HighlightInfo toAdd) {
@@ -554,11 +551,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           return addingError || !isError || !isCoveredBy(toAdd, interval);
         }
       });
-    if (toAddIsVisible) {
-      // ok
-      //highlightsToSet.add(toAdd);
-    }
-    else {
+    if (!toAddIsVisible) {
       // toAdd is covered by
       markup.removeHighlighter(toAdd.highlighter);
     }
@@ -667,9 +660,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         myAlarm.cancelAllRequests();
         DaemonProgressIndicator progress;
         synchronized (DaemonCodeAnalyzerImpl.this) {
-          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-          indicator.start();
-          myUpdateProgress = progress = indicator;
+          progress = new DaemonProgressIndicator();
+          progress.start();
+          myUpdateProgress = progress;
         }
         myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
       }

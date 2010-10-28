@@ -41,4 +41,9 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
     return array.toArray(new GenerationInfo[array.size()]);
   }
+
+  @Override
+  protected String getNothingFoundMessage() {
+    return "No fields have been found to generate getters/setters for";
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -670,7 +671,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return this;
   }
 
-  public final CompositeElement calcTreeElement() {
+  public final FileElement calcTreeElement() {
     // Attempt to find (loaded) tree element without taking lock first.
     FileElement treeElement = getTreeElement();
     if (treeElement != null) return treeElement;
@@ -682,7 +683,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return loadTreeElement();
     }
   }
-
 
   @NotNull
   public PsiElement[] getChildren() {
@@ -859,7 +859,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return manager.getProject();
   }
 
-  public ASTNode getNode() {
+  public FileASTNode getNode() {
     return calcTreeElement();
   }
 

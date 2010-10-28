@@ -114,7 +114,7 @@ public class GantRunner extends GroovyScriptRunner {
     }
 
     params.getVMParametersList().add("-Dant.home=" + antHome);
-    params.getVMParametersList().add("-Dgant.home=" + gantHome + "");
+    params.getVMParametersList().add("-Dgant.home=" + gantHome);
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add("gant.Gant");

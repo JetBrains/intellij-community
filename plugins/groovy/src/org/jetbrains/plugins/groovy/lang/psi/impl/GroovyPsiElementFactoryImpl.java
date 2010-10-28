@@ -46,10 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -627,4 +624,21 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       throw e;
     }
   }
+
+  @Override
+  public GrExtendsClause createExtendsClause() {
+    final GrTypeDefinition typeDefinition = createTypeDefinition("class A extends B {}");
+    final GrExtendsClause clause = typeDefinition.getExtendsClause();
+    clause.getReferenceElements()[0].delete();
+    return clause;
+  }
+
+  @Override
+  public GrImplementsClause createImplementsClause() {
+    final GrTypeDefinition typeDefinition = createTypeDefinition("class A implements B {}");
+    final GrImplementsClause clause = typeDefinition.getImplementsClause();
+    clause.getReferenceElements()[0].delete();
+    return clause;
+  }
+
 }

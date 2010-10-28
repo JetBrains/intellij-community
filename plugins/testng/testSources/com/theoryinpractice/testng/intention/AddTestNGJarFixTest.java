@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -64,9 +65,19 @@ public class AddTestNGJarFixTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
-    myFixture.tearDown();
-    myFixture = null;
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+          myFixture.tearDown();
+          myFixture = null;
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @NonNls
@@ -76,16 +87,26 @@ public class AddTestNGJarFixTest {
   }
 
   @Test(dataProvider = "data")
-  public void doTest(String testName) throws Throwable {
-    IntentionAction resultAction = null;
-    final List<IntentionAction> actions = myFixture.getAvailableIntentions("intention/testNGJar" + "/" + testName + ".java");
-    for (IntentionAction action : actions) {
-      if (Comparing.strEqual(action.getText(), "Add testng.jar to classpath")) {
-        resultAction = action;
-        break;
+  public void doTest(final String testName) throws Throwable {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          IntentionAction resultAction = null;
+          final List<IntentionAction> actions = myFixture.getAvailableIntentions("intention/testNGJar" + "/" + testName + ".java");
+          for (IntentionAction action : actions) {
+            if (Comparing.strEqual(action.getText(), "Add testng.jar to classpath")) {
+              resultAction = action;
+              break;
+            }
+          }
+          Assert.assertNotNull(resultAction);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
-    }
-    Assert.assertNotNull(resultAction);
+    });
   }
 
 

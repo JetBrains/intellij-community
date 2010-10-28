@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
@@ -43,14 +44,29 @@ import java.util.Set;
 public class SvnAuthenticationTest extends PlatformTestCase {
   private SvnAuthenticationManager myAuthenticationManager;
   private TestInteraction myTestInteraction;
-  private SvnVcs myVcs;
   private final Object mySynchObject = new Object();
   private SvnTestInteractiveAuthentication myInteractiveProvider;
   private SvnConfiguration myConfiguration;
 
   @Override
+  protected void runBareRunnable(Runnable runnable) throws Throwable {
+    runnable.run();
+  }
+
+  @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          SvnAuthenticationTest.super.setUp();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
 
     myConfiguration = SvnConfiguration.getInstance(myProject);
     final String configPath = myProject.getBaseDir().getPath() + File.separator + "Subversion";
@@ -59,12 +75,12 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     final File configFile = new File(configPath);
     myFilesToDelete.add(configFile);
 
-    myVcs = SvnVcs.getInstance(myProject);
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
-    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(myVcs, myInteractiveProvider));
+    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider));
     myAuthenticationManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
 
     myTestInteraction = new TestInteraction();
@@ -75,7 +91,18 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          SvnAuthenticationTest.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
     FileUtil.delete(new File(myConfiguration.getConfigurationDirectory()));
   }
 
@@ -117,7 +144,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           commonScheme(url, false, null);
           //start = System.currentTimeMillis();
           //waitListenerStep(start, listener, 4);
-          Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
+          Assert.assertEquals(SystemInfo.isWindows ? 1 : 3, listener.getCnt());
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -132,7 +159,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     Assert.assertEquals(0, myTestInteraction.getNumPasswordsWarn());
     Assert.assertEquals(0, myTestInteraction.getNumSSLPlaintextPrompt());
     Assert.assertEquals(0, myTestInteraction.getNumSSLWarn());
-    Assert.assertEquals((SystemInfo.isWindows ? 1 : 3), listener.getCnt());
+    Assert.assertEquals(SystemInfo.isWindows ? 1 : 3, listener.getCnt());
     listener.assertForAwt();
     savedOnceListener.assertForAwt();
 
@@ -207,7 +234,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   private void waitListenerStep(long start, TestListener listener, final int stepNoNext) {
-    while ((listener.getCnt() < stepNoNext) && ((System.currentTimeMillis() - start) < 10000)) {
+    while (listener.getCnt() < stepNoNext && System.currentTimeMillis() - start < 10000) {
       synchronized (mySynchObject) {
         try {
           mySynchObject.wait(50);
@@ -701,7 +728,18 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           savedOnceListener.reset();
           myTestInteraction.reset();
 
-          myConfiguration.clearAuthenticationDirectory();
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                myConfiguration.clearAuthenticationDirectory();
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
+
           myTestInteraction.setPlaintextAnswer(false);
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
@@ -835,7 +873,18 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           savedOnceListener.reset();
           myTestInteraction.reset();
 
-          myConfiguration.clearAuthenticationDirectory();
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                myConfiguration.clearAuthenticationDirectory();
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
+
           myTestInteraction.setSSLPlaintextAnswer(false);
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
@@ -879,7 +928,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     SVNJNAUtil.setJNAEnabled(true);
   }
 
-  private void synchronousBackground(final Runnable runnable) throws InterruptedException {
+  private static void synchronousBackground(final Runnable runnable) throws InterruptedException {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -947,7 +996,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
                                                          SVNErrorMessage errorMessage,
                                                          SVNAuthentication previousAuth,
                                                          boolean authMayBeStored) {
-      authMayBeStored = authMayBeStored & mySaveData;
+      authMayBeStored = authMayBeStored && mySaveData;
       SVNAuthentication result = null;
       if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
         result = new SVNUserNameAuthentication("username", authMayBeStored);
@@ -970,7 +1019,8 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     if (ISVNAuthenticationManager.SSH.equals(kind)) {
       if (((SVNSSHAuthentication) authentication).hasPrivateKey()) {
         return ((SVNSSHAuthentication) authentication).getPassphrase() != null &&
-               ((((SVNSSHAuthentication) authentication).getPrivateKey() != null) || (((SVNSSHAuthentication) authentication).getPrivateKeyFile() != null));
+               (((SVNSSHAuthentication) authentication).getPrivateKey() != null ||
+                ((SVNSSHAuthentication) authentication).getPrivateKeyFile() != null);
       } else {
         return ((SVNSSHAuthentication) authentication).getPassword() != null;
       }
@@ -985,7 +1035,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   private static class TestListener implements SvnAuthenticationListener {
-    private List<Trinity<ProviderType, SVNURL, Type>> myExpectedSequence;
+    private final List<Trinity<ProviderType, SVNURL, Type>> myExpectedSequence;
     private int myCnt;
     private final Object mySynchObject;
     private boolean mySuccess;
@@ -1082,7 +1132,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     public void assertForAwt() {
-      Assert.assertTrue(myCause, myCause == null);
+      assertNull(myCause, myCause);
     }
 
     public void assertSaved(final SVNURL url, final String kind) {

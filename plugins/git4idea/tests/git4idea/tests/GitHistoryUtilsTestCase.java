@@ -15,8 +15,6 @@
  */
 package git4idea.tests;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -24,7 +22,6 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -40,9 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.
@@ -142,9 +137,28 @@ public class GitHistoryUtilsTestCase extends GitTestCase {
 
   @Test
   public void testGetCurrentRevision() throws Exception {
-    GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, bfilePath);
+    GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, bfilePath, null);
     assertEquals(revisionNumber.getRev(), myRevisions.get(0).myHash);
     assertEquals(revisionNumber.getTimestamp(), myRevisions.get(0).myDate);
+  }
+
+  @Test
+  public void testGetCurrentRevisionInMasterBranch() throws Exception {
+    GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, bfilePath, "master");
+    assertEquals(revisionNumber.getRev(), myRevisions.get(0).myHash);
+    assertEquals(revisionNumber.getTimestamp(), myRevisions.get(0).myDate);
+  }
+
+  @Test
+  public void testGetCurrentRevisionInOtherBranch() throws Exception {
+    myRepo.checkout("feature");
+    editFileInCommand(myProject, bfile, "new content");
+    myRepo.addCommit();
+    final String[] output = myRepo.log("--pretty=%H#%at", "-n1").getStdout().trim().split("#");
+
+    GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, bfilePath, "master");
+    assertEquals(revisionNumber.getRev(), output[0]);
+    assertEquals(revisionNumber.getTimestamp(), GitTestRevision.gitTimeStampToDate(output[1]));
   }
 
   @Test

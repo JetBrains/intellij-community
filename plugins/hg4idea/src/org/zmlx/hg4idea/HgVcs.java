@@ -88,7 +88,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final String ORIG_FILE_PATTERN = "*.orig";
 
   private final HgChangeProvider changeProvider;
-  private final HgProjectConfigurable configurable;
   private final HgRollbackEnvironment rollbackEnvironment;
   private final HgDiffProvider diffProvider;
   private final HgHistoryProvider historyProvider;
@@ -118,7 +117,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
     myVcsManager = vcsManager;
-    configurable = new HgProjectConfigurable(projectSettings);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -133,11 +131,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public String getDisplayName() {
-    return configurable.getDisplayName();
+    return HgVcsMessages.message("hg4idea.mercurial");
   }
 
   public Configurable getConfigurable() {
-    return configurable;
+    return new HgProjectConfigurable(projectSettings);
   }
 
   @Override

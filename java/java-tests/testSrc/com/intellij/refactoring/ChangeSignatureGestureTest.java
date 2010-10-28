@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -33,14 +34,22 @@ import java.util.List;
  * Date: Sep 9, 2010
  */
 public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
-  private void doTest(Runnable run, boolean shouldShow) {
+
+  private void doTest(final Runnable run, boolean shouldShow) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(getProject());
     final Document document = myFixture.getEditor().getDocument();
     try {
       PsiManager.getInstance(getProject()).addPsiTreeChangeListener(detector);
       detector.addDocListener(document);
-      run.run();
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          run.run();
+        }
+      }.execute().throwException();
+
+
       myFixture.doHighlighting();
       final String hint = "Change signature ...";
       if (shouldShow) {

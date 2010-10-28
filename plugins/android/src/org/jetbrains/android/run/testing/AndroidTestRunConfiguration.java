@@ -48,6 +48,8 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Eugene.Kudelevsky
@@ -193,7 +195,7 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
       this.myInstrumentationTestRunner = instrumentationTestRunner;
     }
 
-    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) {
+    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException {
       state.getProcessHandler().notifyTextAvailable("Running tests", ProcessOutputTypes.STDOUT);
       RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(state.getPackageName(), myInstrumentationTestRunner, device);
       switch (TESTING_TYPE) {

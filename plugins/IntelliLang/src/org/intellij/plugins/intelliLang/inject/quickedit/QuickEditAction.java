@@ -128,7 +128,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     return false;
   }
 
-  private static Key<MyHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
+  private static final Key<MyHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
   @NotNull
   private static MyHandler getHandler(Project project, PsiFile injectedFile, Editor editor, PsiFile origFile) {
     MyHandler handler = injectedFile.getUserData(QUICK_EDIT_HANDLER);
@@ -212,7 +212,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
             myInjectedFile.putUserData(QUICK_EDIT_HANDLER, null);
           }
         }
-      });
+      }, project);
       initMarkers(shreds);
     }
 

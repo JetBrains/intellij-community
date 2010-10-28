@@ -31,15 +31,20 @@
     </component>
   </application-components>
   <actions>
-    <group>
+    <!--<group>
       <action id="NewActivity" class="org.jetbrains.android.actions.CreateActivityAction"/>
       <action id="NewService" class="org.jetbrains.android.actions.CreateServiceAction"/>
       <action id="NewReceiver" class="org.jetbrains.android.actions.CreateReceiverAction"/>
       <action id="NewRemoteInterface" class="org.jetbrains.android.actions.CreateRemoteInterfaceAction"/>
-      <action id="Android.CreateResourcesActionGroup" class="org.jetbrains.android.actions.CreateResourceFileActionGroup"/>
       <separator/>
       <add-to-group group-id="NewGroup" anchor="first"/>
-    </group>
+    </group>-->
+    <action id="NewAndroidComponent" class="org.jetbrains.android.actions.NewAndroidComponentAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+    <action id="Android.CreateResourcesActionGroup" class="org.jetbrains.android.actions.CreateResourceFileActionGroup">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
     <group id="AndroidToolsGroup" popup="true" text="Android" icon="/icons/android.png"
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -49,6 +54,9 @@
     </action>
     <action id="Android.RunAndroidSdkManager" class="org.jetbrains.android.actions.RunAndroidSdkManagerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableDdmsAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="first"/>
     </action>
     <action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
       <keyboard-shortcut first-keystroke="control shift alt R" keymap="$default"/>
@@ -126,6 +134,9 @@
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
+    <projectService serviceInterface="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"
+                    serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>
+    <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
   </extensions>
 
   <extensionPoints>

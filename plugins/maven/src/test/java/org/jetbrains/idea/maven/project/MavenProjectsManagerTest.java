@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -61,7 +63,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertEquals(1, myProjectsTree.getRootProjects().size());
 
-    myProjectPom.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        myProjectPom.delete(this);
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertEquals(0, myProjectsTree.getRootProjects().size());
@@ -84,7 +92,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<artifactId>project1</artifactId>" +
                                      "<version>1</version>");
 
-    VirtualFile p2 = createModulePom("project2",
+    final VirtualFile p2 = createModulePom("project2",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project2</artifactId>" +
                                      "<version>1</version>");
@@ -92,12 +100,18 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
 
-    p2.rename(this, "foo.bar");
-    waitForReadingCompletion();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        p2.rename(this, "foo.bar");
+        waitForReadingCompletion();
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+        assertEquals(1, myProjectsTree.getRootProjects().size());
 
-    p2.rename(this, "pom.xml");
+        p2.rename(this, "pom.xml");
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
@@ -109,23 +123,29 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<artifactId>project1</artifactId>" +
                                      "<version>1</version>");
 
-    VirtualFile p2 = createModulePom("project2",
+    final VirtualFile p2 = createModulePom("project2",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project2</artifactId>" +
                                      "<version>1</version>");
     importProjects(p1, p2);
 
-    VirtualFile oldDir = p2.getParent();
-    VirtualFile newDir = myProjectRoot.createChildDirectory(this, "foo");
+    final VirtualFile oldDir = p2.getParent();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile newDir = myProjectRoot.createChildDirectory(this, "foo");
 
-    assertEquals(2, myProjectsTree.getRootProjects().size());
+        assertEquals(2, myProjectsTree.getRootProjects().size());
 
-    p2.move(this, newDir);
-    waitForReadingCompletion();
+        p2.move(this, newDir);
+        waitForReadingCompletion();
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
+        assertEquals(1, myProjectsTree.getRootProjects().size());
 
-    p2.move(this, oldDir);
+        p2.move(this, oldDir);
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
@@ -141,29 +161,35 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "  <module>m2</module>" +
                      "</modules>");
 
-    VirtualFile m = createModulePom("m1",
+    final VirtualFile m = createModulePom("m1",
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
     importProject();
 
-    VirtualFile oldDir = m.getParent();
-    VirtualFile newDir = myProjectRoot.createChildDirectory(this, "m2");
+    final VirtualFile oldDir = m.getParent();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile newDir = myProjectRoot.createChildDirectory(this, "m2");
 
-    assertEquals(1, myProjectsTree.getRootProjects().size());
-    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+        assertEquals(1, myProjectsTree.getRootProjects().size());
+        assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
-    m.move(this, newDir);
-    waitForReadingCompletion();
+        m.move(this, newDir);
+        waitForReadingCompletion();
 
-    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+        assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
-    m.move(this, oldDir);
-    waitForReadingCompletion();
+        m.move(this, oldDir);
+        waitForReadingCompletion();
 
-    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+        assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
-    m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
+        m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
@@ -615,8 +641,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size());
 
-    VirtualFile dir = myProjectRoot.findChild("dir");
-    dir.delete(null);
+    final VirtualFile dir = myProjectRoot.findChild("dir");
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        dir.delete(null);
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
@@ -690,7 +722,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    VirtualFile m = createModulePom("m",
+    final VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
@@ -699,7 +731,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModules("project", "m");
 
     configConfirmationForYesAnswer();
-    m.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        m.delete(this);
+      }
+    }.execute().throwException();
+
     waitForReadingCompletion();
 
     myProjectsManager.performScheduledImport();
@@ -780,7 +818,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                           "  </dependency>" +
                           "</dependencies>");
 
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+    final VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
                                            "<artifactId>m2</artifactId>" +
                                            "<version>1</version>" +
 
@@ -799,7 +837,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
 
-    m2.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        m2.delete(this);
+      }
+    }.execute().throwException();
+
 
     configConfirmationForYesAnswer();// should update deps even if module is not removed
 
@@ -895,13 +939,18 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     createProjectSubDir("src/main/java");
 
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
-    for (OrderEntry each : model.getOrderEntries()) {
-      if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
-        model.removeOrderEntry(each);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+        for (OrderEntry each : model.getOrderEntries()) {
+          if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
+            model.removeOrderEntry(each);
+          }
+        }
+        model.commit();
       }
-    }
-    model.commit();
+    });
+
 
     assertSources("project");
     assertModuleLibDeps("project");

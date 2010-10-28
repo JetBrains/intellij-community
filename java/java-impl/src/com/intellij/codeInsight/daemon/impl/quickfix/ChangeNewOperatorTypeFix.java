@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.introduceVariable.PsiExpressionTrimRenderer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("change.new.operator.type.text", myExpression.getText(), myType.getPresentableText(), myType instanceof PsiArrayType ? "" : "()");
+    return QuickFixBundle.message("change.new.operator.type.text", new PsiExpressionTrimRenderer.RenderFunction().fun(myExpression), myType.getPresentableText(), myType instanceof PsiArrayType ? "" : "()");
   }
 
   @NotNull
@@ -81,10 +82,17 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       selection = new TextRange(caretOffset, caretOffset+1);
     }
     else {
-      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()", originalExpression);
+      final PsiAnonymousClass anonymousClass = originalExpression.getAnonymousClass();
+      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
       PsiExpressionList argumentList = originalExpression.getArgumentList();
       if (argumentList == null) return;
       newExpression.getArgumentList().replace(argumentList);
+      if (anonymousClass != null) {
+        final PsiAnonymousClass newAnonymousClass = (PsiAnonymousClass)newExpression.getAnonymousClass().replace(anonymousClass);
+        final PsiClass aClass = PsiUtil.resolveClassInType(toType);
+        assert aClass != null;
+        newAnonymousClass.getBaseClassReference().replace(factory.createClassReferenceElement(aClass));
+      }
       selection = null;
       caretOffset = -1;
     }

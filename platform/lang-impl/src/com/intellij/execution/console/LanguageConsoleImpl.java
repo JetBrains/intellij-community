@@ -492,12 +492,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
     };
-    EditorFactory.getInstance().addEditorFactoryListener(factoryListener);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        EditorFactory.getInstance().removeEditorFactoryListener(factoryListener);
-      }
-    });
+    EditorFactory.getInstance().addEditorFactoryListener(factoryListener, this);
   }
 
   protected void registerActionShortcuts(JComponent component) {

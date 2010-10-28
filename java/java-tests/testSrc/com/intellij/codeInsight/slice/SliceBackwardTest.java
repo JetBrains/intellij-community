@@ -3,6 +3,7 @@ package com.intellij.codeInsight.slice;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -125,19 +126,23 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private static void extract(Document document, Map<String, RangeMarker> sliceUsageName2Offset, String name) {
-    for (int i = 1; i < 9; i++) {
-      String newName = name + i;
-      String s = "<flown" + newName + ">";
-      if (!document.getText().contains(s)) break;
-      int off = document.getText().indexOf(s);
+  private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (int i = 1; i < 9; i++) {
+          String newName = name + i;
+          String s = "<flown" + newName + ">";
+          if (!document.getText().contains(s)) break;
+          int off = document.getText().indexOf(s);
 
-      document.deleteString(off, off + s.length());
-      RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
-      assertNull(prev);
+          document.deleteString(off, off + s.length());
+          RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
+          assertNull(prev);
 
-      extract(document, sliceUsageName2Offset, newName);
-    }
+          extract(document, sliceUsageName2Offset, newName);
+        }
+      }
+    });
   }
 
   public void testSimple() throws Exception { dotest();}

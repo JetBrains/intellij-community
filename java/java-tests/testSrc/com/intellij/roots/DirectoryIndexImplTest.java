@@ -1,6 +1,7 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -242,14 +243,20 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testAddProjectDir() throws Exception {
-    VirtualFile newDir = myModule1Dir.getParent().createChildDirectory(null, "newDir");
-    newDir.createChildDirectory(null, "subdir");
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile newDir = myModule1Dir.getParent().createChildDirectory(null, "newDir");
+        newDir.createChildDirectory(null, "subdir");
 
-    myIndex.checkConsistency();
+        myIndex.checkConsistency();
 
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    rootModel.addContentEntry(newDir);
-    rootModel.commit();
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        rootModel.addContentEntry(newDir);
+        rootModel.commit();
+      }
+    }.execute().throwException();
+
 
     myIndex.checkConsistency();
   }
@@ -285,26 +292,37 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   public void testAddModule() throws Exception {
     myIndex.checkConsistency();
 
-    VirtualFile newModuleContent = myRootVFile.createChildDirectory(null, "newModule");
-    newModuleContent.createChildDirectory(null, "subDir");
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA);
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    rootModel.addContentEntry(newModuleContent);
-    rootModel.commit();
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile newModuleContent = myRootVFile.createChildDirectory(null, "newModule");
+        newModuleContent.createChildDirectory(null, "subDir");
+        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA);
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        rootModel.addContentEntry(newModuleContent);
+        rootModel.commit();
+      }
+    }.execute().throwException();
+
 
     myIndex.checkConsistency();
   }
 
   public void testExplicitExcludeOfInner() throws Exception {
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
 
-    ContentEntry[] contentEntries = rootModel.getContentEntries();
-    assertEquals(1, contentEntries.length);
-    ContentEntry contentEntry = contentEntries[0];
-    contentEntry.addExcludeFolder(myModule2Dir);
+        ContentEntry[] contentEntries = rootModel.getContentEntries();
+        assertEquals(1, contentEntries.length);
+        ContentEntry contentEntry = contentEntries[0];
+        contentEntry.addExcludeFolder(myModule2Dir);
 
-    rootModel.commit();
+        rootModel.commit();
+      }
+    });
+
 
     myIndex.checkConsistency();
 
@@ -349,19 +367,27 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
     CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(projectOutput.getUrl());
 
-    ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    ContentEntry[] ee = m.getContentEntries();
-    assertEquals(1, ee.length);
-    ee[0].addExcludeFolder(excluded);
-    m.commit();
-    
-    m = ModuleRootManager.getInstance(myModule2).getModifiableModel();
-    final CompilerModuleExtension compilerModuleExtension = m.getModuleExtension(CompilerModuleExtension.class);
-    compilerModuleExtension.setCompilerOutputPath(module2Output);
-    compilerModuleExtension.setCompilerOutputPathForTests(module2TestOutput);
-    compilerModuleExtension.setExcludeOutput(true);
-    compilerModuleExtension.inheritCompilerOutputPath(false);
-    m.commit();
+    final VirtualFile finalExcluded = excluded;
+    final VirtualFile finalModule2Output = module2Output;
+    final VirtualFile finalModule2TestOutput = module2TestOutput;
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        ContentEntry[] ee = m.getContentEntries();
+        assertEquals(1, ee.length);
+        ee[0].addExcludeFolder(finalExcluded);
+        m.commit();
+
+        m = ModuleRootManager.getInstance(myModule2).getModifiableModel();
+        final CompilerModuleExtension compilerModuleExtension = m.getModuleExtension(CompilerModuleExtension.class);
+        compilerModuleExtension.setCompilerOutputPath(finalModule2Output);
+        compilerModuleExtension.setCompilerOutputPathForTests(finalModule2TestOutput);
+        compilerModuleExtension.setExcludeOutput(true);
+        compilerModuleExtension.inheritCompilerOutputPath(false);
+        m.commit();
+      }
+    });
+
 
     assertNull(myIndex.getInfoForDirectory(excluded));
     assertNull(myIndex.getInfoForDirectory(projectOutput));
@@ -404,16 +430,22 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
-    VirtualFile dir = myModule1Dir.createChildDirectory(null, "dir");
-    VirtualFile excluded = dir.createChildDirectory(null, "excluded");
+    final VirtualFile dir = myModule1Dir.createChildDirectory(null, "dir");
+    final VirtualFile excluded = dir.createChildDirectory(null, "excluded");
 
-    ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    ContentEntry[] ee = m.getContentEntries();
-    assertEquals(1, ee.length);
-    ee[0].addExcludeFolder(excluded);
-    m.commit();
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        ContentEntry[] ee = m.getContentEntries();
+        assertEquals(1, ee.length);
+        ee[0].addExcludeFolder(excluded);
+        m.commit();
 
-    dir.delete(null);
+        dir.delete(null);
+      }
+    }.execute().throwException();
+
 
     new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
 
@@ -442,29 +474,40 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
     String rootPath = myModule1Dir.getPath();
-    File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
+    final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
 
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    rootModel.getContentEntries()[0].addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        rootModel.getContentEntries()[0]
+          .addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
+        rootModel.commit();
 
-    rootModel = ModuleRootManager.getInstance(myModule2).getModifiableModel();
-    rootModel.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getPath())));
-    rootModel.commit();
+        rootModel = ModuleRootManager.getInstance(myModule2).getModifiableModel();
+        rootModel.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getPath())));
+        rootModel.commit();
 
-    f.mkdirs();
-    LocalFileSystem.getInstance().refresh(false);
+        f.mkdirs();
+        LocalFileSystem.getInstance().refresh(false);
+      }
+    });
+
 
     assertNull(myIndex.getInfoForDirectory(LocalFileSystem.getInstance().findFileByIoFile(f.getParentFile().getParentFile())));
     assertNotNull(myIndex.getInfoForDirectory(LocalFileSystem.getInstance().findFileByIoFile(f)));
   }
 
   public void testLibraryDirInContent() throws Exception {
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
-    libraryModel.addRoot(myModule1Dir, OrderRootType.CLASSES);
-    libraryModel.commit();
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
+        libraryModel.addRoot(myModule1Dir, OrderRootType.CLASSES);
+        libraryModel.commit();
+        rootModel.commit();
+      }
+    });
+
 
     myIndex.checkConsistency();
 

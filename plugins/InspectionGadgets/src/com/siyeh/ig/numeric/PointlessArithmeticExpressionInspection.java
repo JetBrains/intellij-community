@@ -174,7 +174,7 @@ public class PointlessArithmeticExpressionInspection
             if (!arithmeticTokens.contains(signText)) {
                 return;
             }
-            if (TypeUtils.expressionHasType("java.lang.String", expression)) {
+            if (TypeUtils.expressionHasType(expression, "java.lang.String")) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();

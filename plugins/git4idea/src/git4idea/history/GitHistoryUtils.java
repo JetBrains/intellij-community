@@ -52,21 +52,26 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Get current revision for the file under git
-   *
+   * Get current revision for the file under git in the current or specified branch.
+   * 
    * @param project  a project
    * @param filePath file path to the file which revision is to be retrieved.
+   * @param branch   name of branch or null if current branch wanted.
    * @return revision number or null if the file is unversioned or new.
    * @throws VcsException if there is a problem with running git.
    */
   @Nullable
-  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
+  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
+    final VirtualFile root = GitUtil.getGitRoot(filePath);
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
+    if (branch != null && !branch.isEmpty()) {
+      h.addParameters(branch);
+    }
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = h.run();
@@ -91,7 +96,7 @@ public class GitHistoryUtils {
     GitBranch c = GitBranch.current(project, root);
     GitBranch t = c == null ? null : c.tracked(project, root);
     if (t == null) {
-      return new ItemLatestState(getCurrentRevision(project, filePath), true, false);
+      return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);

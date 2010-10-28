@@ -188,11 +188,11 @@ public abstract class PassExecutorService implements Disposable {
 
     log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get());
 
-    for (ScheduledPass freePass : freePasses) {
-      submit(freePass);
-    }
     for (ScheduledPass dependentPass : dependentPasses) {
       mySubmittedPasses.put(dependentPass, JobImpl.NULL_JOB);
+    }
+    for (ScheduledPass freePass : freePasses) {
+      submit(freePass);
     }
   }
 
@@ -375,29 +375,24 @@ public abstract class PassExecutorService implements Disposable {
     }
   }
 
-  protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress,
-                                           final AtomicInteger threadsToStartCountdown) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, true);
-        }
-      });
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-        public void run() {
-          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, false);
-        }
-      }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
-    }
+  protected void applyInformationToEditors(@NotNull final List<FileEditor> fileEditors,
+                                           @NotNull final TextEditorHighlightingPass pass,
+                                           @NotNull final DaemonProgressIndicator updateProgress,
+                                           @NotNull final AtomicInteger threadsToStartCountdown) {
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+      public void run() {
+        doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, testMode);
+      }
+    }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
   }
 
-  private void doApplyInformationToEditors(DaemonProgressIndicator updateProgress,
-                                           TextEditorHighlightingPass pass,
-                                           List<FileEditor> fileEditors,
-                                           AtomicInteger threadsToStartCountdown,
+  private void doApplyInformationToEditors(@NotNull DaemonProgressIndicator updateProgress,
+                                           @NotNull TextEditorHighlightingPass pass,
+                                           @NotNull List<FileEditor> fileEditors,
+                                           @NotNull AtomicInteger threadsToStartCountdown,
                                            boolean testMode) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed() || myProject.isDisposed()) {
       updateProgress.cancel();
     }
@@ -474,13 +469,14 @@ public abstract class PassExecutorService implements Disposable {
         for (Object o : info) {
           s.append(o.toString());
         }
-        LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4)
-                  + " "+pass+" "
-                  + s
-                  + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                  + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true)) + "'"
-        );
+        String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
+                         + " " + pass + " "
+                         + s
+                         + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
+                         + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
+                         + " : '" + (pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true)) + "'";
+        LOG.debug(message);
+        //System.out.println(message);
       }
     }
   }

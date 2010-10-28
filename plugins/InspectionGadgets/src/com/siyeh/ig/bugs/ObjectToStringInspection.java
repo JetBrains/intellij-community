@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -30,18 +31,21 @@ import java.util.Set;
 
 public class ObjectToStringInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
       return InspectionGadgetsBundle.message(
               "default.tostring.call.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "default.tostring.call.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ObjectToStringVisitor();
     }
@@ -93,18 +97,54 @@ public class ObjectToStringInspection extends BaseInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.TO_STRING.equals(name)) {
-                return;
+            @NonNls final String name = methodExpression.getReferenceName();
+            if (HardcodedMethodConstants.TO_STRING.equals(name)) {
+                final PsiExpressionList argumentList =
+                        expression.getArgumentList();
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                if (arguments.length != 0) {
+                    return;
+                }
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                checkExpression(qualifier);
+            } else if ("append".equals(name)) {
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                        "java.lang.AbstractStringBuilder")) {
+                    return;
+                }
+                final PsiExpressionList argumentList =
+                        expression.getArgumentList();
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                if (arguments.length != 1) {
+                    return;
+                }
+                final PsiExpression argument = arguments[0];
+                checkExpression(argument);
+            } else if ("valueOf".equals(name)) {
+                final PsiExpression qualifierExpression =
+                        methodExpression.getQualifierExpression();
+                if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+                    return;
+                }
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) qualifierExpression;
+                final String canonicalText =
+                        referenceExpression.getCanonicalText();
+                if (!"java.lang.String".equals(canonicalText)) {
+                    return;
+                }
+                final PsiExpressionList argumentList =
+                        expression.getArgumentList();
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                if (arguments.length != 1) {
+                    return;
+                }
+                final PsiExpression argument = arguments[0];
+                checkExpression(argument);
             }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length !=0) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            checkExpression(qualifier);
         }
 
         private void checkExpression(PsiExpression expression) {

@@ -17,8 +17,7 @@ package git4idea.tests;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -95,7 +94,7 @@ public class GitTestRepository {
    * @param writeAction           If true, the command will be executed in a write action, otherwise - inside a read action.
    * @param commandWithParameters Mercurial command with parameters. E.g. ["status", "-a"]
    */
-  public ProcessOutput execute(boolean writeAction, final String... commandWithParameters) throws IOException {
+  public ProcessOutput execute(final boolean writeAction, final String... commandWithParameters) throws IOException {
     final AtomicReference<ProcessOutput> result = new AtomicReference<ProcessOutput>();
     final Runnable action = new Runnable() {
       @Override public void run() {
@@ -110,11 +109,15 @@ public class GitTestRepository {
       action.run();
       return result.get();
     }
-    if (writeAction) {
-      ApplicationManager.getApplication().runWriteAction(action);
-    } else {
-      ApplicationManager.getApplication().runReadAction(action);
-    }
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        if (writeAction) {
+          ApplicationManager.getApplication().runWriteAction(action);
+        } else {
+          ApplicationManager.getApplication().runReadAction(action);
+        }
+      }
+    }, ModalityState.defaultModalityState());
     return result.get();
   }
 
@@ -157,7 +160,7 @@ public class GitTestRepository {
   public void checkout(String branchName) throws IOException {
     execute(true, "checkout", branchName);
     // need to refresh the root directory, because checkouting a branch changes files on disk, but VFS is unaware of it.
-    refreshFile(getDir(), true);
+    refresh();
   }
 
   public ProcessOutput log(String... parameters) throws IOException {
@@ -250,6 +253,10 @@ public class GitTestRepository {
   }
 
   public void refresh() {
-    refreshFile(getDir(), true);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        refreshFile(getDir(), true);
+      }
+    }, ModalityState.defaultModalityState());
   }
 }

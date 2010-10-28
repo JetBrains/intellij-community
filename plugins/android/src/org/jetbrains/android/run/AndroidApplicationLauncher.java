@@ -20,6 +20,8 @@ import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Eugene.Kudelevsky
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidApplicationLauncher {
-  public abstract boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device);
+  public abstract boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException;
 
   public boolean isReadyForDebugging(ClientData data) {
     return data.getDebuggerConnectionStatus() == ClientData.DebuggerStatus.WAITING;

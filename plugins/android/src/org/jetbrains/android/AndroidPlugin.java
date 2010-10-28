@@ -15,11 +15,11 @@
  */
 package org.jetbrains.android;
 
-import com.android.ddmlib.AndroidDebugBridge;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
+import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +40,7 @@ public class AndroidPlugin implements ApplicationComponent {
     try {
       AdbManager.run(new Runnable() {
         public void run() {
-          AndroidDebugBridge.terminate();
+          AndroidSdk.terminateDdmlib();
         }
       }, false);
     }

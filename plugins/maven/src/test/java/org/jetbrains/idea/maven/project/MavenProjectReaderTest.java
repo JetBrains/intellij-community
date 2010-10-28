@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -234,7 +237,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testDefaults() throws Exception {
-    VirtualFile file = myProjectRoot.createChildData(this, "pom.xml");
+    VirtualFile file = new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+        result.setResult(res);
+      }
+    }.execute().getResultObject();
     VfsUtil.saveText(file, "<project>" +
                            "  <groupId>test</groupId>" +
                            "  <artifactId>project</artifactId>" +
@@ -293,7 +302,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testCustomSettings() throws Exception {
-    VirtualFile file = myProjectRoot.createChildData(this, "pom.xml");
+    VirtualFile file = new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+        result.setResult(res);
+      }
+    }.execute().getResultObject();
     VfsUtil.saveText(file, "<project>" +
                            "  <modelVersion>1.2.3</modelVersion>" +
                            "  <groupId>test</groupId>" +
@@ -1033,7 +1048,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    VirtualFile parentProfiles = createProfilesXml("<profile>" +
+    final VirtualFile parentProfiles = createProfilesXml("<profile>" +
                                                    "  <id>profile</id>" +
                                                    "  <modules><module>parentProfiles</module></modules>" +
                                                    "</profile>");
@@ -1063,7 +1078,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                       "  </profile>" +
                       "</profiles>");
 
-    VirtualFile profiles = createProfilesXml("module",
+    final VirtualFile profiles = createProfilesXml("module",
                                              "<profile>" +
                                              "  <id>profile</id>" +
                                              "  <modules><module>profiles</module></modules>" +
@@ -1090,7 +1105,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("profiles", p.getProfiles().get(0).getModules().get(0));
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    profiles.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        profiles.delete(this);
+      }
+    }.execute().throwException();
+
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());
@@ -1106,7 +1127,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("parentProfiles", p.getProfiles().get(0).getModules().get(0));
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    parentProfiles.delete(null);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        parentProfiles.delete(null);
+      }
+    }.execute().throwException();
+
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());

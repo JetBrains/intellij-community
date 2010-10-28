@@ -16,13 +16,17 @@
 
 package org.jetbrains.android.actions;
 
+import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.util.Icons;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,15 +37,26 @@ import java.util.Collection;
  */
 public abstract class CreateResourceDialog extends DialogWrapper {
   private JTextField myFileNameField;
-  private JComboBox myResourceTypeCombo;
+  private TemplateKindCombo myResourceTypeCombo;
   private JPanel myPanel;
+  private JLabel myUpDownHint;
+  private JLabel myResTypeLabel;
   private InputValidator myValidator;
 
+  private final Map<String, CreateTypedResourceFileAction> myResType2ActionMap = new HashMap<String, CreateTypedResourceFileAction>();
+
   public CreateResourceDialog(Project project, Collection<CreateTypedResourceFileAction> actions, CreateTypedResourceFileAction selected) {
-    super(project, true);
+    super(project);
+    myResTypeLabel.setLabelFor(myResourceTypeCombo);
+    myResourceTypeCombo.registerUpDownHint(myFileNameField);
+    myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
     CreateTypedResourceFileAction[] actionArray = actions.toArray(new CreateTypedResourceFileAction[actions.size()]);
-    myResourceTypeCombo.setModel(new DefaultComboBoxModel(actionArray));
-    myResourceTypeCombo.setSelectedItem(selected);
+    for (CreateTypedResourceFileAction action : actionArray) {
+      String resType = action.getResourceType();
+      assert !myResType2ActionMap.containsKey(resType);
+      myResType2ActionMap.put(resType, action);
+      myResourceTypeCombo.addItem(action.toString(), null, resType);
+    }
     init();
   }
 
@@ -72,6 +87,6 @@ public abstract class CreateResourceDialog extends DialogWrapper {
   }
 
   public CreateTypedResourceFileAction getSelectedAction() {
-    return (CreateTypedResourceFileAction)myResourceTypeCombo.getSelectedItem();
+    return myResType2ActionMap.get(myResourceTypeCombo.getSelectedName());
   }
 }

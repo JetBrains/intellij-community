@@ -231,6 +231,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return myRecords.writeContent(getFileId(file));
   }
 
+  private void writeContent(VirtualFile file, byte[] content) throws IOException {
+    myRecords.writeContent(getFileId(file), content);
+  }
+
   public int storeUnlinkedContent(byte[] bytes) {
     return myRecords.storeUnlinkedContent(bytes);
   }
@@ -424,13 +428,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
       if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD && !noCaching) {
         synchronized (INPUT_LOCK) {
-          DataOutputStream sink = writeContent(file);
-          try {
-            FileUtil.copy(new ByteArrayInputStream(content), sink);
-          }
-          finally {
-            sink.close();
-          }
+          writeContent(file, content);
 
           myRecords.setLength(getFileId(file), content.length);
           setFlag(file, MUST_RELOAD_CONTENT, false);
@@ -480,14 +478,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         synchronized (INPUT_LOCK) {
           if (getBytesRead() == len) {
-            DataOutputStream sink = writeContent(file);
-            try {
-              FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
-            }
-            finally {
-              sink.close();
-            }
-
+            writeContent(file, cache.toByteArray());
             myRecords.setLength(getFileId(file), len);
             setFlag(file, MUST_RELOAD_CONTENT, false);
           }

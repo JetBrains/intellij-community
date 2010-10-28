@@ -1,5 +1,6 @@
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -80,13 +81,18 @@ public class FileTemplatesTest extends IdeaTestCase {
       File temp = FileUtil.createTempDirectory(getTestName(true), "");
 
       myFilesToDelete.add(temp);
-      VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      final VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
 
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-      ModifiableRootModel model = rootManager.getModifiableModel();
-      ContentEntry contentEntry = model.addContentEntry(tempDir);
-      contentEntry.addSourceFolder(tempDir, false);
-      model.commit();
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ModifiableRootModel model = rootManager.getModifiableModel();
+          ContentEntry contentEntry = model.addContentEntry(tempDir);
+          contentEntry.addSourceFolder(tempDir, false);
+          model.commit();
+        }
+      });
+
 
       VirtualFile sourceRoot = rootManager.getSourceRoots()[0];
       PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot);

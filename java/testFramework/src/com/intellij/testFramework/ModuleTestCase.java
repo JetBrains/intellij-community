@@ -138,12 +138,16 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  protected void readJdomExternalizables(ModuleImpl module) {
-    final ProjectImpl project = (ProjectImpl)myProject;
-    project.setOptimiseTestLoadSpeed(false);
-    final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
-    module.getStateStore().initComponent(moduleRootManager, false);
-    project.setOptimiseTestLoadSpeed(true);
+  protected void readJdomExternalizables(final ModuleImpl module) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ProjectImpl project = (ProjectImpl)myProject;
+        project.setOptimiseTestLoadSpeed(false);
+        final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
+        module.getStateStore().initComponent(moduleRootManager, false);
+        project.setOptimiseTestLoadSpeed(true);
+      }
+    });
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,

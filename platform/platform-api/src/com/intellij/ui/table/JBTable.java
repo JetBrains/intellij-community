@@ -131,6 +131,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myEmptyText.paint(this, g);
   }
 
+  @Override
+  protected void paintChildren(Graphics g) {
+    if (myEnableAntialiasing) {
+      UISettings.setupAntialiasing(g);
+    }
+    super.paintChildren(g);
+  }
+
   public void setEnableAntialiasing(boolean flag) {
     myEnableAntialiasing = flag;
   }

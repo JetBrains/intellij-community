@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -368,7 +368,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return null;
   }
 
-  public ASTNode getNode() {
+  public FileASTNode getNode() {
     return null;
   }
 

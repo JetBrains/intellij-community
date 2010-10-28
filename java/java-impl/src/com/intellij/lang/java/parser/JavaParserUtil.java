@@ -125,7 +125,7 @@ public class JavaParserUtil {
   private JavaParserUtil() { }
 
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
-    builder.putUserData(LANG_LEVEL_KEY, level);
+    builder.putUserDataUnprotected(LANG_LEVEL_KEY, level);
   }
 
   public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
@@ -138,7 +138,7 @@ public class JavaParserUtil {
 
   @NotNull
   private static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
-    final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
+    final LanguageLevel level = builder.getUserDataUnprotected(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
   }
@@ -181,7 +181,7 @@ public class JavaParserUtil {
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final LanguageLevel level = LanguageLevel.HIGHEST;
     final Lexer lexer = JavaParserDefinition.createLexer(level);
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, psi.getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
     setLanguageLevel(builder, level);
 
     final PsiBuilder.Marker root = builder.mark();
@@ -351,6 +351,16 @@ public class JavaParserUtil {
 
     public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
       myDelegate.putUserData(key, value);
+    }
+
+    @Override
+    public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
+      return myDelegate.getUserDataUnprotected(key);
+    }
+
+    @Override
+    public <T> void putUserDataUnprotected(@NotNull Key<T> key, @Nullable T value) {
+      myDelegate.putUserDataUnprotected(key, value);
     }
   }
 }

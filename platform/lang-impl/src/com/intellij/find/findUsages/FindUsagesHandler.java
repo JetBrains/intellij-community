@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -140,6 +141,7 @@ public abstract class FindUsagesHandler {
     TextOccurrencesUtil.processTextOccurences(element, stringToSearch, searchScope, processor, factory);
   }
 
+  @Nullable
   protected String getStringToSearch(final PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();

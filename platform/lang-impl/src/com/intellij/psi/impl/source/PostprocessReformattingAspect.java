@@ -65,28 +65,6 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   private volatile int myDisabledCounter = 0;
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
-  private final ApplicationListener myApplicationListener = new ApplicationAdapter() {
-    public void writeActionStarted(final Object action) {
-      final CommandProcessor processor = CommandProcessor.getInstance();
-      if (processor != null) {
-        final Project project = processor.getCurrentCommandProject();
-        if (project == myProject) {
-          myPostponedCounter++;
-        }
-      }
-    }
-
-    public void writeActionFinished(final Object action) {
-      final CommandProcessor processor = CommandProcessor.getInstance();
-      if (processor != null) {
-        final Project project = processor.getCurrentCommandProject();
-        if (project == myProject) {
-          decrementPostponedCounter();
-        }
-      }
-    }
-  };
-
   public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect) {
     myProject = project;
     myPsiManager = psiManager;
@@ -94,12 +72,31 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     PomManager.getModel(psiManager.getProject())
       .registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
 
-    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
-    Disposer.register(project, this);
+    ApplicationListener applicationListener = new ApplicationAdapter() {
+      public void writeActionStarted(final Object action) {
+        final CommandProcessor processor = CommandProcessor.getInstance();
+        if (processor != null) {
+          final Project project = processor.getCurrentCommandProject();
+          if (project == myProject) {
+            myPostponedCounter++;
+          }
+        }
+      }
+
+      public void writeActionFinished(final Object action) {
+        final CommandProcessor processor = CommandProcessor.getInstance();
+        if (processor != null) {
+          final Project project = processor.getCurrentCommandProject();
+          if (project == myProject) {
+            decrementPostponedCounter();
+          }
+        }
+      }
+    };
+    ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
   }
 
   public void dispose() {
-    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
   }
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {

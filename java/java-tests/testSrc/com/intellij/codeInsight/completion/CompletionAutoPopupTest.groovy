@@ -16,33 +16,61 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 
-/**
+ /**
  * @author peter
  */
 class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
-    super.setUp()
+    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+                                 @Override
+                                 void run() {
+                                   superSetUp()
+                                 }
+
+                                 })
     CompletionAutoPopupHandler.ourTestingAutopopup = true
+  }
+  void superSetUp() {
+    super.setUp()
+  }
+  void superTearDown() {
+    super.tearDown()
   }
 
   @Override protected void tearDown() {
     CompletionAutoPopupHandler.ourTestingAutopopup = false
-    super.tearDown()
+    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+                                 @Override
+                                 void run() {
+                                   superTearDown()
+                                 }
+
+                                 })
   }
 
   private type(String s) {
     myFixture.type(s)
-    ApplicationManager.application.invokeAndWait(({} as Runnable), ModalityState.current())
+    UIUtil.invokeAndWaitIfNeeded(({} as Runnable))
   }
 
   @Override protected void runTest() {
     runTestBare()
   }
+
+  @Override
+  void runBare() {
+    superRunBare()
+  }
+
+
+  @Override protected void invokeTestRunnable(Runnable runnable) {
+    runnable.run()
+  }
+
 
   public void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
@@ -53,7 +81,7 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
       }
     """)
     type('i')
-    assertSameElements myFixture.lookupElementStrings, "iterable", "int"
+    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
     type('t')
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
     type('er')
@@ -95,6 +123,33 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
     """)
     type 'e'
     assertNull LookupManager.getActiveLookup(myFixture.getEditor())
+  }
+
+  public void testGenerallyFocusLookupInJavaMethod() {
+        myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String iterable) {
+          return it<caret>;
+        }
+      }
+    """)
+    type 'e'
+    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
+    assertNotNull lookup
+    assertTrue lookup.focused
+  }
+
+  public void testNoLookupFocusInJavaVariable() {
+        myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String st<caret>) {
+        }
+      }
+    """)
+    type 'r'
+    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
+    assertNotNull lookup
+    assertFalse lookup.focused
   }
 
 }

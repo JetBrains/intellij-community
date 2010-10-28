@@ -2,13 +2,13 @@
 enum I {
     A {
         void m() {
-          <selection>System.out.println("");</selection>
+            <selection>System.out.println("");</selection>
         }
     },
-  B {
-    public void m(){
-      System.out.println("");
-    }
-  };
-  abstract void m();
+    B {
+        public void m() {
+            System.out.println("");
+        }
+    };
+    abstract void m();
 }

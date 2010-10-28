@@ -42,4 +42,9 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     }
     return GenerationInfo.EMPTY_ARRAY;
   }
+
+  @Override
+  protected String getNothingFoundMessage() {
+    return "No fields have been found to generate getters for";
+  }
 }

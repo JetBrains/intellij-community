@@ -38,6 +38,7 @@ import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import com.theoryinpractice.testng.model.TestType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -72,10 +73,20 @@ public class ConfigurationsTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    myProjectFixture.tearDown();
-    myProjectFixture = null;
-    myFixture.tearDown();
-    myFixture = null;
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myProjectFixture.tearDown();
+          myProjectFixture = null;
+          myFixture.tearDown();
+          myFixture = null;
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @Test

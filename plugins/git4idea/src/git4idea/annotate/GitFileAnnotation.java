@@ -81,14 +81,14 @@ public class GitFileAnnotation implements FileAnnotation {
    */
   private final boolean myMonitorFlag;
 
-  private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect() {
+  private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(GitAnnotationAspect.DATE, true) {
     public String doGetValue(LineInfo info) {
       final Date date = info.getDate();
       return date == null ? "" : DateFormatUtil.formatPrettyDate(date);
     }
   };
 
-  private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect() {
+  private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect(GitAnnotationAspect.REVISION, false) {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
       final GitRevisionNumber revision = lineInfo.getRevision();
@@ -96,7 +96,7 @@ public class GitFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAnnotationAspect(GitAnnotationAspect.AUTHOR, true) {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
       final String author = lineInfo.getAuthor();
@@ -278,6 +278,10 @@ public class GitFileAnnotation implements FileAnnotation {
    * Revision annotation aspect implementation
    */
   private abstract class GitAnnotationAspect extends LineAnnotationAspectAdapter {
+    public GitAnnotationAspect(String id, boolean showByDefault) {
+      super(id, showByDefault);
+    }
+
     public String getValue(int lineNumber) {
       if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
         return "";

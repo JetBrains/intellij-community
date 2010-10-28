@@ -59,4 +59,6 @@ public interface Lookup extends UserDataHolder{
   boolean isCompletion();
 
   java.util.List<LookupElement> getItems();
+
+  boolean isFocused();
 }

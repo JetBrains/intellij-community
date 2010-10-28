@@ -37,12 +37,14 @@ import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -220,8 +222,30 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(Runnable runnable) throws Exception {
-    runnable.run();
+     UIUtil.invokeAndWaitIfNeeded(runnable);
+    //runnable.run();
   }
+
+  protected void superRunBare() throws Throwable {
+    super.runBare();
+  }
+
+  public void runBare() throws Throwable {
+    final Throwable[] exception = {null};
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          superRunBare();
+        }
+        catch (Throwable tearingDown) {
+          if (exception[0] == null) exception[0] = tearingDown;
+        }
+      }
+    });
+    if (exception[0] != null) throw exception[0];
+  }
+
 
   @NonNls
   public static String toString(Collection<?> collection) {
@@ -267,19 +291,19 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public static <T> void assertOrderedCollection(T[] collection, Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(T[] collection, @NotNull Consumer<T>... checkers) {
     Assert.assertNotNull(collection);
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
-  public static <T> void assertSameElements(T[] collection, T... expected) {
+  public static <T> void assertSameElements(@NotNull T[] collection, @NotNull T... expected) {
     assertSameElements(Arrays.asList(collection), expected);
   }
   
-  public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
     assertSameElements(collection, Arrays.asList(expected));
   }
-  public static <T> void assertSameElements(Collection<? extends T> collection, Collection<T> expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
     if (collection.size() != expected.size() || !new HashSet<T>(expected).equals(new HashSet<T>(collection))) {
       Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
       Assert.assertEquals(new HashSet<T>(expected), new HashSet<T>(collection));

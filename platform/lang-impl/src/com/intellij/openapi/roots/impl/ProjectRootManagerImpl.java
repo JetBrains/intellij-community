@@ -80,8 +80,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
 
-  private AppListener myApplicationListener;
-
   private String myProjectSdkName;
   private String myProjectSdkType;
 
@@ -340,11 +338,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myProjectSdkName;
   }
 
-  public void setProjectSdk(Sdk projectSdk) {
+  public void setProjectSdk(Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (projectSdk != null) {
-      myProjectSdkName = projectSdk.getName();
-      myProjectSdkType = projectSdk.getSdkType().getName();
+    if (sdk != null) {
+      myProjectSdkName = sdk.getName();
+      myProjectSdkType = sdk.getSdkType().getName();
     }
     else {
       myProjectSdkName = null;
@@ -378,13 +376,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void projectOpened() {
     addRootsToWatch();
-    myApplicationListener = new AppListener();
-    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
+    AppListener applicationListener = new AppListener();
+    ApplicationManager.getApplication().addApplicationListener(applicationListener, myProject);
   }
 
   public void projectClosed() {
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
   }
 
   @NotNull

@@ -17,14 +17,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 
@@ -52,7 +56,7 @@ public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrRefere
   @NotNull
   @Override
   public PsiClassType[] getReferenceTypes() {
-    if (cachedTypes == null) {
+    if (cachedTypes == null || !isValid()) {
       final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
       for (GrCodeReferenceElement ref : getReferenceElements()) {
         types.add(new GrClassReferenceType(ref));
@@ -65,5 +69,20 @@ public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrRefere
   @Override
   public void subtreeChanged() {
     cachedTypes = null;
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (element instanceof GrCodeReferenceElement && findChildByClass(GrCodeReferenceElement.class) != null) {
+      PsiElement lastChild = getLastChild();
+      lastChild = PsiUtil.skipWhitespaces(lastChild, false);
+      if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
+      }
+      return super.add(element);
+    }
+    else {
+      return super.add(element);
+    }
   }
 }

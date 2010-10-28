@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.application.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -41,8 +40,7 @@ public class ConfirmExitDialog extends OptionsDialog {
   }
 
   protected Action[] createActions() {
-    setOKButtonText(CommonBundle.getYesButtonText());
-    setCancelButtonText(CommonBundle.getNoButtonText());
+    setOKButtonText(ApplicationBundle.message("command.exit"));
     final Action cancelAction = getCancelAction();
     cancelAction.putValue(FOCUSED_ACTION, Boolean.TRUE);
     return new Action[] {getOKAction(), cancelAction};

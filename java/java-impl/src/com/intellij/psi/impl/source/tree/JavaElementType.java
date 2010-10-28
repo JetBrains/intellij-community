@@ -180,6 +180,8 @@ public interface JavaElementType {
   }
 
   class ICodeBlockNewElementType extends ICodeBlockElementType implements ILightLazyParseableElementType {
+    private ICodeBlockNewElementType() { }
+
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
       StatementParser.parseCodeBlockDeep(builder, true);

@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -32,22 +33,27 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 
 public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
 
-  private void doTestCreate(String[] classRoots, String[] sourceRoots) throws Exception {
+  private void doTestCreate(final String[] classRoots, final String[] sourceRoots) throws Exception {
     final Project project = getProject();
     final String path = project.getBaseDir().getPath() + "/test";
     final Module module = EclipseClasspathTest.setUpModule(path, project);
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, model.getContentRoots()[0].getParent().getPath());
-    final Library library = model.getModuleLibraryTable().createLibrary("created");
-    final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
-    for (String classRoot : classRoots) {
-      libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
-    }
-    for (String sourceRoot : sourceRoots) {
-      libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
-    }
-    libModifiableModel.commit();
-    model.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, model.getContentRoots()[0].getParent().getPath());
+        final Library library = model.getModuleLibraryTable().createLibrary("created");
+        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
+        for (String classRoot : classRoots) {
+          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
+        }
+        for (String sourceRoot : sourceRoots) {
+          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+        }
+        libModifiableModel.commit();
+        model.commit();
+      }
+    });
+
     EclipseClasspathTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
   }
 
@@ -152,39 +158,44 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
                    new String[]{});
   }
 
-  private void doTestExisting(String[] classRoots, String[] sourceRoots, String[] javadocs) throws Exception {
+  private void doTestExisting(final String[] classRoots, final String[] sourceRoots, final String[] javadocs) throws Exception {
     final Project project = getProject();
     final String path = project.getBaseDir().getPath() + "/test";
     final Module module = EclipseClasspathTest.setUpModule(path, project);
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, model.getContentRoots()[0].getParent().getPath());
-    final Library library = model.getModuleLibraryTable().getLibraryByName("test.jar");
-    final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
-    final String[] oldClsRoots = libModifiableModel.getUrls(OrderRootType.CLASSES);
-    for (String oldClsRoot : oldClsRoots) {
-      libModifiableModel.removeRoot(oldClsRoot, OrderRootType.CLASSES);
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, model.getContentRoots()[0].getParent().getPath());
+        final Library library = model.getModuleLibraryTable().getLibraryByName("test.jar");
+        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
+        final String[] oldClsRoots = libModifiableModel.getUrls(OrderRootType.CLASSES);
+        for (String oldClsRoot : oldClsRoots) {
+          libModifiableModel.removeRoot(oldClsRoot, OrderRootType.CLASSES);
+        }
 
-    final String[] oldSrcRoots = libModifiableModel.getUrls(OrderRootType.SOURCES);
-    for (String oldSrcRoot : oldSrcRoots) {
-      libModifiableModel.removeRoot(oldSrcRoot, OrderRootType.SOURCES);
-    }
+        final String[] oldSrcRoots = libModifiableModel.getUrls(OrderRootType.SOURCES);
+        for (String oldSrcRoot : oldSrcRoots) {
+          libModifiableModel.removeRoot(oldSrcRoot, OrderRootType.SOURCES);
+        }
 
-    final String[] oldJdcRoots = libModifiableModel.getUrls(JavadocOrderRootType.getInstance());
-    for (String oldJavadocRoot : oldJdcRoots) {
-      libModifiableModel.removeRoot(oldJavadocRoot, JavadocOrderRootType.getInstance());
-    }
-    for (String classRoot : classRoots) {
-      libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
-    }
-    for (String sourceRoot : sourceRoots) {
-      libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
-    }
-     for (String javadocRoot : javadocs) {
-      libModifiableModel.addRoot(parentUrl + javadocRoot, JavadocOrderRootType.getInstance());
-    }
-    libModifiableModel.commit();
-    model.commit();
+        final String[] oldJdcRoots = libModifiableModel.getUrls(JavadocOrderRootType.getInstance());
+        for (String oldJavadocRoot : oldJdcRoots) {
+          libModifiableModel.removeRoot(oldJavadocRoot, JavadocOrderRootType.getInstance());
+        }
+        for (String classRoot : classRoots) {
+          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
+        }
+        for (String sourceRoot : sourceRoots) {
+          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+        }
+        for (String javadocRoot : javadocs) {
+          libModifiableModel.addRoot(parentUrl + javadocRoot, JavadocOrderRootType.getInstance());
+        }
+        libModifiableModel.commit();
+        model.commit();
+      }
+    });
+
     EclipseClasspathTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
     EclipseEmlTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
   }

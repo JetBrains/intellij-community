@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -630,20 +633,13 @@ public class VfsUtil {
   }
 
   public static VirtualFile createDirectories(@NotNull final String dir) throws IOException {
-    final Ref<IOException> err = new Ref<IOException>();
-    VirtualFile result = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        try {
-          return createDirectoryIfMissing(dir);
-        }
-        catch (IOException e) {
-          err.set(e);
-          return null;
-        }
+    return new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        VirtualFile res = createDirectoryIfMissing(dir);
+        result.setResult(res);
       }
-    });
-    if (!err.isNull()) throw err.get();
-    return result;
+    }.execute().throwException().getResultObject();
   }
 
   public static VirtualFile createDirectoryIfMissing(VirtualFile parent, String relativePath) throws IOException {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -237,8 +238,14 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   public void testQualifyNameOnSecondCompletion() throws Throwable {
-    final Module module = ModuleManager.getInstance(getProject()).newModule("second.iml", new JavaModuleType());
-    createClass(module, "package foo.bar; class AxBxCxDxEx {}");
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final Module module = ModuleManager.getInstance(getProject()).newModule("second.iml", new JavaModuleType());
+        createClass(module, "package foo.bar; class AxBxCxDxEx {}");
+      }
+    }.execute().throwException();
+
     configureByFileNoCompletion(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-source.java");
     new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, myFile, 2);
     checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.android.actions.CreateResourceDialog">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="20" y="20" width="407" height="170"/>
@@ -13,12 +13,13 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="File name:"/>
+          <labelFor value="6bfe"/>
+          <text value="&amp;File name:"/>
         </properties>
       </component>
       <hspacer id="ccc36">
         <constraints>
-          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
       <vspacer id="5d2d6">
@@ -34,17 +35,25 @@
         </constraints>
         <properties/>
       </component>
-      <component id="6cd6a" class="javax.swing.JLabel">
+      <component id="6cd6a" class="javax.swing.JLabel" binding="myResTypeLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Resource type"/>
+          <text value="&amp;Resource type"/>
         </properties>
       </component>
-      <component id="577d8" class="javax.swing.JComboBox" binding="myResourceTypeCombo">
+      <component id="c5913" class="javax.swing.JLabel" binding="myUpDownHint">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <toolTipText value="Pressing Up or Down arrows while in editor changes the kind"/>
+        </properties>
+      </component>
+      <component id="45173" class="com.intellij.ide.actions.TemplateKindCombo" binding="myResourceTypeCombo">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
       </component>

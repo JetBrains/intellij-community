@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -41,6 +42,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 @NonNls public class PsiTestUtil {
@@ -82,40 +84,64 @@ import java.util.Collection;
     File dir = FileUtil.createTempDirectory(tempName, null);
     filesToDelete.add(dir);
 
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
-    if (rootPath != null) {
-      VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
-      if (vDir1 == null) {
-        throw new Exception(rootPath + " not found");
+    final Exception[] exception = {null};
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        if (rootPath != null) {
+          VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
+          if (vDir1 == null) {
+            exception[0] = new Exception(rootPath + " not found");
+            return;
+          }
+          try {
+            VfsUtil.copyDirectory(null, vDir1, vDir, null);
+          }
+          catch (IOException e) {
+            exception[0] = e;
+            return;
+          }
+        }
+
+        if (addProjectRoots) {
+          addSourceContentToRoots(module, vDir);
+        }
       }
-      VfsUtil.copyDirectory(null, vDir1, vDir, null);
-    }
+    });
+    if (exception[0] != null) throw exception[0];
 
-    if (addProjectRoots) {
-      addSourceContentToRoots(module, vDir);
-    }
     return vDir;
   }
 
-  public static void removeAllRoots(Module module, final Sdk jdk) {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    rootModel.clear();
-    rootModel.setSdk(jdk);
-    rootModel.commit();
+  public static void removeAllRoots(final Module module, final Sdk jdk) {
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        rootModel.clear();
+        rootModel.setSdk(jdk);
+        rootModel.commit();
+      }
+    }.execute().throwException();
   }
 
   public static void addSourceContentToRoots(Module module, VirtualFile vDir) {
     addSourceContentToRoots(module, vDir, false);
   }
 
-  public static void addSourceContentToRoots(Module module, VirtualFile vDir, final boolean testSource) {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
-    contentEntry.addSourceFolder(vDir, testSource);
-    rootModel.commit();
+  public static void addSourceContentToRoots(final Module module, final VirtualFile vDir, final boolean testSource) {
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
+        contentEntry.addSourceFolder(vDir, testSource);
+        rootModel.commit();
+      }
+    }.execute().throwException();
   }
 
   public static void addSourceRoot(Module module, final VirtualFile vDir) {
@@ -123,25 +149,35 @@ import java.util.Collection;
   }
 
   public static void addSourceRoot(final Module module, final VirtualFile vDir, final boolean isTestSource) {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    final ContentEntry[] contentEntries = rootModel.getContentEntries();
-    ContentEntry entry = ContainerUtil.find(contentEntries, new Condition<ContentEntry>() {
+    new WriteCommandAction.Simple(module.getProject()) {
       @Override
-      public boolean value(final ContentEntry object) {
-        return VfsUtil.isAncestor(object.getFile(), vDir, false);
+      protected void run() throws Throwable {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        final ContentEntry[] contentEntries = rootModel.getContentEntries();
+        ContentEntry entry = ContainerUtil.find(contentEntries, new Condition<ContentEntry>() {
+          @Override
+          public boolean value(final ContentEntry object) {
+            return VfsUtil.isAncestor(object.getFile(), vDir, false);
+          }
+        });
+        if (entry == null) entry = rootModel.addContentEntry(vDir);
+        entry.addSourceFolder(vDir, isTestSource);
+        rootModel.commit();
       }
-    });
-    if (entry == null) entry = rootModel.addContentEntry(vDir);
-    entry.addSourceFolder(vDir, isTestSource);
-    rootModel.commit();
+    }.execute().throwException();
   }
 
-  public static ContentEntry addContentRoot(Module module, VirtualFile vDir) {
+  public static ContentEntry addContentRoot(final Module module, final VirtualFile vDir) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    rootModel.addContentEntry(vDir);
-    rootModel.commit();
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        rootModel.addContentEntry(vDir);
+        rootModel.commit();
+      }
+    }.execute().throwException();
     for (ContentEntry entry : rootManager.getContentEntries()) {
       if (entry.getFile() == vDir) {
         Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
@@ -151,11 +187,16 @@ import java.util.Collection;
     return null;
   }
 
-  public static void removeContentEntry(Module m, ContentEntry e) {
-    ModuleRootManager rootModel = ModuleRootManager.getInstance(m);
-    ModifiableRootModel model = rootModel.getModifiableModel();
-    model.removeContentEntry(e);
-    model.commit();
+  public static void removeContentEntry(final Module module, final ContentEntry e) {
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModuleRootManager rootModel = ModuleRootManager.getInstance(module);
+        ModifiableRootModel model = rootModel.getModifiableModel();
+        model.removeContentEntry(e);
+        model.commit();
+      }
+    }.execute().throwException();
   }
 
   public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
@@ -174,30 +215,35 @@ import java.util.Collection;
         addLibrary(module, model, libName, libPath, jarArr);
         model.commit();
       }
-    }.execute();
+    }.execute().throwException();
   }
 
-  public static void addLibrary(Module module, ModifiableRootModel model, String libName, String libPath, String... jarArr) {
-    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-    final Library library = libraryTable.createLibrary(libName);
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    for (String jar : jarArr) {
-      if (!libPath.endsWith("/") && !jar.startsWith("/")) {
-        jar = "/" + jar;
+  public static void addLibrary(final Module module, final ModifiableRootModel model, final String libName, final String libPath, final String... jarArr) {
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
+        final Library library = libraryTable.createLibrary(libName);
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (String jar : jarArr) {
+          if (!libPath.endsWith("/") && !jar.startsWith("/")) {
+            jar = "/" + jar;
+          }
+          final String path = libPath + jar;
+          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+          assert root != null : "Library root folder not found: " + path + "!/";
+          libraryModel.addRoot(root, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+        model.addLibraryEntry(library);
+        final OrderEntry[] orderEntries = model.getOrderEntries();
+        OrderEntry last = orderEntries[orderEntries.length - 1];
+        for (int i = orderEntries.length - 2; i > -1; i--) {
+          orderEntries[i + 1] = orderEntries[i];
+        }
+        orderEntries[0] = last;
+        model.rearrangeOrderEntries(orderEntries);
       }
-      final String path = libPath + jar;
-      final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
-      assert root != null : "Library root folder not found: " + path + "!/";
-      libraryModel.addRoot(root, OrderRootType.CLASSES);
-    }
-    libraryModel.commit();
-    model.addLibraryEntry(library);
-    final OrderEntry[] orderEntries = model.getOrderEntries();
-    OrderEntry last = orderEntries[orderEntries.length - 1];
-    for (int i = orderEntries.length - 2; i > -1; i--) {
-      orderEntries[i + 1] = orderEntries[i];
-    }
-    orderEntries[0] = last;
-    model.rearrangeOrderEntries(orderEntries);
+    }.execute().throwException();
   }
 }

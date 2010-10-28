@@ -18,8 +18,8 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -36,4 +36,6 @@ public interface TemplateOptionalProcessor {
 
   boolean isEnabled(final Template template);
   void setEnabled(Template template, boolean value);
+
+  boolean isVisible(final Template template);
 }

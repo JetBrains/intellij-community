@@ -17,17 +17,17 @@ package org.intellij.lang.xpath;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import junit.framework.TestCase;
 
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
 * Date: 17.12.2008
 */
-public abstract class TestBase extends TestCase {
+public abstract class TestBase extends UsefulTestCase {
 
   protected TestBase() {
     PlatformTestCase.initPlatformLangPrefix();

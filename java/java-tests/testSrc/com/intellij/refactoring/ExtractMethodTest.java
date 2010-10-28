@@ -372,6 +372,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testUnusedGenerics() throws Exception {
+    doTest();
+  }
+
   public void testParamsUsedInLocalClass() throws Exception {
     doTest();
   }

@@ -36,8 +36,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -69,8 +69,16 @@ import java.util.StringTokenizer;
  * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
-  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-  public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
+    "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
+  private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
+    new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
+    @Override
+    protected Boolean compute(PsiElement parent, Object p) {
+      OuterLanguageElement element = PsiTreeUtil.getChildOfType(parent, OuterLanguageElement.class);
+      return element != null && element.getLanguage() != parent.getLanguage();
+    }
+  };
   private List<HighlightInfo> myResult;
 
   private static boolean ourDoJaxpTesting;
@@ -145,7 +153,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     if (myResult == null) {
-      if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+      if (!skipValidation(tag)) {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
 
         if (tag instanceof HtmlTag &&
@@ -243,7 +251,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
       if (parentDescriptor != null &&
           elementDescriptor == null &&
-          parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null &&
+          !skipValidation(parentTag) &&
           !XmlUtil.tagFromTemplateFramework(tag)
       ) {
         if (tag instanceof HtmlTag) {
@@ -280,6 +288,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
 
+    checkRequiredAttributes(tag, name, elementDescriptor);
+
+    if (elementDescriptor instanceof Validator) {
+      //noinspection unchecked
+      ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
+    }
+  }
+
+  private void checkRequiredAttributes(XmlTag tag, String name, XmlElementDescriptor elementDescriptor) {
     XmlAttributeDescriptor[] attributeDescriptors = elementDescriptor.getAttributesDescriptors(tag);
     Set<String> requiredAttributes = null;
 
@@ -317,11 +334,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-    }
-
-    if (elementDescriptor instanceof Validator) {
-      //noinspection unchecked
-      ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
     }
   }
 
@@ -387,12 +399,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return context != null && skipValidation(context);
   }
 
-  private static boolean skipValidation(PsiElement context) {
-    return context.getUserData(DO_NOT_VALIDATE_KEY) != null;
+  public static boolean skipValidation(PsiElement context) {
+    return DO_NOT_VALIDATE.get(context, null);
   }
 
   public static void setSkipValidation(@NotNull PsiElement element) {
-    element.putUserData(DO_NOT_VALIDATE_KEY, "");
+    DO_NOT_VALIDATE.put(element, Boolean.TRUE);
   }
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {}
@@ -548,7 +560,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;
 
-    if (attributeDescriptor != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+    if (attributeDescriptor != null && !skipValidation(value)) {
       String error = attributeDescriptor.validateValue(value, attribute.getValue());
 
       if (error != null) {
@@ -566,11 +578,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkReferences(PsiElement value) {
     if (value == null) return;
 
-    doCheckRefs(value, value.getReferences());
-  }
-
-  private void doCheckRefs(final PsiElement value, final PsiReference[] references) {
-    doCheckRefs(value, references, 0);
+    doCheckRefs(value, value.getReferences(), 0);
   }
 
   private void doCheckRefs(final PsiElement value, final PsiReference[] references, int start) {
@@ -580,41 +588,42 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (reference == null) {
         continue;
       }
-      if(hasBadResolve(reference, false)) {
-        String description = getErrorDescription(reference);
+      if (!hasBadResolve(reference, false)) {
+        continue;
+      }
+      String description = getErrorDescription(reference);
 
-        final int startOffset = reference.getElement().getTextRange().getStartOffset();
-        final TextRange referenceRange = reference.getRangeInElement();
+      final int startOffset = reference.getElement().getTextRange().getStartOffset();
+      final TextRange referenceRange = reference.getRangeInElement();
 
-        // logging for IDEADEV-29655
-        if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
-          LOG.error("Reference range start offset > end offset:  " + reference +
-          ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
-        }
+      // logging for IDEADEV-29655
+      if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
+        LOG.error("Reference range start offset > end offset:  " + reference +
+        ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
+      }
 
-        HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
-        if (value instanceof XmlAttributeValue) {
-          PsiElement parent = value.getParent();
-          if (parent instanceof XmlAttribute) {
-            String name = ((XmlAttribute)parent).getName().toLowerCase();
-            if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
-              type = HighlightInfoType.WARNING;
-            }
-            else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
-              continue;
-            }
+      HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
+      if (value instanceof XmlAttributeValue) {
+        PsiElement parent = value.getParent();
+        if (parent instanceof XmlAttribute) {
+          String name = ((XmlAttribute)parent).getName().toLowerCase();
+          if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
+            type = HighlightInfoType.WARNING;
+          }
+          else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
+            continue;
           }
         }
-        HighlightInfo info = HighlightInfo.createHighlightInfo(
-          type,
-          startOffset + referenceRange.getStartOffset(),
-          startOffset + referenceRange.getEndOffset(),
-          description
-        );
-        addToResults(info);
-        if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
       }
+      HighlightInfo info = HighlightInfo.createHighlightInfo(
+        type,
+        startOffset + referenceRange.getStartOffset(),
+        startOffset + referenceRange.getEndOffset(),
+        description
+      );
+      addToResults(info);
+      if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
     }
   }
 
@@ -631,10 +640,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     String description;
     try {
       description = MessageFormat.format(message, reference.getCanonicalText());
-    } catch(IllegalArgumentException ex) {
+    }
+    catch (IllegalArgumentException ex) {
       // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
       description = message;
-      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem",reference.getClass().getName(),message));
+      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem", reference.getClass().getName(), message));
     }
     return description;
   }
@@ -702,16 +712,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addToResults(highlightInfo);
       }
     }
-  }
-
-  public static void visitJspElement(OuterLanguageElement text) {
-    PsiElement parent = text.getParent();
-
-    if (parent instanceof XmlText) {
-      parent = parent.getParent();
-    }
-
-    parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
   public boolean suitableForFile(final PsiFile file) {

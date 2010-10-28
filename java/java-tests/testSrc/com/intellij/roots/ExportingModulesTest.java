@@ -4,6 +4,7 @@
  */
 package com.intellij.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -31,44 +32,51 @@ public class ExportingModulesTest extends IdeaTestCase {
     final VirtualFile testRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath);
     assertNotNull(testRoot);
 
-    final ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    final Module moduleA = moduleModel.newModule("A.iml", StdModuleTypes.JAVA);
-    final Module moduleB = moduleModel.newModule("B.iml", StdModuleTypes.JAVA);
-    final Module moduleC = moduleModel.newModule("C.iml", StdModuleTypes.JAVA);
-    moduleModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+        final Module moduleA = moduleModel.newModule("A.iml", StdModuleTypes.JAVA);
+        final Module moduleB = moduleModel.newModule("B.iml", StdModuleTypes.JAVA);
+        final Module moduleC = moduleModel.newModule("C.iml", StdModuleTypes.JAVA);
+        moduleModel.commit();
 
-    configureModule(moduleA, testRoot, "A");
-    configureModule(moduleB, testRoot, "B");
-    configureModule(moduleC, testRoot, "C");
+        configureModule(moduleA, testRoot, "A");
+        configureModule(moduleB, testRoot, "B");
+        configureModule(moduleC, testRoot, "C");
 
-    final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-    final ModuleOrderEntry moduleBAentry = rootModelB.addModuleOrderEntry(moduleA);
-    moduleBAentry.setExported(true);
-    rootModelB.commit();
+        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+        final ModuleOrderEntry moduleBAentry = rootModelB.addModuleOrderEntry(moduleA);
+        moduleBAentry.setExported(true);
+        rootModelB.commit();
 
-    final ModifiableRootModel rootModelC = ModuleRootManager.getInstance(moduleC).getModifiableModel();
-    rootModelC.addModuleOrderEntry(moduleB);
-    rootModelC.commit();
+        final ModifiableRootModel rootModelC = ModuleRootManager.getInstance(moduleC).getModifiableModel();
+        rootModelC.addModuleOrderEntry(moduleB);
+        rootModelC.commit();
 
-    final PsiClass pCClass =
-      JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
-    assertNotNull(pCClass);
+        final PsiClass pCClass =
+          JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
+        assertNotNull(pCClass);
 
-    final PsiClass pAClass =
-      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB));
-    assertNotNull(pAClass);
+        final PsiClass pAClass =
+          JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB));
+        assertNotNull(pAClass);
 
-    final PsiClass pAClass2 =
-      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
-    assertNotNull(pAClass2);
-
+        final PsiClass pAClass2 =
+          JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
+        assertNotNull(pAClass2);
+      }
+    });
   }
 
   private void configureModule(final Module module, final VirtualFile testRoot, final String name) {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final VirtualFile contentRoot = testRoot.findChild(name);
-    final ContentEntry contentEntry = rootModel.addContentEntry(contentRoot);
-    contentEntry.addSourceFolder(contentRoot.findChild("src"), false);
-    rootModel.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        final VirtualFile contentRoot = testRoot.findChild(name);
+        final ContentEntry contentEntry = rootModel.addContentEntry(contentRoot);
+        contentEntry.addSourceFolder(contentRoot.findChild("src"), false);
+        rootModel.commit();
+      }
+    });
   }
 }

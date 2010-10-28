@@ -77,7 +77,8 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
       (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
-    final Runnable action = new Runnable() {
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
@@ -92,9 +93,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
         contentEntry.addExcludeFolder(excludeFile);
         rootModel.commit();
       }
-    };
-
-    ApplicationManager.getApplication().runWriteAction(action);
+    });
 
 
     final Element element = new Element("root");

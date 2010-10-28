@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.dom.wrappers;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -308,7 +308,7 @@ public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapp
   }
 
   @Nullable
-  public ASTNode getNode() {
+  public FileASTNode getNode() {
     return myWrappee.getNode();
   }
 

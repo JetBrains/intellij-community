@@ -1,6 +1,6 @@
 PsiJavaFileStub []
   PsiClassStub[name=DoubleTest fqn=DoubleTest]
-    PsiModifierListStub[mask=9]
+    PsiModifierListStub[mask=1]
     PsiTypeParameterListStub
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:]

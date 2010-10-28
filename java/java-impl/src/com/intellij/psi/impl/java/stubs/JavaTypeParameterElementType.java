@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.compiled.ClsTypeParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -32,6 +34,9 @@ import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
   public JavaTypeParameterElementType() {
     super("TYPE_PARAMETER");
@@ -53,6 +58,13 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
   public PsiTypeParameterStub createStub(final PsiTypeParameter psi, final StubElement parentStub) {
     StringRef name = StringRef.fromString(psi.getName());
     return new PsiTypeParameterStubImpl(parentStub, name);
+  }
+
+  @Override
+  public PsiTypeParameterStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
+    final String name = RecordUtil.intern(tree.getCharTable(), id);
+    return new PsiTypeParameterStubImpl(parentStub, StringRef.fromString(name));
   }
 
   public void serialize(final PsiTypeParameterStub stub, final StubOutputStream dataStream) throws IOException {

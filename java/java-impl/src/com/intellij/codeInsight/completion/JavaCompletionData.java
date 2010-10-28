@@ -525,6 +525,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
       variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
       variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
+      variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);
       variant.includeScopeClass(PsiExpressionList.class);
       variant.includeScopeClass(PsiStatement.class);
       registerVariant(variant);
@@ -547,7 +548,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   private static void addKeywords(CompletionVariant variant){
     variant.addCompletion(PsiKeyword.SWITCH, TailTypes.SWITCH_LPARENTH);
     variant.addCompletion(PsiKeyword.WHILE, TailTypes.WHILE_LPARENTH);
+    variant.addCompletion(PsiKeyword.DO, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.FOR, TailTypes.FOR_LPARENTH);
+    variant.addCompletion(PsiKeyword.IF, TailTypes.IF_LPARENTH);
     variant.addCompletion(PsiKeyword.TRY, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);

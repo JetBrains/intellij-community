@@ -496,6 +496,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final VariablesProcessor processor = new VariablesProcessor(false) {
         protected boolean check(PsiVariable var, ResolveState state) {
           if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
+          if (var instanceof PsiLocalVariable && list.getTextRange().getStartOffset() <= var.getTextRange().getStartOffset()) return false;
+          if (PsiTreeUtil.isAncestor(var, list, false)) return false;
           final PsiType varType = state.get(PsiSubstitutor.KEY).substitute(var.getType());
           return type.isAssignableFrom(varType);
         }
@@ -509,6 +511,23 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (processor.size() == 1) {
         final PsiVariable result = processor.getResult(0);
         return factory.createExpressionFromText(result.getName(), list);
+      }
+      if (processor.size() == 0) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(list, PsiClass.class);
+        if (parentClass != null) {
+          PsiClass containingClass = parentClass;
+          final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+          while (containingClass != null) {
+            if (type.isAssignableFrom(factory.createType(containingClass, PsiSubstitutor.EMPTY))) {
+              containingClasses.add(containingClass);
+            }
+            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+          }
+          if (containingClasses.size() == 1) {
+            return RefactoringUtil.createThisExpression(parentClass.getManager(), containingClasses.contains(parentClass) ? null
+                                                                                                                          : containingClasses.iterator().next());
+          }
+        }
       }
     }
     final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(list, PsiCallExpression.class);

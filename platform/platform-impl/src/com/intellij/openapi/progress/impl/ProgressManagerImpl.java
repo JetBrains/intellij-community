@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -41,8 +39,10 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager {
@@ -196,7 +196,7 @@ public class ProgressManagerImpl extends ProgressManager {
     executeProcessUnderProgress(new Runnable(){
       public void run() {
         synchronized (process) {
-          process.notify();
+          process.notifyAll();
         }
         try {
           if (progress != null && !progress.isRunning()) {
@@ -209,6 +209,9 @@ public class ProgressManagerImpl extends ProgressManager {
             progress.stop();
             if (progress instanceof ProgressIndicatorEx) {
               ((ProgressIndicatorEx)progress).processFinish();
+            }
+            synchronized (process) {
+              process.notifyAll();
             }
           }
         }

@@ -1,9 +1,6 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
       <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>
@@ -17,10 +14,6 @@
     <component>
       <interface-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManager</interface-class>
       <implementation-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
-      <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.ide.impl.convert.ProjectFileVersion</interface-class>

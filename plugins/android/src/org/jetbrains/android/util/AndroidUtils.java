@@ -15,7 +15,10 @@
  */
 package org.jetbrains.android.util;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.ShellCommandUnresponsiveException;
+import com.android.ddmlib.TimeoutException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -90,6 +93,7 @@ public class AndroidUtils {
   public static final String CLASSES_FILE_NAME = "classes.dex";
 
   public static final Icon ANDROID_ICON = IconLoader.getIcon("/icons/android.png");
+  public static final Icon DDMS_ICON = IconLoader.getIcon("/icons/ddms.png");
   public static final String NAMESPACE_KEY = "android";
   public static final String SYSTEM_RESOURCE_PACKAGE = "android";
   public static final String R_JAVA_FILENAME = "R.java";
@@ -330,10 +334,19 @@ public class AndroidUtils {
     return (c.isInterface() || c.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
-  public static void executeCommand(IDevice device, String command, AndroidOutputReceiver receiver, boolean infinite) throws IOException {
+  @SuppressWarnings({"DuplicateThrows"})
+  public static void executeCommand(IDevice device, String command, AndroidOutputReceiver receiver, boolean infinite) throws IOException,
+                                                                                                                             TimeoutException,
+                                                                                                                             AdbCommandRejectedException,
+                                                                                                                             ShellCommandUnresponsiveException {
     int attempt = 0;
     while (attempt < 5) {
-      device.executeShellCommand(command, receiver);
+      if (infinite) {
+        device.executeShellCommand(command, receiver, 0);
+      }
+      else {
+        device.executeShellCommand(command, receiver);
+      }
       if (infinite && !receiver.isCancelled()) {
         attempt++;
       }

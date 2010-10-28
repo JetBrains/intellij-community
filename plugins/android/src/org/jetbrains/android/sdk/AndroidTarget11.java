@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -158,6 +159,28 @@ public class AndroidTarget11 implements IAndroidTarget {
 
   public String[] getPlatformLibraries() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public String getProperty(String name) {
+    return null;
+  }
+
+  @Override
+  public Integer getProperty(String name, Integer defaultValue) {
+    return defaultValue;
+  }
+
+  @Override
+  public Boolean getProperty(String name, Boolean defaultValue) {
+    return defaultValue;
+  }
+
+  @Nullable
+  @Override
+  public Map<String, String> getProperties() {
+    return null;
   }
 
   public int getUsbVendorId() {

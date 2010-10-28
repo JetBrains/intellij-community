@@ -42,21 +42,9 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          try{
-            String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
-            myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
+    String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
     myGenerator = new FormSourceCodeGenerator(getProject());
   }
 

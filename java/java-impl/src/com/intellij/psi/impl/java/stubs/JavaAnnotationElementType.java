@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -33,6 +33,9 @@ import com.intellij.psi.stubs.StubOutputStream;
 
 import java.io.IOException;
 
+/*
+ * @author max
+ */
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
   public JavaAnnotationElementType() {
     super("ANNOTATION");
@@ -55,19 +58,22 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new PsiAnnotationStubImpl(parentStub, psi.getText());
   }
 
-  public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream)
-      throws IOException {
+  @Override
+  public PsiAnnotationStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    final String text = LightTreeUtil.toFilteredString(tree, node, null);
+    return new PsiAnnotationStubImpl(parentStub, text);
+  }
+
+  public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeUTFFast(stub.getText());
   }
 
-  public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+  public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {
-    final String text = stub.getText();
-    final String refText = getReferenceShortName(text);
+    final String refText = getReferenceShortName(stub.getText());
     sink.occurrence(JavaAnnotationIndex.KEY, refText);
   }
 

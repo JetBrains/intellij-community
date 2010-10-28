@@ -99,7 +99,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
 
-        new CodeCompletionHandlerBase(CompletionType.BASIC, false, false).invoke(project, editor);
+        new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(project, editor);
 
         final AutoPopupState state = new AutoPopupState(project, editor);
         editor.putUserData(STATE_KEY, state);

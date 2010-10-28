@@ -1,4 +1,4 @@
-// "Change 'new ArrayList<Integer>(2)' to 'new ArrayList<String>()'" "true"
+// "Change 'new ArrayList<Integer>(...)' to 'new ArrayList<String>()'" "true"
 import java.util.*;
 
 class RRR {

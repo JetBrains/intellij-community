@@ -16,8 +16,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -42,9 +40,11 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,9 +89,19 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tearDown() throws Exception {
-    myMainOutput.tearDown();
-    myMainOutput = null;
-    super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myMainOutput.tearDown();
+          myMainOutput = null;
+          GroovyCompilerTestCase.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   protected void setupTestSources() {
@@ -150,7 +160,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected static void setFileText(final PsiFile file, final String barText) throws IOException {
-    Runnable runnable = new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
@@ -160,9 +170,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
           throw new RuntimeException(e);
         }
       }
-    };
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
-
+    });
   }
 
   protected void setFileName(final PsiFile bar, final String name) {
@@ -178,8 +186,24 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
-    CompilerManager.getInstance(getProject()).make(callback);
-    semaphore.waitFor();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          CompilerManager.getInstance(getProject()).make(callback);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    //tests run in awt
+    while (!semaphore.waitFor(100)) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
     callback.throwException();
     return callback.getMessages();
   }

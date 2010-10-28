@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -259,19 +260,24 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {
-    return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference t) {
-        PsiFile f = t.getElement().getContainingFile();
-        if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-          return true;
+    try {
+      return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference t) {
+          PsiFile f = t.getElement().getContainingFile();
+          if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+            return true;
+          }
+          PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
+          if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
+            return true;
+          }
+          return false;
         }
-        PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
-        if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
-          return true;
-        }
-        return false;
-      }
-    });
+      });
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 
   public static void checkCreateBindingFromText(final RadComponent component, final String text) {

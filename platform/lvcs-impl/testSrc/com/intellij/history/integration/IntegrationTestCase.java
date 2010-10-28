@@ -60,7 +60,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
 
     myGateway = new IdeaGateway();
 
-    runWriteAction(new RunnableAdapter() {
+    ApplicationManager.getApplication().runWriteAction(new RunnableAdapter() {
       @Override
       public void doRun() throws Exception {
         setUpInWriteAction();
@@ -83,10 +83,6 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     Clock.reset();
     Paths.useSystemCaseSensitivity();
     super.tearDown();
-  }
-
-  protected void runWriteAction(Runnable r) {
-    ApplicationManager.getApplication().runWriteAction(r);
   }
 
   protected VirtualFile createFile(String name) throws IOException {
@@ -159,21 +155,29 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     addContentRoot(myModule, path);
   }
 
-  protected void addContentRoot(Module module, String path) {
-    ModuleRootManager rm = ModuleRootManager.getInstance(module);
-    ModifiableRootModel m = rm.getModifiableModel();
-    m.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
-    m.commit();
+  protected void addContentRoot(final Module module, final String path) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModuleRootManager rm = ModuleRootManager.getInstance(module);
+        ModifiableRootModel m = rm.getModifiableModel();
+        m.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
+        m.commit();
+      }
+    });
   }
 
-  protected void addExcludedDir(String path) {
-    ModuleRootManager rm = ModuleRootManager.getInstance(myModule);
-    ModifiableRootModel m = rm.getModifiableModel();
-    for (ContentEntry e : m.getContentEntries()) {
-      if (e.getFile() != myRoot) continue;
-      e.addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
-    }
-    m.commit();
+  protected void addExcludedDir(final String path) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModuleRootManager rm = ModuleRootManager.getInstance(myModule);
+        ModifiableRootModel m = rm.getModifiableModel();
+        for (ContentEntry e : m.getContentEntries()) {
+          if (e.getFile() != myRoot) continue;
+          e.addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
+        }
+        m.commit();
+      }
+    });
   }
 
   protected void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {

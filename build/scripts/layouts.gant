@@ -1,5 +1,5 @@
 import org.jetbrains.jps.Module
-import static org.jetbrains.jps.idea.IdeaProjectLoader.*
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 

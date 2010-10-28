@@ -92,6 +92,15 @@ public class TailTypes {
       return styleSettings.SPACE_WITHIN_FOR_PARENTHESES;
     }
   };
+  public static final TailType IF_LPARENTH = new ParenthesesTailType() {
+    protected boolean isSpaceBeforeParentheses(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_IF_PARENTHESES;
+    }
+
+    protected boolean isSpaceWithinParentheses(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
+    }
+  };
   public static final TailType FINALLY_LBRACE = new BracesTailType() {
     protected boolean isSpaceBeforeLBrace(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
       return styleSettings.SPACE_BEFORE_FINALLY_LBRACE;

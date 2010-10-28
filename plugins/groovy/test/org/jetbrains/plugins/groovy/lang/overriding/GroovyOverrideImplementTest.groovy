@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
@@ -68,7 +69,12 @@ class Test {
   private def generateImplementation(PsiMethod method) {
     GrTypeDefinition clazz = ((PsiClassOwner) myFixture.file).classes[0]
     GroovyOverrideImplementUtil.generateImplementation myFixture.editor, myFixture.file, clazz, method, PsiSubstitutor.EMPTY
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+                                                       @Override
+                                                       void run() {
+                                                         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+                                                       }
+                                                       });
     myFixture.editor.selectionModel.removeSelection()
   }
 

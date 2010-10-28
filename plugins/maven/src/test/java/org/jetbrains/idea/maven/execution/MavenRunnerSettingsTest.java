@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -46,22 +47,27 @@ public class MavenRunnerSettingsTest extends MavenImportingTestCase {
   }
 
   public void testUsingLatestAvailableJdk() throws Exception {
-    Sdk jdk3 = createJdk("Java 1.3");
-    Sdk jdk4 = createJdk("Java 1.4");
-    Sdk jdk5 = createJdk("Java 1.5");
-    ProjectJdkTable.getInstance().addJdk(jdk3);
-    ProjectJdkTable.getInstance().addJdk(jdk5);
-    ProjectJdkTable.getInstance().addJdk(jdk4);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        Sdk jdk3 = createJdk("Java 1.3");
+        Sdk jdk4 = createJdk("Java 1.4");
+        Sdk jdk5 = createJdk("Java 1.5");
+        ProjectJdkTable.getInstance().addJdk(jdk3);
+        ProjectJdkTable.getInstance().addJdk(jdk5);
+        ProjectJdkTable.getInstance().addJdk(jdk4);
 
-    try {
-      MavenRunnerSettings settings = new MavenRunnerSettings();
-      assertEquals("Java 1.5", settings.getJreName());
-    }
-    finally {
-      ProjectJdkTable.getInstance().removeJdk(jdk3);
-      ProjectJdkTable.getInstance().removeJdk(jdk4);
-      ProjectJdkTable.getInstance().removeJdk(jdk5);
-    }
+        try {
+          MavenRunnerSettings settings = new MavenRunnerSettings();
+          assertEquals("Java 1.5", settings.getJreName());
+        }
+        finally {
+          ProjectJdkTable.getInstance().removeJdk(jdk3);
+          ProjectJdkTable.getInstance().removeJdk(jdk4);
+          ProjectJdkTable.getInstance().removeJdk(jdk5);
+        }
+      }
+    }.execute().throwException();
   }
 
   public void testUsingInternalJdkIfNoOtherIsDefined() throws Exception {

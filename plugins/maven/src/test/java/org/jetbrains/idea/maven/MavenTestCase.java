@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.maven;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -34,6 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
@@ -63,6 +67,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
+  private boolean myCompileInBackground;
 
   @Override
   protected void setUp() throws Exception {
@@ -97,9 +102,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
       }
     });
+    myCompileInBackground = CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND;
+    CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = false;
   }
 
-  private void ensureTempDirCreated() {
+  private static void ensureTempDirCreated() {
     if (ourTempDir != null) return;
 
     ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
@@ -120,6 +127,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = myCompileInBackground;
+
     myProject = null;
     tearDownFixtures();
     if (!FileUtil.delete(myDir)) {
@@ -188,10 +197,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected boolean runInWriteAction() {
-    return true;
+    return false;
   }
 
-  protected String getRoot() {
+  protected static String getRoot() {
     if (SystemInfo.isWindows) return "c:";
     return "";
   }
@@ -235,7 +244,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return pathFromBasedir(myProjectRoot, relPath);
   }
 
-  protected String pathFromBasedir(VirtualFile root, String relPath) {
+  protected static String pathFromBasedir(VirtualFile root, String relPath) {
     return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
   }
 
@@ -243,7 +252,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return updateSettingsXmlFully(createSettingsXmlContent(content));
   }
 
-  protected VirtualFile updateSettingsXmlFully(String content) throws IOException {
+  protected VirtualFile updateSettingsXmlFully(@NonNls @Language("XML") String content) throws IOException {
     File ioFile = new File(myDir, "settings.xml");
     ioFile.createNewFile();
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
@@ -253,11 +262,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void deleteSettingsXml() throws IOException {
-    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
-    if (f != null) f.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
+        if (f != null) f.delete(this);
+      }
+    }.execute().throwException();
   }
 
-  private String createSettingsXmlContent(String content) {
+  private static String createSettingsXmlContent(String content) {
     String mirror = System.getProperty("idea.maven.test.mirror",
                                        "http://maven.labs.intellij.net:8081/nexus/content/groups/public/");
     return "<settings>" +
@@ -280,16 +294,21 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createModule(name, StdModuleTypes.JAVA);
   }
 
-  protected Module createModule(String name, ModuleType type) throws IOException {
-    VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
-    Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type);
-    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    model.addContentEntry(f.getParent());
-    model.commit();
-    return module;
+  protected Module createModule(final String name, final ModuleType type) throws IOException {
+    return new WriteCommandAction<Module>(myProject) {
+      @Override
+      protected void run(Result<Module> moduleResult) throws Throwable {
+        VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
+        Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type);
+        ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        model.addContentEntry(f.getParent());
+        model.commit();
+        moduleResult.setResult(module);
+      }
+    }.execute().getResultObject();
   }
 
-  protected VirtualFile createProjectPom(String xml) throws IOException {
+  protected VirtualFile createProjectPom(@NonNls String xml) throws IOException {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
@@ -297,17 +316,24 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
+  protected VirtualFile createPomFile(final VirtualFile dir, String xml) throws IOException {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
-      f = dir.createChildData(null, "pom.xml");
+      f = new WriteAction<VirtualFile>() {
+        @Override
+        protected void run(Result<VirtualFile> result) throws Throwable {
+          VirtualFile res = dir.createChildData(null, "pom.xml");
+          result.setResult(res);
+        }
+      }.execute().getResultObject();
       myAllPoms.add(f);
     }
     setFileContent(f, createPomXml(xml));
     return f;
   }
 
-  protected String createPomXml(String xml) {
+  @NonNls @Language(value="XML")
+  protected static String createPomXml(@NonNls @Language(value="XML", prefix="<xml>", suffix="</xml>") String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -345,16 +371,22 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createProfilesFile(createProjectSubDir(relativePath), content);
   }
 
-  private VirtualFile createProfilesFile(VirtualFile dir, String content) throws IOException {
+  private VirtualFile createProfilesFile(final VirtualFile dir, String content) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
-      f = dir.createChildData(null, "profiles.xml");
+      f = new WriteAction<VirtualFile>() {
+        @Override
+        protected void run(Result<VirtualFile> result) throws Throwable {
+          VirtualFile res = dir.createChildData(null, "profiles.xml");
+          result.setResult(res);
+        }
+      }.execute().getResultObject();
     }
     setFileContent(f, content);
     return f;
   }
 
-  private String createValidProfiles(String xml, boolean oldStyle) {
+  private static String createValidProfiles(String xml, boolean oldStyle) {
     if (oldStyle) {
       return "<?xml version=\"1.0\"?>" +
              "<profiles>" +
@@ -370,8 +402,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void deleteProfilesXml() throws IOException {
-    VirtualFile f = myProjectRoot.findChild("profiles.xml");
-    if (f != null) f.delete(this);
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile f = myProjectRoot.findChild("profiles.xml");
+        if (f != null) f.delete(this);
+      }
+    }.execute().throwException();
   }
 
   protected void createStdProjectFolders() {
@@ -406,11 +443,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return file;
   }
 
-  private void setFileContent(VirtualFile file, String content) throws IOException {
+  private static void setFileContent(VirtualFile file, String content) throws IOException {
     file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
   }
 
-  protected void assertPathEquals(String expected, String actual) {
+  protected static void assertPathEquals(String expected, String actual) {
     if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
     if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
     assertEquals(expected, actual);
@@ -428,7 +465,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
+  protected static <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
     assertEquals(s, expected.length, actual.size());
 
@@ -444,7 +481,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
     assertEquals(s, expected.length, actual.size());
 
@@ -456,12 +493,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected <T> void assertContain(List<? extends T> actual, T... expected) {
+  protected static <T> void assertContain(List<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
 
-  protected <T> void assertDoNotContain(List<T> actual, T... expected) {
+  protected static <T> void assertDoNotContain(List<T> actual, T... expected) {
     List<T> actualCopy = new ArrayList<T>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertTrue(actual.toString(), actualCopy.size() == actual.size());
@@ -493,7 +530,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     System.out.println(toPrint);
   }
 
-  private String getTestMavenHome() {
+  private static String getTestMavenHome() {
     return System.getProperty("idea.maven.test.home");
   }
 }

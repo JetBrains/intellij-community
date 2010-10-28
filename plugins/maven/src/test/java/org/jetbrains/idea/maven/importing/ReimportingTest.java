@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,11 +48,17 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testKeepingModuleGroups() throws Exception {
-    Module m = getModule("project");
+    final Module m = getModule("project");
 
-    ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-    model.setModuleGroupPath(m, new String[]{"group"});
-    model.commit();
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+        model.setModuleGroupPath(m, new String[]{"group"});
+        model.commit();
+      }
+    }.execute().throwException();
+
 
     importProject();
     assertModuleGroupPath("project", "group");

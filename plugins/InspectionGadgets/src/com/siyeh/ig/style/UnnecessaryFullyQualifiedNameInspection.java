@@ -115,10 +115,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (importList == null) {
                 return;
             }
-            final PsiClass aClass = (PsiClass)referenceElement.resolve();
-            if (aClass == null) {
+            final PsiElement target = referenceElement.resolve();
+            if (!(target instanceof PsiClass)) {
                 return;
             }
+            final PsiClass aClass = (PsiClass) target;
             final String qualifiedName = aClass.getQualifiedName();
             if (qualifiedName == null) {
                 return;
@@ -126,15 +127,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             final String containingPackageName = file.getPackageName();
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
-            if (!containingPackageName.equals(packageName)) {
-                if (importList.findSingleClassImportStatement(qualifiedName) == null) {
-                    if (importList.findOnDemandImportStatement(packageName) == null) {
-                        addImport(importList, aClass);
-                    } else if (ImportUtils.hasDefaultImportConflict(qualifiedName, file)) {
-                        addImport(importList, aClass);
-                    } else if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
-                        addImport(importList, aClass);
-                    }
+            if (!containingPackageName.equals(packageName) &&
+                    importList.findSingleClassImportStatement(qualifiedName) == null) {
+                if (importList.findOnDemandImportStatement(packageName) == null ||
+                        ImportUtils.hasDefaultImportConflict(qualifiedName, file) ||
+                        ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
+                    addImport(importList, aClass);
                 }
             }
             final String fullyQualifiedText = referenceElement.getText();

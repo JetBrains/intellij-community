@@ -16,6 +16,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 
@@ -34,7 +35,14 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
   @Override
   public Module getModule() {
     if (myModule != null) return myModule;
-    myModule = myBuilder.buildModule();
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        myModule = myBuilder.buildModule();
+      }
+    }.execute().throwException();
+
+
     //disposeOnTearDown(myModule);
     return myModule;
   }

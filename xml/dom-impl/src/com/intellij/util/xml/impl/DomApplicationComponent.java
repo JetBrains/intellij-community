@@ -68,7 +68,7 @@ public class DomApplicationComponent {
   private final ConcurrentFactoryMap<Class, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Class, InvocationCache>() {
     @NotNull
     protected InvocationCache create(final Class key) {
-      return new InvocationCache();
+      return new InvocationCache(key);
     }
   };
   private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =

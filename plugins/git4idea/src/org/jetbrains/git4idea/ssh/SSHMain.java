@@ -50,7 +50,7 @@ public class SSHMain {
   /**
    * the xml RPC port
    */
-  private final GitSSHXmlRcpClient myXmlRpcClient;
+  private final GitSSHXmlRpcClient myXmlRpcClient;
   /**
    * the command to run
    */
@@ -120,7 +120,7 @@ public class SSHMain {
     myHost = config.lookup(username, host, port);
     myHandlerNo = Integer.parseInt(System.getenv(GitSSHHandler.SSH_HANDLER_ENV));
     int xmlRpcPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PORT_ENV));
-    myXmlRpcClient = new GitSSHXmlRcpClient(xmlRpcPort, myHost.isBatchMode());
+    myXmlRpcClient = new GitSSHXmlRpcClient(xmlRpcPort, myHost.isBatchMode());
     myCommand = command;
   }
 

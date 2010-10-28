@@ -21,8 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
@@ -32,7 +30,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +44,7 @@ import java.util.List;
 public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference {
 
   public static final String ANT_FILE_PREFIX = "ant.file.";
+  public static final String ANT_FILE_TYPE_PREFIX = "ant.file.type.";
   private final DomElement myInvocationContextElement;
   private boolean myShouldBeSkippedByAnnotator = false;
   
@@ -107,28 +105,59 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     final MyResolveResult resolveResult = doResolve();
     if (resolveResult != null) {
       final PsiElement resolve = resolveResult.getElement();
+      final PropertiesProvider provider = resolveResult.getProvider();
       final String refText = getCanonicalText();
-      if (refText.startsWith(ANT_FILE_PREFIX)) {
-        if (resolve instanceof PomTargetPsiElement) {
-          final PomTarget target = ((PomTargetPsiElement)resolve).getTarget();
-          if(target instanceof DomTarget) {
-            final DomTarget domTarget = (DomTarget)target;
-            final String oldName = domTarget.getName();
-            if (oldName != null && (refText.length() == ANT_FILE_PREFIX.length() + oldName.length()) && refText.endsWith(oldName)) {
-              newElementName = ANT_FILE_PREFIX + newElementName;
-            }
+      if (provider instanceof AntDomProject) {
+        final DomElement resolvedDomElem = AntDomReferenceBase.toDomElement(resolve);
+        if (provider.equals(resolvedDomElem)) {
+          final String oldProjectName = ((AntDomProject)provider).getName().getValue();
+          if (oldProjectName != null && refText.endsWith(oldProjectName)) {
+            final String prefix = refText.substring(0, refText.length() - oldProjectName.length());
+            newElementName = prefix + newElementName;
           }
         }
       }
-      else {
-        final PropertiesProvider provider = resolveResult.getProvider();
-        final String prefix = provider instanceof AntDomProperty? ((AntDomProperty)provider).getPropertyPrefixValue() : null;
-        if (prefix != null) {
-          newElementName = prefix + newElementName;
+      else if (provider instanceof AntDomProperty) {
+        final AntDomProperty antProperty = (AntDomProperty)provider;
+        if (antProperty.equals(AntDomReferenceBase.toDomElement(resolve))) {
+          String envPrefix = antProperty.getEnvironment().getValue();
+          if (envPrefix != null) {
+            if (!envPrefix.endsWith(".")) {
+              envPrefix = envPrefix + ".";
+            }
+            if (refText.startsWith(envPrefix)) {
+              final String envVariableName = refText.substring(envPrefix.length());
+              final String newPrefix = newElementName.endsWith(".")? newElementName : newElementName + ".";
+              newElementName = newPrefix + envVariableName;
+            }
+          }
+        }
+        else {
+          final String prefix = antProperty.getPropertyPrefixValue();
+          if (prefix != null) {
+            newElementName = prefix + newElementName;
+          }
+        }
+      }
+
+    }
+    return super.handleElementRename(newElementName);
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    // optimization to exclude obvious variants
+    final DomElement domElement = AntDomReferenceBase.toDomElement(element);
+    if (domElement instanceof AntDomProperty) {
+      final AntDomProperty prop = (AntDomProperty)domElement;
+      final String propName = prop.getName().getRawText();
+      if (propName != null && prop.getPrefix().getRawText() == null && prop.getEnvironment().getRawText() == null) {
+        // if only 'name' attrib is specified  
+        if (!propName.equalsIgnoreCase(getCanonicalText())) {
+          return false;
         }
       }
     }
-    return super.handleElementRename(newElementName);
+    return super.isReferenceTo(element);
   }
 
   private static class MyResolveResult implements ResolveResult {

@@ -44,12 +44,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidFileTemplateProvider;
-import org.jetbrains.android.actions.CreateActivityAction;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -344,9 +342,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
               final Manifest manifest = facet.getManifest();
               if (manifest != null) {
                 manifest.getPackage().setValue(myPackageName);
-                if (isHelloAndroid()) {
-                  createActivity(packageDir);
-                }
                 final Project project = facet.getModule().getProject();
                 StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
                   public void run() {
@@ -365,28 +360,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
   }
 
-  private void createActivity(PsiDirectory packageDir) {
-    CreateActivityAction hackAction = new CreateActivityAction(true) {
-      @Override
-      protected boolean asStartupActivity() {
-        return true;
-      }
-    };
-    final PsiClass c = hackAction.createActivity(myActivityName, "", packageDir);
-    if (c != null) {
-      StartupManager.getInstance(c.getProject()).runWhenProjectIsInitialized(new Runnable() {
-        public void run() {
-          c.getProject().save();
-        }
-      });
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          c.getContainingFile().navigate(true);
-        }
-      });
-    }
-  }
-
   @NotNull
   private AndroidFacet addAndroidFacetAndLibrary(ModifiableRootModel rootModel) {
     Module module = rootModel.getModule();
@@ -397,7 +370,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     configuration.setAndroidPlatform(myPlatform);
     if (myProjectType == ProjectType.LIBRARY) {
       configuration.LIBRARY_PROJECT = true;
-      Project project = rootModel.getProject();
     }
     model.addFacet(facet);
     if (configuration.ADD_ANDROID_LIBRARY) {

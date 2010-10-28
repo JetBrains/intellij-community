@@ -26,6 +26,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -34,9 +37,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
@@ -44,8 +45,11 @@ import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -207,8 +211,40 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
   }
 
+  @Nullable
+  private PsiClass getScriptClass() {
+    final VirtualFile scriptFile = getScriptFile();
+    if (scriptFile == null) return null;
+    final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
+    if (file instanceof GroovyFile) {
+      if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
+      final PsiClass[] classes = ((GroovyFile)file).getClasses();
+      for (PsiClass aClass : classes) {
+        if (GroovyScriptRunConfigurationProducer.isRunnable(aClass)) {
+          return aClass;
+        }
+      }
+    }
+    return null;
+  }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();
+  }
+
+  @Override
+  public void checkConfiguration() throws RuntimeConfigurationException {
+    final PsiClass scriptClass = getScriptClass();
+    if (scriptClass == null) {
+      throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
+    }
+    if (scriptClass instanceof GrTypeDefinition) {
+      if (!GroovyScriptRunConfigurationProducer.isRunnable(scriptClass)) {
+        throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
+      }
+    }
+    else if (!(scriptClass instanceof GroovyScriptClass)) {
+      throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
+    }
   }
 }

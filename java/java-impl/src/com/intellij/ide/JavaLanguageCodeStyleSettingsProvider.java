@@ -118,12 +118,22 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                        "  private int field2;\n" +
                                                        "\n" +
                                                        "  public void foo1() {\n" +
-                                                       "\n" +
+                                                       "      new Runnable() {\n" +
+                                                       "          public void run() {\n" +
+                                                       "          }\n" +
+                                                       "      }\n" +
                                                        "  }\n" +
                                                        "\n" +
-                                                       "  public void foo2() {\n" +
+                                                       "  public class InnerClass {\n" +
                                                        "  }\n" +
-                                                       "\n" +
+                                                       "}\n" +
+                                                       "class AnotherClass {\n" +
+                                                       "}\n" +
+                                                       "interface TestInterface {\n" +
+                                                       "    int MAX = 10;\n" +
+                                                       "    int MIN = 1;\n" +
+                                                       "    void method1();\n" +
+                                                       "    void method2();\n" +
                                                        "}";
 
   private static final String SPACING_SAMPLE = "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
@@ -158,6 +168,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                "    }\n" +
                                                "    while (true);\n" +
                                                "  }\n" +
+                                               "  void bar(){{return;}}\n" +
                                                "}";
 
   private static final String WRAPPING_CODE_SAMPLE = "/*\n" +
@@ -200,7 +211,14 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      "    } finally {\n" +
                                                      "      processFinally();\n" +
                                                      "    }\n" +
+                                                     "    do {\n" +
+                                                     "        x--;\n" +
+                                                     "    } while (x > 10) \n" +
                                                      "  }\n" +
+                                                     "    public static void test() { \n" +
+                                                     "        foo.foo().bar(\"arg1\", \n" +
+                                                     "                      \"arg2\"); \n" +
+                                                     "    } \n" +
                                                      "}\n" +
                                                      "\n" +
                                                      "enum Breed {\n" +

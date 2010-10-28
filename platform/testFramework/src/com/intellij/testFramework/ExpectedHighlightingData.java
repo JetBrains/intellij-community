@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -44,6 +45,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -85,42 +87,46 @@ public class ExpectedHighlightingData {
   protected final Map<String,ExpectedHighlightingSet> highlightingTypes;
   private final Map<RangeMarker, LineMarkerInfo> lineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
 
-  public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
+  public ExpectedHighlightingData(@NotNull Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
   }
 
-  public ExpectedHighlightingData(Document document,
+  public ExpectedHighlightingData(@NotNull Document document,
                                   boolean checkWarnings,
                                   boolean checkWeakWarnings,
                                   boolean checkInfos) {
     this(document, checkWarnings, checkWeakWarnings, checkInfos, null);
   }
 
-  public ExpectedHighlightingData(Document document,
-                                  boolean checkWarnings,
-                                  boolean checkWeakWarnings,
-                                  boolean checkInfos,
+  public ExpectedHighlightingData(@NotNull final Document document,
+                                  final boolean checkWarnings,
+                                  final boolean checkWeakWarnings,
+                                  final boolean checkInfos,
                                   PsiFile file) {
     myFile = file;
     myText = document.getText();
     highlightingTypes = new LinkedHashMap<String,ExpectedHighlightingSet>();
-    highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
-    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
-    highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
-    highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
-    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
-      for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
-        final HighlightSeverity severity = type.getSeverity(null);
-        highlightingTypes.put(severity.toString(), new ExpectedHighlightingSet(type, severity , false, true));
+    new WriteCommandAction.Simple(file == null ? null : file.getProject()) {
+      public void run() {
+        highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
+        highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
+        highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
+        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
+        highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
+        for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+          for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
+            final HighlightSeverity severity = type.getSeverity(null);
+            highlightingTypes.put(severity.toString(), new ExpectedHighlightingSet(type, severity, false, true));
+          }
+        }
+        highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER,new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
+        highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
+        initAdditionalHighlightingTypes();
+        extractExpectedLineMarkerSet(document);
+        extractExpectedHighlightsSet(document);
+        refreshLineMarkers();
       }
-    }
-    highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
-    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
-    initAdditionalHighlightingTypes();
-    extractExpectedLineMarkerSet(document);
-    extractExpectedHighlightsSet(document);
-    refreshLineMarkers();
+    }.execute().throwException();
   }
 
   private void refreshLineMarkers() {
@@ -146,11 +152,11 @@ public class ExpectedHighlightingData {
     final Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     final Pattern pat2 = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
 
-    for (; ;) {
+    while (true) {
       Matcher m = p.matcher(text);
       if (!m.matches()) break;
       int startOffset = m.start(1);
-      final String descr = m.group(3) != null ? m.group(3): ANY_TEXT;
+      final String descr = m.group(3) != null ? m.group(3) : ANY_TEXT;
       String rest = m.group(4);
 
       document.replaceString(startOffset, m.end(1), "");
@@ -164,8 +170,8 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset,endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<PsiElement,String>(descr), null,
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
+                                                                 new ConstantFunction<PsiElement, String>(descr), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       lineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);

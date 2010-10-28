@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
             final PsiExpression binaryExpression =
                     (PsiExpression)parent;
             final PsiType type = binaryExpression.getType();
-            if (type != null && type != PsiType.CHAR) {
+            if (type != null && !type.equals(PsiType.CHAR)) {
                 final String typeText = type.getCanonicalText();
                 result.add(new CharUsedInArithmeticContentCastFix(typeText));
             }
@@ -68,8 +68,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         while (parent instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) parent;
-            if (TypeUtils.expressionHasType("java.lang.String",
-                    binaryExpression)) {
+            if (TypeUtils.expressionHasType(binaryExpression,
+                    "java.lang.String")) {
                 result.add(new CharUsedInArithmeticContentFix());
                 break;
             }
@@ -164,9 +164,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
                 return;
             }
             final PsiType rhsType = rhs.getType();
-            if (PsiType.CHAR.equals(rhsType)) {
-                registerError(rhs, rhs);
+            if (!PsiType.CHAR.equals(rhsType)) {
+                return;
             }
+            registerError(rhs, rhs);
         }
     }
 }

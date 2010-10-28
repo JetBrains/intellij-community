@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class TrivialStringConcatenationInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ConcatenationWithEmptyString";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "trivial.string.concatenation.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String replacementString =
@@ -72,13 +75,14 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
             } else {
                 replacementText = replacement.getText();
             }
-            if (TypeUtils.expressionHasType("java.lang.String", replacement)) {
+            if (TypeUtils.expressionHasType(replacement, "java.lang.String")) {
                 return replacementText;
             }
         }
         return "String.valueOf(" + replacementText + ')';
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)infos[0]);
     }
@@ -98,6 +102,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiBinaryExpression expression =
@@ -108,6 +113,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TrivialStringConcatenationVisitor();
     }
@@ -121,19 +127,19 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
             if (!(expression.getROperand() != null)) {
                 return;
             }
-            if (!TypeUtils.expressionHasType("java.lang.String", expression)) {
+            if (!TypeUtils.expressionHasType(expression, "java.lang.String")) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-	        if (!ExpressionUtils.isEmptyStringLiteral(lhs) &&
-	            !ExpressionUtils.isEmptyStringLiteral(rhs)) {
-		        return;
-	        }
-	        if (PsiUtil.isConstantExpression(expression)) {
-		        return;
-	        }
-	        registerError(expression, expression);
+            if (!ExpressionUtils.isEmptyStringLiteral(lhs) &&
+                    !ExpressionUtils.isEmptyStringLiteral(rhs)) {
+                return;
+            }
+            if (PsiUtil.isConstantExpression(expression)) {
+                return;
+            }
+            registerError(expression, expression);
         }
     }
 }

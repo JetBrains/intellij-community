@@ -84,12 +84,16 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   );
 
   static final TokenSet tBRACES = TokenSet.create(
-      mLPAREN,
-      mRPAREN,
-      mLBRACK,
-      mRBRACK,
-      mLCURLY,
-      mRCURLY
+    mLCURLY,
+    mRCURLY
+  );
+  static final TokenSet tPARENTHESES = TokenSet.create(
+    mLPAREN,
+    mRPAREN
+  );
+  static final TokenSet tBRACKETS = TokenSet.create(
+    mLBRACK,
+    mRBRACK
   );
 
   public static final TokenSet tOPERATORS = TokenSet.create(
@@ -205,6 +209,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tWRONG_REGEX, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
+    fillMap(ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
+    fillMap(ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
   }
 
   @NotNull

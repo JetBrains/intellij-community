@@ -120,34 +120,43 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText - data file text.
    * @throws java.io.IOException
    */
-  protected static void configureFromFileText(@NonNls final String fileName, @NonNls String fileText) throws IOException {
-    final Document fakeDocument = new DocumentImpl(fileText);
+  protected static void configureFromFileText(@NonNls final String fileName, @NonNls final String fileText) throws IOException {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final Document fakeDocument = new DocumentImpl(fileText);
 
-    int caretIndex = fileText.indexOf(CARET_MARKER);
-    int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-    int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+        int caretIndex = fileText.indexOf(CARET_MARKER);
+        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
+        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
 
-    final RangeMarker caretMarker = caretIndex >= 0 ? fakeDocument.createRangeMarker(caretIndex, caretIndex) : null;
-    final RangeMarker selStartMarker = selStartIndex >= 0 ? fakeDocument.createRangeMarker(selStartIndex, selStartIndex) : null;
-    final RangeMarker selEndMarker = selEndIndex >= 0 ? fakeDocument.createRangeMarker(selEndIndex, selEndIndex) : null;
+        final RangeMarker caretMarker = caretIndex >= 0 ? fakeDocument.createRangeMarker(caretIndex, caretIndex) : null;
+        final RangeMarker selStartMarker = selStartIndex >= 0 ? fakeDocument.createRangeMarker(selStartIndex, selStartIndex) : null;
+        final RangeMarker selEndMarker = selEndIndex >= 0 ? fakeDocument.createRangeMarker(selEndIndex, selEndIndex) : null;
 
-    if (caretMarker != null) {
-      fakeDocument.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-    }
-    if (selStartMarker != null) {
-      fakeDocument.deleteString(selStartMarker.getStartOffset(),
-                                selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-    }
-    if (selEndMarker != null) {
-      fakeDocument.deleteString(selEndMarker.getStartOffset(),
-                                selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-    }
+        if (caretMarker != null) {
+          fakeDocument.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+        }
+        if (selStartMarker != null) {
+          fakeDocument.deleteString(selStartMarker.getStartOffset(),
+                                    selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+        }
+        if (selEndMarker != null) {
+          fakeDocument.deleteString(selEndMarker.getStartOffset(),
+                                    selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+        }
 
-    String newFileText = fakeDocument.getText();
-    setupFileEditorAndDocument(fileName, newFileText);
-    setupCaret(caretMarker, newFileText);
-    setupSelection(selStartMarker, selEndMarker);
-    setupEditorForInjectedLanguage();
+        String newFileText = fakeDocument.getText();
+        try {
+          setupFileEditorAndDocument(fileName, newFileText);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        setupCaret(caretMarker, newFileText);
+        setupSelection(selStartMarker, selEndMarker);
+        setupEditorForInjectedLanguage();
+      }
+    });
   }
 
   private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
@@ -290,48 +299,52 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(String message, String fileText, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    final Document document = EditorFactory.getInstance().createDocument(fileText);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final Document document = EditorFactory.getInstance().createDocument(fileText);
 
-    int caretIndex = fileText.indexOf(CARET_MARKER);
-    int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-    int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+        int caretIndex = fileText.indexOf(CARET_MARKER);
+        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
+        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
 
-    final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-    final RangeMarker selStartMarker = selStartIndex >= 0
-                                       ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                       : null;
-    final RangeMarker selEndMarker = selEndIndex >= 0
-                                     ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                     : null;
+        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+        final RangeMarker selStartMarker = selStartIndex >= 0
+                                           ? document.createRangeMarker(selStartIndex, selStartIndex)
+                                           : null;
+        final RangeMarker selEndMarker = selEndIndex >= 0
+                                         ? document.createRangeMarker(selEndIndex, selEndIndex)
+                                         : null;
 
-    if (ignoreTrailingSpaces) {
-      ((DocumentEx) document).stripTrailingSpaces(false);
-    }
+        if (ignoreTrailingSpaces) {
+          ((DocumentEx)document).stripTrailingSpaces(false);
+        }
 
-    if (caretMarker != null) {
-      document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-    }
-    if (selStartMarker != null) {
-      document.deleteString(selStartMarker.getStartOffset(),
-                            selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-    }
-    if (selEndMarker != null) {
-      document.deleteString(selEndMarker.getStartOffset(),
-                            selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-    }
+        if (caretMarker != null) {
+          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+        }
+        if (selStartMarker != null) {
+          document.deleteString(selStartMarker.getStartOffset(),
+                                selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+        }
+        if (selEndMarker != null) {
+          document.deleteString(selEndMarker.getStartOffset(),
+                                selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+        }
 
 
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    String newFileText = document.getText();
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        String newFileText = document.getText();
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertEquals(getMessage("Text mismatch", message), newFileText, myFile.getText());
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        assertEquals(getMessage("Text mismatch", message), newFileText, myFile.getText());
 
-    checkCaretPosition(caretMarker, newFileText, message);
-    checkSelection(selStartMarker, selEndMarker, newFileText, message);
+        checkCaretPosition(caretMarker, newFileText, message);
+        checkSelection(selStartMarker, selEndMarker, newFileText, message);
+      }
+    });
   }
 
   private static String getMessage(@NonNls String engineMessage, String userMessage) {

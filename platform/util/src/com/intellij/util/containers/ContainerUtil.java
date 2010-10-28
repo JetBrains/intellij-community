@@ -291,8 +291,18 @@ public class ContainerUtil {
   }
 
   @NotNull
+  public static <T> List<T> filter(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
+    return findAll(collection, condition);
+  }
+
+  @NotNull
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
     return findAll(Arrays.asList(collection), condition);
+  }
+
+  @NotNull
+  public static <T> List<T> filter(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    return findAll(collection, condition);
   }
 
   @NotNull

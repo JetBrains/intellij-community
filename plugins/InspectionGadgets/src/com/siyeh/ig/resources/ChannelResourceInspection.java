@@ -15,17 +15,16 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class ChannelResourceInspection extends ResourceInspection {
 
@@ -58,23 +57,9 @@ public class ChannelResourceInspection extends ResourceInspection {
 
     @Override
     public JComponent createOptionsPanel() {
-        final JComponent panel = new JPanel(new GridBagLayout());
-        final CheckBox checkBox = new CheckBox(
-                InspectionGadgetsBundle.message(
-                        "allow.resource.to.be.opened.inside.a.try.block"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "allow.resource.to.be.opened.inside.a.try.block"),
                 this, "insideTryAllowed");
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.insets.left = 4;
-        constraints.insets.right = 4;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(checkBox, constraints);
-        return panel;
     }
 
     @Override

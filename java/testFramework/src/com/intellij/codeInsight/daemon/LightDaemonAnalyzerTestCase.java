@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,6 +53,25 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     codeAnalyzer.projectClosed();
 
     super.tearDown();
+  }
+
+  @Override
+  protected void runTest() throws Throwable {
+    final Throwable[] throwable = {null};
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        try {
+          doRunTest();
+        }
+        catch (Throwable t) {
+          throwable[0] = t;
+        }
+      }
+    }, "", null);
+    if (throwable[0] != null) {
+      throw throwable[0];
+    }
   }
 
   protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {

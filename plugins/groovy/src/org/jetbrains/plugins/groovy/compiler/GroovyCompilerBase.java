@@ -64,6 +64,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
@@ -75,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -95,6 +97,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
                                     boolean forStubs,
                                     VirtualFile outputDir,
                                     OutputSink sink, boolean tests) {
+    //assert !ApplicationManager.getApplication().isDispatchThread();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
     SdkType sdkType = sdk.getSdkType();
@@ -177,7 +180,13 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
 
       processHandler.startNotify();
-      processHandler.waitFor();
+      // tests run in awt
+      while (!processHandler.waitFor(100)) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      }
+
 
       final List<VirtualFile> toRecompile = new ArrayList<VirtualFile>();
       Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
@@ -194,7 +203,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
         final String url = compilerMessage.getUrl();
 
-        compileContext.addMessage(category, compilerMessage.getMessage(), VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)), compilerMessage.getLineNum(),
+        compileContext.addMessage(category, compilerMessage.getMessage(), VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),
+                                  compilerMessage.getLineNum(),
                                   compilerMessage.getColumnNum());
       }
 
@@ -219,7 +229,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
         addStubsToCompileScope(outputPaths, compileContext, module);
         outputItems = Collections.emptyList();
-      } else {
+      }
+      else {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator != null) {
           indicator.setText("Updating caches...");

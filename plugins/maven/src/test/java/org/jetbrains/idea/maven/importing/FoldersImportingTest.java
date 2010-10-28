@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,19 +72,24 @@ public class FoldersImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoesNotResetUserFolders() throws Exception {
-    VirtualFile dir1 = createProjectSubDir("userSourceFolder");
-    VirtualFile dir2 = createProjectSubDir("userExcludedFolder");
+    final VirtualFile dir1 = createProjectSubDir("userSourceFolder");
+    final VirtualFile dir2 = createProjectSubDir("userExcludedFolder");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                              getModule("project"),
-                                                              new MavenDefaultModifiableModelsProvider(myProject));
-    adapter.addSourceFolder(dir1.getPath(), false);
-    adapter.addExcludedFolder(dir2.getPath());
-    adapter.getRootModel().commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                  getModule("project"),
+                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+        adapter.addSourceFolder(dir1.getPath(), false);
+        adapter.addExcludedFolder(dir2.getPath());
+        adapter.getRootModel().commit();
+      }
+    });
+
 
     assertSources("project", "userSourceFolder");
     assertExcludes("project", "target", "userExcludedFolder");

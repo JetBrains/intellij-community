@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -70,9 +69,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
-  private final DocumentChangesCollector myChangesCollector = new DocumentChangesCollector();
-  private final ChangesDiffCalculator    myDiffCalculator   = new ChangesDiffCalculator();
-  private final List<TextRange> myPreviewRangesToHighlight = new ArrayList<TextRange>();
+  private final ChangesDiffCalculator myDiffCalculator           = new ChangesDiffCalculator();
+  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<TextRange>();
 
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
@@ -144,6 +142,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
+    editorSettings.setUseSoftWraps(false);
   }
 
   protected void updatePreview() {
@@ -187,7 +186,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          Pair<CharSequence, List<TextChange>> beforeReformat = null;
+          Document beforeReformat = null;
           if (!mySkipPreviewHighlighting) {
             beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
           }
@@ -195,16 +194,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           //important not mark as generated not to get the classes before setting language level
           PsiFile psiFile = createFileFromText(project, myTextToReformat);
           prepareForReformat(psiFile);
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          Document document = null;
-          if (documentManager != null && !mySkipPreviewHighlighting) {
-            document = documentManager.getDocument(psiFile);
-            if (document != null) {
-              myChangesCollector.reset();
-              myChangesCollector.setCollectChanges(true);
-              document.addDocumentListener(myChangesCollector);
-            }
-          }
 
           apply(mySettings);
           CodeStyleSettings clone = mySettings.clone();
@@ -216,14 +205,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           }
           finally {
             CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-            myChangesCollector.setCollectChanges(false);
-            if (!mySkipPreviewHighlighting && document != null) {
-              document.removeDocumentListener(myChangesCollector);
-            }
           }
 
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-          document = myEditor.getDocument();
+          Document document = myEditor.getDocument();
           document.replaceString(0, document.getTextLength(), formatted.getText());
           if (document != null && beforeReformat != null) {
             highlightChanges(beforeReformat);
@@ -245,7 +230,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    *                  by change start offset in ascending order
    */
   @Nullable
-  private Pair<CharSequence, List<TextChange>> collectChangesBeforeCurrentSettingsAppliance(Project project) {
+  private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -253,10 +238,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     if (documentManager != null) {
       document = documentManager.getDocument(psiFile);
       if (document != null) {
-        myChangesCollector.reset();
-        myChangesCollector.setCollectChanges(true);
-        document.addDocumentListener(myChangesCollector);
-
         CodeStyleSettings clone = mySettings.clone();
         clone.RIGHT_MARGIN = getAdjustedRightMargin();
         CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
@@ -265,12 +246,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
         finally {
           CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-          myChangesCollector.setCollectChanges(false);
-          document.removeDocumentListener(myChangesCollector);
         }
-        List<TextChange> result = new ArrayList<TextChange>(myChangesCollector.getChanges());
-        myChangesCollector.reset();
-        return new Pair<CharSequence, List<TextChange>>(document.getCharsSequence(), result);
+        return document;
       }
     }
     return null;
@@ -307,7 +284,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return project;
   }
 
-  private void highlightChanges(Pair<CharSequence, List<TextChange>> beforeReformat) {
+  private void highlightChanges(Document beforeReformat) {
     if (mySkipPreviewHighlighting) {
       return;
     }
@@ -317,9 +294,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     markupModel.removeAllHighlighters();
     int textLength = myEditor.getDocument().getTextLength();
     boolean highlightPreview = false;
-    Collection<TextRange> ranges = myDiffCalculator.calculateDiff(
-      beforeReformat.second, beforeReformat.first, myChangesCollector.getChanges(), myEditor.getDocument().getCharsSequence()
-    );
+    Collection<TextRange> ranges = myDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument());
     for (TextRange range : ranges) {
       if (range.getStartOffset() >= textLength) {
         continue;

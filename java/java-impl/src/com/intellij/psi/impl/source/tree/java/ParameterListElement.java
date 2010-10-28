@@ -77,7 +77,8 @@ public class ParameterListElement extends CompositeElement implements Constants 
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
-    TreeElement oldLastNodeInsideParens = getLastNodeInsideParens();
+    final TreeElement oldLastNodeInsideParens = getLastNodeInsideParens();
+    final TreeElement oldFirstNodeInsideParens = getFirstNodeInsideParens();
     if (child.getElementType() == PARAMETER) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {
@@ -102,6 +103,15 @@ public class ParameterListElement extends CompositeElement implements Constants 
         deleteChildInternal(newLastNodeInsideParens);
       } else {
         replaceChild(newLastNodeInsideParens, (ASTNode)oldLastNodeInsideParens.clone());
+      }
+    }
+
+    final TreeElement newFirstNodeInsideParens = getFirstNodeInsideParens();
+    if (newFirstNodeInsideParens != null && newFirstNodeInsideParens.getElementType() == WHITE_SPACE) {
+      if (oldFirstNodeInsideParens == null || oldFirstNodeInsideParens.getElementType() != WHITE_SPACE) {
+        deleteChildInternal(newFirstNodeInsideParens);
+      } else {
+        replaceChild(newFirstNodeInsideParens, (ASTNode)oldFirstNodeInsideParens.clone());
       }
     }
 
@@ -165,5 +175,14 @@ public class ParameterListElement extends CompositeElement implements Constants 
   private TreeElement getLastNodeInsideParens() {
     TreeElement lastNode = getLastChildNode();
     return lastNode.getElementType() == RPARENTH ? lastNode.getTreePrev() : null;
+  }
+
+   /**
+   * @return    first node after opening left paren if possible; <code>null</code> otherwise
+   */
+  @Nullable
+  private TreeElement getFirstNodeInsideParens() {
+    TreeElement firstNode = getFirstChildNode();
+    return firstNode.getElementType() == LPARENTH ? firstNode.getTreeNext() : null;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,52 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
   public void testRefreshingAsynchronously() throws Exception {
     doTestRefreshing(true);
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    if (getName().equals("testRefreshingAsynchronously")) {
+      // this methods waits for another thread to finish, that leds
+      // to deadlock in swing-thread. Therefore we have to run this test
+      // outside of swing-thread
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            ExternalChangesAndRefreshingTest.super.setUp();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+    else {
+      super.setUp();
+    }
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (getName().equals("testRefreshingAsynchronously")) {
+      // this methods waits for another thread to finish, that leds
+      // to deadlock in swing-thread. Therefore we have to run this test
+      // outside of swing-thread
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            ExternalChangesAndRefreshingTest.super.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+    else {
+      super.tearDown();
+    }
   }
 
   @Override

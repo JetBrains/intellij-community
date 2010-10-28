@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.*;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -73,39 +74,130 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
 
       @Override public void visitField(PsiField field) {
         if (!PsiUtil.isLanguageLevel5OrHigher(field)) return;
-        Annotated annotated = check(field, holder, field.getType());
-        if (annotated.isDeclaredNotNull || annotated.isDeclaredNullable) {
+        final PsiType type = field.getType();
+        final Annotated annotated = check(field, holder, type);
+        if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
+          return;
+        }
+        if (annotated.isDeclaredNotNull ^ annotated.isDeclaredNullable) {
           final String anno = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
           final String annoToRemove = annotated.isDeclaredNotNull ? AnnotationUtil.NULLABLE : AnnotationUtil.NOT_NULL;
           final String simpleName = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL_SIMPLE_NAME : AnnotationUtil.NULLABLE_SIMPLE_NAME;
 
           final String propName = JavaCodeStyleManager.getInstance(field.getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
           final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-          if (REPORT_NOT_ANNOTATED_GETTER) {
-            final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
-            if (getter != null && !AnnotationUtil.isAnnotated(getter, AnnotationUtil.ALL_ANNOTATIONS) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
-              holder.registerProblem(getter.getNameIdentifier(),
-                                     InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     new AnnotateMethodFix(anno, annoToRemove));
+          final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
+          if (getter != null) {
+            if (REPORT_NOT_ANNOTATED_GETTER) {
+              if (!AnnotationUtil.isAnnotated(getter, AnnotationUtil.ALL_ANNOTATIONS) &&
+                  !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
+                holder.registerProblem(getter.getNameIdentifier(), InspectionsBundle
+                  .message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, annoToRemove));
+              }
+            }
+            if (annotated.isDeclaredNotNull && AnnotationUtil.isAnnotated(getter, AnnotationUtil.NULLABLE, false)) {
+              holder.registerProblem(getter.getNameIdentifier(), InspectionsBundle.message(
+                "inspection.nullable.problems.annotated.field.getter.conflict", simpleName, AnnotationUtil.NULLABLE_SIMPLE_NAME),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, annoToRemove));
+            } else if (annotated.isDeclaredNullable && AnnotationUtil.isAnnotated(getter, AnnotationUtil.NOT_NULL, false)) {
+              holder.registerProblem(getter.getNameIdentifier(), InspectionsBundle.message(
+                "inspection.nullable.problems.annotated.field.getter.conflict", simpleName, AnnotationUtil.NOT_NULL_SIMPLE_NAME),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, annoToRemove));
             }
           }
 
-          if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER) {
-            final PsiMethod setter = PropertyUtil.findPropertySetter(field.getContainingClass(), propName, isStatic, false);
-            if (setter != null) {
-              final PsiParameter[] parameters = setter.getParameterList().getParameters();
-              assert parameters.length == 1;
-              final PsiParameter parameter = parameters[0];
-              if (!AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-                holder.registerProblem(parameter.getNameIdentifier(),
-                                 InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AddAnnotationFix(anno, parameter, annoToRemove));
-              }
+          final PsiClass containingClass = field.getContainingClass();
+          final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
+          if (setter != null) {
+            final PsiParameter[] parameters = setter.getParameterList().getParameters();
+            assert parameters.length == 1;
+            final PsiParameter parameter = parameters[0];
+            if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER && !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+              holder.registerProblem(parameter.getNameIdentifier(),
+                                     InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     new AddAnnotationFix(anno, parameter, annoToRemove));
             }
+            if (annotated.isDeclaredNotNull && AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NULLABLE, false)) {
+              holder.registerProblem(parameter.getNameIdentifier(), InspectionsBundle.message(
+                                     "inspection.nullable.problems.annotated.field.setter.parameter.conflict", simpleName, AnnotationUtil.NULLABLE_SIMPLE_NAME),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     new AddAnnotationFix(anno, parameter, annoToRemove));
+            } else if (annotated.isDeclaredNullable && AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false)) {
+              holder.registerProblem(parameter.getNameIdentifier(), InspectionsBundle.message(
+                "inspection.nullable.problems.annotated.field.setter.parameter.conflict", simpleName, AnnotationUtil.NOT_NULL_SIMPLE_NAME),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     new AddAnnotationFix(anno, parameter, annoToRemove));
+            }
+            if (containingClass == null) {
+              return;
+            }
+            final PsiMethod[] constructors = containingClass.getConstructors();
+            final Query<PsiReference> search = ReferencesSearch.search(field, new LocalSearchScope(constructors), false);
+            search.forEach(new Processor<PsiReference>() {
+              @Override
+              public boolean process(PsiReference reference) {
+                final PsiElement element = reference.getElement();
+                if (!(element instanceof PsiReferenceExpression)) {
+                  return true;
+                }
+                PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+                final PsiAssignmentExpression assignmentExpression = getAssignmentExpressionIfOnAssignmentLefthand(referenceExpression);
+                final PsiMethod method = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMethod.class);
+                if (method == null || !method.isConstructor()) {
+                  return true;
+                }
+                if (assignmentExpression == null) {
+                  return true;
+                }
+                final PsiExpression rhs = assignmentExpression.getRExpression();
+                if (!(rhs instanceof PsiReferenceExpression)) {
+                  return true;
+                }
+                PsiReferenceExpression expression = (PsiReferenceExpression)rhs;
+                final PsiElement target = expression.resolve();
+                if (!(target instanceof PsiParameter)) {
+                  return true;
+                }
+                final PsiParameter parameter = (PsiParameter)target;
+                if (!method.equals(parameter.getDeclarationScope())) {
+                  return true;
+                }
+                if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER && !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS)) {
+                  holder.registerProblem(parameter.getNameIdentifier(), InspectionsBundle
+                    .message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated", simpleName),
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AddAnnotationFix(anno, parameter, annoToRemove));
+                  return true;
+                }
+                if (annotated.isDeclaredNotNull && AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NULLABLE, false)) {
+                  holder.registerProblem(parameter.getNameIdentifier(), InspectionsBundle.message(
+                    "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", simpleName, AnnotationUtil.NULLABLE_SIMPLE_NAME),
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                         new AddAnnotationFix(anno, parameter, annoToRemove));
+                } else if (annotated.isDeclaredNullable && AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false)) {
+                  holder.registerProblem(parameter.getNameIdentifier(), InspectionsBundle.message(
+                    "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", simpleName, AnnotationUtil.NOT_NULL_SIMPLE_NAME),
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                         new AddAnnotationFix(anno, parameter, annoToRemove));
+                }
+                return true;
+              }
+            });
           }
         }
+      }
+
+      public PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLefthand(PsiExpression expression) {
+        PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
+        if (!(parent instanceof PsiAssignmentExpression)) {
+          return null;
+        }
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (!PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), expression, false)) {
+          return null;
+        }
+        return assignmentExpression;
       }
 
       @Override public void visitParameter(PsiParameter parameter) {

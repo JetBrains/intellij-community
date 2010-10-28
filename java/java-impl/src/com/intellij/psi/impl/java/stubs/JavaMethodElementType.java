@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiMethod;
@@ -30,16 +30,25 @@ import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationMethodElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
+import java.util.List;
 
+/*
+ * @author max
+ */
 public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
   public JavaMethodElementType(@NonNls final String name) {
     super(name);
@@ -84,6 +93,57 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
                                  StringRef.fromString(defValueText));
   }
 
+  @Override
+  public PsiMethodStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
+
+    String name = null;
+    boolean isConstructor = true;
+    boolean isVarArgs = false;
+    boolean isDeprecatedByComment = false;
+    boolean hasDeprecatedAnnotation = false;
+    String defValueText = null;
+
+    boolean expectingDef = false;
+    for (final LighterASTNode child : tree.getChildren(node)) {
+      final IElementType type = child.getTokenType();
+      if (type == JavaDocElementType.DOC_COMMENT) {
+        isDeprecatedByComment = RecordUtil.isDeprecatedByDocComment(tree, child);
+      }
+      else if (type == JavaElementType.MODIFIER_LIST) {
+        hasDeprecatedAnnotation = RecordUtil.isDeprecatedByAnnotation(tree, child);
+      }
+      else if (type == JavaElementType.TYPE) {
+        isConstructor = false;
+      }
+      else if (type == JavaTokenType.IDENTIFIER) {
+        name = RecordUtil.intern(tree.getCharTable(), child);
+      }
+      else if (type == JavaElementType.PARAMETER_LIST) {
+        final List<LighterASTNode> params = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER);
+        if (params.size() > 0) {
+          final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
+          if (pType != null) {
+            isVarArgs = (LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null);
+          }
+        }
+      }
+      else if (type == JavaTokenType.DEFAULT_KEYWORD) {
+        expectingDef = true;
+      }
+      else if (expectingDef && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type) &&
+               type != JavaTokenType.SEMICOLON && type != JavaElementType.CODE_BLOCK) {
+        defValueText = LightTreeUtil.toFilteredString(tree, child, null);
+        break;
+      }
+    }
+
+    final boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation);
+
+    return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
+  }
+
   public void serialize(final PsiMethodStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText(false));
@@ -107,12 +167,4 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
       sink.occurrence(JavaMethodNameIndex.KEY, name);
     }
   }
-
-  /*
-  public String getId(final PsiMethodStub stub) {
-    final String name = stub.getName();
-    if (name != null) return name;
-    return super.getId(stub);
-  }
-  */
 }

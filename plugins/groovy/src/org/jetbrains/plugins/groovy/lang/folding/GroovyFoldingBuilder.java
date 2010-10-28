@@ -211,8 +211,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    return (node.getElementType() == IMPORT_STATEMENT && JavaCodeFoldingSettings.getInstance().isCollapseImports()) ||
-           isMultiLineStringLiteral(node);
+    return node.getElementType() == IMPORT_STATEMENT && JavaCodeFoldingSettings.getInstance().isCollapseImports();
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {

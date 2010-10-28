@@ -16,17 +16,18 @@
 
 package com.intellij.facet.impl.ui.actions;
 
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.*;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author nik
@@ -34,43 +35,31 @@ import java.util.Collection;
 public class AddFacetAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetAction");
   private final FacetEditorFacade myEditor;
+  private final Project myProject;
   private final FacetType myType;
 
-  public AddFacetAction(final FacetEditorFacade editor, final FacetType type) {
+  public AddFacetAction(final FacetEditorFacade editor, Project project, final FacetType type) {
     super(type.getPresentableName(), null, type.getIcon());
     myEditor = editor;
+    myProject = project;
     myType = type;
   }
 
   public void actionPerformed(AnActionEvent e) {
     FacetInfo parent = myEditor.getSelectedFacetInfo();
-    final Collection<FacetInfo> facetInfos = myEditor.getFacetsByType(myType);
-    String facetName = myType.getDefaultFacetName();
-    int i = 2;
-    while (facetExists(facetName, facetInfos)) {
-      facetName = myType.getPresentableName() + i;
-      i++;
-    }
     final FacetTypeId<?> underlyingFacetType = myType.getUnderlyingFacetType();
+    Facet facet;
     if (parent == null && underlyingFacetType == null || parent != null && parent.getFacetType().getId() == underlyingFacetType) {
-      myEditor.createFacet(parent, myType, facetName);
+      facet = myEditor.createFacet(parent, myType);
     }
     else {
       LOG.assertTrue(parent != null);
       final FacetInfo grandParent = myEditor.getParent(parent);
       LOG.assertTrue(grandParent == null && underlyingFacetType == null ||
                      grandParent != null && grandParent.getFacetType().getId() == underlyingFacetType);
-      myEditor.createFacet(grandParent, myType, facetName);
+      facet = myEditor.createFacet(grandParent, myType);
     }
-  }
-
-  private static boolean facetExists(final String facetName, final Collection<FacetInfo> facetInfos) {
-    for (FacetInfo facetInfo : facetInfos) {
-      if (facetInfo.getName().equals(facetName)) {
-        return true;
-      }
-    }
-    return false;
+    ProjectStructureConfigurable.getInstance(myProject).select(facet, true);
   }
 
   public void update(AnActionEvent e) {
@@ -103,5 +92,20 @@ public class AddFacetAction extends AnAction implements DumbAware {
 
   private static boolean canAddFacet(final FacetInfo selectedFacet, final FacetType<?, ?> type, final FacetEditorFacade editor) {
     return !(type.isOnlyOneFacetAllowed() && editor.nodeHasFacetOfType(selectedFacet, type.getId()));
+  }
+
+  public static AnAction[] createAddFacetActions(FacetEditorFacade editor, Project project) {
+    final FacetType[] types = FacetTypeRegistry.getInstance().getFacetTypes();
+    Arrays.sort(types, new Comparator<FacetType>() {
+      public int compare(final FacetType o1, final FacetType o2) {
+        return o1.getPresentableName().compareTo(o2.getPresentableName());
+      }
+    });
+
+    AnAction[] actions = new AnAction[types.length];
+    for (int i = 0; i < types.length; i++) {
+      actions[i] = new AddFacetAction(editor, project, types[i]);
+    }
+    return actions;
   }
 }

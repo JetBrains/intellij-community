@@ -22,19 +22,9 @@ public class CyclicDependenciesTest extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/" + getTestName(true);
-          PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
-          PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    });
+    String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/" + getTestName(true);
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
   public void testT1() {

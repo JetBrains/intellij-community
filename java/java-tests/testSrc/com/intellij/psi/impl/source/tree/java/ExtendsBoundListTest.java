@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
@@ -8,18 +9,33 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  */
 public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromFront() throws Exception {
-    PsiTypeParameter typeParameter = getTypeParameter();
-    typeParameter.getExtendsList().getReferenceElements()[0].delete();
+    final PsiTypeParameter typeParameter = getTypeParameter();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        typeParameter.getExtendsList().getReferenceElements()[0].delete();
+      }
+    });
+
     check();
   }
   public void testRemoveBoundFromEnd() throws Exception {
-    PsiTypeParameter typeParameter = getTypeParameter();
-    typeParameter.getExtendsList().getReferenceElements()[1].delete();
+    final PsiTypeParameter typeParameter = getTypeParameter();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        typeParameter.getExtendsList().getReferenceElements()[1].delete();
+      }
+    });
+
     check();
   }
   public void testRemoveBoundFromMiddle() throws Exception {
-    PsiTypeParameter typeParameter = getTypeParameter();
-    typeParameter.getExtendsList().getReferenceElements()[1].delete();
+    final PsiTypeParameter typeParameter = getTypeParameter();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        typeParameter.getExtendsList().getReferenceElements()[1].delete();
+      }
+    });
+
     check();
   }
 

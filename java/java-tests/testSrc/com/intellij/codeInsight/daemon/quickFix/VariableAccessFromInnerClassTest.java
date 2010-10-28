@@ -1,6 +1,8 @@
 
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.openapi.application.ApplicationManager;
+
 public class VariableAccessFromInnerClassTest extends LightQuickFixTestCase {
   public void test() throws Exception {
     doAllTests();
@@ -9,7 +11,12 @@ public class VariableAccessFromInnerClassTest extends LightQuickFixTestCase {
   @Override
   protected void beforeActionStarted(String testName, String contents) {
     for (int i=0;i<10;i++) {
-      myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");
+        }
+      });
+
       doHighlighting();
       delete();
       delete();

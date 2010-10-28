@@ -49,7 +49,7 @@ public class GenerateAntTest extends IdeaTestCase {
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         final VirtualFile parent = myModule.getModuleFile().getParent();
-        assertTrue(parent != null);
+        assertNotNull(parent);
         final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
         extension.inheritCompilerOutputPath(false);
         extension.setCompilerOutputPath(parent.getUrl() + "/classes");

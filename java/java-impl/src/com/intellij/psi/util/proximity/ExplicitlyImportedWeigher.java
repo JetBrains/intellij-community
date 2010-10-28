@@ -38,7 +38,9 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
           final PsiImportList importList = psiJavaFile.getImportList();
           if (importList != null) {
             for (final PsiImportStatement importStatement : importList.getImportStatements()) {
-              if (!importStatement.isOnDemand() && qname.equals(importStatement.getQualifiedName())) {
+              final boolean onDemand = importStatement.isOnDemand();
+              final String imported = importStatement.getQualifiedName();
+              if (onDemand && qname.startsWith(imported + ".") || !onDemand && qname.equals(imported)) {
                 return true;
               }
             }

@@ -131,7 +131,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     final T annotation = getChildDescription().getAnnotation(myIndex, annotationClass);
     if (annotation != null) return annotation;
 
-    return getRawType().getAnnotation(annotationClass);
+    return getClassAnnotation(annotationClass);
   }
 
   public final DomElement createPathStableCopy() {

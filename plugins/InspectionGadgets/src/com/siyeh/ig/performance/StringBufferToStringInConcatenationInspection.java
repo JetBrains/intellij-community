@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,10 +104,10 @@ public class StringBufferToStringInConcatenationInspection
             }
             if (rhs.equals(expression)) {
                 final PsiExpression lhs = parentBinary.getLOperand();
-                if (!TypeUtils.expressionHasType("java.lang.String", lhs)) {
+                if (!TypeUtils.expressionHasType(lhs, "java.lang.String")) {
                     return;
                 }
-            } else if (!TypeUtils.expressionHasType("java.lang.String", rhs)) {
+            } else if (!TypeUtils.expressionHasType(rhs, "java.lang.String")) {
                 return;
             }
             if (!isStringBufferToString(expression)) {

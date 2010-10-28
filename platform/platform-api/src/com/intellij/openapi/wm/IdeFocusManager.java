@@ -106,7 +106,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   @Nullable
   private static IdeFocusManager getInstanceSafe(@Nullable Project project) {
     if (project != null && !project.isDisposed() && project.isInitialized()) {
-      return IdeFocusManager.getInstance(project);
+      return getInstance(project);
     } else {
       return null;
     }

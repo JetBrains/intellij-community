@@ -92,9 +92,11 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       myDeaf = true;
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
-      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-      if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
-        changeBean.reinit();
+      if (currentInfo != null) {
+        final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
+        if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
+          changeBean.reinit();
+        }
       }
     }
     finally {
@@ -105,11 +107,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   @Override
   public void projectOpened() {
     myPsiManager.addPsiTreeChangeListener(this);
-    EditorFactory.getInstance().addEditorFactoryListener(this);
+    EditorFactory.getInstance().addEditorFactoryListener(this,myProject);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
-        EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
         LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
       }
     });

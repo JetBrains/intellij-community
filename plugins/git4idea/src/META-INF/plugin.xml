@@ -26,6 +26,7 @@
       <reference ref="Compare.Selected"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
+      <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with branch" />
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
       <!-- <action id="Test" class="git4idea.history.wholeTree.FictiveAction" text="Test git log"/> -->

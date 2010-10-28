@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -229,12 +230,17 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "  </resources>" +
                   "</build>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                              getModule("project"),
-                                                              new MavenDefaultModifiableModelsProvider(myProject));
-    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
-    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
-    adapter.getRootModel().commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                  getModule("project"),
+                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
+        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
+        adapter.getRootModel().commit();
+      }
+    });
+
 
     assertSources("project", "src/main/resources", "src/main/ideaRes");
 
@@ -866,7 +872,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult(myProjectPom, relativePath, content);
   }
 
-  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+  private static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
     VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
     assertNotNull("file not found: " + relativePath, file);
     assertEquals(content, VfsUtil.loadText(file));

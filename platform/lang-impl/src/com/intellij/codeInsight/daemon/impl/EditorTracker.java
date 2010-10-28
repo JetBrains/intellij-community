@@ -60,7 +60,6 @@ public class EditorTracker extends AbstractProjectComponent {
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
   private List<Editor> myActiveEditors = Collections.emptyList();
 
-  private MyEditorFactoryListener myEditorFactoryListener;
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
   private IdeFrameImpl myIdeFrame;
@@ -85,12 +84,11 @@ public class EditorTracker extends AbstractProjectComponent {
       }
     });
 
-    myEditorFactoryListener = new MyEditorFactoryListener();
-    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener);
+    final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
+    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener,myProject);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
         myEditorFactoryListener.dispose(null);
-        myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
       }
     });
   }
@@ -222,12 +220,8 @@ public class EditorTracker extends AbstractProjectComponent {
     myDispatcher.getMulticaster().activeEditorsChanged(editors);
   }
 
-  public void addEditorTrackerListener(EditorTrackerListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeEditorTrackerListener(EditorTrackerListener listener) {
-    myDispatcher.removeListener(listener);
+  public void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener,parentDisposable);
   }
 
   private class MyEditorFactoryListener implements EditorFactoryListener {

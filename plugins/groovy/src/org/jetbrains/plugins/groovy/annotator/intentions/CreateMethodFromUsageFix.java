@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -87,7 +88,13 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     PsiElement parent = myTargetClass instanceof GrTypeDefinition ? ((GrTypeDefinition)myTargetClass).getBody() : ((GroovyScriptClass) myTargetClass).getContainingFile();
     if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
       PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
-      method = owner.addMemberDeclaration(method, prevParent.getNextSibling());
+      PsiElement sibling = PsiUtil.skipWhitespaces(prevParent.getNextSibling(), true);
+      if (sibling != null && GroovyTokenTypes.mSEMI.equals(sibling.getNode().getElementType())) {
+        sibling = sibling.getNextSibling();
+      } else {
+        sibling = prevParent.getNextSibling();
+      }
+      method = owner.addMemberDeclaration(method, sibling);
     } else {
       method = owner.addMemberDeclaration(method, null);
     }

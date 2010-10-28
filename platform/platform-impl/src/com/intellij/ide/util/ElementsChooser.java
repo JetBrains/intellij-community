@@ -134,6 +134,10 @@ public class ElementsChooser<T> extends JPanel {
     setElements(elements, marked);
   }
 
+  public void setSingleSelectionMode() {
+    myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+  }
+
   public void refresh() {
     myTableModel.fireTableDataChanged();
   }

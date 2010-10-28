@@ -174,6 +174,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
+    myFolding.clear();
 
     updateFoldings(0, myEditor.getDocument().getLineCount() - 1, true);
   }
@@ -983,6 +984,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
       if (lStart == lEnd) {
         return;
+      }
+
+      for (int i = lStart; i <= lEnd; i++) {
+        myFolding.remove(i);
       }
 
       List<String> toFold = new ArrayList<String>(lEnd - lStart + 1);

@@ -35,6 +35,8 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -81,6 +83,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
   private boolean toInitializeDaemon;
   private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -242,7 +249,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-
     return checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile));
   }
 
@@ -414,22 +420,32 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected PsiClass createClass(final Module module, final String text) throws IOException {
-    final String qname = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
-    File dir;
-    if (files.length > 0) {
-      dir = VfsUtil.virtualToIoFile(files[0]);
-    }
-    else {
-      dir = createTempDirectory();
-      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-      addSourceContentToRoots(module, vDir);
-    }
+    return new WriteCommandAction<PsiClass>(getProject()) {
+      @Override
+      protected void run(Result<PsiClass> result) throws Throwable {
+        final String qname =
+          ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
+        final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
+        File dir;
+        if (files.length > 0) {
+          dir = VfsUtil.virtualToIoFile(files[0]);
+        }
+        else {
+          dir = createTempDirectory();
+          VirtualFile vDir =
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+          addSourceContentToRoots(module, vDir);
+        }
 
-    File file = new File(dir, qname.replace('.', '/') + ".java");
-    FileUtil.createIfDoesntExist(file);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
-    VfsUtil.saveText(vFile, text);
-    return ((PsiJavaFile)myPsiManager.findFile(vFile)).getClasses()[0];
+        File file = new File(dir, qname.replace('.', '/') + ".java");
+        FileUtil.createIfDoesntExist(file);
+        VirtualFile vFile =
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+        VfsUtil.saveText(vFile, text);
+        PsiClass psiClass = ((PsiJavaFile)myPsiManager.findFile(vFile)).getClasses()[0];
+        result.setResult(psiClass);
+
+      }
+    }.execute().throwException().getResultObject();
   }
 }

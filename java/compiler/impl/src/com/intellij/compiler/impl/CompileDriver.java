@@ -32,6 +32,8 @@ import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -108,8 +110,8 @@ public class CompileDriver {
   private final Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
-  private static final String VERSION_FILE_NAME = "version.dat";
-  private static final String LOCK_FILE_NAME = "in_progress.dat";
+  @NonNls private static final String VERSION_FILE_NAME = "version.dat";
+  @NonNls private static final String LOCK_FILE_NAME = "in_progress.dat";
 
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
   private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
@@ -398,10 +400,11 @@ public class CompileDriver {
                        final CompilerMessage message,
                        final boolean checkCachesVersion,
                        final boolean trackDependencies) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final CompilerTask compileTask = new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
-                                                    : CompilerBundle.message("compiler.content.name.make"), false);
+                                                    : CompilerBundle.message("compiler.content.name.make"), ApplicationManager.getApplication().isUnitTestMode());
     final WindowManager windowManager = WindowManager.getInstance();
     if (windowManager != null) {
       windowManager.getStatusBar(myProject).setInfo("");
@@ -501,6 +504,7 @@ public class CompileDriver {
       status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, false);
     }
     catch (Throwable ex) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(ex);
       wereExceptions = true;
       final PluginId pluginId = IdeErrorsDialog.findPluginId(ex);
 
@@ -530,7 +534,9 @@ public class CompileDriver {
       }
       else {
         final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
-        writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions, vfsTimestamp), compileContext);
+        if (!myProject.isDisposed()) {
+          writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions, vfsTimestamp), compileContext);
+        }
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -1670,13 +1676,13 @@ public class CompileDriver {
     final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
     context.getProgressIndicator().pushState();
 
-    final boolean[] wereFilesDeleted = new boolean[]{false};
+    final boolean[] wereFilesDeleted = {false};
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-              context, compiler, srcSnapshot.iterator(), forceCompile, isRebuild, toCompile, toDelete
+            context, compiler, srcSnapshot.iterator(), forceCompile, isRebuild, toCompile, toDelete
           );
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             // todo: drop this?
@@ -1946,7 +1952,7 @@ public class CompileDriver {
       return true;
     }
     CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
-      public void run() throws IOException {
+      public void run() {
         final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
         for (FileProcessingCompiler.ProcessingItem aProcessed : processed) {
           final VirtualFile file = aProcessed.getFile();
@@ -2142,17 +2148,22 @@ public class CompileDriver {
           return false;
         }
       }
-      final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
-          for (File file : nonExistingOutputPaths) {
-            if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
-              return Boolean.FALSE;
+      final Boolean refreshSuccess =
+        new WriteAction<Boolean>() {
+          @Override
+          protected void run(Result<Boolean> result) throws Throwable {
+            LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
+            Boolean res = Boolean.TRUE;
+            for (File file : nonExistingOutputPaths) {
+              if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
+                res = Boolean.FALSE;
+                break;
+              }
             }
+            result.setResult(res);
           }
-          return Boolean.TRUE;
-        }
-      });
+        }.execute().getResultObject();
+
       if (!refreshSuccess.booleanValue()) {
         return false;
       }
@@ -2418,7 +2429,7 @@ public class CompileDriver {
 
     private TranslatorsOutputSink(CompileContextEx context, TranslatingCompiler[] compilers) {
       myContext = context;
-      this.myCompilers = compilers;
+      myCompilers = compilers;
     }
 
     public void setCurrentCompilerIndex(int index) {
@@ -2460,7 +2471,8 @@ public class CompileDriver {
               TranslatingCompiler.OutputItem item = it.next();
               boolean shouldPostpone = false;
               for (int idx = nextCompilerIdx; idx < myCompilers.length; idx++) {
-                if (shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext)) {
+                shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext);
+                if (shouldPostpone) {
                   break;
                 }
               }
@@ -2475,7 +2487,8 @@ public class CompileDriver {
           for (TranslatingCompiler.OutputItem item : items) {
             boolean shouldPostpone = false;
             for (int idx = nextCompilerIdx; idx < myCompilers.length; idx++) {
-              if (shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext)) {
+              shouldPostpone = myCompilers[idx].isCompilableFile(item.getSourceFile(), myContext);
+              if (shouldPostpone) {
                 break;
               }
             }

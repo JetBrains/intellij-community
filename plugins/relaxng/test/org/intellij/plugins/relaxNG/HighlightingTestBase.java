@@ -27,7 +27,6 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,13 +36,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import junit.framework.TestCase;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
 import org.intellij.plugins.testUtil.ResourceUtil;
@@ -61,7 +60,7 @@ import static com.intellij.openapi.util.io.FileUtil.delete;
  * User: sweinreuter
  * Date: 25.07.2007
  */
-public abstract class HighlightingTestBase extends TestCase implements IdeaCodeInsightTestCase {
+public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   private static final File ourTempPath;
 
   private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
@@ -87,6 +86,7 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
   protected CodeInsightTestFixture myTestFixture;
 
   protected void setUp() throws Exception {
+    super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
 
     myTestFixture = createFixture(factory);
@@ -96,12 +96,13 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
     InspectionToolProvider[] loaders;
     if (getName().contains("Inspection")) {
       loaders = new InspectionToolProvider[]{
-              new ApplicationLoader(),
-              new DefaultInspectionProvider()
+        new ApplicationLoader(),
+        new DefaultInspectionProvider()
       };
-    } else {
+    }
+    else {
       loaders = new InspectionToolProvider[]{
-              new DefaultInspectionProvider()
+        new DefaultInspectionProvider()
       };
     }
 
@@ -114,7 +115,7 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
         ResourceUtil.copyFiles(HighlightingTestBase.this);
         init();
       }
-    }.execute();
+    }.execute().throwException();
   }
 
   protected static String toAbsolutePath(String relativeTestDataPath) {
@@ -162,6 +163,7 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
 
   protected void tearDown() throws Exception {
     myTestFixture.tearDown();
+    super.tearDown();
   }
 
   protected void doHighlightingTest(String s) throws Throwable {
@@ -177,17 +179,13 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
     myTestFixture.configureByFile(name);
 
     final PsiFile file = myTestFixture.getFile();
-    new WriteCommandAction(myTestFixture.getProject(), file) {
-      protected void run(Result result) throws Throwable {
-        final Document doc = myTestFixture.getEditor().getDocument();
-        ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false, file);
-        PsiDocumentManager.getInstance(myTestFixture.getProject()).commitAllDocuments();
+    final Document doc = myTestFixture.getEditor().getDocument();
+    ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false, file);
+    PsiDocumentManager.getInstance(myTestFixture.getProject()).commitAllDocuments();
 
-        Collection<HighlightInfo> highlights1 = doHighlighting(includeExternalToolPass);
+    Collection<HighlightInfo> highlights1 = doHighlighting(includeExternalToolPass);
 
-        data.checkResult(highlights1, doc.getText());
-      }
-    }.execute();
+    data.checkResult(highlights1, doc.getText());
   }
 
   @NotNull

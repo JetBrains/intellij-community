@@ -30,6 +30,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.testng.Assert;
@@ -77,19 +78,29 @@ public abstract class BaseTestNGInspectionsTest {
     myEnabledTool = null;
   }
 
-  protected void doTest(String testName) throws Throwable {
-    final String resultActionName = getActionName();
-    IntentionAction resultAction = null;
-    final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/" + BEFORE + testName + ".java");
-    for (IntentionAction action : actions) {
-      if (Comparing.strEqual(action.getText(), resultActionName)) {
-        resultAction = action;
-        break;
+  protected void doTest(final String testName) throws Throwable {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final String resultActionName = getActionName();
+          IntentionAction resultAction = null;
+          final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/" + BEFORE + testName + ".java");
+          for (IntentionAction action : actions) {
+            if (Comparing.strEqual(action.getText(), resultActionName)) {
+              resultAction = action;
+              break;
+            }
+          }
+          Assert.assertNotNull(resultAction);
+          myFixture.launchAction(resultAction);
+          myFixture.checkResultByFile(getSourceRoot() + "/" + AFTER + testName + ".java");
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
-    }
-    Assert.assertNotNull(resultAction);
-    myFixture.launchAction(resultAction);
-    myFixture.checkResultByFile(getSourceRoot() + "/"+ AFTER + testName +".java");
+    });
   }
 
   protected abstract String getSourceRoot();

@@ -1047,6 +1047,10 @@ public class FSRecords implements Forceable {
     return new ContentOutputStream(fileId);
   }
 
+  public void writeContent(int fileId, byte[] bytes) throws IOException {
+    new ContentOutputStream(fileId).writeBytes(bytes, fileId);
+  }
+
   public int storeUnlinkedContent(byte[] bytes) {
     try {
       int recordId = getContentStorage().acquireNewRecord();
@@ -1127,15 +1131,19 @@ public class FSRecords implements Forceable {
     }
 
     protected void doFlush() throws IOException {
+      writeBytes(((ByteArrayOutputStream)out).toByteArray(), myFileId);
+    }
+
+    public void writeBytes(byte[] bytes, int fileId) throws IOException {
       final int page;
       synchronized (lock) {
         DbConnection.markDirty();
-        incModCount(myFileId);
+        incModCount(fileId);
         page = findOrCreatePage();
       }
 
       final DataOutputStream sinkStream = getStorage().writeStream(page);
-      sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
+      sinkStream.write(bytes);
       sinkStream.close();
     }
 

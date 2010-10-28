@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -146,6 +147,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myModel.setArranger(arranger);
   }
 
+  @Override
   public boolean isFocused() {
     return myFocused;
   }
@@ -565,7 +567,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void show(){
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!myDisposed, disposeTrace);
     LOG.assertTrue(!myShown);
     myShown = true;
 
@@ -899,7 +901,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
-    assert !myDisposed;
+    assert !myDisposed : disposeTrace;
     myHidden = true;
 
     try {
@@ -910,6 +912,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     catch (Throwable e) {
       LOG.error(e);
     }
+
+    assert myDisposed;
 
     if (fireCanceled) {
       fireLookupCanceled(explicitly);
@@ -922,14 +926,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
+  String disposeTrace = null;
+
   public void dispose() {
     assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;
-    assert !myDisposed;
+    assert !myDisposed : disposeTrace;
 
     Disposer.dispose(myProcessIcon);
 
     myDisposed = true;
+    disposeTrace = DebugUtil.currentStackTrace();
   }
 
   private int doSelectMostPreferableItem(List<LookupElement> items) {

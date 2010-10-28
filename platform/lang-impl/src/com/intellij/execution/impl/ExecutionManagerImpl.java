@@ -184,7 +184,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     else {
       compileAndRun(startRunnable, profile, state, new Runnable() {
         public void run() {
-          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
+          if (!project.isDisposed()) {
+            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
+          }
         }
       });
     }

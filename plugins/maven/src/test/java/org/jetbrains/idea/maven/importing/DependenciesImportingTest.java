@@ -15,12 +15,14 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -1338,11 +1340,16 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     assertModuleModuleDeps("m1", "m2");
 
-    Module module = createModule("my-module");
+    final Module module = createModule("my-module");
 
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
-    model.addModuleOrderEntry(module);
-    model.commit();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ModifiableRootModel model = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+        model.addModuleOrderEntry(module);
+        model.commit();
+      }
+    });
+
 
     assertModuleModuleDeps("m1", "m2", "my-module");
 
@@ -1910,33 +1917,49 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries();
   }
 
-  private Library createProjectLibrary(String libraryName) {
-    return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
-  }
-
-  private void createAndAddProjectLibrary(String moduleName, String libraryName) {
-    Library lib = createProjectLibrary(libraryName);
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
-    model.addLibraryEntry(lib);
-    model.commit();
-  }
-
-  private void clearLibraryRoots(String libraryName, OrderRootType... types) {
-    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-    Library.ModifiableModel model = lib.getModifiableModel();
-    for (OrderRootType eachType : types) {
-      for (String each : model.getUrls(eachType)) {
-        model.removeRoot(each, eachType);
+  private Library createProjectLibrary(final String libraryName) {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
+      public Library compute() {
+        return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
       }
-    }
-    model.commit();
+    });
   }
 
-  private void addLibraryRoot(String libraryName, OrderRootType type, String path) {
-    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-    Library.ModifiableModel model = lib.getModifiableModel();
-    model.addRoot(path, type);
-    model.commit();
+  private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        Library lib = createProjectLibrary(libraryName);
+        ModifiableRootModel model = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
+        model.addLibraryEntry(lib);
+        model.commit();
+      }
+    });
+  }
+
+  private void clearLibraryRoots(final String libraryName, final OrderRootType... types) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+        Library.ModifiableModel model = lib.getModifiableModel();
+        for (OrderRootType eachType : types) {
+          for (String each : model.getUrls(eachType)) {
+            model.removeRoot(each, eachType);
+          }
+        }
+        model.commit();
+      }
+    });
+  }
+
+  private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+        Library.ModifiableModel model = lib.getModifiableModel();
+        model.addRoot(path, type);
+        model.commit();
+      }
+    });
   }
 
   public void testEjbDependenciesInJarProject() throws Exception {
@@ -1968,12 +1991,17 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    Library lib = appTable.createLibrary("foo");
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
-    model.addLibraryEntry(lib);
-    model.commit();
-    appTable.removeLibrary(lib);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+        Library lib = appTable.createLibrary("foo");
+        ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+        model.addLibraryEntry(lib);
+        model.commit();
+        appTable.removeLibrary(lib);
+      }
+    });
+
 
     importProject(); // should not fail;
   }

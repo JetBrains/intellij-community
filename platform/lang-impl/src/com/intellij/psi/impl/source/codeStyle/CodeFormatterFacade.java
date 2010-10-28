@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -47,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
@@ -115,10 +116,11 @@ public class CodeFormatterFacade {
   public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
     final Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
     if (document instanceof DocumentWindow) {
       file = InjectedLanguageUtil.getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+      for (FormatTextRanges.FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
       }
       document = documentWindow.getDelegate();
@@ -130,11 +132,21 @@ public class CodeFormatterFacade {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
-          ranges.preprocess(file.getNode());
+          final PsiElement startElement = file.findElementAt(textRanges.get(0).getTextRange().getStartOffset());
+          final PsiElement endElement = file.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1);
+          final PsiElement commonParent = startElement != null && endElement != null ? PsiTreeUtil.findCommonParent(startElement, endElement) : null;
+          ASTNode node = null;
+          if (commonParent != null) {
+            node = commonParent.getNode();
+          }
+          if (node == null) {
+            node = file.getNode();
+          }
+          ranges.preprocess(node);
           if (doPostponedFormatting) {
-            RangeMarker[] markers = new RangeMarker[ranges.getRanges().size()];
+            RangeMarker[] markers = new RangeMarker[textRanges.size()];
             int i = 0;
-            for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+            for (FormatTextRanges.FormatTextRange range : textRanges) {
               TextRange textRange = range.getTextRange();
               int start = textRange.getStartOffset();
               int end = textRange.getEndOffset();
@@ -148,11 +160,11 @@ public class CodeFormatterFacade {
             final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
             component.doPostponedFormatting(file.getViewProvider());
             i = 0;
-            for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+            for (FormatTextRanges.FormatTextRange range : textRanges) {
               RangeMarker marker = markers[i];
               if (marker != null) {
                 range.setTextRange(new TextRange(marker.getStartOffset(), marker.getEndOffset()));
-                ((RangeMarkerEx)marker).dispose();
+                marker.dispose();
               }
               i++;
             }
@@ -164,7 +176,7 @@ public class CodeFormatterFacade {
                                                                          project, mySettings, file.getFileType(), file);
 
           FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
-          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+          for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());
           }
@@ -243,8 +255,8 @@ public class CodeFormatterFacade {
 
   private void doWrapLongLinesIfNecessary(@NotNull Editor editor, @NotNull Document document, int startOffset, int endOffset) {
     // Normalization.
-    int startOffsetToUse = Math.max(0, startOffset);
-    int endOffsetToUse = Math.min(document.getTextLength(), endOffset);
+    int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
+    int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
 
     LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
     CharSequence text = document.getCharsSequence();
