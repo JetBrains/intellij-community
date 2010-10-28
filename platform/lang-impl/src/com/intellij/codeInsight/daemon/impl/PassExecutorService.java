@@ -380,20 +380,11 @@ public abstract class PassExecutorService implements Disposable {
                                            @NotNull final DaemonProgressIndicator updateProgress,
                                            @NotNull final AtomicInteger threadsToStartCountdown) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-    /*if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, true);
-        }
-      });
-    }
-    else*/ {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-        public void run() {
-          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, testMode);
-        }
-      }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
-    }
+    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+      public void run() {
+        doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, testMode);
+      }
+    }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
   }
 
   private void doApplyInformationToEditors(@NotNull DaemonProgressIndicator updateProgress,
@@ -401,6 +392,7 @@ public abstract class PassExecutorService implements Disposable {
                                            @NotNull List<FileEditor> fileEditors,
                                            @NotNull AtomicInteger threadsToStartCountdown,
                                            boolean testMode) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed() || myProject.isDisposed()) {
       updateProgress.cancel();
     }
