@@ -399,7 +399,8 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    return UIManager.getColor("List.background");
+    // Fixes most of the GTK+ L&F glitches
+    return UIUtil.isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
 
   public static Color getListForeground() {
@@ -1371,7 +1372,7 @@ public class UIUtil {
   /**
    * Avoid blinking while changing background
    */
-  public static void changeBackGround(final JComponent component, final Color background) {
+  public static void changeBackGround(final Component component, final Color background) {
     final Color oldBackGround = component.getBackground();
     if (background == null || !background.equals(oldBackGround)){
       component.setBackground(background);
