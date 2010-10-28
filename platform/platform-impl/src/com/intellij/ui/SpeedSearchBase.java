@@ -58,6 +58,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myRecentEnteredPrefix;
   private SpeedSearchComparator myComparator = new SpeedSearchComparator();
+  private boolean myClearSearchOnNavigateNoMatch = false;
 
   @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 
@@ -85,6 +86,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public static boolean hasActiveSpeedSearch(JComponent component) {
     SpeedSearchBase speedSearch = (SpeedSearchBase)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
     return speedSearch != null && speedSearch.mySearchPopup != null && speedSearch.mySearchPopup.isVisible();
+  }
+
+  public void setClearSearchOnNavigateNoMatch(boolean clearSearchOnNavigateNoMatch) {
+    myClearSearchOnNavigateNoMatch = clearSearchOnNavigateNoMatch;
   }
 
   @Override
@@ -410,22 +415,34 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         int keyCode = e.getKeyCode();
         String s = mySearchField.getText();
         Object element;
-        if (keyCode == KeyEvent.VK_UP) {
-          element = findPreviousElement(s);
-        }
-        else if (keyCode == KeyEvent.VK_DOWN) {
-          element = findNextElement(s);
-        }
-        else if (keyCode == KeyEvent.VK_HOME) {
-          element = findFirstElement(s);
-        }
-        else if (keyCode == KeyEvent.VK_END) {
-          element = findLastElement(s);
+        if (isUpDownHomeEnd(keyCode)) {
+          element = findTargetElement(keyCode, s);
+          if (myClearSearchOnNavigateNoMatch && element == null) {
+            manageSearchPopup(null);
+            element = findTargetElement(keyCode, "");
+          }
         }
         else {
           element = findElement(s);
         }
         updateSelection(element);
+      }
+    }
+
+    @Nullable
+    private Object findTargetElement(int keyCode, String searchPrefix) {
+      if (keyCode == KeyEvent.VK_UP) {
+        return findPreviousElement(searchPrefix);
+      }
+      else if (keyCode == KeyEvent.VK_DOWN) {
+        return findNextElement(searchPrefix);
+      }
+      else if (keyCode == KeyEvent.VK_HOME) {
+        return findFirstElement(searchPrefix);
+      }
+      else {
+        assert keyCode == KeyEvent.VK_END;
+        return findLastElement(searchPrefix);
       }
     }
 
@@ -486,12 +503,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         return;
       }
       
-      if (
-        i == KeyEvent.VK_HOME ||
-        i == KeyEvent.VK_END ||
-        i == KeyEvent.VK_UP ||
-        i == KeyEvent.VK_DOWN
-        ) {
+      if (isUpDownHomeEnd(i)) {
         e.consume();
         return;
       }
@@ -501,6 +513,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         e.consume();
       }
     }
+
+  }
+
+  private static boolean isUpDownHomeEnd(int keyCode) {
+    return keyCode == KeyEvent.VK_HOME || keyCode == KeyEvent.VK_END || keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
   }
 
   private void manageSearchPopup(SearchPopup searchPopup) {

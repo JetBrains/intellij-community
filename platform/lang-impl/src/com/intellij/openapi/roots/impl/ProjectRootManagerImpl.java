@@ -338,11 +338,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myProjectSdkName;
   }
 
-  public void setProjectSdk(Sdk projectSdk) {
+  public void setProjectSdk(Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (projectSdk != null) {
-      myProjectSdkName = projectSdk.getName();
-      myProjectSdkType = projectSdk.getSdkType().getName();
+    if (sdk != null) {
+      myProjectSdkName = sdk.getName();
+      myProjectSdkType = sdk.getSdkType().getName();
     }
     else {
       myProjectSdkName = null;

@@ -20,7 +20,6 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -99,7 +98,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     if (selectedSerials != null) {
       resetSelection(selectedSerials);
     }
-    try {
+    /*try {
       AdbManager.run(new Runnable() {
         public void run() {
           AndroidDebugBridge.addDeviceChangeListener(DeviceChooser.this);
@@ -108,7 +107,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     }
     catch (AdbNotRespondingException e) {
       Messages.showErrorDialog(facet.getModule().getProject(), e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    }*/
   }
 
   private void resetSelection(@NotNull String[] selectedSerials) {
@@ -264,30 +263,29 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
   }
 
   public void deviceConnected(IDevice device) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         updateTable();
       }
-    });
+    });*/
   }
 
   public void deviceDisconnected(IDevice device) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         updateTable();
       }
-    });
+    });*/
   }
 
   public void deviceChanged(IDevice device, int changeMask) {
-    if ((changeMask & (IDevice.CHANGE_STATE | IDevice.CHANGE_BUILD_INFO)) != 0) {
+    /*if ((changeMask & (IDevice.CHANGE_STATE | IDevice.CHANGE_BUILD_INFO)) != 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           updateTable();
         }
       });
-      updateOkButton();
-    }
+    }*/
   }
 
   private class MyDeviceTableModel extends AbstractTableModel {

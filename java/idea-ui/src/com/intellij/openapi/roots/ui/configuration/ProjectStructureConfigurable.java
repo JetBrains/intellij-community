@@ -21,7 +21,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,6 +38,7 @@ import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
@@ -64,6 +68,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   @NonNls private static final String CATEGORY = "category";
   private JComponent myToFocus;
   private boolean myWasUiDisposed;
+  private ConfigurationErrorsComponent myErrorsComponent;
 
   public static class UIState {
     public float proportion;
@@ -187,6 +192,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.setSecondComponent(myDetails);
 
     myComponent.add(mySplitter, BorderLayout.CENTER);
+    myErrorsComponent = new ConfigurationErrorsComponent(myProject);
+    myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
 
     myWasIntialized = true;
 
@@ -323,6 +330,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
+
+    Disposer.dispose(myErrorsComponent);
+
     myWasIntialized = false;
   }
 

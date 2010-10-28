@@ -46,9 +46,9 @@ public class PathUtilEx {
       return ModuleRootManager.getInstance(module).getSdk();
     }
   };
-  private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
-    public String convert(Sdk jdk) {
-      return jdk.getVersionString();
+  private static final Convertor<Sdk, String> SDK_VERSION = new Convertor<Sdk, String>() {
+    public String convert(Sdk sdk) {
+      return sdk.getVersionString();
     }
   };
 
@@ -75,20 +75,20 @@ public class PathUtilEx {
   }
 
   public static Sdk chooseJdk(Project project, Collection<Module> modules) {
-    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectJdk != null) {
-      return projectJdk;
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (projectSdk != null) {
+      return projectSdk;
     }
     return chooseJdk(modules);
   }
 
   public static Sdk chooseJdk(Collection<Module> modules) {
-    List<Sdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
-    if (jdks.isEmpty()) {
+    List<Sdk> sdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
+    if (sdks.isEmpty()) {
       return null;
     }
-    Collections.sort(jdks, ComparatorUtil.compareBy(JDK_VERSION, String.CASE_INSENSITIVE_ORDER));
-    return jdks.get(jdks.size() - 1);
+    Collections.sort(sdks, ComparatorUtil.compareBy(SDK_VERSION, String.CASE_INSENSITIVE_ORDER));
+    return sdks.get(sdks.size() - 1);
   }
 }
 
