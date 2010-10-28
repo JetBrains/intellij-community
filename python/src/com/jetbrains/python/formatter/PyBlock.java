@@ -102,16 +102,6 @@ public class PyBlock implements ASTBlock {
       if (child.getTextRange().getLength() == 0) continue;
 
       if (childType == TokenType.WHITE_SPACE) {
-        // don't break this block into sub-blocks if some of the
-        // whitespace between sub-blocks would include \ characters,
-        // because the IDEA 5.0/5.1 formatter core requires that whitespace
-        // between blocks must include whitespace-only characters
-        /*
-        if (child.getText().indexOf('\\') >= 0) {
-          return Collections.emptyList();
-        }
-        */
-
         continue;
       }
 
@@ -167,6 +157,11 @@ public class PyBlock implements ASTBlock {
       }
       else {
         childIndent = Indent.getNormalIndent();
+      }
+    }
+    else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      if (childType == PyTokenTypes.STRING_LITERAL) {
+        childAlignment = getAlignmentForChildren();
       }
     }
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
@@ -260,11 +255,16 @@ public class PyBlock implements ASTBlock {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
     }
 
-    if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
-      return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
+    if (type1 == PyTokenTypes.COLON) {
+      if (type2 == PyElementTypes.STATEMENT_LIST) {
+        return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
+      }
+      if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
+        return getSpacingForOption(getPySettings().SPACE_AFTER_PY_COLON);
+      }
     }
     if (type2 == PyTokenTypes.COLON) {
-      return getSpacingForOption(getPySettings().SPACE_BEFORE_COLON);
+      return getSpacingForOption(getPySettings().SPACE_BEFORE_PY_COLON);
     }
 
     if (type1 == PyTokenTypes.COMMA) {

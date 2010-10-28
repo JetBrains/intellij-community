@@ -16,6 +16,11 @@ import threading
 import pydevd_resolver
 import traceback
 
+try:
+    from pydevd_exec import Exec
+except:
+    from pydevd_exec2 import Exec
+
 #-------------------------------------------------------------------------- defining true and false for earlier versions
 
 try:
@@ -347,13 +352,13 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''
     frame = findFrame(thread_id, frame_id)
 
-    expression = expression.replace('@LINE@', '\n')
+    expression = str(expression.replace('@LINE@', '\n'))
 
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)
     #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-    updated_globals = dict()
+    updated_globals = {}
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
@@ -365,7 +370,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
                 #it will have whatever the user actually did)
                 compiled = compile(expression, '<string>', 'eval')
             except:
-                exec(expression, updated_globals, frame.f_locals)
+                Exec(expression, updated_globals, frame.f_locals)
             else:
                 result = eval(compiled, updated_globals, frame.f_locals)
                 if result is not None: #Only print if it's not None (as python does)
@@ -427,7 +432,7 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
         else:
             #default way (only works for changing it in the topmost frame)
             result = eval(expression, frame.f_globals, frame.f_locals)
-            exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
+            Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
 
 

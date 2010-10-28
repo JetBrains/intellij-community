@@ -162,7 +162,7 @@ public class PyResolveUtil {
     // if we're under a cap, an external object that we want to use might be also defined below us.
     // look through all contexts, closest first.
     PsiElement ret = null;
-    PsiElement our_cap = PsiTreeUtil.getParentOfType(start, PyFunction.class);
+    PsiElement our_cap = PsiTreeUtil.getParentOfType(start, Callable.class);
     if (our_cap != null) {
       PsiElement cap = our_cap;
       while (true) {

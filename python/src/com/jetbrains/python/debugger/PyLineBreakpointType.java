@@ -12,12 +12,14 @@ import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+  private final PyDebuggerEditorsProvider myEditorsProvider = new PyDebuggerEditorsProvider();
 
   public PyLineBreakpointType() {
     super("python-line", "Python Line Breakpoint");
@@ -49,5 +51,10 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
   @Override
   public String getBreakpointsDialogHelpTopic() {
     return "reference.dialogs.breakpoints";
+  }
+
+  @Override
+  public XDebuggerEditorsProvider getEditorsProvider() {
+    return myEditorsProvider;
   }
 }

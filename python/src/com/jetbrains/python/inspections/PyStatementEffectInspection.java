@@ -30,6 +30,11 @@ public class PyStatementEffectInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
+  @Override
+  protected boolean isSuppressForCodeFragment() {
+    return true;
+  }
+
   private static class Visitor extends PyInspectionVisitor {
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
@@ -105,6 +110,10 @@ public class PyStatementEffectInspection extends PyInspection {
       else if (expression instanceof PyConditionalExpression) {
         PyConditionalExpression conditionalExpression = (PyConditionalExpression)expression;
         return hasEffect(conditionalExpression.getTruePart()) || hasEffect(conditionalExpression.getFalsePart());
+      }
+      else if (expression instanceof PyParenthesizedExpression) {
+        PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)expression;
+        return hasEffect(parenthesizedExpression.getContainedExpression());
       }
       return false;
     }

@@ -1327,6 +1327,8 @@ class ModuleRedeclarator(object):
               mod_name = ""
         else:
             mod_name = " does not know its name"
+        if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
+            self.out("from __future__ import print_function", 0)
         self.out("# module " + p_name + mod_name, 0)
         if hasattr(self.module, "__file__"):
             self.out("# from file " + self.module.__file__, 0)

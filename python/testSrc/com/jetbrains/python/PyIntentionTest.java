@@ -11,10 +11,10 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 public class PyIntentionTest extends PyLightFixtureTestCase {
 
   private void doTest(String hint) {
-    myFixture.configureByFile("before" + getTestName(false) + ".py");
+    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile("after" + getTestName(false) + ".py");
+    myFixture.checkResultByFile("intentions/after" + getTestName(false) + ".py");
   }
 
   private void doTest(String hint, LanguageLevel languageLevel) {
@@ -25,11 +25,6 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     finally {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/intentions/";
   }
 
   public void testConvertDictComp() {

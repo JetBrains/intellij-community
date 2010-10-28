@@ -48,7 +48,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testToConstructorInherited() {
     ResolveResult[] targets = multiResolve();
-    assertEquals(targets.length, 2); // to class, to init
+    assertEquals(2, targets.length); // to class, to init
     PsiElement elt;
     // class
     elt = targets[0].getElement();
@@ -343,6 +343,11 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  public void testSuperTwoClasses() {  // PY-2133
+    final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "my_call");
+    assertEquals("Base2", pyFunction.getContainingClass().getName());
+  }
+
   public void testLambdaDefaultParameter() {
     final PsiElement element = doResolve();
     assertInstanceOf(element, PyTargetExpression.class);
@@ -365,5 +370,9 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testBuiltinVsClassMember() {  // PY-1654
     final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "eval");
     assertEquals("__builtin__.py", pyFunction.getContainingFile().getName());
+  }
+
+  public void testLambdaToClass() {  // PY-2182
+    assertResolvesTo(PyClass.class, "TestTwo");
   }
 }

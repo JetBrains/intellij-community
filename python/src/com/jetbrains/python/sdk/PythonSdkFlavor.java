@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -124,6 +125,9 @@ public abstract class PythonSdkFlavor {
 
   public static final String PYTHONPATH = "PYTHONPATH";
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+    final String encoding = EncodingManager.getInstance().getDefaultCharset().name();
+    envs.put("PYTHONIOENCODING", encoding);
   }
 }

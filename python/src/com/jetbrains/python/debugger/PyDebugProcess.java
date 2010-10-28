@@ -172,7 +172,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     dropFrameCaches();
     if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
-      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine());
+      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine(), null);
       myDebugger.execute(command);  // set temp. breakpoint
       resume(ResumeCommand.Mode.RESUME);
     }
@@ -248,7 +248,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (myDebugger.isConnected()) {
-      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine());
+      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition());
       myDebugger.execute(command);
     }
   }

@@ -22,6 +22,8 @@ public abstract class AbstractCommand {
   public static final int EXECUTE = 115;
   public static final int CHANGE_VARIABLE = 117;
   public static final int VERSION = 501;
+  public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
+  public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
   private final RemoteDebugger myDebugger;
   private final int myCommandCode;
