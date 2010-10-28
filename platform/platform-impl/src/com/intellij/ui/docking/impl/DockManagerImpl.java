@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.*;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -389,6 +390,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
           myContainer.closeAll();
         }
       });
+
+      new UiNotifyConnector(frame.getContentPane(), myContainer);
+
       return frame;
     }
   }

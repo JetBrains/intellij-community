@@ -60,7 +60,6 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
   public DockContainer loadContainerFrom(Element element) {
     DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer();
     container.getSplitters().readExternal(element.getChild("state"));
-    container.getSplitters().openFiles();
     return container;
   }
 

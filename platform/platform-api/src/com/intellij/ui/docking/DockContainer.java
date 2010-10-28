@@ -19,13 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.util.ui.update.Activatable;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public interface DockContainer extends Disposable {
+public interface DockContainer extends Disposable, Activatable {
 
   RelativeRectangle getAcceptArea();
   boolean canAccept(DockableContent content, RelativePoint point);

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
@@ -50,6 +51,8 @@ class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   private boolean myDisposeWhenEmpty;
   private DockManager myDockManager;
+
+  private boolean myWasEverShown;
 
   DockableEditorTabbedContainer(Project project, DockManager dockManager) {
     this(project, dockManager, null, true);
@@ -210,5 +213,22 @@ class DockableEditorTabbedContainer implements DockContainer.Persistent {
   @Override
   public boolean isDisposeWhenEmpty() {
     return myDisposeWhenEmpty;
+  }
+
+  @Override
+  public void showNotify() {
+    if (!myWasEverShown) {
+      myWasEverShown = true;
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          getSplitters().openFiles();
+        }
+      });
+    }
+  }
+
+  @Override
+  public void hideNotify() {
   }
 }
