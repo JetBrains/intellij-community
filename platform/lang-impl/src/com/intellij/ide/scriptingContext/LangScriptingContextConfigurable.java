@@ -80,6 +80,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
 
   @Override
   public Configurable[] getConfigurables() {
-    return new Configurable[] {myContextsConfigurable};
+    //return new Configurable[] {myContextsConfigurable};
+    return new Configurable[] {};
   }
 }
