@@ -290,7 +290,7 @@ public class ExpressionParser {
 
   @Nullable
   private static PsiBuilder.Marker parsePostfix(final PsiBuilder builder) {
-    PsiBuilder.Marker operand = parsePrimary(builder, null);
+    PsiBuilder.Marker operand = parsePrimary(builder, null, -1);
     if (operand == null) return null;
 
     while (POSTFIX_OPS.contains(builder.getTokenType())) {
@@ -306,7 +306,7 @@ public class ExpressionParser {
   private enum BreakPoint {P1, P2, P3, P4}
 
   @Nullable
-  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, final BreakPoint breakPoint) {
+  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, final BreakPoint breakPoint, final int breakOffset) {
     PsiBuilder.Marker startMarker = builder.mark();
 
     PsiBuilder.Marker expr = parsePrimaryExpressionStart(builder);
@@ -323,19 +323,20 @@ public class ExpressionParser {
 
         final IElementType dotTokenType = builder.getTokenType();
         if (dotTokenType == JavaTokenType.CLASS_KEYWORD && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
-          if (breakPoint == BreakPoint.P1) {
+          if (breakPoint == BreakPoint.P1 && builder.getCurrentOffset() == breakOffset) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
             PsiBuilderUtil.drop(startMarker, dotPos);
             return expr;
           }
 
           final PsiBuilder.Marker copy = startMarker.precede();
+          final int offset = builder.getCurrentOffset();
           startMarker.rollbackTo();
 
           final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
-          if (classObjAccess == null) {
+          if (classObjAccess == null || builder.getCurrentOffset() < offset) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P1);
+            return parsePrimary(builder, BreakPoint.P1, offset);
           }
 
           startMarker = copy;
@@ -359,13 +360,13 @@ public class ExpressionParser {
           final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P2);
+            return parsePrimary(builder, BreakPoint.P2, -1);
           }
           builder.advanceLexer();
 
           if (builder.getTokenType() != dotTokenType) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P2);
+            return parsePrimary(builder, BreakPoint.P2, -1);
           }
           builder.advanceLexer();
 
@@ -422,7 +423,7 @@ public class ExpressionParser {
             }
 
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P3);
+            return parsePrimary(builder, BreakPoint.P3, -1);
           }
           else {
             startMarker.drop();
@@ -451,7 +452,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
           if (classObjAccess == null || builder.getCurrentOffset() <= pos) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P4);
+            return parsePrimary(builder, BreakPoint.P4, -1);
           }
 
           startMarker = copy;
@@ -828,16 +829,10 @@ public class ExpressionParser {
     if (type == JavaTokenType.GTGTGTEQ) {
       PsiBuilderUtil.advance(builder, 4);
     }
-    else if (type == JavaTokenType.GTGTGT) {
+    else if (type == JavaTokenType.GTGTGT || type == JavaTokenType.GTGTEQ) {
       PsiBuilderUtil.advance(builder, 3);
     }
-    else if (type == JavaTokenType.GTGTEQ) {
-      PsiBuilderUtil.advance(builder, 3);
-    }
-    else if (type == JavaTokenType.GTGT) {
-      PsiBuilderUtil.advance(builder, 2);
-    }
-    else if (type == JavaTokenType.GE) {
+    else if (type == JavaTokenType.GTGT || type == JavaTokenType.GE) {
       PsiBuilderUtil.advance(builder, 2);
     }
     else {

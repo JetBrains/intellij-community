@@ -35,7 +35,7 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
     return myAnnoFqn;
   }
 
-  public static PsiRef<PsiAnnotation> createRef(@NotNull PsiModifierListOwner parent, @NonNls String fqn) {
+  public static PsiElementRef<PsiAnnotation> createRef(@NotNull PsiModifierListOwner parent, @NonNls String fqn) {
     return new AnnotationChildLink(fqn).createChildRef(parent);
   }
 

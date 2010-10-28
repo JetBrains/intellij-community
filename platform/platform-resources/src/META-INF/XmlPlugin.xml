@@ -56,6 +56,9 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first"/>
 
+    <completion.confidence language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="xml"/>
+    <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="html"/>
+
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue"

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -104,6 +105,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   private JComponent buildNavBarPanel() {
     final JComponent result = new OpaquePanel.List(new BorderLayout());
+    result.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
     myNavigationBar = new NavBarPanel(myProject);
 
     JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);

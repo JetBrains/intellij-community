@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaMethodCallElement");
   private static final Key<PsiSubstitutor> INFERENCE_SUBSTITUTOR = Key.create("INFERENCE_SUBSTITUTOR");
   private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
@@ -49,6 +51,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     super(method, method.getName());
     myMethod = method;
     myContainingClass = method.getContainingClass();
+    if (myContainingClass == null) {
+      LOG.error(method.getName());
+    }
     myCanImportStatic = canImportStatic;
     PsiType type = method.getReturnType();
     setTailType(PsiType.VOID.equals(type) ? TailType.SEMICOLON : TailType.NONE);

@@ -103,14 +103,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testKeywordsInName() throws Exception {
-    configureByFile("KeywordsInName.java");
-    checkResultByFile("KeywordsInName_after.java");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.completeBasic()
+    myFixture.type 'a\n'
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testSimpleVariable() throws Exception {
-    configureByFile("SimpleVariable.java");
-    checkResultByFile("SimpleVariable_after.java");
-  }
+  public void testSimpleVariable() throws Exception { doTest() }
 
   public void testPreferLongerNamesOption() throws Exception {
     configureByFile("PreferLongerNamesOption.java");

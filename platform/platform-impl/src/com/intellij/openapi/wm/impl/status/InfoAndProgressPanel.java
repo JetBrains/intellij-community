@@ -72,6 +72,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
 
+  private String myCurrentRequestor;
+
   public InfoAndProgressPanel() {
     setOpaque(false);
 
@@ -323,8 +325,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.repaint();
   }
 
-  public void setText(final String text) {
+  public void setText(final String text, final String requestor) {
+    if (text == null || text.length() == 0) {
+      if (requestor == null && myCurrentRequestor == null) return;
+      if (requestor != null && !requestor.equals(myCurrentRequestor)) return;
+      if (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor)) return;
+    }
+
     myInfoPanel.setText(text);
+    myCurrentRequestor = requestor;
   }
 
   public void setRefreshVisible(final boolean visible) {

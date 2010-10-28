@@ -124,7 +124,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);
 
-    int allowedWidth = list.getFixedCellWidth() - getCommonIconWidth();
+    int allowedWidth = list.getFixedCellWidth() - getCommonGapsWidth() - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics);
     item.renderElement(presentation);
 
@@ -319,12 +319,11 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     int maxWidth = Math.min(RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics), myMaxWidth);
-    return maxWidth + getCommonIconWidth();
+    return maxWidth + getCommonGapsWidth();
   }
 
-  private int getCommonIconWidth() {
-    return myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap()
-           + PopupIcons.HAS_NEXT_ICON_GRAYED.getIconWidth() //actions
+  private int getCommonGapsWidth() {
+    return PopupIcons.HAS_NEXT_ICON_GRAYED.getIconWidth() //actions
            + myNormalMetrics.stringWidth("W"); //tail-type separation
   }
 

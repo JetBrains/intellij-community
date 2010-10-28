@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -209,6 +210,11 @@ import java.util.Map;
   @Override
   public EditorWindow getCurrentWindow() {
     return null;
+  }
+
+  @Override
+  public AsyncResult<EditorWindow> getActiveWindow() {
+    return new AsyncResult.Done<EditorWindow>(null);
   }
 
   @Override

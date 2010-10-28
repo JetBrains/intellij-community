@@ -173,7 +173,7 @@ public class PerformanceWatcher implements ApplicationComponent {
           myCurHangLogDir.mkdirs();
         }
         if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
-          dumpThreads();
+          dumpThreads(false);
         }
       }
       else {
@@ -202,8 +202,9 @@ public class PerformanceWatcher implements ApplicationComponent {
     return name.toString();
   }
 
-  public void dumpThreads() {
-    File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + ".txt");
+  public void dumpThreads(boolean millis) {
+    final String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
+    File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(f);

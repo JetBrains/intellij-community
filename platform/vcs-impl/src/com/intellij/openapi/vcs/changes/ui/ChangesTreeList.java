@@ -573,7 +573,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
                                                   int row,
                                                   boolean hasFocus) {
 
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
+      if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
         NonOpaquePanel.setTransparent(this);
         NonOpaquePanel.setTransparent(myCheckBox);
       } else {

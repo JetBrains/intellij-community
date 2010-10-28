@@ -105,7 +105,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile boolean myDisposeInProgress = false;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  private static boolean ourDumpThreadsOnLongWriteActionWaiting = "true".equals(System.getProperty("dump.threads.on.long.write.action.waiting"));
+  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
+    System.getProperty("dump.threads.on.long.write.action.waiting"), 0);
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -777,15 +778,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     fireBeforeWriteActionStart(action);
     final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    if (ourDumpThreadsOnLongWriteActionWaiting) {
+    if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
       executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
           while (!stopped.get()) {
             try {
-              Thread.sleep(239);
+              Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
               if (!stopped.get()) {
-                getComponent(PerformanceWatcher.class).dumpThreads();
+                getComponent(PerformanceWatcher.class).dumpThreads(true);
               }
             }
             catch (InterruptedException e) {
