@@ -144,10 +144,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myDraggingNow && myPressPointScreen != null) {
       final Point draggedTo = new RelativePoint(e).getScreenPoint();
 
-      draggedTo.x -= myDelta.width;
-      draggedTo.y -= myDelta.height;
-
-
       boolean dragOutStarted = false;
       if (!myDetachingMode) {
         if (isDragOut(e, draggedTo, (Point)myPressPointScreen.clone())) {
@@ -204,8 +200,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   private boolean isWithinDeadZone(final MouseEvent e) {
     final Point screen = new RelativePoint(e).getScreenPoint();
-    return Math.abs(myPressPointScreen.x - screen.x) < DRAG_START_DEADZONE &&
-           Math.abs(myPressPointScreen.y - screen.y) < DRAG_START_DEADZONE;
+    return Math.abs(myPressPointScreen.x - screen.x - myDelta.width) < DRAG_START_DEADZONE &&
+           Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
   }
 
   public void mouseClicked(final MouseEvent e) {

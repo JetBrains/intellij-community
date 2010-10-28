@@ -630,6 +630,8 @@ public class JBTabsImpl extends JComponent
       }
     }
 
+    revalidateAndRepaint(false);
+
     return info;
   }
 
@@ -1468,7 +1470,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private void paintSelectionAndBorder(Graphics2D g2d) {
-    if (getSelectedLabel() == null) return;
+    if (mySelectedInfo == null) return;
 
     final ShapeInfo shapeInfo = computeSelectedLabelShape();
     if (!isHideTabs()) {
@@ -2848,7 +2850,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isTabDraggingEnabled() {
-    return myTabDraggingEnabled && isSingleRow();
+    return myTabDraggingEnabled;
   }
 
   public JBTabsPresentation setProvideSwitchTargets(boolean provide) {
