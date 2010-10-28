@@ -108,7 +108,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             }
         });
 
-        myScopeMappingTable.setRowHeight(myProfilesComboBox.getPreferredSize().height);
         myScopeMappingTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(final ListSelectionEvent e) {
                 updateButtons();
@@ -354,7 +353,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             };
         }
 
-        public TableCellEditor getEditor(ScopeSetting scopeSetting) {
+        public TableCellEditor getEditor(final ScopeSetting scopeSetting) {
             return new AbstractTableCellEditor() {
                 private ComboBox myProfilesCombo;
 
@@ -362,9 +361,17 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                     return myProfilesCombo.getSelectedItem();
                 }
 
-                public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
-                    final Collection<CopyrightProfile> copyrights = myProfilesModel.getAllProfiles().values();
-                    myProfilesCombo = new ComboBox(copyrights.toArray(new CopyrightProfile[copyrights.size()]), 60);
+              public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
+                final List<CopyrightProfile> copyrights = new ArrayList<CopyrightProfile>(myProfilesModel.getAllProfiles().values());
+                Collections.sort(copyrights, new Comparator<CopyrightProfile>() {
+                  @Override
+                  public int compare(CopyrightProfile o1, CopyrightProfile o2) {
+                    return o1.getName().compareToIgnoreCase(o2.getName());
+                  }
+                });
+                myProfilesCombo = new ComboBox(copyrights.toArray(new CopyrightProfile[copyrights.size()]), 60);
+                myProfilesCombo.setBorder(null);
+                myProfilesCombo.setSelectedItem(scopeSetting.getProfile());
                   myProfilesCombo.addItemListener(new ItemListener() {
                     public void itemStateChanged(final ItemEvent e) {
                       if (table.isEditing()) {
@@ -406,7 +413,19 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                                                                int row,
                                                                int column) {
                     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                    setText(value == null ? "" : ((NamedScope) value).getName());
+                    if (value == null) {
+                      setText("");
+                    }
+                    else {
+                      final String scopeName = ((NamedScope)value).getName();
+                      if (!isSelected) {
+                        final NamedScope scope = DependencyValidationManager.getScope(myProject, scopeName);
+                        if (scope == null) {
+                          setForeground(Color.red);
+                        }
+                      }
+                      setText(scopeName);
+                    }
                     return this;
                 }
             };

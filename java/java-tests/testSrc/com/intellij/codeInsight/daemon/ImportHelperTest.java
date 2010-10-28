@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -99,44 +100,44 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-
-              CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-              settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
-              PackageEntryTable table = new PackageEntryTable();
-              table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
-              table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-              table.addEntry(new PackageEntry(false, "javax", true));
-              table.addEntry(new PackageEntry(false, "java", true));
-              table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-              table.addEntry(new PackageEntry(true, "java", true));
-              table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-              table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
-
-              settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
-              CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
               try {
-              JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-              }
-              finally {
-                CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-              }
 
-              assertOrder(file, "java.awt.*", "java.util.Map", "static java.lang.Math.max", "static java.lang.Math.min", "static javax.swing.SwingConstants.CENTER");
+                CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+                settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+                PackageEntryTable table = new PackageEntryTable();
+                table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+                table.addEntry(new PackageEntry(false, "javax", true));
+                table.addEntry(new PackageEntry(false, "java", true));
+                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+                table.addEntry(new PackageEntry(true, "java", true));
+                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+                table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
 
+                settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
+                CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+                try {
+                  JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
+                }
+                finally {
+                  CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+                }
+
+                assertOrder(file, "java.awt.*", "java.util.Map", "static java.lang.Math.max", "static java.lang.Math.min", "static javax.swing.SwingConstants.CENTER");
+
+              }
+              catch (Throwable e) {
+                LOG.error(e);
+              }
             }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, "", "");
+          });
+        }
+      }, "", "");
   }
 
   @Override
@@ -149,8 +150,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     ImportHelper importHelper = new ImportHelper(settings);
 
     PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(fqn, GlobalSearchScope.allScope(getProject()));
-    boolean b = importHelper.addImport(file, psiClass);
-    assertTrue(b);
+        boolean b = importHelper.addImport(file, psiClass);
+        assertTrue(b);
 
     assertOrder(file, expectedOrder);
   }
@@ -199,8 +200,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     try {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
       configureByText(StdFileTypes.JAVA, "class X { ArrayList<caret> c; }");
-      ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).flushCurrentCommandMerger();
-      ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
+      ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
+      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
       
@@ -232,8 +233,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     try {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
       configureByText(StdFileTypes.JAVA, "class X { <caret>ArrayList c = new ArrayList(); }");
-      ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).flushCurrentCommandMerger();
-      ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
+      ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
+      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
       
@@ -290,8 +291,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testAutoImportWorks() throws Throwable {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(StdFileTypes.JAVA, text);
-    ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).flushCurrentCommandMerger();
-    ((UndoManagerImpl)UndoManagerImpl.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
+    ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
+    ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
     assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
 
 
@@ -304,6 +305,36 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     undo();
 
     assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+  }
+
+  @CanChangeDocumentDuringHighlighting
+  @DoNotWrapInCommand
+  public void testAutoImportOfGenericReference() throws Throwable {
+    @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
+    configureByText(StdFileTypes.JAVA, text);
+    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
+    ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
+    type(" ");
+    backspace();
+
+    try {
+      doHighlighting();
+      //caret is too close
+      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+
+      caretRight();
+
+      doHighlighting();
+
+      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    }
+    finally {
+       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    }
   }
 
    @CanChangeDocumentDuringHighlighting

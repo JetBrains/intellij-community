@@ -24,21 +24,29 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class EditLibraryDialog extends DialogWrapper {
+
+  private static final int FILE_URL_COL  = 0;
+  private static final int FILE_TYPE_COL = 1;
+
+  private static final String SOURCE_TYPE = "Source";
+  private static final String COMPACT_TYPE = "Compact";
+
   private JPanel contentPane;
   private JTextField myLibName;
-  private JPanel myFilesPanel;
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
@@ -59,6 +67,7 @@ public class EditLibraryDialog extends DialogWrapper {
     });
     myFileTableModel = new FileTableModel();
     myFileTable.setModel(myFileTableModel);
+
     myRemoveFileButton.setEnabled(false);
     myRemoveFileButton.addActionListener(new ActionListener() {
       @Override
@@ -67,20 +76,53 @@ public class EditLibraryDialog extends DialogWrapper {
       }
     });
     myProject = project;
-    myFileTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+    myFileTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         updateSelection();
       }
     });
-    myFilesPanel.setMinimumSize(new Dimension(600, myFilesPanel.getY()));
     init();
+
+    TableColumn typeCol = myFileTable.getColumnModel().getColumn(FILE_TYPE_COL);
+    typeCol.setMaxWidth(80);
+    MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {SOURCE_TYPE, COMPACT_TYPE}), myFileTableModel);
+    typeCol.setCellEditor(cellEditor);
+    typeCol.getCellEditor();
   }
+
+
+  private static class MyTableCellEditor extends DefaultCellEditor {
+
+    private FileTableModel myFileTableModel;
+    private VirtualFile myFile;
+
+    public MyTableCellEditor(JComboBox comboBox, FileTableModel fileTableModel) {
+      super(comboBox);
+      myFileTableModel = fileTableModel;
+    }
+
+    @Override
+    public boolean stopCellEditing() {
+      if (myFile != null) {
+        Object value = getCellEditorValue();
+        myFileTableModel.setFileType(myFile, value.equals(COMPACT_TYPE));
+      }
+      return super.stopCellEditing();
+    }
+
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+      myFile = myFileTableModel.getFileAt(row);
+      return super.getTableCellEditorComponent(table, value, isSelected, row, column);
+    }
+  }
+
 
   public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, ScriptingLibraryTable.LibraryModel lib) {
     this(title, provider, project);
     myLibName.setText(lib.getName());
-    myFileTableModel.setFiles(lib.getSourceFiles());
+    myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
   }
 
   @Override
@@ -96,14 +138,14 @@ public class EditLibraryDialog extends DialogWrapper {
     FileChooserDescriptor chooserDescriptor = new LibFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
     if (files.length == 1 && files[0] != null) {
-      myFileTableModel.addFile(files[0]);
+      myFileTableModel.addFile(files[0], false);
     }
   }
 
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
       super (true, false, false, true, false, false);
-      setTitle("Select library file"); // TODO: Add a resources string
+      setTitle("Select library file");
     }
 
     @Override
@@ -121,16 +163,55 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private static class FileTableModel extends AbstractTableModel {
 
-    private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    @Override
+    public String getColumnName(int column) {
+      switch(column) {
+        case FILE_URL_COL:
+          return "URL";
+        case FILE_TYPE_COL:
+          return "Type";
+      }
+      return "";
+    }
 
-    public void addFile(VirtualFile file) {
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+      if (columnIndex == FILE_TYPE_COL) {
+        return true;
+      }
+      return super.isCellEditable(rowIndex, columnIndex);
+    }
+
+    private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    private HashSet<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
+
+    public void addFile(VirtualFile file, boolean isCompact) {
       myFiles.add(file);
+      if (isCompact) {
+        myCompactFiles.add(file);
+      }
       fireTableDataChanged();
     }
 
-    public void setFiles(VirtualFile[] files) {
+    public void setFiles(VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
       myFiles.clear();
-      myFiles.addAll(Arrays.asList(files));
+      myFiles.addAll(Arrays.asList(sourceFiles));
+      myFiles.addAll(Arrays.asList(compactFiles));
+      myCompactFiles.addAll(Arrays.asList(compactFiles));
+    }
+
+    public void setFileType(VirtualFile file, boolean isCompact) {
+      if (isCompact) {
+        if (!myCompactFiles.contains(file)) {
+          myCompactFiles.add(file);
+        }
+      }
+      else {
+        if (myCompactFiles.contains(file)) {
+          myCompactFiles.remove(file);
+        }
+      }
+      fireTableDataChanged();
     }
 
     @Override
@@ -140,13 +221,17 @@ public class EditLibraryDialog extends DialogWrapper {
 
     @Override
     public int getColumnCount() {
-      return 1;
+      return 2;
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      if (columnIndex == 0) {
-        return myFiles.get(rowIndex);
+      VirtualFile file = myFiles.get(rowIndex);
+      switch (columnIndex) {
+        case FILE_URL_COL:
+          return file;
+        case FILE_TYPE_COL:
+          return myCompactFiles.contains(file) ? COMPACT_TYPE : SOURCE_TYPE;
       }
       return "";
     }
@@ -163,8 +248,18 @@ public class EditLibraryDialog extends DialogWrapper {
       }
     }
 
-    public VirtualFile[] getFiles() {
-      return myFiles.toArray(new VirtualFile[myFiles.size()]);
+    public VirtualFile[] getSourceFiles() {
+      ArrayList<VirtualFile> sourceFiles = new ArrayList<VirtualFile>();
+      for (VirtualFile file : myFiles) {
+        if (!myCompactFiles.contains(file)) {
+          sourceFiles.add(file);
+        }
+      }
+      return sourceFiles.toArray(new VirtualFile[sourceFiles.size()]);
+    }
+
+    public VirtualFile[] getCompactFiles() {
+      return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
     }
   }
 
@@ -183,8 +278,12 @@ public class EditLibraryDialog extends DialogWrapper {
      myFileTableModel.removeFile(mySelectedFile);
   }
 
-  public VirtualFile[] getFiles() {
-    return myFileTableModel.getFiles();
+  public VirtualFile[] getSourceFiles() {
+    return myFileTableModel.getSourceFiles();
+  }
+
+  public VirtualFile[] getCompactFiles() {
+    return myFileTableModel.getCompactFiles();
   }
 
   @Override

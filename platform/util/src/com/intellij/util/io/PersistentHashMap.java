@@ -40,6 +40,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
   private static final int NULL_SIZE = 0;
+  private static final int INITIAL_INDEX_SIZE;
+  static {
+    String property = System.getProperty("idea.initialIndexSize");
+    INITIAL_INDEX_SIZE = property == null ? 4 * 1024 : Integer.valueOf(property);
+  }
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
@@ -118,7 +123,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   });
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
-    this(file, keyDescriptor, valueExternalizer, 1024 * 4);
+    this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
   }
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {

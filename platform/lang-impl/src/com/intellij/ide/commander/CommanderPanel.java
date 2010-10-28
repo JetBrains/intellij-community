@@ -111,6 +111,7 @@ public class CommanderPanel extends JPanel {
     }
 
     myListSpeedSearch = new ListSpeedSearch(myList);
+    myListSpeedSearch.setClearSearchOnNavigateNoMatch(true);
 
     ListScrollingUtil.installActions(myList);
 

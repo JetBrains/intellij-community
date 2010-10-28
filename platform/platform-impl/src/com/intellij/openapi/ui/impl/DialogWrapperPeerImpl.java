@@ -488,7 +488,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     private FocusTrackback myFocusTrackback;
     private MyDialog.MyWindowListener myWindowListener;
-    private MyDialog.MyComponentListener myComponentListener;
 
     private final WeakReference<Project> myProject;
     private ActionCallback myFocusedCallback;
@@ -520,8 +519,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      myComponentListener = new MyComponentListener();
-      addComponentListener(myComponentListener);
     }
 
     public JDialog getWindow() {
@@ -728,10 +725,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         removeWindowListener(myWindowListener);
         myWindowListener = null;
       }
-      if (myComponentListener != null) {
-        removeComponentListener(myComponentListener);
-        myComponentListener = null;
-      }
 
       if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.dispose();
@@ -901,33 +894,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               exc.printStackTrace();
             }
           }
-        }
-      }
-    }
-
-    private class MyComponentListener extends ComponentAdapter {
-      @SuppressWarnings({"RefusedBequest"})
-      public void componentResized(ComponentEvent e) {
-        final JRootPane pane = getRootPane();
-        if (pane == null) return;
-        final Dimension minSize = pane.getMinimumSize();
-        final Dimension size = pane.getSize();
-        final Dimension winSize = getSize();
-        if (minSize.width > size.width) {
-          winSize.width += minSize.width - size.width;
-        }
-        if (minSize.height > size.height) {
-          winSize.height += minSize.height - size.height;
-        }
-
-        if (!winSize.equals(getSize())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (isShowing()) {
-                setSize(winSize);
-              }
-            }
-          });
         }
       }
     }

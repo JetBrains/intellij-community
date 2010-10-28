@@ -250,13 +250,14 @@ public class JavaLexer extends LexerBase {
             myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
           }
           else if (nextChar == '*') {
-            if (myBufferIndex + 2 >= myBufferEndOffset || myBuffer.charAt(myBufferIndex + 2) != '*') {
+            if (myBufferIndex + 2 >= myBufferEndOffset || myBuffer.charAt(myBufferIndex + 2) != '*' ||
+                (myBufferIndex + 3 < myBufferEndOffset && myBuffer.charAt(myBufferIndex + 3) == '/')) {
               myTokenType = JavaTokenType.C_STYLE_COMMENT;
               myTokenEndOffset = getClosingComment(myBufferIndex + 2);
             }
             else {
               myTokenType = JavaDocElementType.DOC_COMMENT;
-              myTokenEndOffset = getDocClosingComment(myBufferIndex + 3);
+              myTokenEndOffset = getClosingComment(myBufferIndex + 3);
             }
           }
           else if (c > 127 && Character.isJavaIdentifierStart(c)) {
@@ -271,7 +272,7 @@ public class JavaLexer extends LexerBase {
       case '"':
       case '\'':
         myTokenType = c == '"' ? JavaTokenType.STRING_LITERAL : JavaTokenType.CHARACTER_LITERAL;
-        myTokenEndOffset = getClosingParenthesys(myBufferIndex + 1, c);
+        myTokenEndOffset = getClosingParenthesis(myBufferIndex + 1, c);
     }
 
     if (myTokenEndOffset > myBufferEndOffset) {
@@ -305,8 +306,7 @@ public class JavaLexer extends LexerBase {
     }
   }
 
-
-  private int getClosingParenthesys(int offset, char c) {
+  private int getClosingParenthesis(int offset, char c) {
     int pos = offset;
     final int lBufferEnd = myBufferEndOffset;
     if (pos >= lBufferEnd) return lBufferEnd;
@@ -340,26 +340,6 @@ public class JavaLexer extends LexerBase {
     }
 
     return pos + 1;
-  }
-
-  private int getDocClosingComment(int offset) {
-    final int lBufferEnd = myBufferEndOffset;
-    final CharSequence lBuffer = myBuffer;
-
-    if (offset < lBufferEnd && lBuffer.charAt(offset) == '/') {
-      return offset + 1;
-    }
-
-    int pos = offset;
-    while (pos < lBufferEnd - 1) {
-      final char c = lBuffer.charAt(pos);
-
-      if (c == '*' && lBuffer.charAt(pos + 1) == '/') {
-        break;
-      }
-      pos++;
-    }
-    return pos + 2;
   }
 
   private int getClosingComment(int offset) {

@@ -17,12 +17,14 @@
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
+import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -106,4 +108,12 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
   }
 
   private static final Logger logger = Logger.getInstance(UpdateJavaFileCopyright.class.getName());
+
+  public static class UpdateJavaCopyrightsProvider extends UpdateCopyrightsProvider {
+
+    @Override
+    public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
+      return new UpdateJavaFileCopyright(project, module, file, options);
+    }
+  }
 }

@@ -17,10 +17,13 @@
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,11 @@ public class Options implements JDOMExternalizable, Cloneable
         if (res == null)
         {
           // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
+          final FileType fileType = FileTypeUtil.getInstance().getFileTypeByName(name);
+          if (fileType != null) {
+            final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
+            if (provider != null) return provider.getDefaultOptions();
+          }
           res = new LanguageOptions();
         }
 

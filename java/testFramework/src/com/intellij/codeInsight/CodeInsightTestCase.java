@@ -628,6 +628,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
   }
 
+  protected void caretRight() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+
   protected void type(@NonNls String s) {
     for (char c : s.toCharArray()) {
       type(c);

@@ -1,6 +1,5 @@
 PsiJavaFile:ImportListBug.java
-  PsiDocComment
-    PsiDocToken:DOC_COMMENT_END('/**/')
+  PsiComment(C_STYLE_COMMENT)('/**/')
   PsiImportList
     <empty list>
   PsiClass:AClass

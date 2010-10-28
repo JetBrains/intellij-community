@@ -17,6 +17,7 @@
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
+import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
 public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
@@ -182,4 +184,16 @@ public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
     }
 
     private static final Logger logger = Logger.getInstance(UpdateJspFileCopyright.class.getName());
+  public static class UpdateJspCopyrightsProvider extends UpdateCopyrightsProvider {
+
+    @Override
+    public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
+      return new UpdateJspFileCopyright(project, module, file, options);
+    }
+
+    @Override
+    public LanguageOptions getDefaultOptions() {
+      return createDefaultOptions(false);
+    }
+  }
 }

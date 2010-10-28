@@ -16,12 +16,12 @@
 package com.maddyhome.idea.copyright;
 
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.maddyhome.idea.copyright.psi.UpdateCopyrightInstanceFactory;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 
 /**
  * @author yole
  */
-public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightInstanceFactory> {
+public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
   public static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
