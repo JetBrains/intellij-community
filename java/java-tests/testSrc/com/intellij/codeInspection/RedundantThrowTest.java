@@ -37,4 +37,8 @@ public class RedundantThrowTest extends InspectionTestCase {
   public void testinherited() throws Exception {
     doTest();
   }
+
+  public void testImplicitSuper() throws Exception {
+    doTest();
+  }
 }
