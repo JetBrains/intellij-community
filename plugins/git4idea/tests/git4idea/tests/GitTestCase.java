@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
@@ -37,14 +38,12 @@ import java.io.IOException;
  * contains git executable.
  * @author Kirill Likhodedov
  */
-public class GitTestCase extends AbstractVcsTestCase {
+public abstract class GitTestCase extends AbstractVcsTestCase {
 
   public static final String GIT_EXECUTABLE_PATH = "IDEA_TEST_GIT_EXECUTABLE_PATH";
-  public static final String CONFIG_USER_NAME = "Git TestCase Name";
-  public static final String CONFIG_USER_EMAIL = "Git TestCase Email";
 
   private static final String GIT_EXECUTABLE = (SystemInfo.isWindows ? "git.exe" : "git");
-  protected GitTestRepository myRepo;
+  protected GitTestRepository myMainRepo;
   private File myProjectDir;
 
   @BeforeMethod
@@ -59,11 +58,9 @@ public class GitTestCase extends AbstractVcsTestCase {
       myClientBinaryPath = new File(pluginRoot, "tests/git4idea/tests/data/bin");
     }
 
-    myRepo = GitTestRepository.create(this);
-    myRepo.config("user.name", CONFIG_USER_NAME);
-    myRepo.config("user.email", CONFIG_USER_EMAIL);
-    myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
+    myMainRepo = initRepositories();
 
+    myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
     if (EventQueue.isDispatchThread()) {
       initProject(myProjectDir);
     } else {
@@ -86,10 +83,28 @@ public class GitTestCase extends AbstractVcsTestCase {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
+  /**
+   * Different implementations for {@link git4idea.tests.GitSingleUserTestCase} and {@link git4idea.tests.GitCollaborativeTestCase}:
+   * create a single or several repositories, which will be used in tests.
+   * @return main repository which IDEA project will be bound to.
+   */
+  protected abstract GitTestRepository initRepositories() throws Exception;
+
+  protected abstract void tearDownRepositories() throws Exception;
+
   @AfterMethod
   protected void tearDown() throws Exception {
-    tearDownProject();
-    myRepo.getDirFixture().tearDown();
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDownProject();
+          tearDownRepositories();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 
   /**

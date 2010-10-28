@@ -23,13 +23,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
+import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeProvider;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +45,7 @@ import static org.testng.Assert.*;
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  * @author Kirill Likhodedov
  */
-public class GitChangeProviderTest extends GitTestCase {
+public class GitChangeProviderTest extends GitSingleUserTestCase {
 
   private GitChangeProvider myChangeProvider;
   private VcsModifiableDirtyScope myDirtyScope;
@@ -91,9 +91,15 @@ public class GitChangeProviderTest extends GitTestCase {
 
   @Test
   public void testDeleteDirRecursively() throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override public void run() {
-        FileUtil.delete(new File(myRepo.getDir().getPath(), "dir"));
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileUtil.delete(new File(myRepo.getDir().getPath(), "dir"));
+          }
+        });
       }
     });
     assertChanges(new VirtualFile[] { myFiles.get("dir/c.txt"), myFiles.get("dir/subdir/d.txt") }, new FileStatus[] { DELETED, DELETED });
@@ -169,7 +175,7 @@ public class GitChangeProviderTest extends GitTestCase {
     assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
-  private void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws IOException {
+  private void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
     myRepo.createBranch("feature");
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
     myRepo.commit();
@@ -184,7 +190,7 @@ public class GitChangeProviderTest extends GitTestCase {
     CREATE, MODIFY, DELETE, RENAME
   }
 
-  private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws IOException {
+  private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws Exception {
     VirtualFile file = myRepo.getDir().findChild(filename);
     switch (action) {
       case CREATE:
