@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -65,8 +66,27 @@ public class GenerateMembersUtil {
 
       assert spaceNode != null;
       if (spaceNode.getStartOffset() <= offset && spaceNode.getStartOffset() + spaceNode.getTextLength() >= offset) {
-        final ASTNode singleNewLineWhitespace = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createWhiteSpaceFromText(spaceNode.getText().substring(0, offset - spaceNode.getStartOffset())).getNode();
-        spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
+        String whiteSpace = spaceNode.getText().substring(0, offset - spaceNode.getStartOffset());
+        if (!StringUtil.containsLineBreak(whiteSpace)) {
+          // There is a possible case that the caret is located at the end of the line that already contains expression, say, we
+          // want to override particular method while caret is located after the field.
+          // Example - consider that we want to override toString() method at the class below:
+          //     class Test {
+          //         int i;<caret>
+          //     }
+          // We want to add line feed then in order to avoid situation like below:
+          //     class Test {
+          //         int i;@Override String toString() {
+          //             super.toString();
+          //         }
+          //     }
+          whiteSpace += "\n";
+        }
+        PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+        final ASTNode singleNewLineWhitespace = factory.createWhiteSpaceFromText(whiteSpace).getNode();
+        if (singleNewLineWhitespace != null) {
+          spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
+        }
       }
     }
 
