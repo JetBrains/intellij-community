@@ -15,51 +15,17 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.FilterPositionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class JavaPsiClassReferenceElement extends LookupItem<Object> {             
-  public static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
-    public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-      if (completingRawConstructor(context, item)) {
-        ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
-        DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
-      } else {
-        new DefaultInsertHandler().handleInsert(context, item);
-      }
-    }
-
-    private boolean completingRawConstructor(InsertionContext context, JavaPsiClassReferenceElement item) {
-      final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
-      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
-      if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        PsiTypeParameter[] typeParameters = item.getObject().getTypeParameters();
-        for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression) prevElement.getParent(), true)) {
-          final PsiType type = info.getType();
-
-          if (info.isArrayTypeInfo()) {
-            return false;
-          }
-          if (typeParameters.length > 0 && type instanceof PsiClassType && !((PsiClassType)type).isRaw()) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      return false;
-    }
-  };
-
+public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   private final Object myClass;
   private final String myQualifiedName;
 
@@ -68,7 +34,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
     JavaCompletionUtil.setShowFQN(this);
-    setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
+    setInsertHandler(AllClassesGetter.TRY_SHORTENING);
+    setTailType(TailType.NONE);
   }
 
   @NotNull

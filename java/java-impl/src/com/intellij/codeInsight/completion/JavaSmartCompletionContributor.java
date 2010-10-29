@@ -234,7 +234,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
           final PsiClass psiClass = PsiUtil.resolveClassInType(type);
           if (psiClass != null && psiClass.isAnnotationType()) {
-            final LookupItem item = new JavaPsiClassReferenceElement(psiClass).setTailType(TailType.NONE);
+            final LookupItem item = JavaClassNameCompletionContributor.createClassLookupItem(psiClass, true);
             if (needQualify) JavaCompletionUtil.qualify(item);
             result.addElement(item);
           }
@@ -254,7 +254,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
+              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.SPACE));
             }
           }
         }
@@ -326,7 +326,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
                      if (psiClass == null) return;
 
-                     resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass).setInsertHandler(new DefaultInsertHandler()), tail));
+                     resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass), tail));
                    }
                  }, resultSet.getPrefixMatcher());
 
