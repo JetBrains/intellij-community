@@ -22,7 +22,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +30,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.FilePathSplittingPolicy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -83,20 +81,17 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
   }
 
   @Override
-  protected boolean customizeLeftRenderer(ColoredListCellRenderer renderer, JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                       JList list,
+                                                       Object value,
+                                                       int index,
+                                                       boolean selected,
+                                                       boolean hasFocus) {
     if (!(value instanceof NavigationItem)) return false;
 
     NavigationItem item = (NavigationItem)value;
 
-    TextAttributes attributes = null;
-
-    TextAttributesKey attributesKey = null;
-    final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-    if (presentation != null) attributesKey = presentation.getTextAttributesKey();
-
-    if (attributesKey != null) {
-      attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-    }
+    TextAttributes attributes = getNavigationItemAttributes(item);
 
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 

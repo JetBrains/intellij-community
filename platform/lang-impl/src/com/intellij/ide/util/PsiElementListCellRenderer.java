@@ -82,17 +82,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           }
         }
 
-        TextAttributes attributes = null;
-
-        if (value instanceof NavigationItem) {
-          TextAttributesKey attributesKey = null;
-          final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-          if (presentation != null) attributesKey = presentation.getTextAttributesKey();
-
-          if (attributesKey != null) {
-            attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-          }
-        }
+        TextAttributes attributes = getNavigationItemAttributes(value);
 
         if (isProblemFile) {
           attributes = TextAttributes.merge(new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN), attributes);
@@ -111,7 +101,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
         }
       }
-      else if (!customizeLeftRenderer(this, list, value, index, selected, hasFocus)) {
+      else if (!customizeNonPsiElementLeftRenderer(this, list, value, index, selected, hasFocus)) {
         setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
@@ -119,6 +109,22 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
 
+  }
+
+  @Nullable
+  protected static TextAttributes getNavigationItemAttributes(Object value) {
+    TextAttributes attributes = null;
+
+    if (value instanceof NavigationItem) {
+      TextAttributesKey attributesKey = null;
+      final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
+      if (presentation != null) attributesKey = presentation.getTextAttributesKey();
+
+      if (attributesKey != null) {
+        attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+      }
+    }
+    return attributes;
   }
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -141,12 +147,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return this;
   }
 
-  protected boolean customizeLeftRenderer(ColoredListCellRenderer renderer,
-                                          JList list,
-                                          Object value,
-                                          int index,
-                                          boolean selected,
-                                          boolean hasFocus) {
+  protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                       JList list,
+                                                       Object value,
+                                                       int index,
+                                                       boolean selected,
+                                                       boolean hasFocus) {
     return false;
   }
 
