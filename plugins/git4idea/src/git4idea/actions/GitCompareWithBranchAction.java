@@ -21,13 +21,12 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -37,19 +36,20 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.history.GitHistoryUtils;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.font.TextAttribute;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 
 /**
  * Compares selected file with itself in one of other branches.
@@ -60,7 +60,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GitCompareWithBranchAction.class.getName());
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(final AnActionEvent event) {
     // get basic information
     final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDisposed()) {
@@ -79,12 +79,11 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       return;
     }
 
-    // get all branches and current branch
-    final List<String> branches = new ArrayList<String>();
+    // get branches information
+    final List<GitBranch> branches = new ArrayList<GitBranch>();
     GitBranch curBranch = null;
     try {
-      GitBranch.listAsStrings(project, vcsRoot, true, true, branches, null); // make it return current branch not to call the command twice.
-      curBranch = GitBranch.current(project, vcsRoot);
+      curBranch = GitBranch.list(project, vcsRoot, true, true, branches, null);
     } catch (VcsException e) {
       notifyError(project, "Couldn't get information about current branch", e);
     }
@@ -92,28 +91,51 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       notifyError(project, "Current branch is null.", null);
       return;
     }
-
-    // invoke popup
-    final AtomicReference<ListPopup> popup = new AtomicReference<ListPopup>();
     final String currentBranch = curBranch.getName();
-    final ListPopupStep<String> branchesStep = new BaseListPopupStep<String>("Select branch to compare", branches) {
-      @Override
-      public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            if (project.isDisposed()) { return; }
-            try {
-              showDiffWithBranch(project, file, currentBranch, selectedValue);
-              popup.get().cancel();
-            } catch (Exception e) {
-              notifyError(project, "Couldn't compare file [" + file + "] with selected branch [" + selectedValue + "]", e);
-            }
-          }
-        });
+
+    // prepare and invoke popup
+    final JBList list = new JBList(branches);
+    list.installCellRenderer(new NotNullFunction<GitBranch, JComponent>() { // display current branch in bold with asterisk
+      @NotNull public JComponent fun(GitBranch branch) {
+        if (branch.isActive()) {
+          JLabel label = new JLabel(branch.getName() + " *");
+          final Map<TextAttribute, Float> attributes = new HashMap<TextAttribute, Float>(1);
+          attributes.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
+          label.setFont(label.getFont().deriveFont(attributes));
+          return label;
+        }
+        return new JLabel(branch.getName());
       }
-    };
-    popup.set(new ListPopupImpl(branchesStep));
-    popup.get().showInBestPositionFor(event.getDataContext());
+    });
+
+    JBPopupFactory.getInstance()
+      .createListPopupBuilder(list)
+      .setTitle("Select branch to compare")
+      .setItemChoosenCallback(
+        new Runnable() {
+          public void run() {
+            Application app = ApplicationManager.getApplication();
+            if (project.isDisposed() || app == null || !app.isActive() || app.isDisposed() || app.isDisposeInProgress()) { // safe check
+              return;
+            }
+            ApplicationManager.getApplication()
+              .invokeLater(new Runnable() { // don't block awt thread - getting revision content may take long
+
+                @Override
+                public void run() {
+                  try {
+                    showDiffWithBranch(project, file, currentBranch, list.getSelectedValue().toString());
+                  }
+                  catch (Exception e) {
+                    notifyError(project, "Couldn't compare file [" + file + "] with selected branch [" + list.getSelectedValue() + "]", e);
+                  }
+                }
+              });
+          }
+        })
+      .setAutoselectOnMouseMove(true)
+      .createPopup()
+      .showInBestPositionFor(event.getDataContext());
   }
 
   private static void notifyError(Project project, String message, Throwable t) {
