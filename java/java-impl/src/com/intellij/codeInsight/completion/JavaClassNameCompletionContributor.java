@@ -23,14 +23,17 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,18 +60,14 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
 
-        PsiElement insertedElement = parameters.getPosition();
+        final PsiElement insertedElement = parameters.getPosition();
 
-        AllClassesGetter getter = new AllClassesGetter(TrueFilter.INSTANCE);
-        if (AFTER_THROW_NEW.accepts(insertedElement)) {
-          getter = new AllClassesGetter(new AssignableFromFilter("java.lang.Throwable"));
-        }
-        else if (IN_TYPE_PARAMETER.accepts(insertedElement)) {
-          getter = new AllClassesGetter(new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)));
-        }
-        else if (INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement)) {
-          getter = new AllClassesGetter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
-        }
+        final ElementFilter filter =
+          AFTER_THROW_NEW.accepts(insertedElement) ? new AssignableFromFilter("java.lang.Throwable") :
+          IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
+          INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement) ? new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")) :
+          TrueFilter.INSTANCE;
+
 
         if (AFTER_NEW.accepts(insertedElement)) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
@@ -88,7 +87,18 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           }
         }
 
-        getter.getClasses(insertedElement, result, parameters.getOffset(), parameters.getInvocationCount() <= 1);
+        final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(insertedElement);
+
+        AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
+          @Override
+          public void consume(PsiClass psiClass) {
+            if (lookingForAnnotations && !psiClass.isAnnotationType()) return;
+
+            if (filter.isAcceptable(psiClass, insertedElement)) {
+              result.addElement(AllClassesGetter.createLookupItem(psiClass));
+            }
+          }
+        });
       }
     });
 

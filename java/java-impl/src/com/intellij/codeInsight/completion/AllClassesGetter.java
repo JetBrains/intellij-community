@@ -24,12 +24,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -46,7 +45,6 @@ import java.util.Set;
  */
 public class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
-  private final ElementFilter myFilter;
   private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
 
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
@@ -138,30 +136,15 @@ public class AllClassesGetter {
 
   };
 
-  public AllClassesGetter(final ElementFilter filter) {
-    myFilter = filter;
-  }
-
-  public void getClasses(final PsiElement context, final CompletionResultSet set, final int offset, final boolean filterByScope) {
-    if (context == null || !context.isValid()) return;
-
-    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
-    getClasses(context, set, offset, filterByScope, lookingForAnnotations);
-  }
-
-  public void getClasses(final PsiElement context,
-                         final CompletionResultSet set,
-                         final int offset,
-                         final boolean filterByScope,
-                         final boolean lookingForAnnotations) {
-    if (context == null || !context.isValid()) return;
-
-    final String packagePrefix = getPackagePrefix(context, offset);
+  public static void processJavaClasses(CompletionParameters parameters,
+                                        final PrefixMatcher prefixMatcher, final boolean filterByScope,
+                                        final Consumer<PsiClass> consumer) {
+    final PsiElement context = parameters.getPosition();
+    final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
 
     final Set<String> qnames = new THashSet<String>();
 
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
-    final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
 
     AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
       public boolean value(String s) {
@@ -170,13 +153,14 @@ public class AllClassesGetter {
     }).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
-        if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
-          set.addElement(createLookupItem(psiClass));
+        if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope)) {
+          consumer.consume(psiClass);
         }
         return true;
       }
     });
   }
+
 
   private static String getPackagePrefix(final PsiElement context, final int offset) {
     final String fileText = context.getContainingFile().getText();
@@ -191,22 +175,17 @@ public class AllClassesGetter {
     return j > 0 ? prefix.substring(0, j) : "";
   }
 
-  private boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
-                             final boolean lookingForAnnotations,
+  private static boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
                              @NotNull final PsiClass psiClass,
                              final boolean filterByScope) {
     ProgressManager.checkCanceled();
 
     if (!context.isValid() || !psiClass.isValid()) return false;
 
-    if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
-
     if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
 
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
-
-    if (!myFilter.isAcceptable(psiClass, context)) return false;
 
     if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
         JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
