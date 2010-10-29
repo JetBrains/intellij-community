@@ -39,7 +39,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   private final AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions;
   private SwitchAnnotationSourceAction mySwitchAction;
-  private final List<Consumer<Integer>> myPopupLineNumberListeners;
+  private final List<LineNumberListener> myPopupLineNumberListeners;
 
   AnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
                                 final EditorGutterComponentEx gutter,
@@ -47,7 +47,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
                                 final AnAction... actions) {
     myHighlighting = highlighting;
     mySwitcher = switcher;
-    myPopupLineNumberListeners = new LinkedList<Consumer<Integer>>();
+    myPopupLineNumberListeners = new LinkedList<LineNumberListener>();
 
     myActions = new ArrayList<AnAction>();
     myActions.add(Separator.getInstance());
@@ -68,7 +68,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     myActions.add(new ShowShortenNames(gutter));
   }
 
-  public void addLineNumberListener(final Consumer<Integer> listener) {
+  public void addLineNumberListener(final LineNumberListener listener) {
     myPopupLineNumberListeners.add(listener);
   }
 
@@ -82,7 +82,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   }
 
   public List<AnAction> getActions(int line) {
-    for (Consumer<Integer> listener : myPopupLineNumberListeners) {
+    for (LineNumberListener listener : myPopupLineNumberListeners) {
       listener.consume(line);
     }
     return myActions;

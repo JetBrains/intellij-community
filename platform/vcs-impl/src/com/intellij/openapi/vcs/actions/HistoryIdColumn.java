@@ -41,6 +41,7 @@ class HistoryIdColumn extends AnnotationFieldGutter {
 
   @Override
   public String getLineText(int line, Editor editor) {
+    if (!isAvailable()) return "";
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(line);
     if (revisionNumber != null) {
       final Integer num = myHistoryIds.get(revisionNumber.asString());

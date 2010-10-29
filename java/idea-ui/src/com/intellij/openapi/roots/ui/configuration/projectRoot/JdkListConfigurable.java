@@ -99,7 +99,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "reference.settingsdialog.project.structure.jdk";
+    final NamedConfigurable selectedConfigurable = getSelectedConfugurable();
+    return selectedConfigurable != null ? selectedConfigurable.getHelpTopic() : "reference.settingsdialog.project.structure.jdk";
   }
 
   @NonNls

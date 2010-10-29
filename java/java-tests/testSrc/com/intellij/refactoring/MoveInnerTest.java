@@ -46,6 +46,16 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("xxx.Outer.Inner", "Inner", true, "outer", false, false, null));
   }
 
+  public void testInnerClassInheritance() throws Exception {
+    try {
+      doTest(createAction("p.A.B", "B", false, null, false, false, null));
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("class <b><code>p.A.C</code></b> will become inaccessible from class <b><code>p.A.B</code></b>.", e.getMessage());
+    }
+  }
+
   public void testScr30106() throws Exception {
     doTest(createAction("p.A.B", "B", true, "outer", false, false, null));
   }

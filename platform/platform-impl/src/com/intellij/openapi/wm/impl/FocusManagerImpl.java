@@ -341,21 +341,26 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    if (myRunContext != null) {
-      runnable.run();
-      return;
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myRunContext != null) {
+          runnable.run();
+          return;
+        }
 
-    final boolean needsRestart = isIdleQueueEmpty();
-    myIdleRequests.add(runnable);
+        final boolean needsRestart = isIdleQueueEmpty();
+        myIdleRequests.add(runnable);
 
-    if (isFocusTransferReady()) {
-      flushIdleRequests();
-    } else {
-      if (needsRestart) {
-        restartIdleAlarm();
+        if (isFocusTransferReady()) {
+          flushIdleRequests();
+        } else {
+          if (needsRestart) {
+            restartIdleAlarm();
+          }
+        }
       }
-    }
+    });
   }
 
   private void restartIdleAlarm() {
@@ -410,7 +415,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
         myIdleRequests.clear();
         for (Runnable each : all) {
-          each.run();
+          if (each != null) {
+            each.run();
+          }
         }
       }
     }

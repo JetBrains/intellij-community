@@ -43,7 +43,7 @@ public class JBScrollPane extends JScrollPane {
     init();
   }
 
-  private void init() {
+  protected void init() {
     setBorder(IdeBorderFactory.createBorder());
     setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
     setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
