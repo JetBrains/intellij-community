@@ -244,7 +244,13 @@ public class ProjectUtil {
                                                  final FileType fileType) {
     final boolean iprBased = fileType instanceof WorkspaceFileType || fileType instanceof ProjectFileType || fileType instanceof ModuleFileType;
     if (iprBased) return true;
-    final VirtualFile parent = file.getParent();
-    return parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR);
+    VirtualFile parent = file.getParent();
+    if (parent != null) {
+      if (parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR)) return true;
+      parent = parent.getParent();
+      if (parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR)) return true;
+    }
+
+    return false;
   }
 }

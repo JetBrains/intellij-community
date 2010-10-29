@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -215,12 +217,17 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
     final AnnotationPresentation presentation;
+    final List<AnAction> additionalActions = new ArrayList<AnAction>();
     if (vcs.getCommittedChangesProvider() != null) {
-      final ShowDiffFromAnnotation showDiff = new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file);
-      presentation = new AnnotationPresentation(highlighting, switcher, editorGutter, gutters, showDiff);
-      presentation.addLineNumberListener(showDiff);
-    } else {
-      presentation = new AnnotationPresentation(highlighting, switcher, editorGutter, gutters);
+      additionalActions.add(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
+    }
+    additionalActions.add(new CopyRevisionNumberAction(fileAnnotation));
+    presentation = new AnnotationPresentation(highlighting, switcher, editorGutter, gutters, additionalActions.toArray(new AnAction[additionalActions.size()]));
+
+    for (AnAction action : additionalActions) {
+      if (action instanceof LineNumberListener) {
+         presentation.addLineNumberListener((LineNumberListener)action);
+      }
     }
 
     final Map<String, Color> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
@@ -250,10 +257,14 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutter.setAspectValueToBgColorMap(bgColorMap);
       gutters.add(gutter);
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting, bgColorMap));
+
+
     if (historyIds != null) {
-      gutters.add(new HistoryIdColumn(fileAnnotation, editor, null, presentation, bgColorMap, historyIds));
+      gutters.add(new HistoryIdColumn(fileAnnotation, editor, presentation, bgColorMap, historyIds));
     }
+    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting, bgColorMap));
+    presentation.addAction(new AnnotateActionGroup(gutters, editorGutter), 1);
+
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);

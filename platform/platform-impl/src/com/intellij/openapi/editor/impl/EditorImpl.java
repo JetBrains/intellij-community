@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
@@ -67,6 +68,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -442,6 +444,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  @Override
+  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
+    getSoftWrapModel().setPlace(place);
+    mySettings.setSoftWrapAppliancePlace(place);
   }
 
   @NotNull
@@ -5190,6 +5198,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public JScrollBar createVerticalScrollBar() {
       return new MyScrollBar(Adjustable.VERTICAL);
+    }
+
+    @Override
+    protected void init() {
+      super.init();
+      setCorner(LOWER_LEFT_CORNER, new JPanel() {
+        @Override
+        public void paint(Graphics g) {
+          final Rectangle bounds = getBounds();
+          int width = bounds.width;
+          int height = bounds.height;
+
+          g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+          g.fillRect(0, 0, width, height);
+
+          int shortner = 0;
+          if (myGutterComponent.isFoldingOutlineShown()) {
+            shortner = myGutterComponent.getFoldingAreaWidth() / 2;
+          }
+
+          g.setColor(myGutterComponent.getBackground());
+          g.fillRect(0, 0, width - shortner, height);
+
+          g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+          g.drawLine(width - 1 - shortner, 0, width - 1 - shortner, height);
+          g.drawLine(0, 0, width - 1, 0);
+        }
+      });
     }
   }
 

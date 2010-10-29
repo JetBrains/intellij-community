@@ -352,7 +352,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
      */
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      // Fix GTK backround
+      // Fix GTK background
       if (UIUtil.isUnderGTKLookAndFeel()){
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);

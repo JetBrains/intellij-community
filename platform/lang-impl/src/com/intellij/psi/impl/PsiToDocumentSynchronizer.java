@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.messages.MessageBus;
@@ -278,41 +279,58 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return myChangeScope;
     }
 
-    public void replace(int start, int length, String str) {
+    public void replace(int initialStart, int length, String replace) {
       // calculating fragment
       // minimize replace
-      final int oldStart = start;
+      int start = 0;
       int end = start + length;
 
-      final int newStringLength = str.length();
-      final String chars = getText(start, end);
-      if (chars.equals(str)) return;
+      final int replaceLength = replace.length();
+      final String chars = getText(start + initialStart, end + initialStart);
+      if (chars.equals(replace)) return;
 
-      int newStartInString = 0;
-      int newEndInString = newStringLength;
-      while (newStartInString < newStringLength && start < end && str.charAt(newStartInString) == chars.charAt(start - oldStart)) {
+      int newStartInReplace = 0;
+      int newEndInReplace = replaceLength;
+      while (newStartInReplace < replaceLength && start < end && replace.charAt(newStartInReplace) == chars.charAt(start)) {
         start++;
-        newStartInString++;
+        newStartInReplace++;
       }
 
-      while (end > start && newEndInString > newStartInString && str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
-        newEndInString--;
+      while (start < end && newStartInReplace < newEndInReplace && replace.charAt(newEndInReplace - 1) == chars.charAt(end - 1)) {
+        newEndInReplace--;
         end--;
+      }
+
+      // optimization: when delete fragment from the middle of the text, prefer split at the line boundaries
+      if (newStartInReplace == newEndInReplace && start > 0 && start < end && StringUtil.indexOf(chars, '\n', start, end) != -1) {
+        // try to align to the line boundaries
+        while (start > 0 &&
+               newStartInReplace > 0 &&
+               chars.charAt(start - 1) == chars.charAt(end - 1) &&
+               chars.charAt(end - 1) != '\n'
+          ) {
+          start--;
+          end--;
+          newStartInReplace--;
+          newEndInReplace--;
+        }
       }
 
       //[mike] dirty hack for xml:
       //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
       //which is perfectly valid but invalidates range markers
+      start += initialStart;
+      end += initialStart;
       final CharSequence charsSequence = myDocument.getCharsSequence();
       while (start < charsSequence.length() && end < charsSequence.length() && start > 0 &&
              charsSequence.subSequence(start, end).toString().endsWith("><") && charsSequence.charAt(start - 1) == '<') {
         start--;
-        newStartInString--;
+        newStartInReplace--;
         end--;
-        newEndInString--;
+        newEndInReplace--;
       }
 
-      str = str.substring(newStartInString, newEndInString);
+      replace = replace.substring(newStartInReplace, newEndInReplace);
       length = end - start;
 
       final Pair<MutableTextRange, StringBuffer> fragment = getFragmentByRange(start, length);
@@ -320,7 +338,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       final int startInFragment = start - fragment.getFirst().getStartOffset();
 
       // text range adjustment
-      final int lengthDiff = str.length() - length;
+      final int lengthDiff = replace.length() - length;
       final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
       boolean adjust = false;
       while (iterator.hasNext()) {
@@ -329,7 +347,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         if (pair == fragment) adjust = true;
       }
 
-      fragmentReplaceText.replace(startInFragment, startInFragment + length, str);
+      fragmentReplaceText.replace(startInFragment, startInFragment + length, replace);
     }
 
     private String getText(final int start, final int end) {

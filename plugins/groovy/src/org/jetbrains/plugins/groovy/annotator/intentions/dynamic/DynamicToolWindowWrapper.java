@@ -303,7 +303,6 @@ public class DynamicToolWindowWrapper {
       }
 
       public void editingCanceled(ChangeEvent e) {
-        System.out.println("editing canceled");
         myTreeTable.editingCanceled(e);
       }
     });

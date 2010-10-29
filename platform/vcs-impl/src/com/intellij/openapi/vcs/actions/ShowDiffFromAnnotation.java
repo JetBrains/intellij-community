@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
@@ -37,7 +38,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class ShowDiffFromAnnotation extends AnAction implements Consumer<Integer> {
+class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
   private final UpToDateLineNumberProvider myLineNumberProvider;
   private final FileAnnotation myFileAnnotation;
   private final AbstractVcs myVcs;

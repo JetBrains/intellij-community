@@ -20,6 +20,6 @@ package com.intellij.lexer;
  */
 public class JavaDocLexer extends DocCommentLexer {
   public JavaDocLexer(final boolean isJdk15Enabled) {
-    super(new JavaDocTokenTypes(), isJdk15Enabled);
+    super(JavaDocTokenTypes.INSTANCE, isJdk15Enabled);
   }
 }

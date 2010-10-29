@@ -104,7 +104,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private final Alarm myModelUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public NavBarPanel(final Project project) {
-    super(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
 
     myProject = project;
     myModel = new NavBarModel(myProject);
@@ -912,7 +912,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       setPaintFocusBorder(selected);
       setFocusBorderAroundIcon(true);
 
-      setBackground(selected && focused ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      setBackground(selected && focused ? UIUtil.getListSelectionBackground() :
+                    (UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground()));
 
       final Color fg = selected && focused
                        ? UIUtil.getListSelectionForeground()
@@ -1123,6 +1124,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
       }
       append(name, nameAttributes);
+      // manually set icon opaque to prevent background artifacts
+      setIconOpaque(false);
       setIcon(NavBarPanel.getIcon(value, false));
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());

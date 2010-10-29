@@ -93,7 +93,7 @@ public class AlignmentInColumnsHelper {
         break;
       }
       if (prevSubNode.getElementType() != currSubNode.getElementType()
-          || StringUtil.countNewLines(prevSubNode.getChars()) != StringUtil.countNewLines(currSubNode.getChars())) {
+          /*|| StringUtil.countNewLines(prevSubNode.getChars()) != StringUtil.countNewLines(currSubNode.getChars())*/) {
         return true;
       }
       prevSubNode = getSubNodeThatStartsNewLine(prevSubNode.getTreeNext(), config);
@@ -207,7 +207,8 @@ public class AlignmentInColumnsHelper {
   }
 
   /**
-   * Shorthand for calling {@link #findPreviousNode()} with the type of the given node as a target type.
+   * Shorthand for calling {@link #findPreviousNode(AlignmentInColumnsConfig, ASTNode, NodeProcessor)} with the type of
+   * the given node as a target type.
    *
    * @param config    configuration to use
    * @param from      start node to use

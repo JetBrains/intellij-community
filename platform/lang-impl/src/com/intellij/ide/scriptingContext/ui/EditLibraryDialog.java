@@ -39,7 +39,7 @@ import java.util.Arrays;
 
 public class EditLibraryDialog extends DialogWrapper {
 
-  private static final int FILE_URL_COL  = 0;
+  private static final int FILE_LOCATION_COL  = 0;
   private static final int FILE_TYPE_COL = 1;
 
   private static final String SOURCE_TYPE = "Source";
@@ -88,9 +88,13 @@ public class EditLibraryDialog extends DialogWrapper {
     typeCol.setMaxWidth(80);
     MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {SOURCE_TYPE, COMPACT_TYPE}), myFileTableModel);
     typeCol.setCellEditor(cellEditor);
-    typeCol.getCellEditor();
   }
 
+  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, ScriptingLibraryTable.LibraryModel lib) {
+    this(title, provider, project);
+    myLibName.setText(lib.getName());
+    myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
+  }
 
   private static class MyTableCellEditor extends DefaultCellEditor {
 
@@ -116,13 +120,6 @@ public class EditLibraryDialog extends DialogWrapper {
       myFile = myFileTableModel.getFileAt(row);
       return super.getTableCellEditorComponent(table, value, isSelected, row, column);
     }
-  }
-
-
-  public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, ScriptingLibraryTable.LibraryModel lib) {
-    this(title, provider, project);
-    myLibName.setText(lib.getName());
-    myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
   }
 
   @Override
@@ -166,8 +163,8 @@ public class EditLibraryDialog extends DialogWrapper {
     @Override
     public String getColumnName(int column) {
       switch(column) {
-        case FILE_URL_COL:
-          return "URL";
+        case FILE_LOCATION_COL:
+          return "Location";
         case FILE_TYPE_COL:
           return "Type";
       }
@@ -228,7 +225,7 @@ public class EditLibraryDialog extends DialogWrapper {
     public Object getValueAt(int rowIndex, int columnIndex) {
       VirtualFile file = myFiles.get(rowIndex);
       switch (columnIndex) {
-        case FILE_URL_COL:
+        case FILE_LOCATION_COL:
           return file;
         case FILE_TYPE_COL:
           return myCompactFiles.contains(file) ? COMPACT_TYPE : SOURCE_TYPE;

@@ -15,62 +15,10 @@
  */
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
-
  /**
  * @author peter
  */
-class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
-  @Override protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
-                                 @Override
-                                 void run() {
-                                   superSetUp()
-                                 }
-
-                                 })
-    CompletionAutoPopupHandler.ourTestingAutopopup = true
-  }
-  void superSetUp() {
-    super.setUp()
-  }
-  void superTearDown() {
-    super.tearDown()
-  }
-
-  @Override protected void tearDown() {
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
-    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
-                                 @Override
-                                 void run() {
-                                   superTearDown()
-                                 }
-
-                                 })
-  }
-
-  private type(String s) {
-    myFixture.type(s)
-    UIUtil.invokeAndWaitIfNeeded(({} as Runnable))
-  }
-
-  @Override protected void runTest() {
-    runTestBare()
-  }
-
-  @Override
-  void runBare() {
-    superRunBare()
-  }
-
-
-  @Override protected void invokeTestRunnable(Runnable runnable) {
-    runnable.run()
-  }
-
+class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
@@ -122,7 +70,7 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
       }
     """)
     type 'e'
-    assertNull LookupManager.getActiveLookup(myFixture.getEditor())
+    assertNull lookup
   }
 
   public void testGenerallyFocusLookupInJavaMethod() {
@@ -134,8 +82,6 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
       }
     """)
     type 'e'
-    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
-    assertNotNull lookup
     assertTrue lookup.focused
   }
 
@@ -147,8 +93,6 @@ class CompletionAutoPopupTest extends LightCodeInsightFixtureTestCase {
       }
     """)
     type 'r'
-    final def lookup = LookupManager.getActiveLookup(myFixture.getEditor())
-    assertNotNull lookup
     assertFalse lookup.focused
   }
 

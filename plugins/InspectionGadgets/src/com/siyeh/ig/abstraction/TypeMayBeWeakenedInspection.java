@@ -48,6 +48,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean doNotWeakenToJavaLangObject = true;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyWeakentoInterface = true;
+
     @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -100,6 +103,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "type.may.be.weakened.do.not.weaken.to.object.option"),
                 "doNotWeakenToJavaLangObject");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message("only.weaken.to.an.interface"),
+                "onlyWeakentoInterface");
         return optionsPanel;
     }
 
@@ -272,6 +277,15 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                                 variable.getResolveScope());
                 weakestClasses.remove(javaLangObjectClass);
             }
+            if (onlyWeakentoInterface) {
+                for (Iterator<PsiClass> iterator = weakestClasses.iterator();
+                     iterator.hasNext();) {
+                    final PsiClass weakestClass = iterator.next();
+                    if (!weakestClass.isInterface()) {
+                        iterator.remove();
+                    }
+                }
+            }
             if (weakestClasses.isEmpty()) {
                 return;
             }
@@ -309,6 +323,15 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         facade.findClass("java.lang.Object",
                                 method.getResolveScope());
                 weakestClasses.remove(javaLangObjectClass);
+            }
+            if (onlyWeakentoInterface) {
+                for (Iterator<PsiClass> iterator = weakestClasses.iterator();
+                     iterator.hasNext();) {
+                    final PsiClass weakestClass = iterator.next();
+                    if (!weakestClass.isInterface()) {
+                        iterator.remove();
+                    }
+                }
             }
             if (weakestClasses.isEmpty()) {
                 return;

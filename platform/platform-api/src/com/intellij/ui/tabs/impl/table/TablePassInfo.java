@@ -36,18 +36,19 @@ public class TablePassInfo extends LayoutPassInfo {
 
   JBTabsImpl myTabs;
 
-  TablePassInfo(final JBTabsImpl tabs) {
+  TablePassInfo(final JBTabsImpl tabs, java.util.List<TabInfo> visibleInfos) {
+    super(visibleInfos);
     myTabs = tabs;
   }
 
   public TabInfo getPreviousFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
-    return getPrevious(row.myColumns, row.myColumns.indexOf(info));
+    return row != null ? getPrevious(row.myColumns, row.myColumns.indexOf(info)) : null;
   }
 
   public TabInfo getNextFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
-    return getNext(row.myColumns, row.myColumns.indexOf(info));
+    return row != null ? getNext(row.myColumns, row.myColumns.indexOf(info)) : null;
   }
 
   public boolean isInSelectionRow(final TabInfo tabInfo) {
@@ -70,7 +71,7 @@ public class TablePassInfo extends LayoutPassInfo {
 
   public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
     final TableRow row = myInfo2Row.get(tabInfo);
-    return row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1;
+    return row != null ? row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1 : false;
   }
 
   @Override

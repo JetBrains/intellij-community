@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -59,6 +60,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -870,10 +872,18 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
+    final Lookup lookup = LookupManager.getActiveLookup(myEditor);
+    if (lookup != null) {
+      lookup.showItemPopup(hint);
+      return;
+    }
+
     if (myEditor != null) {
       hint.showInBestPositionFor(myEditor);
+      return;
     }
-    else if (myPreviouslyFocused != null) {
+
+    if (myPreviouslyFocused != null) {
       hint.showInBestPositionFor(DataManager.getInstance().getDataContext(myPreviouslyFocused));
     } else {
       hint.showInBestPositionFor(DataManager.getInstance().getDataContext());

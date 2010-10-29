@@ -17,6 +17,8 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,6 +84,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
   private final Map<IdeFrame, WeakReference<Component>> myLastFocusedAtDeactivation = new HashMap<IdeFrame, WeakReference<Component>>();
+
+  private DataContext myRunContext;
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
@@ -337,16 +341,26 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    final boolean needsRestart = isIdleQueueEmpty();
-    myIdleRequests.add(runnable);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myRunContext != null) {
+          runnable.run();
+          return;
+        }
 
-    if (isFocusTransferReady()) {
-      flushIdleRequests();
-    } else {
-      if (needsRestart) {
-        restartIdleAlarm();
+        final boolean needsRestart = isIdleQueueEmpty();
+        myIdleRequests.add(runnable);
+
+        if (isFocusTransferReady()) {
+          flushIdleRequests();
+        } else {
+          if (needsRestart) {
+            restartIdleAlarm();
+          }
+        }
       }
-    }
+    });
   }
 
   private void restartIdleAlarm() {
@@ -401,7 +415,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
         myIdleRequests.clear();
         for (Runnable each : all) {
-          each.run();
+          if (each != null) {
+            each.run();
+          }
         }
       }
     }
@@ -414,6 +430,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public boolean isFocusTransferReady() {
+    if (myRunContext != null) return true;
+
     invalidateFocusRequestsQueue();
 
     if (!myFocusRequests.isEmpty()) return false;
@@ -494,6 +512,30 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   @Override
   public FocusRequestor getFurtherRequestor() {
     return new FurtherRequestor(this, getTimestamp(true));
+  }
+
+  @Override
+  public Component getFocusOwner() {
+    Component result = null;
+    if (myRunContext != null) {
+      result = (Component)myRunContext.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName());
+    }
+
+    if (result == null) {
+      result =  isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    }
+
+    return result;
+  }
+
+  @Override
+  public void runOnOwnContext(DataContext context, Runnable runnable) {
+    myRunContext = context;
+    try {
+      runnable.run();
+    } finally {
+      myRunContext = null;
+    }
   }
 
   private static class FurtherRequestor implements FocusRequestor {

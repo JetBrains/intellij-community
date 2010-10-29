@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.vcs.annotate.AnnotationSource;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
-import com.intellij.openapi.vcs.annotate.HighlightAnnotationsActions;
-import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +37,9 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   private final HighlightAnnotationsActions myHighlighting;
   @Nullable
   private final AnnotationSourceSwitcher mySwitcher;
-  private final List<AnAction> myActions;
+  private final ArrayList<AnAction> myActions;
   private SwitchAnnotationSourceAction mySwitchAction;
-  private final List<Consumer<Integer>> myPopupLineNumberListeners;
+  private final List<LineNumberListener> myPopupLineNumberListeners;
 
   AnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
                                 final EditorGutterComponentEx gutter,
@@ -50,7 +47,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
                                 final AnAction... actions) {
     myHighlighting = highlighting;
     mySwitcher = switcher;
-    myPopupLineNumberListeners = new LinkedList<Consumer<Integer>>();
+    myPopupLineNumberListeners = new LinkedList<LineNumberListener>();
 
     myActions = new ArrayList<AnAction>();
     myActions.add(Separator.getInstance());
@@ -68,9 +65,10 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     }
     myActions.add(new ShowHideAdditionalInfoAction(gutters, gutter));
     myActions.add(new ShowHideColorsAction(gutters, gutter));
+    myActions.add(new ShowShortenNames(gutter));
   }
 
-  public void addLineNumberListener(final Consumer<Integer> listener) {
+  public void addLineNumberListener(final LineNumberListener listener) {
     myPopupLineNumberListeners.add(listener);
   }
 
@@ -84,7 +82,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   }
 
   public List<AnAction> getActions(int line) {
-    for (Consumer<Integer> listener : myPopupLineNumberListeners) {
+    for (LineNumberListener listener : myPopupLineNumberListeners) {
       listener.consume(line);
     }
     return myActions;
@@ -92,5 +90,13 @@ class AnnotationPresentation implements TextAnnotationPresentation {
 
   public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
     mySwitchAction.addSourceSwitchListener(listener);
+  }
+
+  public void addAction(AnAction action) {
+    myActions.add(action);
+  }
+
+  public void addAction(AnAction action, int index) {
+    myActions.add(index, action);
   }
 }

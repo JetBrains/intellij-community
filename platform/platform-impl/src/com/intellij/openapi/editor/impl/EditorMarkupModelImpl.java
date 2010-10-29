@@ -69,7 +69,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
   private static final int ERROR_ICON_WIDTH = ERRORS_FOUND_ICON.getIconWidth();
   private static final int ERROR_ICON_HEIGHT = ERRORS_FOUND_ICON.getIconHeight();
-  private static final int PREFERRED_WIDTH = ERRORS_FOUND_ICON.getIconWidth() + 4;
+  private static final int PREFERRED_WIDTH = ERRORS_FOUND_ICON.getIconWidth() + 3;
   private final EditorImpl myEditor;
   private ErrorStripeRenderer myErrorStripeRenderer = null;
   private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
@@ -299,18 +299,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       final Rectangle bounds = getBounds();
 
-      g.setColor(myEditor.getBackgroundColor());
+      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
       g.fillRect(0, 0, bounds.width, bounds.height);
 
-      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
-      g.fillRect(3, 0, bounds.width, bounds.height);
-
       g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
-      g.drawLine(3, 0, 3, bounds.height);
+      g.drawLine(0, 0, 0, bounds.height);
 
       try {
         if (myErrorStripeRenderer != null) {
-          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+          myErrorStripeRenderer.paint(this, g, new Rectangle(3, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
         }
       }
       finally {
@@ -354,56 +351,39 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      g.translate(-2, 0);
-      g.setColor(Color.white);
-      final Rectangle oldClip = g.getClipBounds();
-      g.setClip(thumbBounds.x, thumbBounds.y, 5, thumbBounds.height );
-      g.fillRect(thumbBounds.x + 2, thumbBounds.y + 2, thumbBounds.width, thumbBounds.height - 4);
-
-      g.setClip(oldClip);
+      g.translate(6, 0);
       super.paintThumb(g, c, thumbBounds);
-      g.translate(2, 0);
+      g.translate(-6, 0);
     }
 
     @Override
     protected int adjustThumbWidth(int width) {
-      return width - 5;
+      return width - 1;
     }
 
     @Override
     protected int getThickness() {
-      return super.getThickness() + 5;
+      return super.getThickness() + 4;
     }
 
     @Override
     protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
-      Rectangle bounds = new Rectangle(trackBounds);
-
-      g.setColor(myEditor.getBackgroundColor());
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-
-      bounds.width /= 1.20;
-      final int shift = trackBounds.width - bounds.width;
-
-      g.translate(shift, 0);
-
-      super.paintTrack(g, c, bounds);
+      super.paintTrack(g, c, trackBounds);
 
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       try {
         Rectangle clipBounds = g.getClipBounds();
-        repaint(g, ERROR_ICON_WIDTH - 2, clipBounds);
+        repaint(g, ERROR_ICON_WIDTH - 1, clipBounds);
       }
       finally {
-        g.translate(-shift, 0);
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
       }
     }
 
     @Override
     protected Color adjustColor(Color c) {
-      return ColorUtil.withAlpha(super.adjustColor(c), 0.85);
+      return ColorUtil.withAlpha(ColorUtil.shift(super.adjustColor(c), 0.9), 0.85);
     }
 
     private void repaint(final Graphics g, final int width, Rectangle clipBounds) {
@@ -505,7 +485,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         int i = stripes.indexOf(endingStripe);
         stripes.remove(i);
         if (i == 0) {
-          // visible
+          // visible                                                    f
           drawSpot(g, width, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color, true, true);
           yStart = endingStripe.yEnd;
         }
@@ -521,12 +501,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
-      int x = 3;
+      int x = 4;
       int paintWidth = width;
       if (thinErrorStripeMark) {
         paintWidth /= 2;
         paintWidth += 1;
-        x += paintWidth + 1;
+        x = 0;
       }
       if (color == null) return;
       g.setColor(color);

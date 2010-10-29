@@ -140,7 +140,7 @@ public class GitCommit {
     return myAuthorEmail;
   }
 
-  public String getComitterEmail() {
+  public String getCommitterEmail() {
     return myComitterEmail;
   }
 
