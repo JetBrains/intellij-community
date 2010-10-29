@@ -4,10 +4,15 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
@@ -15,15 +20,18 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.List;
 
 /**
  * @author yole
@@ -63,13 +71,35 @@ public class PyDebugRunner extends GenericProgramRunner {
       startSession(this, env, contentToReuse, new XDebugProcessStarter() {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
-          return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
+          PyDebugProcess pyDebugProcess =
+            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
+
+          registerConsoleEvaluateActions(result, pyDebugProcess);
+
+          return pyDebugProcess;
         }
       });
     return session.getRunContentDescriptor();
   }
 
-  private CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
+  private static void registerConsoleEvaluateActions(final ExecutionResult result, PyDebugProcess pyDebugProcess) {
+    ExecutionConsole console = result.getExecutionConsole();
+    ProcessHandler processHandler = result.getProcessHandler();
+
+    if (console instanceof LanguageConsoleViewImpl) {
+      LanguageConsoleViewImpl consoleView = (LanguageConsoleViewImpl)console;
+      PythonCommandLineState.PyDebugProcessConsoleCommandExecutor consoleCommandExecutor = new PythonCommandLineState.PyDebugProcessConsoleCommandExecutor(pyDebugProcess);
+      List<AnAction> actions = AbstractConsoleRunnerWithHistory
+                       .createConsoleExecActions(consoleView.getConsole(), processHandler, new PydevConsoleExecuteActionHandler(consoleView,
+                                                                                                                                processHandler,
+                                                                                                                                consoleCommandExecutor))
+                       .getActionsAsList();
+      AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), consoleView.getComponent());
+    }
+  }
+
+  @Nullable
+  private static CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
     CommandLinePatcher runConfigPatcher = null;
     if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
       runConfigPatcher = (PythonRunConfiguration)profile;
@@ -77,11 +107,13 @@ public class PyDebugRunner extends GenericProgramRunner {
     return runConfigPatcher;
   }
 
-  public CommandLinePatcher[] createCommandLinePatchers(final PythonCommandLineState state, RunProfile profile, final int serverLocalPort) {
+  public static CommandLinePatcher[] createCommandLinePatchers(final PythonCommandLineState state,
+                                                               RunProfile profile,
+                                                               final int serverLocalPort) {
     return new CommandLinePatcher[]{createDebugServerPatcher(state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
-  private CommandLinePatcher createDebugServerPatcher(final PythonCommandLineState pyState, final int serverLocalPort) {
+  private static CommandLinePatcher createDebugServerPatcher(final PythonCommandLineState pyState, final int serverLocalPort) {
     return new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
 
