@@ -466,6 +466,9 @@
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
   </intentionAction>
+  <intentionAction>
+    <className>com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction</className>
+  </intentionAction>
 
   <!-- CodeInsightSettings -->
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler" id="editorEnter"/>
@@ -595,7 +598,7 @@
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
-  <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
+
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="before hide-hints"/>
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 
