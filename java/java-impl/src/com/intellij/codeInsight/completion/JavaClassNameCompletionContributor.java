@@ -20,10 +20,8 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
@@ -83,18 +81,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         final StatisticsInfo[] infos =
             StatisticsManager.getInstance().getAllValues(JavaCompletionStatistician.CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(prefix));
         for (final StatisticsInfo info : infos) {
-          final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-            public PsiClass[] compute() {
-              return JavaPsiFacade.getInstance(project).findClasses(info.getValue(), file.getResolveScope());
-            }
-          });
-          for (final PsiClass psiClass : classes) {
-            final boolean isExcluded = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-              public Boolean compute() {
-                return JavaCompletionUtil.isInExcludedPackage(psiClass);
-              }
-            }).booleanValue();
-            if (!isExcluded) {
+          for (final PsiClass psiClass : JavaPsiFacade.getInstance(project).findClasses(info.getValue(), file.getResolveScope())) {
+            if (!JavaCompletionUtil.isInExcludedPackage(psiClass)) {
               result.addElement(AllClassesGetter.createLookupItem(psiClass));
             }
           }
@@ -102,25 +90,19 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
         if (afterNew) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
-          if (expr != null) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                for (final ExpectedTypeInfo info : ExpectedTypesProvider.getInstance(project).getExpectedTypes(expr, true)) {
-                  final PsiType type = info.getType();
-                  final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-                  if (psiClass != null) {
-                    result.addElement(AllClassesGetter.createLookupItem(psiClass));
-                  }
-                  final PsiType defaultType = info.getDefaultType();
-                  if (!defaultType.equals(type)) {
-                    final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
-                    if (defClass != null) {
-                      result.addElement(AllClassesGetter.createLookupItem(defClass));
-                    }
-                  }
-                }
+          for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
+            final PsiType type = info.getType();
+            final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+            if (psiClass != null) {
+              result.addElement(AllClassesGetter.createLookupItem(psiClass));
+            }
+            final PsiType defaultType = info.getDefaultType();
+            if (!defaultType.equals(type)) {
+              final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
+              if (defClass != null) {
+                result.addElement(AllClassesGetter.createLookupItem(defClass));
               }
-            });
+            }
           }
         }
 
