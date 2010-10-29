@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
@@ -442,6 +443,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  @Override
+  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
+    getSoftWrapModel().setPlace(place);
+    mySettings.setSoftWrapAppliancePlace(place);
   }
 
   @NotNull
