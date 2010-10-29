@@ -961,7 +961,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         ASTNode nextModifier = FormattingAstUtil.getNextNonWhiteSpaceNode(annotation.getNode());
         if (nextModifier == null) {
           PsiElement element = modifierList.getNextSibling();
-          if (element != null) dependencyStart = element.getTextRange().getStartOffset();
+          if (element != null) {
+            ASTNode node = element.getNode();
+            if (node != null && node.getTextLength() > 0) {
+              dependencyStart = element.getTextRange().getStartOffset();
+            }
+          }
         } else {
           dependencyStart = nextModifier.getStartOffset();
         }

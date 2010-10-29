@@ -48,10 +48,10 @@ public class AbstractMethodWithMissingImplementationsInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new AbstactMethodWithMissingImplementationsVisitor();
+        return new AbstractMethodWithMissingImplementationsVisitor();
     }
 
-    private static class AbstactMethodWithMissingImplementationsVisitor
+    private static class AbstractMethodWithMissingImplementationsVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(PsiMethod method) {

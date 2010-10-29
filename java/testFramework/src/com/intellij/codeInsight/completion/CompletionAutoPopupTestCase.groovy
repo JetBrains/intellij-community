@@ -24,7 +24,7 @@ import com.intellij.util.ui.UIUtil
 /**
  * @author peter
  */
-class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
+abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable(){
                                  @Override
