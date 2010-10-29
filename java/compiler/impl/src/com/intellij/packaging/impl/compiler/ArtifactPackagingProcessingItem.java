@@ -35,7 +35,7 @@ import java.io.IOException;
  */
 public class ArtifactPackagingProcessingItem implements FileProcessingCompiler.ProcessingItem {
   private final VirtualFile mySourceFile;
-  private final List<Pair<DestinationInfo, Boolean>> myDestinations = new SmartList<Pair<DestinationInfo, Boolean>>();
+  private final SmartList<Pair<DestinationInfo, Boolean>> myDestinations = new SmartList<Pair<DestinationInfo, Boolean>>();
   private List<DestinationInfo> myEnabledDestinations;
   private boolean mySourceFileModified;
   private ArtifactPackagingItemValidityState myOldState;
@@ -50,7 +50,8 @@ public class ArtifactPackagingProcessingItem implements FileProcessingCompiler.P
   }
 
   public void addDestination(DestinationInfo info, boolean enabled) {
-    for (int i = 0; i < myDestinations.size(); i++) {
+    final int size = myDestinations.size();
+    for (int i = 0; i < size; i++) {
       Pair<DestinationInfo, Boolean> pair = myDestinations.get(i);
       if (info.getOutputPath().equals(pair.getFirst().getOutputPath())) {
         if (enabled && !pair.getSecond()) {

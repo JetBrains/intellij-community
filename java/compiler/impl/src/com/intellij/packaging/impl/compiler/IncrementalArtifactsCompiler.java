@@ -353,7 +353,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
   private boolean collectFilesToDelete(final CompileContext context, final ArtifactPackagingProcessingItem[] allProcessingItems) {
     List<String> filesToDelete = new ArrayList<String>();
-    Set<String> outputPaths = createPathsHashSet();
+    Set<String> outputPaths = new THashSet<String>();
     for (ArtifactPackagingProcessingItem item : allProcessingItems) {
       for (Pair<DestinationInfo, Boolean> destinationInfo : item.getDestinations()) {
         String outputPath = getOutputPathWithJarSeparator(destinationInfo.getFirst());
