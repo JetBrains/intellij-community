@@ -25,9 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -316,52 +313,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return false;
   }
 
-  @Nullable
-  @Override
-  public TextRange getQuickFixRange(PsiElement element) {
-    element = element.getParent();
-    if (element instanceof PsiMethod) {
-      return getSignatureRange((PsiMethod)element);
-    }
-    return null;
-  }
-
-  private TextRange getSignatureRange(PsiMethod method) {
+  private static TextRange getSignatureRange(PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     return new TextRange(method.getModifierList().getTextRange().getStartOffset(), body == null ? method.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
-  }
-
-  @Override
-  public boolean isToHighlight(PsiElement element, ChangeInfo changeInfo) {
-    element = element.getParent();
-    LOG.assertTrue(changeInfo instanceof JavaChangeInfo);
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      SearchScope useScope = method.getUseScope();
-      final PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
-      if (useScope instanceof GlobalSearchScope) {
-        final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
-          .isCheapEnoughToSearch(((JavaChangeInfo)changeInfo).getOldName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        final SearchScope classUseScope = containingClass.getUseScope();
-        final String className = containingClass.getName();
-        if (classUseScope instanceof GlobalSearchScope && className != null) {
-          final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
-            .isCheapEnoughToSearch(className, (GlobalSearchScope)classUseScope, containingClass.getContainingFile(), null);
-          if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo) {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    return method != null && isInsideMethodSignature(element, method) && Comparing.equal(method, bannedInfo.getMethod());
   }
 
   @Override
