@@ -281,7 +281,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @NotNull
   public PsiReferenceList getThrowsList() {
     GrThrowsClause clause = findChildByClass(GrThrowsClause.class);
-    assert clause != null;
+    assert clause != null : this;
     return clause;
   }
 

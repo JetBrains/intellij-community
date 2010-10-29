@@ -306,7 +306,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo) {
     if (currentInfo instanceof JavaChangeInfo) {
-      return element instanceof PsiIdentifier && Comparing.equal(currentInfo.getMethod(), element.getParent());
+      final PsiMethod method = (PsiMethod)currentInfo.getMethod();
+      return getSignatureRange(method).contains(element.getTextRange());
     }
     return false;
   }
@@ -316,10 +317,14 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public TextRange getQuickFixRange(PsiElement element) {
     element = element.getParent();
     if (element instanceof PsiMethod) {
-      final PsiCodeBlock body = ((PsiMethod)element).getBody();
-      return new TextRange(((PsiMethod)element).getModifierList().getTextRange().getStartOffset(), body == null ? element.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
+      return getSignatureRange((PsiMethod)element);
     }
     return null;
+  }
+
+  private TextRange getSignatureRange(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    return new TextRange(method.getModifierList().getTextRange().getStartOffset(), body == null ? method.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
   }
 
   @Override

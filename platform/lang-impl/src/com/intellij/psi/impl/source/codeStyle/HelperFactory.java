@@ -24,20 +24,20 @@ import com.intellij.openapi.project.Project;
 
 public class HelperFactory {
   private static Factory INSTANCE = new Factory() {
-    public Helper create(final FileType fileType, final Project project) {
-      return new Helper(fileType, project);
+    public IndentHelper create(final FileType fileType, final Project project) {
+      return new IndentHelper(fileType, project);
     }
   };
 
   private HelperFactory() {
   }
 
-  public static Helper createHelper(FileType fileType, Project project) {
+  public static IndentHelper createHelper(FileType fileType, Project project) {
     return INSTANCE.create(fileType, project);
   }
 
   interface Factory {
-    Helper create(FileType fileType, Project project);
+    IndentHelper create(FileType fileType, Project project);
   }
 
   public static void setFactory(Factory factory) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -370,6 +371,9 @@ public abstract class AbstractLayoutCodeProcessor {
         catch(ProcessCanceledException e) {
           return;
         }
+        catch(IndexNotReadyException e) {
+          return;
+        }
         /*
         finally {
           DaemonCodeAnalyzer.getInstance(myProject).setUpdateByTimerEnabled(true);
@@ -381,10 +385,14 @@ public abstract class AbstractLayoutCodeProcessor {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
                 if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-                ApplicationManager.getApplication().runWriteAction(writeAction);
+                try {
+                  ApplicationManager.getApplication().runWriteAction(writeAction);
 
-                if (myPostRunnable != null) {
-                  ApplicationManager.getApplication().invokeLater(myPostRunnable);
+                  if (myPostRunnable != null) {
+                    ApplicationManager.getApplication().invokeLater(myPostRunnable);
+                  }
+                }
+                catch (IndexNotReadyException ignored) {
                 }
               }
             }, myCommandName, null);
