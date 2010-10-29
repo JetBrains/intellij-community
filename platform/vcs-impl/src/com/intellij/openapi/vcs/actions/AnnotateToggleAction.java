@@ -251,8 +251,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(gutter);
     }
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting, bgColorMap));
+
+    presentation.addAction(new AnnotateActionGroup(gutters, editorGutter), 1); //do not include history gutter
+
     if (historyIds != null) {
-      gutters.add(new HistoryIdColumn(fileAnnotation, editor, null, presentation, bgColorMap, historyIds));
+      gutters.add(new HistoryIdColumn(fileAnnotation, editor, presentation, bgColorMap, historyIds));
     }
 
     for (AnnotationFieldGutter gutter : gutters) {

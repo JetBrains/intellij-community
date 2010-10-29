@@ -34,8 +34,8 @@ public class TableLayout extends TabLayout {
     myTabs = tabs;
   }
 
-  private TablePassInfo computeLayoutTable() {
-    final TablePassInfo data = new TablePassInfo(myTabs);
+  private TablePassInfo computeLayoutTable(java.util.List<TabInfo> visibleInfos) {
+    final TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
 
     final Insets insets = myTabs.getLayoutInsets();
     data.toFitRec =
@@ -46,7 +46,7 @@ public class TableLayout extends TabLayout {
 
 
     data.requiredRows = 1;
-    for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+    for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getPreferredSize();
       if (eachX + size.width >= data.toFitRec.getMaxX()) {
@@ -65,7 +65,7 @@ public class TableLayout extends TabLayout {
 
     if (data.requiredRows > 1) {
       final int rowFit = insets.left + data.requiredWidth / data.requiredRows;
-      for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+      for (TabInfo eachInfo : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
         final Rectangle eachBounds = eachLabel.getBounds();
         if (eachBounds.contains(rowFit, 0)) {
@@ -75,7 +75,7 @@ public class TableLayout extends TabLayout {
       }
     }
 
-    for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+    for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getPreferredSize();
       if (eachX + size.width <= data.rowToFitMaxX) {
@@ -112,9 +112,9 @@ public class TableLayout extends TabLayout {
   }
 
 
-  public LayoutPassInfo layoutTable() {
+  public LayoutPassInfo layoutTable(java.util.List<TabInfo> visibleInfos) {
     myTabs.resetLayout(true);
-    final TablePassInfo data = computeLayoutTable();
+    final TablePassInfo data = computeLayoutTable(visibleInfos);
     final Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     int eachX;
@@ -169,4 +169,8 @@ public class TableLayout extends TabLayout {
     return data;
   }
 
+  @Override
+  public int getDropIndexFor(Point point) {
+    return -1;
+  }
 }

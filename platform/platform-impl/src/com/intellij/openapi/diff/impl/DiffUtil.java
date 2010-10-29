@@ -89,7 +89,7 @@ public class DiffUtil {
     EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
-    editor.getSoftWrapModel().setPlace(SoftWrapAppliancePlaces.VCS_DIFF);
+    editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF);
     editor.getGutterComponentEx().revalidateMarkup();
     return editor;
   }

@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.awt.RelativePoint;
+
 import java.awt.*;
 
 public abstract class TabLayout {
@@ -28,8 +31,17 @@ public abstract class TabLayout {
     return new ShapeTransform.Top(rectangle);
   }
 
+  public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+    return Math.abs(deltaY) > tabLabel.getSize().height * getDragOutMultiplier();
+  }
+
   public boolean isSideComponentOnTabs() {
     return false;
   }
 
+  public static double getDragOutMultiplier() {
+    return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
+  }
+
+  public abstract int getDropIndexFor(Point point);
 }

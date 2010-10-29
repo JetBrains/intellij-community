@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -61,4 +62,6 @@ public interface Lookup extends UserDataHolder{
   java.util.List<LookupElement> getItems();
 
   boolean isFocused();
+
+  void showItemPopup(JBPopup hint);
 }

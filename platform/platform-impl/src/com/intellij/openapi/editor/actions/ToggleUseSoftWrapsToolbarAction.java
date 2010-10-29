@@ -16,7 +16,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link ToggleUseSoftWrapsMenuAction} extension that doesn't suppress configured icon (if any).
@@ -26,8 +27,8 @@ import com.intellij.openapi.editor.Editor;
  */
 public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
 
-  public ToggleUseSoftWrapsToolbarAction() {
-    super();
+  public ToggleUseSoftWrapsToolbarAction(@NotNull SoftWrapAppliancePlaces place) {
+    super(place);
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
   }
 }

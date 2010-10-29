@@ -31,7 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.compiler.tools.AndroidDx;
+import org.jetbrains.android.compiler.tools.AndroidDx1;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -228,7 +227,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           for (VirtualFile child : parentDir.getChildren()) {
             if (child.getFileType() == StdFileTypes.CLASS) {
               if (isRJavaFile(child)) {
-                result.add(child.getPath());
+                result.add(FileUtil.toSystemDependentName(child.getPath()));
               }
             }
           }
@@ -256,7 +255,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       for (ProcessingItem item : myItems) {
         if (item instanceof DexItem) {
           DexItem dexItem = (DexItem)item;
-          AndroidDx dxTool = new AndroidDx();
+          AndroidDx1 dxTool = new AndroidDx1();
           String outputDirPath = FileUtil.toSystemDependentName(dexItem.myClassDir.getPath());
           String[] files = new String[dexItem.myFiles.size()];
           int i = 0;
@@ -264,15 +263,15 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             files[i++] = FileUtil.toSystemDependentName(file.getPath());
           }
 
-          for (String excludedFile : dexItem.myExcludedFiles) {
+          /*for (String excludedFile : dexItem.myExcludedFiles) {
             File f = new File(excludedFile);
             if (f.exists()) {
               f.delete();
             }
-          }
+          }*/
 
           Map<CompilerMessageCategory, List<String>> messages =
-            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files);
+            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, dexItem.myExcludedFiles.toArray(new String[dexItem.myExcludedFiles.size()]));
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(dexItem);

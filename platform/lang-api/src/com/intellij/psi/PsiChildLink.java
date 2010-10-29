@@ -26,24 +26,24 @@ public abstract class PsiChildLink<Parent extends PsiElement, Child extends PsiE
   @Nullable public abstract Child findLinkedChild(@Nullable Parent parent);
 
   @NotNull
-  public final PsiRef<Child> createChildRef(@NotNull Parent parent) {
+  public final PsiElementRef<Child> createChildRef(@NotNull Parent parent) {
     final Child existing = findLinkedChild(parent);
     if (existing != null) {
-      return PsiRef.real(existing);
+      return PsiElementRef.real(existing);
     }
-    return PsiRef.imaginary(PsiRef.real(parent), this);
+    return PsiElementRef.imaginary(PsiElementRef.real(parent), this);
   }
 
   @NotNull
-  public final PsiRef<Child> createChildRef(@NotNull PsiRef<? extends Parent> parentRef) {
+  public final PsiElementRef<Child> createChildRef(@NotNull PsiElementRef<? extends Parent> parentRef) {
     final Parent parent = parentRef.getPsiElement();
     if (parent != null) {
       final Child existing = findLinkedChild(parent);
       if (existing != null) {
-        return PsiRef.real(existing);
+        return PsiElementRef.real(existing);
       }
     }
-    return PsiRef.imaginary(parentRef, this);
+    return PsiElementRef.imaginary(parentRef, this);
   }
 
 }

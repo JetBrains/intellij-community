@@ -682,7 +682,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     });
     final EditorEx editor = (EditorEx)document.createViewer(editorDocument, myProject);
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
-    editor.getSoftWrapModel().setPlace(SoftWrapAppliancePlaces.CONSOLE);
+    editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
     final EditorHighlighter highlighter = new MyHighlighter();
     editor.setHighlighter(highlighter);
@@ -695,7 +695,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
-    editorSettings.setUseSoftWraps(EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
 
     final EditorColorsScheme scheme = editor.getColorsScheme();
     editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
@@ -1448,7 +1447,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
-    final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction() {
+    final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;

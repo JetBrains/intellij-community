@@ -17,6 +17,8 @@ package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.table.TableLayout;
 
 import java.awt.*;
 
@@ -62,6 +64,8 @@ public abstract class SingleRowLayoutStrategy {
     return false;
   }
 
+  public abstract boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY);
+
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -74,6 +78,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public boolean canBeStretched() {
       return true;
+    }
+
+    @Override
+    public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+      return Math.abs(deltaY) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
     }
 
     public int getMoreRectAxisSize() {
@@ -202,6 +211,11 @@ public abstract class SingleRowLayoutStrategy {
   abstract static class Vertical extends SingleRowLayoutStrategy {
     protected Vertical(SingleRowLayout layout) {
       super(layout);
+    }
+
+    @Override
+    public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+      return Math.abs(deltaX) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
     }
 
     public boolean isToCenterTextWhenStretched() {

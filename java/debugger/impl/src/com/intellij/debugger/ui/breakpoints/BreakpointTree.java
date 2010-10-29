@@ -612,7 +612,7 @@ public class BreakpointTree extends CheckboxTree {
 
   private static class BreakpointTreeCellRenderer extends CheckboxTreeCellRenderer {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      // Fix GTK backround
+      // Fix GTK background
       if (UIUtil.isUnderGTKLookAndFeel()){
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);

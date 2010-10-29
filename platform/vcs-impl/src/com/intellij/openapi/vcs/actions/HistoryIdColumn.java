@@ -16,8 +16,8 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
@@ -31,12 +31,11 @@ class HistoryIdColumn extends AnnotationFieldGutter {
   private final Map<String, Integer> myHistoryIds;
 
   HistoryIdColumn(FileAnnotation annotation,
-                  Editor editor,
-                  LineAnnotationAspect aspect,
+                  final Editor editor,
                   final TextAnnotationPresentation presentation,
                   Map<String, Color> colorScheme,
                   Map<String, Integer> ids) {
-    super(annotation, editor, aspect, presentation, colorScheme);
+    super(annotation, editor, null, presentation, colorScheme);
     myHistoryIds = ids;
   }
 
@@ -47,14 +46,18 @@ class HistoryIdColumn extends AnnotationFieldGutter {
       final Integer num = myHistoryIds.get(revisionNumber.asString());
       if (num != null) {
         final String size = String.valueOf(myHistoryIds.size());
-        String value = num.toString() + "/" + size;
-        final int len = 2 * String.valueOf(myHistoryIds.size()).length() + 1;
-        while (value.length() < len) {
+        String value = num.toString();
+        while (value.length() < size.length()) {
           value = " " + value;
         }
         return value;
       }
     }
     return "";
+  }
+
+  @Override
+  public String getID() {
+    return VcsBundle.message("annotation.commit.number");
   }
 }

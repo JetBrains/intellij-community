@@ -45,6 +45,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private final Disposable myParentDisposable;
   private Dimension myDelta;
 
+  private boolean myDetachingMode;
+
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
     myParentDisposable = parent;
@@ -111,12 +113,17 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
     if (wasDragging) {
       try {
-        processDragFinish(e);
+        if (myDetachingMode) {
+          processDragOutFinish(e);
+        } else {
+          processDragFinish(e, false);
+        }
       }
       finally {
         myDraggingNow = false;
         myPressPointComponent = null;
         myPressPointScreen = null;
+        myDetachingMode = false;
         e.consume();
       }
     }
@@ -137,11 +144,20 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myDraggingNow && myPressPointScreen != null) {
       final Point draggedTo = new RelativePoint(e).getScreenPoint();
 
-      draggedTo.x -= myDelta.width;
-      draggedTo.y -= myDelta.height;
+      boolean dragOutStarted = false;
+      if (!myDetachingMode) {
+        if (isDragOut(e, draggedTo, (Point)myPressPointScreen.clone())) {
+          myDetachingMode = true;
+          processDragFinish(e, true);
+          dragOutStarted = true;
+        }
+      }
 
-
-      processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
+      if (myDetachingMode) {
+        processDragOut(e, draggedTo, (Point)myPressPointScreen.clone(), dragOutStarted);
+      } else {
+        processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
+      }
 
       e.consume();
     }
@@ -161,7 +177,11 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return true;
   }
 
-  protected void processDragFinish(final MouseEvent even) {
+
+  protected void processDragFinish(final MouseEvent event, boolean willDragOutStart) {
+  }
+
+  protected void processDragOutFinish(final MouseEvent event) {
   }
 
   public final boolean isDragJustStarted() {
@@ -170,11 +190,18 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   protected abstract void processDrag(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint);
 
+  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+    return false;
+  }
+
+  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+
+  }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
     final Point screen = new RelativePoint(e).getScreenPoint();
-    return Math.abs(myPressPointScreen.x - screen.x) < DRAG_START_DEADZONE &&
-           Math.abs(myPressPointScreen.y - screen.y) < DRAG_START_DEADZONE;
+    return Math.abs(myPressPointScreen.x - screen.x - myDelta.width) < DRAG_START_DEADZONE &&
+           Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
   }
 
   public void mouseClicked(final MouseEvent e) {

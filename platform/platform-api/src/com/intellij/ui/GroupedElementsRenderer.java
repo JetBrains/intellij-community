@@ -71,7 +71,7 @@ public abstract class GroupedElementsRenderer {
       myComponent.setBorder(ourBorder);
       setDeselected(myComponent);
       setDeselected(myTextLabel);
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
+      if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
         myTextLabel.setOpaque(false);
       }
     }

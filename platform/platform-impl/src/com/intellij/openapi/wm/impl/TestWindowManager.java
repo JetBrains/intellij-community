@@ -74,6 +74,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
       return new Dimension(0, 0);
     }
 
+    @Override
+    public void setInfo(@Nullable String s, @Nullable String requestor) {
+    }
+
     public boolean isVisible() {
       return false;
     }
