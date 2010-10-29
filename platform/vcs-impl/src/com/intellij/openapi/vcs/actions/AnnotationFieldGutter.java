@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -30,6 +31,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +73,23 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public String getLineText(int line, Editor editor) {
-    return isAvailable() ? myAspect.getValue(line) : "";
+    final String value = isAvailable() ? myAspect.getValue(line) : "";
+    if (myAspect.getId() == LineAnnotationAspect.AUTHOR && ShowShortenNames.isSet()) {
+      return shorten(value);
+    }
+    return value;
+  }
+
+  @Nullable
+  private static String shorten(String value) {
+    if (value != null) {
+      final List<String> strings = StringUtil.split(value, " ");
+      if (strings.size() > 1) {
+        //Middle name check: Vasya S. Pupkin
+        return strings.get(1).length() < 3 && strings.size() > 2 && strings.get(2).length() > 1 ? strings.get(2) : strings.get(1);
+      }
+    }
+    return value;
   }
 
   @Nullable
@@ -105,7 +123,13 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public List<AnAction> getPopupActions(int line, final Editor editor) {
-    return myPresentation.getActions(line);
+    final ArrayList<AnAction> actions = new ArrayList<AnAction>(myPresentation.getActions(line));
+    //TODO do something with files where user has made changes. Calculate actual 'line"
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(line);
+    if (revisionNumber != null) {
+      actions.add(0, new CopyRevisionNumberAction(revisionNumber.asString()));
+    }
+    return actions;
   }
 
   public void gutterClosed() {
@@ -151,7 +175,12 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myShowAdditionalInfo = show;
   }
 
-  private boolean isAvailable() {
-    return myShowAdditionalInfo || VcsUtil.isAspectAvailableByDefault(myAspect);
+  public boolean isAvailable() {
+    return myShowAdditionalInfo || myAspect == null || VcsUtil.isAspectAvailableByDefault(myAspect);
+  }
+
+  @Nullable
+  public String getID() {
+    return myAspect == null ? null : myAspect.getId();
   }
 }
