@@ -73,7 +73,9 @@ public abstract class PsiClassType extends PsiType {
     String className = getClassName();
     String otherClassName = otherClassType.getClassName();
     if (!Comparing.equal(className, otherClassName)) return false;
-
+    final PsiType[] parameters = getParameters();
+    final PsiType[] otherParameters = otherClassType.getParameters();
+    if (parameters.length != otherParameters.length) return false;
     final ClassResolveResult result = resolveGenerics();
     final ClassResolveResult otherResult = otherClassType.resolveGenerics();
     if (result == otherResult) return true;
@@ -84,7 +86,7 @@ public abstract class PsiClassType extends PsiType {
       return aClass == otherClass;
     }
     return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
-           PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass);
+           (parameters.length == 0 || PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass));
   }
 
   /**
