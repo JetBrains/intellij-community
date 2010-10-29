@@ -13,6 +13,8 @@ except:
   # python version doesn't have unittest2
   pass
 
+from nose_helper import TestLoader, ContextSuite
+
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 PYTHON_VERSION_MINOR = sys.version_info[1]
 
@@ -71,9 +73,12 @@ def loadModulesFromFolderUsingPattern(folder, pattern):
       result.append(module)
   return result
 
-testLoader = unittest.TestLoader()
+#testLoader = unittest.TestLoader()
+testLoader = TestLoader()
 
-all = unittest.TestSuite()
+#all = unittest.TestSuite()
+all = ContextSuite()
+
 for arg in sys.argv[1:]:
   arg = arg.strip()
   if len(arg) == 0:
@@ -97,12 +102,12 @@ for arg in sys.argv[1:]:
         modules = [loadSource(a[0])]
 
     for module in modules:
-      all.addTests(testLoader.loadTestsFromModule(module)._tests)
+      all.addTests(testLoader.loadTestsFromModule(module))
   elif len(a) == 2:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
     module = loadSource(a[0])
-    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1]))._tests)
+    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
   else:
     # From method in testcase
     debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
