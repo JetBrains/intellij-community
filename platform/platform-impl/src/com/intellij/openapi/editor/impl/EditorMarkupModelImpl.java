@@ -351,14 +351,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      g.translate(5, 0);
+      g.translate(6, 0);
       super.paintThumb(g, c, thumbBounds);
-      g.translate(-5, 0);
+      g.translate(-6, 0);
     }
 
     @Override
     protected int adjustThumbWidth(int width) {
-      return width - 5;
+      return width - 1;
     }
 
     @Override

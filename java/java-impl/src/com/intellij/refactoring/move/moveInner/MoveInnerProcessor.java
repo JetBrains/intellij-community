@@ -347,51 +347,20 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-
+    final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
-      private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
+
 
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiMember &&
             PsiTreeUtil.isAncestor(myInnerClass, resolved, true) &&
             becomesInaccessible((PsiMember)resolved)) {
-          final PsiElement container = ConflictsUtil.getContainer(reference);
-          HashSet<PsiElement> containerSet = reported.get(resolved);
-          if (containerSet == null) {
-            containerSet = new HashSet<PsiElement>();
-            reported.put(resolved, containerSet);
-          }
-          if (!containerSet.contains(container)) {
-            containerSet.add(container);
-            String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                       RefactoringUIUtil.getDescription(resolved, true),
-                                                       RefactoringUIUtil.getDescription(container, true));
-            conflicts.putValue(resolved, message);
-          }
+          registerConflict(reference, resolved, reported, conflicts);
         }
       }
 
-      private boolean becomesInaccessible(PsiMember element) {
-        final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
-        if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
-        if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
-        final PsiFile containingFile = myOuterClass.getContainingFile();
-        if (myTargetContainer instanceof PsiDirectory) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);
-          return !isInPackage(containingFile, aPackage);
-        }
-        // target container is a class
-        PsiFile targetFile = myTargetContainer.getContainingFile();
-        if (targetFile != null) {
-          final PsiDirectory containingDirectory = targetFile.getContainingDirectory();
-          if (containingDirectory != null) {
-            final PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
-            return isInPackage(containingFile, targetPackage);
-          }
-        }
-        return false;
-      }
+
 
 
       @Override public void visitClass(PsiClass aClass) {
@@ -402,8 +371,61 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
 //    if (myInnerClass.hasModifierProperty(PsiModifier.)) {
     myOuterClass.accept(new Visitor());
+    myInnerClass.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        final PsiElement resolve = reference.resolve();
+        if (resolve instanceof PsiMember) {
+          if (PsiTreeUtil.isAncestor(myOuterClass, resolve, true) && !PsiTreeUtil.isAncestor(myInnerClass, resolve, true)) {
+            if (becomesInaccessible((PsiMember)resolve)) {
+              registerConflict(reference, resolve, reported, conflicts);
+            }
+          }
+        }
+      }
+    });
 
     return showConflicts(conflicts, refUsages.get());
+  }
+
+  private static void registerConflict(PsiJavaCodeReferenceElement reference,
+                                       PsiElement resolved,
+                                       HashMap<PsiElement, HashSet<PsiElement>> reported, MultiMap<PsiElement, String> conflicts) {
+    final PsiElement container = ConflictsUtil.getContainer(reference);
+    HashSet<PsiElement> containerSet = reported.get(resolved);
+    if (containerSet == null) {
+      containerSet = new HashSet<PsiElement>();
+      reported.put(resolved, containerSet);
+    }
+    if (!containerSet.contains(container)) {
+      containerSet.add(container);
+      String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
+                                                 RefactoringUIUtil.getDescription(resolved, true),
+                                                 RefactoringUIUtil.getDescription(container, true));
+      conflicts.putValue(resolved, message);
+    }
+  }
+
+  private boolean becomesInaccessible(PsiMember element) {
+    final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
+    if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
+    if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
+    final PsiFile containingFile = myOuterClass.getContainingFile();
+    if (myTargetContainer instanceof PsiDirectory) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);
+      return !isInPackage(containingFile, aPackage);
+    }
+    // target container is a class
+    PsiFile targetFile = myTargetContainer.getContainingFile();
+    if (targetFile != null) {
+      final PsiDirectory containingDirectory = targetFile.getContainingDirectory();
+      if (containingDirectory != null) {
+        final PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
+        return isInPackage(containingFile, targetPackage);
+      }
+    }
+    return false;
   }
 
   private static boolean isInPackage(final PsiFile containingFile, PsiPackage aPackage) {
