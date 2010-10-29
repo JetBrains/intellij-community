@@ -15,14 +15,19 @@
  */
 package com.intellij.openapi.roots.libraries.scripting;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,11 +67,19 @@ public class ScriptingLibraryManager {
         updateLibraries(libTableModel, OrderRootType.CLASSES);
         libTableModel.commit();
       }
+      updateOpenProjects();
       myLibTable = null;
     }
-    if (myLibLevel == LibraryLevel.GLOBAL) {
-      ModuleManager.getInstance(myProject).getModifiableModel().commit();
-    }
+  }
+
+  private static void updateOpenProjects() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+        }
+      }
+    });
   }
 
   private void updateLibraries(LibraryTable.ModifiableModel libTableModel, OrderRootType rootType) {
