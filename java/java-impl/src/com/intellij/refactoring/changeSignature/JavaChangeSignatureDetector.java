@@ -213,7 +213,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean showDialog(ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
+  public boolean accept(ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();

@@ -94,7 +94,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-        if (detector.showDialog(currentInfo, changeBean.getInitialText(), silently)) {
+        if (detector.accept(currentInfo, changeBean.getInitialText(), silently)) {
           changeBean.reinit();
         }
       }
