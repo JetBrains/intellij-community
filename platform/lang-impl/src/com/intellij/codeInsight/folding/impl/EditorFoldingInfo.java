@@ -16,24 +16,25 @@
 
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
-  private final Map<FoldRegion, PsiElement> myFoldRegionToSmartPointerMap = new THashMap<FoldRegion, PsiElement>();
+  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap
+    = new THashMap<FoldRegion, SmartPsiElementPointer<?>>();
 
   public static EditorFoldingInfo get(@NotNull Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
@@ -44,10 +45,17 @@ public class EditorFoldingInfo {
     return info;
   }
 
+  @Nullable
   public PsiElement getPsiElement(@NotNull FoldRegion region) {
-    final PsiElement element = myFoldRegionToSmartPointerMap.get(region);
-    return element != null && element.isValid() ? element:null;
+    final SmartPsiElementPointer<?> pointer = myFoldRegionToSmartPointerMap.get(region);
+    if (pointer == null) {
+      return null;
+    }
+    PsiElement element = pointer.getElement();
+    return element != null && element.isValid() ? element : null;
   }
+
+  @Nullable
   public TextRange getPsiElementRange(@NotNull FoldRegion region) {
     PsiElement element = getPsiElement(region);
     if (element == null) return null;
@@ -65,8 +73,8 @@ public class EditorFoldingInfo {
     return myFoldRegionToSmartPointerMap.get(region) == null;
   }
 
-  public void addRegion(@NotNull FoldRegion region, @NotNull FoldingDescriptor element){
-    myFoldRegionToSmartPointerMap.put(region, element.getElement().getPsi());
+  public void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer){
+    myFoldRegionToSmartPointerMap.put(region, pointer);
   }
 
   public void removeRegion(@NotNull FoldRegion region){
@@ -81,7 +89,7 @@ public class EditorFoldingInfo {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info != null) {
       for(FoldRegion region:info.myFoldRegionToSmartPointerMap.keySet()) {
-        ((RangeMarkerEx)region).dispose();
+        region.dispose();
       }
     }
     editor.putUserData(KEY, null);
