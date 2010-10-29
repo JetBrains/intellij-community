@@ -30,6 +30,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -393,6 +394,9 @@ public class HighlightControlFlowUtil {
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
+        codeBlockProblems = Collections.emptyList();
+      }
+      catch (IndexNotReadyException e) {
         codeBlockProblems = Collections.emptyList();
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);

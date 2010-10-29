@@ -576,6 +576,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
   }
 
+  @Override
+  public String toString() {
+    return myCache.toString();
+  }
+
   private class CacheState {
 
     public boolean valid = true;

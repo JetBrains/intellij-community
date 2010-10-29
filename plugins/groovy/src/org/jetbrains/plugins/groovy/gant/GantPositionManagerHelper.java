@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
@@ -50,6 +51,8 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
       if (files.length == 1) return files[0];
     }
     catch (ProcessCanceledException ignored) {
+    }
+    catch (IndexNotReadyException ignored) {
     }
     return null;
   }

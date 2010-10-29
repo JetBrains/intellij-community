@@ -557,7 +557,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       }
       final List<XmlTag> tags = DomImplUtil.findSubTags(subTags, evaluatedXmlName, getFile());
       if (tags.size() > index) {
-        return myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tags.get(index));
+        final XmlTag child = tags.get(index);
+        final IndexedElementInvocationHandler semElement = myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, child);
+        if (semElement == null) {
+          final IndexedElementInvocationHandler take2 = myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, child);
+          throw new AssertionError("No DOM at XML. Parent=" + tag + "; child=" + child + "; index=" + index+ "; second attempt=" + take2);
+
+        }
+        return semElement;
       }
     }
     return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, "");

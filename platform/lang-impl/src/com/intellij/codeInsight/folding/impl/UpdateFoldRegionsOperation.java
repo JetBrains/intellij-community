@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.util.containers.HashMap;
 
 import java.util.List;
@@ -36,8 +37,8 @@ import static com.intellij.util.containers.CollectionFactory.arrayList;
 import static com.intellij.util.containers.CollectionFactory.newTroveMap;
 
 /**
-* @author cdr
-*/
+ * @author cdr
+ */
 class UpdateFoldRegionsOperation implements Runnable {
   private final Project myProject;
   private final Editor myEditor;
@@ -85,6 +86,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                                          Map<FoldRegion, Boolean> shouldExpand,
                                          Map<FoldingGroup, Boolean> groupExpand) {
     List<FoldRegion> newRegions = arrayList();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
 
     for (final Map.Entry<PsiElement, FoldingDescriptor> entry : myElementsToFoldMap.entrySet()) {
       ProgressManager.checkCanceled();
@@ -96,7 +98,7 @@ class UpdateFoldRegionsOperation implements Runnable {
       FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(), placeholder == null ? "..." : placeholder, group);
       if (region == null || !foldingModel.addFoldRegion(region)) continue;
 
-      info.addRegion(region, descriptor);
+      info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(descriptor.getElement().getPsi()));
       newRegions.add(region);
 
       boolean expandStatus = shouldExpandNewRegion(element, range, rangeToExpandStatusMap);

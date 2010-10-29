@@ -226,4 +226,29 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
+    // Inspired by IDEA-60237
+
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "    @Id\n" +
+      "    private final String name;\n" +
+      "    @Column(length = 2 * 1024 * 1024 /* 2 MB */)\n" +
+      "    private String value;\n" +
+      "    private boolean required;\n" +
+      "    private String unsetValue;\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    @Id\n" +
+      "    private final String  name;\n" +
+      "    @Column(length = 2 * 1024 * 1024 /* 2 MB */)\n" +
+      "    private       String  value;\n" +
+      "    private       boolean required;\n" +
+      "    private       String  unsetValue;\n" +
+      "}"
+    );
+  }
 }
