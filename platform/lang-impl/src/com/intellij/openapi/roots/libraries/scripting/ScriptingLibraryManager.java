@@ -16,11 +16,9 @@
 package com.intellij.openapi.roots.libraries.scripting;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -67,9 +65,9 @@ public class ScriptingLibraryManager {
         updateLibraries(libTableModel, OrderRootType.CLASSES);
         libTableModel.commit();
       }
-      updateOpenProjects();
       myLibTable = null;
     }
+    updateOpenProjects();
   }
 
   private static void updateOpenProjects() {
