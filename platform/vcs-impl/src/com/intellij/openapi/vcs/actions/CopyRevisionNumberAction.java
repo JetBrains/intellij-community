@@ -18,21 +18,41 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.history.TextTransferrable;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class CopyRevisionNumberAction extends AnAction {
-  private final String myRevision;
+public class CopyRevisionNumberAction extends AnAction implements LineNumberListener {
+  private final FileAnnotation myAnnotation;
+  private int myLineNumber = -1;
 
-  public CopyRevisionNumberAction(String revision) {
+  public CopyRevisionNumberAction(FileAnnotation annotation) {
     super("Copy revision number");
-    myRevision = revision;
+    myAnnotation = annotation;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    CopyPasteManager.getInstance().setContents(new TextTransferrable(myRevision, myRevision));
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
+    if (revisionNumber != null) {
+      final String revision = revisionNumber.asString();
+      CopyPasteManager.getInstance().setContents(new TextTransferrable(revision, revision));
+    }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final boolean enabled = myLineNumber != -1 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled);
+  }
+
+  @Override
+  public void consume(Integer integer) {
+    myLineNumber = integer;
   }
 }

@@ -31,7 +31,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -123,13 +122,7 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public List<AnAction> getPopupActions(int line, final Editor editor) {
-    final ArrayList<AnAction> actions = new ArrayList<AnAction>(myPresentation.getActions(line));
-    //TODO do something with files where user has made changes. Calculate actual 'line"
-    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(line);
-    if (revisionNumber != null) {
-      actions.add(0, new CopyRevisionNumberAction(revisionNumber.asString()));
-    }
-    return actions;
+    return myPresentation.getActions(line);
   }
 
   public void gutterClosed() {
@@ -176,7 +169,7 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public boolean isAvailable() {
-    return myShowAdditionalInfo || myAspect == null || VcsUtil.isAspectAvailableByDefault(myAspect);
+    return myShowAdditionalInfo || VcsUtil.isAspectAvailableByDefault(getID());
   }
 
   @Nullable
