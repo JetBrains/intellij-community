@@ -56,7 +56,11 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return (PsiJavaCodeReferenceElement)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
     }
 
-    return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
+    final Object result = PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
+    if (result != null && !(result instanceof PsiJavaCodeReferenceElement)) {
+      throw new AssertionError("getChildOfType returned rubbish: " + result);
+    }
+    return (PsiJavaCodeReferenceElement)result;
   }
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
