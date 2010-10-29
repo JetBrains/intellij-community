@@ -249,7 +249,9 @@ public class FrameWrapper implements Disposable {
       }
       myPreferedFocus = null;
 
-      myFocusTrackback.restoreFocus();
+      if (myFocusTrackback != null) {
+        myFocusTrackback.restoreFocus();
+      }
       if (myComponent != null && myFocusWatcher != null) {
         myFocusWatcher.deinstall(myComponent);
       }
