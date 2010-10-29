@@ -57,7 +57,7 @@ public class PythonProcessHandler extends ColoredProcessHandler {
     }
   }
 
-  public static ColoredProcessHandler createProcessHandler(GeneralCommandLine commandLine)
+  public static PythonProcessHandler createProcessHandler(GeneralCommandLine commandLine)
     throws ExecutionException {
 
     String processUid = RunnerMediator.injectUid(commandLine);

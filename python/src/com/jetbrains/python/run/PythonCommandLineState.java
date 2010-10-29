@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.filters.Filter;
@@ -17,12 +18,20 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.console.ConsoleCommandExecutor;
+import com.jetbrains.python.console.PyDebugConsoleBuilder;
+import com.jetbrains.python.console.pydev.ICallback;
+import com.jetbrains.python.console.pydev.InterpreterResponse;
+import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -44,6 +53,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private final AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
 
+  public boolean isDebug() {
+    return isDebug(getConfigurationSettings());
+  }
+
+  protected static boolean isDebug(ConfigurationPerRunnerSettings configurationSettings) {
+    return PyDebugRunner.PY_DEBUG_RUNNER.equals(configurationSettings.getRunnerId());
+  }
+
   public AbstractPythonRunConfiguration getConfig() {
     return myConfig;
   }
@@ -60,16 +77,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patchers);
+    final ColoredProcessHandler processHandler = startProcess(patchers);
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler, executor);
 
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+    List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
+
+    return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
   }
 
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    final TextConsoleBuilder consoleBuilder = createConsoleBuilder(project);
     for (Filter filter : myFilters) {
       consoleBuilder.addFilter(filter);
     }
@@ -77,6 +96,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
     final ConsoleView consoleView = consoleBuilder.getConsole();
     consoleView.attachToProcess(processHandler);
     return consoleView;
+  }
+
+  private TextConsoleBuilder createConsoleBuilder(Project project) {
+    if (isDebug()) {
+      return new PyDebugConsoleBuilder(project);
+    }
+    else {
+      return TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    }
   }
 
   protected ColoredProcessHandler startProcess() throws ExecutionException {
@@ -179,7 +207,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
     String interpreterPath = getInterpreterPath();
-    commandLine.setExePath(interpreterPath);
+    commandLine.setExePath(FileUtil.toSystemDependentName(interpreterPath));
   }
 
   protected String getInterpreterPath() throws ExecutionException {
@@ -191,5 +219,32 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
+  }
+
+  public static class PyDebugProcessConsoleCommandExecutor implements ConsoleCommandExecutor {
+    @NotNull
+    private final PyDebugProcess myDebugProcess;
+
+    public PyDebugProcessConsoleCommandExecutor(@NotNull PyDebugProcess debugProcess) {
+      myDebugProcess = debugProcess;
+    }
+
+    @Override
+    public boolean isWaitingForInput() {
+      return false;
+    }
+
+    @Override
+    public void execInterpreter(
+      String s,
+      ICallback<Object, InterpreterResponse> callback) {
+      try {
+        myDebugProcess.evaluate(s, true);
+        callback.call(new InterpreterResponse("", null, false, isWaitingForInput()));
+      }
+      catch (PyDebuggerException e) {
+        callback.call(new InterpreterResponse(null, "", false, isWaitingForInput()));
+      }
+    }
   }
 }
