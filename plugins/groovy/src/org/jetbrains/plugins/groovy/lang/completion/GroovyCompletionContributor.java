@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -272,33 +271,25 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
         final List<PsiArrayType> expectedArrayTypes = new ArrayList<PsiArrayType>();
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            PsiType psiType = ((GrVariable)identifierCopy.getParent().getParent().getParent()).getTypeGroovy();
-            if (psiType instanceof PsiClassType) {
-              PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
-              final PsiClassType classType = (PsiClassType)type;
-              if (classType.resolve() != null) {
-                expectedClassTypes.add(classType);
-              }
-            }
-            else if (psiType instanceof PsiArrayType) {
-              expectedArrayTypes.add((PsiArrayType)psiType);
-            }
+        PsiType psiType = ((GrVariable)identifierCopy.getParent().getParent().getParent()).getTypeGroovy();
+        if (psiType instanceof PsiClassType) {
+          PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
+          final PsiClassType classType = (PsiClassType)type;
+          if (classType.resolve() != null) {
+            expectedClassTypes.add(classType);
           }
-        });
+        }
+        else if (psiType instanceof PsiArrayType) {
+          expectedArrayTypes.add((PsiArrayType)psiType);
+        }
 
         for (final PsiArrayType type : expectedArrayTypes) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
-              if (item.getObject() instanceof PsiClass) {
-                JavaCompletionUtil.setShowFQN(item);
-              }
-              item.setInsertHandler(new ArrayInsertHandler());
-              result.addElement(item);
-            }
-          });
+          final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
+          if (item.getObject() instanceof PsiClass) {
+            JavaCompletionUtil.setShowFQN(item);
+          }
+          item.setInsertHandler(new ArrayInsertHandler());
+          result.addElement(item);
         }
 
         JavaSmartCompletionContributor.processInheritors(parameters, identifierCopy, file, expectedClassTypes, new Consumer<PsiType>() {
@@ -415,28 +406,24 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     };
     final PsiFile file = position.getContainingFile();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (file instanceof GroovyFile) {
-          for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
-            if (statement.isStatic()) {
-              GrCodeReferenceElement importReference = statement.getImportReference();
-              if (importReference != null) {
-                if (!statement.isOnDemand()) {
-                  importReference = importReference.getQualifier();
-                }
-                if (importReference != null) {
-                  final PsiElement target = importReference.resolve();
-                  if (target instanceof PsiClass) {
-                    processor.importMembersOf((PsiClass)target);
-                  }
-                }
+    if (file instanceof GroovyFile) {
+      for (GrImportStatement statement : ((GroovyFile)file).getImportStatements()) {
+        if (statement.isStatic()) {
+          GrCodeReferenceElement importReference = statement.getImportReference();
+          if (importReference != null) {
+            if (!statement.isOnDemand()) {
+              importReference = importReference.getQualifier();
+            }
+            if (importReference != null) {
+              final PsiElement target = importReference.resolve();
+              if (target instanceof PsiClass) {
+                processor.importMembersOf((PsiClass)target);
               }
             }
           }
         }
       }
-    });
+    }
     return processor;
   }
 
