@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,8 +29,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -212,16 +216,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean showDialog(ChangeInfo changeInfo, @NotNull final String oldText) {
+  public boolean showDialog(ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
 
-      //if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (silently || ApplicationManager.getApplication().isUnitTestMode()) {
         temporallyRevertChanges(info.getMethod(), oldText);
         createChangeSignatureProcessor(info, method).run();
         return true;
-      /*}
+      }
       final JavaChangeSignatureDialog dialog =
         new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
           @Override
@@ -249,7 +253,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           }
         };
       dialog.show();
-      return dialog.isOK();*/
+      return dialog.isOK();
     }
     return false;
 

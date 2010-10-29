@@ -49,7 +49,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(project);
       final PsiIdentifier nameIdentifier = ((PsiMethod)element).getNameIdentifier();
       if (nameIdentifier != null && detector.isChangeSignatureAvailable(nameIdentifier)) {
-        detector.changeSignature(element.getContainingFile());
+        detector.changeSignature(element.getContainingFile(), false);
         return;
       }
       invoke((PsiMethod) element, project, editor);

@@ -32,7 +32,7 @@ public interface LanguageChangeSignatureDetector {
   ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                           final @Nullable ChangeInfo changeInfo);
 
-  boolean showDialog(ChangeInfo changeInfo, @NotNull String oldText);
+  boolean showDialog(ChangeInfo changeInfo, @NotNull String oldText, boolean silently);
 
   boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo);
 

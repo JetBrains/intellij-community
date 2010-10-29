@@ -87,14 +87,14 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return adapter != null ? adapter.getCurrentInfo() : null;
   }
 
-  public void changeSignature(PsiFile file) {
+  public void changeSignature(PsiFile file, final boolean silently) {
     try {
       myDeaf = true;
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-        if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
+        if (detector.showDialog(currentInfo, changeBean.getInitialText(), silently)) {
           changeBean.reinit();
         }
       }
