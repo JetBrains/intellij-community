@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -22,14 +24,27 @@ import java.util.Map;
 /**
  * @author Roman.Chernyatchik, oleg
  */
-public interface CommandLineArgumentsProvider {
+public abstract class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)
    */
-  String[] getArguments();
+  public abstract String[] getArguments();
 
-  boolean passParentEnvs();
+  public abstract boolean passParentEnvs();
 
   @Nullable
-  Map<String, String> getAdditionalEnvs();
+  public abstract Map<String, String> getAdditionalEnvs();
+
+
+  public String getCommandLineString() {
+    return toCommandLine(getArguments());
+  }
+
+  public static String toCommandLine(String... commands) {
+    if (commands.length > 0) {
+      commands[0] = FileUtil.toSystemDependentName(commands[0]);
+      return StringUtil.join(commands, " ");
+    }
+    return "";
+  }
 }

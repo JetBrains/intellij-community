@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.MultipleFacetSettingsEditor");
-  private final List<AbstactBinding> myBindings = new ArrayList<AbstactBinding>();
+  private final List<AbstractBinding> myBindings = new ArrayList<AbstractBinding>();
 
   public void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun) {
     List<JCheckBox> checkBoxesList = new ArrayList<JCheckBox>();
@@ -70,17 +70,17 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
   }
 
   public void unbind() {
-    for (AbstactBinding binding : myBindings) {
+    for (AbstractBinding binding : myBindings) {
       binding.unbind();
     }
     myBindings.clear();
   }
 
-  private static abstract class AbstactBinding {
+  private static abstract class AbstractBinding {
     public abstract void unbind();
   }
 
-  private static class CheckBoxBinding extends AbstactBinding implements ActionListener {
+  private static class CheckBoxBinding extends AbstractBinding implements ActionListener {
     private final ThreeStateCheckBox myCommon;
     private final List<JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
@@ -132,7 +132,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class TextFieldBinding extends AbstactBinding {
+  private static class TextFieldBinding extends AbstractBinding {
     private final JTextField myCommon;
     private final List<JTextField> myTextFields;
     private final List<String> myInitialValues;
@@ -173,7 +173,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class CombobBoxBinding extends AbstactBinding implements ItemListener {
+  private static class CombobBoxBinding extends AbstractBinding implements ItemListener {
     private final JComboBox myCommon;
     private final List<JComboBox> myComponentsList;
     private final List<Object> myInitialValues;
