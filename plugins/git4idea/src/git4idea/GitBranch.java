@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,40 +30,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.StringTokenizer;
 
 /**
  * This data class represents a Git branch
  */
 public class GitBranch extends GitReference {
-  /**
-   * If true, the branch is remote
-   */
-  private final boolean myRemote;
-  /**
-   * If true, the branch is active
-   */
-  private final boolean myActive;
-  /**
-   * The name that specifies that git is on specific commit rather then on some branch ({@value})
-   */
-  @NonNls public static final String NO_BRANCH_NAME = "(no branch)";
-  /**
-   * Prefix for local branches ({@value})
-   */
-  @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/";
-  /**
-   * Prefix for remote branches ({@value})
-   */
-  @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/";
+  @NonNls public static final String NO_BRANCH_NAME = "(no branch)"; // The name that specifies that git is on specific commit rather then on some branch ({@value}) 
+  @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
+  @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
-  /**
-   * The constructor for the branch
-   *
-   * @param name   the name of the branch
-   * @param active if true, the branch is active
-   * @param remote if true, the branch is remote
-   */
+  private final boolean myRemote;
+  private final boolean myActive;
+
   public GitBranch(@NotNull String name, boolean active, boolean remote) {
     super(name);
     myRemote = remote;
@@ -85,103 +62,6 @@ public class GitBranch extends GitReference {
     return myActive;
   }
 
-  /**
-   * Get current branch
-   *
-   * @param project a project
-   * @param root    a directory inside the repository
-   * @return the current branch or null if there is no current branch or if specific commit has been checked out
-   * @throws VcsException if there is a problem running git
-   */
-  @Nullable
-  public static GitBranch current(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.BRANCH);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    h.addParameters("--no-color");
-    String output = h.run();
-    for (StringTokenizer lines = new StringTokenizer(output, "\n"); lines.hasMoreTokens();) {
-      String line = lines.nextToken();
-      if (line != null && line.startsWith("*")) {
-        //noinspection HardCodedStringLiteral
-        if (line.endsWith(NO_BRANCH_NAME)) {
-          return null;
-        }
-        else {
-          return new GitBranch(line.substring(2), true, false);
-        }
-      }
-    }
-    if (output.trim().length() == 0) {
-      // the case for situation after git init and before first commit
-      String text;
-      try {
-        text = new String(FileUtil.loadFileText(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING)).trim();
-      }
-      catch (IOException e) {
-        return null;
-      }
-      String prefix = "ref: refs/heads/";
-      if (text.startsWith(prefix)) {
-        return new GitBranch(text.substring(prefix.length()), true, false);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * List branches for the git root
-   *
-   * @param project          the context project
-   * @param root             the git root
-   * @param remote           if true remote branches are listed
-   * @param local            if true local branches are listed
-   * @param branches         the collection used to store branches
-   * @param containingCommit
-   * @throws VcsException if there is a problem with running git
-   */
-  public static void listAsStrings(final Project project,
-                                   final VirtualFile root,
-                                   final boolean remote,
-                                   final boolean local,
-                                   final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
-    if (!local && !remote) {
-      // no need to run handler
-      return;
-    }
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.addParameters("--no-color");
-    if (remote && local) {
-      handler.addParameters("-a");
-    }
-    else if (remote) {
-      handler.addParameters("-r");
-    }
-    if (containingCommit != null) {
-      handler.addParameters("--contains");
-      handler.addParameters(containingCommit);
-    }
-    StringScanner s = new StringScanner(handler.run());
-    while (s.hasMoreData()) {
-      String line = s.line();
-      if (line.length() == 0 || line.endsWith(NO_BRANCH_NAME)) {
-        continue;
-      }
-      int sp = line.indexOf(' ', 2);
-      if (sp != -1) {
-        branches.add(line.substring(2, sp));
-      }
-      else {
-        branches.add(line.substring(2));
-      }
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   public String getFullName() {
     return (myRemote ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
@@ -213,36 +93,99 @@ public class GitBranch extends GitReference {
     return GitConfigUtil.getValue(project, root, trackedBranchKey());
   }
 
+  /**
+   * Get current branch from Git.
+   *
+   * @param project a project
+   * @param root    vcs root
+   * @return the current branch or null if there is no current branch or if specific commit has been checked out.
+   * @throws VcsException if there is a problem running git
+   */
+  @Nullable
+  public static GitBranch current(Project project, VirtualFile root) throws VcsException {
+    return list(project, root, false, false, null, null);
+  }
 
   /**
-   * List branches for the git root
-   *
-   * @param project  the context project
-   * @param root     the git root
-   * @param remote   if true remote branches are listed
-   * @param local    if true local branches are listed
-   * @param branches the collection used to store branches
+   * List branches for the git root as strings.
+   * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String) 
+   */
+  public static void listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
+                                   final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
+    final Collection<GitBranch> gitBranches = new ArrayList<GitBranch>();
+    list(project, root, local, remote, gitBranches, containingCommit);
+    for (GitBranch b : gitBranches) {
+      branches.add(b.getName());
+    }
+  }
+
+  /**
+   * List branches in the repository. Supply a Collection to this method, and it will be filled by branches.
+   * @param project          the context project
+   * @param root             the git root
+   * @param localWanted      should local branches be collected.
+   * @param remoteWanted     should remote branches be collected.
+   * @param branches         the collection which will be used to store branches.
+   *                         Can be null - then the method does the same as {@link #current(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)}
+   * @param containingCommit show only branches which contain the specified commit. If null, no commit filtering is performed.
+   * @return current branch. May be null if no branch is active.
    * @throws VcsException if there is a problem with running git
    */
-  public static void list(final Project project,
-                          final VirtualFile root,
-                          final boolean local,
-                          final boolean remote,
-                          final Collection<GitBranch> branches) throws VcsException {
-    ArrayList<String> temp = new ArrayList<String>();
-    if (local) {
-      listAsStrings(project, root, false, true, temp, null);
-      for (String b : temp) {
-        branches.add(new GitBranch(b, false, false));
-      }
-      temp.clear();
+  @Nullable
+  public static GitBranch list(final Project project, final VirtualFile root, final boolean localWanted, final boolean remoteWanted,
+                               @Nullable final Collection<GitBranch> branches, @Nullable final String containingCommit) throws VcsException {
+    // preparing native command executor
+    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.addParameters("--no-color");
+    if (remoteWanted && localWanted) {
+      handler.addParameters("-a");
+    } else if (remoteWanted) {
+      handler.addParameters("-r");
     }
-    if (remote) {
-      listAsStrings(project, root, true, false, temp, null);
-      for (String b : temp) {
-        branches.add(new GitBranch(b, false, true));
+    if (containingCommit != null) {
+      handler.addParameters("--contains", containingCommit);
+    }
+    final String output = handler.run();
+
+    if (output.trim().length() == 0) {
+      // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
+      String head;
+      try {
+        head = new String(FileUtil.loadFileText(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING)).trim();
+        final String prefix = "ref: refs/heads/";
+        return head.startsWith(prefix) ? new GitBranch(head.substring(prefix.length()), true, false) : null;
+      } catch (IOException e) {
+        return null;
       }
     }
+
+    // standard situation. output example:
+    //  master
+    //* my_feature
+    //  remotes/origin/eap
+    //  remotes/origin/feature
+    //  remotes/origin/master
+    // also possible:
+    //* (no branch)
+    final String[] split = output.split("\n");
+    GitBranch currentBranch = null;
+    for (String b : split) {
+      boolean current = b.charAt(0) == '*';
+      b = b.substring(2).trim();
+      if (b.equals(NO_BRANCH_NAME)) { continue; }
+
+      boolean isRemote = b.startsWith("remotes");
+      final GitBranch branch = new GitBranch(b, current, isRemote);
+      if (current) {
+        currentBranch = branch;
+      }
+      if (branches != null && ((isRemote && remoteWanted) || (!isRemote && localWanted))) {
+        branches.add(branch);
+      }
+    }
+    return currentBranch;
   }
 
   /**
