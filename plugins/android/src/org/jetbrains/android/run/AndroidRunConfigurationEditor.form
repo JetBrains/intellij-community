@@ -57,7 +57,7 @@
                   <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Choose target device manually"/>
+                  <text value="&amp;Choose target device manually"/>
                 </properties>
               </component>
               <component id="6765c" class="com.intellij.openapi.ui.LabeledComponent" binding="myChooseAvdComponent">
@@ -66,7 +66,7 @@
                 </constraints>
                 <properties>
                   <componentClass value="com.intellij.ui.ComboboxWithBrowseButton"/>
-                  <text value="Prefer Android Virtual Device for deployment"/>
+                  <text value="&amp;Prefer Android Virtual Device for deployment"/>
                 </properties>
               </component>
               <grid id="f6c8d" binding="myConfigurationSpecificPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -109,6 +109,7 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
+                      <labelFor value="21170"/>
                       <text resource-bundle="messages/AndroidBundle" key="android.run.configuration.network.spped.label"/>
                     </properties>
                   </component>
@@ -130,6 +131,7 @@
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
+                      <labelFor value="7cfcb"/>
                       <text resource-bundle="messages/AndroidBundle" key="android.run.configuration.network.latency.label"/>
                     </properties>
                   </component>
