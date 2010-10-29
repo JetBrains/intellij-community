@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 
 public abstract class ActionRef<T extends AnAction> {
   private static ActionManager ourManager;
-  private static ActionManager getManager() {
+  static ActionManager getManager() {
     if (ourManager == null) {
       ourManager = ActionManager.getInstance();
     }
