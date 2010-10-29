@@ -502,6 +502,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     fireRunConfigurationSelected();
   }
 
+  // used by MPS, don't delete
   public void clearAll(){
     clear();
     initializeConfigurationTypes(new ConfigurationType[0]);
