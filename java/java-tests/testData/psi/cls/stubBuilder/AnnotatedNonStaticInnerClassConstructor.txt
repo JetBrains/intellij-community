@@ -1,0 +1,24 @@
+PsiJavaFileStub []
+  PsiClassStub[name=AnnotatedNonStaticInnerClassConstructor fqn=AnnotatedNonStaticInnerClassConstructor]
+    PsiModifierListStub[mask=1]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiClassStub[name=Inner fqn=AnnotatedNonStaticInnerClassConstructor.Inner]
+      PsiModifierListStub[mask=4096]
+      PsiTypeParameterListStub
+      PsiRefListStub[EXTENDS_LIST:]
+      PsiRefListStub[IMPLEMENTS_LIST:]
+      PsiMethodStub[cons Inner:void]
+        PsiModifierListStub[mask=1]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+          PsiParameterStub[param:java.lang.Integer]
+            PsiModifierListStub[mask=0]
+              PsiAnnotationStub[@org.jetbrains.annotations.NotNull]
+        PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[cons AnnotatedNonStaticInnerClassConstructor:void]
+      PsiModifierListStub[mask=1]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]

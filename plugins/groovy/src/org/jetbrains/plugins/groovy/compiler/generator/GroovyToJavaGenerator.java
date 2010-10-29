@@ -191,9 +191,14 @@ public class GroovyToJavaGenerator {
 
   private void generateClassStub(@NotNull PsiClass typeDefinition, GrPackageDefinition packageDefinition, Map<String, String> output) {
     StringBuffer text = new StringBuffer();
-    writeTypeDefinition(text, typeDefinition, packageDefinition, true);
+    try {
+      writeTypeDefinition(text, typeDefinition, packageDefinition, true);
 
-    output.put(getPackageDirectory(packageDefinition) + typeDefinition.getName() + "." + "java", text.toString());
+      output.put(getPackageDirectory(packageDefinition) + typeDefinition.getName() + "." + "java", text.toString());
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
   }
 
   private static GrTopStatement[] getTopStatementsInReadAction(final GroovyFileBase myPsiFile) {

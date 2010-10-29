@@ -15,11 +15,12 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -32,14 +33,14 @@ import javax.swing.*;
  * User: anna
  * Date: Sep 6, 2010
  */
-public class ChangeSignatureDetectorAction implements IntentionAction, Iconable {
+public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
-  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
+  @NonNls public static final String CHANGE_SIGNATURE = "Apply signature change";
 
   @NotNull
   @Override
   public String getText() {
-    return "Change signature ...";
+    return CHANGE_SIGNATURE;
   }
 
   @NotNull
@@ -49,13 +50,13 @@ public class ChangeSignatureDetectorAction implements IntentionAction, Iconable 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return ChangeSignatureGestureDetector.getInstance(project).containsChangeSignatureChange(file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return ChangeSignatureGestureDetector.getInstance(project).isChangeSignatureAvailable(element);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file);
+    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file, true);
   }
 
   @Override

@@ -358,6 +358,8 @@ public class CompositeElement extends TreeElement {
       cachedLength = myCachedLength;
       if (cachedLength >= 0) return cachedLength;
 
+      ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
+
       walkCachingLength();
       return myCachedLength;
     }

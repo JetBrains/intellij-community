@@ -79,7 +79,7 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.console.folding";
   }
 
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {

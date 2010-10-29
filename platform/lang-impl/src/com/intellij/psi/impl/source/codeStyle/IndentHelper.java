@@ -24,11 +24,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 
-public class Helper {
+public class IndentHelper {
   private final CodeStyleSettings mySettings;
   private final FileType myFileType;
 
-  protected Helper(FileType fileType, Project project) {
+  protected IndentHelper(FileType fileType, Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);
     myFileType = fileType;
   }
@@ -45,10 +45,10 @@ public class Helper {
     return getIndentInner(element, includeNonSpace, 0);
   }
   
-  public static final int TOO_BIG_WALK_THRESHOULD = 450;
+  public static final int TOO_BIG_WALK_THRESHOLD = 450;
 
   protected int getIndentInner(final ASTNode element, boolean includeNonSpace, int recursionLevel) {
-    if (recursionLevel > TOO_BIG_WALK_THRESHOULD) return 0;
+    if (recursionLevel > TOO_BIG_WALK_THRESHOLD) return 0;
 
     if (element.getTreePrev() != null) {
       ASTNode prev = element.getTreePrev();

@@ -277,6 +277,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               startSemaphore.up(); //todo move inside read action
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 public void run() {
+                  if (!parameters.getPosition().isValid() || !parameters.getOriginalFile().isValid()) {
+                    data.set(LookupElement.EMPTY_ARRAY);
+                    return;
+                  }
+
                   ProgressManager.checkCanceled();
                   data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
                     public void consume(final LookupElement lookupElement) {

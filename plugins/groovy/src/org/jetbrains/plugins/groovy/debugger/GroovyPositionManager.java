@@ -26,6 +26,8 @@ import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -34,10 +36,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -240,9 +239,17 @@ public class GroovyPositionManager implements PositionManager {
     }
 
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-    final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
-    PsiClass clazz = classes.length == 1 ? classes[0] : null;
-    if (clazz != null) return clazz.getContainingFile();
+    try {
+      final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
+      PsiClass clazz = classes.length == 1 ? classes[0] : null;
+      if (clazz != null) return clazz.getContainingFile();
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
     int dotIndex = qName.lastIndexOf(".");

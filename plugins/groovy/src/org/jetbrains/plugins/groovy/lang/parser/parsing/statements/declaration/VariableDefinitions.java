@@ -126,6 +126,7 @@ public class VariableDefinitions implements GroovyElementTypes {
           }
 
           defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
+          ThrowClause.parse(builder); //every method must have a throws clause, so says the Java API
           return ANNOTATION_METHOD;
         }
         if (ParserUtils.lookAhead(builder, mNLS, kTHROWS) || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
