@@ -543,6 +543,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     //Spec example
     assertProxyPresentation("should be beautiful", "World", "should be beautiful");
+    assertProxyPresentation("<no name>", "World", "");
 
     //Common example
     assertProxyPresentation("some phrase", "Begin of", "Begin of some phrase");
