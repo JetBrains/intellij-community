@@ -18,13 +18,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -162,11 +160,7 @@ public class AllClassesGetter {
 
     final Set<String> qnames = new THashSet<String>();
 
-    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      public GlobalSearchScope compute() {
-        return filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
-      }
-    });
+    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
     final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
 
     AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
@@ -185,12 +179,7 @@ public class AllClassesGetter {
   }
 
   private static String getPackagePrefix(final PsiElement context, final int offset) {
-    final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        ProgressManager.checkCanceled();
-        return context.getContainingFile().getText();
-      }
-    });
+    final String fileText = context.getContainingFile().getText();
     int i = offset - 1;
     while (i >= 0) {
       final char c = fileText.charAt(i);
@@ -206,38 +195,28 @@ public class AllClassesGetter {
                              final boolean lookingForAnnotations,
                              @NotNull final PsiClass psiClass,
                              final boolean filterByScope) {
-    //noinspection AutoUnboxing
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        ProgressManager.checkCanceled();
+    ProgressManager.checkCanceled();
 
-        if (!context.isValid() || !psiClass.isValid()) return false;
+    if (!context.isValid() || !psiClass.isValid()) return false;
 
-        if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
+    if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
 
-        if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
+    if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
 
-        final String qualifiedName = psiClass.getQualifiedName();
-        if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
+    final String qualifiedName = psiClass.getQualifiedName();
+    if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
 
-        if (!myFilter.isAcceptable(psiClass, context)) return false;
+    if (!myFilter.isAcceptable(psiClass, context)) return false;
 
-        if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
-            JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
-          return qnames.add(qualifiedName);
-        }
-        return false;
-
-      }
-    });
+    if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
+        JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
+      return qnames.add(qualifiedName);
+    }
+    return false;
   }
 
   public static LookupElement createLookupItem(@NotNull final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<LookupElement>() {
-      public LookupElement compute() {
-        return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
-      }
-    });
+    return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
   }
 
 
