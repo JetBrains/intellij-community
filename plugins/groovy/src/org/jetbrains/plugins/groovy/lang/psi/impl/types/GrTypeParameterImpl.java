@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
@@ -53,6 +54,7 @@ import java.util.List;
  * @author ilyas
  */
 public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeParameter {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl");
   public GrTypeDefinitionBody getBody() {
     return null;
   }
@@ -302,6 +304,9 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
+    if (parentParent != null && !(parentParent instanceof PsiTypeParameterListOwner)) {
+      throw new AssertionError("CCE: " + parentParent);
+    }
     return (PsiTypeParameterListOwner)parentParent;
   }
 
