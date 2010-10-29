@@ -394,7 +394,7 @@ public class ClsStubBuilder {
       stub.setReturnType(TypeInfo.fromString(returnType));
 
 
-      boolean nonStaticInnerClassConstructor =
+      final boolean nonStaticInnerClassConstructor =
         isConstructor && !parsedViaGenericSignature && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
@@ -415,8 +415,14 @@ public class ClsStubBuilder {
       String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
 
-      int ignoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
-      return new AnnotationParamCollectingVisitor(stub, modlist, ignoreCount, paramCount, paramStubs);
+      final boolean isEnumConstructor = isConstructor && myResult.isEnum();
+      
+      int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
+      if (isEnumConstructor) {
+        localVarIgnoreCount += 2;
+      }
+      final int paramIgnoreCount = isEnumConstructor? 2 : nonStaticInnerClassConstructor? 1 : 0;
+      return new AnnotationParamCollectingVisitor(stub, modlist, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
     }
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {
@@ -599,13 +605,19 @@ public class ClsStubBuilder {
 
   private static class AnnotationParamCollectingVisitor extends AnnotationCollectingVisitor {
     private final int myIgnoreCount;
+    private final int myParamIgnoreCount;
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
 
-    private AnnotationParamCollectingVisitor(final StubElement owner, final PsiModifierListStub modList, int ignoreCount, int paramCount,
+    private AnnotationParamCollectingVisitor(final PsiMethodStub owner,
+                                             final PsiModifierListStub modList,
+                                             int ignoreCount,
+                                             int paramIgnoreCount,
+                                             int paramCount,
                                              PsiParameterStubImpl[] paramStubs) {
       super(owner, modList);
       myIgnoreCount = ignoreCount;
+      myParamIgnoreCount = paramIgnoreCount;
       myParamCount = paramCount;
       myParamStubs = paramStubs;
     }
@@ -618,6 +630,10 @@ public class ClsStubBuilder {
           parameterStub.setName(name);
         }
       }
+    }
+
+    public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
+      return (parameter < myParamIgnoreCount) ? null : super.visitParameterAnnotation(parameter - myParamIgnoreCount, desc, visible);
     }
   }
 

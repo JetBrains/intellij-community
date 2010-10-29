@@ -75,7 +75,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     StringBuilder builder = new StringBuilder();
     builder.
         append("PsiParameterStub[").
-        append(myName).append(':').append(TypeInfo.createTypeText(getType(true))).
+        append(myName).append(':').append(TypeInfo.createTypeText(getType(false))).
         append(']');
     return builder.toString();
   }
