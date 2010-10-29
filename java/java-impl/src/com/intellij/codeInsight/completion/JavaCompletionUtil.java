@@ -1104,8 +1104,6 @@ public class JavaCompletionUtil {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiClass);
-
     final PsiManager manager = file.getManager();
 
     final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
@@ -1135,26 +1133,22 @@ public class JavaCompletionUtil {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
         if (!psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
-          final PsiElement pointerElement = pointer.getElement();
-          if (pointerElement instanceof PsiClass) {
-            final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-            PsiElement newElement = staticImport
-                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement)
-                                    : ref.bindToElement(pointerElement);
+          final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
+          PsiElement newElement = staticImport
+                                  ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                                  : ref.bindToElement(psiClass);
 
-            RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
-            newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
-            newStartOffset = marker.getStartOffset();
+          RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
+          newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+          newStartOffset = marker.getStartOffset();
 
-            if (!staticImport &&
-                newElement instanceof PsiJavaCodeReferenceElement &&
-                !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
-              final String qName = psiClass.getQualifiedName();
-              if (qName != null) {
-                document.replaceString(newStartOffset, newElement.getTextRange().getEndOffset(), qName);
-              }
+          if (!staticImport &&
+              newElement instanceof PsiJavaCodeReferenceElement &&
+              !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
+            final String qName = psiClass.getQualifiedName();
+            if (qName != null) {
+              document.replaceString(newStartOffset, newElement.getTextRange().getEndOffset(), qName);
             }
-
           }
         }
       }
