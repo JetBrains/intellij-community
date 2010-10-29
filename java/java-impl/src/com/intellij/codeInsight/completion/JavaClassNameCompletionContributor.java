@@ -60,7 +60,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         PsiElement insertedElement = parameters.getPosition();
 
         AllClassesGetter getter = new AllClassesGetter(TrueFilter.INSTANCE);
-        boolean afterNew = AFTER_NEW.accepts(insertedElement);
         if (AFTER_THROW_NEW.accepts(insertedElement)) {
           getter = new AllClassesGetter(new AssignableFromFilter("java.lang.Throwable"));
         }
@@ -71,7 +70,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           getter = new AllClassesGetter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
         }
 
-        if (afterNew) {
+        if (AFTER_NEW.accepts(insertedElement)) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
           for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
             final PsiType type = info.getType();
