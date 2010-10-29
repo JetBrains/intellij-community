@@ -244,7 +244,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                 result.addElement((LookupElement)completion);
               }
               else if (completion instanceof PsiClass) {
-                result.addElement(AllClassesGetter.createLookupItem((PsiClass)completion));
+                result.addElement(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true));
               }
               else {
                 result.addElement(LookupItemUtil.objectToLookupItem(completion));

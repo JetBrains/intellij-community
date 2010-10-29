@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +43,7 @@ import java.util.Set;
  */
 public class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
-  private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
+  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<JavaPsiClassReferenceElement>() {
 
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
@@ -65,11 +63,6 @@ public class AllClassesGetter {
 
       final OffsetKey key = OffsetKey.create("endOffset", false);
       context.getOffsetMap().addOffset(key, endOffset);
-      ClassNameInsertHandler handler = ClassNameInsertHandler.EP_NAME.forLanguage(file.getLanguage());
-      ClassNameInsertHandlerResult checkReference = ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
-      if (handler != null) {
-        checkReference = handler.handleInsert(context, item);
-      }
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
       final int newOffset = context.getOffsetMap().getOffset(key);
@@ -84,8 +77,8 @@ public class AllClassesGetter {
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
 
-      boolean insertFqn=checkReference!=ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
-      if (checkReference == ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE && psiReference != null) {
+      boolean insertFqn = true;
+      if (psiReference != null) {
         final PsiManager psiManager = file.getManager();
         if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(psiReference))) {
           insertFqn = false;
@@ -99,7 +92,6 @@ public class AllClassesGetter {
                 for (final PsiReference reference : psiElement.getReferences()) {
                   if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {
                     insertFqn = false;
-                    endOffset = reference.getRangeInElement().getEndOffset() + reference.getElement().getTextRange().getStartOffset();
                     break;
                   }
                 }
@@ -113,19 +105,11 @@ public class AllClassesGetter {
       }
       if (toDelete.isValid()) {
         document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
-        if (insertFqn) {
-          endOffset = toDelete.getStartOffset();
-        }
+        context.setTailOffset(toDelete.getStartOffset());
       }
 
       if (insertFqn) {
-        int i = endOffset - 1;
-        while (i >= 0) {
-          final char ch = document.getCharsSequence().charAt(i);
-          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
-          i--;
-        }
-        document.replaceString(i + 1, endOffset, qname);
+        INSERT_FQN.handleInsert(context, item);
       }
     }
 
@@ -134,6 +118,22 @@ public class AllClassesGetter {
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }
 
+  };
+
+  public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = new InsertHandler<JavaPsiClassReferenceElement>() {
+    @Override
+    public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
+      final String qName = item.getQualifiedName();
+      if (qName != null) {
+        int start = context.getTailOffset() - 1;
+        while (start >= 0) {
+          final char ch = context.getDocument().getCharsSequence().charAt(start);
+          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+          start--;
+        }
+        context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
+      }
+    }
   };
 
   public static void processJavaClasses(CompletionParameters parameters,
@@ -194,20 +194,11 @@ public class AllClassesGetter {
     return false;
   }
 
-  public static LookupElement createLookupItem(@NotNull final PsiClass psiClass) {
-    return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
-  }
-
-
-  public interface ClassNameInsertHandler {
-    LanguageExtension<ClassNameInsertHandler> EP_NAME =
-      new LanguageExtension<ClassNameInsertHandler>("com.intellij.classNameInsertHandler");
-
-    ClassNameInsertHandlerResult handleInsert(InsertionContext context, JavaPsiClassReferenceElement item);
-  }
-
-  public enum ClassNameInsertHandlerResult {
-    INSERT_FQN, REFERENCE_CORRECTED, CHECK_FOR_CORRECT_REFERENCE
+  public static JavaPsiClassReferenceElement createLookupItem(@NotNull final PsiClass psiClass,
+                                               final InsertHandler<JavaPsiClassReferenceElement> insertHandler) {
+    final JavaPsiClassReferenceElement item = new JavaPsiClassReferenceElement(psiClass);
+    item.setInsertHandler(insertHandler);
+    return item;
   }
 
 }

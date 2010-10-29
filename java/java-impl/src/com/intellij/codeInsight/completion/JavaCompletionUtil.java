@@ -24,8 +24,6 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -1103,15 +1101,10 @@ public class JavaCompletionUtil {
   }
 
   public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-    if (!psiClass.isValid()) {
-      return startOffset;
-    }
+    final Project project = file.getProject();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(psiClass);
-    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
-    LOG.assertTrue(
-      ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiClass);
 
     final PsiManager manager = file.getManager();
 
@@ -1132,7 +1125,7 @@ public class JavaCompletionUtil {
 
     final RangeMarker toDelete = insertSpace(startOffset + name.length(), document);
 
-    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int newStartOffset = startOffset;
     PsiElement element = file.findElementAt(startOffset);
@@ -1144,16 +1137,24 @@ public class JavaCompletionUtil {
         if (!psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final PsiElement pointerElement = pointer.getElement();
           if (pointerElement instanceof PsiClass) {
-            PsiElement newElement;
-            if (!(ref instanceof PsiImportStaticReferenceElement)) {
-              newElement = ref.bindToElement(pointerElement);
-            }
-            else {
-              newElement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
-            }
+            final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
+            PsiElement newElement = staticImport
+                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement)
+                                    : ref.bindToElement(pointerElement);
+
             RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
-            CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+            newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
             newStartOffset = marker.getStartOffset();
+
+            if (!staticImport &&
+                newElement instanceof PsiJavaCodeReferenceElement &&
+                !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
+              final String qName = psiClass.getQualifiedName();
+              if (qName != null) {
+                document.replaceString(newStartOffset, newElement.getTextRange().getEndOffset(), qName);
+              }
+            }
+
           }
         }
       }

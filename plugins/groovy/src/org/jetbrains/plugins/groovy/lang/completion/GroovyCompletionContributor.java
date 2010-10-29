@@ -227,7 +227,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
               final LookupElement lookupElement = element instanceof PsiClass
-                                                  ? AllClassesGetter.createLookupItem((PsiClass)element)
+                                                  ? GroovyCompletionUtil.createClassLookupItem((PsiClass)element)
                                                   : GroovyCompletionUtil.getLookupElement(element);
               final Object object = lookupElement.getObject();
               if ((object instanceof PsiMethod || object instanceof PsiField) && ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
@@ -358,29 +358,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, MAP_ARGUMENT_COMPLETION_PROVIDER);
     extend(CompletionType.BASIC, IN_MAP_KEY_ARGUMENT_LIST_OF_CALL, MAP_ARGUMENT_COMPLETION_PROVIDER);
 
-    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
-        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
+    // class name stuff
 
-        final String s = result.getPrefixMatcher().getPrefix();
-        if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
-
-        result.runRemainingContributors(
-          new CompletionParameters(parameters.getPosition(), parameters.getOriginalFile(), CompletionType.CLASS_NAME,
-                                   parameters.getOffset(),
-                                   parameters.getInvocationCount()), new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement lookupElement) {
-              result.addElement(lookupElement);
-            }
-          });
-      }
-    });
-    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>(false) {
+    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
@@ -392,6 +372,39 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
 
         completeStaticMembers(position).processStaticMethodsGlobally(result);
+      }
+    });
+
+
+    final CompletionProvider<CompletionParameters> classNameProvider = new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        result.stopHere();
+        AllClassesGetter
+          .processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
+            @Override
+            public void consume(PsiClass psiClass) {
+              result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
+            }
+          });
+      }
+    };
+    extend(CompletionType.CLASS_NAME, psiElement(), classNameProvider);
+
+    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
+
+        final String s = result.getPrefixMatcher().getPrefix();
+        if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
+
+        classNameProvider.addCompletionVariants(parameters, context, result);
       }
     });
   }

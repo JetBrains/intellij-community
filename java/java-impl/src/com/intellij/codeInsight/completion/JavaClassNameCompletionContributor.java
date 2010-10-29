@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -69,19 +70,20 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           TrueFilter.INSTANCE;
 
 
+        final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
         if (AFTER_NEW.accepts(insertedElement)) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
           for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
             final PsiType type = info.getType();
             final PsiClass psiClass = PsiUtil.resolveClassInType(type);
             if (psiClass != null) {
-              result.addElement(AllClassesGetter.createLookupItem(psiClass));
+              result.addElement(createClassLookupItem(psiClass, inJavaContext));
             }
             final PsiType defaultType = info.getDefaultType();
             if (!defaultType.equals(type)) {
               final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
               if (defClass != null) {
-                result.addElement(AllClassesGetter.createLookupItem(defClass));
+                result.addElement(createClassLookupItem(defClass, inJavaContext));
               }
             }
           }
@@ -95,13 +97,37 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
             if (lookingForAnnotations && !psiClass.isAnnotationType()) return;
 
             if (filter.isAcceptable(psiClass, insertedElement)) {
-              result.addElement(AllClassesGetter.createLookupItem(psiClass));
+              result.addElement(createClassLookupItem(psiClass, inJavaContext));
             }
           }
         });
       }
     });
 
+  }
+
+  public static LookupElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {
+    if (inJavaContext) {
+      return AllClassesGetter.createLookupItem(psiClass, new InsertHandler<JavaPsiClassReferenceElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
+          context.setAddCompletionChar(false);
+          int offset = context.getTailOffset() - 1;
+          final PsiFile file = context.getFile();
+          if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
+            final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
+            final String qname = item.getQualifiedName();
+            if (qname != null && (ref == null || !qname.equals(ref.getCanonicalText()))) {
+              AllClassesGetter.INSERT_FQN.handleInsert(context, item);
+            }
+            return;
+          }
+
+          JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
+        }
+      });
+    }
+    return AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING);
   }
 
   @Override
