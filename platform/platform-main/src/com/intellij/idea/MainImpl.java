@@ -26,7 +26,6 @@ import javax.swing.*;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr"})
 public class MainImpl {
-  final static String APPLICATION_NAME = "idea";
   private static final String LOG_CATEGORY = "#com.intellij.idea.Main";
 
   private MainImpl() {

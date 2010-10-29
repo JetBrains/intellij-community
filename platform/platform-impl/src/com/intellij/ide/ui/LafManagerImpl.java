@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -213,9 +214,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * @return default LookAndFeelInfo for the running OS. For Win32 and
    * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
+   * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf(){
     if(SystemInfo.isMac) {
+      UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
+      LOG.assertTrue(laf!=null);
+      return laf;
+    }
+    else if (SystemInfo.isLinux && ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
       UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
       LOG.assertTrue(laf!=null);
       return laf;
