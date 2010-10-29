@@ -98,9 +98,17 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doClassTest(
       "@Override\n" +
       "public int hashCode() {\n" +
+      "}\n" +
+      "@Deprecated\n" +
+      "void foo() {\n" +
       "}",
       "@Override\n" +
       "public int hashCode() \n" +
+      "{\n" +
+      "}\n" +
+      "\n" +
+      "@Deprecated\n" +
+      "void foo() \n" +
       "{\n" +
       "}"
     );
