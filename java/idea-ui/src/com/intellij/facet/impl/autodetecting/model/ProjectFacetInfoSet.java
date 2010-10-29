@@ -148,6 +148,7 @@ public class ProjectFacetInfoSet extends FacetInfoSet<Module> {
     Element element = XmlSerializer.serialize(facetsBean, new SkipDefaultValuesSerializationFilters());
     try {
       FileUtil.delete(file);
+      FileUtil.createParentDirs(file);
       JDOMUtil.writeDocument(new Document(element), file, SystemProperties.getLineSeparator());
     }
     catch (IOException e) {

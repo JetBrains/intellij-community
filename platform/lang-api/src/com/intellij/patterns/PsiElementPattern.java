@@ -203,6 +203,30 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     });
   }
 
+  public Self withTextLength(@NotNull final ElementPattern lengthPattern) {
+    return with(new PatternConditionPlus<T, Integer>("withTextLength", lengthPattern) {
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<Integer, ProcessingContext> integerProcessingContextPairProcessor) {
+        return integerProcessingContextPairProcessor.process(t.getTextLength(), context);
+      }
+    });
+  }
+
+  public Self notEmpty() {
+    return withTextLengthLongerThan(0);
+  }
+
+  public Self withTextLengthLongerThan(final int minLength) {
+    return with(new PatternCondition<T>("withTextLengthLongerThan") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        return t.getTextLength() > minLength;
+      }
+    });
+  }
+
   public Self withText(@NotNull final ElementPattern text) {
     return with(_withText(text));
   }

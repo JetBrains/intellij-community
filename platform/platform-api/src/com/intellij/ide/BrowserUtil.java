@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -237,8 +238,7 @@ public class BrowserUtil {
       if (jarVirtualFile == null) return null;
 
       String targetFilePath = file.getPath();
-      String targetFileRelativePath = targetFilePath.substring(
-        targetFilePath.indexOf(JarFileSystem.JAR_SEPARATOR) + JarFileSystem.JAR_SEPARATOR.length());
+      String targetFileRelativePath = StringUtil.substringAfter(targetFilePath, JarFileSystem.JAR_SEPARATOR);
 
       String jarVirtualFileLocationHash = jarVirtualFile.getName() + Integer.toHexString(jarVirtualFile.getUrl().hashCode());
       final File outputDir = new File(getExtractedFilesDir(), jarVirtualFileLocationHash);

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -156,4 +157,13 @@ public interface EditorEx extends Editor {
    * @return
    */
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
+
+  /**
+   * Instructs current editor about soft wraps appliance appliance use-case.
+   * <p/>
+   * {@link SoftWrapAppliancePlaces#MAIN_EDITOR} is used by default.
+   *
+   * @param place   soft wraps appliance appliance use-case
+   */
+  void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place);
 }

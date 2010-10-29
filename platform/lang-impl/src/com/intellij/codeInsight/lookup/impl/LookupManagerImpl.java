@@ -104,16 +104,6 @@ public class LookupManagerImpl extends LookupManager {
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    final Alarm alarm = new Alarm();
-    final Runnable request = new Runnable() {
-      public void run() {
-        DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
-      }
-    };
-    if (settings.AUTO_POPUP_JAVADOC_INFO) {
-      alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
-    }
-
     final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     final boolean previousUpdate;
     if (daemonCodeAnalyzer != null) {
@@ -123,15 +113,29 @@ public class LookupManagerImpl extends LookupManager {
     else {
       previousUpdate = false;
     }
-    myActiveLookup = new LookupImpl(myProject, editor, arranger);
+    final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
+
+    final Alarm alarm = new Alarm();
+    final Runnable request = new Runnable() {
+      public void run() {
+        if (myActiveLookup == lookup) {
+          DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+        }
+      }
+    };
+    if (settings.AUTO_POPUP_JAVADOC_INFO) {
+      alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
+    }
+
+    myActiveLookup = lookup;
     myActiveLookupEditor = editor;
     myActiveLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
-        dispose();
+        lookupClosed();
       }
 
       public void lookupCanceled(LookupEvent event) {
-        dispose();
+        lookupClosed();
       }
 
       public void currentItemChanged(LookupEvent event) {
@@ -141,7 +145,7 @@ public class LookupManagerImpl extends LookupManager {
         }
       }
 
-      private void dispose() {
+      private void lookupClosed() {
         alarm.cancelAllRequests();
         if (daemonCodeAnalyzer != null) {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);

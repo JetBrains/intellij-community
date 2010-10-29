@@ -588,8 +588,7 @@ public class VcsUtil {
     return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + aspect.getId(), aspect.isShowByDefault());
   }
 
-  public static void setAspectAvailability(LineAnnotationAspect aspect, boolean showByDefault) {
-    if (aspect.getId() == null) throw new IllegalArgumentException("Aspect should have not null ID");
-    PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspect.getId(), String.valueOf(showByDefault));
+  public static void setAspectAvailability(String aspectID, boolean showByDefault) {
+    PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspectID, String.valueOf(showByDefault));
   }
 }

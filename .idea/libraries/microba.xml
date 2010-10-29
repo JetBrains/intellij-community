@@ -2,9 +2,10 @@
   <library name="microba">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/microba.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/src/main/java"/>
+    </SOURCES>
   </library>
 </component>

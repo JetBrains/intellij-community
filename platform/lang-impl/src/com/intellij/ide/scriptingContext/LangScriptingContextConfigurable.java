@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scriptingContext;
 
+import com.intellij.ide.scriptingContext.ui.ScriptingContextsConfigurable;
 import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
@@ -28,13 +29,15 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class LangScriptingContextConfigurable implements Configurable {
+public abstract class LangScriptingContextConfigurable implements Configurable, Configurable.Composite {
   private ScriptingLibrariesPanel myPanel;
   private ScriptingLibraryManager myLibManager;
+  private ScriptingContextsConfigurable myContextsConfigurable;
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
     myPanel = new ScriptingLibrariesPanel(provider, project, myLibManager);
+    myContextsConfigurable = new ScriptingContextsConfigurable(project, provider);
   }
 
   @Nls
@@ -73,5 +76,11 @@ public abstract class LangScriptingContextConfigurable implements Configurable {
   @Override
   public void disposeUIResources() {
 
+  }
+
+  @Override
+  public Configurable[] getConfigurables() {
+    //return new Configurable[] {myContextsConfigurable};
+    return new Configurable[] {};
   }
 }
