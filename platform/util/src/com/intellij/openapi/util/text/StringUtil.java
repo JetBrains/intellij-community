@@ -1337,6 +1337,18 @@ public class StringUtil {
     return -1;
   }
 
+  public static int indexOfSubstringEnd(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return -1;
+    return i + subString.length();
+  }
+
+  public static String substringAfter(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(i + subString.length());
+  }
+
   /**
    * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
    *
