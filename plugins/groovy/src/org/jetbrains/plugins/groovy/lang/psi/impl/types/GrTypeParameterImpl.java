@@ -305,7 +305,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
     if (parentParent != null && !(parentParent instanceof PsiTypeParameterListOwner)) {
-      LOG.error(parentParent);
+      throw new AssertionError("CCE: " + parentParent);
     }
     return (PsiTypeParameterListOwner)parentParent;
   }
