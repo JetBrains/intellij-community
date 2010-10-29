@@ -21,7 +21,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
@@ -30,8 +29,6 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
@@ -61,10 +58,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         }
 
         PsiElement insertedElement = parameters.getPosition();
-        String prefix = result.getPrefixMatcher().getPrefix();
-
-        final PsiFile file = parameters.getOriginalFile();
-        final Project project = file.getProject();
 
         AllClassesGetter getter = new AllClassesGetter(TrueFilter.INSTANCE);
         boolean afterNew = AFTER_NEW.accepts(insertedElement);
@@ -76,16 +69,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         }
         else if (INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement)) {
           getter = new AllClassesGetter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
-        }
-
-        final StatisticsInfo[] infos =
-            StatisticsManager.getInstance().getAllValues(JavaCompletionStatistician.CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(prefix));
-        for (final StatisticsInfo info : infos) {
-          for (final PsiClass psiClass : JavaPsiFacade.getInstance(project).findClasses(info.getValue(), file.getResolveScope())) {
-            if (!JavaCompletionUtil.isInExcludedPackage(psiClass)) {
-              result.addElement(AllClassesGetter.createLookupItem(psiClass));
-            }
-          }
         }
 
         if (afterNew) {
