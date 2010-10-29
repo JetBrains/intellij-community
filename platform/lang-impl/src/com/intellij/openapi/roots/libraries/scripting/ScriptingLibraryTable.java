@@ -40,8 +40,7 @@ public class ScriptingLibraryTable {
   private HashSet<VirtualFile> myCompactFilesCache;
 
   public ScriptingLibraryTable(@NotNull LibraryTable libraryTable, LibraryType libraryType) {
-    LibraryTable.ModifiableModel tableModel = libraryTable.getModifiableModel();
-    for (Library library : tableModel.getLibraries()) {
+    for (Library library : libraryTable.getLibraries()) {
       if (library instanceof LibraryEx) {
         LibraryType libType = ((LibraryEx)library).getType();
         if (libType != null && libType.equals(libraryType)) {
