@@ -22,19 +22,25 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +56,7 @@ import java.util.List;
 /**
  * Author: msk
  */
-public final class EditorsSplitters extends JPanel {
+public class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private EditorWindow myCurrentWindow;
   private VirtualFile myCurrentFile;
@@ -60,16 +66,24 @@ public final class EditorsSplitters extends JPanel {
   private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
+  private DockManager myDockManager;
 
-  public EditorsSplitters(final FileEditorManagerImpl manager) {
+  public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
     myManager = manager;
+    myDockManager = dockManager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
+
+    if (createOwnDockableContainer) {
+      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), dockManager, this, false);
+      Disposer.register(manager.getProject(), dockable);
+      myDockManager.register(dockable);
+    }
   }
 
   public FileEditorManagerImpl getManager() {
@@ -430,6 +444,35 @@ public final class EditorsSplitters extends JPanel {
     return 0;
   }
 
+  protected void afterFileClosed(VirtualFile file) {
+  }
+
+  protected void afterFileOpen(VirtualFile file) {
+  }
+
+  public JBTabs getTabsAt(RelativePoint point) {
+    Point thisPoint = point.getPoint(this);
+    Component c = SwingUtilities.getDeepestComponentAt(this, thisPoint.x, thisPoint.y);
+    while (c != null) {
+      if (c instanceof JBTabs) {
+        return (JBTabs)c;
+      }
+      c = c.getParent();
+    }
+
+    return null;
+  }
+
+  public boolean isEmptyVisible() {
+    EditorWindow[] windows = getWindows();
+    for (EditorWindow each : windows) {
+      if (!each.isEmptyVisible()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
@@ -473,7 +516,7 @@ public final class EditorsSplitters extends JPanel {
     return getCurrentWindow();
   }
 
-  private void createCurrentWindow() {
+  public void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
     setCurrentWindow(new EditorWindow(this));
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);

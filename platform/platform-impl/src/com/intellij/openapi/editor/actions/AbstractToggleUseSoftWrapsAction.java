@@ -19,6 +19,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * @since Aug 23, 2010 11:33:35 AM
  */
 public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
+
+  private final SoftWrapAppliancePlaces myAppliancePlace;
+
+  public AbstractToggleUseSoftWrapsAction(@NotNull SoftWrapAppliancePlaces appliancePlace) {
+    myAppliancePlace = appliancePlace;
+  }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
@@ -39,7 +49,10 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
     if (editor != null) {
-      editor.getSettings().setUseSoftWraps(state);
+      EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
+      if (editor instanceof EditorEx) {
+        ((EditorEx)editor).reinitSettings();
+      }
     }
   }
 

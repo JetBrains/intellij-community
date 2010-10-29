@@ -32,7 +32,9 @@ public abstract class LookupManager {
   }
 
   @Nullable
-  public static Lookup getActiveLookup(Editor editor) {
+  public static Lookup getActiveLookup(@Nullable Editor editor) {
+    if (editor == null) return null;
+
     final Project project = editor.getProject();
     if (project == null) return null;
 

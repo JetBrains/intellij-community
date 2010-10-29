@@ -85,7 +85,7 @@ class ToolsPanel extends JPanel {
                                             final int row,
                                             final boolean hasFocus) {
             Object object = ((CheckedTreeNode)value).getUserObject();
-            // Fix GTK backround
+            // Fix GTK background
             if (UIUtil.isUnderGTKLookAndFeel()){
               final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
               UIUtil.changeBackGround(this, background);

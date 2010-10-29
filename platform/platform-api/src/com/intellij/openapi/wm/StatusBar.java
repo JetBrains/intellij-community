@@ -39,12 +39,16 @@ public interface StatusBar extends StatusBarInfo {
     }
 
     public static void set(@Nullable final String text, @Nullable final Project project) {
+      set(text, project, null);
+    }
+
+    public static void set(@Nullable final String text, @Nullable final Project project, @Nullable final String requestor) {
       if (project != null) {
         if (project.isDisposed()) return;
         if (!project.isInitialized()) {
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
-              project.getMessageBus().syncPublisher(TOPIC).setInfo(text);
+              project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor);
             }
           });
           return;
@@ -52,7 +56,7 @@ public interface StatusBar extends StatusBarInfo {
       }
 
       final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-      bus.syncPublisher(TOPIC).setInfo(text);
+      bus.syncPublisher(TOPIC).setInfo(text, requestor);
     }
   }
 

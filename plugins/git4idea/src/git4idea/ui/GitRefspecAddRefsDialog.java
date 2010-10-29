@@ -244,7 +244,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
                                         final boolean leaf,
                                         final int row,
                                         final boolean hasFocus) {
-        // Fix GTK backround
+        // Fix GTK background
         if (UIUtil.isUnderGTKLookAndFeel()) {
           final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
           UIUtil.changeBackGround(this, background);

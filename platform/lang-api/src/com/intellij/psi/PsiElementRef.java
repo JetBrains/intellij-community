@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public final class PsiRef<T extends PsiElement> {
+public final class PsiElementRef<T extends PsiElement> {
   private volatile PsiRefColleague<T> myColleague;
 
-  public PsiRef(PsiRefColleague<T> colleague) {
+  public PsiElementRef(PsiRefColleague<T> colleague) {
     myColleague = colleague;
   }
 
@@ -51,7 +51,7 @@ public final class PsiRef<T extends PsiElement> {
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof PsiRef && myColleague.equals(((PsiRef) o).myColleague);
+    return o instanceof PsiElementRef && myColleague.equals(((PsiElementRef) o).myColleague);
   }
 
   @Override
@@ -63,12 +63,12 @@ public final class PsiRef<T extends PsiElement> {
     return myColleague.isValid();
   }
 
-  public static <T extends PsiElement> PsiRef<T> real(final T element) {
-    return new PsiRef<T>(new PsiRefColleague.Real<T>(element));
+  public static <T extends PsiElement> PsiElementRef<T> real(@NotNull final T element) {
+    return new PsiElementRef<T>(new PsiRefColleague.Real<T>(element));
   }
 
-  public static <Child extends PsiElement, Parent extends PsiElement> PsiRef<Child> imaginary(final PsiRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
-    return new PsiRef<Child>(new PsiRefColleague.Imaginary<Child, Parent>(parent, creator));
+  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
+    return new PsiElementRef<Child>(new PsiRefColleague.Imaginary<Child, Parent>(parent, creator));
   }
 
   public PsiManager getPsiManager() {
@@ -91,12 +91,12 @@ public final class PsiRef<T extends PsiElement> {
     class Real<T extends PsiElement> implements PsiRefColleague<T> {
       private final T myElement;
 
-      public Real(T element) {
+      public Real(@NotNull T element) {
         myElement = element;
       }
 
       @NotNull
-        public T getPsiElement() {
+      public T getPsiElement() {
         return myElement;
       }
 
@@ -133,10 +133,10 @@ public final class PsiRef<T extends PsiElement> {
     }
 
     class Imaginary<Child extends PsiElement, Parent extends PsiElement> implements PsiRefColleague<Child> {
-      private final PsiRef<? extends Parent> myParent;
+      private final PsiElementRef<? extends Parent> myParent;
       private final PsiRefElementCreator<Parent, Child> myCreator;
 
-      public Imaginary(PsiRef<? extends Parent> parent, PsiRefElementCreator<Parent, Child> creator) {
+      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<Parent, Child> creator) {
         myParent = parent;
         myCreator = creator;
       }

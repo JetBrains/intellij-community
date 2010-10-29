@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -51,9 +53,15 @@ public class OpaquePanel extends JPanel {
 
   protected void paintComponent(Graphics g) {
     if (myOpaqueActive) {
-      Color bg = myKey != null ? UIManager.getColor(myKey) : getBackground();
+      // Fix for GTK+L&F: IDEA-60485 Wrong Navbar background under GTK L&F
+      final Color bg;
+      if (myKey != null) {
+        bg = "List.background".equals(myKey) && UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIManager.getColor(myKey);
+      } else {
+        bg = getBackground();
+      }
       g.setColor(bg);
-      Dimension size = getSize();
+      final Dimension size = getSize();
       g.fillRect(0, 0, size.width, size.height);
     }
   }

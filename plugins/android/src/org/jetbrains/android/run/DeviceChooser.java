@@ -172,7 +172,8 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
 
   @NotNull
   private static String getDeviceState(@NotNull IDevice device) {
-    return capitalize(device.getState().name().toLowerCase());
+    IDevice.DeviceState state = device.getState();
+    return state != null ? capitalize(state.name().toLowerCase()) : "";
   }
 
   @Override

@@ -22,6 +22,10 @@ import com.intellij.psi.tree.IElementType;
  * @author yole
  */
 public class JavaDocTokenTypes implements DocCommentTokenTypes {
+  public static final DocCommentTokenTypes INSTANCE = new JavaDocTokenTypes();
+
+  private JavaDocTokenTypes() { }
+
   public IElementType commentStart() {
     return JavaDocTokenType.DOC_COMMENT_START;
   }

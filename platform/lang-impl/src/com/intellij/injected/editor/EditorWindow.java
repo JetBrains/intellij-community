@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -623,5 +624,10 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
 
   public IndentsModel getIndentsModel() {
     return myDelegate.getIndentsModel();
+  }
+
+  @Override
+  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
+    myDelegate.setSoftWrapAppliancePlace(place);
   }
 }

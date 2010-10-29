@@ -21,16 +21,13 @@ import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -60,13 +57,7 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
       return false;
     }
 
-    final BaseListPopupStep<LookupElementAction> step = new LookupActionsStep(actions, lookup, element);
-
-    final Rectangle bounds = lookup.getCurrentItemBounds();
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    final JComponent component = lookup.getComponent();
-    popup.show(new RelativePoint(component, new Point(bounds.x + bounds.width,
-                                                      bounds.y)));
+    lookup.showItemPopup(JBPopupFactory.getInstance().createListPopup(new LookupActionsStep(actions, lookup, element)));
     return true;
   }
 

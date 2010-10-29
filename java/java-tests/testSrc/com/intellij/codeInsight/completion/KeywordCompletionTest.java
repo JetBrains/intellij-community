@@ -164,6 +164,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testTrueInVariableDeclaration() throws Throwable { doTest(); }
   public void testNullInIf() throws Throwable { doTest(); }
+  public void testNullInReturn() throws Throwable { doTest(); }
 
   public void testExtendsInMethodParameters() throws Throwable { doTest(); }
 

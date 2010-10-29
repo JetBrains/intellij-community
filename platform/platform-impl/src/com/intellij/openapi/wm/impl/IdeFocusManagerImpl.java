@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
@@ -84,6 +85,16 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public FocusRequestor getFurtherRequestor() {
     return getGlobalInstance().getFurtherRequestor();
+  }
+
+  @Override
+  public Component getFocusOwner() {
+    return getGlobalInstance().getFocusOwner();
+  }
+
+  @Override
+  public void runOnOwnContext(DataContext context, Runnable runnable) {
+    getGlobalInstance().runOnOwnContext(context, runnable);
   }
 
   public boolean isFocusBeingTransferred() {

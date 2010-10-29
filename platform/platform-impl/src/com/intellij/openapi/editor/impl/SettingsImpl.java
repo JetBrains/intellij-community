@@ -28,6 +28,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,11 +43,12 @@ public class SettingsImpl implements EditorSettings {
   }
 
   // This group of settings does not have UI
-  private int     myAdditionalLinesCount          = 5;
-  private int     myAdditionalColumnsCount        = 3;
-  private int     myLineCursorWidth               = 2;
-  private boolean myLineMarkerAreaShown           = true;
-  private boolean myAllowSingleLogicalLineFolding = false;
+  private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
+  private int                     myAdditionalLinesCount          = 5;
+  private int                     myAdditionalColumnsCount        = 3;
+  private int                     myLineCursorWidth               = 2;
+  private boolean                 myLineMarkerAreaShown           = true;
+  private boolean                 myAllowSingleLogicalLineFolding = false;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;
@@ -198,8 +200,14 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
+    mySoftWrapAppliancePlace = softWrapAppliancePlace;
+  }
+
   public void reinitSettings() {
     myCachedTabSize = null;
+    //TODO den check
+    //myUseSoftWraps = null;
   }
 
   public int getTabSize(Project project) {
@@ -393,7 +401,7 @@ public class SettingsImpl implements EditorSettings {
 
   public boolean isUseSoftWraps() {
     return myUseSoftWraps != null ? myUseSoftWraps.booleanValue()
-                                  : EditorSettingsExternalizable.getInstance().isUseSoftWraps();
+                                  : EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
   }
 
   public void setUseSoftWraps(boolean use) {

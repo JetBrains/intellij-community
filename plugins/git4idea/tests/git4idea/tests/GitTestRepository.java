@@ -22,11 +22,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.ui.GuiUtils;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.testng.Assert.fail;
 
 /**
  * Representation of a Git repository for tests purposes.
@@ -35,12 +39,12 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GitTestRepository {
   @NotNull private final GitTestCase myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
+  private VirtualFile myDir;
 
-  public GitTestRepository(@NotNull GitTestCase test, @NotNull TempDirTestFixture dir) {
+  public GitTestRepository(@NotNull GitTestCase test, @NotNull TempDirTestFixture fixture) {
     myTest = test;
-    myDirFixture = dir;
+    myDirFixture = fixture;
   }
-
 
   /**
    * Creates a new Mercurial repository in a new temporary test directory.
@@ -55,6 +59,14 @@ public class GitTestRepository {
     return new GitTestRepository(testCase, dirFixture);
   }
 
+  public static GitTestRepository cloneFrom(GitTestRepository parent) throws Exception {
+    final TempDirTestFixture dirFixture = createFixtureDir();
+    final File repo = new File(dirFixture.getTempDirPath());
+    final ProcessOutput processOutput = parent.getTest().executeCommand(repo, "clone", parent.getDir().getPath(), repo.getPath());
+    AbstractVcsTestCase.verify(processOutput);
+    return new GitTestRepository(parent.getTest(), dirFixture);
+  }
+
   private static TempDirTestFixture createFixtureDir() throws Exception {
     final TempDirTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     fixture.setUp();
@@ -66,8 +78,20 @@ public class GitTestRepository {
     return myDirFixture;
   }
 
+  @Nullable
   public VirtualFile getDir() {
-    return myDirFixture.getFile(".");
+    if (myDir == null) {
+      myDir = VcsUtil.getVirtualFile(myDirFixture.getTempDirPath());
+    }
+    return myDir;
+  }
+
+  /**
+   * Configures name and email for this git repository.
+   */
+  public void setName(String name, String email) throws IOException {
+    config("user.name", name);
+    config("user.email", email);
   }
 
   /**
@@ -175,15 +199,21 @@ public class GitTestRepository {
     execute(true, "mv", file.getPath(), newPath);
   }
 
-  public void mv(String oldPath, String newPath) throws IOException {
+  public void mv(String oldPath, String newPath) throws Exception {
     execute(true, "mv", oldPath, newPath);
     refreshFile(getDir(), true);
   }
 
-  private static void refreshFile(final VirtualFile file, final boolean recursive) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override public void run() {
-        file.refresh(false, recursive);
+  private static void refreshFile(final VirtualFile file, final boolean recursive) throws Exception {
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            file.refresh(false, recursive);
+          }
+        });
       }
     });
   }
@@ -196,7 +226,7 @@ public class GitTestRepository {
     execute(true, "push");
   }
 
-  public void rm(String... filenames) throws IOException {
+  public void rm(String... filenames) throws Exception {
     execute(true, join("rm", filenames));
     refreshFile(getDir(), true);
   }
@@ -255,8 +285,28 @@ public class GitTestRepository {
   public void refresh() {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        refreshFile(getDir(), true);
+        try {
+          refreshFile(getDir(), true);
+        } catch (Exception e) {
+          e.printStackTrace();
+          fail("Exception while refreshing repository", e);
+        }
       }
     }, ModalityState.defaultModalityState());
+  }
+
+  public void addRemotes(String... parameters) throws IOException {
+    for (String s : parameters) {
+      execute(true, "remote", "add", s);
+    }
+  }
+
+  public void branch() throws IOException {
+    execute(false, "branch");
+  }
+
+  @NotNull
+  public GitTestCase getTest() {
+    return myTest;
   }
 }

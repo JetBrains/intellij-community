@@ -46,7 +46,6 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
                            myDescriptor.getCaptionAboveOf(value), -1);
 
     customizeComponent(list, value, isSelected);
-
     return result;
   }
 

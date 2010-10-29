@@ -41,6 +41,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -156,7 +157,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       assert myFullEditor != null;
       configureFullEditor();
-      fileManager.getCurrentWindow().setFilePinned(virtualFile, true);
+      EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(myFullEditor.getComponent()));
+      if (editorWindow == null) {
+        editorWindow = fileManager.getCurrentWindow();
+      }
+      if (editorWindow != null) {
+        editorWindow.setFilePinned(virtualFile, true);
+      }
     }
   }
 
