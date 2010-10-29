@@ -20,17 +20,18 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -43,20 +44,23 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -78,7 +82,6 @@ public class JavaCompletionUtil {
   public static final String SET_PREFIX = "set";
   @NonNls
   public static final String IS_PREFIX = "is";
-  private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
   public static final OffsetKey LPAREN_OFFSET = OffsetKey.create("lparen");
   public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
   public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
@@ -116,224 +119,19 @@ public class JavaCompletionUtil {
   });
   public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
-  public static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, PsiVariable var){
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
-    final VariableKind variableKind = codeStyleManager.getVariableKind(var);
-
-    String propertyName = null;
-    if (variableKind == VariableKind.PARAMETER) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-      propertyName = PropertyUtil.getPropertyName(method);
-    }
-
-    final PsiType type = var.getType();
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type);
-    final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
-    if (set.isEmpty()) {
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(LookupElementBuilder.create("object"));
-      }
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(LookupElementBuilder.create("string"));
-      }
-    }
-
-    if (set.isEmpty()) {
-      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, "")) {
-        public void nameChoosen(String name) {
-        }
-      };
-
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
-    }
-    PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(parent, false), matcher), suggestedNameInfo);
-    final String[] nameSuggestions =
-      JavaStatisticsManager.getNameSuggestions(type, JavaStatisticsManager.getContext(var), matcher.getPrefix());
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, nameSuggestions, matcher), suggestedNameInfo);
-  }
-
-  public static void completeFieldName(Set<LookupElement> set, PsiVariable var, final PrefixMatcher matcher){
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
-
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
-    final VariableKind variableKind = JavaCodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
-
-    final String prefix = matcher.getPrefix();
-    if (PsiType.VOID.equals(var.getType()) || prefix.startsWith(IS_PREFIX) ||
-        prefix.startsWith(GET_PREFIX) ||
-        prefix.startsWith(SET_PREFIX)) {
-      completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind);
-      return;
-    }
-
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
-    final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
-
-    if (set.isEmpty()) {
-      // use suggested names as suffixes
-      final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(variableKind);
-      if(variableKind != VariableKind.STATIC_FINAL_FIELD){
-        for (int i = 0; i < suggestedNames.length; i++)
-          suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], variableKind);
-      }
-
-
-        suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
-        public void nameChoosen(String name) {
-        }
-      };
-
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
-    }
-
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, JavaStatisticsManager.getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false),
-                                                                      matcher), suggestedNameInfo);
-  }
-
-  public static void completeMethodName(Set<LookupElement> set, PsiElement element, final PrefixMatcher matcher){
-    if(element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor()) {
-        final PsiClass containingClass = method.getContainingClass();
-        final String name = containingClass.getName();
-        if (StringUtil.isNotEmpty(name)) {
-          LookupItemUtil.addLookupItem(set, name, matcher);
-        }
-        return;
-      }
-    }
-
-    PsiClass ourClassParent = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (ourClassParent == null) return;
-    LookupItemUtil.addLookupItems(set, getUnresolvedReferences(ourClassParent, true), matcher);
-
-    if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
-      LookupItemUtil.addLookupItems(set, getOverides(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
-                                    matcher);
-      LookupItemUtil.addLookupItems(set, getImplements(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
-                                    matcher);
-    }
-    LookupItemUtil.addLookupItems(set, getPropertiesHandlersNames(
-      ourClassParent,
-      ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
-      PsiUtil.getTypeByPsiElement(element), element), matcher);
-  }
-
   public static PsiType getQualifierType(LookupItem item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
   }
 
   public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
-    completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
-  }
-
-  public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
-    final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo);
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, strings, matcher), suggestedNameInfo);
+    JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PsiType varType,
                                                                final VariableKind varKind,
                                                                SuggestedNameInfo suggestedNameInfo) {
-    return completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo);
-  }
-
-  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PrefixMatcher matcher, final PsiType varType,
-                                                               final VariableKind varKind,
-                                                               SuggestedNameInfo suggestedNameInfo) {
-    Set<String> result = new LinkedHashSet<String>();
-    final String[] suggestedNames = suggestedNameInfo.names;
-    for (final String suggestedName : suggestedNames) {
-      if (matcher.prefixMatches(suggestedName)) {
-        result.add(suggestedName);
-      }
-    }
-
-    if (result.isEmpty() && PsiType.VOID != varType) {
-      // use suggested names as suffixes
-      final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
-      final String prefix = matcher.getPrefix();
-      final boolean isMethodPrefix = prefix.startsWith(IS_PREFIX) || prefix.startsWith(GET_PREFIX) || prefix.startsWith(SET_PREFIX);
-      if (varKind != VariableKind.STATIC_FINAL_FIELD || isMethodPrefix) {
-        for (int i = 0; i < suggestedNames.length; i++) {
-          suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], varKind);
-        }
-      }
-
-      ContainerUtil.addAll(result, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
-
-
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  private static void tunePreferencePolicy(final List<LookupElement> list, final SuggestedNameInfo suggestedNameInfo) {
-    final InsertHandler insertHandler = new InsertHandler() {
-      public void handleInsert(final InsertionContext context, final LookupElement item) {
-        suggestedNameInfo.nameChoosen(item.getLookupString());
-      }
-    };
-
-    for (int i = 0; i < list.size(); i++) {
-      LookupElement item = list.get(i);
-      if (item instanceof LookupItem) {
-        ((LookupItem)item).setPriority(list.size() - i).setInsertHandler(insertHandler);
-      }
-    }
-  }
-
-  public static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
-    final List<String> newSuggestions = new ArrayList<String>();
-    int longestOverlap = 0;
-
-    for (String suggestedName : suggestedNames) {
-      if (suggestedName.toUpperCase().startsWith(prefix.toUpperCase())) {
-        newSuggestions.add(suggestedName);
-        longestOverlap = prefix.length();
-      }
-
-      suggestedName = String.valueOf(Character.toUpperCase(suggestedName.charAt(0))) + suggestedName.substring(1);
-      final int overlap = getOverlap(suggestedName, prefix);
-
-      if (overlap < longestOverlap) continue;
-
-      if (overlap > longestOverlap) {
-        newSuggestions.clear();
-        longestOverlap = overlap;
-      }
-
-      String suggestion = prefix.substring(0, prefix.length() - overlap) + suggestedName;
-
-      final int lastIndexOfSuffix = suggestion.lastIndexOf(suffix);
-      if (lastIndexOfSuffix >= 0 && suffix.length() < suggestion.length() - lastIndexOfSuffix) {
-        suggestion = suggestion.substring(0, lastIndexOfSuffix) + suffix;
-      }
-
-      if (!newSuggestions.contains(suggestion)) {
-        newSuggestions.add(suggestion);
-      }
-    }
-    return ArrayUtil.toStringArray(newSuggestions);
-  }
-
-  static int getOverlap(final String propertyName, final String prefix) {
-    int overlap = 0;
-    int propertyNameLen = propertyName.length();
-    int prefixLen = prefix.length();
-    for (int j = 1; j < prefixLen && j < propertyNameLen; j++) {
-      if (prefix.substring(prefixLen - j).equals(propertyName.substring(0, j))) {
-        overlap = j;
-      }
-    }
-    return overlap;
+    return JavaMemberNameCompletionContributor
+      .completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo);
   }
 
   public static PsiType eliminateWildcards(PsiType type) {
@@ -370,70 +168,6 @@ public class JavaCompletionUtil {
       return ((PsiWildcardType)type).getExtendsBound();
     }
     return type;
-  }
-
-  public static String[] getOverides(final PsiClass parent, final PsiType typeByPsiElement) {
-    final List<String> overides = new ArrayList<String>();
-    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
-    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
-      final PsiElement element = candidateInfo.getElement();
-      if (Comparing.equal(typeByPsiElement, PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
-        overides.add(((PsiNamedElement)element).getName());
-      }
-    }
-    return ArrayUtil.toStringArray(overides);
-  }
-
-  public static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
-    final List<String> overides = new ArrayList<String>();
-    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
-    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
-      final PsiElement element = candidateInfo.getElement();
-      if (Comparing.equal(typeByPsiElement,PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
-        overides.add(((PsiNamedElement)element).getName());
-      }
-    }
-    return ArrayUtil.toStringArray(overides);
-  }
-
-  public static String[] getPropertiesHandlersNames(final PsiClass psiClass,
-                                                    final boolean staticContext,
-                                                    final PsiType varType,
-                                                    final PsiElement element) {
-    class Change implements Runnable {
-      private String[] result;
-
-      public void run() {
-        final List<String> propertyHandlers = new ArrayList<String>();
-        final PsiField[] fields = psiClass.getFields();
-
-        for (final PsiField field : fields) {
-          if (field == element) continue;
-          final PsiModifierList modifierList = field.getModifierList();
-          if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
-
-          if (field.getType().equals(varType)) {
-            final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
-            if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
-                 psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
-              propertyHandlers.add(getterName);
-            }
-          }
-
-          if (PsiType.VOID.equals(varType)) {
-            final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
-            if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
-                 psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
-              propertyHandlers.add(setterName);
-            }
-          }
-        }
-        result = ArrayUtil.toStringArray(propertyHandlers);
-      }
-    }
-    final Change result = new Change();
-    element.getManager().performActionWithFormatterDisabled(result);
-    return result.result;
   }
 
   public static boolean isInExcludedPackage(@NotNull final PsiClass psiClass) {
@@ -570,28 +304,6 @@ public class JavaCompletionUtil {
     return originalSubstitutor;
   }
 
-  public static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
-    if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final List<String> unresolvedRefs = new ArrayList<String>();
-
-    if (parentOfType != null) {
-      parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
-          final PsiElement parent = reference.getParent();
-          if (parent instanceof PsiReference) return;
-          if (referenceOnMethod && parent instanceof PsiMethodCallExpression &&
-              reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
-            if (reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
-          }
-          else if (!referenceOnMethod && !(parent instanceof PsiMethodCallExpression) &&reference.resolve() == null && reference.getReferenceName() != null) {
-            unresolvedRefs.add(reference.getReferenceName());
-          }
-        }
-      });
-    }
-    return ArrayUtil.toStringArray(unresolvedRefs);
-  }
-
   public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){
     int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
@@ -651,17 +363,14 @@ public class JavaCompletionUtil {
   }
 
   static boolean isWord(PsiElement element) {
-    if (element instanceof PsiIdentifier){
+    if (element instanceof PsiIdentifier || element instanceof PsiKeyword) {
       return true;
     }
-    else if (element instanceof PsiKeyword){
-      return true;
-    }
-    else if (element instanceof PsiJavaToken){
+    else if (element instanceof PsiJavaToken) {
       final String text = element.getText();
-      if(PsiKeyword.TRUE.equals(text)) return true;
-      if(PsiKeyword.FALSE.equals(text)) return true;
-      if(PsiKeyword.NULL.equals(text)) return true;
+      if (PsiKeyword.TRUE.equals(text)) return true;
+      if (PsiKeyword.FALSE.equals(text)) return true;
+      if (PsiKeyword.NULL.equals(text)) return true;
       return false;
     }
     else if (element instanceof PsiDocToken) {
@@ -671,12 +380,12 @@ public class JavaCompletionUtil {
     else if (element instanceof XmlToken) {
       IElementType tokenType = ((XmlToken)element).getTokenType();
       return tokenType == XmlTokenType.XML_TAG_NAME ||
-          tokenType == XmlTokenType.XML_NAME ||
-          tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-          // html data chars contains whitespaces
-          (tokenType == XmlTokenType.XML_DATA_CHARACTERS && !(element.getParent() instanceof HtmlTag));
+             tokenType == XmlTokenType.XML_NAME ||
+             tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+             // html data chars contains whitespaces
+             (tokenType == XmlTokenType.XML_DATA_CHARACTERS && !(element.getParent() instanceof HtmlTag));
     }
-    else{
+    else {
       return false;
     }
   }
@@ -741,7 +450,7 @@ public class JavaCompletionUtil {
     return name.substring(0, count + 1);
   }
 
-  static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
+  private static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
       String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
       if (expectedName == null) continue;
