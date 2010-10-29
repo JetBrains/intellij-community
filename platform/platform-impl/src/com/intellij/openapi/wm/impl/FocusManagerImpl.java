@@ -341,7 +341,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myRunContext != null) {
