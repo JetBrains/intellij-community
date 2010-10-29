@@ -36,7 +36,7 @@ import javax.swing.*;
  */
 public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
-  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
+  @NonNls public static final String CHANGE_SIGNATURE = "Apply signature change";
 
   @NotNull
   @Override
