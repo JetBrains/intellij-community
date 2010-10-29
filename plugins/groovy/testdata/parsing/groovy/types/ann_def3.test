@@ -39,6 +39,8 @@ Groovy script
             Literal
               PsiElement(Integer)('8')
             PsiElement(])(']')
+        Throw clause
+          <empty list>
       PsiElement(;)(';')
       PsiElement(new line)('\n')
       PsiElement(})('}')

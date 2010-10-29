@@ -44,5 +44,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Annotation arguments
               <empty list>
+        Throw clause
+          <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

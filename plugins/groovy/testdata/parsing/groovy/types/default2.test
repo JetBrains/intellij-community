@@ -39,5 +39,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('5')
+        Throw clause
+          <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')
