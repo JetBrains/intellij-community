@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -33,6 +34,9 @@ public interface AndroidMavenProvider {
 
   @NotNull
   List<File> getMavenDependencyArtifactFiles(@NotNull Module module);
+
+  @Nullable
+  String getBuildDirectory(@NotNull Module module);
 
   void setPathsToDefault(@NotNull Module module, AndroidFacetConfiguration facetConfiguration);
 }

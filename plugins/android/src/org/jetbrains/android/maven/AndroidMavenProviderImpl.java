@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -85,6 +86,16 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public String getBuildDirectory(@NotNull Module module) {
+    MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
+    if (mavenProject != null) {
+      return mavenProject.getBuildDirectory();
+    }
+    return null;
   }
 
   @Override
