@@ -494,14 +494,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     activateEditorComponent(true);
   }
 
-  private void activateEditorComponent(boolean forced) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: activateEditorComponent()");
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    activateEditorComponentImpl(commandList, forced);
-    execute(commandList);
+  private void activateEditorComponent(final boolean forced) {
+    getFocusManager().getFurtherRequestor().requestFocus(new FocusCommand() {
+      @Override
+      public ActionCallback run() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("enter: activateEditorComponent()");
+        }
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+        activateEditorComponentImpl(commandList, forced);
+        execute(commandList);
+        return new ActionCallback.Done();
+      }
+    }, forced);
   }
 
   private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList, final boolean forced) {
