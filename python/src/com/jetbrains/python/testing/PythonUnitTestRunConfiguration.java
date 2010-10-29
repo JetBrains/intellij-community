@@ -125,7 +125,8 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
     TEST_FOLDER,
     TEST_SCRIPT,
     TEST_CLASS,
-    TEST_METHOD, }
+    TEST_METHOD,
+    TEST_FUNCTION,}
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
@@ -163,6 +164,8 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
         return "Tests in " + myScriptName;
       case TEST_FOLDER:
         return "Tests in " + FileUtil.toSystemDependentName(myFolderName);
+      case TEST_FUNCTION:
+        return "Test " + myMethodName;
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }

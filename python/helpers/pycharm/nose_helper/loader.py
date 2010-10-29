@@ -57,7 +57,7 @@ class TestLoader(unittest.TestLoader):
             except:
                 exc = sys.exc_info()
                 yield Failure(exc[0], exc[1], exc[2])
-        return self.suiteClass(generate, context=generator, can_split=False)
+        return self.suiteClass(generate, context=generator)
 
     def loadTestsFromModule(self, module):
         """Load all tests from module and return a suite containing
@@ -164,3 +164,4 @@ class TestLoader(unittest.TestLoader):
             test_func, arg = (test[0], test[1:])
         return test_func, arg
 
+defaultLoader = TestLoader()

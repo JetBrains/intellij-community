@@ -56,11 +56,14 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
         specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-	      if (!myConfig.getPattern().isEmpty())
+	    if (!myConfig.getPattern().isEmpty())
           specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern() + "$");
         else
-	        specs.add(myConfig.getFolderName() + "/");
+	      specs.add(myConfig.getFolderName() + "/");
 	      // TODO[kate]:think about delimiter between folderName and Pattern
+        break;
+      case TEST_FUNCTION:
+        specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
         break;
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());

@@ -79,14 +79,13 @@ class ContextSuite(LazySuite):
                        'tearDownPackage')
 
     def __init__(self, tests=(), context=None, factory=None,
-                 config=None, can_split=True):
+                 config=None):
         self.context = context
         self.factory = factory
         if config is None:
             config = Config()
         self.config = config
         self.has_run = False
-        self.can_split = can_split
         self.error_context = None
         LazySuite.__init__(self, tests)
 

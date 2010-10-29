@@ -107,13 +107,21 @@ for arg in sys.argv[1:]:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
     module = loadSource(a[0])
-    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
+    all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
   else:
     # From method in testcase
     debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
     module = loadSource(a[0])
-    testCaseClass = getattr(module, a[1])
-    all.addTest(testCaseClass(a[2]))
+    if a[1] == "":
+        # test function, not method
+        all.addTest(testLoader.makeTest(getattr(module, a[2])))
+    else:
+        testCaseClass = getattr(module, a[1])
+        try:
+            all.addTest(testCaseClass(a[2]))
+        except:
+            # class is not a testcase inheritor
+            all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
 
 debug("/ Loaded " + str(all.countTestCases()) + " tests")
 TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
