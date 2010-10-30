@@ -35,7 +35,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
   @Override
   public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
     PsiFile file = context.getFile();
-    assert GroovyFileType.GROOVY_LANGUAGE.equals(file.getLanguage());
+    assert GroovyFileType.GROOVY_LANGUAGE.equals(file.getLanguage()) : file.getLanguage();
     Editor editor = context.getEditor();
     int endOffset = editor.getCaretModel().getOffset();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, GrImportStatement.class, false) != null) {
