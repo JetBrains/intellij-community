@@ -807,6 +807,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue 'do' in strings
     assertTrue 'new' in strings
     assertTrue 'try' in strings
+
+    strings.remove 'new'
+    assertFalse 'new' in strings
   }
 
   public void testExpressionKeywords() {

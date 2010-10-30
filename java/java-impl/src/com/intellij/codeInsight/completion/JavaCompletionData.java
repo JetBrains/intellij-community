@@ -20,7 +20,6 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -577,20 +576,17 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         not(
           or(psiElement(PsiTypeCastExpression.class),
              psiElement(PsiSwitchLabelStatement.class),
-             psiElement(PsiExpressionStatement.class).withParent(psiElement(PsiCodeBlock.class).withParent(PsiSwitchStatement.class))
+             psiElement(PsiExpressionStatement.class)
           )
         )
       )),
       not(psiElement().afterLeaf("."))
     );
     if (exprKeywords.accepts(position)) {
-      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.SPACE));
-
-      if (!psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiExpressionStatement.class)).accepts(position)) {
-        result.addElement(createKeyword(position, PsiKeyword.NULL));
-        result.addElement(createKeyword(position, PsiKeyword.TRUE));
-        result.addElement(createKeyword(position, PsiKeyword.FALSE));
-      }
+      result.addElement(createKeyword(position, PsiKeyword.NEW));
+      result.addElement(createKeyword(position, PsiKeyword.NULL));
+      result.addElement(createKeyword(position, PsiKeyword.TRUE));
+      result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
   }
 
