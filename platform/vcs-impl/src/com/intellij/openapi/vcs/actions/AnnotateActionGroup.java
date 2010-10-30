@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,9 @@ public class AnnotateActionGroup extends ActionGroup {
         actions.add(new ShowHideAspectAction(g, gutterComponent));
       }
     }
+    actions.add(Separator.getInstance());
+    actions.add(new ShowAnnotationColorsAction(gutters, gutterComponent));
+    actions.add(new ShowShortenNames(gutterComponent));
     myActions = actions.toArray(new AnAction[actions.size()]);
   }
 
