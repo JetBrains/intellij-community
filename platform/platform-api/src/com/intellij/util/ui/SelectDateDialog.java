@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.CommonBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Date;
 
 
@@ -29,6 +30,13 @@ public class SelectDateDialog extends DialogWrapper {
 
   public SelectDateDialog(Project project) {
     super(project, true);
+    init();
+    setTitle(CommonBundle.message("dialog.title.choose.date"));
+    pack();
+  }
+
+  public SelectDateDialog(Component component) {
+    super(component, true);
     init();
     setTitle(CommonBundle.message("dialog.title.choose.date"));
     pack();

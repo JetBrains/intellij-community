@@ -19,8 +19,10 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -45,6 +47,13 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
         configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
         configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
       }
+    }
+
+    String buildDirectory = FileUtil.toSystemIndependentName(mavenProject.getBuildDirectory());
+
+    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(buildDirectory), true)) {
+      String buildDirRelPath = FileUtil.getRelativePath(moduleDirPath, buildDirectory, '/');
+      configuration.APK_PATH = '/' + buildDirRelPath + '/' + AndroidFacet.getApkName(module);
     }
   }
 
@@ -85,6 +94,16 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public String getBuildDirectory(@NotNull Module module) {
+    MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
+    if (mavenProject != null) {
+      return mavenProject.getBuildDirectory();
+    }
+    return null;
   }
 
   @Override
