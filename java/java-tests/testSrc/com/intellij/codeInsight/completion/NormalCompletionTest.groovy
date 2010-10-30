@@ -598,8 +598,25 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCaseTailType() throws Throwable { doTest(); }
 
+  def doPrimitiveTypeTest() {
+    configure()
+    checkResultByFile(getTestName(false) + ".java");
+    assertTrue 'boolean' in myFixture.lookupElementStrings
+  }
+
+  private def configure() {
+    configureByFile(getTestName(false) + ".java")
+  }
+
+  public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
+  public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
+  public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }
+  public void testPrimitiveTypesInForLoop4() throws Throwable { doPrimitiveTypeTest() }
+  public void testPrimitiveTypesInForLoop5() throws Throwable { doPrimitiveTypeTest() }
+  public void testPrimitiveTypesInForLoop6() throws Throwable { doPrimitiveTypeTest() }
+
   public void testSecondInvocationToFillCommonPrefix() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     type('a');
     complete();
     assertStringItems("fai1", "fai2", "fai3");
@@ -607,7 +624,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     assertStringItems("_bar", "_goo");
     complete();
     assertStringItems("_bar", "_goo", "_foo");
@@ -637,18 +654,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPropertyReferencePrefix() throws Throwable {
     myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile();
 
-    configureByFile(getTestName(false) + ".java");
+    configure()
     checkResultByFile(getTestName(false) + ".java");
     assertNull(getLookup());
   }
 
   private void doTest() throws Exception {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
   private void doAntiTest() throws Exception {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     checkResultByFile(getTestName(false) + ".java");
     assertEmpty(myItems);
     assertNull(getLookup());
@@ -663,11 +680,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testWildcardsInLookup() throws Exception {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     assertNotNull(getLookup());
-    type('*');
-    type('f');
-    type('z');
+    type('*fz');
     final List<LookupElement> list = getLookup().getItems();
     assertEquals("azzzfzzz", list.get(0).getLookupString());
     assertEquals("fzazzz", list.get(1).getLookupString());
@@ -680,7 +695,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
   public void testRightShift() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
+    configure()
     assertStringItems("myField1", "myField2");
   }
 

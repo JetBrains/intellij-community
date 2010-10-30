@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -588,6 +589,15 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(createKeyword(position, PsiKeyword.TRUE));
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
+
+    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
+      for (String primitiveType : PRIMITIVE_TYPES) {
+        if (!PsiKeyword.VOID.equals(primitiveType)) {
+          result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
+        }
+      }
+    }
+
   }
 
   private static LookupElement createKeyword(PsiElement position, String keyword) {
