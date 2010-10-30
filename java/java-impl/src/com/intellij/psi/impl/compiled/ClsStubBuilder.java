@@ -421,7 +421,9 @@ public class ClsStubBuilder {
       if (isEnumConstructor) {
         localVarIgnoreCount += 2;
       }
-      final int paramIgnoreCount = isEnumConstructor? 2 : nonStaticInnerClassConstructor? 1 : 0;
+      // IMPORTANT! for ASM 3.0 paramIgnoreCount must be 0. 
+      // ASM 3.3 exposes synthetic parameters, so parameter indices are shifted and we should filter them on our side 
+      final int paramIgnoreCount = 0/*isEnumConstructor? 2 : nonStaticInnerClassConstructor? 1 : 0*/;
       return new AnnotationParamCollectingVisitor(stub, modlist, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
     }
 

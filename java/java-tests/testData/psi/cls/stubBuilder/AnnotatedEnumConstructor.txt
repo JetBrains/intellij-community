@@ -1,6 +1,6 @@
 PsiJavaFileStub []
   PsiClassStub[enum name=AnnotatedEnumConstructor fqn=AnnotatedEnumConstructor]
-    PsiModifierListStub[mask=17]
+    PsiModifierListStub[mask=25]
     PsiTypeParameterListStub
     PsiRefListStub[EXTENDS_LIST:java.lang.Enum<AnnotatedEnumConstructor>]
     PsiRefListStub[IMPLEMENTS_LIST:]
