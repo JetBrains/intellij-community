@@ -23,7 +23,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -35,7 +34,6 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
   @Override
   public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
     PsiFile file = context.getFile();
-    assert GroovyFileType.GROOVY_LANGUAGE.equals(file.getLanguage()) : file.getLanguage();
     Editor editor = context.getEditor();
     int endOffset = editor.getCaretModel().getOffset();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, GrImportStatement.class, false) != null) {
