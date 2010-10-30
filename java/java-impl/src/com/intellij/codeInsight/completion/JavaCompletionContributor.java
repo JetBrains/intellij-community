@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -177,7 +178,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    final JavaAwareCompletionData completionData = PsiUtil.isLanguageLevel5OrHigher(lastElement) ? ourJava15CompletionData : ourJavaCompletionData;
+    final ASTNode node = lastElement.getNode();
+    assert node != null;
+    if (node.getElementType() == JavaTokenType.DOUBLE_LITERAL) {
+      return;
+    }
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position)) {
       completeAnnotationAttributeName(_result, position, parameters);
@@ -185,6 +190,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
+    final JavaAwareCompletionData completionData = PsiUtil.isLanguageLevel5OrHigher(lastElement) ? ourJava15CompletionData : ourJavaCompletionData;
     final boolean checkAccess = parameters.getInvocationCount() <= 1;
 
     LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {

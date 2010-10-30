@@ -478,6 +478,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
+
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertEmpty(myItems);
