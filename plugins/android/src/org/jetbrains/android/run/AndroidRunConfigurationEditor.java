@@ -56,6 +56,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JComboBox myNetworkLatencyCombo;
   private JCheckBox myDisableBootAnimationCombo;
   private JCheckBox myClearLogCheckBox;
+  private JTabbedPane myTabbedPane;
   private ComboboxWithBrowseButton myAvdBox;
   private RawCommandLineEditor myCommandLineField;
   private String incorrectPreferredAvd;

@@ -325,15 +325,17 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.repaint();
   }
 
-  public void setText(final String text, final String requestor) {
+  public String setText(final String text, final String requestor) {
     if (text == null || text.length() == 0) {
-      if (requestor == null && myCurrentRequestor == null) return;
-      if (requestor != null && !requestor.equals(myCurrentRequestor)) return;
-      if (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor)) return;
+      if ((requestor == null && myCurrentRequestor == null) || (requestor != null && !requestor.equals(myCurrentRequestor))
+          || (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor))) {
+        return myInfoPanel.getText();
+      }
     }
 
     myInfoPanel.setText(text);
     myCurrentRequestor = requestor;
+    return text;
   }
 
   public void setRefreshVisible(final boolean visible) {

@@ -42,6 +42,21 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
 
   protected abstract ParentType[] getChildren(@NotNull final ParentType parentType);
 
+  public Self withParents(@NotNull final Class<? extends ParentType>... types) {
+    return with(new PatternCondition<T>("withParents") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        ParentType current = getParent(t);
+        for (Class<? extends ParentType> type : types) {
+          if (current == null || !type.isInstance(current)) {
+            return false;
+          }
+          current = getParent(current);
+        }
+        return true;
+      }
+    });
+  }
   public Self withParent(@NotNull final Class<? extends ParentType> type) {
     return withParent(StandardPatterns.instanceOf(type));
   }

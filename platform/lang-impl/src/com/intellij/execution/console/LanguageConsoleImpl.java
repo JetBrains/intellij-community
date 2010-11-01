@@ -150,6 +150,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
       myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
+
+      myHistoryViewer.setHorizontalScrollbarVisible(false);
     }
     else {
       myPanel.removeAll();
@@ -164,6 +166,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       if (editorWindow != null) {
         editorWindow.setFilePinned(virtualFile, true);
       }
+
+      myHistoryViewer.setHorizontalScrollbarVisible(true);
     }
   }
 

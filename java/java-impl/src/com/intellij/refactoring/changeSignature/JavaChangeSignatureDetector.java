@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -24,12 +27,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +116,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           return javaChangeInfo;
         }
         return changeInfo;
+      }
+    } else {
+      final PsiLocalVariable localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
+      if (localVariable != null) {
+        return new RenameChangeInfo(localVariable, changeInfo) {
+          @Override
+          public Language getLanguage() {
+            return StdLanguages.JAVA;
+          }
+        };
       }
     }
     return null;
@@ -212,16 +226,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean showDialog(ChangeInfo changeInfo, @NotNull final String oldText) {
+  public boolean accept(final ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
 
-      //if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (silently || ApplicationManager.getApplication().isUnitTestMode()) {
         temporallyRevertChanges(info.getMethod(), oldText);
         createChangeSignatureProcessor(info, method).run();
         return true;
-      /*}
+      }
       final JavaChangeSignatureDialog dialog =
         new JavaChangeSignatureDialog(method.getProject(), new JavaMethodDescriptor(info.getMethod()) {
           @Override
@@ -249,18 +263,21 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           }
         };
       dialog.show();
-      return dialog.isOK();*/
+      return dialog.isOK();
+    } else if (changeInfo instanceof RenameChangeInfo) {
+      ((RenameChangeInfo)changeInfo).perform();
+      return true;
     }
     return false;
 
   }
 
-  private static void temporallyRevertChanges(final PsiMethod method, final String oldText) {
+  private static void temporallyRevertChanges(final PsiElement psiElement, final String oldText) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiFile file = method.getContainingFile();
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(method.getProject());
+        final PsiFile file = psiElement.getContainingFile();
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
         final Document document = documentManager.getDocument(file);
         if (document != null) {
           document.setText(oldText);
@@ -308,56 +325,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (currentInfo instanceof JavaChangeInfo) {
       final PsiMethod method = (PsiMethod)currentInfo.getMethod();
       return getSignatureRange(method).contains(element.getTextRange());
+    } else if (currentInfo instanceof RenameChangeInfo) {
+      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNamedElement().getNameIdentifier();
+      return nameIdentifier != null && nameIdentifier.getTextRange().contains(element.getTextRange());
     }
     return false;
   }
 
-  @Nullable
-  @Override
-  public TextRange getQuickFixRange(PsiElement element) {
-    element = element.getParent();
-    if (element instanceof PsiMethod) {
-      return getSignatureRange((PsiMethod)element);
-    }
-    return null;
-  }
-
-  private TextRange getSignatureRange(PsiMethod method) {
+  private static TextRange getSignatureRange(PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     return new TextRange(method.getModifierList().getTextRange().getStartOffset(), body == null ? method.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
-  }
-
-  @Override
-  public boolean isToHighlight(PsiElement element, ChangeInfo changeInfo) {
-    element = element.getParent();
-    LOG.assertTrue(changeInfo instanceof JavaChangeInfo);
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      SearchScope useScope = method.getUseScope();
-      final PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
-      if (useScope instanceof GlobalSearchScope) {
-        final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
-          .isCheapEnoughToSearch(((JavaChangeInfo)changeInfo).getOldName(), (GlobalSearchScope)useScope, method.getContainingFile(), null);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        final SearchScope classUseScope = containingClass.getUseScope();
-        final String className = containingClass.getName();
-        if (classUseScope instanceof GlobalSearchScope && className != null) {
-          final PsiSearchHelper.SearchCostResult cheapEnough = searchHelper
-            .isCheapEnoughToSearch(className, (GlobalSearchScope)classUseScope, containingClass.getContainingFile(), null);
-          if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo) {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    return method != null && isInsideMethodSignature(element, method) && Comparing.equal(method, bannedInfo.getMethod());
   }
 
   @Override

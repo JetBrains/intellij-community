@@ -41,11 +41,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.ddms.AdbManager;
@@ -58,7 +56,6 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -169,13 +166,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnv.getConfigurationSettings();
-  }
-
-  @Nullable
-  public static String getOutputPackage(@NotNull Module module) {
-    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    if (compilerOutput == null) return null;
-    return new File(compilerOutput.getPath(), module.getName() + ".apk").getPath();
   }
 
   public boolean isStopped() {
@@ -565,7 +555,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, @NotNull Module module) throws IOException {
     String remotePath = "/data/local/tmp/" + packageName;
-    String localPath = getOutputPackage(module);
+    String localPath = myFacet.getApkPath();
     if (!uploadApp(device, remotePath, localPath)) return false;
     if (!installApp(device, remotePath, packageName)) return false;
     return true;

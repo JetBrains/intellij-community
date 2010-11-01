@@ -29,7 +29,10 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,7 +59,6 @@ import java.awt.event.*;
 import java.awt.image.BufferStrategy;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -734,13 +736,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
-        try {
-          Method method = strategy.getClass().getMethod("dispose");   // added in JDK 1.6 so cannot call directly
-          method.invoke(strategy);
-        }
-        catch (Exception ex) {
-          // ignore
-        }
+        strategy.dispose();
       }
       super.dispose();
 
@@ -760,7 +756,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           field.setAccessible(true);
           field.set(this, null);
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
         }
       }
 
@@ -771,7 +767,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         final List<?> list = (List<?>)field.get(null);
         list.remove(this);
       }
-      catch (final Exception ex) {
+      catch (final Exception ignored) {
       }
     }
 

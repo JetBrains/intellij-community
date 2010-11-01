@@ -16,10 +16,17 @@
 package org.jetbrains.idea.maven.facade.embedder;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExecutorManager {
-  private final static ExecutorService myExecutor = new ThreadPoolExecutor(3, Integer.MAX_VALUE, 30 * 60L, TimeUnit.SECONDS,
-                                                                           new SynchronousQueue<Runnable>());
+  private static final ExecutorService myExecutor = new ThreadPoolExecutor(3, Integer.MAX_VALUE, 30 * 60L, TimeUnit.SECONDS,
+                                                                           new SynchronousQueue<Runnable>(),new ThreadFactory() {
+      AtomicInteger num = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Maven Embedder "+num.getAndIncrement());
+      }
+    });
 
   public static Future<?> execute(Runnable r) {
     return myExecutor.submit(r);

@@ -100,11 +100,11 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
           if (outputDir != null) {
             VirtualFile[] externalJars = getExternalJars(module, configuration);
             String resPackage = AndroidResourcesPackagingCompiler.getOutputPath(module, outputDir);
-            String outputPath = new File(outputDir.getPath(), module.getName() + ".apk").getPath();
+            String outputPath = facet.getApkPath();
             String classesDexPath = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME).getPath();
             IAndroidTarget target = configuration.getAndroidTarget();
             String sdkPath = configuration.getSdkPath();
-            if (target != null && sdkPath != null) {
+            if (target != null && sdkPath != null && outputPath != null) {
               AptPackagingItem item =
                 new AptPackagingItem(sdkPath, manifestFile, resPackage, outputPath, configuration.GENERATE_UNSIGNED_APK);
               item.setNativeLibsFolders(collectNativeLibsFolders(facet));
@@ -271,7 +271,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myGenerateUnsignedApk, mySourceRoots,
+      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsignedApk, mySourceRoots,
                                  myExternalLibraries, myNativeLibsFolders);
     }
 
@@ -282,6 +282,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
   private static class MyValidityState implements ValidityState {
     private final Map<String, Long> myResourceTimestamps = new HashMap<String, Long>();
+    private final String myApkPath;
     private final boolean myGenerateUnsignedApk;
 
     MyValidityState(DataInput is) throws IOException {
@@ -292,11 +293,13 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         myResourceTimestamps.put(key, value);
       }
       myGenerateUnsignedApk = is.readBoolean();
+      myApkPath = is.readUTF();
     }
 
     MyValidityState(VirtualFile manifestFile,
                     String resPackagePath,
                     String classesDexPath,
+                    String apkPath,
                     boolean generateUnsignedApk,
                     VirtualFile[] sourceRoots,
                     VirtualFile[] externalLibs,
@@ -304,6 +307,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(resPackagePath), new File(resPackagePath).lastModified());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(classesDexPath), new File(classesDexPath).lastModified());
+      myApkPath = apkPath;
       myGenerateUnsignedApk = generateUnsignedApk;
       for (VirtualFile sourceRoot : sourceRoots) {
         myResourceTimestamps.put(sourceRoot.getPath(), sourceRoot.getTimeStamp());
@@ -328,7 +332,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         return false;
       }
       MyValidityState mvs = (MyValidityState)otherState;
-      return mvs.myGenerateUnsignedApk == myGenerateUnsignedApk && mvs.myResourceTimestamps.equals(myResourceTimestamps);
+      return mvs.myGenerateUnsignedApk == myGenerateUnsignedApk &&
+             mvs.myResourceTimestamps.equals(myResourceTimestamps) &&
+             mvs.myApkPath.equals(myApkPath);
     }
 
     @Override
@@ -339,6 +345,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         out.writeLong(entry.getValue());
       }
       out.writeBoolean(myGenerateUnsignedApk);
+      out.writeUTF(myApkPath);
     }
   }
 }

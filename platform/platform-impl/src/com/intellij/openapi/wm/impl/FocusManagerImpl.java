@@ -525,6 +525,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       result =  isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     }
 
+    final boolean meaninglessOwner = result instanceof JFrame || result instanceof JDialog || result instanceof JWindow || result instanceof JRootPane;
+    if ((result == null && !isFocusBeingTransferred()) || meaninglessOwner) {
+      final Component permOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+      if (permOwner != null) {
+        result = permOwner;
+      }
+    }
+
     return result;
   }
 

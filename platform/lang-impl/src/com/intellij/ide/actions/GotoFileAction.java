@@ -28,6 +28,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -60,16 +62,21 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
         filterUI.close();
       }
 
-      public void elementChosen(Object element) {
-        final PsiFile file = (PsiFile)element;
-        if (file == null) return;
+      public void elementChosen(final Object element) {
+        if (element == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            final OpenFileDescriptor descriptor =
-                new OpenFileDescriptor(project, file.getVirtualFile(), popup.getLinePosition(), popup.getColumnPosition());
-            if (descriptor.canNavigate()) {
-              descriptor.navigate(true);
+            Navigatable n = (Navigatable)element;
+
+            //this is for better cursor position
+            if (element instanceof PsiFile) {
+              VirtualFile vfile = ((PsiFile)element).getVirtualFile();
+              if (vfile == null) return;
+              n = new OpenFileDescriptor(project, vfile, popup.getLinePosition(), popup.getColumnPosition());
             }
+
+            if (!n.canNavigate()) return;
+            n.navigate(true);
           }
         }, ModalityState.NON_MODAL);
       }

@@ -50,10 +50,11 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   private static final int REFRESH_INTERVAL = 1000;
 
   public CreateFileFix(final boolean isDirectory,
-                                   final String newFileName,
-                                   final PsiDirectory directory,
-                                   @Nullable String text,
-                                   @NotNull String key) {
+                       final String newFileName,
+                       @NotNull
+                       final PsiDirectory directory,
+                       @Nullable String text,
+                       @NotNull String key) {
     myIsDirectory = isDirectory;
     myNewFileName = newFileName;
     myDirectory = directory;
@@ -64,13 +65,13 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   }
 
   public CreateFileFix(final String newFileName,
-                                   final PsiDirectory directory, String text) {
+                                   @NotNull PsiDirectory directory, String text) {
     this(false,newFileName,directory, text, "create.file.text" );
   }
 
   public CreateFileFix(final boolean isDirectory,
                                    final String newFileName,
-                                   final PsiDirectory directory) {
+                                   @NotNull PsiDirectory directory) {
     this(isDirectory,newFileName,directory,null, isDirectory ? "create.directory.text":"create.file.text" );
   }
 

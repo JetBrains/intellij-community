@@ -141,9 +141,22 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
         validateOKButton();
       }
     };
+    if (myShowNewNameField) {
+      myNewNameField = new JTextField();
+      Dimension size = myNewNameField.getPreferredSize();
+      FontMetrics fontMetrics = myNewNameField.getFontMetrics(myNewNameField.getFont());
+      size.width = fontMetrics.charWidth('a') * 60;
+      myNewNameField.setPreferredSize(size);
+
+      panel.add(new JLabel(RefactoringBundle.message("copy.files.new.name.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
+
+      panel.add(myNewNameField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
+
+      myNewNameField.getDocument().addDocumentListener(documentListener);
+    }
 
     if (myShowDirectoryField) {
-      panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
+      panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,2,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
       myTargetDirectoryField = new EditorComboWithBrowseButton(null, "", myProject,
                                                                RECENT_KEYS);
@@ -152,7 +165,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
                                                                             myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                                                             EditorComboBox.COMPONENT_ACCESSOR);
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
-      panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
+      panel.add(myTargetDirectoryField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
       myTargetDirectoryField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
         @Override
@@ -160,20 +173,6 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
           validateOKButton();
         }
       });
-    }
-
-    if (myShowNewNameField) {
-      myNewNameField = new JTextField();
-      Dimension size = myNewNameField.getPreferredSize();
-      FontMetrics fontMetrics = myNewNameField.getFontMetrics(myNewNameField.getFont());
-      size.width = fontMetrics.charWidth('a') * 60;
-      myNewNameField.setPreferredSize(size);
-
-      panel.add(new JLabel(RefactoringBundle.message("copy.files.new.name.label")), new GridBagConstraints(0,2,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
-      panel.add(myNewNameField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
-
-      myNewNameField.getDocument().addDocumentListener(documentListener);
     }
 
     return panel;

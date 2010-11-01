@@ -20,10 +20,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,7 +48,7 @@ public class ActionMenuItem extends JMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = new EmptyIcon(18, 18);
 
-  private final AnAction myAction;
+  private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
   private DataContext myContext;
@@ -57,8 +56,13 @@ public class ActionMenuItem extends JMenuItem {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private final boolean myEnableMnemonics;
 
-  public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context, final boolean enableMnemonics, boolean prepareNow) {
-    myAction = action;
+  public ActionMenuItem(AnAction action,
+                        Presentation presentation,
+                        String place,
+                        DataContext context,
+                        final boolean enableMnemonics,
+                        boolean prepareNow) {
+    myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
     myContext = context;
@@ -69,7 +73,8 @@ public class ActionMenuItem extends JMenuItem {
 
     if (prepareNow) {
       init();
-    } else {
+    }
+    else {
       setText("loading...");
     }
   }
@@ -144,14 +149,15 @@ public class ActionMenuItem extends JMenuItem {
       setDisplayedMnemonicIndex(mnemonicIndex);
     }
 
-    updateIcon();
-    String id = ActionManager.getInstance().getId(myAction);
+    AnAction action = myAction.getAction();
+    updateIcon(action);
+    String id = ActionManager.getInstance().getId(action);
     if (id != null) {
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
       setAcceleratorFromShortcuts(shortcuts);
     }
     else {
-      final ShortcutSet shortcutSet = myAction.getShortcutSet();
+      final ShortcutSet shortcutSet = action.getShortcutSet();
       if (shortcutSet != null) {
         setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
       }
@@ -185,7 +191,7 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   public String getFirstShortcutText() {
-    return KeymapUtil.getFirstKeyboardShortcutText(myAction);
+    return KeymapUtil.getFirstKeyboardShortcutText(myAction.getAction());
   }
 
   public void updateContext(DataContext context) {
@@ -216,24 +222,25 @@ public class ActionMenuItem extends JMenuItem {
           AnActionEvent event = new AnActionEvent(
             new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
             myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
-          if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
+          AnAction action = myAction.getAction();
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-            actionManager.fireBeforeActionPerformed(myAction, myContext, event);
+            actionManager.fireBeforeActionPerformed(action, myContext, event);
             Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
             if (component != null && !isInTree(component)) {
               return;
             }
-            myAction.actionPerformed(event);
-            actionManager.queueActionPerformedEvent(myAction, myContext, event);
+            action.actionPerformed(event);
+            actionManager.queueActionPerformedEvent(action, myContext, event);
           }
         }
       });
     }
   }
 
-  private void updateIcon() {
-    if (myAction instanceof Toggleable && myPresentation.getIcon() == null) {
-      myAction.update(myEvent);
+  private void updateIcon(AnAction action) {
+    if (action instanceof Toggleable && myPresentation.getIcon() == null) {
+      action.update(myEvent);
       if (Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY))) {
         setIcon(ourCheckedIcon);
         setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
@@ -290,7 +297,7 @@ public class ActionMenuItem extends JMenuItem {
         }
         else if (Presentation.PROP_ENABLED.equals(name)) {
           setEnabled(myPresentation.isEnabled());
-          updateIcon();
+          updateIcon(myAction.getAction());
         }
         else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
           setMnemonic(myPresentation.getMnemonic());
@@ -302,10 +309,10 @@ public class ActionMenuItem extends JMenuItem {
           setText(myPresentation.getText());
         }
         else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
-          updateIcon();
+          updateIcon(myAction.getAction());
         }
         else if (SELECTED.equals(name)) {
-          updateIcon();
+          updateIcon(myAction.getAction());
         }
       }
       finally {
@@ -316,13 +323,12 @@ public class ActionMenuItem extends JMenuItem {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               if (getParent() == null) {
-                uninstallSynchronizer();  
+                uninstallSynchronizer();
               }
             }
           });
         }
       }
     }
-
   }
 }

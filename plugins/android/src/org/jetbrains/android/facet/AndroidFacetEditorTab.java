@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -96,6 +97,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JPanel myResOverlayPanel;
   private JButton myRemoveResOverlayButton;
   private JCheckBox myGenerateUnsignedApk;
+  private ComboboxWithBrowseButton myApkPathCombo;
+  private JLabel myApkPathLabel;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -226,6 +229,35 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         myResOverlayList.setModel(new CollectionListModel(newItems));
       }
     });
+
+    myApkPathLabel.setLabelFor(myApkPathCombo);
+    myApkPathCombo.getComboBox().setEditable(true);
+    myApkPathCombo.getComboBox().setModel(new DefaultComboBoxModel(getDefaultApks(module)));
+    myApkPathCombo.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!super.isFileVisible(file, showHiddenFiles)) {
+          return false;
+        }
+        return file.isDirectory() || "apk".equals(file.getExtension());
+      }
+    });
+  }
+
+  private static String[] getDefaultApks(@NotNull Module module) {
+    List<String> result = new ArrayList<String>();
+    String path = AndroidFacet.getOutputPackage(module);
+    if (path != null) {
+      result.add(path);
+    }
+    AndroidMavenProvider mavenProvider = AndroidMavenUtil.getMavenProvider();
+    if (mavenProvider != null && mavenProvider.isMavenizedModule(module)) {
+      String buildDirectory = mavenProvider.getBuildDirectory(module);
+      if (buildDirectory != null) {
+        result.add(FileUtil.toSystemDependentName(buildDirectory + '/' + AndroidFacet.getApkName(module)));
+      }
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private boolean isUnderModuleDir(VirtualFile vFile) {
@@ -275,6 +307,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
 
     if (checkRelativePath(myConfiguration.LIBS_FOLDER_RELATIVE_PATH, myNativeLibsFolder.getText())) {
+      return true;
+    }
+
+    if (checkRelativePath(myConfiguration.APK_PATH, (String)myApkPathCombo.getComboBox().getEditor().getItem())) {
       return true;
     }
 
@@ -413,6 +449,14 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       throw new ConfigurationException("Assets folder not specified");
     }
     myConfiguration.ASSETS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absAssetsPath, false);
+
+    String absApkPath = (String)myApkPathCombo.getComboBox().getEditor().getItem();
+    if (absResPath.length() == 0) {
+      myConfiguration.APK_PATH = "";
+    }
+    else {
+      myConfiguration.APK_PATH = '/' + getAndCheckRelativePath(absApkPath, false);
+    }
 
     String absLibsPath = myNativeLibsFolder.getText().trim();
     if (absLibsPath.length() == 0) {
@@ -605,6 +649,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     String aptSourceAbsPath = aptSourcePath.length() > 0 ? toAbsolutePath(aptSourcePath) : "";
     myCustomAptSourceDirField.setText(aptSourceAbsPath != null ? aptSourceAbsPath : "");
     myCustomAptSourceDirField.setEnabled(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
+
+    String apkPath = configuration.APK_PATH;
+    String apkAbsPath = apkPath.length() > 0 ? toAbsolutePath(apkPath) : "";
+    myApkPathCombo.getComboBox().getEditor().setItem(apkAbsPath != null ? apkAbsPath : "");
 
     boolean mavenizedModule = AndroidMavenUtil.isMavenizedModule(myContext.getModule());
     myCopyResourcesFromArtifacts.setVisible(mavenizedModule);

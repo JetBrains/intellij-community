@@ -72,10 +72,20 @@ public abstract class BaseTestNGInspectionsTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
-    myFixture.tearDown();
-    myFixture = null;
-    myEnabledTool = null;
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+          myFixture.tearDown();
+          myFixture = null;
+          myEnabledTool = null;
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   protected void doTest(final String testName) throws Throwable {

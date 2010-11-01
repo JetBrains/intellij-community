@@ -147,8 +147,10 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
             final ID windowTitle = invoke(window, "title");
             final String titleString = Foundation.toStringViaUTF8(windowTitle);
             if (titleString.equals(activeWindowTitle)) {
-              focusedWindow = window;
-              break;
+              if (1 == invoke(window, "isVisible").intValue()) {
+                focusedWindow = window;
+                break;
+              }
             }
           }
 

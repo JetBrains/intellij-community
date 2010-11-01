@@ -20,7 +20,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.validation.AntInspection;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
@@ -59,17 +58,12 @@ public class AntResolveInspection extends AntInspection {
       final AntDomTypeDef typeDef = (AntDomTypeDef)element;
       final List<String> errors = typeDef.getErrorDescriptions();
       if (!errors.isEmpty()) {
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(AntBundle.message("failed.to.load.types")).append(":");
-          for (String error : errors) {
-            builder.append("\n").append(error);
-          }
-          holder.createProblem(typeDef, builder.toString());
+        final StringBuilder builder = new StringBuilder();
+        builder.append(AntBundle.message("failed.to.load.types")).append(":");
+        for (String error : errors) {
+          builder.append("\n").append(error);
         }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        holder.createProblem(typeDef, builder.toString());
       }
     }
     else if (element instanceof AntDomCustomElement) {

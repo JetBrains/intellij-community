@@ -66,6 +66,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
+    if (element == null) return;
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (checkAvailable(element, editor, dataContext)) {
       doRename(element, editor, dataContext);
@@ -96,7 +97,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  public VariableInplaceRenamer doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  public VariableInplaceRenamer doRename(final @NotNull PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
     boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
 
@@ -119,7 +120,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  protected VariableInplaceRenamer createRenamer(PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
     return new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor);
   }
 }

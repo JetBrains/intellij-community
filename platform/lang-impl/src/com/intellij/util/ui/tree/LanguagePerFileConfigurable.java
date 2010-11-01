@@ -145,7 +145,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
             protected void chosen(final VirtualFile virtualFile, final T charset) {
               getValueColumn().getCellEditor().stopCellEditing();
               if (clearSubdirectoriesOnDemandOrCancel(virtualFile, myOverrideQuestion, myOverrideTitle)) {
-                getTableModel().setValueAt(charset, new DefaultMutableTreeNode(virtualFile), 1);
+                getTableModel().setValueAt(myMappings.chosenToStored(virtualFile, charset), new DefaultMutableTreeNode(virtualFile), 1);
               }
             }
           };
@@ -253,7 +253,9 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
         }
       });
       for (T t : values) {
-        group.add(createChooseAction(myVirtualFile, t));
+        if (myMappings.isSelectable(t)) {
+          group.add(createChooseAction(myVirtualFile, t));
+        }
       }
       return group;
     }

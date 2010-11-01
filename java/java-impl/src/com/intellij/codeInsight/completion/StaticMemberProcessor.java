@@ -3,9 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -53,42 +51,27 @@ public abstract class StaticMemberProcessor {
     final PrefixMatcher matcher = resultSet.getPrefixMatcher();
     final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
-    final String[] methodNames = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-      public String[] compute() {
-        return namesCache.getAllMethodNames();
-      }
-    });
-    for (final String methodName : methodNames) {
+    for (final String methodName : namesCache.getAllMethodNames()) {
       if (matcher.prefixMatches(methodName)) {
-        final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
-          public PsiMethod[] compute() {
-            return namesCache.getMethodsByName(methodName, scope);
-          }
-        });
-        for (final PsiMethod method : methods) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              if (isStaticallyImportable(method)) {
-                final PsiClass containingClass = method.getContainingClass();
-                assert containingClass != null;
+        for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
+          if (isStaticallyImportable(method)) {
+            final PsiClass containingClass = method.getContainingClass();
+            assert containingClass != null;
 
-                final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-                if (!myHintShown &&
-                    !shouldImport &&
-                    FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
-                    CompletionService.getCompletionService().getAdvertisementText() == null) {
-                  final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
-                  if (shortcut != null) {
-                    CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
-                  }
-                  myHintShown = true;
-                }
-
-                consumer.consume(createLookupElement(method, containingClass, shouldImport));
+            final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
+            if (!myHintShown &&
+                !shouldImport &&
+                FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
+                CompletionService.getCompletionService().getAdvertisementText() == null) {
+              final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
+              if (shortcut != null) {
+                CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
               }
+              myHintShown = true;
             }
-          });
 
+            consumer.consume(createLookupElement(method, containingClass, shouldImport));
+          }
         }
       }
     }

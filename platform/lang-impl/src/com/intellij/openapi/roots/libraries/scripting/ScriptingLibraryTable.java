@@ -63,7 +63,7 @@ public class ScriptingLibraryTable {
     return myCompactFilesCache.contains(file);
   }
 
-  private void invalidateCache() {
+  public void invalidateCache() {
     myCompactFilesCache = null;
   }
 
@@ -108,7 +108,7 @@ public class ScriptingLibraryTable {
     return myLibraryModels.get(index);
   }
 
-  public class LibraryModel {
+  public static class LibraryModel {
     private String myName;
     private ArrayList<VirtualFile> mySourceFiles = new ArrayList<VirtualFile>();
     private ArrayList<VirtualFile> myCompactFiles = new ArrayList<VirtualFile>();
@@ -133,7 +133,6 @@ public class ScriptingLibraryTable {
     }
 
     public void setCompactFiles(VirtualFile[] files) {
-      invalidateCache();
       myCompactFiles.clear();
       myCompactFiles.addAll(Arrays.asList(files));
     }
