@@ -393,7 +393,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
           doVfsRefresh();
         } finally {
-          myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
+          if (myProject.isOpen() && (! myProject.isDisposed())) { // not sure
+            myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
+          }
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }
@@ -433,7 +435,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
       finally {
         action.finish();
-        LocalHistory.getInstance().putSystemLabel(myProject, actionName);
+        if ((! myProject.isOpen()) || myProject.isDisposed()) {
+          LocalHistory.getInstance().putSystemLabel(myProject, actionName);
+        }
       }
     }
 
@@ -470,7 +474,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void onSuccessImpl() {
-      if (myProject.isDisposed()) {
+      if ((! myProject.isOpen()) || myProject.isDisposed()) {
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
         return;
       }

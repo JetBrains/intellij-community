@@ -57,9 +57,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -269,8 +267,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
-                                                                        final CompletionProgressIndicator indicator,
-                                                                        final CompletionInitializationContext initContext) {
+                                                                        final CompletionProgressIndicator indicator, final CompletionInitializationContext initContext) {
 
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
@@ -344,6 +341,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
     }
+
+    startSemaphore.waitFor();
+    return data;
   }
 
   private CompletionParameters createCompletionParameters(final CompletionContext context, final FileCopyPatcher patcher, int invocationCount) {
