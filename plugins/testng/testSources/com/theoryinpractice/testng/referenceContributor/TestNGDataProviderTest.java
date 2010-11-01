@@ -35,7 +35,17 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @AfterMethod
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          TestNGDataProviderTest.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @DataProvider
