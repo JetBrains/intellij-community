@@ -14,6 +14,7 @@ package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -21,8 +22,16 @@ import java.util.List;
  * @author nik
  */
 public abstract class LibraryRootsComponentDescriptor {
+  /**
+   * Defines presentation for root type nodes in the library roots editor
+   * @return custom presentation or {@code null} if default presentation should be used
+   */
+  @Nullable
   public abstract OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type);
 
+  /**
+   * @return descriptors for 'Attach' buttons in the library roots editor
+   */
   @NotNull
   public abstract List<? extends AttachRootButtonDescriptor> createAttachButtons();
 }

@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Describes an 'attach' button in the library roots component.
+ *
+ * @see ChooserBasedAttachRootButtonDescriptor
  * @author nik
  */
 public abstract class AttachRootButtonDescriptor {

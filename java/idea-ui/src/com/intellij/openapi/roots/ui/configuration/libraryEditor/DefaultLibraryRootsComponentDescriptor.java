@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
-import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptorBase;
+import com.intellij.openapi.roots.libraries.ui.ChooserBasedAttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
@@ -46,8 +46,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
-    return Arrays.asList(new AttachClassesAction(), new AttachJarDirectoriesAction(), new AttachSourcesAction(),
-                         new AttachAnnotationsAction(), new AttachJavadocAction(), new AttachUrlJavadocAction());
+    return Arrays.asList(new AttachClassesDescriptor(), new AttachJarDirectoriesDescriptor(), new AttachSourcesDescriptor(),
+                         new AttachAnnotationsDescriptor(), new AttachJavadocDescriptor(), new AttachUrlJavadocDescriptor());
   }
 
   public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
@@ -55,8 +55,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     return new OrderRootTypePresentation(factory.getNodeText(), factory.getIcon());
   }
 
-  private static class AttachClassesAction extends AttachRootButtonDescriptorBase {
-    private AttachClassesAction() {
+  private static class AttachClassesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachClassesDescriptor() {
       super(OrderRootType.CLASSES, ProjectBundle.message("module.libraries.attach.classes.button"));
     }
 
@@ -78,8 +78,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class AttachJarDirectoriesAction extends AttachRootButtonDescriptorBase {
-    private AttachJarDirectoriesAction() {
+  private static class AttachJarDirectoriesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachJarDirectoriesDescriptor() {
       super(OrderRootType.CLASSES, ProjectBundle.message("module.libraries.attach.jar.directories.button"));
     }
 
@@ -105,8 +105,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private class AttachSourcesAction extends AttachRootButtonDescriptorBase {
-    private AttachSourcesAction() {
+  private class AttachSourcesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachSourcesDescriptor() {
       super(OrderRootType.SOURCES, ProjectBundle.message("module.libraries.attach.sources.button"));
     }
 
@@ -124,8 +124,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class AttachAnnotationsAction extends AttachRootButtonDescriptorBase {
-    private AttachAnnotationsAction() {
+  private static class AttachAnnotationsDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachAnnotationsDescriptor() {
       super(AnnotationOrderRootType.getInstance(), ProjectBundle.message("attach.annotations.button"));
     }
 
@@ -143,8 +143,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class AttachJavadocAction extends AttachRootButtonDescriptorBase {
-    private AttachJavadocAction() {
+  private static class AttachJavadocDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachJavadocDescriptor() {
       super(JavadocOrderRootType.getInstance(), ProjectBundle.message("module.libraries.javadoc.attach.button"));
     }
 
@@ -157,8 +157,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class AttachUrlJavadocAction extends AttachRootButtonDescriptor {
-    private AttachUrlJavadocAction() {
+  private static class AttachUrlJavadocDescriptor extends AttachRootButtonDescriptor {
+    private AttachUrlJavadocDescriptor() {
       super(JavadocOrderRootType.getInstance(), ProjectBundle.message("module.libraries.javadoc.url.button"));
     }
 

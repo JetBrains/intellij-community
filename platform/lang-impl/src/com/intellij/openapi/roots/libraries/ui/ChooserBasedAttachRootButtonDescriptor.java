@@ -26,8 +26,8 @@ import javax.swing.*;
 /**
 * @author nik
 */
-public abstract class AttachRootButtonDescriptorBase extends AttachRootButtonDescriptor {
-  public AttachRootButtonDescriptorBase(@NotNull OrderRootType rootType, @NotNull String buttonText) {
+public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootButtonDescriptor {
+  public ChooserBasedAttachRootButtonDescriptor(@NotNull OrderRootType rootType, @NotNull String buttonText) {
     super(rootType, buttonText);
   }
 
