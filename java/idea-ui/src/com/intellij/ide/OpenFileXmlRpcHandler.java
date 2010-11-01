@@ -21,39 +21,41 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.io.File;
 
 /**
  * @author mike
  */
+@SuppressWarnings({"MethodMayBeStatic"})
 public class OpenFileXmlRpcHandler {
-  @SuppressWarnings({"MethodMayBeStatic"})
   public boolean open(final String absolutePath) {
+    return openAndNavigate(absolutePath, -1, -1);
+  }
+
+  public boolean openAndNavigate(final String absolutePath, final int line, final int column) {
     final Application application = ApplicationManager.getApplication();
 
     application.invokeLater(new Runnable() {
       public void run() {
-        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-        if (openProjects.length == 0) return;
-        Project project = openProjects[0];
-
-        String correctPath = absolutePath.replace(File.separatorChar, '/');
-        final VirtualFile[] virtualFiles = new VirtualFile[1];
-        final String correctPath1 = correctPath;
-        application.runWriteAction(new Runnable() {
-          public void run() {
-            virtualFiles[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(correctPath1);
+        final String path = FileUtil.toSystemIndependentName(absolutePath);
+        final VirtualFile virtualFile = application.runWriteAction(new Computable<VirtualFile>() {
+          @Override
+          public VirtualFile compute() {
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
           }
         });
-        if (virtualFiles[0] == null) return;
+        if (virtualFile == null) return;
+
+        Project project = ProjectUtil.guessProjectForFile(virtualFile);
+        if (project == null) return;
 
         FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-        if (editorProviderManager.getProviders(project, virtualFiles[0]).length == 0) return;
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFiles[0]);
+        if (editorProviderManager.getProviders(project, virtualFile).length == 0) return;
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, line, column);
         FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
       }
     });
