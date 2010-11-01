@@ -380,11 +380,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        cancel();
-      }
-    });
+    cancel();
 
     assert !myDisposed;
     myDisposed = true;
@@ -422,7 +418,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
         if (isOutdated()) return;
-        if (isCanceled()) return;
+        if (isCanceled()) return; //todo hide lookup
 
         //what if a new completion was invoked by the user before this 'later'?
         if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
@@ -476,11 +472,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void cancelByWriteAction() {
     myToRestart = true;
     cancel();
-  }
-
-  @Override
-  public void cancel() {
-    super.cancel();
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
