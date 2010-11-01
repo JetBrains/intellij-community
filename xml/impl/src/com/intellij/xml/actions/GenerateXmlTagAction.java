@@ -254,7 +254,9 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return file instanceof XmlFile;
+    if (!(file instanceof XmlFile)) return false;
+    XmlTag contextTag = getContextTag(editor, file);
+    return contextTag != null && contextTag.getDescriptor() != null;
   }
 
   @Override
