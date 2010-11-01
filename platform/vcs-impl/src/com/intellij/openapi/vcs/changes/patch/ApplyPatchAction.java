@@ -58,6 +58,10 @@ public class ApplyPatchAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
+    showApplyPatch(project, null);
+  }
+
+  public static void showApplyPatch(final Project project, final VirtualFile file) {
     final Consumer<ApplyPatchDifferentiatedDialog> callback = new Consumer<ApplyPatchDifferentiatedDialog>() {
       public void consume(ApplyPatchDifferentiatedDialog newDia) {
         if (newDia.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
@@ -73,18 +77,19 @@ public class ApplyPatchAction extends DumbAwareAction {
         final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
         for (VirtualFile base : patchGroups.keySet()) {
           final PatchApplier patchApplier =
-            new PatchApplier<BinaryFilePatch>(project, base, ObjectsConvertor.convert(patchGroups.get(base), new Convertor<FilePatchInProgress, FilePatch>() {
-              public FilePatch convert(FilePatchInProgress o) {
-                return o.getPatch();
-              }
-            }), newDia.getSelectedChangeList(), null);
+            new PatchApplier<BinaryFilePatch>(project, base, ObjectsConvertor.convert(patchGroups.get(base),
+                                                                                      new Convertor<FilePatchInProgress, FilePatch>() {
+                                                                                        public FilePatch convert(FilePatchInProgress o) {
+                                                                                          return o.getPatch();
+                                                                                        }
+                                                                                      }), newDia.getSelectedChangeList(), null);
           appliers.add(patchApplier);
         }
         PatchApplier.executePatchGroup(appliers);
       }
     };
     FileDocumentManager.getInstance().saveAllDocuments();
-    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback);
+    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback, file);
     dialog.show();
   }
 
