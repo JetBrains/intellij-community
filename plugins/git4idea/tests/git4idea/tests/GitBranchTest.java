@@ -90,7 +90,7 @@ public class GitBranchTest extends GitCollaborativeTestCase {
   @Test
   public void testList() throws VcsException {
     List<GitBranch> branches = new ArrayList<GitBranch>();
-    GitBranch.list(myProject, myDir, true, true, branches);
+    GitBranch.list(myProject, myDir, true, true, branches, null);
     assertEqualBranchLists(branches, myBranches);
   }
 
@@ -99,7 +99,7 @@ public class GitBranchTest extends GitCollaborativeTestCase {
     checkoutRemoteBranch();
 
     List<GitBranch> branches = new ArrayList<GitBranch>();
-    GitBranch.list(myProject, myDir, true, true, branches);
+    GitBranch.list(myProject, myDir, true, true, branches, null);
     assertEqualBranchLists(branches, myBranches);
   }
 
