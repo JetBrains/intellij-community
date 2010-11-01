@@ -621,7 +621,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myStopped) return false;
       boolean deviceNotResponding = false;
       try {
-        executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + "\"", receiver);
+        executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + "\"", receiver);
       }
       catch (ShellCommandUnresponsiveException e) {
         LOG.info(e);
@@ -641,13 +641,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       receiver = new MyReceiver();
     }
-    if (receiver.failureMessage != null && receiver.failureMessage.equals("INSTALL_FAILED_ALREADY_EXISTS")) {
+    /*if (receiver.failureMessage != null && receiver.failureMessage.equals("INSTALL_FAILED_ALREADY_EXISTS")) {
       if (myStopped) return false;
       receiver = new MyReceiver();
       getProcessHandler().notifyTextAvailable("Application is already installed. Reinstalling.\n", STDOUT);
       executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
       if (myStopped) return false;
-    }
+    }*/
     if (!isSuccess(receiver)) {
       getProcessHandler().notifyTextAvailable("Can't reinstall application. Installing from scratch.\n", STDOUT);
       executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
