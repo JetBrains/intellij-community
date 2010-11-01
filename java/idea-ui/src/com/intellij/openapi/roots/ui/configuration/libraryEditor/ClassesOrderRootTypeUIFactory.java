@@ -26,13 +26,24 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
 
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement() {
-    return new ClassesElement();
-  }
+  private static final Icon ICON = IconLoader.getIcon("/nodes/compiledClassesFolder.png");
 
   public PathEditor createPathEditor(Sdk sdk) {
     return new PathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true));
+  }
+
+  @Override
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  @Override
+  public String getNodeText() {
+    return ProjectBundle.message("library.classes.node");
   }
 }

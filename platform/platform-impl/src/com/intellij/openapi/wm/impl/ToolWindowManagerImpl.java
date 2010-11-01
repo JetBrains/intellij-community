@@ -30,9 +30,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -341,12 +341,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
 
-    final JComponent editorComponent = FileEditorManagerEx.getInstanceEx(myProject).getComponent();
+    FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
+    final JComponent editorComponent = editorManager.getComponent();
     myEditorComponentFocusWatcher.install(editorComponent);
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
     if (myEditorComponentActive) {
-      activateEditorComponentImpl(commandsList, true);
+      activateEditorComponentImpl(editorManager.getSplitters(), commandsList, true);
     }
     execute(commandsList);
 
@@ -494,20 +495,30 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     activateEditorComponent(true);
   }
 
-  private void activateEditorComponent(boolean forced) {
+  private void activateEditorComponent(final boolean forced) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    activateEditorComponentImpl(commandList, forced);
-    execute(commandList);
+
+    getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+        activateEditorComponentImpl(getSplittersFromFocus(), commandList, forced);
+        execute(commandList);
+      }
+    });
   }
 
-  private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList, final boolean forced) {
+  private EditorsSplitters getSplittersFromFocus() {
+    return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
+  }
+
+  private void activateEditorComponentImpl(EditorsSplitters splitters, final ArrayList<FinalizableCommand> commandList, final boolean forced) {
     final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
-    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(new Runnable() {
+    appendRequestFocusInEditorComponentCmd(splitters, commandList, forced).doWhenDone(new Runnable() {
       public void run() {
         final ArrayList<FinalizableCommand> postExecute = new ArrayList<FinalizableCommand>();
 
@@ -800,7 +811,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
 
-      activateEditorComponentImpl(commandList, true);
+      activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
     }
     else {
 
@@ -835,7 +846,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (wasActive && moveFocus) {
         if (myActiveStack.isEmpty()) {
           if (hasOpenEditorFiles()) {
-            activateEditorComponentImpl(commandList, false);
+            activateEditorComponentImpl(getSplittersFromFocus(), commandList, false);
           }
           else {
             focusToolWinowByDefault(id);
@@ -1021,7 +1032,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     else if (wasActive) { // tool window was active but it cannot be activate again
-      activateEditorComponentImpl(commandsList, true);
+      activateEditorComponentImpl(getSplittersFromFocus(), commandsList, true);
     }
 
     execute(commandsList);
@@ -1152,7 +1163,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // if there is no any active tool window and editor is also inactive
     // then activate editor
     if (!myEditorComponentActive && getActiveToolWindowId() == null) {
-      activateEditorComponentImpl(commandList, true);
+      activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
     }
     execute(commandList);
   }
@@ -1559,11 +1570,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     commandsList.add(command);
   }
 
-  private ActionCallback appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList, boolean forced) {
+  private ActionCallback appendRequestFocusInEditorComponentCmd(EditorsSplitters splitters, final ArrayList<FinalizableCommand> commandList, boolean forced) {
     if (myProject.isDisposed()) return new ActionCallback.Done();
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final RequestFocusInEditorComponentCmd command =
-      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), getFocusManager(), commandProcessor, forced);
+      new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
     commandList.add(command);
     return command.getDoneCallback();
   }

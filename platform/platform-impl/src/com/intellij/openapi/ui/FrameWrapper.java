@@ -26,9 +26,9 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable {
@@ -58,10 +59,12 @@ public class FrameWrapper implements Disposable {
   private ActionCallback myFocusedCallback;
   private boolean myDisposed;
 
-  public FrameWrapper() {
+  public FrameWrapper(Project project) {
+    this(project, null);
   }
 
-  public FrameWrapper(@NonNls String dimensionServiceKey) {
+  public FrameWrapper(Project project, @NonNls String dimensionServiceKey) {
+    myProject = project;
     myDimensionKey = dimensionServiceKey;
   }
 
@@ -158,13 +161,13 @@ public class FrameWrapper implements Disposable {
     assert !myDisposed : "Already disposed!";
 
     if (myFrame == null) {
-      myFrame = createJFrame();
+      myFrame = createJFrame(WindowManager.getInstance().getIdeFrame(myProject));
     }
     return myFrame;
   }
 
-  protected JFrame createJFrame() {
-    return new MyJFrame();
+  protected JFrame createJFrame(IdeFrame parent) {
+    return new MyJFrame(parent);
   }
 
   public void setComponent(JComponent component) {
@@ -230,11 +233,55 @@ public class FrameWrapper implements Disposable {
     Disposer.register(this, disposable);
   }
 
-  private class MyJFrame extends JFrame implements DataProvider {
-    private boolean myDisposing;
+  private class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
 
-    private MyJFrame() throws HeadlessException {
+    private boolean myDisposing;
+    private IdeFrame myParent;
+
+    private String myFrameTitle;
+    private String myFileTitle;
+    private File myFile;
+
+    private MyJFrame(IdeFrame parent) throws HeadlessException {
+      myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+    }
+
+    @Override
+    public StatusBar getStatusBar() {
+      return myParent.getStatusBar();
+    }
+
+    @Override
+    public Rectangle suggestChildFrameBounds() {
+      return myParent.suggestChildFrameBounds();
+    }
+
+    @Override
+    public Project getProject() {
+      return myParent.getProject();
+    }
+
+    @Override
+    public void setFrameTitle(String title) {
+      myFrameTitle = title;
+      updateTitle();
+    }
+
+    @Override
+    public void setFileTitle(String fileTitle, File ioFile) {
+      myFileTitle = fileTitle;
+      myFile = ioFile;
+      updateTitle();
+    }
+
+    private void updateTitle() {
+      IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
+    }
+
+    @Override
+    public IdeFrame getParentFrame() {
+      return myParent;
     }
 
     public void dispose() {

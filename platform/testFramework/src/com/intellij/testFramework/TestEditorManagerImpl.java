@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -432,5 +433,10 @@ import java.util.Map;
   @NotNull
   public String getComponentName() {
     return "TestEditorManager";
+  }
+
+  @Override
+  public EditorsSplitters getSplitters() {
+    return null;
   }
 }

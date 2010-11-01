@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +34,7 @@ import javax.swing.*;
  * User: anna
  * Date: Sep 6, 2010
  */
-public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
+public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
   public static final String CHANGE_SIGNATURE = "Apply signature change";
   public static final String NEW_NAME = "Apply new name";

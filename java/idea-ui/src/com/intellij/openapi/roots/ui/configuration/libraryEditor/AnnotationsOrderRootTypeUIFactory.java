@@ -26,10 +26,21 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
 
 public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement() {
-    return new AnnotationElement();
+  private static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
+
+  @Override
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  @Override
+  public String getNodeText() {
+    return ProjectBundle.message("sdk.configure.annotations.tab");
   }
 
   public PathEditor createPathEditor(Sdk sdk) {

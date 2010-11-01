@@ -119,6 +119,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract void closeAllFiles();
 
+  public abstract EditorsSplitters getSplitters();
+
   @NotNull
   public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
     return openFileWithProviders(file, focusEditor).getFirst ();

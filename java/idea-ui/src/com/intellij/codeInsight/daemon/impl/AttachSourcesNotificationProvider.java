@@ -194,7 +194,9 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
                 appendSources(libraryOrderEntry.getLibrary(), files);
               } else {
                 for (Library libOrderEntry : librariesToAppendSourcesTo.keySet()) {
-                  appendSources(libOrderEntry, files);
+                  if (libOrderEntry != null) {
+                    appendSources(libOrderEntry, files);
+                  }
                 }
               }
               return FINAL_CHOICE;

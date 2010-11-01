@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -380,11 +381,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        cancel();
-      }
-    });
+    cancel();
 
     assert !myDisposed;
     myDisposed = true;
@@ -422,7 +419,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
         if (isOutdated()) return;
-        if (isCanceled()) return;
+        if (isCanceled() && !myToRestart) return; // otherwise
 
         //what if a new completion was invoked by the user before this 'later'?
         if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
@@ -476,11 +473,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void cancelByWriteAction() {
     myToRestart = true;
     cancel();
-  }
 
-  @Override
-  public void cancel() {
-    super.cancel();
+    scheduleRestart();
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
@@ -555,7 +549,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void prefixUpdated() {
     if (myToRestart) {
-      restartCompletion();
+      scheduleRestart();
       return;
     }
 
@@ -564,7 +558,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {
-        restartCompletion();
+        scheduleRestart();
         return;
       }
     }
@@ -572,11 +566,35 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     hideAutopopupIfMeaningless();
   }
 
-  public void restartCompletion() {
-    closeAndFinish(false);
+  public void scheduleRestart() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
-    final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, getProject());
-    newHandler.invokeCompletion(getProject(), myEditor, psiFileInEditor, myParameters.getInvocationCount());
+    final int offset = myEditor.getCaretModel().getOffset();
+    final long stamp = myEditor.getDocument().getModificationStamp();
+    final Project project = getProject();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (myEditor.isDisposed() || project.isDisposed()) {
+          return;
+        }
+
+        if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
+          return;
+        }
+
+        if (!isOutdated()) {
+          closeAndFinish(false);
+        }
+
+        final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
+        final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);
+        try {
+          newHandler.invokeCompletion(project, myEditor, psiFileInEditor, myParameters.getInvocationCount());
+        }
+        catch (IndexNotReadyException ignored) {
+        }
+      }
+    });
   }
 }

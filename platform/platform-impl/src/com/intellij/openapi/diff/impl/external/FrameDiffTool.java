@@ -62,7 +62,7 @@ class FrameDiffTool implements DiffTool {
                                   diffPanel.getComponent());
       showDiffDialog(builder, hints);
     } else {
-      final FrameWrapper frameWrapper = new FrameWrapper(request.getGroupKey());
+      final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame());
       if (diffPanel == null) return;
       frameWrapper.setTitle(request.getWindowTitle());

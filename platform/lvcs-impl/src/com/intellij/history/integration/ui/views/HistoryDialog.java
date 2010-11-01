@@ -86,7 +86,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private boolean isUpdating;
 
   protected HistoryDialog(Project project, IdeaGateway gw, VirtualFile f, boolean doInit) {
-    super();
+    super(project);
     myProject = project;
     myGateway = gw;
     myFile = f;

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
@@ -49,6 +50,11 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
       @Override
       protected void afterFileOpen(VirtualFile file) {
         container.get().fireContentOpen(file);
+      }
+
+      @Override
+      protected IdeFrame getFrame(Project project) {
+        return DockManager.getInstance(project).getIdeFrame(container.get());
       }
     };
     splitters.createCurrentWindow();

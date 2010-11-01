@@ -15,17 +15,24 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author nik
  */
-public abstract class OrderRootTypeElement extends LibraryTableTreeContentElement {
+public class OrderRootTypeElement extends LibraryTableTreeContentElement {
   private final OrderRootType myRootType;
+  private String myNodeText;
+  private Icon myIcon;
 
-  public OrderRootTypeElement(@NotNull OrderRootType rootType) {
+  public OrderRootTypeElement(@NotNull OrderRootType rootType, final String nodeText, final Icon icon) {
     myRootType = rootType;
+    myNodeText = nodeText;
+    myIcon = icon;
   }
 
   @NotNull
@@ -41,5 +48,9 @@ public abstract class OrderRootTypeElement extends LibraryTableTreeContentElemen
   @Override
   public boolean equals(Object obj) {
     return obj instanceof OrderRootTypeElement && ((OrderRootTypeElement)obj).getOrderRootType().equals(myRootType);
+  }
+
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
+    return new OrderRootTypeElementDescriptor(parentDescriptor, this, myNodeText, myIcon);
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -89,7 +89,9 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
       docManager.commitDocument(document);
       PsiFile psiFile = docManager.getPsiFile(document);
-      if (method.getParameterList().getParametersCount() > 0 && isTopLevelStatement(psiFile, context.getStartOffset())) {
+      if (method instanceof GrMethod &&
+          method.getParameterList().getParametersCount() > 0 &&
+          method.getContainingClass() instanceof GroovyScriptClass) {
         return;
       }
       if (isExpressionStatement(psiFile, context.getStartOffset()) &&
@@ -139,14 +141,6 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }
 
     addTailType(item).processTail(context.getEditor(), context.getTailOffset());
-  }
-
-  private static boolean isTopLevelStatement(PsiFile psiFile, int offset) {
-    PsiElement elementAt = psiFile.findElementAt(offset);
-    if (elementAt == null) return false;
-    GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
-    if (expr == null) return false;
-    return expr.getParent() instanceof GroovyFile;
   }
 
   private static boolean isExpressionStatement(PsiFile psiFile, int offset) {

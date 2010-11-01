@@ -82,7 +82,10 @@ public class CompletionUtil {
     }
   }
 
-  public static CompletionData getCompletionDataByElement(final PsiElement position, PsiFile originalFile) {
+  @Nullable
+  public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
+    if (position == null) return null;
+
     final FileType fileType = position.getParent().getLanguage().getAssociatedFileType();
     if (fileType != null) {
       final CompletionData mainData = getCompletionDataByFileType(fileType);

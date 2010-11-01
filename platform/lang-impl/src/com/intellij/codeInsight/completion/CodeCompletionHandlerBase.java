@@ -33,7 +33,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +47,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -95,8 +93,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
+    if (editor.isViewer()) {
+      editor.getDocument().fireReadOnlyModificationAttempt();
+      return;
     }
 
     try {
@@ -108,11 +107,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
-    final Document document = editor.getDocument();
-    if (editor.isViewer()) {
-      document.fireReadOnlyModificationAttempt();
-      return;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
+
+    final Document document = editor.getDocument();
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;
     }
@@ -159,12 +158,26 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
-            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType);
+
+            final Ref<CompletionContributor> current = Ref.create(null);
+            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
+              CompletionContributor dummyIdentifierChanger;
+              @Override
+              public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
+                super.setFileCopyPatcher(fileCopyPatcher);
+
+                if (dummyIdentifierChanger != null) {
+                  LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+                }
+                dummyIdentifierChanger = current.get();
+              }
+            };
             for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
               if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
                 continue;
               }
 
+              current.set(contributor);
               contributor.beforeCompletion(initializationContext[0]);
               assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
             }
@@ -274,13 +287,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-              startSemaphore.up(); //todo move inside read action
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 public void run() {
-                  if (!parameters.getPosition().isValid() || !parameters.getOriginalFile().isValid()) {
-                    data.set(LookupElement.EMPTY_ARRAY);
-                    return;
-                  }
+                  startSemaphore.up();
 
                   ProgressManager.checkCanceled();
                   data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
@@ -622,43 +631,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
           final Document document = copy.getViewProvider().getDocument();
           assert document != null;
-          final String oldDocumentText = document.getText();
-          final String oldCopyText = copy.getText();
-          final String newText = file.getText();
-          document.setText(newText);
-          try {
-            PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
-            return copy;
-          }
-          catch (Throwable e) {
-            document.setText("");
-            if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-              final StringBuilder sb = new StringBuilder();
-              boolean oldsAreSame = Comparing.equal(oldCopyText, oldDocumentText);
-              if (oldsAreSame) {
-                sb.append("oldCopyText == oldDocumentText");
-              }
-              else {
-                sb.append("oldCopyText != oldDocumentText");
-                sb.append("\n--- oldCopyText ------------------------------------------------\n").append(oldCopyText);
-                sb.append("\n--- oldDocumentText ------------------------------------------------\n").append(oldDocumentText);
-              }
-              if (Comparing.equal(oldCopyText, newText)) {
-                sb.insert(0, "newText == oldCopyText; ");
-              }
-              else if (!oldsAreSame && Comparing.equal(oldDocumentText, newText)) {
-                sb.insert(0, "newText == oldDocumentText; ");
-              }
-              else {
-                sb.insert(0, "newText != oldCopyText, oldDocumentText; ");
-                if (oldsAreSame) {
-                  sb.append("\n--- oldCopyText ------------------------------------------------\n").append(oldCopyText);
-                }
-                sb.append("\n--- newText ------------------------------------------------\n").append(newText);
-              }
-              LOG.error(sb.toString(), e);
-            }
-          }
+          document.setText(file.getText());
+          PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
+          return copy;
         }
       }
     }
@@ -671,13 +646,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     switch (type) {
-      case CLASS_NAME:
-        return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-      case SMART:
-        return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
+      case CLASS_NAME: return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
+      case SMART: return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
       case BASIC:
-      default:
-        return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
+      default: return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
     }
   }
 }

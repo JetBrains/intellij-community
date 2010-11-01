@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,8 +71,19 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    for (final PsiParameter parameter : getAllParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    boolean it_already_processed = false;
+    while (place != this) {
+      if (place instanceof GrClosableBlock && !((GrClosableBlock)place).hasParametersSection()) {
+        it_already_processed = true;
+        break;
+      }
+      place = place.getParent();
+    }
+
+    if (hasParametersSection() || !it_already_processed) {
+      for (final PsiParameter parameter : getAllParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+      }
     }
 
     if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {

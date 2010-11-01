@@ -34,6 +34,8 @@ public abstract class SpeedSearchSupply {
       return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
   }
 
+  public abstract void refreshSelection();
+
   public abstract boolean isPopupActive();
 
   @Nullable

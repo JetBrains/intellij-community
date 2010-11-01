@@ -74,6 +74,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   private IdeRootPane myRootPane;
   private final BalloonLayout myBalloonLayout;
+  private static boolean myUpdatingTitle;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application, final String[] commandLineArgs) {
@@ -188,11 +189,16 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void setTitle(final String title) {
-    myTitle = title;
+    if (myUpdatingTitle) {
+      super.setTitle(title);
+    } else {
+      myTitle = title;
+    }
+
     updateTitle();
   }
 
-  private void setFrameTitle(final String text) {
+  public void setFrameTitle(final String text) {
     super.setTitle(text);
   }
 
@@ -207,20 +213,33 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   private void updateTitle() {
-    final StringBuilder sb = new StringBuilder();
-    if (myTitle != null && myTitle.length() > 0) {
-      sb.append(myTitle);
-      sb.append(" - ");
-    }
-    if (myFileTitle != null && myFileTitle.length() > 0) {
-      sb.append(myFileTitle);
-      sb.append(" - ");
-    }
+    updateTitle(this, myTitle, myFileTitle, myCurrentFile);
+  }
 
-    getRootPane().putClientProperty("Window.documentFile", myCurrentFile);
+  public static void updateTitle(JFrame frame, final String title, final String fileTitle, final File currentFile) {
+    if (myUpdatingTitle) return;
 
-    sb.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
-    setFrameTitle(sb.toString());
+    try {
+      myUpdatingTitle = true;
+
+      final StringBuilder sb = new StringBuilder();
+      if (title != null && title.length() > 0) {
+        sb.append(title);
+        sb.append(" - ");
+      }
+      if (fileTitle != null && fileTitle.length() > 0) {
+        sb.append(fileTitle);
+        sb.append(" - ");
+      }
+
+      frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+
+      sb.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
+      frame.setTitle(sb.toString());
+    }
+    finally {
+      myUpdatingTitle = false;
+    }
   }
 
   public Object getData(final String dataId) {

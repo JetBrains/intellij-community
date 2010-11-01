@@ -244,6 +244,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
+    if (window instanceof JFrame) {
+      return false;
+    }
+
     boolean isMainFrame = window instanceof IdeFrameImpl;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
 
