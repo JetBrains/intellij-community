@@ -48,6 +48,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
   private JRadioButton myLaunchCustomButton;
   private JPanel myPanel;
   private JRadioButton myDoNothingButton;
+  private JCheckBox myDeployAndInstallCheckBox;
 
   private final ConfigurationModuleSelector myModuleSelector;
 
@@ -110,6 +111,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
     }
     myActivityField.setEnabled(launchSpecificActivity);
     myActivityField.setText(configuration.ACTIVITY_CLASS);
+    myDeployAndInstallCheckBox.setSelected(configuration.DEPLOY);
   }
 
   public Component getComponent() {
@@ -127,5 +129,6 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
     else {
       configuration.MODE = AndroidRunConfiguration.DO_NOTHING;
     }
+    configuration.DEPLOY = myDeployAndInstallCheckBox.isSelected();
   }
 }

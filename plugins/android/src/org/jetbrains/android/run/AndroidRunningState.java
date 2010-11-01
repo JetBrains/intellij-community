@@ -86,6 +86,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final AndroidApplicationLauncher myApplicationLauncher;
   private final Map<Module, String> myAdditionalModule2PackageName;
 
+  private final Object myDebugLock = new Object();
+
   @NotNull
   private volatile String[] myTargetDeviceSerialNumbers;
 
@@ -99,6 +101,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean myStopped;
   private volatile ProcessHandler myProcessHandler;
   private final Object myLock = new Object();
+
+  private boolean myDeploy;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -251,8 +255,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myAdditionalModule2PackageName = additionalModule2PackageName;
   }
 
+  public void setDeploy(boolean deploy) {
+    myDeploy = deploy;
+  }
+
   public void setTargetPackageName(String targetPackageName) {
-    myTargetPackageName = targetPackageName;
+    synchronized (myDebugLock) {
+      myTargetPackageName = targetPackageName;
+    }
   }
 
   private void chooseDeviceAutomaticaly() throws AdbNotRespondingException {
@@ -376,23 +386,29 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   public void clientChanged(Client client, int changeMask) {
-    IDevice device = client.getDevice();
-    if (isMyDevice(device) && device.isOnline()) {
-      if (myTargetDeviceSerialNumbers.length == 0) {
-        myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
-      }
+    synchronized (myDebugLock) {
       if (myDebugLauncher == null) {
         return;
       }
-      ClientData data = client.getClientData();
-      String description = data.getClientDescription();
-      if (description != null && description.equals(myTargetPackageName)) {
-        if (myApplicationLauncher.isReadyForDebugging(data)) {
-          String port = Integer.toString(client.getDebuggerListenPort());
-          myDebugLauncher.launchDebug(device, port);
-          myDebugLauncher = null;
+      IDevice device = client.getDevice();
+      if (isMyDevice(device) && device.isOnline()) {
+        if (myTargetDeviceSerialNumbers.length == 0) {
+          myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
+        }
+        ClientData data = client.getClientData();
+        String description = data.getClientDescription();
+        if (description != null && description.equals(myTargetPackageName)) {
+          launchDebug(client);
         }
       }
+    }
+  }
+
+  private void launchDebug(Client client) {
+    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData())) {
+      String port = Integer.toString(client.getDebuggerListenPort());
+      myDebugLauncher.launchDebug(client.getDevice(), port);
+      myDebugLauncher = null;
     }
   }
 
@@ -519,11 +535,19 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
     deviceMessageBuilder.append('\n');
     getProcessHandler().notifyTextAvailable(deviceMessageBuilder.toString(), STDOUT);
-    Module module = myFacet.getModule();
     try {
-      if (!uploadAndInstall(device, myPackageName, module)) return false;
-      if (!uploadAndInstallDependentModules(device)) return false;
-      return myApplicationLauncher.launch(this, device);
+      if (myDeploy) {
+        if (!uploadAndInstall(device, myPackageName)) return false;
+        if (!uploadAndInstallDependentModules(device)) return false;
+      }
+      if (!myApplicationLauncher.launch(this, device)) return false;
+      synchronized (myDebugLock) {
+        Client client = device.getClient(myTargetPackageName);
+        if (client != null) {
+          launchDebug(client);
+        }
+      }
+      return true;
     }
     catch (TimeoutException e) {
       LOG.info(e);
@@ -546,14 +570,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadAndInstallDependentModules(@NotNull IDevice device) throws IOException {
     for (Module module : myAdditionalModule2PackageName.keySet()) {
       String packageName = myAdditionalModule2PackageName.get(module);
-      if (!uploadAndInstall(device, packageName, module)) {
+      if (!uploadAndInstall(device, packageName)) {
         return false;
       }
     }
     return true;
   }
 
-  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, @NotNull Module module) throws IOException {
+  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName) throws IOException {
     String remotePath = "/data/local/tmp/" + packageName;
     String localPath = myFacet.getApkPath();
     if (!uploadApp(device, remotePath, localPath)) return false;
