@@ -4,15 +4,122 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import gnu.trove.TIntStack;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author yole
  */
-public class PythonIndentingLexer extends PythonFutureAwareLexer {
+public class PythonIndentingLexer extends PythonLexer {
   private final TIntStack myIndentStack = new TIntStack();
   private int myBraceLevel;
   private boolean myLineHasSignificantTokens;
 
   private static final boolean DUMP_TOKENS = false;
+
+  protected static class PendingToken {
+    private IElementType _type;
+    private final int _start;
+    private final int _end;
+
+    public PendingToken(IElementType type, int start, int end) {
+      _type = type;
+      _start = start;
+      _end = end;
+    }
+
+    public IElementType getType() {
+      return _type;
+    }
+
+    public int getStart() {
+      return _start;
+    }
+
+    public int getEnd() {
+      return _end;
+    }
+
+    public void setType(IElementType type) {
+      _type = type;
+    }
+  }
+
+  protected List<PendingToken> myTokenQueue = new ArrayList<PendingToken>();
+
+  protected boolean myProcessSpecialTokensPending = false;
+
+  protected IElementType getBaseTokenType() {
+    return super.getTokenType();
+  }
+
+  protected int getBaseTokenStart() {
+    return super.getTokenStart();
+  }
+
+  protected int getBaseTokenEnd() {
+    return super.getTokenEnd();
+  }
+
+  @Override
+  public IElementType getTokenType() {
+    if (myTokenQueue.size() > 0) {
+      return myTokenQueue.get(0).getType();
+    }
+    return super.getTokenType();
+  }
+
+  @Override
+  public int getTokenStart() {
+    if (myTokenQueue.size() > 0) {
+      return myTokenQueue.get(0).getStart();
+    }
+    return super.getTokenStart();
+  }
+
+  @Override
+  public int getTokenEnd() {
+    if (myTokenQueue.size() > 0) {
+      return myTokenQueue.get(0).getEnd();
+    }
+    return super.getTokenEnd();
+  }
+
+  @Override
+  public void advance() {
+    if (myTokenQueue.size() > 0) {
+      myTokenQueue.remove(0);
+      if (myProcessSpecialTokensPending) {
+        myProcessSpecialTokensPending = false;
+        processSpecialTokens();
+      }
+    }
+    else {
+      advanceBase();
+      processSpecialTokens();
+    }
+    adjustBraceLevel();
+    if (DUMP_TOKENS) {
+      if (getTokenType() != null) {
+        System.out.print(getTokenStart() + "-" + getTokenEnd() + ":" + getTokenType());
+        if (getTokenType() == PyTokenTypes.LINE_BREAK) {
+          System.out.println("{" + myBraceLevel + "}");
+        }
+        else {
+          System.out.print(" ");
+        }
+      }
+    }
+  }
+
+  protected void advanceBase() {
+    super.advance();
+    checkSignificantTokens();
+  }
+
+  protected void pushToken(IElementType type, int start, int end) {
+    myTokenQueue.add(new PendingToken(type, start, end));
+  }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     checkStartState(startOffset, initialState);
@@ -54,29 +161,6 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
     }
   }
 
-  @Override
-  protected void advanceBase() {
-    super.advanceBase();
-    checkSignificantTokens();
-  }
-
-  @Override
-  public void advance() {
-    super.advance();
-    adjustBraceLevel();
-    if (DUMP_TOKENS) {
-      if (getTokenType() != null) {
-        System.out.print(getTokenStart() + "-" + getTokenEnd() + ":" + getTokenType());
-        if (getTokenType() == PyTokenTypes.LINE_BREAK) {
-          System.out.println("{" + myBraceLevel + "}");
-        }
-        else {
-          System.out.print(" ");
-        }
-      }
-    }
-  }
-
   protected void processSpecialTokens() {
     int tokenStart = getBaseTokenStart();
     if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
@@ -88,7 +172,6 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
     else if (getBaseTokenType() == PyTokenTypes.SPACE) {
       processSpace();
     }
-    super.processSpecialTokens();
   }
 
   private void processSpace() {
