@@ -19,7 +19,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.psi.PsiReferenceProvider;
 
 /**
+ *
  * @author Dmitry Avdeev
+ * @deprecated use PsiReferenceProvider instead
  */
 public abstract class PsiReferenceProviderBase extends PsiReferenceProvider {
 
