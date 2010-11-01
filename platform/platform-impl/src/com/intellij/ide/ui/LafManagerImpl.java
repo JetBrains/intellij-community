@@ -37,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -50,6 +51,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -222,21 +224,23 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       LOG.assertTrue(laf!=null);
       return laf;
     }
-    else if (SystemInfo.isLinux && ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
-      UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
-      LOG.assertTrue(laf!=null);
-      return laf;
-    }
-    else {
-      String defaultLafName = StartupUtil.getDefaultLAF();
-      if (defaultLafName != null) {
-        UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
-        if (defaultLaf != null) {
-          return defaultLaf;
-        }
+    if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
+      final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
+      if ("gnome".equals(desktop)) {
+        UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
+        LOG.assertTrue(laf!=null);
+        return laf;
       }
-      return findLaf(IDEA_LAF_CLASSNAME);
     }
+    // Default
+    final String defaultLafName = StartupUtil.getDefaultLAF();
+    if (defaultLafName != null) {
+      UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
+      if (defaultLaf != null) {
+        return defaultLaf;
+      }
+    }
+    return findLaf(IDEA_LAF_CLASSNAME);
   }
 
   /**
