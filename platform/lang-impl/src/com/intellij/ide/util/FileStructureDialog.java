@@ -55,6 +55,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -263,6 +264,11 @@ public class FileStructureDialog extends DialogWrapper {
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         if (builder != null) {
           builder.updateList(true);
+        }
+
+        if (SpeedSearchBase.hasActiveSpeedSearch(myCommanderPanel.getList())) {
+          final SpeedSearchSupply supply = SpeedSearchBase.getSupply(myCommanderPanel.getList());
+          if (supply != null && supply.isPopupActive()) supply.refreshSelection();
         }
       }
     });
