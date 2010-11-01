@@ -158,6 +158,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     fm.doWhenFocusSettlesDown(new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed()) {
+          result.setRejected();
+          return;
+        }
+
         Component focusOwner = fm.getFocusOwner();
 
         if (focusOwner != null) {
