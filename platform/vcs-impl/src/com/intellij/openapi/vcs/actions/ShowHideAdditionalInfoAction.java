@@ -28,10 +28,12 @@ public class ShowHideAdditionalInfoAction extends AnAction {
   private boolean showAdditionalInfo = false;
   private final List<AnnotationFieldGutter> myGutters;
   private final EditorGutterComponentEx myGutter;
+  private final AnnotateActionGroup myViewActions;
 
-  public ShowHideAdditionalInfoAction(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutter) {
+  public ShowHideAdditionalInfoAction(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutter, AnnotateActionGroup viewActions) {
     myGutters = gutters;
     myGutter = gutter;
+    myViewActions = viewActions;
   }
 
   @Override
@@ -40,6 +42,7 @@ public class ShowHideAdditionalInfoAction extends AnAction {
     for (AnnotationFieldGutter gutter : myGutters) {
       gutter.setShowAdditionalInfo(showAdditionalInfo);
     }
+    myViewActions.setAvailable(!showAdditionalInfo);
     myGutter.revalidateMarkup();
   }
 
