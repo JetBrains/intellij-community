@@ -545,10 +545,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           EditorFactory.getInstance().releaseEditor(editor);
           return Pair.create(newContext, element);
         }
-        else {
-          PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
-          fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
-        }
+
+        PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
+        fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
       }
       EditorFactory.getInstance().releaseEditor(editor);
     }
