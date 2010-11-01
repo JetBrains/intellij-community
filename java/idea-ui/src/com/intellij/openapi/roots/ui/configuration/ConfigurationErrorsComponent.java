@@ -57,6 +57,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private static final Icon COLLAPSE = IconLoader.getIcon("/actions/collapseall.png");
   private static final Icon FIX = IconLoader.findIcon("/actions/quickfixBulb.png");
   private static final Icon IGNORE = IconLoader.findIcon("/toolbar/unknown.png");
+  private static final Icon NAVIGATE = IconLoader.findIcon("/general/autoscrollToSource.png");
 
   private ConfigurationErrorsListModel myConfigurationErrorsListModel;
   private ErrorView myCurrentView;
@@ -355,6 +356,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
     private JViewport myFakeViewport;
     private JList myList;
     private JPanel myButtonsPanel;
+    private JPanel myFixGroup;
 
     private ErrorListRenderer(@NotNull final JList list) {
       setLayout(new BorderLayout());
@@ -376,12 +378,21 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       myButtonsPanel.setOpaque(false);
       final JPanel buttons = new JPanel();
       buttons.setOpaque(false);
-      buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+      buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
       myButtonsPanel.add(buttons, BorderLayout.NORTH);
       add(myButtonsPanel, BorderLayout.EAST);
 
-      buttons.add(new ToolbarAlikeButton(FIX, "FIX") {});
-      buttons.add(Box.createVerticalStrut(3));
+      myFixGroup = new JPanel();
+      myFixGroup.setOpaque(false);
+      myFixGroup.setLayout(new BoxLayout(myFixGroup, BoxLayout.Y_AXIS));
+
+      myFixGroup.add(new ToolbarAlikeButton(FIX, "FIX") {});
+      myFixGroup.add(Box.createHorizontalStrut(3));
+      buttons.add(myFixGroup);
+
+      buttons.add(new ToolbarAlikeButton(NAVIGATE, "NAVIGATE") {});
+      buttons.add(Box.createHorizontalStrut(3));
+
       buttons.add(new ToolbarAlikeButton(IGNORE, "IGNORE") {});
 
       myFakeTextPane = new JTextPane();
@@ -430,6 +441,8 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
       mySelected = isSelected;
       myHasFocus = cellHasFocus;
+
+      myFixGroup.setVisible(error.canBeFixed());
 
       myText.setText(error.getDescription());
 
@@ -525,7 +538,8 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       removeAll();
       if (errors.size() > 0) {
         if (errors.size() == 1) {
-          add(wrapLabel(mySingleErrorLabel), BorderLayout.CENTER);
+          add(wrapLabel(mySingleErrorLabel, errors.get(0)), BorderLayout.CENTER);
+          mySingleErrorLabel.setToolTipText(errors.get(0).getDescription());
         } else {
           add(myErrorsLabel, BorderLayout.CENTER);
         }
@@ -539,7 +553,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       repaint();
     }
 
-    private JComponent wrapLabel(@NotNull final JLabel label) {
+    private JComponent wrapLabel(@NotNull final JLabel label, @NotNull final ConfigurationError configurationError) {
       final JPanel result = new JPanel(new BorderLayout());
       result.setBackground(label.getBackground());
       result.add(label, BorderLayout.CENTER);
@@ -547,27 +561,47 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       final JPanel buttonsPanel = new JPanel();
       buttonsPanel.setOpaque(false);
       buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-      buttonsPanel.add(new ToolbarAlikeButton(FIX) {
+
+      if (configurationError.canBeFixed()) {
+        buttonsPanel.add(new ToolbarAlikeButton(FIX) {
+          {
+            setToolTipText("Fix error");
+          }
+
+          @Override
+          public void onClick() {
+            final Object o = myModel.getElementAt(0);
+            if (o instanceof ConfigurationError) {
+              ((ConfigurationError)o).fix();
+              updateView();
+              final Container ancestor = SwingUtilities.getAncestorOfClass(ConfigurationErrorsComponent.class, this);
+              if (ancestor != null && ancestor instanceof JComponent) {
+                ((JComponent)ancestor).revalidate();
+                ancestor.repaint();
+              }
+            }
+          }
+        });
+
+        buttonsPanel.add(Box.createHorizontalStrut(3));
+      }
+
+      buttonsPanel.add(new ToolbarAlikeButton(NAVIGATE) {
         {
-          setToolTipText("Fix error");
+          setToolTipText("Navigate to error");
         }
 
         @Override
         public void onClick() {
           final Object o = myModel.getElementAt(0);
           if (o instanceof ConfigurationError) {
-            ((ConfigurationError)o).fix();
-            updateView();
-            final Container ancestor = SwingUtilities.getAncestorOfClass(ConfigurationErrorsComponent.class, this);
-            if (ancestor != null && ancestor instanceof JComponent) {
-              ((JComponent)ancestor).revalidate();
-              ancestor.repaint();
-            }
+            ((ConfigurationError)o).navigate();
           }
         }
       });
 
       buttonsPanel.add(Box.createHorizontalStrut(3));
+
       buttonsPanel.add(new ToolbarAlikeButton(IGNORE) {
         {
           setToolTipText("Ignore error");

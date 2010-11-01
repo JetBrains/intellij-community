@@ -88,6 +88,10 @@ public class ProjectConfigurationProblems {
     }
 
     @Override
+    public void navigate() {
+    }
+
+    @Override
     public void fix() {
     }
   }
