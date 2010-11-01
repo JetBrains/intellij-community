@@ -16,11 +16,10 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -30,16 +29,12 @@ import java.util.List;
 public class RangesBuilder {
   private List<Range> myRanges;
 
-  public RangesBuilder(String current, String upToDate) {
-    this(EditorFactory.getInstance().createDocument(current), EditorFactory.getInstance().createDocument(upToDate));
-  }
-
   public RangesBuilder(Document current, Document upToDate) {
     this(new DocumentWrapper(current).getLines(), new DocumentWrapper(upToDate).getLines(), 0, 0);
   }
 
   public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) {
-    myRanges = new ArrayList<Range>();
+    myRanges = new LinkedList<Range>();
 
     int shiftBefore = 0;
 
