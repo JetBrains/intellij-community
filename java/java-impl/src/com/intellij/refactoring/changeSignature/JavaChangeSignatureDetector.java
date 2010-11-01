@@ -52,7 +52,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                                  final @Nullable ChangeInfo changeInfo) {
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-    if (method != null && isInsideMethodSignature(element, method)) {
+    if (method != null && isInsideMethodSignature(element, method) && (changeInfo == null || changeInfo instanceof MyJavaChangeInfo)) {
       if (PsiTreeUtil.hasErrorElements(method.getParameterList())) return changeInfo;
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement != null && PsiTreeUtil.hasErrorElements(returnTypeElement)) return changeInfo;
