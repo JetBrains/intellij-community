@@ -467,6 +467,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     configureByTestName();
     assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "equals", "getClass", "hashCode", "toString");
     type('e');
+    assertEquals("equals", assertOneElement(getLookup().getItems()).getLookupString());
     select();
     checkResultByTestName();
   }
