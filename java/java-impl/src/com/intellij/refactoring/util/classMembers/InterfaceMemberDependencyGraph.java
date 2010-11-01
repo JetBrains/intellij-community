@@ -73,7 +73,7 @@ public class InterfaceMemberDependencyGraph implements MemberDependencyGraph<Psi
     if(dependencies == null || dependencies.size() == 0) return null;
     StringBuffer buffer = new StringBuffer();
     buffer.append(RefactoringBundle.message("interface.member.dependency.required.by.interfaces", dependencies.size()));
-
+    buffer.append(" ");
     for (Iterator<? extends PsiMember> iterator = dependencies.iterator(); iterator.hasNext();) {
       PsiClass aClass = (PsiClass) iterator.next();
       buffer.append(aClass.getName());
