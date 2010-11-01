@@ -106,11 +106,24 @@ public final class ExecutionUtil {
     final List<String> error = new ArrayList<String>();
     handler.addProcessListener(new ProcessAdapter() {
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          filter(event.getText(), information);
+        String output = event.getText();
+        if (StringUtil.isEmptyOrSpaces(output)) {
+          return;
         }
-        else if (outputType == ProcessOutputTypes.STDERR) {
-          filter(event.getText(), error);
+        String[] lines = output.split("[\\n\\r]+");
+        for (String line : lines) {
+          String l = line.toLowerCase();
+          if (outputType == ProcessOutputTypes.STDOUT) {
+            information.add(line);
+          }
+          else if (outputType == ProcessOutputTypes.STDERR) {
+            if (l.contains(IGNORING) || l.contains(SKIPPING)) {
+              information.add(line);
+            }
+            else {
+              error.add(line);
+            }
+          }
         }
       }
     });
@@ -118,18 +131,6 @@ public final class ExecutionUtil {
     handler.waitFor();
     int exitCode = handler.getProcess().exitValue();
     return new ProcessResult(information, error, exitCode);
-  }
-
-  private static void filter(@NonNls String output, @NotNull List<String> buffer) {
-    if (!StringUtil.isEmptyOrSpaces(output)) {
-      String[] lines = output.split("[\\n\\r]+");
-      for (String line : lines) {
-        String l = line.toLowerCase();
-        if (!l.contains(IGNORING) && !l.contains(SKIPPING)) {
-          buffer.add(line);
-        }
-      }
-    }
   }
 
   private static final class ProcessResult {
