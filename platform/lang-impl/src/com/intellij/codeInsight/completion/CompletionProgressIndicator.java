@@ -489,7 +489,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         if (myCount == 0) {
           LookupManager.getInstance(getProject()).hideActiveLookup();
-          assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
+
+          final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+          assert current == null : current + "!=" + CompletionProgressIndicator.this;
 
           if (!isAutopopupCompletion() ) {
             myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);

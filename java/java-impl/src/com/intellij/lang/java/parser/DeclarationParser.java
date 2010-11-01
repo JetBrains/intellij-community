@@ -821,7 +821,7 @@ public class DeclarationParser {
 
     done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
     if (unclosed) {
-      annoArray.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+      annoArray.setCustomEdgeTokenBinders(null, GREEDY_RIGHT_EDGE_PROCESSOR);
     }
     return annoArray;
   }
