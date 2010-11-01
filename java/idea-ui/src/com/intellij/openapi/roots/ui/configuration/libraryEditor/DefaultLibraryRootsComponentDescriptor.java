@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptorBase;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
+import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,11 +38,21 @@ import java.util.List;
  * @author nik
  */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
+  @Override
+  public OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type) {
+    return getDefaultPresentation(type);
+  }
+
   @NotNull
   @Override
   public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
     return Arrays.asList(new AttachClassesAction(), new AttachJarDirectoriesAction(), new AttachSourcesAction(),
                          new AttachAnnotationsAction(), new AttachJavadocAction(), new AttachUrlJavadocAction());
+  }
+
+  public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
+    final OrderRootTypeUIFactory factory = OrderRootTypeUIFactory.FACTORY.getByKey(type);
+    return new OrderRootTypePresentation(factory.getNodeText(), factory.getIcon());
   }
 
   private static class AttachClassesAction extends AttachRootButtonDescriptorBase {

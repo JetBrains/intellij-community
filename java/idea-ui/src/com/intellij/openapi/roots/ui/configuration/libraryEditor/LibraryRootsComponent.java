@@ -115,7 +115,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (myDescriptor == null) {
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
-    init(new LibraryTreeStructure(this));
+    init(new LibraryTreeStructure(this, myDescriptor));
     updateProperties();
   }
 
@@ -398,9 +398,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     public void updateButtons() {
       final Object[] selectedElements = getSelectedElements();
       final Class<?> elementsClass = getElementsClass(selectedElements);
-      myRemoveButton.setEnabled(elementsClass != null &&
-                !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class) || elementsClass.isAssignableFrom(AnnotationElement.class))
-      );
+      myRemoveButton.setEnabled(elementsClass != null && !elementsClass.isAssignableFrom(OrderRootTypeElement.class));
     }
 
     @Nullable

@@ -27,14 +27,14 @@ import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement() {
-    return new SourcesElement();
-  }
+  private static final Icon ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
 
   public PathEditor createPathEditor(Sdk sdk) {
     return new PathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
@@ -43,5 +43,15 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);
       }
     };
+  }
+
+  @Override
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  @Override
+  public String getNodeText() {
+    return ProjectBundle.message("library.sources.node");
   }
 }

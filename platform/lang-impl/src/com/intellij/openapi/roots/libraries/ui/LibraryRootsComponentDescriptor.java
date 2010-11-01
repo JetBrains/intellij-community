@@ -12,6 +12,7 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,6 +21,8 @@ import java.util.List;
  * @author nik
  */
 public abstract class LibraryRootsComponentDescriptor {
+  public abstract OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type);
+
   @NotNull
   public abstract List<? extends AttachRootButtonDescriptor> createAttachButtons();
 }

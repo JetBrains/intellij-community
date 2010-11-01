@@ -1,12 +1,9 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
+ * Copyright 2000-2010 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +13,28 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 
-class JavadocElement extends OrderRootTypeElement {
-  public JavadocElement() {
-    super(JavadocOrderRootType.getInstance());
+import javax.swing.*;
+
+/**
+ * @author nik
+ */
+public class OrderRootTypeElementDescriptor extends NodeDescriptor<OrderRootTypeElement> {
+  private final OrderRootTypeElement myElement;
+
+  public OrderRootTypeElementDescriptor(NodeDescriptor parentDescriptor,
+                                        OrderRootTypeElement element, String text, Icon icon) {
+    super(null, parentDescriptor);
+    myElement = element;
+    myOpenIcon = myClosedIcon = icon;
+    myName = text;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
-    return new JavadocElementDescriptor(parentDescriptor, this);
+  public boolean update() {
+    return false;
+  }
+
+  public OrderRootTypeElement getElement() {
+    return myElement;
   }
 }
