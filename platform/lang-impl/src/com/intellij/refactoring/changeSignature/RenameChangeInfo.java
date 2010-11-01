@@ -13,23 +13,26 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * User: anna
 * Date: 10/29/10
 */
 public abstract class RenameChangeInfo implements ChangeInfo {
-  private final PsiNameIdentifierOwner myNamedElement;
+  private final PsiFile myFile;
+  private final int myOffset;
   private final String myOldName;
 
   public RenameChangeInfo(final PsiNameIdentifierOwner namedElement, final ChangeInfo oldInfo) {
-    myNamedElement = namedElement;
-    myOldName = oldInfo instanceof RenameChangeInfo ? ((RenameChangeInfo)oldInfo).getOldName() : myNamedElement.getName();
+    myOldName = oldInfo instanceof RenameChangeInfo ? ((RenameChangeInfo)oldInfo).getOldName() : namedElement.getName();
+    myFile = namedElement.getContainingFile();
+    myOffset = namedElement.getTextOffset();
   }
 
   @NotNull
@@ -75,24 +78,35 @@ public abstract class RenameChangeInfo implements ChangeInfo {
 
   @Override
   public String getNewName() {
-    return myNamedElement.getName();
+    final PsiNameIdentifierOwner nameOwner = getNamedElement();
+    return nameOwner != null ? nameOwner.getName() : null;
   }
 
   public String getOldName() {
     return myOldName;
   }
 
+  @Nullable
   public PsiNameIdentifierOwner getNamedElement() {
-    return myNamedElement;
+    return PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiNameIdentifierOwner.class);
   }
 
   public void perform() {
-    final String name = myNamedElement.getName();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myNamedElement.setName(myOldName);
-      }
-    });
-    new RenameProcessor(myNamedElement.getProject(), myNamedElement, name, true, true).run();
+    final PsiNameIdentifierOwner element = getNamedElement();
+    if (element != null) {
+      final String name = element.getName();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          element.setName(myOldName);
+        }
+      });
+      new RenameProcessor(element.getProject(), element, name, true, true).run();
+    }
+  }
+
+  @Nullable
+  public PsiElement getNameIdentifier() {
+    final PsiNameIdentifierOwner namedElement = getNamedElement();
+    return namedElement != null ? namedElement.getNameIdentifier() : null;
   }
 }

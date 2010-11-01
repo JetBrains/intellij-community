@@ -260,6 +260,7 @@ public class TemplateState implements Disposable {
   public void start(TemplateImpl template,
                     @Nullable final PairProcessor<String, String> processor,
                     @Nullable Map<String, String> predefinedVarValues) {
+    myTemplate = template;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     myProcessor = processor;
@@ -286,7 +287,7 @@ public class TemplateState implements Disposable {
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
     myPrevTemplate = myTemplate;
-    myTemplate = template;
+
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
 
