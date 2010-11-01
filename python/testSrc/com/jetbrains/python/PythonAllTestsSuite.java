@@ -41,7 +41,6 @@ public class PythonAllTestsSuite {
     PySelectWordTest.class,
     PyEditingTest.class,
     PySurroundWithTest.class,
-    PyEditingTest.class,
     PyFormatterTest.class,
     PyRenameTest.class,
     PyExtractMethodTest.class,
