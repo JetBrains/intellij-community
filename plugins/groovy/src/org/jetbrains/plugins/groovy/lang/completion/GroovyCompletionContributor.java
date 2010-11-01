@@ -524,10 +524,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof GroovyFile) {
       if (semicolonNeeded(context)) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";"));
+        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";");
       }
       else if (isInClosurePropertyParameters(context.getFile().findElementAt(context.getStartOffset()))) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "->"));
+        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "->");
       }
     }
   }

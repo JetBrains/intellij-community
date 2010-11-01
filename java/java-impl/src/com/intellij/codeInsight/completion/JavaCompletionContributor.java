@@ -529,7 +529,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
       if (semicolonNeeded(context)) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";"));
+        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
         return;
       }
 
@@ -539,7 +539,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         return;
       }
 
-      context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim()));
+      context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
     }
   }
 

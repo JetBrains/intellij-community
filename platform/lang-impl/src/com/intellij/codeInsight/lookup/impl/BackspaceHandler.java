@@ -47,6 +47,7 @@ public class BackspaceHandler extends EditorActionHandler {
 
     final String prefix = lookup.getAdditionalPrefix();
     if (prefix.length() > 0) {
+      lookup.markSelectionTouched();
       lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
       return;
     }

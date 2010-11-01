@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.completion
 
- /**
+import com.intellij.openapi.actionSystem.IdeActions
+
+/**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -30,10 +32,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     type('i')
     assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+
     type('t')
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    assertEquals 'iterable', lookup.currentItem.lookupString
+
     type('er')
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertEquals 'iter', lookup.currentItem.lookupString
   }
 
   public void testRecalculateItemsOnBackspace() {
@@ -59,6 +65,28 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+  }
+
+  public void testExplicitSelectionShouldSurvive() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          int iterable2;
+          it<caret>
+        }
+      }
+    """)
+    type "e"
+    assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
+
+    assertEquals 'iterable', lookup.currentItem.lookupString
+    myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
+    assertEquals 'iterable2', lookup.currentItem.lookupString
+
+    type "r"
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable", 'iterable2'
+    assertEquals 'iterable2', lookup.currentItem.lookupString
+
   }
 
   public void testNoAutopopupInTheMiddleOfIdentifier() {

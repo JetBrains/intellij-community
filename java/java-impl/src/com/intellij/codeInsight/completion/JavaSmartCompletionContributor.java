@@ -596,15 +596,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (lastElement != null && lastElement.getText().equals("(")) {
       final PsiElement parent = lastElement.getParent();
       if (parent instanceof PsiTypeCastExpression) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(""));
+        context.setDummyIdentifier("");
         return;
       }
       if (parent instanceof PsiParenthesizedExpression) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher("xxx)yyy ")); // to handle type cast
+        context.setDummyIdentifier("xxx)yyy "); // to handle type cast
         return;
       }
     }
-    context.setFileCopyPatcher(new DummyIdentifierPatcher("xxx"));
+    context.setDummyIdentifier("xxx");
   }
 
 }

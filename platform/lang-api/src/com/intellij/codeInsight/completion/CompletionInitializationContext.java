@@ -87,6 +87,11 @@ public class CompletionInitializationContext {
     return idEnd;
   }
 
+  public void setDummyIdentifier(@NotNull String dummyIdentifier) {
+    setFileCopyPatcher(new DummyIdentifierPatcher(dummyIdentifier));
+  }
+
+  @Deprecated
   public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
     myFileCopyPatcher = fileCopyPatcher;
   }

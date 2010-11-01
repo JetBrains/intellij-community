@@ -40,7 +40,7 @@ public class MavenPropertyCompletionContributor extends CompletionContributor {
     CharSequence text = context.getEditor().getDocument().getCharsSequence();
     int offset = context.getStartOffset();
     if (isAfterOpenBrace(text, offset)) {
-      context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + "}"));
+      context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "}");
     }
   }
 

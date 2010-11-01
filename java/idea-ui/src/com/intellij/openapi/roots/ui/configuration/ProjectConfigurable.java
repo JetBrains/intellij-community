@@ -348,6 +348,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     @Override
     public void fix() {
     }
+
+    @Override
+    public void navigate() {
+    }
   }
 
   private class MyJPanel extends JPanel {

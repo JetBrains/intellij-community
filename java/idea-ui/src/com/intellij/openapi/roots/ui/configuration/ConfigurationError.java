@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,7 +65,14 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
   /**
    * Called when user invokes "Fix" action
    */
-  public abstract void fix();
+  public void fix() {
+  }
+
+  public boolean canBeFixed() {
+    return true;
+  }
+
+  public abstract void navigate();
 
   @Override
   public int compareTo(final ConfigurationError o) {

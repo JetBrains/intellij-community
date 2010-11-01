@@ -262,7 +262,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void setAdditionalPrefix(final String additionalPrefix) {
     myAdditionalPrefix = additionalPrefix;
     myInitialPrefix = null;
-    markSelectionTouched();
     refreshUi();
   }
 
@@ -394,7 +393,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private boolean addPreselectedItem(DefaultListModel model, Set<LookupElement> firstItems, @Nullable final LookupElement preselectedItem) {
-    final boolean hasPreselectedItem = !mySelectionTouched && preselectedItem != EMPTY_LOOKUP_ITEM && preselectedItem != null;
+    final boolean hasPreselectedItem = !mySelectionTouched && preselectedItem != EMPTY_LOOKUP_ITEM && preselectedItem != null && prefixMatches(preselectedItem);
     if (hasPreselectedItem && !firstItems.contains(preselectedItem)) {
       firstItems.add(preselectedItem);
       model.addElement(preselectedItem);

@@ -187,10 +187,10 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     if (lastElement != null && lastElement.getText().equals("(")) {
       final PsiElement parent = lastElement.getParent();
       if (parent instanceof GrTypeCastExpression) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher(""));
+        context.setDummyIdentifier("");
       }
       else if (parent instanceof GrParenthesizedExpression) {
-        context.setFileCopyPatcher(new DummyIdentifierPatcher("xxx)yyy ")); // to handle type cast
+        context.setDummyIdentifier("xxx)yyy "); // to handle type cast
       }
     }
   }
