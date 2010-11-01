@@ -176,6 +176,10 @@ public class PyCallExpressionHelper {
   ) {
     //return getImplicitArgumentCount(functionBeingCalled, null, null, qualifierIsAnInstance(callReference, TypeEvalContext.fast()));
     if (typeContext == null) typeContext = TypeEvalContext.fast();
+    final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
+    if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
+      return 1;
+    }
     QualifiedResolveResult followed = callReference.followAssignmentsChain(typeContext);
     return getImplicitArgumentCount(functionBeingCalled, null, null, isQualifiedByInstance(functionBeingCalled, followed.getLastQualifier(), typeContext));
   }

@@ -5,7 +5,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 import java.util.Arrays;
@@ -223,5 +222,9 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.configureByFile(dirname + "importedModule.py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(dirname + "importedModule.after.py");
+  }
+
+  public void testNoParensForDecorator() {  // PY-2210
+    doTest();
   }
 }
