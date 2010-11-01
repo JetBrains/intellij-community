@@ -249,6 +249,8 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
 
     public void actionPerformed(final ActionEvent e) {
       myEditor.apply();
+      myEditor.revalidate();
+      myEditor.repaint();
     }
   }
 
