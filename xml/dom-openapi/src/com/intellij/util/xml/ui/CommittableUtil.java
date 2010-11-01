@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,12 +23,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CommittableUtil {
 
-  public void commit(Committable committable) {
+  public void commit(@NotNull Committable committable) {
     committable.commit();
-  }
-
-  public void queueReset(Committable committable) {
-    committable.reset();
   }
 
   public static void updateHighlighting(@Nullable Committable committable) {
