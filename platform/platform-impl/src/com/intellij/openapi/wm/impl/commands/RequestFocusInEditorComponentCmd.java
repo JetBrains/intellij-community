@@ -20,6 +20,9 @@
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -33,19 +36,26 @@ import java.awt.*;
  * Requests focus for the editor component.
  */
 public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
-  private final FileEditorManagerEx myEditorManager;
-  private final JComponent myComponent;
+  private JComponent myComponent;
   private final boolean myForced;
   private final ActionCallback myDoneCallback;
 
   private final IdeFocusManager myFocusManager;
   private final Expirable myTimestamp;
 
-  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, IdeFocusManager
+  public RequestFocusInEditorComponentCmd(@NotNull final EditorsSplitters splitters, IdeFocusManager
                                           focusManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);
-    myEditorManager = editorManager;
-    myComponent = myEditorManager.getPreferredFocusedComponent();
+
+    myComponent = null;
+    final EditorWindow window = splitters.getCurrentWindow();
+    if (window != null) {
+      final EditorWithProviderComposite editor = window.getSelectedEditor();
+      if (editor != null) {
+        myComponent = editor.getPreferredFocusedComponent();
+      }
+    }
+
     myForced = forced;
     myFocusManager = focusManager;
 
@@ -70,7 +80,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       }
 
 
-      final Window owner=SwingUtilities.getWindowAncestor(myEditorManager.getComponent());
+      final Window owner = myComponent != null ? SwingUtilities.getWindowAncestor(myComponent) : null;
       if(owner==null){
         return;
       }

@@ -63,7 +63,7 @@ public class FocusTrackback {
   private boolean myWillBeSheduledForRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
-    this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
+    this(requestor, (parent instanceof Window) ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {

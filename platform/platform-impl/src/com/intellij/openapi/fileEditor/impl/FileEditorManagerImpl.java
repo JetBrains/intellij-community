@@ -910,7 +910,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return getSplitters().getSelectedEditors();
   }
 
-  private EditorsSplitters getSplitters() {
+  public EditorsSplitters getSplitters() {
     EditorsSplitters active = getActiveSplitters().getResult();
     return active == null ? getMainSplitters() : active;
   }
