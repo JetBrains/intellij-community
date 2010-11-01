@@ -19,6 +19,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -60,6 +61,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +71,8 @@ import java.util.Set;
  * @author yole
  */
 public class AndroidFacetEditorTab extends FacetEditorTab {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacetEditorTab");
+
   private final AndroidPlatformChooser myPlatformChooser;
   private final AndroidFacetConfiguration myConfiguration;
   private final FacetEditorContext myContext;
@@ -387,11 +391,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private String toRelativePath(String absPath) {
     absPath = FileUtil.toSystemIndependentName(absPath);
     String moduleDirPath = new File(myContext.getModule().getModuleFilePath()).getParent();
-    if (moduleDirPath != null && absPath != null) {
+    if (moduleDirPath != null) {
       moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
-      if (VfsUtil.isAncestor(new File(moduleDirPath), new File(absPath), true)) {
+      //if (VfsUtil.isAncestor(new File(moduleDirPath), new File(absPath), true)) {
         return FileUtil.getRelativePath(moduleDirPath, absPath, '/');
-      }
+      //}
     }
     return null;
   }
@@ -563,9 +567,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   }
 
   private String getAndCheckRelativePath(String absPath, boolean checkExists) throws ConfigurationException {
+    if (absPath.indexOf('/') < 0 && absPath.indexOf(File.separatorChar) < 0) {
+      throw new ConfigurationException(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(absPath)));
+    }
     String relativeGenPathR = toRelativePath(absPath);
     if (relativeGenPathR == null || relativeGenPathR.length() == 0) {
-      throw new ConfigurationException(AndroidBundle.message("file.must.be.under.module.error", absPath));
+      throw new ConfigurationException(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(absPath)));
     }
     if (checkExists && LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(absPath)) == null) {
       throw new ConfigurationException(AndroidBundle.message("android.file.not.exist.error", FileUtil.toSystemDependentName(absPath)));
@@ -687,7 +694,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private String toAbsolutePath(String genRelativePath) {
     String moduleDirPath = new File(myContext.getModule().getModuleFilePath()).getParent();
     if (moduleDirPath == null) return null;
-    return FileUtil.toSystemDependentName(moduleDirPath + genRelativePath);
+    try {
+      return new File(moduleDirPath + genRelativePath).getCanonicalPath();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return moduleDirPath + genRelativePath;
+    }
   }
 
   public void disposeUIResources() {
@@ -731,16 +744,16 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
         }
       }
-      VirtualFile[] files = FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(false, true, false, false, false, false) {
+      VirtualFile[] files = FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(false, true, false, false, false, false) /*{
         @Override
         public void validateSelectedFiles(VirtualFile[] files) throws Exception {
           assert files.length == 1;
           VirtualFile file = files[0];
           if (!isUnderModuleDir(file)) {
-            throw new Exception(AndroidBundle.message("file.must.be.under.module.error", file.getPath()));
+            throw new Exception(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(file.getPath())));
           }
         }
-      }, initialFile);
+      }*/, initialFile);
       if (files.length > 0) {
         assert files.length == 1;
         myTextField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
@@ -796,14 +809,14 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           return file.isDirectory() || !chooseManifest || SdkConstants.FN_ANDROID_MANIFEST_XML.equals(file.getName());
         }
 
-        @Override
+        /*@Override
         public void validateSelectedFiles(VirtualFile[] files) throws Exception {
           for (VirtualFile file : files) {
             if (!isUnderModuleDir(file)) {
-              throw new Exception(AndroidBundle.message("file.must.be.under.module.error", file.getPath()));
+              throw new Exception(AndroidBundle.message("file.must.be.under.module.error", FileUtil.toSystemDependentName(file.getPath())));
             }
           }
-        }
+        }*/
       }, initialFile);
   }
 }
