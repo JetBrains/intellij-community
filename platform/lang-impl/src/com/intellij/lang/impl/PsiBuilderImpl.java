@@ -119,14 +119,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private static final WhitespacesAndCommentsProcessor DEFAULT_LEFT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
-  private static final WhitespacesAndCommentsProcessor DEFAULT_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return 0;
     }
   };
@@ -261,7 +261,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private abstract static class ProductionMarker extends Node {
     protected int myLexemeIndex;
-    protected WhitespacesAndCommentsProcessor myEdgeProcessor;
+    protected WhitespacesAndCommentsBinder myEdgeProcessor;
     protected ProductionMarker myParent;
     protected ProductionMarker myNext;
 
@@ -399,7 +399,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myType;
     }
 
-    public void setCustomEdgeProcessors(final WhitespacesAndCommentsProcessor left, final WhitespacesAndCommentsProcessor right) {
+    public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
         myEdgeProcessor = left;
       }
@@ -998,12 +998,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
       final boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
-      final WhitespacesAndCommentsProcessor.TokenTextGetter getter = new WhitespacesAndCommentsProcessor.TokenTextGetter() {
+      final WhitespacesAndCommentsBinder.TokenTextGetter getter = new WhitespacesAndCommentsBinder.TokenTextGetter() {
         public CharSequence get(final int i) {
           return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
         }
       };
-      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.process(wsTokens, atEnd, getter);
+      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.getEdgePosition(wsTokens, atEnd, getter);
     }
   }
 
