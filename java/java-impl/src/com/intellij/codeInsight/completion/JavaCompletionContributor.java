@@ -519,9 +519,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final PsiFile file = context.getFile();
-    final Project project = context.getProject();
-
-    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
 
     if (file instanceof PsiJavaFile) {
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
@@ -541,6 +538,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
     }
+  }
+
+  @Override
+  public void duringCompletion(@NotNull CompletionInitializationContext context) {
+    JavaCompletionUtil.initOffsets(context.getFile(), context.getProject(), context.getOffsetMap());
   }
 
   private static boolean semicolonNeeded(CompletionInitializationContext context) {

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -519,10 +518,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
-    final PsiFile file = context.getFile();
-    final Project project = context.getProject();
-    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
-    if (context.getCompletionType() == CompletionType.BASIC && file instanceof GroovyFile) {
+    if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
       if (semicolonNeeded(context)) {
         context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";");
       }
