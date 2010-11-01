@@ -577,21 +577,27 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         not(
           or(psiElement(PsiTypeCastExpression.class),
              psiElement(PsiSwitchLabelStatement.class),
-             psiElement(PsiExpressionStatement.class).withParent(psiElement(PsiCodeBlock.class).withParent(PsiSwitchStatement.class))
+             psiElement(PsiExpressionStatement.class)
           )
         )
       )),
       not(psiElement().afterLeaf("."))
     );
     if (exprKeywords.accepts(position)) {
-      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.SPACE));
+      result.addElement(createKeyword(position, PsiKeyword.NEW));
+      result.addElement(createKeyword(position, PsiKeyword.NULL));
+      result.addElement(createKeyword(position, PsiKeyword.TRUE));
+      result.addElement(createKeyword(position, PsiKeyword.FALSE));
+    }
 
-      if (!psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiExpressionStatement.class)).accepts(position)) {
-        result.addElement(createKeyword(position, PsiKeyword.NULL));
-        result.addElement(createKeyword(position, PsiKeyword.TRUE));
-        result.addElement(createKeyword(position, PsiKeyword.FALSE));
+    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
+      for (String primitiveType : PRIMITIVE_TYPES) {
+        if (!PsiKeyword.VOID.equals(primitiveType)) {
+          result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
+        }
       }
     }
+
   }
 
   private static LookupElement createKeyword(PsiElement position, String keyword) {

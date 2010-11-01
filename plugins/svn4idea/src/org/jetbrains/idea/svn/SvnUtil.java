@@ -635,16 +635,22 @@ public class SvnUtil {
   }
 
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
-    final SVNRepository repository;
-    repository = vcs.createRepository(url);
-    final Ref<Boolean> result = new Ref<Boolean>(true);
-    repository.getDir("", -1, null, new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        if (dirEntry != null) {
-          result.set(false);
+    SVNRepository repository = null;
+    try {
+      repository = vcs.createRepository(url);
+      final Ref<Boolean> result = new Ref<Boolean>(true);
+      repository.getDir("", -1, null, new ISVNDirEntryHandler() {
+        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+          if (dirEntry != null) {
+            result.set(false);
+          }
         }
+      });
+      return result.get();
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
       }
-    });
-    return result.get();
+    }
   }
 }

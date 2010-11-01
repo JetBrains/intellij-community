@@ -67,18 +67,12 @@ class CopyClassDialog extends DialogWrapper{
     myClass2Copy = aClass;
     myProject = project;
     myDefaultTargetDirectory = defaultTargetDirectory;
-    init();
     myDoClone = doClone;
     String text = myDoClone ? RefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
-                       RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
+                  RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
+    init();
     myNameField.setText(UsageViewUtil.getShortName(aClass));
-    myNameLabel.setText(RefactoringBundle.message("name.prompt"));
-    if (myDoClone) {
-      myTfPackage.setVisible(false);
-      myPackageLabel.setVisible(false);
-      myCbMoveToAnotherSourceFolder.setVisible(false);
-    }
   }
 
   protected Action[] createActions(){
@@ -110,6 +104,7 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.gridy = 1;
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 0;
+    myNameLabel.setText(RefactoringBundle.message("copy.files.new.name.label"));
     panel.add(myNameLabel, gbConstraints);
 
     gbConstraints.gridx = 1;
@@ -140,6 +135,11 @@ class CopyClassDialog extends DialogWrapper{
     myPackageLabel.setText(RefactoringBundle.message("destination.package"));
 
     panel.add(myTfPackage, gbConstraints);
+    if (myDoClone) {
+      myTfPackage.setVisible(false);
+      myPackageLabel.setVisible(false);
+      myCbMoveToAnotherSourceFolder.setVisible(false);
+    }
 
     final boolean isLibraryClass = !myClass2Copy.getManager().isInProject(myClass2Copy);
     myCbMoveToAnotherSourceFolder.setEnabled(ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1 ||

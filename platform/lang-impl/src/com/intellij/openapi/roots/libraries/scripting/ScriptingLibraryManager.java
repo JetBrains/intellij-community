@@ -153,6 +153,7 @@ public class ScriptingLibraryManager {
         libModel.setName(name);
         libModel.setSourceFiles(sourceFiles);
         libModel.setCompactFiles(compactFiles);
+        myLibTable.invalidateCache();
       }
     }
   }
@@ -161,6 +162,14 @@ public class ScriptingLibraryManager {
   public ScriptingLibraryTable.LibraryModel[] getLibraries() {
     if (ensureModel()) {
       return myLibTable.getLibraries();
+    }
+    return null;
+  }
+
+  @Nullable
+  public ScriptingLibraryTable.LibraryModel getLibraryByName(String name) {
+    if (ensureModel()) {
+      return myLibTable.getLibraryByName(name);
     }
     return null;
   }

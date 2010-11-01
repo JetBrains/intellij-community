@@ -49,4 +49,8 @@ public class CollectionComboBoxModel extends AbstractListModel implements ComboB
   public void update() {
     super.fireContentsChanged(this, -1, -1);
   }
+
+  public boolean contains(Object item) {
+    return myItems.contains(item);
+  }
 }

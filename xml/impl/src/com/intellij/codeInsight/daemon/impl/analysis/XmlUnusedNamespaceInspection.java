@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
@@ -252,6 +253,9 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       }
       XmlAttribute attribute = (XmlAttribute)element;
       XmlTag parent = attribute.getParent();
+
+      if (!CodeInsightUtilBase.prepareFileForWrite(parent.getContainingFile())) return;
+
       SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
 
       PsiDocumentManager manager = PsiDocumentManager.getInstance(project);

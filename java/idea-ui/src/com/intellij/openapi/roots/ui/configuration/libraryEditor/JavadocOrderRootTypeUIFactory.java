@@ -28,16 +28,27 @@ import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 
+import javax.swing.*;
+
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  public LibraryTableTreeContentElement createElement() {
-    return new JavadocElement();
-  }
+  private static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
 
   public PathEditor createPathEditor(Sdk sdk) {
     return new JavadocPathsEditor(sdk);
+  }
+
+  @Override
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  @Override
+  public String getNodeText() {
+    return ProjectBundle.message("library.javadocs.node");
   }
 
   static class JavadocPathsEditor extends PathEditor {

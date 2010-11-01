@@ -39,7 +39,9 @@ public abstract class MoveParameterAction extends AnAction{
       if (psiElement != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(psiElement.getLanguage());
         if (detector != null) {
-          presentation.setEnabled(detector.isMoveParameterAvailable(psiElement, myLeft));
+          final boolean available = detector.isMoveParameterAvailable(psiElement, myLeft);
+          presentation.setEnabled(available);
+          presentation.setVisible(available);
         }
       }
     }

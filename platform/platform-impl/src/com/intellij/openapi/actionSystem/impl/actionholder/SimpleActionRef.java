@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
+package com.intellij.openapi.actionSystem.impl.actionholder;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.actionSystem.AnAction;
 
-class JavadocElement extends OrderRootTypeElement {
-  public JavadocElement() {
-    super(JavadocOrderRootType.getInstance());
+class SimpleActionRef<T extends AnAction> extends ActionRef<T> {
+  private T myAction;
+
+  public SimpleActionRef(T action) {
+    myAction = action;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
-    return new JavadocElementDescriptor(parentDescriptor, this);
+  public T getAction() {
+    return myAction;
   }
 }

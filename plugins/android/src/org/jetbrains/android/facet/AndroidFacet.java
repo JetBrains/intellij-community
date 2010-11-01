@@ -36,10 +36,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -101,6 +98,17 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public AndroidFacet(@NotNull Module module, String name, @NotNull AndroidFacetConfiguration configuration) {
     super(getFacetType(), module, name, configuration, null);
     configuration.setFacet(this);
+  }
+
+  @Nullable
+  public static String getOutputPackage(@NotNull Module module) {
+    VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    if (compilerOutput == null) return null;
+    return new File(compilerOutput.getPath(), getApkName(module)).getPath();
+  }
+
+  public static String getApkName(Module module) {
+    return module.getName() + ".apk";
   }
 
   public void androidPlatformChanged() {
@@ -519,11 +527,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public String getAptGenSourceRootPath() {
     String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_APT;
     if (path.length() == 0) return null;
-    String moduleFilePath = getModule().getModuleFilePath();
-    String moduleDirPath = new File(moduleFilePath).getParent();
-    if (moduleDirPath != null) {
-      moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
-    }
+    String moduleDirPath = getModuleDirPath();
     return moduleDirPath != null ? moduleDirPath + path : null;
   }
 
@@ -532,11 +536,27 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   public String getAidlGenSourceRootPath() {
     String path = getConfiguration().GEN_FOLDER_RELATIVE_PATH_AIDL;
     if (path.length() == 0) return null;
+    String moduleDirPath = getModuleDirPath();
+    return moduleDirPath != null ? moduleDirPath + path : null;
+  }
+
+  @Nullable
+  private String getModuleDirPath() {
     String moduleFilePath = getModule().getModuleFilePath();
     String moduleDirPath = new File(moduleFilePath).getParent();
     if (moduleDirPath != null) {
       moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
     }
-    return moduleDirPath != null ? moduleDirPath + path : null;
+    return moduleDirPath;
+  }
+
+  @Nullable
+  public String getApkPath() {
+    String path = getConfiguration().APK_PATH;
+    if (path.length() == 0) {
+      return getOutputPackage(getModule());
+    }
+    String moduleDirPath = getModuleDirPath();
+    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
   }
 }

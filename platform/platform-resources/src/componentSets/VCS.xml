@@ -27,6 +27,7 @@
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDefaultProject/>

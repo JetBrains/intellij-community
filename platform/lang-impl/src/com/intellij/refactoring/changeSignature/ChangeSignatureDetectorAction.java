@@ -15,11 +15,12 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -32,30 +33,34 @@ import javax.swing.*;
  * User: anna
  * Date: Sep 6, 2010
  */
-public class ChangeSignatureDetectorAction implements IntentionAction, Iconable {
+public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
-  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
+  public static final String CHANGE_SIGNATURE = "Apply signature change";
+  public static final String NEW_NAME = "Apply new name";
+
+  private String myAcceptText;
 
   @NotNull
   @Override
   public String getText() {
-    return "Change signature ...";
+    return myAcceptText;
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return CHANGE_SIGNATURE;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return ChangeSignatureGestureDetector.getInstance(project).containsChangeSignatureChange(file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    myAcceptText = ChangeSignatureGestureDetector.getInstance(project).getChangeSignatureAcceptText(element);
+    return myAcceptText != null;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file);
+    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file, true);
   }
 
   @Override

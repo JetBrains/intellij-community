@@ -87,6 +87,15 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
         //Middle name check: Vasya S. Pupkin
         return strings.get(1).length() < 3 && strings.size() > 2 && strings.get(2).length() > 1 ? strings.get(2) : strings.get(1);
       }
+      if (value.contains(".")) {
+        strings.clear();
+        strings.addAll(StringUtil.split(value, "."));
+        // vasya.pupkin case
+        if (strings.size() > 1) {
+          //Middle name check: Vasya.S.Pupkin
+          return strings.get(1).length() == 1 && strings.size() > 2 && strings.get(2).length() > 1 ? strings.get(2) : strings.get(1);
+        }
+      }
     }
     return value;
   }

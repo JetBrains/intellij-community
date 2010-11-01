@@ -502,12 +502,20 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     fireRunConfigurationSelected();
   }
 
+  // used by MPS, don't delete
+  public void clearAll(){
+    clear();
+    initializeConfigurationTypes(new ConfigurationType[0]);
+  }
+
   private void clear() {
     final List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
     myConfigurations.clear();
     myUnloadedElements = null;
     myConfigurationToBeforeTasksMap.clear();
     mySharedConfigurations.clear();
+    myTemplateConfigurationsMap.clear();
+    mySelectedConfiguration = null;
     myIdToIcon.clear();
     fireRunConfigurationsRemoved(configurations);
   }
@@ -782,6 +790,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
+    if (shareConfiguration && isTemporary(runConfiguration)) makeStable(runConfiguration);
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
   }
 

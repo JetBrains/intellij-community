@@ -37,7 +37,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -135,8 +134,8 @@ public class CodeEditUtil {
       return;
     }
     final PsiFile containingFile = psiElement.getContainingFile();
-    final Helper helper = HelperFactory.createHelper(containingFile.getFileType(), containingFile.getProject());
-    setOldIndentation((TreeElement)first, helper.getIndent(first));
+    final IndentHelper indentHelper = HelperFactory.createHelper(containingFile.getFileType(), containingFile.getProject());
+    setOldIndentation((TreeElement)first, indentHelper.getIndent(first));
   }
 
   public static int getOldIndentation(ASTNode node){

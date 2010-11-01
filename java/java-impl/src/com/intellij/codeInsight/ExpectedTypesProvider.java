@@ -85,21 +85,21 @@ public class ExpectedTypesProvider {
     return new ExpectedTypeInfoImpl(type, kind, dims, defaultType, tailType);
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion) {
+  public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion) {
     return getExpectedTypes(expr, forCompletion, false, false);
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable, boolean usedAfter) {
+  public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion, final boolean voidable, boolean usedAfter) {
     return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable, usedAfter);
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
+  public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr,
                                                     boolean forCompletion,
                                                     ExpectedClassProvider classProvider, boolean usedAfter) {
     return getExpectedTypes(expr, forCompletion, classProvider, false, usedAfter);
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
+  public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return null;
     PsiElement parent = expr.getParent();

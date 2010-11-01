@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
@@ -134,7 +135,11 @@ public class AutoPopupController implements Disposable {
           if (!editor.isDisposed()) {
             documentManager.commitAllDocuments();
             int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-            new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+            try {
+              new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+            }
+            catch (IndexNotReadyException ignored) { //anything can happen on alarm
+            }
           }
         }
       };

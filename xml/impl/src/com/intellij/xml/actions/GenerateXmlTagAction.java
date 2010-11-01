@@ -89,6 +89,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
             @Override
             protected void run() {
+              if (selected == null) return;
               XmlTag newTag = createTag(contextTag, selected);
               newTag = contextTag.addSubTag(newTag, false);
               generateTag(newTag);
@@ -194,7 +195,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
-  private static XmlTag createTag(XmlTag contextTag, XmlElementDescriptor descriptor) {
+  private static XmlTag createTag(@NotNull XmlTag contextTag, @NotNull XmlElementDescriptor descriptor) {
     String namespace = getNamespace(descriptor);
     XmlTag tag = contextTag.createChildTag(descriptor.getName(), namespace, null, false);
     PsiElement lastChild = tag.getLastChild();
@@ -254,7 +255,9 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return file instanceof XmlFile;
+    if (!(file instanceof XmlFile)) return false;
+    XmlTag contextTag = getContextTag(editor, file);
+    return contextTag != null && contextTag.getDescriptor() != null;
   }
 
   @Override

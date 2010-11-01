@@ -73,5 +73,5 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
                                                boolean hasChildren,
                                                int numberInIteration);
 
-  public abstract boolean isMyContext(@NotNull PsiElement context);
+  public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
 }

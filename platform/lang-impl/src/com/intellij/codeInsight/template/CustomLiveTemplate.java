@@ -29,7 +29,7 @@ public interface CustomLiveTemplate {
   @Nullable
   String computeTemplateKey(@NotNull CustomTemplateCallback callback);
 
-  boolean isApplicable(PsiFile file, int offset);
+  boolean isApplicable(PsiFile file, int offset, boolean wrapping);
 
   boolean supportsWrapping();
 

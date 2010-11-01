@@ -16,9 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.paths.PsiDynaReference;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -50,11 +48,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final PsiFile file = parameters.getOriginalFile();
         final int startOffset = parameters.getOffset();
         final PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
-          public CompletionData compute() {
-            return CompletionUtil.getCompletionDataByElement(insertedElement, file);
-          }
-        });
+        CompletionData completionData = CompletionUtil.getCompletionDataByElement(insertedElement, file);
         if (completionData == null) return;
 
         final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
@@ -101,11 +95,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                        final CompletionData completionData,
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
-    final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-      public PsiReference compute() {
-        return parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
-      }
-    });
+    final PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
     if (ref instanceof PsiMultiReference) {
       for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
         processReference(result, startOffset, consumer, reference);
@@ -129,11 +119,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
     final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
-    final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
-      }
-    });
+    final String prefix = reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
     consumer.consume(reference, result.withPrefixMatcher(prefix));
   }
 

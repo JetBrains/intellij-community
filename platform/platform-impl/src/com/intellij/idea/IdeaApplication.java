@@ -132,7 +132,7 @@ public class IdeaApplication {
     public void premain(String[] args) {
       if (StartupUtil.shouldShowSplash(args)) {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-        final Object splashScreen = getSplashScreen();
+        final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
           final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
           SwingUtilities.invokeLater(new Runnable() {
@@ -149,31 +149,17 @@ public class IdeaApplication {
       initLAF();
     }
 
-    private void updateSplashScreen(ApplicationInfoEx appInfo, Object splashScreen) {
-      final Graphics2D graphics;
-      try {
-        final Class<?> aClass = splashScreen.getClass();
-        graphics = (Graphics2D)aClass.getMethod("createGraphics").invoke(splashScreen);
-        final Dimension size = (Dimension)aClass.getMethod("getSize").invoke(splashScreen);
-        if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getLogoTextColor())) {
-          aClass.getMethod("update").invoke(splashScreen);
-        }
-      }
-      catch (Exception e) {
-        LOG.info(e);
+    private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
+      final Graphics2D graphics = splashScreen.createGraphics();
+      final Dimension size = splashScreen.getSize();
+      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getLogoTextColor())) {
+        splashScreen.update();
       }
     }
 
     @Nullable
-    private Object getSplashScreen() {
-      //todo[nik] get rid of reflection when (if?) IDEA will be built only under jdk 1.6
-      try {
-        final Class<?> aClass = Class.forName("java.awt.SplashScreen");
-        return aClass.getMethod("getSplashScreen").invoke(null);
-      }
-      catch (Exception e) {
-        return null;
-      }
+    private SplashScreen getSplashScreen() {
+      return SplashScreen.getSplashScreen();
     }
 
     public void main(String[] args) {

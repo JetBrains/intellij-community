@@ -220,9 +220,9 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context) {
+  private static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
-      if (generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
+      if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         return generator;
       }
     }
@@ -387,17 +387,17 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public void expand(String key, @NotNull CustomTemplateCallback callback) {
-    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
+    ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
     assert defaultGenerator != null;
     expand(key, callback, null, defaultGenerator);
   }
 
   @Nullable
-  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, PsiElement context) {
+  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, PsiElement context, boolean wrapping) {
     ZenCodingGenerator defaultGenerator = null;
     List<ZenCodingGenerator> generators = ZenCodingGenerator.getInstances();
     for (ZenCodingGenerator generator : generators) {
-      if (defaultGenerator == null && generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
+      if (defaultGenerator == null && generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         defaultGenerator = generator;
       }
     }
@@ -405,7 +405,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       FilterNode filterNode = (FilterNode)node;
       String suffix = filterNode.getFilter();
       for (ZenCodingGenerator generator : generators) {
-        if (generator.isMyContext(context)) {
+        if (generator.isMyContext(context, wrapping)) {
           if (suffix != null && suffix.equals(generator.getSuffix())) {
             return generator;
           }
@@ -462,7 +462,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     }
 
     PsiElement context = callback.getContext();
-    ZenCodingGenerator generator = findApplicableGenerator(node, context);
+    ZenCodingGenerator generator = findApplicableGenerator(node, context, false);
     List<ZenCodingFilter> filters = getFilters(node, context);
 
     expand(node, generator, filters, surroundedText, callback);
@@ -529,7 +529,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   ) {
     InputValidatorEx validator = new InputValidatorEx() {
       public String getErrorText(String inputString) {
-        ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext());
+        ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
         assert generator != null;
         if (!checkTemplateKey(inputString, callback, generator)) {
           return XmlBundle.message("zen.coding.incorrect.abbreviation.error");
@@ -553,7 +553,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     }
   }
 
-  public boolean isApplicable(PsiFile file, int offset) {
+  public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
     WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (!webEditorOptions.isZenCodingEnabled()) {
       return false;
@@ -563,13 +563,13 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     }
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     PsiElement element = CustomTemplateCallback.getContext(file, offset);
-    return findApplicableDefaultGenerator(element) != null;
+    return findApplicableDefaultGenerator(element, wrapping) != null;
   }
 
   protected static void doWrap(final String selection,
                                final String abbreviation,
                                final CustomTemplateCallback callback) {
-    final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext());
+    final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -579,7 +579,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
             ZenCodingNode node = parse(abbreviation, callback, defaultGenerator);
             assert node != null;
             PsiElement context = callback.getContext();
-            ZenCodingGenerator generator = findApplicableGenerator(node, context);
+            ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
             List<ZenCodingFilter> filters = getFilters(node, context);
 
             EditorModificationUtil.deleteSelectedText(callback.getEditor());
@@ -612,7 +612,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
-    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext());
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), false);
     if (generator == null) return null;
     return generator.computeTemplateKey(callback);
   }

@@ -23,8 +23,9 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableTreeContentElement;
 import com.intellij.openapi.util.KeyedExtensionFactory;
+
+import javax.swing.*;
 
 public interface OrderRootTypeUIFactory {
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, "com.intellij.OrderRootTypeUI") {
@@ -33,6 +34,9 @@ public interface OrderRootTypeUIFactory {
     }
   };
 
-  LibraryTableTreeContentElement createElement();
   PathEditor createPathEditor(Sdk sdk);
+
+  Icon getIcon();
+
+  String getNodeText();
 }

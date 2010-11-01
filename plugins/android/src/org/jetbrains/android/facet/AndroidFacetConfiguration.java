@@ -57,6 +57,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public boolean USE_CUSTOM_APK_RESOURCE_FOLDER = false;
   public String CUSTOM_APK_RESOURCE_FOLDER = "";
 
+  public String APK_PATH = "";
+
   public boolean ADD_ANDROID_LIBRARY = true;
 
   public boolean LIBRARY_PROJECT = false;

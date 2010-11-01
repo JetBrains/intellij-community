@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -83,11 +82,11 @@ public class FileUtil {
   public static String getRelativePath(String basePath, String filePath, final char separator, final boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
-    int len = 0;
-    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
     String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
     String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
     if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
+    int len = 0;
+    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
     while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
@@ -622,7 +621,7 @@ public class FileUtil {
     });
   }
 
-  public static void copyDir(File fromDir, File toDir, final @Nullable FileFilter filter) throws IOException {
+  public static void copyDir(File fromDir, File toDir, @Nullable final FileFilter filter) throws IOException {
     toDir.mkdirs();
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
@@ -900,84 +899,12 @@ public class FileUtil {
     return result.toString();
   }
 
-  private static final Method IO_FILE_CAN_EXECUTE_METHOD;
-  static {
-    Method method;
-    try {
-      method = File.class.getDeclaredMethod("canExecute", boolean.class);
-    }
-    catch (NoSuchMethodException e) {
-      method = null;
-    }
-    IO_FILE_CAN_EXECUTE_METHOD = method;
-  }
-
-  public static boolean canCallCanExecute() {
-    return IO_FILE_CAN_EXECUTE_METHOD != null;
-  }
-
   public static boolean canExecute(File file) {
-    try {
-      return ((Boolean)IO_FILE_CAN_EXECUTE_METHOD.invoke(file));
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return false;
-    }
+    return file.canExecute();
   }
 
-  //File.setWritable() since java 6.0
-  private static final Method IO_FILE_SET_WRITABLE_METHOD;
-  static {
-    Method method;
-    try {
-      method = File.class.getDeclaredMethod("setWritable", boolean.class);
-    }
-    catch (NoSuchMethodException e) {
-      method = null;
-    }
-    IO_FILE_SET_WRITABLE_METHOD = method;
-  }
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
-    if (IO_FILE_SET_WRITABLE_METHOD != null) {
-      try {
-        IO_FILE_SET_WRITABLE_METHOD.invoke(new File(path), !readOnlyStatus);
-        return;
-      }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-    }
-    Process process;
-    if (SystemInfo.isWindows) {
-      process = Runtime.getRuntime().exec(new String[]{"attrib", readOnlyStatus ? "+r" : "-r", path});
-    }
-    else { // UNIXes go here
-      process = Runtime.getRuntime().exec(new String[]{"chmod", readOnlyStatus ? "u-w" : "u+w", path});
-    }
-    try {
-      process.waitFor();
-    }
-    catch (InterruptedException ignored) {
-    }
-  }
-
-  /**
-   * The method File.setExecutalbe() (which is avaialable since java 6.0)
-   */
-  private static final Method IO_FILE_SET_EXECUTABLE_METHOD;
-  static {
-    Method method;
-    try {
-      method = File.class.getDeclaredMethod("setExecutable", boolean.class);
-    }
-    catch (NoSuchMethodException e) {
-      method = null;
-    }
-    IO_FILE_SET_EXECUTABLE_METHOD = method;
+    new File(path).setWritable(!readOnlyStatus);
   }
 
   /**
@@ -987,28 +914,8 @@ public class FileUtil {
    * @param executableFlag new value of executable attribute
    * @throws IOException if there is a problem with setting the flag
    */
-  public static void setExectuableAttribute(String path, boolean executableFlag) throws IOException {
-    if (IO_FILE_SET_EXECUTABLE_METHOD != null) {
-      try {
-        IO_FILE_SET_EXECUTABLE_METHOD.invoke(new File(path), executableFlag);
-        return;
-      }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-    }
-    if (!SystemInfo.isWindows) {
-      // UNIXes go here
-      Process process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u+x" : "u-x", path});
-      try {
-        process.waitFor();
-      }
-      catch (InterruptedException ignored) {
-      }
-    }
+  public static void setExecutableAttribute(String path, boolean executableFlag) throws IOException {
+    new File(path).setExecutable(executableFlag);
   }
 
   public static void appendToFile(File file, String text) throws IOException {

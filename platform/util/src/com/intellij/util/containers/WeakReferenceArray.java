@@ -22,12 +22,11 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class WeakReferenceArray <T> {
+public class WeakReferenceArray<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakReferenceArray");
 
-  static boolean PEFORM_CHECK_THREAD = true;
   static final int MINIMUM_CAPACITY = 5;
-  private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
+  private final ReferenceQueue<T> myQueue = new TReferenceQueue<T>();
   private MyWeakReference[] myReferences;
   private int mySize = 0;
   private int myCorpseCounter = 0;
@@ -48,8 +47,9 @@ public class WeakReferenceArray <T> {
   }
 
   private void checkRange(int index) {
-    if (index >= mySize)
+    if (index >= mySize) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
+    }
   }
 
   public int getCorpseCount() {
@@ -72,16 +72,16 @@ public class WeakReferenceArray <T> {
     MyWeakReference.createAt(myReferences, mySize, object, myQueue);
     mySize++;
   }
-  
+
   public void add(int index, T element) {
     ensureCapacity(mySize + 1);
     if (index < 0 || index > mySize) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
-    for (int i = mySize-1; i >= index; i--) {
+    for (int i = mySize - 1; i >= index; i--) {
       MyWeakReference aliveReference = MyWeakReference.getFrom(myReferences, i);
       if (aliveReference != null) {
-        aliveReference.putTo(myReferences, i+1);
+        aliveReference.putTo(myReferences, i + 1);
       }
     }
     MyWeakReference.createAt(myReferences, index, element, myQueue);
@@ -137,19 +137,25 @@ public class WeakReferenceArray <T> {
       if (validIndex < i) {
         performRemoveAt(validIndex);
         //myReferences[i] = null;
-      } else LOG.assertTrue(validIndex == i);
+      }
+      else {
+        LOG.assertTrue(validIndex == i);
+      }
       aliveReference.moveTo(myReferences, references, validIndex);
       validIndex++;
     }
 
     if (newIndex == -1) newIndex = -validIndex - 1;
-    for (int i = validIndex; i < mySize; i++)
+    for (int i = validIndex; i < mySize; i++) {
       performRemoveAt(i);
-    for (int i = mySize; i < myReferences.length; i++)
+    }
+    for (int i = validIndex; i < myReferences.length; i++) {
       LOG.assertTrue(myReferences[i] == null);
+    }
 
     flushQueue();
     mySize = validIndex;
+
     return newIndex;
   }
 
@@ -209,7 +215,9 @@ public class WeakReferenceArray <T> {
   }
 
   // For testing only
-  WeakReference[] getReferences() { return myReferences; }
+  WeakReference[] getReferences() {
+    return myReferences;
+  }
 
   boolean removeReference(int index) {
     MyWeakReference reference = MyWeakReference.getFrom(myReferences, index);
@@ -227,6 +235,7 @@ public class WeakReferenceArray <T> {
 
   private static class MyWeakReference<E> extends WeakReference<E> {
     private int myIndex = -1;
+
     private MyWeakReference(E e, ReferenceQueue<E> referenceQueue) {
       super(e, referenceQueue);
     }
@@ -270,6 +279,14 @@ public class WeakReferenceArray <T> {
       if (myIndex == -1) return;
       LOG.assertTrue(array[myIndex] == this);
       array[myIndex] = null;
+    }
+  }
+
+  private static class TReferenceQueue<T> extends ReferenceQueue<T> {
+    @Override
+    public Reference<? extends T> poll() {
+      Reference<? extends T> reference = super.poll();
+      return reference;
     }
   }
 }

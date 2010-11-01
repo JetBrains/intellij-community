@@ -108,7 +108,8 @@ public class ShowFilePathAction extends AnAction {
           Icon eachIcon;
           if (ioFile.exists()) {
             eachIcon = FileSystemView.getFileSystemView().getSystemIcon(ioFile);
-          } else {
+          }
+          else {
             eachIcon = new EmptyIcon(16, 16);
           }
 
@@ -152,11 +153,13 @@ public class ShowFilePathAction extends AnAction {
         if (files.indexOf(selectedValue) == 0 && files.size() > 1) {
           open.set(new File(getPresentableUrl(files.get(1))));
           toSelect.set(selectedIoFile);
-        } else {
+        }
+        else {
           open.set(selectedIoFile);
         }
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
+            if (!open.get().exists()) return;
             open(open.get(), toSelect.get());
           }
         });
@@ -176,7 +179,8 @@ public class ShowFilePathAction extends AnAction {
         File parent = ioFile.getParentFile();
         if (parent != null) {
           Runtime.getRuntime().exec(cmd + " " + path, ArrayUtil.EMPTY_STRING_ARRAY, parent);
-        } else {
+        }
+        else {
           Runtime.getRuntime().exec(cmd + " " + path);
         }
       }
@@ -184,7 +188,8 @@ public class ShowFilePathAction extends AnAction {
         LOG.warn(e);
       }
 
-    } else if (isJava6()) {
+    }
+    else if (isJava6()) {
       try {
         final Object desktopObject = Class.forName("java.awt.Desktop").getMethod("getDesktop").invoke(null);
         desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);
@@ -192,7 +197,8 @@ public class ShowFilePathAction extends AnAction {
       catch (Exception e) {
         LOG.debug(e);
       }
-    } else {
+    }
+    else {
       throw new UnsupportedOperationException();
     }
 

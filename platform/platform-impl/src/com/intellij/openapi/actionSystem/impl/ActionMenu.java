@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.StatusBar;
@@ -39,7 +40,7 @@ import java.beans.PropertyChangeListener;
 public final class ActionMenu extends JMenu {
   private final String myPlace;
   private DataContext myContext;
-  private final ActionGroup myGroup;
+  private final ActionRef<ActionGroup> myGroup;
   private final PresentationFactory myPresentationFactory;
   private final Presentation myPresentation;
   /**
@@ -54,10 +55,14 @@ public final class ActionMenu extends JMenu {
    */
   private StubItem myStubItem;
 
-  public ActionMenu(DataContext context, String place, ActionGroup group, PresentationFactory presentationFactory, final boolean enableMnemonics) {
+  public ActionMenu(DataContext context,
+                    String place,
+                    ActionGroup group,
+                    PresentationFactory presentationFactory,
+                    final boolean enableMnemonics) {
     myContext = context;
     myPlace = place;
-    myGroup = group;
+    myGroup = ActionRef.fromAction(group);
     myPresentationFactory = presentationFactory;
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
@@ -82,7 +87,7 @@ public final class ActionMenu extends JMenu {
   private void installSynchronizer() {
     if (myMenuItemSynchronizer == null) {
       myMenuItemSynchronizer = new MenuItemSynchronizer();
-      myGroup.addPropertyChangeListener(myMenuItemSynchronizer);
+      myGroup.getAction().addPropertyChangeListener(myMenuItemSynchronizer);
       myPresentation.addPropertyChangeListener(myMenuItemSynchronizer);
     }
   }
@@ -94,7 +99,7 @@ public final class ActionMenu extends JMenu {
 
   private void uninstallSynchronizer() {
     if (myMenuItemSynchronizer != null) {
-      myGroup.removePropertyChangeListener(myMenuItemSynchronizer);
+      myGroup.getAction().removePropertyChangeListener(myMenuItemSynchronizer);
       myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
       myMenuItemSynchronizer = null;
     }
@@ -169,8 +174,9 @@ public final class ActionMenu extends JMenu {
   }
 
   public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
-    IdeFrameImpl frame = component instanceof IdeFrameImpl ? (IdeFrameImpl)component :
-                         (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, component);
+    IdeFrameImpl frame = component instanceof IdeFrameImpl
+                         ? (IdeFrameImpl)component
+                         : (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, component);
     if (frame != null) {
       StatusBar statusBar = frame.getStatusBar();
       if (isIncluded) {
@@ -228,11 +234,12 @@ public final class ActionMenu extends JMenu {
     if (myContext != null) {
       context = myContext;
       mayContextBeInvalid = false;
-    } else {
+    }
+    else {
       context = DataManager.getInstance().getDataContext();
       mayContextBeInvalid = true;
     }
-    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
+    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {

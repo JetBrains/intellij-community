@@ -341,7 +341,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myRunContext != null) {
@@ -523,6 +523,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     if (result == null) {
       result =  isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    }
+
+    final boolean meaninglessOwner = result instanceof JFrame || result instanceof JDialog || result instanceof JWindow || result instanceof JRootPane;
+    if ((result == null && !isFocusBeingTransferred()) || meaninglessOwner) {
+      final Component permOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+      if (permOwner != null) {
+        result = permOwner;
+      }
     }
 
     return result;

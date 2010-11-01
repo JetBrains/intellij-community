@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -64,7 +63,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
                                               registrar.getLibraryTable());
     CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, new NewLibraryEditor(), tables, 1);
     final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
-    dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
+    dialog.setContextModule(contextModule);
     dialog.show();
     myIsOk = dialog.isOK();
     if (myIsOk) {

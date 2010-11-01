@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.AllClassesGetter;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -26,7 +23,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -34,14 +30,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyClassNameInsertHandler implements AllClassesGetter.ClassNameInsertHandler {
-  public AllClassesGetter.ClassNameInsertHandlerResult handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
+public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
+  @Override
+  public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
     PsiFile file = context.getFile();
-    assert GroovyFileType.GROOVY_LANGUAGE.equals(file.getLanguage());
     Editor editor = context.getEditor();
     int endOffset = editor.getCaretModel().getOffset();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, GrImportStatement.class, false) != null) {
-      return AllClassesGetter.ClassNameInsertHandlerResult.INSERT_FQN;
+      AllClassesGetter.INSERT_FQN.handleInsert(context, item);
+      return;
     }
     PsiElement position = file.findElementAt(endOffset - 1);
 
@@ -52,23 +49,22 @@ public class GroovyClassNameInsertHandler implements AllClassesGetter.ClassNameI
     if (isInVariable(position) || GroovyCompletionContributor.isInClosurePropertyParameters(position)) {
       Project project = context.getProject();
       PsiClass psiClass = item.getObject();
-      if (!psiClass.isValid()) return AllClassesGetter.ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
       String qname = psiClass.getQualifiedName();
       String shortName = psiClass.getName();
-      if (qname == null) return AllClassesGetter.ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
+      if (qname == null) return;
 
       PsiClass aClass = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedClass(shortName, position);
       if (aClass == null) {
         ((GroovyFileBase)file).addImportForClass(psiClass);
         GroovyInsertHandler.INSTANCE.handleInsert(context, item);
-        return AllClassesGetter.ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
+        return;
       }
       else if (aClass == psiClass) {
         GroovyInsertHandler.INSTANCE.handleInsert(context, item);
-        return AllClassesGetter.ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
+        return;
       }
     }
-    return AllClassesGetter.ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
+    AllClassesGetter.TRY_SHORTENING.handleInsert(context, item);
   }
 
   private static boolean isInVariable(PsiElement position) {

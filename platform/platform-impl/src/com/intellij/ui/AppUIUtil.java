@@ -21,9 +21,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -33,16 +32,7 @@ public class AppUIUtil {
   }
 
   public static void updateFrameIcon(final Frame frame) {
-    try {
-      // new API added in JDK 1.6
-      final Method method = frame.getClass().getMethod("setIconImages", List.class);
-      method.invoke(frame, getAppIconImages());
-    }
-    catch (Exception e) {
-      // fallback to JDK 1.5 API which doesn't support transparent PNGs as frame icons
-      final Image image = ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getOpaqueIconUrl());
-      frame.setIconImage(image);
-    }
+    frame.setIconImages(getAppIconImages());
   }
 
   public static List<Image> getAppIconImages() {

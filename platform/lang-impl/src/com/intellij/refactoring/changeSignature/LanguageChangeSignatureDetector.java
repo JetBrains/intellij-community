@@ -32,16 +32,9 @@ public interface LanguageChangeSignatureDetector {
   ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                           final @Nullable ChangeInfo changeInfo);
 
-  boolean showDialog(ChangeInfo changeInfo, @NotNull String oldText);
+  boolean accept(ChangeInfo changeInfo, @NotNull String oldText, boolean silently);
 
   boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo);
-
-  @Nullable
-  TextRange getQuickFixRange(PsiElement element);
-
-  boolean isToHighlight(PsiElement element, ChangeInfo changeInfo);
-
-  boolean wasBanned(PsiElement element, @NotNull ChangeInfo bannedInfo);
 
   boolean isMoveParameterAvailable(PsiElement parameter, boolean left);
 

@@ -26,13 +26,13 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 
-public class JavaHelper extends Helper {
-  public JavaHelper(final FileType fileType, final Project project) {
+public class JavaIndentHelper extends IndentHelper {
+  public JavaIndentHelper(final FileType fileType, final Project project) {
     super(fileType, project);
   }
 
   protected int getIndentInner(final ASTNode element, final boolean includeNonSpace, final int recursionLevel) {
-    if (recursionLevel > TOO_BIG_WALK_THRESHOULD) return 0;
+    if (recursionLevel > TOO_BIG_WALK_THRESHOLD) return 0;
 
     if (element.getTreePrev() != null) {
       ASTNode prev = element.getTreePrev();

@@ -316,7 +316,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (hasItems) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
 
-      if (isFocused() && !hasExactPrefixes) {
+      if (isFocused() && (!hasExactPrefixes || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselectedItem, oldInvariant);
       }
       else {

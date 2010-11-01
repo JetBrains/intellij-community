@@ -18,6 +18,7 @@ package com.intellij.codeHighlighting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -84,6 +85,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public final void applyInformationToEditor() {
     if (!isValid()) return; // Document has changed.
+    if (DumbService.getInstance(myProject).isDumb() && !(this instanceof DumbAware)) {
+      return;
+    }
     doApplyInformationToEditor();
   }
 

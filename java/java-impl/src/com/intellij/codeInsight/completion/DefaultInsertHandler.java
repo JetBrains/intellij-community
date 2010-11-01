@@ -53,7 +53,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private void handleInsertInner(InsertionContext context, LookupItem item, final char completionChar) {
-    LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     final Project project = context.getProject();
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();

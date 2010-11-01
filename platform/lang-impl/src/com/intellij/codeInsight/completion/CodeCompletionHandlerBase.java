@@ -95,8 +95,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
+    if (editor.isViewer()) {
+      editor.getDocument().fireReadOnlyModificationAttempt();
+      return;
     }
 
     try {
@@ -108,11 +109,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
-    final Document document = editor.getDocument();
-    if (editor.isViewer()) {
-      document.fireReadOnlyModificationAttempt();
-      return;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
+
+    final Document document = editor.getDocument();
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;
     }
@@ -274,9 +275,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-              startSemaphore.up(); //todo move inside read action
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 public void run() {
+                  startSemaphore.up();
+
                   ProgressManager.checkCanceled();
                   data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
                     public void consume(final LookupElement lookupElement) {

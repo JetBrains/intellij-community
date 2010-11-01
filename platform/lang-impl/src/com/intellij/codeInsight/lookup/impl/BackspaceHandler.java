@@ -54,7 +54,7 @@ public class BackspaceHandler extends EditorActionHandler {
     if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
       final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
       if (process instanceof CompletionProgressIndicator) {
-        ((CompletionProgressIndicator)process).restartCompletion();
+        ((CompletionProgressIndicator)process).scheduleRestart();
         return;
       }
     }

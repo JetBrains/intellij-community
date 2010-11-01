@@ -22,7 +22,6 @@ import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -74,7 +73,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
-    if (!(data instanceof SyntaxTableCompletionData)) {
+    if (data != null && !(data instanceof SyntaxTableCompletionData)) {
       Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
       data.addKeywordVariants(toAdd, insertedElement, file);
       for (CompletionVariant completionVariant : toAdd) {
@@ -86,20 +85,12 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     final int startOffset = parameters.getOffset();
 
-    final PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-      public PsiReference compute() {
-        return file.findReferenceAt(startOffset);
-      }
-    });
+    final PsiReference reference = file.findReferenceAt(startOffset);
     if (reference != null) {
       return false;
     }
 
-    final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      public PsiElement compute() {
-        return file.findElementAt(startOffset - 1);
-      }
-    });
+    final PsiElement element = file.findElementAt(startOffset - 1);
 
     ASTNode textContainer = element != null ? element.getNode() : null;
     while (textContainer != null) {

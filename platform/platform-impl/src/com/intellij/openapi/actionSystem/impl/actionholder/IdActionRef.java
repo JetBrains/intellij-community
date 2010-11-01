@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
+package com.intellij.openapi.actionSystem.impl.actionholder;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.actionSystem.AnAction;
 
-class ClassesElement extends OrderRootTypeElement {
-  public ClassesElement() {
-    super(OrderRootType.CLASSES);
+class IdActionRef<T extends AnAction> extends ActionRef<T> {
+  private String myId;
+
+  public IdActionRef(String id) {
+    myId = id;
   }
 
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
-    return new ClassesElementDescriptor(parentDescriptor, this);
+  public T getAction() {
+    T action = (T)getManager().getAction(myId);
+    if (action != null) return action;
+    throw new IllegalStateException("There's no registered action with id=" + myId);
   }
 }

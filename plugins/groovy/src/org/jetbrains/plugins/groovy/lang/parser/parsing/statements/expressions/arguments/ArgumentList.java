@@ -124,7 +124,8 @@ public class ArgumentList implements GroovyElementTypes {
     else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
              KEYWORDS.contains(builder.getTokenType()) ||
              mSTRING_LITERAL.equals(builder.getTokenType()) ||
-             mGSTRING_LITERAL.equals(builder.getTokenType())) {
+             mGSTRING_LITERAL.equals(builder.getTokenType()) ||
+             mREGEX_LITERAL.equals(builder.getTokenType())) {
       builder.advanceLexer();
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
@@ -136,6 +137,7 @@ public class ArgumentList implements GroovyElementTypes {
       }
     }
     else if (mGSTRING_BEGIN.equals(builder.getTokenType()) ||
+             mREGEX_BEGIN.equals(builder.getTokenType()) ||
              TokenSets.NUMBERS.contains(builder.getTokenType()) ||
              mLBRACK.equals(builder.getTokenType()) ||
              mLPAREN.equals(builder.getTokenType()) ||

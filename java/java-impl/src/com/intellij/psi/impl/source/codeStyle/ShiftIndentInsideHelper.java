@@ -43,12 +43,12 @@ public class ShiftIndentInsideHelper {
 
   private final CodeStyleSettings mySettings;
   private final FileType myFileType;
-  private final Helper myIndentHelper;
+  private final IndentHelper myIndentIndentHelper;
 
   public ShiftIndentInsideHelper(FileType fileType, Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);
     myFileType = fileType;
-    myIndentHelper = HelperFactory.createHelper(fileType, project);
+    myIndentIndentHelper = HelperFactory.createHelper(fileType, project);
   }
 
   private static int getStartOffset(ASTNode root, ASTNode child) {
@@ -75,10 +75,10 @@ public class ShiftIndentInsideHelper {
         }
                     if (c == '\n' || c == '\r') continue;
         String space = text.substring(offset + 1, offset1);
-        int indent = myIndentHelper.getIndent(space, true);
+        int indent = myIndentIndentHelper.getIndent(space, true);
         int newIndent = indent + indentShift;
         newIndent = Math.max(newIndent, 0);
-        String newSpace = myIndentHelper.fillIndent(newIndent);
+        String newSpace = myIndentIndentHelper.fillIndent(newIndent);
 
         ASTNode leaf = element.findLeafElementAt(offset);
         if (!mayShiftIndentInside(leaf)) {
@@ -96,7 +96,7 @@ public class ShiftIndentInsideHelper {
           ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
-              int commentIndent = myIndentHelper.getIndent(next, true);
+              int commentIndent = myIndentIndentHelper.getIndent(next, true);
               if (commentIndent == 0) continue;
             }
           }

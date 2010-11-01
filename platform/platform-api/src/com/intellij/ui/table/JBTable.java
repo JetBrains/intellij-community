@@ -17,6 +17,7 @@ package com.intellij.ui.table;
 
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
@@ -203,7 +204,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (myEditorRemover == null) {
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      myEditorRemover = new MyCellEditorRemover(keyboardFocusManager);
+      myEditorRemover = new MyCellEditorRemover();
       //noinspection HardCodedStringLiteral
       keyboardFocusManager.addPropertyChangeListener("focusOwner", myEditorRemover);
       //noinspection HardCodedStringLiteral
@@ -268,10 +269,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private final class MyCellEditorRemover implements PropertyChangeListener {
-    private final KeyboardFocusManager myFocusManager;
+    private final IdeFocusManager myFocusManager;
 
-    public MyCellEditorRemover(final KeyboardFocusManager focusManager) {
-      myFocusManager = focusManager;
+    public MyCellEditorRemover() {
+      myFocusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
     }
 
     public void propertyChange(final PropertyChangeEvent e) {
@@ -279,20 +280,31 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return;
       }
 
-      Component c = myFocusManager.getFocusOwner();
-      while (c != null) {
-        if (c == JBTable.this) {
-          // focus remains inside the table
-          return;
-        }
-        else if (c instanceof Window) {
-          if (c == SwingUtilities.getWindowAncestor(JBTable.this)) {
-            getCellEditor().stopCellEditing();
+      myFocusManager.doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          if (!isEditing()) {
+            return;
           }
-          break;
+          Component c = myFocusManager.getFocusOwner();
+          while (c != null) {
+            if (c instanceof JPopupMenu) {
+              c = ((JPopupMenu)c).getInvoker();
+            }
+            if (c == JBTable.this) {
+              // focus remains inside the table
+              return;
+            }
+            else if (c instanceof Window) {
+              if (c == SwingUtilities.getWindowAncestor(JBTable.this)) {
+                getCellEditor().stopCellEditing();
+              }
+              break;
+            }
+            c = c.getParent();
+          }
         }
-        c = c.getParent();
-      }
+      });
     }
   }
 
