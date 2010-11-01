@@ -160,12 +160,26 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
-            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType);
+
+            final Ref<CompletionContributor> current = Ref.create(null);
+            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
+              CompletionContributor dummyIdentifierChanger;
+              @Override
+              public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
+                super.setFileCopyPatcher(fileCopyPatcher);
+
+                if (dummyIdentifierChanger != null) {
+                  LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+                }
+                dummyIdentifierChanger = current.get();
+              }
+            };
             for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
               if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
                 continue;
               }
 
+              current.set(contributor);
               contributor.beforeCompletion(initializationContext[0]);
               assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
             }
