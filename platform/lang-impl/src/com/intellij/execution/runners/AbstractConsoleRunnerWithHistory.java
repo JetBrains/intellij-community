@@ -33,9 +33,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -187,10 +191,25 @@ public abstract class AbstractConsoleRunnerWithHistory {
     };
     EmptyAction.setupAction(myRunAction, "Console.Execute", null);
     toolbarActions.add(myRunAction);
+    final EditorEx editor = myConsoleView.getConsole().getHistoryViewer();
+    // Add soft wrap toggle action
+    toolbarActions.add(new ToggleUseSoftWrapsToolbarAction() {
+      @Override
+      protected Editor getEditor(AnActionEvent e) {
+        return editor;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        EditorSettingsExternalizable.getInstance().setUseSoftWraps(editor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
+      }
+    });
+    // Add scroll to the end action
     toolbarActions.add(new ScrollToTheEndToolbarAction(){
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        EditorUtil.scrollToTheEnd(myConsoleView.getConsole().getHistoryViewer());
+        EditorUtil.scrollToTheEnd(editor);
       }
     });
 
