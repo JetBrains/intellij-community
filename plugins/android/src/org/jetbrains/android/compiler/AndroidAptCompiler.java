@@ -120,6 +120,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           if (aptItem.myGeneratedFile.exists()) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
+                if (context.getProject().isDisposed()) {
+                  return;
+                }
                 String className = FileUtil.getNameWithoutExtension(aptItem.myGeneratedFile);
                 AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aptItem.myPackage, className, aptItem.myGeneratedFile);
               }
