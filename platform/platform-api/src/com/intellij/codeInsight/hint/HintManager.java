@@ -56,6 +56,7 @@ public abstract class HintManager {
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
 
   public abstract void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action);
+  public abstract void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action, boolean showByBaloon);
 
   public abstract boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
 

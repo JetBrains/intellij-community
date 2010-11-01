@@ -147,7 +147,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           public boolean canBeDismissedOnTimeout() {
             return false;
           }
-        }.setToCenterIfSmall(hintHint.isMayCenterTooltip()).setPreferredPosition(hintHint.getPreferredPosition()).setHighlighterType(hintHint.isHightlighterType());
+        }.setToCenterIfSmall(hintHint.isMayCenterTooltip())
+          .setPreferredPosition(hintHint.getPreferredPosition())
+          .setHighlighterType(hintHint.isHightlighterType())
+          .setTextForeground(hintHint.getTextForeground())
+          .setTextBackground(hintHint.getTextBackground())
+          .setBorderColor(hintHint.getBorderColor());
 
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);

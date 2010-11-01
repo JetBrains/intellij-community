@@ -38,6 +38,10 @@ public class HintHint {
   private boolean myQuickHint = false;
   private boolean myMayCenterTooltip = false;
 
+  private Color myTextFg;
+  private Color myTextBg;
+  private Color myBorderColor;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -91,11 +95,11 @@ public class HintHint {
   }
 
   public Color getTextForeground() {
-    return getTooltipManager().getTextForeground(myAwtTooltip);
+    return myTextFg != null ? myTextFg : getTooltipManager().getTextForeground(myAwtTooltip);
   }
 
   public Color getTextBackground() {
-    return getTooltipManager().getTextBackground(myAwtTooltip);
+    return myTextBg != null ? myTextBg : getTooltipManager().getTextBackground(myAwtTooltip);
   }
 
   public Color getLinkForeground() {
@@ -107,7 +111,7 @@ public class HintHint {
   }
 
   public Color getBorderColor() {
-    return getTooltipManager().getBorderColor(myAwtTooltip);
+    return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
   }
 
   public boolean isOpaqueAllowed() {
@@ -169,4 +173,23 @@ public class HintHint {
     }
   }
 
+  public void initStyleFrom(JComponent component) {
+    myTextFg = component.getForeground();
+    myTextBg = component.getBackground();
+  }
+
+  public HintHint setTextFg(Color textFg) {
+    myTextFg = textFg;
+    return this;
+  }
+
+  public HintHint setTextBg(Color textBg) {
+    myTextBg = textBg;
+    return this;
+  }
+
+  public HintHint setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
+    return this;
+  }
 }

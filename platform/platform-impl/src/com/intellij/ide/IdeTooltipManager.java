@@ -241,9 +241,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       return;
     }
 
-    Color bg = getTextBackground(true);
-    Color fg = getTextForeground(true);
-    Color border = getBorderColor(true);
+    Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
+    Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
+    Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
       .setPreferredPosition(tooltip.getPreferredPosition())

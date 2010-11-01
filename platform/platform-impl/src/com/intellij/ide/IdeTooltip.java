@@ -35,6 +35,10 @@ public class IdeTooltip extends ComparableObject.Impl {
   private boolean myToCenterIfSmall = true;
   private boolean myHighlighter;
 
+  private Color myTextBackground;
+  private Color myTextForeground;
+  private Color myBorderColor;
+
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
     myComponent = component;
@@ -121,6 +125,33 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   void setTipComponent(JComponent tipComponent) {
     myTipComponent = tipComponent;
+  }
+
+  public IdeTooltip setTextBackground(Color textBackground) {
+    myTextBackground = textBackground;
+    return this;
+  }
+
+  public IdeTooltip setTextForeground(Color textForeground) {
+    myTextForeground = textForeground;
+    return this;
+  }
+
+  public IdeTooltip setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
+    return this;
+  }
+
+  public Color getTextBackground() {
+    return myTextBackground;
+  }
+
+  public Color getTextForeground() {
+    return myTextForeground;
+  }
+
+  public Color getBorderColor() {
+    return myBorderColor;
   }
 }
 
