@@ -97,7 +97,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   public static boolean isApplicable(CustomLiveTemplate template, Editor editor, PsiFile file) {
-    return template.isApplicable(file, editor.getSelectionModel().getSelectionStart());
+    return template.isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
   }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {

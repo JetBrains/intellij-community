@@ -79,7 +79,8 @@ public class XslZenCodingFilter extends ZenCodingFilter {
 
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
-    return myDelegate.isMyContext(context);
+    return myDelegate.isMyContext(context, true) ||
+           myDelegate.isMyContext(context, false);
   }
 
   @NotNull
