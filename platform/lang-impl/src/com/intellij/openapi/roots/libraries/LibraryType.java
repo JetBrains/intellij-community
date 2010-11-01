@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.libraries;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,11 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
 
   @NotNull
   public abstract P createDefaultProperties();
+
+  @Nullable
+  public LibraryRootsComponentDescriptor createLibraryRootsComponentDescriptor() {
+    return null;
+  }
 
   @Nullable
   public abstract LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<P> properties);

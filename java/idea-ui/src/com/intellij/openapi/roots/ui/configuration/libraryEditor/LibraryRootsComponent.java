@@ -19,32 +19,29 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ui.Util;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ScrollPaneFactory;
@@ -80,16 +77,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private JPanel myPanel;
   private JButton myRemoveButton;
-  private JButton myAttachClassesButton;
-  private JButton myAttachJarDirectoriesButton;
-  private JButton myAttachSourcesButton;
-  private JButton myAttachJavadocsButton;
-  private JButton myAttachUrlJavadocsButton;
   private JPanel myTreePanel;
-  private JButton myAttachAnnotationsButton;
   private JButton myAttachMoreButton;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
+  private JPanel myAttachButtonsPanel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
@@ -99,8 +91,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
   @Nullable private final Project myProject;
 
-  private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
   private final Computable<LibraryEditor> myLibraryEditorComputable;
+  private LibraryRootsComponentDescriptor myDescriptor;
+  private Module myContextModule;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     this(project, new Computable.PredefinedValueComputable<LibraryEditor>(libraryEditor));
@@ -112,11 +105,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     final LibraryEditor editor = getLibraryEditor();
     final LibraryType type = editor.getType();
     if (type != null) {
+      myDescriptor = type.createLibraryRootsComponentDescriptor();
       //noinspection unchecked
       myPropertiesEditor = type.createPropertiesEditor(this);
       if (myPropertiesEditor != null) {
         myPropertiesPanel.add(myPropertiesEditor.createComponent(), BorderLayout.CENTER);
       }
+    }
+    if (myDescriptor == null) {
+      myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
     init(new LibraryTreeStructure(this));
     updateProperties();
@@ -151,21 +148,21 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
-    myRemoveButton.addActionListener(new RemoveAction());
-    myAttachClassesButton.addActionListener(new AttachClassesAction());
-    myAttachJarDirectoriesButton.addActionListener(new AttachJarDirectoriesAction());
-    myAttachSourcesButton.addActionListener(new AttachSourcesAction());
-    myAttachJavadocsButton.addActionListener(new AttachJavadocAction());
-    myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
-    myAttachAnnotationsButton.addActionListener(new AttachAnnotationsAction());
+    final JPanel buttonsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
+    for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
+      JButton button = new JButton(descriptor.getButtonText());
+      button.addActionListener(new AttachItemAction(descriptor));
+      buttonsPanel.add(button);
+    }
+    myAttachButtonsPanel.add(buttonsPanel, BorderLayout.CENTER);
 
+    myRemoveButton.addActionListener(new RemoveAction());
     final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
-    final LibraryEditor libraryEditor = getLibraryEditor();
-    if (handlers.length == 0 || myProject == null) {
+    if (handlers.length == 0 || myProject == null || myDescriptor != null) {
       myAttachMoreButton.setVisible(false);
     }
     else {
-      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers, libraryEditor));
+      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers));
       if (handlers.length == 1) {
         myAttachMoreButton.setText(handlers[0].getLongName());
       }
@@ -183,8 +180,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return myPanel;
   }
 
-  public <T> void addFileChooserContext(DataKey<T> key, T value) {
-    myFileChooserUserData.put(key, value);
+  public void setContextModule(Module module) {
+    myContextModule = module;
   }
 
   public LibraryEditor getLibraryEditor() {
@@ -259,40 +256,20 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  private abstract class AttachItemAction implements ActionListener {
-    private final FileChooserDescriptor myDescriptor;
+  private class AttachItemAction implements ActionListener {
     private VirtualFile myLastChosen = null;
+    private final AttachRootButtonDescriptor myDescriptor;
 
-    protected abstract String getTitle();
-    protected abstract String getDescription();
-    protected abstract OrderRootType getRootType();
-
-    protected AttachItemAction() {
-      myDescriptor = createDescriptor();
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor) {
+      myDescriptor = descriptor;
     }
 
-    protected FileChooserDescriptor createDescriptor() {
-      return new FileChooserDescriptor(false, true, true, false, true, true);
-    }
-
-    protected VirtualFile[] scanForActualRoots(VirtualFile[] rootCandidates) {
-      return rootCandidates;
-    }
-
-    protected boolean addAsJarDirectories() {
-      return false;
-    }
-    
     public final void actionPerformed(ActionEvent e) {
-      myDescriptor.setTitle(getTitle());
-      myDescriptor.setDescription(getDescription());
-      for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
-        myDescriptor.putUserData(entry.getKey(), entry.getValue());
-      }
       VirtualFile toSelect = getFileToSelect();
-      final VirtualFile[] attachedFiles =
-        attachFiles(scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(),
-                    addAsJarDirectories());
+      final VirtualFile[] files = myDescriptor.selectFiles(myPanel, toSelect, myContextModule, getLibraryEditor().getName());
+      if (files.length == 0) return;
+
+      final VirtualFile[] attachedFiles = attachFiles(myDescriptor.scanForActualRoots(files, myPanel), myDescriptor.getRootType(), myDescriptor.addAsJarDirectories());
       if (attachedFiles.length > 0) {
         myLastChosen = attachedFiles[0];
       }
@@ -366,121 +343,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     ContainerUtil.addAll(alreadyAdded, libraryFiles);
     chosenFilesSet.removeAll(alreadyAdded);
     return VfsUtil.toVirtualFileArray(chosenFilesSet);
-  }
-
-  private class AttachClassesAction extends AttachItemAction {
-    @SuppressWarnings({"RefusedBequest"})
-    protected FileChooserDescriptor createDescriptor() {
-      return new FileChooserDescriptor(false, true, true, false, false, true);
-    }
-
-    protected String getTitle() {
-      final String name = getLibraryEditor().getName();
-      if (StringUtil.isEmpty(name)) {
-        return ProjectBundle.message("library.attach.classes.action");
-      }
-      else {
-        return ProjectBundle.message("library.attach.classes.to.library.action", name);
-      }
-    }
-
-    protected String getDescription() {
-      return ProjectBundle.message("library.attach.classes.description");
-    }
-
-    protected OrderRootType getRootType() {
-      return OrderRootType.CLASSES;
-    }
-  }
-
-  private class AttachJarDirectoriesAction extends AttachItemAction {
-    @SuppressWarnings({"RefusedBequest"})
-    protected FileChooserDescriptor createDescriptor() {
-      return new FileChooserDescriptor(false, true, false, false, false, true);
-    }
-
-    protected boolean addAsJarDirectories() {
-      return true;
-    }
-
-    protected String getTitle() {
-      final String name = getLibraryEditor().getName();
-      if (StringUtil.isEmpty(name)) {
-        return ProjectBundle.message("library.attach.jar.directory.action");
-      }
-      else {
-        return ProjectBundle.message("library.attach.jar.directory.to.library.action", name);
-      }
-    }
-
-    protected String getDescription() {
-      return ProjectBundle.message("library.attach.jar.directory.description");
-    }
-
-    protected OrderRootType getRootType() {
-      return OrderRootType.CLASSES;
-    }
-  }
-
-  private class AttachSourcesAction extends AttachItemAction {
-    protected String getTitle() {
-      return ProjectBundle.message("library.attach.sources.action");
-    }
-
-    protected String getDescription() {
-      return ProjectBundle.message("library.attach.sources.description");
-    }
-
-    protected OrderRootType getRootType() {
-      return OrderRootType.SOURCES;
-    }
-
-    protected VirtualFile[] scanForActualRoots(final VirtualFile[] rootCandidates) {
-      return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myPanel, rootCandidates);
-    }
-  }
-
-  private class AttachAnnotationsAction extends AttachItemAction {
-    protected String getTitle() {
-      return ProjectBundle.message("library.attach.external.annotations.action");
-    }
-
-    protected String getDescription() {
-      return ProjectBundle.message("library.attach.external.annotations.description");
-    }
-
-    protected OrderRootType getRootType() {
-      return AnnotationOrderRootType.getInstance();
-    }
-
-    @Override
-    protected FileChooserDescriptor createDescriptor() {
-      return new FileChooserDescriptor(false, true, false, false, false, false);
-    }
-  }
-
-  private class AttachJavadocAction extends AttachItemAction {
-    protected String getTitle() {
-      return ProjectBundle.message("library.attach.javadoc.action");
-    }
-
-    protected String getDescription() {
-      return ProjectBundle.message("library.attach.javadoc.description");
-    }
-
-    protected OrderRootType getRootType() {
-      return JavadocOrderRootType.getInstance();
-    }
-  }
-
-  private class AttachUrlJavadocAction implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(myPanel);
-      if (vFile != null) {
-        attachFiles(new VirtualFile[] {vFile}, JavadocOrderRootType.getInstance(), false);
-      }
-      myTree.requestFocus();
-    }
   }
 
   private class RemoveAction implements ActionListener {
@@ -657,24 +519,23 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AttachMoreAction implements ActionListener {
     private final LibraryTableAttachHandler[] myHandlers;
-    private final LibraryEditor myLibraryEditor;
 
-    public AttachMoreAction(LibraryTableAttachHandler[] handlers, final LibraryEditor libraryEditor) {
+    public AttachMoreAction(LibraryTableAttachHandler[] handlers) {
       myHandlers = handlers;
-      myLibraryEditor = libraryEditor;
     }
 
     public void actionPerformed(ActionEvent e) {
+      final LibraryEditor libraryEditor = getLibraryEditor();
       final Ref<Library.ModifiableModel> modelRef = Ref.create(null);
       final NullableComputable<Library.ModifiableModel> computable;
-      if (myLibraryEditor instanceof ExistingLibraryEditor) {
-        final ExistingLibraryEditor libraryEditor = (ExistingLibraryEditor)myLibraryEditor;
+      if (libraryEditor instanceof ExistingLibraryEditor) {
+        final ExistingLibraryEditor existingLibraryEditor = (ExistingLibraryEditor)libraryEditor;
         //todo[nik, greg] actually we cannot reliable find target library if the editor is closed so jars are downloaded under the modal progress dialog now
         computable = new NullableComputable<Library.ModifiableModel>() {
           public Library.ModifiableModel compute() {
             if (myTreeBuilder == null) {
               // The following lines were born in severe pain & suffering, please respect
-              final Library library = libraryEditor.getLibrary();
+              final Library library = existingLibraryEditor.getLibrary();
               final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
               final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
                 .getDelegate() : library;
@@ -686,7 +547,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
               return model;
             }
             else {
-              return libraryEditor.getModel();
+              return existingLibraryEditor.getModel();
             }
           }
         };
@@ -703,8 +564,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myTreeBuilder != null) myTreeBuilder.queueUpdate();
-              if (myProject != null && myLibraryEditor instanceof ExistingLibraryEditor) {
-                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(((ExistingLibraryEditor)myLibraryEditor).getLibrary());
+              if (myProject != null && libraryEditor instanceof ExistingLibraryEditor) {
+                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(((ExistingLibraryEditor)libraryEditor).getLibrary());
               }
             }
           });
@@ -718,7 +579,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       };
       if (myHandlers.length == 1) {
-        myHandlers[0].performAttach(myProject, myLibraryEditor, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
+        myHandlers[0].performAttach(myProject, libraryEditor, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
       }
       else {
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryTableAttachHandler>(null, myHandlers) {
@@ -734,7 +595,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           public PopupStep onChosen(final LibraryTableAttachHandler handler, final boolean finalChoice) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                handler.performAttach(myProject, myLibraryEditor, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
+                handler.performAttach(myProject, libraryEditor, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
               }
             });
             return PopupStep.FINAL_CHOICE;

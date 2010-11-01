@@ -28,8 +28,8 @@ import java.util.Arrays;
 
 public class LibraryTreeStructure extends AbstractTreeStructure {
   private final Object myRootElement;
-  protected NodeDescriptor myRootElementDescriptor;
-  protected final LibraryRootsComponent myParentEditor;
+  private final NodeDescriptor myRootElementDescriptor;
+  private final LibraryRootsComponent myParentEditor;
 
   public LibraryTreeStructure(LibraryRootsComponent parentElement) {
     myParentEditor = parentElement;
