@@ -33,13 +33,11 @@ import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -100,7 +98,12 @@ public class ValueHint extends AbstractValueHint {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
 
-            final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
+            final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+              public String compute() {
+                return myCurrentExpression.getText();
+              }
+            });
+            final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText);
             final Value value = myValueToShow != null? myValueToShow : evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, value);
