@@ -10,8 +10,8 @@ PyFile:CommentBeforeMethod.py
     PyStatementList
       PyPassStatement
         PsiElement(Py:PASS_KEYWORD)('pass')
-    PsiWhiteSpace('\n    ')
-    PsiComment(Py:END_OF_LINE_COMMENT)('# trailing comment\n\n')
+      PsiWhiteSpace('\n    ')
+      PsiComment(Py:END_OF_LINE_COMMENT)('# trailing comment\n\n')
   PsiWhiteSpace('\n\n')
   PsiComment(Py:END_OF_LINE_COMMENT)('#leading comment')
   PsiWhiteSpace('\n')
