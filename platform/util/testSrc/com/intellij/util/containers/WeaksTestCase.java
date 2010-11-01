@@ -16,6 +16,8 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.WaitFor;
 import junit.framework.TestCase;
 
 import java.lang.ref.WeakReference;
@@ -23,25 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class WeaksTestCase extends TestCase {
-  protected static final boolean JVM_IS_GC_CAPABLE = isJvmGcCapable();
-  private static boolean isJvmGcCapable() {
-    List<Object> list = new ArrayList<Object>();
-    Object o = new Object();
-    list.add(o);
-    WeakReference<Object> wr = new WeakReference<Object>(o);
-    assertSame(o, wr.get());
-    o = null;
-    list.clear();
-    gc();
-    boolean cleared = wr.get() == null;
-    if (!cleared) {
-      System.out.println("GC INCAPABLE JVM DETECTED");
-    }
-    return cleared;
-  }
-
-
   protected final List<Object> myHolder = new ArrayList<Object>();
+  protected WeakReferenceArray<Object> myCollection = new WeakReferenceArray<Object>();
 
   protected static void gc() {
     System.gc();
@@ -50,38 +35,54 @@ public abstract class WeaksTestCase extends TestCase {
     WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
     do {
       System.gc();
-    } 
+    }
     while (weakReference.get() != null);
   }
 
+  protected void checkSameElements(final Runnable action) {
+    checkSameNotNulls(action);
+    waitFor(new Condition<Void>() {
+      @Override
+      public boolean value(Void aVoid) {
+        if (action != null) action.run();
+        if (myHolder.size() != myCollection.size()) return false;
+        for (int i = 0; i < myHolder.size(); i++) {
+          if (myHolder.get(i) != myCollection.get(i)) return false;
+        }
+        WeakReference[] references = myCollection.getReferences();
+        for (int i = myHolder.size(); i < references.length; i++) {
+          if (references[i] != null) return false;
+        }
 
-  protected void checkSameElements(WeakReferenceArray collection) {
-    checkSameNotNulls(collection);
-    assertEquals(myHolder.size(), collection.size());
-    for (int i = 0; i < myHolder.size(); i++) {
-      assertSame(myHolder.get(i), collection.get(i));
-    }
-    WeakReference[] references = collection.getReferences();
-    for (int i = myHolder.size(); i < references.length; i++)
-      assertNull(references[i]);
+        return true;
+      }
+    });
   }
 
-  protected void checkSameNotNulls(WeakReferenceArray collection) {
-    int validIndex = -1;
-    int validCount = 0;
-    for (int i = 0; i < myHolder.size(); i++) {
-      validIndex = nextValidIndex(validIndex, collection);
-      assertSame(i + "==" + validIndex, myHolder.get(i), collection.get(validIndex));
-      validCount++;
-    }
-    assertEquals(myHolder.size(), validCount);
-    assertTrue(collection.size() >= nextValidIndex(validIndex, collection));
-    assertTrue(collection.size() - myHolder.size() >= collection.getCorpseCount());
+  protected void checkSameNotNulls(final Runnable action) {
+    waitFor(new Condition<Void>() {
+      @Override
+      public boolean value(Void aVoid) {
+        if (action != null) action.run();
+        int validIndex = -1;
+        int validCount = 0;
+        for (Object o : myHolder) {
+          validIndex = nextValidIndex(validIndex, myCollection);
+          if (o != myCollection.get(validIndex)) return false;
+          validCount++;
+        }
+        if (myHolder.size() != validCount) return false;
+        if (myCollection.size() != nextValidIndex(validIndex, myCollection)) return false;
+        if (myCollection.size() - myHolder.size() != myCollection.getCorpseCount()) return false;
 
-    //validIndex = Math.max(validIndex, 0);
-    WeakReference[] references = collection.getReferences();
-    for (int i = collection.size(); i < references.length; i++)
-      assertNull(references[i]);
+        //validIndex = Math.max(validIndex, 0);
+        WeakReference[] references = myCollection.getReferences();
+        for (int i = myCollection.size(); i < references.length; i++) {
+          if (references[i] != null) return false;
+        }
+        return true;
+      }
+    });
   }
 
   private static int nextValidIndex(int validIndex, WeakReferenceArray collection) {
@@ -93,5 +94,46 @@ public abstract class WeaksTestCase extends TestCase {
   protected void addElement(Object o, WeakReferenceArray<Object> array) {
     myHolder.add(o);
     array.add(o);
+  }
+
+  protected void checkForAliveCount(final int expected) {
+    waitFor(new Condition<Void>() {
+      @Override
+      public boolean value(Void aVoid) {
+        return myCollection.getAliveCount() == expected;
+      }
+
+      @Override
+      public String toString() {
+        return "myCollection.getAliveCount() =" + myCollection.getAliveCount() + ";  expected=" + expected;
+      }
+    });
+  }
+
+  protected void checkForSize(final int expected, final boolean reduceCapacity) {
+    waitFor(new Condition<Void>() {
+      @Override
+      public boolean value(Void aVoid) {
+        if (reduceCapacity) {
+          myCollection.reduceCapacity(-1);
+        }
+        return myCollection.size() == expected;
+      }
+
+      @Override
+      public String toString() {
+        return "Size: " + myCollection.size() + "; expected:" + expected;
+      }
+    });
+  }
+
+  private static void waitFor(final Condition<Void> condition) {
+    new WaitFor(10000) {
+      @Override
+      protected boolean condition() {
+        gc();
+        return condition.value(null);
+      }
+    }.assertCompleted(condition.toString());
   }
 }

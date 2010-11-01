@@ -64,8 +64,6 @@ class AnnotationPresentation implements TextAnnotationPresentation {
       myActions.add(mySwitchAction);
     }
     myActions.add(new ShowHideAdditionalInfoAction(gutters, gutter));
-    myActions.add(new ShowHideColorsAction(gutters, gutter));
-    myActions.add(new ShowShortenNames(gutter));
   }
 
   public void addLineNumberListener(final LineNumberListener listener) {

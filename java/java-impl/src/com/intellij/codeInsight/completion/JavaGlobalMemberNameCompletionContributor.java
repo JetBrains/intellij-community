@@ -2,7 +2,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,19 +60,15 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       }
 
     };
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiFile file = position.getContainingFile();
-        if (file instanceof PsiJavaFile) {
-          final PsiImportList importList = ((PsiJavaFile)file).getImportList();
-          if (importList != null) {
-            for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-              processor.importMembersOf(statement.resolveTargetClass());
-            }
-          }
+    final PsiFile file = position.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      if (importList != null) {
+        for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+          processor.importMembersOf(statement.resolveTargetClass());
         }
       }
-    });
+    }
 
     return processor;
   }

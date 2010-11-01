@@ -52,4 +52,8 @@ public class PluginId {
   public String toString() {
     return getIdString();
   }
+
+  public static Map<String, PluginId> getRegisteredIds() {
+    return ourRegisteredIds;
+  }
 }

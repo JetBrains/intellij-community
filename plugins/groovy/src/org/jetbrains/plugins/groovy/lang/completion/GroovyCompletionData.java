@@ -143,7 +143,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerFinalCompletion() {
-    registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final");
+    registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final", "def");
   }
 
   private void registerSynchronizedCompletion() {

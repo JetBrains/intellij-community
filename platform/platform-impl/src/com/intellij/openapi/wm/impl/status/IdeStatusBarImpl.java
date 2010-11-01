@@ -287,8 +287,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   public void setInfo(@Nullable final String s, @Nullable final String requestor) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        myInfo = s;
-        if (myInfoAndProgressPanel != null) myInfoAndProgressPanel.setText(s, requestor);
+        if (myInfoAndProgressPanel != null) {
+          myInfo = myInfoAndProgressPanel.setText(s, requestor);
+        }
       }
     });
   }

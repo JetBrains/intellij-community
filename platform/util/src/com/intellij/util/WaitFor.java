@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
  * @author kir
  */
 public abstract class WaitFor {
-
   private static final int DEFAULT_STEP = 10;
   private static final int MAX_TIMEOUT = 600 * 1000;
 

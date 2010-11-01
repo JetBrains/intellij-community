@@ -77,6 +77,21 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return false;
   }
 
+   @Nullable
+   public String getChangeSignatureAcceptText(@NotNull PsiElement element) {
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
+    if (adapter != null && adapter.getCurrentInfo() != null) {
+      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
+      LOG.assertTrue(detector != null);
+      final ChangeInfo currentInfo = adapter.getCurrentInfo();
+      if (detector.isChangeSignatureAvailable(element, currentInfo)) {
+        return currentInfo instanceof RenameChangeInfo ? ChangeSignatureDetectorAction.NEW_NAME
+                                                       : ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
+      }
+    }
+    return null;
+  }
+
   public boolean containsChangeSignatureChange(@NotNull PsiFile file) {
     return getChangeInfo(file) != null;
   }
@@ -94,7 +109,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-        if (detector.showDialog(currentInfo, changeBean.getInitialText(), silently)) {
+        if (detector.accept(currentInfo, changeBean.getInitialText(), silently)) {
           changeBean.reinit();
         }
       }

@@ -21,21 +21,21 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -132,19 +133,13 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
-        if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            final GrTypeCastExpression parenthesizedExpression = ((GrTypeCastExpression)position.getParent().getParent().getParent());
-            final PsiElement assignment = parenthesizedExpression.getParent();
-            if (assignment instanceof GrAssignmentExpression &&
-                ((GrAssignmentExpression)assignment).getLValue() == parenthesizedExpression) {
-              return false;
-            }
-            return true;
-          }
-        })) {
+        final GrTypeCastExpression parenthesizedExpression = ((GrTypeCastExpression)position.getParent().getParent().getParent());
+        final PsiElement assignment = parenthesizedExpression.getParent();
+        if (assignment instanceof GrAssignmentExpression &&
+            ((GrAssignmentExpression)assignment).getLValue() == parenthesizedExpression) {
           return;
         }
+
         final boolean overwrite = PlatformPatterns.psiElement()
           .afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrTypeCastExpression.class))
           .accepts(parameters.getOriginalPosition());
@@ -201,17 +196,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   private static Set<TypeConstraint> getExpectedTypeInfos(final CompletionParameters params) {
-    final THashSet<TypeConstraint> _infos = new THashSet<TypeConstraint>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        ContainerUtil.addAll(_infos, getExpectedTypes(params));
-      }
-    });
-    return ApplicationManager.getApplication().runReadAction(new Computable<Set<TypeConstraint>>() {
-      public Set<TypeConstraint> compute() {
-        return new THashSet<TypeConstraint>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
-      }
-    });
+    return new THashSet<TypeConstraint>(Arrays.asList(getExpectedTypes(params)), EXPECTED_TYPE_INFO_STRATEGY);
   }
 
   @NotNull

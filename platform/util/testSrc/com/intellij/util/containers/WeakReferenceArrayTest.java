@@ -18,144 +18,99 @@ package com.intellij.util.containers;
 
 import java.lang.ref.WeakReference;
 
-
 public class WeakReferenceArrayTest extends WeaksTestCase {
-  private WeakReferenceArray<Object> myCollection = new WeakReferenceArray<Object>();
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    assertTrue(WeakReferenceArray.PEFORM_CHECK_THREAD);
-    WeakReferenceArray.PEFORM_CHECK_THREAD = false;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    WeakReferenceArray.PEFORM_CHECK_THREAD = true;
-    super.tearDown();
-  }
-
   public void testCorpseCounter() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElements(5);
-    assertEquals(0, myCollection.getCorpseCount());
-    checkSameElements();
+    checkForAliveCount(5);
+    checkSameElements(null);
     myHolder.remove(3);
     gc();
-    assertTrue(1 >= myCollection.getCorpseCount());
+    checkForAliveCount(4);
     myCollection.remove(3);
-    checkSameNotNulls();
-    assertTrue(1 >= myCollection.getCorpseCount());
+    checkSameNotNulls(null);
+    checkForAliveCount(4);
     myCollection.remove(2);
-    assertTrue(2 >= myCollection.getCorpseCount());
+    checkForAliveCount(3);
     myHolder.remove(2);
     gc();
-    checkSameNotNulls();
-    assertTrue(2 >= myCollection.getCorpseCount());
+    checkSameNotNulls(null);
+    checkForAliveCount(3);
   }
 
   public void testAddRemove() {
-    if (!JVM_IS_GC_CAPABLE) return;
     myHolder.add("1");
     myHolder.add("2");
-    assertEquals(0, myCollection.size());
+    checkForSize(0, false);
+
     myCollection.add(myHolder.get(0));
-    assertEquals(1, myCollection.size());
+    checkForSize(1, false);
     myCollection.add(myHolder.get(1));
-    checkSameElements();
+    checkSameElements(null);
     assertSame(myHolder.get(0), myCollection.remove(0));
-    assertEquals(2, myCollection.size());
+    checkForSize(2, false);
     assertNull(myCollection.remove(0));
   }
 
   public void testRemoveDead() {
-    if (!JVM_IS_GC_CAPABLE) return;
     myCollection.add(new Object());
     myCollection.add(this);
     gc();
-    assertEquals(2, myCollection.size());
-    assertTrue(1 >= myCollection.getCorpseCount());
+    checkForSize(2, false);
+    checkForAliveCount(1);
+
     assertNull(myCollection.remove(0));
-    assertTrue(1 >= myCollection.getCorpseCount());
+    checkForAliveCount(1);
   }
 
   public void testCompress() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElements(5);
-    checkSameElements();
+    checkSameElements(null);
     myHolder.remove(0);
     myHolder.remove(0);
-    gc();
-    checkSameNotNulls();
-    myCollection.compress(-1);
-    checkSameElements();
-    assertEquals(0, myCollection.getCorpseCount());
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.compress(-1);
+      }
+    });
+    checkForAliveCount(3);
   }
 
   public void testCompressTrackingLastSurvived() {
-    if (!JVM_IS_GC_CAPABLE) return;
     myCollection.add(new Object());
     addElement(new Object());
     myCollection.add(new Object());
     addElement(new Object());
     myCollection.add(new Object());
     gc();
-    assertTrue(1 <= myCollection.compress(3));
-  }
-
-  public void testCompressTrackingNotLastSurvived() {
-    if (!JVM_IS_GC_CAPABLE) return;
-    myCollection.add(new Object());
-    addElement(new Object());
-    myCollection.add(new Object());
-    addElement(new Object());
-    gc();
-    assertTrue(0 <= myCollection.compress(1));
-  }
-
-  public void testCompressTrackingLostIndex() {
-    if (!JVM_IS_GC_CAPABLE) return;
-    myCollection.add(new Object());
-    addElement(new Object());
-    myCollection.add(new Object());
-    addElement(new Object());
-    gc();
-    assertTrue(-2 <= myCollection.compress(2));
-  }
-
-  public void testCompressTrackingLostLastIndex() {
-    if (!JVM_IS_GC_CAPABLE) return;
-    myCollection.add(new Object());
-    addElement(new Object());
-    myCollection.add(new Object());
-    addElement(new Object());
-    myCollection.add(new Object());
-    gc();
-    assertTrue(-3 <= myCollection.compress(4));
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.compress(-1);
+      }
+    });
   }
 
   public void testAddingManyElement() {
-    if (!JVM_IS_GC_CAPABLE) return;
     int initialCapacity = fullCollection();
     assertEquals(initialCapacity, myCollection.getCapacity());
     assertTrue(initialCapacity > 3); // Need to go on
     myHolder.remove(0);
     myHolder.remove(0);
     gc();
-    checkSameNotNulls();
+    checkSameNotNulls(null);
     addElement(new Object());
     assertEquals(initialCapacity, myCollection.getCapacity());
-    checkSameElements();
+    checkSameElements(null);
   }
 
   public void testReduceSize() {
-    if (!JVM_IS_GC_CAPABLE) return;
     int initialCapacity = fullCollection();
     assertEquals(initialCapacity, myCollection.getCapacity());
     addElement(new Object());
     int grownCapacity = 2 * initialCapacity;
     assertEquals(grownCapacity, myCollection.getCapacity());
-    checkSameElements();
+    checkSameElements(null);
     myCollection.reduceCapacity(-1);
     assertEquals(grownCapacity, myCollection.getCapacity());
     myHolder.remove(0);
@@ -167,29 +122,36 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
     for (int i = 0; i < grownCapacity; i++) myHolder.remove(0);
     final int lastCapacity = myCollection.getCapacity();
     gc();
-    checkSameNotNulls();
+    checkSameNotNulls(null);
     myCollection.reduceCapacity(-1);
     assertTrue(lastCapacity > myCollection.getCapacity());
-    checkSameElements();
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.reduceCapacity(-1);
+      }
+    });
     myHolder.clear();
     gc();
-    myCollection.reduceCapacity(-1);
-    assertEquals(0, myCollection.size());
+    checkForSize(0, true);
     addElement(new Object());
-    checkSameElements();
+    checkSameElements(null);
   }
 
   public void testReduceCapacityOfAliveCollection() {
-    if (!JVM_IS_GC_CAPABLE) return;
     myCollection = new WeakReferenceArray<Object>(WeakReferenceArray.MINIMUM_CAPACITY * 3);
     addElement(new Object());
     myCollection.reduceCapacity(-1);
-    assertEquals(0, myCollection.getCorpseCount());
-    checkSameElements();
+    checkForAliveCount(1);
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.reduceCapacity(-1);
+      }
+    });
   }
 
   public void testRemoveAlives() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object());
     addElement(new Object());
     addElement(new Object());
@@ -197,12 +159,12 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
     assertTrue(references.length >= 3);
     myCollection.remove(1);
     myCollection.remove(0);
-    assertEquals(2, myCollection.getCorpseCount());
+    checkForAliveCount(1);
     myHolder.remove(0);
     myHolder.remove(0);
-    checkSameNotNulls();
+    checkSameNotNulls(null);
     gc();
-    assertEquals(2, myCollection.getCorpseCount());
+    checkForAliveCount(1);
   }
 
   private WeakReference[] copyReferences() {
@@ -212,7 +174,6 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
   }
 
   public void testRemoveEnqueuedReference() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object());
     WeakReference reference = myCollection.getReferences()[0];
     assertSame(reference.get(), myHolder.get(0));
@@ -220,15 +181,14 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
     reference.enqueue();
     myCollection.remove(0);
     gc();
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
     myCollection.getCorpseCount();
     reference = null;
     gc();
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
   }
 
   public void testRemoveNotEnqueuedReference() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object());
     WeakReference reference = myCollection.getReferences()[0];
     myCollection.remove(0);
@@ -236,19 +196,18 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
     myHolder.clear();
     reference.enqueue();
     gc();
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
   }
 
   public void testOutofboundsReferences() {
-    if (!JVM_IS_GC_CAPABLE) return;
     for (int i = 0; i < 400; i++) addElement(new Object());
     WeakReference[] references = copyReferences();
     for (int i = 0; i < 100; i++) references[i].clear();
     for (int i = 100; i < 395; i++) myCollection.remove(i);
     myCollection.reduceCapacity(-1);
     assertEquals(210, myCollection.getCapacity());
-    assertEquals(5, myCollection.size());
-    assertEquals(0, myCollection.getCorpseCount());
+    checkForSize(5, true);
+    checkForAliveCount(5);
     for (int i = 0; i < 100; i++) assertFalse(String.valueOf(i), references[i].enqueue());
 
     for (int i = 0; i < myCollection.getCapacity() - 20; i++) addElement(new Object());
@@ -259,7 +218,6 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
   }
 
   public void testRemoveAliveReference() {
-    if (!JVM_IS_GC_CAPABLE) return;
     Object obj = new Object();
     myCollection.add(obj);
     WeakReference[] references = copyReferences();
@@ -267,54 +225,67 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
     assertTrue(myCollection.removeReference(0));
     assertTrue(references[0].isEnqueued());
     assertNull(references[0].get());
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
     assertNull(myCollection.getReferences()[0]);
   }
 
   public void testRemoveDeadReference() {
-    if (!JVM_IS_GC_CAPABLE) return;
     Object obj = new Object();
     myCollection.add(obj);
     WeakReference[] references = copyReferences();
     references[0].clear();
     references[0].enqueue();
     assertFalse(myCollection.removeReference(0));
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
     assertNull(myCollection.getReferences()[0]);
   }
 
   public void testRemoveRemovedReference() {
-    if (!JVM_IS_GC_CAPABLE) return;
     Object obj = new Object();
     myCollection.add(obj);
     myCollection.remove(0);
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
     assertFalse(myCollection.removeReference(0));
-    assertEquals(1, myCollection.getCorpseCount());
+    checkForAliveCount(0);
   }
 
   public void testCompacting() {
-    if (!JVM_IS_GC_CAPABLE) return;
     addElements(20);
     removeEven(1);
-    myCollection.reduceCapacity(-1);
-    checkSameElements();
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.reduceCapacity(-1);
+      }
+    });
 
     addElements(19);
     removeEven(1);
 
-    myCollection.compress(-1);
-    checkSameElements();
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.compress(-1);
+      }
+    });
 
     addElements(19);
     removeEven(0);
-    myCollection.reduceCapacity(-1);
-    checkSameElements();
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.reduceCapacity(-1);
+      }
+    });
 
     addElements(19);
     removeEven(0);
-    myCollection.compress(-1);
-    checkSameElements();
+    checkSameElements(new Runnable() {
+      @Override
+      public void run() {
+        myCollection.compress(-1);
+      }
+    });
   }
 
   private void removeEven(int remainder) {
@@ -329,14 +300,6 @@ public class WeakReferenceArrayTest extends WeaksTestCase {
       addElement(new Object());
     }
     return initialCapacity;
-  }
-
-  private void checkSameElements() {
-    checkSameElements(myCollection);
-  }
-
-  private void checkSameNotNulls() {
-    checkSameNotNulls(myCollection);
   }
 
   private void addElements(int count) {

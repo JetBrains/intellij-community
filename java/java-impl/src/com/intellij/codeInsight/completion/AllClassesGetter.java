@@ -16,22 +16,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -48,8 +43,7 @@ import java.util.Set;
  */
 public class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
-  private final ElementFilter myFilter;
-  private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
+  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<JavaPsiClassReferenceElement>() {
 
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
@@ -69,11 +63,6 @@ public class AllClassesGetter {
 
       final OffsetKey key = OffsetKey.create("endOffset", false);
       context.getOffsetMap().addOffset(key, endOffset);
-      ClassNameInsertHandler handler = ClassNameInsertHandler.EP_NAME.forLanguage(file.getLanguage());
-      ClassNameInsertHandlerResult checkReference = ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
-      if (handler != null) {
-        checkReference = handler.handleInsert(context, item);
-      }
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
       final int newOffset = context.getOffsetMap().getOffset(key);
@@ -88,8 +77,8 @@ public class AllClassesGetter {
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
 
-      boolean insertFqn=checkReference!=ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
-      if (checkReference == ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE && psiReference != null) {
+      boolean insertFqn = true;
+      if (psiReference != null) {
         final PsiManager psiManager = file.getManager();
         if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(psiReference))) {
           insertFqn = false;
@@ -103,7 +92,6 @@ public class AllClassesGetter {
                 for (final PsiReference reference : psiElement.getReferences()) {
                   if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {
                     insertFqn = false;
-                    endOffset = reference.getRangeInElement().getEndOffset() + reference.getElement().getTextRange().getStartOffset();
                     break;
                   }
                 }
@@ -117,19 +105,11 @@ public class AllClassesGetter {
       }
       if (toDelete.isValid()) {
         document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
-        if (insertFqn) {
-          endOffset = toDelete.getStartOffset();
-        }
+        context.setTailOffset(toDelete.getStartOffset());
       }
 
       if (insertFqn) {
-        int i = endOffset - 1;
-        while (i >= 0) {
-          final char ch = document.getCharsSequence().charAt(i);
-          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
-          i--;
-        }
-        document.replaceString(i + 1, endOffset, qname);
+        INSERT_FQN.handleInsert(context, item);
       }
     }
 
@@ -140,34 +120,31 @@ public class AllClassesGetter {
 
   };
 
-  public AllClassesGetter(final ElementFilter filter) {
-    myFilter = filter;
-  }
+  public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = new InsertHandler<JavaPsiClassReferenceElement>() {
+    @Override
+    public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
+      final String qName = item.getQualifiedName();
+      if (qName != null) {
+        int start = context.getTailOffset() - 1;
+        while (start >= 0) {
+          final char ch = context.getDocument().getCharsSequence().charAt(start);
+          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+          start--;
+        }
+        context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
+      }
+    }
+  };
 
-  public void getClasses(final PsiElement context, final CompletionResultSet set, final int offset, final boolean filterByScope) {
-    if (context == null || !context.isValid()) return;
-
-    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
-    getClasses(context, set, offset, filterByScope, lookingForAnnotations);
-  }
-
-  public void getClasses(final PsiElement context,
-                         final CompletionResultSet set,
-                         final int offset,
-                         final boolean filterByScope,
-                         final boolean lookingForAnnotations) {
-    if (context == null || !context.isValid()) return;
-
-    final String packagePrefix = getPackagePrefix(context, offset);
+  public static void processJavaClasses(CompletionParameters parameters,
+                                        final PrefixMatcher prefixMatcher, final boolean filterByScope,
+                                        final Consumer<PsiClass> consumer) {
+    final PsiElement context = parameters.getPosition();
+    final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
 
     final Set<String> qnames = new THashSet<String>();
 
-    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      public GlobalSearchScope compute() {
-        return filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
-      }
-    });
-    final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
+    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
 
     AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
       public boolean value(String s) {
@@ -176,21 +153,17 @@ public class AllClassesGetter {
     }).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
-        if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
-          set.addElement(createLookupItem(psiClass));
+        if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope)) {
+          consumer.consume(psiClass);
         }
         return true;
       }
     });
   }
 
+
   private static String getPackagePrefix(final PsiElement context, final int offset) {
-    final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        ProgressManager.checkCanceled();
-        return context.getContainingFile().getText();
-      }
-    });
+    final String fileText = context.getContainingFile().getText();
     int i = offset - 1;
     while (i >= 0) {
       final char c = fileText.charAt(i);
@@ -202,54 +175,30 @@ public class AllClassesGetter {
     return j > 0 ? prefix.substring(0, j) : "";
   }
 
-  private boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
-                             final boolean lookingForAnnotations,
+  private static boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
                              @NotNull final PsiClass psiClass,
                              final boolean filterByScope) {
-    //noinspection AutoUnboxing
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        ProgressManager.checkCanceled();
+    ProgressManager.checkCanceled();
 
-        if (!context.isValid() || !psiClass.isValid()) return false;
+    if (!context.isValid() || !psiClass.isValid()) return false;
 
-        if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
+    if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
 
-        if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
+    final String qualifiedName = psiClass.getQualifiedName();
+    if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
 
-        final String qualifiedName = psiClass.getQualifiedName();
-        if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
-
-        if (!myFilter.isAcceptable(psiClass, context)) return false;
-
-        if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
-            JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
-          return qnames.add(qualifiedName);
-        }
-        return false;
-
-      }
-    });
+    if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
+        JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
+      return qnames.add(qualifiedName);
+    }
+    return false;
   }
 
-  public static LookupElement createLookupItem(@NotNull final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<LookupElement>() {
-      public LookupElement compute() {
-        return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
-      }
-    });
-  }
-
-
-  public interface ClassNameInsertHandler {
-    LanguageExtension<ClassNameInsertHandler> EP_NAME =
-      new LanguageExtension<ClassNameInsertHandler>("com.intellij.classNameInsertHandler");
-
-    ClassNameInsertHandlerResult handleInsert(InsertionContext context, JavaPsiClassReferenceElement item);
-  }
-
-  public enum ClassNameInsertHandlerResult {
-    INSERT_FQN, REFERENCE_CORRECTED, CHECK_FOR_CORRECT_REFERENCE
+  public static JavaPsiClassReferenceElement createLookupItem(@NotNull final PsiClass psiClass,
+                                               final InsertHandler<JavaPsiClassReferenceElement> insertHandler) {
+    final JavaPsiClassReferenceElement item = new JavaPsiClassReferenceElement(psiClass);
+    item.setInsertHandler(insertHandler);
+    return item;
   }
 
 }

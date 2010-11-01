@@ -51,7 +51,8 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processOOMError(event);
       }
       else if (!ourOomOccured) {
-        MessagePool.getInstance().addIdeFatalMessage(event);
+        IdeaLoggingEvent eventToAdd = new IdeaLoggingEvent(event.getMessage(), new ExceptionHolder(event.getThrowable()));
+        MessagePool.getInstance().addIdeFatalMessage(eventToAdd);
       }
     }
     catch (Exception e) {
@@ -75,5 +76,12 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         new OutOfMemoryDialog(k).show();
       }
     });
+  }
+
+  private class ExceptionHolder extends Throwable {
+    public ExceptionHolder(Throwable throwable) {
+      super(throwable.getMessage(), throwable.getCause() == null ? null : new ExceptionHolder(throwable.getCause()));
+      setStackTrace(throwable.getStackTrace());
+    }
   }
 }

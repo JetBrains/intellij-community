@@ -28,7 +28,7 @@ public class ShowShortenNames extends ToggleAction {
   private final EditorGutterComponentEx myGutter;
 
   public ShowShortenNames(EditorGutterComponentEx gutter) {
-    super("Show short names");
+    super("Short names");
     myGutter = gutter;
   }
 

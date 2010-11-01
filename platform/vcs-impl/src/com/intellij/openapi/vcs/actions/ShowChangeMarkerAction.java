@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import com.intellij.openapi.vcs.ex.LineStatusTrackerDrawing;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 
@@ -92,7 +93,8 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     LineStatusTracker lineStatusTracker = myChangeMarkerContext.getLineStatusTracker(context);
     Range range = myChangeMarkerContext.getRange(context);
 
-    lineStatusTracker.moveToRange(range, editor);
+
+    LineStatusTrackerDrawing.moveToRange(range, editor, lineStatusTracker);
   }
 
   protected interface ChangeMarkerContext {

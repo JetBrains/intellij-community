@@ -35,23 +35,27 @@ import javax.swing.*;
  */
 public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
-  @NonNls public static final String CHANGE_SIGNATURE = "Apply signature change";
+  public static final String CHANGE_SIGNATURE = "Apply signature change";
+  public static final String NEW_NAME = "Apply new name";
+
+  private String myAcceptText;
 
   @NotNull
   @Override
   public String getText() {
-    return CHANGE_SIGNATURE;
+    return myAcceptText;
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return CHANGE_SIGNATURE;
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return ChangeSignatureGestureDetector.getInstance(project).isChangeSignatureAvailable(element);
+    myAcceptText = ChangeSignatureGestureDetector.getInstance(project).getChangeSignatureAcceptText(element);
+    return myAcceptText != null;
   }
 
   @Override

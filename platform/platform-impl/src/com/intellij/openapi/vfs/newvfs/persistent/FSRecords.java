@@ -1142,9 +1142,7 @@ public class FSRecords implements Forceable {
         page = findOrCreatePage();
       }
 
-      final DataOutputStream sinkStream = getStorage().writeStream(page);
-      sinkStream.write(bytes);
-      sinkStream.close();
+      getStorage().writeBytes(page, bytes);
     }
 
     protected abstract int findOrCreatePage() throws IOException;

@@ -61,6 +61,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -80,7 +81,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
 
-  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "Groovy DSL File Index Executor");
+    }
+  });
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};

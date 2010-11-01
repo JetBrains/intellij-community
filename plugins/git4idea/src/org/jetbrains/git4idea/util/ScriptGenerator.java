@@ -172,7 +172,7 @@ public class ScriptGenerator {
     finally {
       out.close();
     }
-    FileUtil.setExectuableAttribute(scriptPath.getPath(), true);
+    FileUtil.setExecutableAttribute(scriptPath.getPath(), true);
     return scriptPath;
   }
 
