@@ -286,7 +286,9 @@ public class PythonIndentingLexer extends PythonLexer {
     if (indent > lastIndent) {
       myIndentStack.push(indent);
       myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
-      myTokenQueue.add(new PendingToken(PyTokenTypes.INDENT, whiteSpaceEnd, whiteSpaceEnd));
+      int insertIndex = skipPrecedingCommentsWithIndent(indent, myTokenQueue.size() - 1);
+      int indentOffset = insertIndex == myTokenQueue.size() ? whiteSpaceEnd : myTokenQueue.get(insertIndex).getStart();
+      myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
     }
     else if (indent < lastIndent) {
       while (indent < lastIndent) {
@@ -299,20 +301,10 @@ public class PythonIndentingLexer extends PythonLexer {
           insertIndex++;
         }
         else {
-          // insert the DEDENT before previous comments that have the same indent as the current token indent
-          while(insertIndex > 0 && myTokenQueue.get(insertIndex-1) instanceof PendingCommentToken) {
-            final PendingCommentToken commentToken = (PendingCommentToken)myTokenQueue.get(insertIndex - 1);
-            if (commentToken.getIndent() != indent) {
-              break;
-            }
-            insertIndex--;
-            if (insertIndex > 1 &&
-                myTokenQueue.get(insertIndex - 1).getType() == PyTokenTypes.LINE_BREAK &&
-                myTokenQueue.get(insertIndex - 2) instanceof PendingCommentToken) {
-              insertIndex--;
-            }
-            dedentOffset = commentToken.getStart();
-          }
+          insertIndex = skipPrecedingCommentsWithIndent(indent, insertIndex);
+        }
+        if (insertIndex != myTokenQueue.size()) {
+          dedentOffset = myTokenQueue.get(insertIndex).getStart();
         }
         myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.DEDENT, dedentOffset, dedentOffset));
       }
@@ -321,6 +313,25 @@ public class PythonIndentingLexer extends PythonLexer {
     else {
       myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
     }
+  }
+
+  private int skipPrecedingCommentsWithIndent(int indent, int index) {
+    // insert the DEDENT before previous comments that have the same indent as the current token indent
+    boolean foundComment = false;
+    while(index > 0 && myTokenQueue.get(index-1) instanceof PendingCommentToken) {
+      final PendingCommentToken commentToken = (PendingCommentToken)myTokenQueue.get(index - 1);
+      if (commentToken.getIndent() != indent) {
+        break;
+      }
+      foundComment = true;
+      index--;
+      if (index > 1 &&
+          myTokenQueue.get(index - 1).getType() == PyTokenTypes.LINE_BREAK &&
+          myTokenQueue.get(index - 2) instanceof PendingCommentToken) {
+        index--;
+      }
+    }
+    return foundComment ? index : myTokenQueue.size();
   }
 
   private int getNextLineIndent() {

@@ -105,7 +105,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testIndentedCommentAndCode() {
     doTest("if a:\n #b\n c",
            "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:IDENTIFIER");
+           "Py:INDENT", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:IDENTIFIER");
   }
 
   public void testWithNotKeyword() {
