@@ -46,6 +46,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -197,6 +198,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     scrollPane.setBorder(border);
+    scrollPane.setBackground(UIUtil.getPanelBackground());
     panel.add(scrollPane, BorderLayout.CENTER);
 
     myVisibilityPanel = new JavaVisibilityPanel(true, true);
