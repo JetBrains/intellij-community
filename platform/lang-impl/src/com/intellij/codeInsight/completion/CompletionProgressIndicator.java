@@ -583,7 +583,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return;
         }
 
-        closeAndFinish(false);
+        if (!isOutdated()) {
+          closeAndFinish(false);
+        }
 
         final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
         final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);
