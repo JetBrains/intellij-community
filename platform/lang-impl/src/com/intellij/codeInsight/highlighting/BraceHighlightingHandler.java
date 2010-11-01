@@ -96,11 +96,11 @@ public class BraceHighlightingHandler {
     final int offset = editor.getCaretModel().getOffset();
     JobUtil.submitToJobThread(new Runnable() {
       public void run() {
-        if (isReallyDisposed(editor, project)) return;
         final PsiFile injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
           public PsiFile compute() {
+            if (isReallyDisposed(editor, project)) return null;
             PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-            return null != psiFile ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
+            return psiFile != null ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
           }
         });
         ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable(){
