@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ import java.util.Set;
 public class OffsetMap {
   private final Document myDocument;
   private final Map<OffsetKey, RangeMarker> myMap = new THashMap<OffsetKey, RangeMarker>();
+  private final Set<OffsetKey> myModified = new THashSet<OffsetKey>();
 
   public OffsetMap(final Document document) {
     myDocument = document;
@@ -48,7 +50,7 @@ public class OffsetMap {
 
     final int endOffset = marker.getEndOffset();
     if (marker.getStartOffset() != endOffset) {
-      addOffset(key, endOffset);
+      saveOffset(key, endOffset, false);
     }
     return endOffset;
   }
@@ -56,13 +58,21 @@ public class OffsetMap {
   /**
    * Register key-offset binding. Offset will change together with {@link Document} editing operations
    * unless an operation replaces completely the offset vicinity.
-   * @param key
-   * @param offset
+   * @param key offset key
+   * @param offset offset in the document
    */
   public void addOffset(OffsetKey key, int offset) {
     if (offset < 0) {
       removeOffset(key);
       return;
+    }
+
+    saveOffset(key, offset, true);
+  }
+
+  private void saveOffset(OffsetKey key, int offset, boolean externally) {
+    if (externally && myMap.containsKey(key)) {
+      myModified.add(key);
     }
 
     final RangeMarker marker = myDocument.createRangeMarker(offset, offset);
@@ -71,6 +81,7 @@ public class OffsetMap {
   }
 
   public void removeOffset(OffsetKey key) {
+    myModified.add(key);
     myMap.remove(key);
   }
 
@@ -85,5 +96,9 @@ public class OffsetMap {
       builder.append(key).append("->").append(myMap.get(key)).append(";");
     }
     return builder.toString();
+  }
+
+  public boolean wasModified(OffsetKey key) {
+    return myModified.contains(key);
   }
 }
