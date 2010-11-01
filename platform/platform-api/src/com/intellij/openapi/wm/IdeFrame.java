@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 
 public interface IdeFrame {
 
@@ -28,4 +29,13 @@ public interface IdeFrame {
 
   @Nullable
   Project getProject();
+
+  void setFrameTitle(String title);
+  void setFileTitle(String fileTitle, File ioFile);
+
+  interface Child extends IdeFrame {
+
+    IdeFrame getParentFrame();
+
+  }
 }
