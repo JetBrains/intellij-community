@@ -119,13 +119,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+  private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
-  private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+  private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return 0;
     }
@@ -261,7 +261,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private abstract static class ProductionMarker extends Node {
     protected int myLexemeIndex;
-    protected WhitespacesAndCommentsBinder myEdgeProcessor;
+    protected WhitespacesAndCommentsBinder myEdgeTokenBinder;
     protected ProductionMarker myParent;
     protected ProductionMarker myNext;
 
@@ -286,7 +286,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private LighterASTNode[] myCachedChildren;
 
     private StartMarker() {
-      myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
     }
 
     public void clean() {
@@ -297,7 +297,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myDebugAllocationPosition = null;
       myFirstChild = myLastChild = null;
       myHC = -1;
-      myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
       myCachedChildren = null;
     }
 
@@ -401,12 +401,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
-        myEdgeProcessor = left;
+        myEdgeTokenBinder = left;
       }
 
       if (right != null) {
         if (myDoneMarker == null) throw new IllegalArgumentException("Cannot set right-edge processor for unclosed marker");
-        myDoneMarker.myEdgeProcessor = right;
+        myDoneMarker.myEdgeTokenBinder = right;
       }
     }
   }
@@ -518,7 +518,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private boolean myCollapse = false;
 
     public DoneMarker() {
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public DoneMarker(final StartMarker marker, final int currentLexeme) {
@@ -530,7 +530,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void clean() {
       super.clean();
       myStart = null;
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public int hc() {
@@ -572,7 +572,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public void clean() {
@@ -718,7 +718,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -732,7 +732,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, ((StartMarker)before).myLexemeIndex, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -746,7 +746,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myLexemeIndex = myCurrentLexeme;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -763,7 +763,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myStart = (StartMarker)marker;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -1003,7 +1003,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
         }
       };
-      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.getEdgePosition(wsTokens, atEnd, getter);
+      item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, getter);
     }
   }
 
