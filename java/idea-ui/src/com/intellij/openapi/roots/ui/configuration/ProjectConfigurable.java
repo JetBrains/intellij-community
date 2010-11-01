@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectConfigurationProblems;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -85,6 +86,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   private boolean myFreeze = false;
   private DetailsComponent myDetailsComponent;
+  private CircularDependencyWarning myCircularDependencyWarning;
 
   public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectSdksModel model) {
     myProject = project;
@@ -206,14 +208,24 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
             @NonNls final String rightBrace = "</html>";
             final String warningMessage =
               leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-            final int count1=count;
+            if (ProjectConfigurationProblems.isVisible()) {
+              if (myCircularDependencyWarning != null) {
+                ConfigurationErrors.Bus.removeError(myCircularDependencyWarning, myProject);
+              }
+              if (count > 0) {
+                myCircularDependencyWarning = new CircularDependencyWarning("Circular dependencies", warningMessage);
+                ConfigurationErrors.Bus.addError(myCircularDependencyWarning, myProject);
+              }
+            }
+            final Icon icon = count > 0 ? Messages.getWarningIcon() : null;
+            //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                myWarningLabel.setIcon(count1 > 0 ? Messages.getWarningIcon() : null);
+                myWarningLabel.setIcon(icon);
                 myWarningLabel.setText(warningMessage);
-                myWarningLabel.repaint();}
+                myWarningLabel.repaint();
               }
-            );
+            });
           }
         });
       }
@@ -326,6 +338,16 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   public String getCompilerOutputUrl() {
     return VfsUtil.pathToUrl(myProjectCompilerOutput.getText().trim());
+  }
+
+  private static class CircularDependencyWarning extends ConfigurationError {
+    private CircularDependencyWarning(String plainTextTitle, String description) {
+      super(plainTextTitle, description);
+    }
+
+    @Override
+    public void fix() {
+    }
   }
 
   private class MyJPanel extends JPanel {
