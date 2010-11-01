@@ -18,8 +18,11 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,16 +63,45 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
         return;
       }
       final String guardValue = JCiPUtil.getGuardValue(annotation);
-      if (guardValue == null || "this".equals(guardValue)) {
+      if (guardValue == null || "this".equals(guardValue) || "itself".equals(guardValue)) {
         return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
       if (containingClass == null) {
         return;
       }
-      final PsiField guardField = containingClass.findFieldByName(guardValue, true);
-      if (guardField != null) {
+
+      //field-name
+      if (containingClass.findFieldByName(guardValue, true) != null) {
         return;
+      }
+
+      //method-name
+      if (guardValue.endsWith("()")) {
+        final PsiMethod[] methods = containingClass.findMethodsByName(StringUtil.trimEnd(guardValue, "()"), true);
+        for (PsiMethod method : methods) {
+          if (method.getParameterList().getParameters().length == 0) {
+            return;
+          }
+        }
+      }
+
+      //class-name.class
+      final Project project = containingClass.getProject();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      if (guardValue.endsWith(".class") &&
+          facade.findClass(StringUtil.getPackageName(guardValue), GlobalSearchScope.allScope(project)) != null) {
+        return;
+      }
+
+      //class-name.field-name
+      final String classFQName = StringUtil.getPackageName(guardValue);
+      final PsiClass gClass = facade.findClass(classFQName, GlobalSearchScope.allScope(project));
+      if (gClass != null) {
+        final String fieldName = StringUtil.getShortName(guardValue);
+        if (gClass.findFieldByName(fieldName, true) != null) {
+          return;
+        }
       }
       final PsiAnnotationMemberValue member = annotation.findAttributeValue("value");
       if (member == null) {
