@@ -167,16 +167,21 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
     mySourcePathsChooser = new ElementsChooser<Trinity<String, String, Collection<String>>>(true) {
       public String getItemText(@NotNull Trinity<String, String, Collection<String>> pair) {
         StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        builder.append(pair.first);
-        if (!"".equals(pair.second)) {
-          builder.append(" (").append(pair.second).append(")");
+        try {
+          builder.append(pair.first);
+          if (!"".equals(pair.second)) {
+            builder.append(" (").append(pair.second).append(")");
+          }
+          builder.append(" [");
+          for (String name : pair.third) {
+            builder.append(name).append(", ");
+          }
+          builder.replace(builder.length() - 2, builder.length(), "]");
+          return builder.toString();
         }
-        builder.append(" [");
-        for (String name : pair.third) {
-          builder.append(name).append(", ");
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
         }
-        builder.replace(builder.length() - 2, builder.length(), "]");
-        return builder.toString();
       }
     };
     final String text = IdeBundle.message("label.java.source.files.have.been.found");
