@@ -3,6 +3,7 @@ package com.jetbrains.python.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import gnu.trove.TIntStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +15,11 @@ public class PythonIndentingLexer extends PythonLexer {
   private final TIntStack myIndentStack = new TIntStack();
   private int myBraceLevel;
   private boolean myLineHasSignificantTokens;
+  private int myLastNewLineIndent = -1;
 
   private static final boolean DUMP_TOKENS = false;
 
-  protected static class PendingToken {
+  private static class PendingToken {
     private IElementType _type;
     private final int _start;
     private final int _end;
@@ -43,12 +45,31 @@ public class PythonIndentingLexer extends PythonLexer {
     public void setType(IElementType type) {
       _type = type;
     }
+
+    @Override
+    public String toString() {
+      return _type + ":" + _start + "-" + _end;
+    }
+  }
+
+  private static class PendingCommentToken extends PendingToken {
+    private final int myIndent;
+
+    public PendingCommentToken(IElementType type, int start, int end, int indent) {
+      super(type, start, end);
+      myIndent = indent;
+    }
+
+    public int getIndent() {
+      return myIndent;
+    }
   }
 
   protected List<PendingToken> myTokenQueue = new ArrayList<PendingToken>();
 
   protected boolean myProcessSpecialTokensPending = false;
 
+  @Nullable
   protected IElementType getBaseTokenType() {
     return super.getTokenType();
   }
@@ -59,6 +80,10 @@ public class PythonIndentingLexer extends PythonLexer {
 
   protected int getBaseTokenEnd() {
     return super.getTokenEnd();
+  }
+
+  private boolean isBaseAt(IElementType tokenType) {
+    return getBaseTokenType() == tokenType;
   }
 
   @Override
@@ -163,13 +188,22 @@ public class PythonIndentingLexer extends PythonLexer {
 
   protected void processSpecialTokens() {
     int tokenStart = getBaseTokenStart();
-    if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+    if (isBaseAt(PyTokenTypes.LINE_BREAK)) {
       processLineBreak(tokenStart);
+      while (isBaseAt(PyTokenTypes.END_OF_LINE_COMMENT)) {
+        // comment at start of line; maybe we need to generate dedent before the comments
+        myTokenQueue.add(new PendingCommentToken(getBaseTokenType(), getBaseTokenStart(), getBaseTokenEnd(), myLastNewLineIndent));
+        advanceBase();
+        if (!isBaseAt(PyTokenTypes.LINE_BREAK)) {
+          break;
+        }
+        processLineBreak(getBaseTokenStart());
+      }
     }
-    else if (getBaseTokenType() == PyTokenTypes.BACKSLASH) {
+    else if (isBaseAt(PyTokenTypes.BACKSLASH)) {
       processBackslash(tokenStart);
     }
-    else if (getBaseTokenType() == PyTokenTypes.SPACE) {
+    else if (isBaseAt(PyTokenTypes.SPACE)) {
       processSpace();
     }
   }
@@ -243,6 +277,7 @@ public class PythonIndentingLexer extends PythonLexer {
   private void processIndent(int whiteSpaceStart) {
     int lastIndent = myIndentStack.peek();
     int indent = getNextLineIndent();
+    myLastNewLineIndent = indent;
     // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
     if (getBaseTokenType() == PyTokenTypes.END_OF_LINE_COMMENT) {
       indent = lastIndent;
@@ -257,10 +292,29 @@ public class PythonIndentingLexer extends PythonLexer {
       while (indent < lastIndent) {
         myIndentStack.pop();
         lastIndent = myIndentStack.peek();
+        int insertIndex = myTokenQueue.size();
+        int dedentOffset = whiteSpaceStart;
         if (indent > lastIndent) {
           myTokenQueue.add(new PendingToken(PyTokenTypes.INCONSISTENT_DEDENT, whiteSpaceStart, whiteSpaceStart));
+          insertIndex++;
         }
-        myTokenQueue.add(new PendingToken(PyTokenTypes.DEDENT, whiteSpaceStart, whiteSpaceStart));
+        else {
+          // insert the DEDENT before previous comments that have the same indent as the current token indent
+          while(insertIndex > 0 && myTokenQueue.get(insertIndex-1) instanceof PendingCommentToken) {
+            final PendingCommentToken commentToken = (PendingCommentToken)myTokenQueue.get(insertIndex - 1);
+            if (commentToken.getIndent() != indent) {
+              break;
+            }
+            insertIndex--;
+            if (insertIndex > 1 &&
+                myTokenQueue.get(insertIndex - 1).getType() == PyTokenTypes.LINE_BREAK &&
+                myTokenQueue.get(insertIndex - 2) instanceof PendingCommentToken) {
+              insertIndex--;
+            }
+            dedentOffset = commentToken.getStart();
+          }
+        }
+        myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.DEDENT, dedentOffset, dedentOffset));
       }
       myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
     }

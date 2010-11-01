@@ -158,6 +158,20 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("'''abc\nd", "Py:STRING_LITERAL");
   }
 
+  public void testDedentBeforeComment() {  // PY-2209 & friends
+    doTest("class UserProfile:\n" +
+           "    pass\n" +
+           "\n" +
+           "#noinspection PyUnusedLocal\n" +
+           "def foo(sender):\n" +
+           "    pass",
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:DEDENT", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }
