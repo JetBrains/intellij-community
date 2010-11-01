@@ -172,7 +172,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       {"private", "public", "protected", "static", "transient", "abstract", "native", "volatile", "strictfp", "boolean", "byte", "char",
         "short", "int", "float", "long", "double", "void", "new", "try", "while", "with", "switch", "for", "return", "throw", "throws",
         "assert", "synchronized", "package", "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else",
-        "instanceof", "import", "final",};
+        "instanceof", "import", "final", "def"};
     if (Arrays.asList(withSpace).contains(item.toString())) {
       return TailType.SPACE;
     }
