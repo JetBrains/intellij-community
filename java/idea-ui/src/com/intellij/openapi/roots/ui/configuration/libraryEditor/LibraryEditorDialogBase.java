@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -44,8 +44,8 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
 
-  public <T> void addFileChooserContext(DataKey<T> key, T value) {
-    myLibraryRootsComponent.addFileChooserContext(key, value);
+  public void setContextModule(Module module) {
+    myLibraryRootsComponent.setContextModule(module);
   }
 
   protected String getDimensionServiceKey() {
