@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
@@ -29,7 +30,8 @@ public class XsltRefactoringSupportProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isAvailable(@NotNull PsiElement context) {
-    return XsltSupport.isXsltFile(context.getContainingFile());
+    PsiFile containingFile = context.getContainingFile();
+    return containingFile != null && XsltSupport.isXsltFile(containingFile);
   }
 
   @Override
