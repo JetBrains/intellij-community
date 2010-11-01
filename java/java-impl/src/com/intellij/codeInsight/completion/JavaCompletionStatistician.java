@@ -77,14 +77,6 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         if (!isClass && type == CompletionType.BASIC) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         return StatisticsInfo.EMPTY;
       }
-
-      if (type == CompletionType.CLASS_NAME && isClass) {
-        final String qualifiedName = ((PsiClass)o).getQualifiedName();
-        if (qualifiedName != null) {
-          final String prefixCapitals = StringUtil.capitalsOnly(element.getPrefixMatcher().getPrefix());
-          return new StatisticsInfo(CLASS_NAME_COMPLETION_PREFIX + prefixCapitals, qualifiedName);
-        }
-      }
     }
 
     if (qualifierType != null) return StatisticsInfo.EMPTY;

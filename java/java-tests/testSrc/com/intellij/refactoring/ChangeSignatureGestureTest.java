@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.Assert;
@@ -51,7 +52,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
 
       myFixture.doHighlighting();
-      final String hint = "Change signature ...";
+      final String hint = ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
       if (shouldShow) {
         final IntentionAction intention = myFixture.findSingleIntention(hint);
         myFixture.launchAction(intention);

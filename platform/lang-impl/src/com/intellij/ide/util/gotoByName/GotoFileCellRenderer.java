@@ -18,12 +18,17 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
+public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
   private final int myMaxWidth;
 
   public GotoFileCellRenderer(int maxSize) {
@@ -47,11 +52,12 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
 
   protected String getContainerText(PsiFile element, String name) {
     final PsiDirectory psiDirectory = element.getContainingDirectory();
-    if (psiDirectory == null) return null; 
+    if (psiDirectory == null) return null;
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     final String relativePath = getRelativePath(virtualFile, element.getProject());
     if (relativePath == null) return "( " + File.separator + " )";
-    String path = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(name + "          ", new File(relativePath), this, myMaxWidth);
+    String path =
+      FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(name + "          ", new File(relativePath), this, myMaxWidth);
     return "(" + path + ")";
   }
 
@@ -72,6 +78,33 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
       }
     }
     return url;
+  }
+
+  @Override
+  protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                       JList list,
+                                                       Object value,
+                                                       int index,
+                                                       boolean selected,
+                                                       boolean hasFocus) {
+    if (!(value instanceof NavigationItem)) return false;
+
+    NavigationItem item = (NavigationItem)value;
+
+    TextAttributes attributes = getNavigationItemAttributes(item);
+
+    SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
+
+    Color color = list.getForeground();
+    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+
+    renderer.append(item + " ", nameAttributes);
+    ItemPresentation itemPresentation = item.getPresentation();
+    assert itemPresentation != null;
+    renderer.setIcon(itemPresentation.getIcon(true));
+
+    renderer.append(itemPresentation.getLocationString(), new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+    return true;
   }
 
   @Override

@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
@@ -91,7 +91,7 @@ public class LookupItemUtil{
   public static LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {
-      return new JavaPsiClassReferenceElement((PsiClass)object).setTailType(TailType.NONE);
+      return JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)object, true);
     }
     if (object instanceof PsiMethod) {
       return new JavaMethodCallElement((PsiMethod)object);

@@ -60,6 +60,14 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTestFromTestData();
   }
 
+  public void testAnnotatedNonStaticInnerClassConstructor() throws Exception {
+    doTestFromTestData();
+  }
+
+  public void testAnnotatedEnumConstructor() throws Exception {
+    doTestFromTestData();
+  }
+
   private void doTestFromTestData() throws ClsFormatException, IOException {
     final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
     VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);

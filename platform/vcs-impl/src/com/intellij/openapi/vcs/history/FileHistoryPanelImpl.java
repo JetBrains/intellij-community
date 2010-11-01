@@ -609,7 +609,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     try {
-      VcsHistoryUtil.showDiff(project, myFilePath, left, right, left.getRevisionNumber().asString(), right.getRevisionNumber().asString());
+      final String leftTitle = left.getRevisionNumber().asString() + (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+      final String rightTitle = right.getRevisionNumber().asString() + (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+      VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
     } catch (final VcsException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {

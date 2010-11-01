@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +35,7 @@ import javax.swing.*;
  */
 public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction implements Iconable {
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
-  @NonNls public static final String CHANGE_SIGNATURE = "Change signature ...";
+  @NonNls public static final String CHANGE_SIGNATURE = "Apply signature change";
 
   @NotNull
   @Override
@@ -57,7 +56,7 @@ public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file);
+    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file, true);
   }
 
   @Override

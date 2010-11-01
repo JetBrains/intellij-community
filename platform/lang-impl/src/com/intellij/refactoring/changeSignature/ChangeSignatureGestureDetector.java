@@ -87,14 +87,14 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return adapter != null ? adapter.getCurrentInfo() : null;
   }
 
-  public void changeSignature(PsiFile file) {
+  public void changeSignature(PsiFile file, final boolean silently) {
     try {
       myDeaf = true;
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-        if (detector.showDialog(currentInfo, changeBean.getInitialText())) {
+        if (detector.showDialog(currentInfo, changeBean.getInitialText(), silently)) {
           changeBean.reinit();
         }
       }
@@ -225,7 +225,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   public void clearSignatureChange(PsiFile file) {
     final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
     if (adapter != null) {
-      adapter.setBannedChangeInfo(adapter.getCurrentInfo());
       adapter.reinit();
     }
   }
@@ -234,7 +233,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     private String myInitialText;
     private ChangeInfo myInitialChangeInfo;
     private ChangeInfo myCurrentInfo;
-    private ChangeInfo myBannedChangeInfo;
 
     public void setCurrentInfo(ChangeInfo currentInfo) {
       myCurrentInfo = currentInfo;
@@ -267,8 +265,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           if (file != null) {
             final PsiElement element = file.findElementAt(e.getOffset());
             if (element != null) {
-              if (myBannedChangeInfo != null && LanguageChangeSignatureDetectors.wasBanned(element, myBannedChangeInfo)) return;
-              myBannedChangeInfo = null;
               final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
                 myInitialText = document.getText();
@@ -282,10 +278,6 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
     public ChangeInfo getInitialChangeInfo() {
       return myInitialChangeInfo;
-    }
-
-    public void setBannedChangeInfo(ChangeInfo bannedChangeInfo) {
-      myBannedChangeInfo = bannedChangeInfo;
     }
 
     public void reinit() {

@@ -25,6 +25,7 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -77,6 +78,16 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
     }
     return getDefaultMapping(file);
+  }
+
+  @Override
+  public T chosenToStored(VirtualFile file, T value) {
+    return value;
+  }
+
+  @Override
+  public boolean isSelectable(T value) {
+    return true;
   }
 
   @Nullable
@@ -151,10 +162,20 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
         final Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
-        child.setAttribute("dialect", serialize(dialect));
+        child.setAttribute(getValueAttribute(), serialize(dialect));
       }
       return element;
     }
+  }
+
+  @Nullable
+  protected T handleUnknownMapping(VirtualFile file, String value) {
+    return null;
+  }
+
+  @NotNull
+  protected String getValueAttribute() {
+    return "dialect";
   }
 
   public void loadState(final Element state) {
@@ -166,10 +187,13 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       final List<Element> files = state.getChildren("file");
       for (Element fileElement : files) {
         final String url = fileElement.getAttributeValue("url");
-        final String dialectID = fileElement.getAttributeValue("dialect");
-        final T dialect = dialectMap.get(dialectID);
-        if (dialect == null) continue;
+        final String dialectID = fileElement.getAttributeValue(getValueAttribute());
         final VirtualFile file = url.equals("PROJECT") ? null : VirtualFileManager.getInstance().findFileByUrl(url);
+        T dialect = dialectMap.get(dialectID);
+        if (dialect == null) {
+          dialect = handleUnknownMapping(file, dialectID);
+          if (dialect == null) continue;
+        }
         if (file != null || url.equals("PROJECT")) {
           myMappings.put(file, dialect);
         }

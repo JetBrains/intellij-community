@@ -38,18 +38,4 @@ class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeS
     final LanguageChangeSignatureDetector detector = INSTANCE.forLanguage(element.getLanguage());
     return detector != null ? detector.createCurrentChangeSignature(element, changeInfo) : null;
   }
-
-  public static boolean isSuitableForLanguage(Language lang) {
-    return INSTANCE.forLanguage(lang) != null;
-  }
-
-  @Nullable
-  public static TextRange getHighlightingRange(@NotNull PsiElement element) {
-    return INSTANCE.forLanguage(element.getLanguage()).getQuickFixRange(element);
-  }
-
-  public static boolean wasBanned(@NotNull PsiElement element, ChangeInfo bannedInfo) {
-    return INSTANCE.forLanguage(element.getLanguage()).wasBanned(element, bannedInfo);
-
-  }
 }
