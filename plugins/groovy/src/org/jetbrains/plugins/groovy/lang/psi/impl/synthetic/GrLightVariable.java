@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -23,7 +24,7 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
 
   private final List<PsiElement> myDeclarations;
 
-  public GrLightVariable(PsiModifierList modifierList,
+  public GrLightVariable(@Nullable PsiModifierList modifierList,
                        PsiManager manager,
                        @NonNls String name,
                        @NonNls @NotNull String type,
@@ -31,7 +32,7 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     this(modifierList, manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
-  public GrLightVariable(PsiModifierList modifierList,
+  public GrLightVariable(@Nullable PsiModifierList modifierList,
                        PsiManager manager,
                        @NonNls String name,
                        @NonNls @NotNull String type,
@@ -40,7 +41,7 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     this(modifierList, manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations, scope);
   }
 
-  public GrLightVariable(PsiModifierList modifierList,
+  public GrLightVariable(@Nullable PsiModifierList modifierList,
                        PsiManager manager,
                        @NonNls String name,
                        @NotNull PsiType type,
