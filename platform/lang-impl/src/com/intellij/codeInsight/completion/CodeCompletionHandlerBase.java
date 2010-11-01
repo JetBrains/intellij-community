@@ -284,9 +284,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     startSemaphore.down();
     startSemaphore.down();
 
-    final Semaphore offsets = new Semaphore();
-    offsets.down();
-
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -314,7 +311,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                     }
                   });
 
-                offsets.waitFor();
+                indicator.ensureDuringCompletionPassed();
 
                 data.set(result);
               }

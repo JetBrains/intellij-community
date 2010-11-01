@@ -39,9 +39,8 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       final JavaClassReference classReference = (JavaClassReference)reference;
       if (classReference.getExtendClassNames() != null) {
         final PsiReference[] references = classReference.getJavaClassReferenceSet().getReferences();
-        final PsiReference lastReference = references[references.length - 1];
-        final int endOffset = lastReference.getRangeInElement().getEndOffset() + lastReference.getElement().getTextRange().getStartOffset();
-        context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
+        final PsiReference last = references[references.length - 1];
+        context.setReplacementOffset(last.getRangeInElement().getEndOffset() + last.getElement().getTextRange().getStartOffset());
       }
     }
 

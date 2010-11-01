@@ -521,28 +521,25 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiFile file = context.getFile();
 
     if (file instanceof PsiJavaFile) {
+      JavaCompletionUtil.initOffsets(file, context.getProject(), context.getOffsetMap());
+
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
-    }
 
-    if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
-      if (semicolonNeeded(context)) {
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
-        return;
+      if (context.getCompletionType() == CompletionType.BASIC) {
+        if (semicolonNeeded(context)) {
+          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+          return;
+        }
+
+        final PsiElement element = file.findElementAt(context.getStartOffset());
+
+        if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
+          return;
+        }
+
+        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
       }
-
-      final PsiElement element = file.findElementAt(context.getStartOffset());
-
-      if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
-        return;
-      }
-
-      context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
     }
-  }
-
-  @Override
-  public void duringCompletion(@NotNull CompletionInitializationContext context) {
-    JavaCompletionUtil.initOffsets(context.getFile(), context.getProject(), context.getOffsetMap());
   }
 
   private static boolean semicolonNeeded(CompletionInitializationContext context) {

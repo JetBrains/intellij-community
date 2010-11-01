@@ -101,6 +101,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     public void itemSelected(LookupEvent event) {
+      ensureDuringCompletionPassed();
+
       finishCompletionProcess();
 
       LookupElement item = event.getItem();
@@ -193,6 +195,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     } finally {
       myDuringCompletionSemaphore.up();
     }
+  }
+
+  void ensureDuringCompletionPassed() {
+    myDuringCompletionSemaphore.waitFor();
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {

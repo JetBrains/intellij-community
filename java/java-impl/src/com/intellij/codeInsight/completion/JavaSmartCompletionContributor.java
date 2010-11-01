@@ -586,7 +586,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               newEnd = classReference.getTextRange().getEndOffset();
             }
           }
-          context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, newEnd);
+          context.setReplacementOffset(newEnd);
           element = element.getParent();
         }
       }
