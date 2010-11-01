@@ -104,6 +104,30 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
     });
   }
 
+  public Self constructorParameter(final int index, final String... fqns) {
+    return with(new PatternCondition<T>("methodCallParameter") {
+      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+        final PsiElement parent = literal.getParent();
+        if (parent instanceof PsiExpressionList) {
+          final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
+          final PsiExpression[] psiExpressions = psiExpressionList.getExpressions();
+          if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
+
+          final PsiElement element = psiExpressionList.getParent();
+          if (element instanceof PsiNewExpression) {
+            PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
+            if (reference != null) {
+              for (String fqn : fqns) {
+                if( fqn.equals(reference.getQualifiedName())) return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
+
   public static class Capture<T extends PsiElement> extends PsiJavaElementPattern<T, Capture<T>> {
     public Capture(final Class<T> aClass) {
       super(aClass);
