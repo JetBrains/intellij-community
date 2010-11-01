@@ -22,10 +22,11 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
@@ -37,14 +38,18 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -101,11 +106,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                  }
                });
                if (addWordVariants.get().booleanValue()) {
-                 ApplicationManager.getApplication().runReadAction(new Runnable() {
-                   public void run() {
-                     addWordVariants.set(attributeValue.getReferences().length == 0);
-                   }
-                 });
+                 addWordVariants.set(attributeValue.getReferences().length == 0);
                }
 
                if (addWordVariants.get().booleanValue()) {
@@ -138,25 +139,13 @@ public class XmlCompletionContributor extends CompletionContributor {
         return;
       }
       final XmlTag parent = (XmlTag)element.getParent();
-      final String namespace = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return parent.getNamespace();
-        }
-      });
-      final XmlElementDescriptor parentDescriptor = ApplicationManager.getApplication().runReadAction(new NullableComputable<XmlElementDescriptor>() {
-        public XmlElementDescriptor compute() {
-          return parent.getDescriptor();
-        }
-      });
+      final String namespace = parent.getNamespace();
+      final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
       final String prefix = result.getPrefixMatcher().getPrefix();
       final int pos = prefix.indexOf(':');
       final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
-      final PsiReference reference = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiReference>() {
-        public PsiReference compute() {
-          return parent.getReference();
-        }
-      });
+      final PsiReference reference = parent.getReference();
       if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
         final Set<LookupElement> set = new HashSet<LookupElement>();
         new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
@@ -169,12 +158,7 @@ public class XmlCompletionContributor extends CompletionContributor {
         final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
         final XmlFile file = (XmlFile)parameters.getOriginalFile();
-        final List<Pair<String,String>> names =
-          ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<String, String>>>() {
-            public List<Pair<String, String>> compute() {
-              return XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
-            }
-          });
+        final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
         for (Pair<String, String> pair : names) {
           final String name = pair.getFirst();
           final String ns = pair.getSecond();
