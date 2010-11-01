@@ -116,10 +116,10 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       final VirtualFile toSelectFile = toSelectPath == null ? null : LocalFileSystem.getInstance().findFileByPath(toSelectPath);
       if (toSelectFile != null) {
        if (toSelectFile.isDirectory()) {
-         directory = toSelect;
+         //directory = toSelect;
        } else {
-         directory = Foundation.cfString(toSelectFile.getParent().getPath());
-         file = Foundation.cfString(toSelectFile.getName());
+         //directory = Foundation.cfString(toSelectFile.getParent().getPath());
+         //file = Foundation.cfString(toSelectFile.getName());
        }
       }
 
@@ -147,8 +147,10 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
             final ID windowTitle = invoke(window, "title");
             final String titleString = Foundation.toStringViaUTF8(windowTitle);
             if (titleString.equals(activeWindowTitle)) {
-              focusedWindow = window;
-              break;
+              if (1 == invoke(window, "isVisible").intValue()) {
+                focusedWindow = window;
+                break;
+              }
             }
           }
 
