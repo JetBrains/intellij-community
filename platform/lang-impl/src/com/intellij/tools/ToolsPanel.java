@@ -76,39 +76,44 @@ class ToolsPanel extends JPanel {
   ToolsPanel() {
 
     myTree = new CheckboxTree(
-        new CheckboxTree.CheckboxTreeCellRenderer(){
-          public void customizeCellRenderer(final JTree tree,
-                                            final Object value,
-                                            final boolean selected,
-                                            final boolean expanded,
-                                            final boolean leaf,
-                                            final int row,
-                                            final boolean hasFocus) {
-            Object object = ((CheckedTreeNode)value).getUserObject();
-            // Fix GTK background
-            if (UIUtil.isUnderGTKLookAndFeel()){
-              final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-              UIUtil.changeBackGround(this, background);
-            }
+      new CheckboxTree.CheckboxTreeCellRenderer() {
+        public void customizeCellRenderer(final JTree tree,
+                                          final Object value,
+                                          final boolean selected,
+                                          final boolean expanded,
+                                          final boolean leaf,
+                                          final int row,
+                                          final boolean hasFocus) {
+          Object object = ((CheckedTreeNode)value).getUserObject();
+          // Fix GTK background
+          if (UIUtil.isUnderGTKLookAndFeel()) {
+            final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+            UIUtil.changeBackGround(this, background);
+          }
 
-            if (object instanceof ToolsGroup) {
-              final String groupName = ((ToolsGroup)object).getName();
-              if (groupName != null) {
-                getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-              }
-              else {
-                getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-              }
+          if (object instanceof ToolsGroup) {
+            final String groupName = ((ToolsGroup)object).getName();
+            if (groupName != null) {
+              getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             }
-            else if (object instanceof Tool) {
-              getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            else {
+              getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             }
           }
-        },
-        new CheckedTreeNode(null)){
+          else if (object instanceof Tool) {
+            getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+        }
+      },
+      new CheckedTreeNode(null)) {
       @Override
       protected void onDoubleClick(final CheckedTreeNode node) {
         editSelected();
+      }
+
+      @Override
+      protected void onNodeStateChanged(final CheckedTreeNode node) {
+        myIsModified = true;
       }
     };
 
@@ -210,6 +215,7 @@ class ToolsPanel extends JPanel {
 
   private CheckedTreeNode insertNewTool(final CheckedTreeNode groupNode, final Tool toolCopy) {
     CheckedTreeNode toolNode = new CheckedTreeNode(toolCopy);
+    toolNode.setChecked(toolCopy.isEnabled());
     ((ToolsGroup)groupNode.getUserObject()).addElement(toolCopy);
     groupNode.add(toolNode);
     nodeWasInserted(toolNode);
@@ -232,7 +238,13 @@ class ToolsPanel extends JPanel {
     ArrayList<ToolsGroup> result = new ArrayList<ToolsGroup>();
     MutableTreeNode root = (MutableTreeNode)myTree.getModel().getRoot();
     for (int i = 0; i < root.getChildCount(); i++) {
-      result.add((ToolsGroup)((CheckedTreeNode)root.getChildAt(i)).getUserObject());
+      final CheckedTreeNode node = (CheckedTreeNode)root.getChildAt(i);
+      for (int j = 0; j < node.getChildCount(); j++) {
+        final CheckedTreeNode toolNode = (CheckedTreeNode) node.getChildAt(j);
+        ((Tool)toolNode.getUserObject()).setEnabled(toolNode.isChecked());
+      }
+
+      result.add((ToolsGroup)node.getUserObject());
     }
 
     return result.toArray(new ToolsGroup[result.size()]);
