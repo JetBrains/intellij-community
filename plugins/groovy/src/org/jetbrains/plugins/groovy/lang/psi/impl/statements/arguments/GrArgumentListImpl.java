@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -57,6 +58,19 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
     return findChildrenByClass(GrNamedArgument.class);
+  }
+
+  @Override
+  public GrNamedArgument findNamedArgument(@NotNull String label) {
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrNamedArgument) {
+        if (label.equals(((GrNamedArgument)cur).getLabelName())) {
+          return (GrNamedArgument)cur;
+        }
+      }
+    }
+
+    return null;
   }
 
   @NotNull
