@@ -168,8 +168,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    List<GroovyResolveResult> allCandidates = new ArrayList<GroovyResolveResult>();
-
     PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, this);
     resolveImpl(propertyResolver);
     final GroovyResolveResult[] propertyCandidates = propertyResolver.getCandidates();
@@ -181,16 +179,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     }
-    ContainerUtil.addAll(allCandidates, propertyCandidates);
 
     //search for methods
     final PsiType[] argTypes = PsiUtil.getArgumentTypes(this, false, upToArgument);
-    MethodResolverProcessor methodResolver = runMethodResolverProcessor(argTypes, allVariants);
-    assert methodResolver != null;
+    MethodResolverProcessor methodResolver = runMethodResolverProcessor(name, argTypes, allVariants);
     if (!allVariants && methodResolver.hasApplicableCandidates()) {
       return methodResolver.getCandidates();
     }
-    ContainerUtil.addAll(allCandidates, methodResolver.getCandidates());
 
     //search for fields inside its class
     if (!allVariants) {
@@ -222,9 +217,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
+    List<GroovyResolveResult> allCandidates = new ArrayList<GroovyResolveResult>();
+    ContainerUtil.addAll(allCandidates, propertyCandidates);
+    ContainerUtil.addAll(allCandidates, methodResolver.getCandidates());
+
     //search for getters
-    final String[] names = GroovyPropertyUtils.suggestGettersName(name);
-    for (String getterName : names) {
+    for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
       resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
@@ -725,16 +723,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     ResolveUtil.processNonCodeMethods(qualifierType, processor, this);
   }
 
-  @Nullable
-  public MethodResolverProcessor runMethodResolverProcessor(PsiType[] argTypes, final boolean allVariants) {
-    final String name = getReferenceName();
-    if (name == null) {
-      return null;
-    }
-
+  public MethodResolverProcessor runMethodResolverProcessor(String referenceName, PsiType[] argTypes, final boolean allVariants) {
     PsiType thisType = getThisType();
 
-    MethodResolverProcessor methodResolver = new MethodResolverProcessor(name, this, false, thisType, argTypes, getTypeArguments(), allVariants);
+    MethodResolverProcessor methodResolver = new MethodResolverProcessor(referenceName, this, false, thisType, argTypes, getTypeArguments(), allVariants);
     resolveImpl(methodResolver);
     return methodResolver;
   }
