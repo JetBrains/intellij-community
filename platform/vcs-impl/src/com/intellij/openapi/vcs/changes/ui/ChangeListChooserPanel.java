@@ -43,7 +43,7 @@ public class ChangeListChooserPanel extends JPanel {
   private JPanel myPanel;
   private JRadioButton myRbExisting;
   private JRadioButton myRbNew;
-  private JComboBox myExisitingsCombo;
+  private JComboBox myExistingListsCombo;
   private EditChangelistPanel myNewListPanel;
   @Nullable private final ChangeListEditHandler myHandler;
   private final Consumer<String> myOkEnabledListener;
@@ -65,7 +65,7 @@ public class ChangeListChooserPanel extends JPanel {
   public void init(final Project project) {
     myProject = project;
 
-    myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
+    myExistingListsCombo.setRenderer(new ColoredListCellRenderer() {
 
       private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(project, this);
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -84,7 +84,7 @@ public class ChangeListChooserPanel extends JPanel {
       model.addElement(list);
     }
 
-    myExisitingsCombo.setModel(model);
+    myExistingListsCombo.setModel(model);
   }
 
   public void setDefaultName(String name) {
@@ -93,12 +93,12 @@ public class ChangeListChooserPanel extends JPanel {
 
   private void updateEnabledItems() {
     if (myRbExisting.isSelected()) {
-      myExisitingsCombo.setEnabled(true);
+      myExistingListsCombo.setEnabled(true);
       myNewListPanel.setEnabled(false);
-      myExisitingsCombo.requestFocus();
+      myExistingListsCombo.requestFocus();
     }
     else {
-      myExisitingsCombo.setEnabled(false);
+      myExistingListsCombo.setEnabled(false);
       myNewListPanel.setEnabled(true);
       myNewListPanel.requestFocus();
     }
@@ -121,7 +121,7 @@ public class ChangeListChooserPanel extends JPanel {
     }
 
     if (myRbExisting.isSelected()) {
-      return (LocalChangeList)myExisitingsCombo.getSelectedItem();
+      return (LocalChangeList)myExistingListsCombo.getSelectedItem();
     }
     else {
       LocalChangeList changeList = manager.addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
@@ -137,10 +137,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   public void setDefaultSelection(final ChangeList defaultSelection) {
     if (defaultSelection == null) {
-      myExisitingsCombo.setSelectedIndex(0);
+      myExistingListsCombo.setSelectedIndex(0);
     }
     else {
-      myExisitingsCombo.setSelectedItem(defaultSelection);
+      myExistingListsCombo.setSelectedItem(defaultSelection);
     }
 
 
@@ -155,7 +155,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myRbExisting.isSelected() ? myExisitingsCombo : myNewListPanel.getPrefferedFocusedComponent();
+    return myRbExisting.isSelected() ? myExistingListsCombo : myNewListPanel.getPrefferedFocusedComponent();
   }
 
   private void createUIComponents() {
