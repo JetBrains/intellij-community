@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,7 +31,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -118,9 +118,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         return changeInfo;
       }
     } else {
-      final PsiLocalVariable localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
-      if (localVariable != null) {
-        return new RenameChangeInfo(localVariable, changeInfo) {
+      final PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
+      if (variable != null && JavaRefactoringSupportProvider.mayRenameInplace(variable, element)) {
+        return new RenameChangeInfo(variable, changeInfo) {
           @Override
           public Language getLanguage() {
             return StdLanguages.JAVA;

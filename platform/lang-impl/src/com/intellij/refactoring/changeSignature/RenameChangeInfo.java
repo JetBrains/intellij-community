@@ -13,7 +13,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -100,7 +99,7 @@ public abstract class RenameChangeInfo implements ChangeInfo {
           element.setName(myOldName);
         }
       });
-      new RenameProcessor(element.getProject(), element, name, true, true).run();
+      new RenameProcessor(element.getProject(), element, name, false, false).run();
     }
   }
 
