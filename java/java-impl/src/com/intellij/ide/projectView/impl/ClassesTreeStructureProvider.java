@@ -46,6 +46,18 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       if (o instanceof PsiClassOwner) {
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
+
+        if (classOwner instanceof PsiCompiledElement) {
+          //do not show duplicated items if jar file contains classes and sources
+          final PsiElement sourceElement = classOwner.getNavigationElement();
+          if (sourceElement instanceof PsiFile) {
+            PsiFile sourceFile = (PsiFile)sourceElement;
+            if (classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), sourceFile.getContainingDirectory())) {
+              continue;
+            }
+          }
+        }
+
         PsiClass[] classes = classOwner.getClasses();
         final VirtualFile file = classOwner.getVirtualFile();
         if (fileInRoots(file)) {
@@ -64,8 +76,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
   private boolean fileInRoots(VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return file != null &&
-        (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
+    return file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
   }
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
