@@ -24,13 +24,13 @@ public class PySelectWordTest extends PyLightFixtureTestCase {
   }
 
   private void doTest() {
-    myFixture.copyDirectoryToProject("", "");
-    @NonNls final String path = "/selectWord/" + getTestName(true);
+    @NonNls final String path = "selectWord/" + getTestName(true);
+    myFixture.copyDirectoryToProject(path, path);
     myFixture.configureByFile(path + "/before.py");
     int i = 1;
     while (true) {
       @NonNls String resultPath = path + "/after" + i + ".py";
-      if (new File(getTestDataPath() + resultPath).exists()) {
+      if (new File(getTestDataPath() + "/" + resultPath).exists()) {
         performAction();
         //System.out.println("comparing with "+resultPath);
         myFixture.checkResultByFile(resultPath, false);
