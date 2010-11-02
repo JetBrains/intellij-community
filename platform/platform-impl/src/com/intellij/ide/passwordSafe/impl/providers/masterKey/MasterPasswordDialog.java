@@ -91,6 +91,11 @@ public class MasterPasswordDialog extends DialogWrapper {
       new DialogWrapperExitAction("&Reset Password", RESET_USER_CODE), getCancelAction()};
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myMasterPasswordPasswordField;
+  }
+
   /**
    * Ask password from user and set it to password safe instance
    *
