@@ -31,6 +31,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   private Icon myIcon;
   private String myText;
+  private String myToolTipText;
 
   /**
    * Default JComboBox cell renderer should be passed here.
@@ -48,17 +49,18 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     try {
       customize(list, (T)value, index, isSelected, cellHasFocus);
       final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (myIcon != null && component instanceof JLabel) {
-        ((JLabel)component).setIcon(myIcon);
-      }
-      if (myText != null && component instanceof JLabel) {
-        ((JLabel)component).setText(myText);
+      if (component instanceof JLabel) {
+        final JLabel label = (JLabel)component;
+        if (myIcon != null) label.setIcon(myIcon);
+        if (myText != null) label.setText(myText);
+        if (myToolTipText != null) label.setToolTipText(myToolTipText);
       }
       return component;
     }
     finally {
       myIcon = null;
       myText = null;
+      myToolTipText = null;
     }
   }
 
@@ -79,5 +81,9 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   public final void setText(final String text) {
     myText = text;
+  }
+
+  public void setToolTipText(final String toolTipText) {
+    myToolTipText = toolTipText;
   }
 }
