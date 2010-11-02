@@ -31,8 +31,12 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Icon myIcon;
   private String myText;
 
-  public ListCellRendererWrapper(JComboBox comboBox) {
-    this(comboBox.getRenderer());
+  /**
+   * A combo box for which this cell renderer is created should be passed here.
+   * @param comboBox The combo box for which this cell renderer is created.
+   */
+  public ListCellRendererWrapper(final JComboBox comboBox) {
+    myOriginalRenderer = comboBox.getRenderer();
   }
 
   /**
