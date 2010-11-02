@@ -164,14 +164,14 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
     void errorBefore(String message, Marker before);
 
     /**
-     * Allows to define custom edge processors instead of default ones. If any of parameters is null
-     * then corresponding processor won't be changed (keeping previously set or default processor).
-     * It is an error to set right processor for not-done marker.
+     * Allows to define custom edge token binders instead of default ones. If any of parameters is null
+     * then corresponding token binder won't be changed (keeping previously set or default token binder).
+     * It is an error to set right token binder for not-done marker.
      *
-     * @param left  new left edge processor.
-     * @param right new right edge processor.
+     * @param left  new left edge token binder.
+     * @param right new right edge token binder.
      */
-    void setCustomEdgeProcessors(WhitespacesAndCommentsProcessor left, WhitespacesAndCommentsProcessor right);
+    void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left, @Nullable WhitespacesAndCommentsBinder right);
   }
 
   /**

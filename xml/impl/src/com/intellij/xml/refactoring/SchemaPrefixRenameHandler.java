@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.xml.PossiblePrefixReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  protected VariableInplaceRenamer createRenamer(PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
     PossiblePrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
     if (reference != null) {
       PsiElement prefix = reference.resolve();

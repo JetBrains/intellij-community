@@ -22,14 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 
 /**
  * @author ilyas
  * Plain Argumanet list with parentheses. Cannot contain closure arguments, they are placed outside.
  */
-public interface GrArgumentList extends GroovyPsiElement {
-  @NotNull GrNamedArgument[] getNamedArguments();
-
+public interface GrArgumentList extends GroovyPsiElement, GrNamedArgumentsOwner {
   @NotNull GrExpression[] getExpressionArguments();
 
   @NotNull PsiElement[] getAllArguments();

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
@@ -196,7 +197,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
-      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action);
+      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
     }
   }
 

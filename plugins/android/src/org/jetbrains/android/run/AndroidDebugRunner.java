@@ -60,6 +60,8 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
   private static final Key<RunContentDescriptor> ANDROID_PROCESS_HANDLER = new Key<RunContentDescriptor>("ANDROID_PROCESS_HANDLER");
   private static final Object myReaderLock = new Object();
 
+  private static final Object myDebugLock = new Object();
+
   private static void tryToCloseOldSessions(final Executor executor, Project project) {
     final ExecutionManager manager = ExecutionManager.getInstance(project);
     ProcessHandler[] processes = manager.getRunningProcesses();
@@ -76,7 +78,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
             });
           }
         });
-        process.destroyProcess();
+        process.detachProcess();
       }
     }
   }
@@ -116,13 +118,18 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
       runningState.setTargetPackageName(targetPackage);
     }
     runningState.setDebugMode(true);
-    final RunContentDescriptor runDescriptor = super.doExecute(project, executor, state, contentToReuse, environment);
+    RunContentDescriptor runDescriptor;
+    synchronized (myDebugLock) {
+      MyDebugLauncher launcher = new MyDebugLauncher(project, executor, runningState, environment);
+      runningState.setDebugLauncher(launcher);
+      runDescriptor = super.doExecute(project, executor, state, contentToReuse, environment);
+      launcher.setRunDescriptor(runDescriptor);
+    }
     if (runDescriptor == null) {
       throw new ExecutionException("Can't run an application");
     }
     tryToCloseOldSessions(executor, project);
     runningState.getProcessHandler().putUserData(ANDROID_PROCESS_HANDLER, runDescriptor);
-    runningState.setDebugLauncher(new MyDebugLauncher(project, executor, runningState, environment, runDescriptor));
     return runDescriptor;
   }
 
@@ -196,17 +203,19 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
     private final Executor myExecutor;
     private final AndroidRunningState myRunningState;
     private final ExecutionEnvironment myEnvironment;
-    private final RunContentDescriptor myRunDescriptor;
+    private RunContentDescriptor myRunDescriptor;
 
     public MyDebugLauncher(Project project,
                            Executor executor,
                            AndroidRunningState state,
-                           ExecutionEnvironment environment,
-                           RunContentDescriptor runDescriptor) {
+                           ExecutionEnvironment environment) {
       myProject = project;
       myExecutor = executor;
       myRunningState = state;
       myEnvironment = environment;
+    }
+
+    public void setRunDescriptor(RunContentDescriptor runDescriptor) {
       myRunDescriptor = runDescriptor;
     }
 
@@ -221,9 +230,12 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
           RunContentDescriptor debugDescriptor = null;
           final ProcessHandler processHandler = myRunningState.getProcessHandler();
           try {
-            debugDescriptor = manager
-              .attachVirtualMachine(myExecutor, AndroidDebugRunner.this, myEnvironment, st, myRunDescriptor, st.getRemoteConnection(),
-                                    false);
+            synchronized (myDebugLock) {
+              assert myRunDescriptor != null;
+              debugDescriptor = manager
+                .attachVirtualMachine(myExecutor, AndroidDebugRunner.this, myEnvironment, st, myRunDescriptor, st.getRemoteConnection(),
+                                      false);
+            }
           }
           catch (ExecutionException e) {
             processHandler.notifyTextAvailable("ExecutionException: " + e.getMessage() + '.', STDERR);

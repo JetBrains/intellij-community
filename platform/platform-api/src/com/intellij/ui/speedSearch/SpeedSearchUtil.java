@@ -18,7 +18,6 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,7 +56,8 @@ public final class SpeedSearchUtil {
             }
           }
 
-          searchTerms.add(Pair.create(matcher.group(i + 1), start));
+          final String group = matcher.group(i + 1);
+          if (group != null) searchTerms.add(Pair.create(group, start));
         }
 
         appendFragmentsStrict(text, searchTerms, Font.PLAIN, attributes.getFgColor(),

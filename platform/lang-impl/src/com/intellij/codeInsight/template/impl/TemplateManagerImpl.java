@@ -258,7 +258,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
-    return customLiveTemplate.isApplicable(file, caretOffset > 0 ? caretOffset - 1 : 0);
+    return customLiveTemplate.isApplicable(file, caretOffset > 0 ? caretOffset - 1 : 0, false);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {

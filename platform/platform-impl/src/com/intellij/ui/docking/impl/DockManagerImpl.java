@@ -25,10 +25,12 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.*;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -103,6 +105,15 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   @Override
   public Set<DockContainer> getContainers() {
     return Collections.unmodifiableSet(myContainers);
+  }
+
+  @Override
+  public IdeFrame getIdeFrame(DockContainer container) {
+    Component parent = UIUtil.findUltimateParent(container.getComponent());
+    if (parent instanceof IdeFrame) {
+      return (IdeFrame)parent;
+    }
+    return null;
   }
 
   @Override
@@ -332,6 +343,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private DockContainer myContainer;
 
     private DockWindow(String id, Project project, DockContainer container) {
+      super(project);
       myId = id;
       myContainer = container;
       setProject(project);
@@ -382,8 +394,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     }
 
     @Override
-    protected JFrame createJFrame() {
-      JFrame frame = super.createJFrame();
+    protected JFrame createJFrame(IdeFrame parent) {
+      JFrame frame = super.createJFrame(parent);
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(WindowEvent e) {

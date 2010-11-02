@@ -381,7 +381,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           provider = getStructureConfigurableContext().createModifiableModelProvider(table.getTableLevel());
         }
         EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject());
-        dialog.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
+        dialog.setContextModule(getRootModel().getModule());
         dialog.show();
         myEntryTable.repaint();
         ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();

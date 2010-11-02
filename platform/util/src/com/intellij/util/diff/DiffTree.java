@@ -183,8 +183,8 @@ public class DiffTree<OT, NT> {
     }
     if (!comparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
     ThreeState ret = comparator.deepEqual(oldChild1, newChild1);
-    if (ret == ThreeState.UNSURE) return CompareResult.DRILL_DOWN_NEEDED;
     if (ret == ThreeState.YES) return CompareResult.EQUAL;
+    if (ret == ThreeState.UNSURE) return CompareResult.DRILL_DOWN_NEEDED;
     return CompareResult.TYPE_ONLY;
   }
 

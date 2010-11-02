@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -49,7 +52,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
                                                  final @Nullable ChangeInfo changeInfo) {
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-    if (method != null && isInsideMethodSignature(element, method)) {
+    if (method != null && isInsideMethodSignature(element, method) && (changeInfo == null || changeInfo instanceof MyJavaChangeInfo)) {
       if (PsiTreeUtil.hasErrorElements(method.getParameterList())) return changeInfo;
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement != null && PsiTreeUtil.hasErrorElements(returnTypeElement)) return changeInfo;
@@ -113,6 +116,16 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
           return javaChangeInfo;
         }
         return changeInfo;
+      }
+    } else {
+      final PsiLocalVariable localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
+      if (localVariable != null) {
+        return new RenameChangeInfo(localVariable, changeInfo) {
+          @Override
+          public Language getLanguage() {
+            return StdLanguages.JAVA;
+          }
+        };
       }
     }
     return null;
@@ -213,7 +226,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public boolean showDialog(ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
+  public boolean accept(final ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
     if (changeInfo instanceof MyJavaChangeInfo) {
       final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
       final PsiMethod method = info.getSuperMethod();
@@ -251,17 +264,20 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         };
       dialog.show();
       return dialog.isOK();
+    } else if (changeInfo instanceof RenameChangeInfo) {
+      ((RenameChangeInfo)changeInfo).perform();
+      return true;
     }
     return false;
 
   }
 
-  private static void temporallyRevertChanges(final PsiMethod method, final String oldText) {
+  private static void temporallyRevertChanges(final PsiElement psiElement, final String oldText) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiFile file = method.getContainingFile();
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(method.getProject());
+        final PsiFile file = psiElement.getContainingFile();
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
         final Document document = documentManager.getDocument(file);
         if (document != null) {
           document.setText(oldText);
@@ -309,6 +325,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     if (currentInfo instanceof JavaChangeInfo) {
       final PsiMethod method = (PsiMethod)currentInfo.getMethod();
       return getSignatureRange(method).contains(element.getTextRange());
+    } else if (currentInfo instanceof RenameChangeInfo) {
+      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNameIdentifier();
+      return nameIdentifier != null && nameIdentifier.getTextRange().contains(element.getTextRange());
     }
     return false;
   }

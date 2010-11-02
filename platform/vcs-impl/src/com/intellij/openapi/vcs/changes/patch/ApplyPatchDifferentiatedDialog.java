@@ -85,7 +85,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private boolean myContainBasedChanges;
 
-  public ApplyPatchDifferentiatedDialog(final Project project, final Consumer<ApplyPatchDifferentiatedDialog> callback) {
+  public ApplyPatchDifferentiatedDialog(final Project project, final Consumer<ApplyPatchDifferentiatedDialog> callback,
+                                        @Nullable final VirtualFile patchFile) {
     super(project, true);
     myCallback = callback;
     setModal(false);
@@ -150,10 +151,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
 
     init();
-    final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-    final VirtualFile[] files = fileChooserDialog.choose(null, project);
-    if (files != null && files.length > 0) {
-      init(files[0]);
+
+    if (patchFile != null && patchFile.isValid()) {
+      init(patchFile);
+    } else {
+      final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+      final VirtualFile[] files = fileChooserDialog.choose(null, project);
+      if (files != null && files.length > 0) {
+        init(files[0]);
+      }
     }
   }
 

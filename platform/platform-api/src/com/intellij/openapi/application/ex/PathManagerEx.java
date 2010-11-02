@@ -359,7 +359,7 @@ public class PathManagerEx {
     public void dispatch(File dir) {
       for (File file : dir.listFiles()) {
         if (file.isDirectory()) {
-          if (!isOutputPath(file)) dispatch(file);
+          if (!ignoreDirectory(file, dir)) dispatch(file);
         }
         else {
           process(file);
@@ -367,8 +367,10 @@ public class PathManagerEx {
       }
     }
 
-    private static boolean isOutputPath(File file) {
-      return "out".equals(file.getName());
+    private static boolean ignoreDirectory(File file, File parent) {
+      String fileName = file.getName();
+      return fileName.startsWith(".") || "out".equals(fileName) || "testData".equalsIgnoreCase(fileName) ||
+             ("src".equals(fileName) && !"testFramework".equals(parent.getName()));
     }
 
     private static void process(File file) {

@@ -65,7 +65,7 @@ public class Notification {
 
   @NotNull
   public String getContent() {
-    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content!");
+    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content, groupId: " + myGroupId);
     return myContent;
   }
 

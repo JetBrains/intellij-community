@@ -61,17 +61,29 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     visitor.visitClosure(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState _state,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState _state,
+                                     final PsiElement lastParent,
+                                     final @NotNull PsiElement place) {
     if (lastParent == null || !(place instanceof GroovyPsiElement)) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    for (final PsiParameter parameter : getAllParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    PsiElement current = place;
+    boolean it_already_processed = false;
+    while (current != this && current != null) {
+      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection()) {
+        it_already_processed = true;
+        break;
+      }
+      current = current.getParent();
+    }
+
+    if (hasParametersSection() || !it_already_processed) {
+      for (final PsiParameter parameter : getAllParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+      }
     }
 
     if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {

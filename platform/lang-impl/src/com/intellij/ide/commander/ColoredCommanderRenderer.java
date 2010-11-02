@@ -16,25 +16,19 @@
 
 package com.intellij.ide.commander;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
@@ -54,6 +48,11 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   }
 
   protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+    // Fix GTK background
+    if (UIUtil.isUnderGTKLookAndFeel()){
+      final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+      UIUtil.changeBackGround(this, background);
+    }
     Color color = UIUtil.getListForeground();
     SimpleTextAttributes attributes = null;
     String locationString = null;

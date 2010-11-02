@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.NoSuchElementException;
@@ -151,7 +152,7 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
     return null;
   }
 
-  protected PsiElement restoreBySignatureTokens(PsiFile file, PsiElement parent, String type, StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
     if (type.equals("imports")) {
       if (!(file instanceof PsiJavaFile)) return null;
       return ((PsiJavaFile)file).getImportList();

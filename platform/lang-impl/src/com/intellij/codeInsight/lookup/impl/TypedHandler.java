@@ -37,57 +37,65 @@ import java.util.Arrays;
 
 public class TypedHandler implements TypedActionHandler {
   private final TypedActionHandler myOriginalHandler;
+  private static boolean inside = false;
 
   public TypedHandler(TypedActionHandler originalHandler){
     myOriginalHandler = originalHandler;
   }
 
   public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null){
-      myOriginalHandler.execute(editor, charTyped, dataContext);
-      return;
-    }
-
-    final LookupElement currentItem = lookup.getCurrentItem();
-    final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
-
-    lookup.performGuardedChange(new Runnable() {
-      public void run() {
-        EditorModificationUtil.deleteSelectedText(editor);
+    assert !inside;
+    inside = true;
+    try {
+      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      if (lookup == null){
+        myOriginalHandler.execute(editor, charTyped, dataContext);
+        return;
       }
-    });
-    if (result == CharFilter.Result.ADD_TO_PREFIX) {
-      Document document = editor.getDocument();
-      long modificationStamp = document.getModificationStamp();
+
+      final LookupElement currentItem = lookup.getCurrentItem();
+      final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
 
       lookup.performGuardedChange(new Runnable() {
         public void run() {
-          EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+          EditorModificationUtil.deleteSelectedText(editor);
         }
       });
-      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
+      if (result == CharFilter.Result.ADD_TO_PREFIX) {
+        Document document = editor.getDocument();
+        long modificationStamp = document.getModificationStamp();
 
-      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
+        lookup.performGuardedChange(new Runnable() {
+          public void run() {
+            EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+          }
+        });
+        lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
 
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-      if (completion != null) {
-        completion.prefixUpdated();
-      }
-      return;
-    }
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
-    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
-      LookupElement item = lookup.getCurrentItem();
-      if (item != null){
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-        lookup.finishLookup(charTyped);
+        final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+        if (completion != null) {
+          completion.prefixUpdated();
+        }
         return;
       }
-    }
 
-    lookup.hide();
-    myOriginalHandler.execute(editor, charTyped, dataContext);
+      if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
+        LookupElement item = lookup.getCurrentItem();
+        if (item != null){
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+          lookup.finishLookup(charTyped);
+          return;
+        }
+      }
+
+      lookup.hide();
+      myOriginalHandler.execute(editor, charTyped, dataContext);
+    }
+    finally {
+      inside = false;
+    }
   }
 
   private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {

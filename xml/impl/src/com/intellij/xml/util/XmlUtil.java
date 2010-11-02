@@ -235,7 +235,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static XmlFile findNamespace(PsiFile base, @NotNull String nsLocation) {
+  public static XmlFile findNamespace(@NotNull PsiFile base, @NotNull String nsLocation) {
     final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation, base.getProject());
     if (!location.equals(nsLocation)) { // is mapped
       return findXmlFile(base, location);

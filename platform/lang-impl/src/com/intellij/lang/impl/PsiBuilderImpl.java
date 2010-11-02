@@ -20,7 +20,10 @@ import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -40,6 +43,7 @@ import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.LimitedPool;
@@ -64,8 +68,10 @@ import java.util.Map;
  */
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
+  // function stored in PsiBuilderImpl' user data which called during reparse when merge algorithm is not sure what to merge
+  public static final Key<TripleFunction<ASTNode,LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>> CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
 
-  private Project myProject;
+  private final Project myProject;
   private PsiFile myFile;
 
   private int[] myLexStarts;
@@ -113,14 +119,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private static final WhitespacesAndCommentsProcessor DEFAULT_LEFT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
-  private static final WhitespacesAndCommentsProcessor DEFAULT_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return 0;
     }
   };
@@ -238,7 +244,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myComments = tokens;
   }
 
-  public @Nullable LighterASTNode getLatestDoneMarker() {
+  @Nullable
+  public LighterASTNode getLatestDoneMarker() {
     int index = myProduction.size() - 1;
     while (index >= 0) {
       ProductionMarker marker = myProduction.get(index);
@@ -254,7 +261,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private abstract static class ProductionMarker extends Node {
     protected int myLexemeIndex;
-    protected WhitespacesAndCommentsProcessor myEdgeProcessor;
+    protected WhitespacesAndCommentsBinder myEdgeTokenBinder;
     protected ProductionMarker myParent;
     protected ProductionMarker myNext;
 
@@ -279,7 +286,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private LighterASTNode[] myCachedChildren;
 
     private StartMarker() {
-      myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
     }
 
     public void clean() {
@@ -290,7 +297,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myDebugAllocationPosition = null;
       myFirstChild = myLastChild = null;
       myHC = -1;
-      myEdgeProcessor = DEFAULT_LEFT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
       myCachedChildren = null;
     }
 
@@ -392,14 +399,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myType;
     }
 
-    public void setCustomEdgeProcessors(final WhitespacesAndCommentsProcessor left, final WhitespacesAndCommentsProcessor right) {
+    public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
-        myEdgeProcessor = left;
+        myEdgeTokenBinder = left;
       }
 
       if (right != null) {
         if (myDoneMarker == null) throw new IllegalArgumentException("Cannot set right-edge processor for unclosed marker");
-        myDoneMarker.myEdgeProcessor = right;
+        myDoneMarker.myEdgeTokenBinder = right;
       }
     }
   }
@@ -414,7 +421,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private static abstract class Token extends Node {
+  private abstract static class Token extends Node {
     protected PsiBuilderImpl myBuilder;
     private IElementType myTokenType;
     private int myTokenStart;
@@ -511,7 +518,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private boolean myCollapse = false;
 
     public DoneMarker() {
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public DoneMarker(final StartMarker marker, final int currentLexeme) {
@@ -523,7 +530,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void clean() {
       super.clean();
       myStart = null;
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public int hc() {
@@ -565,7 +572,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
-      myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
     public void clean() {
@@ -711,7 +718,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -725,7 +732,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, ((StartMarker)before).myLexemeIndex, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -739,7 +746,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myLexemeIndex = myCurrentLexeme;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -756,7 +763,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myStart = (StartMarker)marker;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeProcessor = DEFAULT_RIGHT_EDGE_PROCESSOR;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -895,7 +902,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private static void merge(final ASTNode oldNode, final StartMarker newNode) {
+  private void merge(final ASTNode oldNode, final StartMarker newNode) {
     final PsiFileImpl file = (PsiFileImpl)oldNode.getPsi().getContainingFile();
     final PomModel model = PomManager.getModel(file.getProject());
 
@@ -903,7 +910,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
         public PomModelEvent runInner() throws IncorrectOperationException {
           final MyBuilder builder = new MyBuilder(file, newNode);
-          DiffTree.diff(new ASTStructure(oldNode), new MyTreeStructure(newNode, null), new MyComparator(), builder);
+
+          MyTreeStructure treeStructure = new MyTreeStructure(newNode, null);
+          MyComparator comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
+          DiffTree.diff(new ASTStructure(oldNode), treeStructure, comparator, builder);
           file.subtreeChanged();
 
           return new TreeAspectEvent(model, builder.getEvent());
@@ -987,13 +997,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
 
       final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
-      final boolean atEnd = (wsStartIndex == 0 || wsEndIndex == myLexemeCount);
-      final WhitespacesAndCommentsProcessor.TokenTextGetter getter = new WhitespacesAndCommentsProcessor.TokenTextGetter() {
+      final boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
+      final WhitespacesAndCommentsBinder.TokenTextGetter getter = new WhitespacesAndCommentsBinder.TokenTextGetter() {
         public CharSequence get(final int i) {
           return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
         }
       };
-      item.myLexemeIndex = wsStartIndex + item.myEdgeProcessor.process(wsTokens, atEnd, getter);
+      item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, getter);
     }
   }
 
@@ -1096,6 +1106,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
+    private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom;
+    private final MyTreeStructure myTreeStructure;
+
+    private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         MyTreeStructure treeStructure) {
+      this.custom = custom;
+      myTreeStructure = treeStructure;
+    }
+
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
       boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
       boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;
@@ -1135,6 +1154,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
+      }
+      if (custom != null) {
+        return custom.fun(oldNode, newNode, myTreeStructure);
       }
 
       return ThreeState.UNSURE;

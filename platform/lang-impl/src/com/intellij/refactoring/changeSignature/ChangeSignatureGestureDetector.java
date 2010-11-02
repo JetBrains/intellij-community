@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -52,15 +53,18 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   private final PsiManager myPsiManager;
   private final FileEditorManager myFileEditorManager;
   private final Project myProject;
+  private final TemplateManager myTemplateManager;
 
   public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
                                         final PsiManager psiManager,
                                         final FileEditorManager fileEditorManager,
+                                        final TemplateManager templateManager,
                                         final Project project) {
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myFileEditorManager = fileEditorManager;
     myProject = project;
+    myTemplateManager = templateManager;
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -75,6 +79,21 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       return detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
     }
     return false;
+  }
+
+   @Nullable
+   public String getChangeSignatureAcceptText(@NotNull PsiElement element) {
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
+    if (adapter != null && adapter.getCurrentInfo() != null) {
+      final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
+      LOG.assertTrue(detector != null);
+      final ChangeInfo currentInfo = adapter.getCurrentInfo();
+      if (detector.isChangeSignatureAvailable(element, currentInfo)) {
+        return currentInfo instanceof RenameChangeInfo ? ChangeSignatureDetectorAction.NEW_NAME
+                                                       : ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
+      }
+    }
+    return null;
   }
 
   public boolean containsChangeSignatureChange(@NotNull PsiFile file) {
@@ -94,7 +113,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
-        if (detector.showDialog(currentInfo, changeBean.getInitialText(), silently)) {
+        if (detector.accept(currentInfo, changeBean.getInitialText(), silently)) {
           changeBean.reinit();
         }
       }
@@ -107,9 +126,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   @Override
   public void projectOpened() {
     myPsiManager.addPsiTreeChangeListener(this);
-    EditorFactory.getInstance().addEditorFactoryListener(this,myProject);
+    EditorFactory.getInstance().addEditorFactoryListener(this);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
+        EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
         LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
       }
@@ -172,6 +192,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     if (file != null) {
       final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
       if (changeBean != null && changeBean.getInitialText() != null) {
+        final Editor editor = myFileEditorManager.getSelectedTextEditor();
+        if (editor != null && myTemplateManager.getActiveTemplate(editor) != null) return;
         final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(child, changeBean.getInitialChangeInfo());
         if (info == null) {
           changeBean.reinit();

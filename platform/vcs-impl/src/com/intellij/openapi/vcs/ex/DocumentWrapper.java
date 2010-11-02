@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +54,8 @@ public class DocumentWrapper {
     return result;
   }
 
-  private String getLine(int i) {
-    int lineStartOffset = myDocument.getLineStartOffset(i);
-    String line = myDocument.getCharsSequence().subSequence(lineStartOffset, myDocument.getLineEndOffset(i)).toString();
-    return line;
+  private String getLine(final int i) {
+    return myDocument.getText(new TextRange(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i)));
   }
 }
 

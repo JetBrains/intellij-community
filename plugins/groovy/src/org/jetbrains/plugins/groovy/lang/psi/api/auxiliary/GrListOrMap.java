@@ -23,28 +23,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 
 /**
  * @author ilyas
  */
 public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrExpression,
-                                     PsiArrayInitializerMemberValue {
+                                     PsiArrayInitializerMemberValue, GrNamedArgumentsOwner {
   /*
    * Use for list
    */
   @NotNull
   GrExpression[] getInitializers();
-
-  /*
-   * Use for map
-   */
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
-
-  @Nullable
-  GrNamedArgument findNamedArgument(@NotNull String label);
 
   boolean isMap();
 }

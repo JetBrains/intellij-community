@@ -74,8 +74,8 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return result.toString();
   }
 
-  public boolean isMyContext(@NotNull PsiElement context) {
-    return isMyLanguage(context.getLanguage()) && HtmlTextContextType.isInContext(context);
+  public boolean isMyContext(@NotNull PsiElement context, boolean wrapping) {
+    return isMyLanguage(context.getLanguage()) && (wrapping || HtmlTextContextType.isInContext(context));
   }
 
   protected boolean isMyLanguage(Language language) {

@@ -780,7 +780,7 @@ public class ExpressionParser {
 
     list.done(JavaElementType.EXPRESSION_LIST);
     if (!closed) {
-      list.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+      list.setCustomEdgeTokenBinders(null, GREEDY_RIGHT_EDGE_PROCESSOR);
     }
     return list;
   }

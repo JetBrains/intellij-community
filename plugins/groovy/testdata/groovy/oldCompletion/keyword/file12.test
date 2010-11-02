@@ -16,6 +16,7 @@ boolean
 byte
 char
 class
+def
 double
 false
 final

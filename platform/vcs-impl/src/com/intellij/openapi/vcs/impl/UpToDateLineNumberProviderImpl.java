@@ -40,7 +40,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   public int getLineNumber(int currentNumber) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
     if (tracker == null) {
-      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument, myUpToDateContent);
+      return currentNumber;
     }
     return calcLineNumber(tracker, currentNumber);
   }

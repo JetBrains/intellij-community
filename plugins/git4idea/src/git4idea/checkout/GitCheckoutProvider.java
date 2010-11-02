@@ -76,7 +76,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
 
     destinationParent.refresh(true, true, new Runnable() {
       public void run() {
-        if (!project.isDefault()) {
+        if (project.isOpen() && (! project.isDisposed()) && (! project.isDefault())) {
           final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
           mgr.fileDirty(destinationParent);
         }

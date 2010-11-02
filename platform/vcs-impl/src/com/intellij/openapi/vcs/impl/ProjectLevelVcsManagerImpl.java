@@ -28,8 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -80,9 +78,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Project myProject;
   private final MappingsToRoots myMappingsToRoots;
 
-  private volatile boolean myIsDisposed = false;
-  private final Object myDisposeLock = new Object();
-
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
 
@@ -120,13 +115,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myEventDispatcher, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
-
-    ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerAdapter() {
-      @Override
-      public void projectClosing(Project project) {
-        onProjectClosing();
-      }
-    });
   }
 
   public void initComponent() {
@@ -164,8 +152,18 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void disposeComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dispose();
+    if (myEditorAdapter != null) {
+      final Editor editor = myEditorAdapter.getEditor();
+      if (! editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+    }
+    myMappings.disposeMe();
+    myContentManager = null;
+
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
+      toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
     }
   }
 
@@ -188,7 +186,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void projectClosed() {
-    dispose();
   }
 
   @NotNull
@@ -220,7 +217,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
       @Nullable
       public AbstractVcs compute() {
-        if ((! ApplicationManager.getApplication().isUnitTestMode()) && (! myProject.isInitialized())) return null;
+        if ((!ApplicationManager.getApplication().isUnitTestMode()) && (!myProject.isInitialized())) return null;
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
@@ -284,35 +281,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return null;
       }
     });
-  }
-
-  private void onProjectClosing() {
-    if (myEditorAdapter != null) {
-      final Editor editor = myEditorAdapter.getEditor();
-      if (! editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-    }
-  }
-
-  private void dispose() {
-    // todo dispose lock is bad here..
-    synchronized (myDisposeLock) {
-      if (myIsDisposed) return;
-
-      myMappings.disposeMe();
-      try {
-        myContentManager = null;
-
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
-          toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
-        }
-      }
-      finally {
-        myIsDisposed = true;
-      }
-    }
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
@@ -420,21 +388,19 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
-    synchronized (myDisposeLock) {
-      if (myIsDisposed) return null;
-      ContentManager contentManager = getContentManager();
-      if (contentManager == null) {
-        return null;  // content manager is made null during dispose; flag is set later
-      }
-      final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-      Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
-        "toolwindow.title.update.action.info", displayActionName), true);
-      Disposer.register(content, updateInfoTree);
-      ContentsUtil.addContent(contentManager, content, true);
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
-      updateInfoTree.expandRootChildren();
-      return updateInfoTree;
+    if ((! myProject.isOpen()) || myProject.isDisposed()) return null;
+    ContentManager contentManager = getContentManager();
+    if (contentManager == null) {
+      return null;  // content manager is made null during dispose; flag is set later
     }
+    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
+      "toolwindow.title.update.action.info", displayActionName), true);
+    Disposer.register(content, updateInfoTree);
+    ContentsUtil.addContent(contentManager, content, true);
+    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    updateInfoTree.expandRootChildren();
+    return updateInfoTree;
   }
 
   public void cleanupMappings() {
@@ -685,7 +651,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void fireDirectoryMappingsChanged() {
-    if (! myIsDisposed) {
+    if (myProject.isOpen() && (! myProject.isDisposed())) {
       myMappings.mappingsChanged();
     }
   }

@@ -47,6 +47,7 @@ import org.apache.xerces.xni.grammars.XSGrammar;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 
@@ -150,14 +151,16 @@ public class XmlSmartCompletionProvider {
                 return elementDecl.getName().equals(elementDescriptor.getName());
               }
             });
-            addElementToResult(descriptor, result);
+            if (descriptor != null) {
+              addElementToResult(descriptor, result);
+            }
           }
         }
       }
     });
   }
 
-  private static void addElementToResult(final XmlElementDescriptor descriptor, CompletionResultSet result) {
+  private static void addElementToResult(@NotNull XmlElementDescriptor descriptor, CompletionResultSet result) {
     LookupElementBuilder builder = createLookupElement(descriptor);
     result.addElement(builder.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
@@ -167,7 +170,7 @@ public class XmlSmartCompletionProvider {
     }));
   }
 
-  public static LookupElementBuilder createLookupElement(XmlElementDescriptor descriptor) {
+  public static LookupElementBuilder createLookupElement(@NotNull XmlElementDescriptor descriptor) {
     LookupElementBuilder builder = LookupElementBuilder.create(descriptor.getName());
     if (descriptor instanceof XmlElementDescriptorImpl) {
       builder = builder.setTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace(), true);

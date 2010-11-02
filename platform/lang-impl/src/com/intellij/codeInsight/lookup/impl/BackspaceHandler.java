@@ -47,6 +47,7 @@ public class BackspaceHandler extends EditorActionHandler {
 
     final String prefix = lookup.getAdditionalPrefix();
     if (prefix.length() > 0) {
+      lookup.markSelectionTouched();
       lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
       return;
     }
@@ -54,7 +55,7 @@ public class BackspaceHandler extends EditorActionHandler {
     if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
       final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
       if (process instanceof CompletionProgressIndicator) {
-        ((CompletionProgressIndicator)process).restartCompletion();
+        ((CompletionProgressIndicator)process).scheduleRestart();
         return;
       }
     }

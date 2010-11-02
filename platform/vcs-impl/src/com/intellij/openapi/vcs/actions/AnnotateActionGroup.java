@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +28,7 @@ import java.util.List;
  */
 public class AnnotateActionGroup extends ActionGroup {
   private AnAction[] myActions;
+  private boolean isAvailable = true;
 
   public AnnotateActionGroup(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutterComponent) {
     super("View", true);
@@ -50,5 +48,14 @@ public class AnnotateActionGroup extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myActions;
+  }
+
+  public void setAvailable(boolean available) {
+    isAvailable = available;
+    for (AnAction action : myActions) {
+      if (action instanceof ShowHideAspectAction) {
+        ((ShowHideAspectAction)action).setAvailable(isAvailable);
+      }
+    }
   }
 }

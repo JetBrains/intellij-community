@@ -38,6 +38,12 @@ public class HintHint {
   private boolean myQuickHint = false;
   private boolean myMayCenterTooltip = false;
 
+  private Color myTextFg;
+  private Color myTextBg;
+  private Color myBorderColor;
+  private Font myFont;
+  private int myCalloutShift;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -91,11 +97,11 @@ public class HintHint {
   }
 
   public Color getTextForeground() {
-    return getTooltipManager().getTextForeground(myAwtTooltip);
+    return myTextFg != null ? myTextFg : getTooltipManager().getTextForeground(myAwtTooltip);
   }
 
   public Color getTextBackground() {
-    return getTooltipManager().getTextBackground(myAwtTooltip);
+    return myTextBg != null ? myTextBg : getTooltipManager().getTextBackground(myAwtTooltip);
   }
 
   public Color getLinkForeground() {
@@ -107,7 +113,7 @@ public class HintHint {
   }
 
   public Color getBorderColor() {
-    return getTooltipManager().getBorderColor(myAwtTooltip);
+    return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
   }
 
   public boolean isOpaqueAllowed() {
@@ -115,7 +121,7 @@ public class HintHint {
   }
 
   public Font getTextFont() {
-    return getTooltipManager().getTextFont(myAwtTooltip);
+    return myFont != null ? myFont : getTooltipManager().getTextFont(myAwtTooltip);
   }
 
   public String getUlImg() {
@@ -169,4 +175,39 @@ public class HintHint {
     }
   }
 
+  public void initStyleFrom(JComponent component) {
+    setTextFg(component.getForeground()).setTextBg(component.getBackground()).setFont(component.getFont());
+    myTextFg = component.getForeground();
+    myTextBg = component.getBackground();
+    myFont = component.getFont();
+  }
+
+  public HintHint setTextFg(Color textFg) {
+    myTextFg = textFg;
+    return this;
+  }
+
+  public HintHint setTextBg(Color textBg) {
+    myTextBg = textBg;
+    return this;
+  }
+
+  public HintHint setFont(Font font) {
+    myFont = font;
+    return this;
+  }
+
+  public HintHint setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
+    return this;
+  }
+
+  public int getCalloutShift() {
+    return myCalloutShift;
+  }
+
+  public HintHint setCalloutShift(int calloutShift) {
+    myCalloutShift = calloutShift;
+    return this;
+  }
 }

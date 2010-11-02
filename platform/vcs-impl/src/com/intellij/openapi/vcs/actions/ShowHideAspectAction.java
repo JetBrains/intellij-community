@@ -26,6 +26,7 @@ import com.intellij.vcsUtil.VcsUtil;
 public class ShowHideAspectAction extends ToggleAction {
   private final AnnotationFieldGutter myGutter;
   private final EditorGutterComponentEx myGutterComponent;
+  private boolean isAvailable = true;
 
   public ShowHideAspectAction(AnnotationFieldGutter gutter, EditorGutterComponentEx gutterComponent) {
     super(gutter.getID());
@@ -42,5 +43,15 @@ public class ShowHideAspectAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
     VcsUtil.setAspectAvailability(myGutter.getID(), state);
     myGutterComponent.revalidateMarkup();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabled(isAvailable);
+  }
+
+  public void setAvailable(boolean available) {
+    isAvailable = available;
   }
 }

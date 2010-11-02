@@ -91,7 +91,9 @@ public class VcsBalloonProblemNotifier implements Runnable {
     }
 
     for (Project project : projects) {
-      doForProject(project);
+      if (project.isOpen() && (! project.isDisposed())) {
+        doForProject(project);
+      }
     }
   }
 

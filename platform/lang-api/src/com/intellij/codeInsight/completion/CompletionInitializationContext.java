@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author peter
@@ -56,37 +50,23 @@ public class CompletionInitializationContext {
     final int caretOffset = editor.getCaretModel().getOffset();
     final SelectionModel selectionModel = editor.getSelectionModel();
     myOffsetMap.addOffset(START_OFFSET, selectionModel.hasSelection() ? selectionModel.getSelectionStart() : caretOffset);
-    
+
     final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
     myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
-    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, findIdentifierEnd(file, selectionEndOffset));
-  }
-
-  private static int findIdentifierEnd(PsiFile file, int selectionEndOffset) {
-    try {
-      final PsiReference reference = file.findReferenceAt(selectionEndOffset);
-      if(reference != null){
-        final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
-        for (TextRange range : ranges) {
-          if (range.contains(selectionEndOffset)) {
-            return range.getEndOffset();
-          }
-        }
-
-        return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
-      }
-    }
-    catch (IndexNotReadyException ignored) {
-    }
 
     final String text = file.getText();
     int idEnd = selectionEndOffset;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
       idEnd++;
     }
-    return idEnd;
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
   }
 
+  public void setDummyIdentifier(@NotNull String dummyIdentifier) {
+    setFileCopyPatcher(new DummyIdentifierPatcher(dummyIdentifier));
+  }
+
+  @Deprecated
   public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
     myFileCopyPatcher = fileCopyPatcher;
   }
@@ -133,4 +113,11 @@ public class CompletionInitializationContext {
     return myOffsetMap.getOffset(IDENTIFIER_END_OFFSET);
   }
 
+  /**
+   * Mark the offset up to which the text will be deleted if a completion variant is selected using Replace character (Tab)
+   * @param idEnd
+   */
+  public void setReplacementOffset(int idEnd) {
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
+  }
 }

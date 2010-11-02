@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -55,13 +56,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(contentRoot);
+        DirectoryInfo info = getInfoForDirectory(contentRoot);
         if (info == null) continue; // is excluded or ignored
         if (!module.equals(info.module)) continue; // maybe 2 modules have the same content root?
 
         VirtualFile parent = contentRoot.getParent();
         if (parent != null) {
-          DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
+          DirectoryInfo parentInfo = getInfoForDirectory(parent);
           if (parentInfo != null && parentInfo.module != null) continue; // inner content - skip it
         }
 
@@ -73,6 +74,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     return true;
   }
 
+  private DirectoryInfo getInfoForDirectory(@NotNull VirtualFile file) {
+    if ((! myProject.isOpen()) || myProject.isDisposed()) {
+      throw new ProcessCanceledException();
+    }
+    return myDirectoryIndex.getInfoForDirectory(file);
+  }
+
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
     return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
   }
@@ -82,14 +90,14 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
-    DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    DirectoryInfo info = getInfoForDirectory(dir);
     if (info != null) return false;
     if (myDirectoryIndex.isProjectExcludeRoot(dir)) return true;
 
     VirtualFile parent = dir.getParent();
     while (true) {
       if (parent == null) return false;
-      DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
+      DirectoryInfo parentInfo = getInfoForDirectory(parent);
       if (parentInfo != null) return true;
       if (myDirectoryIndex.isProjectExcludeRoot(parent)) return true;
       parent = parent.getParent();
@@ -100,8 +108,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    DirectoryIndex directoryIndex = myDirectoryIndex;
-    DirectoryInfo info = directoryIndex.getInfoForDirectory(dir);
+    DirectoryInfo info = getInfoForDirectory(dir);
     if (info == null) return null;
     return info.module;
   }
@@ -110,8 +117,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return Collections.emptyList();
-    DirectoryIndex directoryIndex = myDirectoryIndex;
-    final DirectoryInfo info = directoryIndex.getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForDirectory(dir);
     if (info == null) return Collections.emptyList();
     return Collections.unmodifiableList(info.getOrderEntries());
   }
@@ -119,7 +125,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForDirectory(dir);
     if (info == null) return null;
     return info.libraryClassRoot;
   }
@@ -127,7 +133,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
     final VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForDirectory(dir);
     if (info == null) return null;
     return info.sourceRoot;
   }
@@ -135,7 +141,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForDirectory(dir);
     if (info == null) return null;
     return info.contentRoot;
   }
@@ -157,13 +163,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.CLASS) return false;
     if (myFileTypeManager.isFileIgnored(file.getName())) return false;
     VirtualFile parent = file.getParent();
-    DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
+    DirectoryInfo parentInfo = getInfoForDirectory(parent);
     return parentInfo != null && parentInfo.libraryClassRoot != null;
   }
 
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       if (info == null) return false;
       return info.isInModuleSource || info.isInLibrarySource;
     }
@@ -175,7 +181,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       return info != null && info.libraryClassRoot != null;
     }
     else {
@@ -186,7 +192,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       return info != null && info.isInLibrarySource;
     }
     else {
@@ -197,7 +203,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       return info != null && info.module != null;
     }
     else {
@@ -208,7 +214,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       return info != null && info.isInModuleSource;
     }
     else {
@@ -219,7 +225,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
+      DirectoryInfo info = getInfoForDirectory(fileOrDir);
       return info != null && info.isInModuleSource && info.isTestSource;
     }
     else {
@@ -231,7 +237,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private class ContentFilter implements VirtualFileFilter {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
+        DirectoryInfo info = getInfoForDirectory(file);
         return info != null && info.module != null;
       }
       else {

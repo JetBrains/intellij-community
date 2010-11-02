@@ -213,6 +213,10 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return power;
   }
 
+  public void writePageBytes(int page, byte[] bytes) {
+    //To change body of created methods use File | Settings | File Templates.
+  }
+
   public StorageDataOutput writeStream(final int record) {
     return new StorageDataOutput(this, record);
   }
@@ -267,7 +271,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  protected void writeBytes(int record, byte[] bytes) throws IOException {
+  public void writeBytes(int record, byte[] bytes) throws IOException {
     synchronized (myLock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);

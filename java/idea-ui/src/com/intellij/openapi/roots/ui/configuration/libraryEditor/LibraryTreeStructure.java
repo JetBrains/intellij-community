@@ -19,7 +19,8 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,11 +29,13 @@ import java.util.Arrays;
 
 public class LibraryTreeStructure extends AbstractTreeStructure {
   private final Object myRootElement;
-  protected NodeDescriptor myRootElementDescriptor;
-  protected final LibraryRootsComponent myParentEditor;
+  private final NodeDescriptor myRootElementDescriptor;
+  private final LibraryRootsComponent myParentEditor;
+  private final LibraryRootsComponentDescriptor myComponentDescriptor;
 
-  public LibraryTreeStructure(LibraryRootsComponent parentElement) {
+  public LibraryTreeStructure(LibraryRootsComponent parentElement, LibraryRootsComponentDescriptor componentDescriptor) {
     myParentEditor = parentElement;
+    myComponentDescriptor = componentDescriptor;
     myRootElement = new Object();
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       public boolean update() {
@@ -56,7 +59,11 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
       for (OrderRootType type : OrderRootType.getAllTypes()) {
         final String[] urls = parentEditor.getUrls(type);
         if (urls.length > 0) {
-          elements.add(OrderRootTypeUIFactory.FACTORY.getByKey(type).createElement());
+          OrderRootTypePresentation presentation = myComponentDescriptor.getRootTypePresentation(type);
+          if (presentation == null) {
+            presentation = DefaultLibraryRootsComponentDescriptor.getDefaultPresentation(type);
+          }
+          elements.add(new OrderRootTypeElement(type, presentation.getNodeText(), presentation.getIcon()));
         }
       }
       return elements.toArray();

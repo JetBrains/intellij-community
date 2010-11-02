@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -63,7 +64,13 @@ public abstract class BaseRefactoringAction extends AnAction {
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
     int eventCount = IdeEventQueue.getInstance().getEventCount();
-    RefactoringActionHandler handler = getHandler(dataContext);
+    RefactoringActionHandler handler;
+    try {
+      handler = getHandler(dataContext);
+    }
+    catch (ProcessCanceledException e1) {
+      return;
+    }
     if (handler == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(
         "error.wrong.caret.position.symbol.to.refactor")), RefactoringBundle.getCannotRefactorMessage(null), null);

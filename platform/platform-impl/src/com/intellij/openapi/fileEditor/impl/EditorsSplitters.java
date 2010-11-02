@@ -31,7 +31,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -49,6 +53,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -402,11 +407,28 @@ public class EditorsSplitters extends JPanel {
     }
   }
 
-  public void updateFileName(final VirtualFile file) {
+  public void updateFileName(final VirtualFile updatedFile) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
-      windows [i].updateFileName(file);
+      windows [i].updateFileName(updatedFile);
     }
+
+    Project project = myManager.getProject();
+
+    final IdeFrame frame = getFrame(project);
+
+    VirtualFile file = getCurrentFile();
+
+    File ioFile = file == null ? null : new File(file.getPresentableUrl());
+    String fileTitle = file == null ? null : FrameTitleBuilder.getInstance().getFileTitle(project, file);
+    frame.setFileTitle(fileTitle, ioFile);
+  }
+
+  protected IdeFrame getFrame(Project project) {
+    final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
+    final IdeFrame frame = windowManagerEx.getFrame(project);
+    LOG.assertTrue(frame != null);
+    return frame;
   }
 
   public boolean isInsideChange() {

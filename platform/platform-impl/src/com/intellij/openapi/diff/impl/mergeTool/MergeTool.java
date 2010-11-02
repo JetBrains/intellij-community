@@ -28,7 +28,7 @@ public class MergeTool implements DiffTool {
       showDialog((MergeRequestImpl)data);
       return;
     }
-    FrameWrapper frameWrapper = new FrameWrapper(data.getGroupKey());
+    FrameWrapper frameWrapper = new FrameWrapper(data.getProject(), data.getGroupKey());
     DiffViewer mergePanel = createMergeComponent(data, null, frameWrapper);
     frameWrapper.setComponent(mergePanel.getComponent());
     frameWrapper.setPreferredFocusedComponent(mergePanel.getPreferredFocusedComponent());

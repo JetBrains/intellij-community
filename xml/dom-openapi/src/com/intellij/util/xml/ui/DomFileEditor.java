@@ -73,7 +73,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   public void commit() {
-    if (checkIsValid()) {
+    if (checkIsValid() && isInitialised()) {
       setShowing(false);
       try {
         ServiceManager.getService(getProject(), CommittableUtil.class).commit(myComponent);

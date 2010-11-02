@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null || !lookup.isVisible() || myRequireFocusedLookup && !lookup.isFocused()) {
+    if (lookup == null ||
+        !lookup.isVisible() && !ApplicationManager.getApplication().isUnitTestMode() ||
+        myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
       if (project != null) {
         LookupManager.getInstance(project).hideActiveLookup();

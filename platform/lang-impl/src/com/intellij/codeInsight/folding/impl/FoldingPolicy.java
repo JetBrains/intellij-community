@@ -22,6 +22,7 @@ import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FoldingPolicy {
@@ -45,7 +46,7 @@ class FoldingPolicy {
 
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static PsiElement restoreBySignature(PsiFile file, String signature) {
+  public static PsiElement restoreBySignature(@NotNull PsiFile file, String signature) {
     for(ElementSignatureProvider provider: Extensions.getExtensions(ElementSignatureProvider.EP_NAME)) {
       PsiElement result = provider.restoreBySignature(file, signature);
       if (result != null) return result;

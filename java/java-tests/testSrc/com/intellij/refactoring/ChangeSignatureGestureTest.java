@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
 
-  private void doTest(final Runnable run, boolean shouldShow) {
+  private void doTest(final Runnable run, boolean shouldShow, final String hint) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(getProject());
     final Document document = myFixture.getEditor().getDocument();
@@ -52,7 +52,6 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
 
       myFixture.doHighlighting();
-      final String hint = ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
       if (shouldShow) {
         final IntentionAction intention = myFixture.findSingleIntention(hint);
         myFixture.launchAction(intention);
@@ -84,13 +83,21 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingTest(", int param");
   }
 
+  public void testRenameLocalVariable() {
+    doTypingTest("1", ChangeSignatureDetectorAction.NEW_NAME);
+  }
+
   private void doTypingTest(final String param) {
+    doTypingTest(param, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+  }
+
+  private void doTypingTest(final String param, final String hint) {
     doTest(new Runnable() {
       @Override
       public void run() {
         myFixture.type(param);
       }
-    }, true);
+    }, true, hint);
   }
 
   public void testReturnValue() {
@@ -111,7 +118,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       public void run() {
         myFixture.type(param);
       }
-    }, false);
+    }, false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 
   public void testDeleteParamInSuperUsed() {
@@ -130,7 +137,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
         document.deleteString(selectionStart, selectionEnd);
         editor.getCaretModel().moveToOffset(selectionStart);
       }
-    }, true);
+    }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 
   @Override

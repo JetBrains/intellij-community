@@ -1070,10 +1070,14 @@ public class ExpectedTypesProvider {
       return parameterType;
     }
 
-    private PsiType getParameterType(PsiParameter parameter, PsiSubstitutor substitutor) {
+    private static PsiType getParameterType(PsiParameter parameter, PsiSubstitutor substitutor) {
       PsiType type = parameter.getType();
       if (parameter.isVarArgs()) {
-        type = ((PsiArrayType)type).getComponentType();
+        if (type instanceof PsiArrayType) {
+          type = ((PsiArrayType)type).getComponentType();
+        } else {
+          LOG.error("Vararg parameter with non-array type. Class=" + parameter.getClass() + "; type=" + parameter.getType());
+        }
       }
       PsiType parameterType = substitutor.substitute(type);
       if (parameterType instanceof PsiCapturedWildcardType) {

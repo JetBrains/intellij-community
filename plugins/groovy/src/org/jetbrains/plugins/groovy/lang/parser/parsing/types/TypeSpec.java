@@ -190,7 +190,7 @@ public class TypeSpec implements GroovyElementTypes {
     typeElementMarker.done(CLASS_TYPE_ELEMENT);
 
     if (mLBRACK.equals(builder.getTokenType())) {
-      return declarationBracketsParseStrict(builder, arrMarker)? fail: mustBeType;
+      return declarationBracketsParseStrict(builder, arrMarker)? mustBeType: fail;
     } else {
 //      arrMarker.done(CLASS_TYPE_ELEMENT);
       arrMarker.drop();

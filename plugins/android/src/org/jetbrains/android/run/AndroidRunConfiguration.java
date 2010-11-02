@@ -18,11 +18,13 @@ package org.jetbrains.android.run;
 import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
 import com.intellij.CommonBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -57,6 +59,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
 
   public String ACTIVITY_CLASS = "";
   public String MODE = LAUNCH_DEFAULT_ACTIVITY;
+  public boolean DEPLOY = true;
 
   public AndroidRunConfiguration(String name, Project project, ConfigurationFactory factory) {
     super(name, project, factory);
@@ -86,6 +89,16 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       }
       throw new RuntimeConfigurationError(AndroidBundle.message("default.activity.not.found.error"));
     }
+  }
+
+  @Override
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+    RunProfileState state = super.getState(executor, env);
+    if (state != null) {
+      assert state instanceof AndroidRunningState;
+      ((AndroidRunningState)state).setDeploy(DEPLOY);
+    }
+    return state;
   }
 
   protected ModuleBasedConfiguration createInstance() {
