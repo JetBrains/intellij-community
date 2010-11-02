@@ -646,9 +646,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     HintHint hintInfo = new HintHint(editor, p);
     if (showByBalloon) {
-      JLayeredPane lp = editor.getComponent().getRootPane().getLayeredPane();
-      hintInfo = new HintHint(lp, p);
-      hintInfo.setAwtTooltip(true).setHighlighterType(true);
+      JRootPane rootPane = editor.getComponent().getRootPane();
+      if (rootPane != null) {
+        JLayeredPane lp = rootPane.getLayeredPane();
+        hintInfo = new HintHint(lp, p);
+        hintInfo.setAwtTooltip(true).setHighlighterType(true);
+      }
     }
     hintInfo.initStyleFrom(hint.getComponent());
     hintInfo.setBorderColor(Color.gray);
