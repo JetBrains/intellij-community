@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -61,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
@@ -199,6 +199,25 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (element instanceof GrField) {
           final PsiClass containingClass = ((PsiField)element).getContainingClass();
           if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return propertyCandidates;
+        }
+      }
+
+      // Search in ClosureMissingMethodContributor
+      if (!isQualified() && getParent() instanceof GrMethodCall) {
+        boolean resolve = false;
+        for (PsiElement e = this.getParent(); !resolve && e != null; e = e.getParent()) {
+          if (e instanceof GrClosableBlock) {
+            for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
+              if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, ResolveState.initial())) {
+                resolve = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (methodResolver.hasApplicableCandidates()) {
+          return methodResolver.getCandidates();
         }
       }
     }
@@ -684,7 +703,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   private void processClassQualifierType(ResolverProcessor processor, PsiType qualifierType, GroovyPsiElement resolveContext) {
-    Project project = getProject();
     if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType) qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
@@ -695,7 +713,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
       if (!ResolveUtil.processCategoryMembers(this, processor)) return;
     } else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
+      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(getProject()).getArrayClass();
       if (!arrayClass.processDeclarations(processor, ResolveState.initial(), null, this)) return;
     } else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
