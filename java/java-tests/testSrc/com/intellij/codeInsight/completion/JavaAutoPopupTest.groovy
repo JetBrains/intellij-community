@@ -102,7 +102,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testGenerallyFocusLookupInJavaMethod() {
-        myFixture.configureByText("a.java", """
+    myFixture.configureByText("a.java", """
       class Foo {
         String foo(String iterable) {
           return it<caret>;
@@ -114,7 +114,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testNoLookupFocusInJavaVariable() {
-        myFixture.configureByText("a.java", """
+    myFixture.configureByText("a.java", """
       class Foo {
         String foo(String st<caret>) {
         }
@@ -122,6 +122,17 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     type 'r'
     assertFalse lookup.focused
+  }
+
+  public void testNoStupidNameSuggestions() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        String foo(String <caret>) {
+        }
+      }
+    """)
+    type 'r'
+    assertNull lookup
   }
 
 }
