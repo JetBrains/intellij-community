@@ -83,10 +83,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context) {
     if (element == null) return null;
     if (element instanceof MetadataPsiElementBase) return null;
-    if (context == null) return null;
-    Module contextModule = ModuleUtil.findModuleForPsiElement(context);
-    if (contextModule == null) return null;
-
+    final Module contextModule = context != null ? ModuleUtil.findModuleForPsiElement(context) : null;
     return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule));
   }
 
