@@ -12,17 +12,14 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Communication with Xml-rpc with the client.
  *
  * @author Fabio
  */
-public class PydevConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler {
+public class PydevConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler, ConsoleCommunication {
 
   /**
    * XML-RPC client for sending messages to the server.
@@ -186,7 +183,6 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     String errorContents = null;
     if (object instanceof Boolean) {
       more = (Boolean)object;
-
     }
     else {
       String str = object.toString();
@@ -233,7 +229,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
-              if (indicator.isCanceled()){
+              if (indicator.isCanceled()) {
                 return;
               }
 
@@ -242,12 +238,12 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
               //executed.o1 is not null only if we had an error
 
               String refusedConnPattern = "Failed to read servers response";  // Was "refused", but it didn't
-                                                                              // work on non English system
-                                                                              // (in Spanish localized systems
-                                                                              // it is "rechazada")
-                                                                              // This string always works,
-                                                                              // because it is hard-coded in
-                                                                              // the XML-RPC library)
+              // work on non English system
+              // (in Spanish localized systems
+              // it is "rechazada")
+              // This string always works,
+              // because it is hard-coded in
+              // the XML-RPC library)
               if (executed.first != null && executed.first.indexOf(refusedConnPattern) != -1) {
                 if (firstCommWorked) {
                   break;
@@ -263,7 +259,6 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
                     break;
                   }
                 }
-
               }
               else {
                 break;
@@ -275,20 +270,18 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
             firstCommWorked = true;
 
-          String errorContents = executed.first;
+            String errorContents = executed.first;
             boolean more = executed.second;
 
             if (errorContents == null) {
               errorContents = stdErrReader.getAndClearContents();
             }
             nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(), errorContents, more, needInput);
-
           }
           catch (Exception e) {
             nextResponse = new InterpreterResponse("", "Exception while pushing line to console:" + e.getMessage(), false, needInput);
           }
         }
-
       }.queue();
 
 
@@ -297,17 +290,17 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
         @Override
         public void run() {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT/10e8) + "s timeout");
+          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
           final long startTime = System.nanoTime();
           while (nextResponse == null) {
-            if (progressIndicator.isCanceled()){
+            if (progressIndicator.isCanceled()) {
               LOG.debug("Canceled");
               nextResponse = new InterpreterResponse("", "Canceled", false, false);
             }
 
             final long time = System.nanoTime() - startTime;
             progressIndicator.setFraction(((double)time) / TIMEOUT);
-            if (time > TIMEOUT){
+            if (time > TIMEOUT) {
               LOG.debug("Timeout exceeded");
               nextResponse = new InterpreterResponse("", "Timeout exceeded", false, false);
             }
@@ -334,25 +327,44 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
       return Collections.emptyList();
     }
     final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
-    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
 
-
-    if (fromServer instanceof Vector) {
-      for (Object o : (Vector)fromServer) {
-        if (o instanceof Vector) {
-          //name, doc, args, type
-          final Vector comp = (Vector)o;
-          final int type = extractInt(comp.get(3));
-          final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
-                                                               AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
-
-          ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
-        }
-      }
-    }
+    final List<PydevCompletionVariant> ret = decodeCompletions(fromServer);
 
     return ret;
   }
+
+  public static List<PydevCompletionVariant> decodeCompletions(Object fromServer) {
+    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
+
+    List complList = objectToList(fromServer);
+
+    for (Object o : complList) {
+      List comp = objectToList(o);
+
+      //name, doc, args, type
+      final int type = extractInt(comp.get(3));
+      final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
+                                                           AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
+
+      ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
+    }
+    return ret;
+  }
+
+  private static List objectToList(Object object) {
+    List list;
+    if (object instanceof Collection) {
+      list = new ArrayList((Collection)object);
+    }
+    else if (object instanceof Object[]) {
+      list = Arrays.asList((Object[])object);
+    }
+    else {
+      throw new IllegalStateException("cant handle type of " + object);
+    }
+    return list;
+  }
+
 
   /**
    * Extracts an int from an object
@@ -360,7 +372,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    * @param objToGetInt the object that should be gotten as an int
    * @return int with the int the object represents
    */
-  private int extractInt(Object objToGetInt) {
+  private static int extractInt(Object objToGetInt) {
     if (objToGetInt instanceof Integer) {
       return (Integer)objToGetInt;
     }
@@ -377,6 +389,4 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     }
     return client.execute("getDescription", new Object[]{text}).toString();
   }
-
-
 }

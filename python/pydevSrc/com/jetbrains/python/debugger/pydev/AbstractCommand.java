@@ -21,6 +21,7 @@ public abstract class AbstractCommand {
   public static final int GET_FRAME = 114;
   public static final int EXECUTE = 115;
   public static final int CHANGE_VARIABLE = 117;
+  public static final int GET_COMPLETIONS = 120;
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";

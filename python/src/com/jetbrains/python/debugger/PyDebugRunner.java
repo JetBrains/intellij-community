@@ -20,7 +20,10 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PyDebugConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
+import com.jetbrains.python.console.PydevLanguageConsoleView;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -76,6 +79,8 @@ public class PyDebugRunner extends GenericProgramRunner {
 
           registerConsoleEvaluateActions(result, pyDebugProcess);
 
+          setDebugConsoleCommunication(result, pyDebugProcess);
+
           return pyDebugProcess;
         }
       });
@@ -95,6 +100,15 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                                                                                 consoleCommandExecutor))
                        .getActionsAsList();
       AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), consoleView.getComponent());
+    }
+  }
+
+  private static void setDebugConsoleCommunication(final ExecutionResult result, final PyDebugProcess debugProcess) {
+    ExecutionConsole console = result.getExecutionConsole();
+    if (console instanceof PydevLanguageConsoleView) {
+      PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)console;
+      ConsoleCommunication communication = new PyDebugConsoleCommunication(debugProcess);
+      consoleView.setConsoleCommunication(communication);
     }
   }
 

@@ -3,6 +3,7 @@
 """
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
+from console import pydevconsole
 try:
     from StringIO import StringIO
 except ImportError:
@@ -345,6 +346,10 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return resolver.getDictionary(var)
     except:
         traceback.print_exc()
+
+def evaluateExpressionConsole(expression):
+    pass
+
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression

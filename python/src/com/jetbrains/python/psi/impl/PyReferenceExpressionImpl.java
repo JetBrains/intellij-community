@@ -12,7 +12,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
@@ -49,7 +49,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     if (file != null) {
       // Return special reference
-      final PydevConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+      final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
       if (communication != null) {
         if (qualifier != null) {
           return new PydevConsoleReference(this, communication, qualifier.getText() + ".");

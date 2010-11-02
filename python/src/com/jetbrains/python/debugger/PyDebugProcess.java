@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.local.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.pydev.*;
 import org.jetbrains.annotations.NotNull;
@@ -248,7 +249,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (myDebugger.isConnected()) {
-      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition());
+      final SetBreakpointCommand command =
+        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition());
       myDebugger.execute(command);
     }
   }
@@ -306,4 +308,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myNewVariableValue.clear();
   }
 
+  @Nullable
+  public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
+    if (myDebugger.isConnected()) {
+      dropFrameCaches();
+      final PyStackFrame frame = currentFrame();
+      final GetCompletionsCommand command = new GetCompletionsCommand(myDebugger, frame.getThreadId(), frame.getFrameId(), prefix);
+      myDebugger.execute(command);
+      return command.getCompletions();
+    }
+    return null;
+  }
 }

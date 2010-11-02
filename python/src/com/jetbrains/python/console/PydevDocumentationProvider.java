@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class PydevDocumentationProvider extends QuickDocumentationProvider {
     if (expression == null){
       return null;
     }
-    final PydevConsoleCommunication communication = PydevConsoleRunner.getConsoleCommunication(originalElement);
+    final ConsoleCommunication communication = PydevConsoleRunner.getConsoleCommunication(originalElement);
     if (communication == null){
       return null;
     }

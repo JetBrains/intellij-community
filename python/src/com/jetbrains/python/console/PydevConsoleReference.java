@@ -7,10 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
-import com.jetbrains.python.console.pydev.IToken;
-import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
-import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,11 +18,11 @@ import java.util.List;
  * @author oleg
  */
 public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferenceExpression> {
-  private final PydevConsoleCommunication myCommunication;
+  private final ConsoleCommunication myCommunication;
   private final String myPrefix;
 
   public PydevConsoleReference(final PyReferenceExpression expression,
-                               final PydevConsoleCommunication communication,
+                               final ConsoleCommunication communication,
                                final String prefix) {
     super(expression, true);
     myCommunication = communication;

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
@@ -37,7 +38,9 @@ import java.util.Map;
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
-  public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
+
+  public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
+
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
 
   protected PydevConsoleRunner(@NotNull final Project project,
@@ -124,7 +127,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     super.initAndRun();
 
     // Propagate console communication to language console
-    ((PydevLanguageConsoleView)getConsoleView()).setPydevConsoleCommunication(myPydevConsoleCommunication);
+    ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
 
     // Required timeout for establishing socket connection
     try {
@@ -197,7 +200,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Nullable
-  public static PydevConsoleCommunication getConsoleCommunication(final PsiElement element) {
+  public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
   }
 }
