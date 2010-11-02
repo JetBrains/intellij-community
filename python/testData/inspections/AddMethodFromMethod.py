@@ -4,3 +4,8 @@ class A:
 
     def foo(self, a):
         self.<caret><warning descr="Unresolved attribute reference 'y' for class 'A'">y</warning>(1, a)
+
+# Some comment
+
+class B:
+    pass
