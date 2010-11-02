@@ -20,6 +20,7 @@ import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -420,7 +421,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           actualUpdate(wasEverythingDirty, composite, builder, adjustedScope, vcs, changeListWorker, gate);
         }
         catch (Throwable t) {
-          LOG.info(t);
+          LOG.debug(t);
           Rethrow.reThrowRuntime(t);
         }
 
@@ -463,6 +464,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     catch(ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
+    } catch (RuntimeInterruptedException ignore) {
     }
     catch(Exception ex) {
       LOG.error(ex);
