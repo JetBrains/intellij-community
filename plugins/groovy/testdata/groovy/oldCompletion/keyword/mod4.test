@@ -6,6 +6,7 @@ boolean
 byte
 char
 class
+def
 double
 enum
 false

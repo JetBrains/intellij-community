@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -62,22 +61,23 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     visitor.visitClosure(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState _state,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState _state,
+                                     final PsiElement lastParent,
+                                     final @NotNull PsiElement place) {
     if (lastParent == null || !(place instanceof GroovyPsiElement)) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
+    PsiElement current = place;
     boolean it_already_processed = false;
-    while (place != this) {
-      if (place instanceof GrClosableBlock && !((GrClosableBlock)place).hasParametersSection()) {
+    while (current != this && current != null) {
+      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection()) {
         it_already_processed = true;
         break;
       }
-      place = place.getParent();
+      current = current.getParent();
     }
 
     if (hasParametersSection() || !it_already_processed) {
