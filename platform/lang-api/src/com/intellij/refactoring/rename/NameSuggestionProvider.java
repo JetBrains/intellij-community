@@ -16,13 +16,11 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -33,7 +31,4 @@ public interface NameSuggestionProvider {
 
   @Nullable
   SuggestedNameInfo getSuggestedNames(PsiElement element, @Nullable PsiElement nameSuggestionContext, Set<String> result);
-
-  @Nullable
-  Collection<LookupElement> completeName(PsiElement element, @Nullable final PsiElement nameSuggestionContext, final String prefix);
 }

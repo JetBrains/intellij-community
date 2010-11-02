@@ -122,26 +122,6 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @Nullable
-  public Collection<LookupElement> completeName(final PsiElement element, final PsiElement nameSuggestionContext, final String prefix) {
-    if (element instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)element;
-      VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind(var);
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-      JavaCompletionUtil.completeVariableNameForRefactoring(element.getProject(), set, prefix, var.getType(), kind);
-
-      if (prefix.length() == 0) {
-        Set<String> suggestedNames = new HashSet<String>();
-        getSuggestedNames(element, nameSuggestionContext, suggestedNames);
-        for (String suggestedName : suggestedNames) {
-          LookupItemUtil.addLookupItem(set, suggestedName);
-        }
-      }
-
-    }
-    return null;
-  }
-
-  @Nullable
   private static String[] suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
     String name = ((PsiNamedElement)psiElement).getName();
