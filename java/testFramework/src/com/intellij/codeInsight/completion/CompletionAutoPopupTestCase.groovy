@@ -63,11 +63,9 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     runTestBare()
   }
 
-  @Override
-  void runBare() {
-    superRunBare()
+  @Override protected boolean runInDispatchThread() {
+    return false;
   }
-
 
   @Override protected void invokeTestRunnable(Runnable runnable) {
     runnable.run()
