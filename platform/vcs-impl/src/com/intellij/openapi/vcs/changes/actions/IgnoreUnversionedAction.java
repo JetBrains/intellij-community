@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class IgnoreUnversionedAction extends AnAction {
@@ -41,12 +42,24 @@ public class IgnoreUnversionedAction extends AnAction {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     if (files == null) return;
+    removeNullFiles(files);
+    if (files.isEmpty()) return;
 
     IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
   }
 
+  private static void removeNullFiles(List<VirtualFile> files) {
+    for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
+      final VirtualFile next = iterator.next();
+      if (next == null) {
+        iterator.remove();
+      }
+    }
+  }
+
   public void update(AnActionEvent e) {
     List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    removeNullFiles(files);
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
