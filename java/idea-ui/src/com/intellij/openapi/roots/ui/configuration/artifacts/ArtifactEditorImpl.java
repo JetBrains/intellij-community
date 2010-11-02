@@ -205,6 +205,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.add(new JLabel("Available Elements"));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(IconLoader.getIcon("/general/help.png"));
+    link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
