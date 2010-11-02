@@ -94,17 +94,17 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       final PairProcessor<MatchResult, Configuration> processor = new PairProcessor<MatchResult, Configuration>() {
         public boolean process(MatchResult matchResult, Configuration configuration) {
           PsiElement element = matchResult.getMatch();
-              String name = configuration.getName();
-              LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
-              holder.registerProblem(
-                holder.getManager().createProblemDescriptor(
-                  element, 
-                  name, 
-                  fix, 
-                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                  isOnTheFly
-                )
-              );
+          String name = configuration.getName();
+          LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
+          holder.registerProblem(
+            holder.getManager().createProblemDescriptor(
+              element,
+              name,
+              fix,
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+              isOnTheFly
+            )
+          );
           return true;
         }
       };
