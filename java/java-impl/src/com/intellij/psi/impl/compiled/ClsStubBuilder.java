@@ -391,14 +391,15 @@ public class ClsStubBuilder {
       stub.setReturnType(TypeInfo.fromString(returnType));
 
 
-      final boolean nonStaticInnerClassConstructor =
-        isConstructor && !parsedViaGenericSignature && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+      final boolean isNonStaticInnerClassConstructor = 
+        isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+      final boolean shouldSkipFirstParamForNonStaticInnerClassConstructor = !parsedViaGenericSignature && isNonStaticInnerClassConstructor;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
       final PsiParameterStubImpl[] paramStubs = new PsiParameterStubImpl[paramCount];
       for (int i = 0; i < paramCount; i++) {
-        if (nonStaticInnerClassConstructor && i == 0) continue;
+        if (shouldSkipFirstParamForNonStaticInnerClassConstructor && i == 0) continue;
 
         String arg = args.get(i);
         boolean isEllipsisParam = isVarargs && i == paramCount - 1;
@@ -418,7 +419,7 @@ public class ClsStubBuilder {
       if (isEnumConstructor) {
         localVarIgnoreCount += 2;
       }
-      final int paramIgnoreCount = isEnumConstructor? 2 : nonStaticInnerClassConstructor? 1 : 0;
+      final int paramIgnoreCount = isEnumConstructor? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
       return new AnnotationParamCollectingVisitor(stub, modlist, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
     }
 
