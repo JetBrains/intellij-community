@@ -46,7 +46,7 @@ import java.util.ListIterator;
 public class LineStatusTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   // true -> have contents
-  private boolean myBaseLoaded;
+  private BaseLoadState myBaseLoaded;
 
   private final Document myDocument;
   private final Document myUpToDateDocument;
@@ -66,13 +66,13 @@ public class LineStatusTracker {
     myUpToDateDocument = upToDateDocument;
     myUpToDateDocument.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
-    myBaseLoaded = false;
+    myBaseLoaded = BaseLoadState.LOADING;
     myRanges = new ArrayList<Range>();
   }
 
   public void initialize(@NotNull final String upToDateContent) {
     ApplicationManager.getApplication().isReadAccessAllowed();
-    LOG.assertTrue(!myBaseLoaded);
+    LOG.assertTrue(BaseLoadState.LOADING == myBaseLoaded);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -88,7 +88,7 @@ public class LineStatusTracker {
           }
         }
         finally {
-          myBaseLoaded = true;
+          myBaseLoaded = BaseLoadState.LOADED;
         }
       }
     });
@@ -202,7 +202,7 @@ public class LineStatusTracker {
     return myApplication.runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (!myBaseLoaded) return false;
+        if (BaseLoadState.LOADING == myBaseLoaded) return false;
         return myApplication.runWriteAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
@@ -211,7 +211,7 @@ public class LineStatusTracker {
             myUpToDateDocument.setReadOnly(true);
             removeHighlightersFromMarkupModel();
             myRanges.clear();
-            myBaseLoaded = false;
+            myBaseLoaded = BaseLoadState.LOADING;
             return true;
           }
         });
@@ -227,7 +227,7 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
 
     public void beforeDocumentChange(DocumentEvent e) {
-      if (myBulkUpdate || (! myBaseLoaded)) return;
+      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
       myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
@@ -275,7 +275,7 @@ public class LineStatusTracker {
     }
 
     public void documentChanged(DocumentEvent e) {
-      if (myBulkUpdate || (! myBaseLoaded)) return;
+      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
       int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
@@ -544,7 +544,18 @@ public class LineStatusTracker {
     return new LineStatusTracker(doc, document, project);
   }
 
-  public boolean isBaseLoaded() {
+  public BaseLoadState getBaseLoaded() {
     return myBaseLoaded;
+  }
+
+  public void baseRevisionLoadFailed() {
+    myApplication.assertWriteAccessAllowed();
+    myBaseLoaded = BaseLoadState.FAILED;
+  }
+
+  public static enum BaseLoadState {
+    LOADING,
+    FAILED,
+    LOADED
   }
 }
