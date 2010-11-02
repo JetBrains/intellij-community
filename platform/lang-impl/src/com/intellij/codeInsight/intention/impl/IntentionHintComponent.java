@@ -197,7 +197,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
-      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, true, HintManager.ABOVE);
+      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
     }
   }
 

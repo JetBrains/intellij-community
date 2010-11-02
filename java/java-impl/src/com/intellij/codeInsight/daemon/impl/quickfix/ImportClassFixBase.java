@@ -160,7 +160,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
         HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(),
-                                                                      myRef.getTextRange().getEndOffset(), action, true);
+                                                                      myRef.getTextRange().getEndOffset(), action);
       }
       return Result.POPUP_SHOWN;
     }

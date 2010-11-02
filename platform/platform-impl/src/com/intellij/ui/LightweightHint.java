@@ -152,7 +152,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setHighlighterType(hintHint.isHightlighterType())
           .setTextForeground(hintHint.getTextForeground())
           .setTextBackground(hintHint.getTextBackground())
-          .setBorderColor(hintHint.getBorderColor());
+          .setBorderColor(hintHint.getBorderColor())
+          .setFont(hintHint.getTextFont()).setCalloutShift(hintHint.getCalloutShift());
 
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
