@@ -26,8 +26,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -55,7 +55,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
-      if (localChangeList.isReadOnly()) return false;
+      if (localChangeList.isReadOnly() || localChangeList.hasDefaultName()) return false;
       if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeListsCopy().size() <= lists.length) return false;
     }
     return true;
@@ -65,6 +65,9 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     assert lists != null;
+    if (! canRemoveChangeLists(project, lists)) {
+      return;
+    }
     int rc;
 
     for(ChangeList list: lists) {

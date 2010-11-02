@@ -37,6 +37,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -237,7 +238,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public void showEditorHint(LightweightHint hint, Editor editor, short constraint, int flags, int timeout, boolean reviveOnEditorChange) {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     Point p = getHintPosition(hint, editor, pos, constraint);
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, new HintHint(editor, p));
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
   }
 
   /**
@@ -250,7 +251,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                              int flags,
                              int timeout, boolean reviveOnEditorChange) {
 
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, new HintHint(editor, p));
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, ABOVE));
   }
 
   public void showEditorHint(@NotNull final LightweightHint hint,
@@ -377,7 +378,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
-    doShowInGivenLocation(hint, editor, p, new HintHint(editor, p));
+    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER));
   }
 
   public void hideAllHints() {
@@ -477,7 +478,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint) {
-    return getHintPosition(hint, editor, pos1, pos2, constraint, false);
+    return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
   }
 
   private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, short constraint, boolean showByBalloon) {
@@ -565,6 +566,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
+    showInformationHint(editor, component, true);
+  }
+
+  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, boolean showByBalloon) {
     LightweightHint hint = new LightweightHint(component);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
@@ -580,21 +585,16 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
 
-  public void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action) {
-    showQuestionHint(editor, hintText, offset1, offset2, action, false);
-  }
-
   @Override
   public void showQuestionHint(@NotNull Editor editor,
                                @NotNull String hintText,
                                int offset1,
                                int offset2,
-                               @NotNull QuestionAction action,
-                               boolean showByBaloon) {
+                               @NotNull QuestionAction action) {
 
     JLabel label = HintUtil.createQuestionLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
-    showQuestionHint(editor, offset1, offset2, hint, action, ABOVE, showByBaloon);
+    showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }
 
   public void showQuestionHint(@NotNull final Editor editor,
@@ -602,12 +602,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                final int offset2,
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
-                               final short constraint,
-                               boolean showByBalloon) {
+                               final short constraint) {
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
     final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
-    final Point p = getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
-    showQuestionHint(editor, p, offset1, offset2, hint, action, showByBalloon, constraint);
+    final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
+    showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
 
 
@@ -617,7 +616,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                final int offset2,
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
-                               boolean showByBalloon,
                                short constraint) {
     TextAttributes attributes = new TextAttributes();
     attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
@@ -644,14 +642,29 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     });
 
+    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false,
+                   createHintHint(editor, p, hint, constraint));
+    myQuestionAction = action;
+    myQuestionHint = hint;
+  }
+
+  private static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
     HintHint hintInfo = new HintHint(editor, p);
+    boolean showByBalloon = Registry.is("editor.balloonHints");
     if (showByBalloon) {
-      JLayeredPane lp = editor.getComponent().getRootPane().getLayeredPane();
-      hintInfo = new HintHint(lp, p);
-      hintInfo.setAwtTooltip(true).setHighlighterType(true);
+      JRootPane rootPane = editor.getComponent().getRootPane();
+      if (rootPane != null) {
+        JLayeredPane lp = rootPane.getLayeredPane();
+        hintInfo = new HintHint(lp, p);
+        hintInfo.setAwtTooltip(true).setHighlighterType(true);
+      }
     }
     hintInfo.initStyleFrom(hint.getComponent());
-    hintInfo.setBorderColor(Color.gray);
+    if (showByBalloon) {
+      hintInfo.setBorderColor(Color.gray);
+      hintInfo.setFont(hintInfo.getTextFont().deriveFont(Font.PLAIN));
+      hintInfo.setCalloutShift(-(int)(editor.getLineHeight() * 0.1));
+    }
     hintInfo.setPreferredPosition(Balloon.Position.above);
     if (constraint == UNDER || constraint == RIGHT_UNDER) {
       hintInfo.setPreferredPosition(Balloon.Position.below);
@@ -660,10 +673,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     } else if (constraint == LEFT) {
       hintInfo.setPreferredPosition(Balloon.Position.atLeft);
     }
-
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false, hintInfo);
-    myQuestionAction = action;
-    myQuestionHint = hint;
+    return hintInfo;
   }
 
   private void updateLastEditor(final Editor editor) {

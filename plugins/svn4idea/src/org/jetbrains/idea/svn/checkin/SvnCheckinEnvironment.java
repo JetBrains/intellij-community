@@ -21,8 +21,10 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -206,11 +208,16 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
+      final Project project = mySvnVcs.getProject();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          new VcsBalloonProblemNotifier(mySvnVcs.getProject(),
-                                                SvnBundle.message("status.text.comitted.revision", committedRevisions),
+          new VcsBalloonProblemNotifier(project, SvnBundle.message("status.text.comitted.revision", committedRevisions),
                                                 MessageType.INFO).run();
+        }
+      }, new Condition<Object>() {
+        @Override
+        public boolean value(Object o) {
+          return (! project.isOpen()) || project.isDisposed();
         }
       });
     }

@@ -24,9 +24,9 @@ import java.util.List;
  * Each element has a pair of edge processors: for it's left and right edge. Edge processors defines position
  * of element start and end in token stream with recognition of whitespace and comment tokens surrounding the element.
  *
- * @see com.intellij.lang.PsiBuilder.Marker#setCustomEdgeProcessors(WhitespacesAndCommentsProcessor, WhitespacesAndCommentsProcessor)
+ * @see com.intellij.lang.PsiBuilder.Marker#setCustomEdgeTokenBinders(WhitespacesAndCommentsBinder, WhitespacesAndCommentsBinder)
  */
-public interface WhitespacesAndCommentsProcessor {
+public interface WhitespacesAndCommentsBinder {
   /**
    * Provides an ability for the processor to get a text of any of given tokens.
    */
@@ -52,5 +52,5 @@ public interface WhitespacesAndCommentsProcessor {
    * @param getter token text getter.
    * @return position of element's edge relative to given tokens.
    */
-  int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter);
+  int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter);
 }

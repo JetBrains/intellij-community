@@ -113,7 +113,7 @@ public class FilePatchInProgress implements Strippable {
     final String beforeName = myPatch.getBeforeName();
     if (beforeName != null) {
       myIoCurrentBase = PathMerger.getFile(new File(myBase.getPath()), beforeName);
-      myCurrentBase = VcsUtil.getVirtualFileWithRefresh(myIoCurrentBase);
+      myCurrentBase = myIoCurrentBase == null ? null : VcsUtil.getVirtualFileWithRefresh(myIoCurrentBase);
       myBaseExists = (myCurrentBase != null) && myCurrentBase.exists();
     } else {
       // creation

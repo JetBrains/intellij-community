@@ -354,17 +354,17 @@ public class PsiBuilderQuickTest {
 
   @Test
   public void testCustomEdgeProcessors() throws Exception {
-    final WhitespacesAndCommentsProcessor leftEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+    final WhitespacesAndCommentsBinder leftEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = tokens.size() - 1;
         while (tokens.get(pos) != COMMENT && pos > 0) pos--;
         return pos;
       }
     };
-    final WhitespacesAndCommentsProcessor rightEdgeProcessor = new WhitespacesAndCommentsProcessor() {
+    final WhitespacesAndCommentsBinder rightEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int process(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = 0;
         while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
         return pos + 1;
@@ -379,7 +379,7 @@ public class PsiBuilderQuickTest {
                final PsiBuilder.Marker marker = builder.mark();
                builder.advanceLexer();
                marker.done(OTHER);
-               marker.setCustomEdgeProcessors(leftEdgeProcessor, rightEdgeProcessor);
+               marker.setCustomEdgeTokenBinders(leftEdgeProcessor, rightEdgeProcessor);
                while (builder.getTokenType() != null) builder.advanceLexer();
              }
            },

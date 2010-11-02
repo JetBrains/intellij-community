@@ -19,17 +19,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class ExplicitlyImportedWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
-    if (location == null) {
-      return null;
-    }
+  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
       if (qname != null) {

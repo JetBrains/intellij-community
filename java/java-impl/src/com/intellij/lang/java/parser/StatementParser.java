@@ -102,7 +102,7 @@ public class StatementParser {
 
     codeBlock.collapse(JavaElementType.CODE_BLOCK);
     if (greedyBlock) {
-      codeBlock.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+      codeBlock.setCustomEdgeTokenBinders(null, GREEDY_RIGHT_EDGE_PROCESSOR);
     }
     return codeBlock;
   }
@@ -121,7 +121,7 @@ public class StatementParser {
 
     done(codeBlock, JavaElementType.CODE_BLOCK);
     if (greedyBlock) {
-      codeBlock.setCustomEdgeProcessors(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+      codeBlock.setCustomEdgeTokenBinders(null, GREEDY_RIGHT_EDGE_PROCESSOR);
     }
     return codeBlock;
   }

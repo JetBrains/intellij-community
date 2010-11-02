@@ -15,6 +15,7 @@ abstract
 boolean
 byte
 char
+def
 double
 final
 float

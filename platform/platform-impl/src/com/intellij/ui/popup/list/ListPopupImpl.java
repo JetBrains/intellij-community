@@ -291,6 +291,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
 
     if (myList.getSelectedIndex() == getIndexForShowingChild()) {
+      if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
       return false;
     }
 

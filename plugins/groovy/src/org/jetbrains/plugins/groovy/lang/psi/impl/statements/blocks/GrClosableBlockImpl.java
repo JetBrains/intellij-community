@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,12 +34,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -62,25 +63,26 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     visitor.visitClosure(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState _state,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState _state,
+                                     final PsiElement lastParent,
+                                     final @NotNull PsiElement place) {
     if (lastParent == null || !(place instanceof GroovyPsiElement)) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
+    PsiElement current = place;
     boolean it_already_processed = false;
-    while (place != this) {
-      if (place instanceof GrClosableBlock && !((GrClosableBlock)place).hasParametersSection()) {
+    while (current != this && current != null) {
+      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection()) {
         it_already_processed = true;
         break;
       }
-      place = place.getParent();
+      current = current.getParent();
     }
 
-    if (hasParametersSection() || !it_already_processed) {
+    if (!it_already_processed || hasParametersSection()) {
       for (final PsiParameter parameter : getAllParameters()) {
         if (!ResolveUtil.processElement(processor, parameter, state)) return false;
       }
@@ -96,9 +98,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 
-      // Process non-code in closures
-      PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
-      if (!ResolveUtil.processNonCodeMethods(clType, processor, (GroovyPsiElement)place)) return false;
+      if (!ResolveUtil.processNonCodeMethods(GrClosureType.create(this), processor, (GroovyPsiElement)place, state)) return false;
     }
 
     return true;
@@ -207,17 +207,15 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new Function<GrClosableBlock, PsiType>() {
     public PsiType fun(GrClosableBlock block) {
-      return GroovyPsiManager.getInstance(block.getProject()).inferType(block, new MethodTypeInferencer(block));
+      return GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
     }
   };
 
-  public
   @Nullable
-  PsiType getReturnType() {
-    if (GroovyPsiManager.getInstance(getProject()).isTypeBeingInferred(this)) {
+  public PsiType getReturnType() {
+    if (GroovyPsiManager.isTypeBeingInferred(this)) {
       return null;
     }
     return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
   }
-
 }

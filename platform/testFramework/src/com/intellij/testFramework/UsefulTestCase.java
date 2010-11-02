@@ -72,7 +72,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
   static {
-    System.setProperty("apple.awt.UIElement", "true"); // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    System.setProperty("apple.awt.UIElement",
+                       "true"); // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
 
     try {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -222,30 +223,38 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(Runnable runnable) throws Exception {
-     UIUtil.invokeAndWaitIfNeeded(runnable);
+    UIUtil.invokeAndWaitIfNeeded(runnable);
     //runnable.run();
   }
 
-  protected void superRunBare() throws Throwable {
+  protected void defaultRunBare() throws Throwable {
     super.runBare();
   }
 
   public void runBare() throws Throwable {
-    final Throwable[] exception = {null};
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          superRunBare();
+    if (runInDispatchThread()) {
+      final Throwable[] exception = {null};
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            defaultRunBare();
+          }
+          catch (Throwable tearingDown) {
+            if (exception[0] == null) exception[0] = tearingDown;
+          }
         }
-        catch (Throwable tearingDown) {
-          if (exception[0] == null) exception[0] = tearingDown;
-        }
-      }
-    });
-    if (exception[0] != null) throw exception[0];
+      });
+      if (exception[0] != null) throw exception[0];
+    }
+    else {
+      defaultRunBare();
+    }
   }
 
+  protected boolean runInDispatchThread() {
+    return true;
+  }
 
   @NonNls
   public static String toString(Collection<?> collection) {
@@ -284,7 +293,9 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(null, actual, expected);
   }
 
-  public static <T> void assertOrderedEquals(final String erroMsg, final Collection<? extends T> actual, final Collection<? extends T> expected) {
+  public static <T> void assertOrderedEquals(final String erroMsg,
+                                             final Collection<? extends T> actual,
+                                             final Collection<? extends T> expected) {
     if (!new ArrayList<T>(actual).equals(new ArrayList<T>(expected))) {
       Assert.assertEquals(erroMsg, toString(expected), toString(actual));
       Assert.fail();
@@ -299,10 +310,11 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertSameElements(@NotNull T[] collection, @NotNull T... expected) {
     assertSameElements(Arrays.asList(collection), expected);
   }
-  
+
   public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
     assertSameElements(collection, Arrays.asList(expected));
   }
+
   public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
     if (collection.size() != expected.size() || !new HashSet<T>(expected).equals(new HashSet<T>(collection))) {
       Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
@@ -315,7 +327,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static String toString(Collection<?> collection, String separator) {
-    List<String> list = ContainerUtil.map2List(collection, new Function<Object,String>() {
+    List<String> list = ContainerUtil.map2List(collection, new Function<Object, String>() {
       @Override
       public String fun(final Object o) {
         return String.valueOf(o);
@@ -333,7 +345,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     return builder.toString();
   }
-  
+
   public static <T> void assertOrderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
     Assert.assertNotNull(collection);
     if (collection.size() != checkers.length) {
@@ -414,12 +426,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void printThreadDump() {
-    final Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
+    final Map<Thread, StackTraceElement[]> traces = Thread.getAllStackTraces();
     for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
       System.out.println("\n" + entry.getKey().getName() + "\n");
       final StackTraceElement[] value = entry.getValue();
       for (final StackTraceElement stackTraceElement : value) {
-        System.out.println(" at "+stackTraceElement);
+        System.out.println(" at " + stackTraceElement);
       }
     }
   }
@@ -480,7 +492,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static boolean isAllUppercaseName(String name) {
     int uppercaseChars = 0;
-    for(int i=0; i<name.length(); i++) {
+    for (int i = 0; i < name.length(); i++) {
       if (Character.isLowerCase(name.charAt(i))) {
         return false;
       }
@@ -584,7 +596,7 @@ public abstract class UsefulTestCase extends TestCase {
       Object firstTimer = field.get(queue);
       if (firstTimer != null) {
         try {
-          fail("Not disposed Timer: "+firstTimer.toString()+"; queue:"+queue);
+          fail("Not disposed Timer: " + firstTimer.toString() + "; queue:" + queue);
         }
         finally {
           field.set(queue, null);
@@ -598,6 +610,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * Checks that code block throw corresponding exception.
+   *
    * @param exceptionCase Block annotated with some exception type
    * @throws Throwable
    */
@@ -608,7 +621,8 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Checks that code block throw corresponding exception with expected error msg.
    * If expected error message is null it will not be checked.
-   * @param exceptionCase Block annotated with some exception type
+   *
+   * @param exceptionCase    Block annotated with some exception type
    * @param expectedErrorMsg expected error messge
    * @throws Throwable
    */
@@ -619,6 +633,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * Checks that code block doesn't throw corresponding exception.
+   *
    * @param exceptionCase Block annotated with some exception type
    * @throws Throwable
    */
@@ -628,9 +643,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void assertNoThrowable(final Runnable closure) {
     String throwableName = null;
-    try{
+    try {
       closure.run();
-    } catch (Throwable thr) {
+    }
+    catch (Throwable thr) {
       throwableName = thr.getClass().getName();
     }
     assertNull(throwableName);
@@ -642,7 +658,8 @@ public abstract class UsefulTestCase extends TestCase {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       if (shouldOccur) {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
@@ -650,17 +667,20 @@ public abstract class UsefulTestCase extends TestCase {
         if (expectedErrorMsg != null) {
           assertEquals("Compare error messages", expectedErrorMsg, e.getMessage());
         }
-      } else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
+      }
+      else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
         wasThrown = true;
 
         System.out.println("");
         e.printStackTrace(System.out);
 
         fail("Exception isn't expected here. Exception message: " + e.getMessage());
-      } else {
+      }
+      else {
         throw e;
       }
-    } finally {
+    }
+    finally {
       if (shouldOccur && !wasThrown) {
         fail(exceptionCase.getAssertionErrorMessage());
       }

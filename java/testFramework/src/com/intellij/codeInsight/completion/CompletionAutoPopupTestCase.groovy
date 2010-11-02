@@ -55,18 +55,17 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   void type(String s) {
     myFixture.type(s)
-    UIUtil.invokeAndWaitIfNeeded(({} as Runnable))
+    UIUtil.invokeAndWaitIfNeeded(({} as Runnable)) // for the autopopup's alarm
+    UIUtil.invokeAndWaitIfNeeded(({} as Runnable)) // for the restartCompletion's invokeLater
   }
 
   @Override protected void runTest() {
     runTestBare()
   }
 
-  @Override
-  void runBare() {
-    superRunBare()
+  @Override protected boolean runInDispatchThread() {
+    return false;
   }
-
 
   @Override protected void invokeTestRunnable(Runnable runnable) {
     runnable.run()

@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -89,15 +85,22 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @NotNull
   public PsiElement[] getModifiers() {
-    List<PsiElement> modifiers = new ArrayList<PsiElement>();
     PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
     GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
 
-    if (modifiersKeywords.length != 0) ContainerUtil.addAll(modifiers, modifiersKeywords);
+    if (modifiersAnnotations.length == 0) return modifiersKeywords;
 
-    if (modifiersAnnotations.length != 0) ContainerUtil.addAll(modifiers, modifiersAnnotations);
+    PsiElement[] res = new PsiElement[modifiersAnnotations.length + modifiersKeywords.length];
 
-    return modifiers.toArray(new PsiElement[modifiers.size()]);
+    int i = 0;
+    for (PsiElement modifiersKeyword : modifiersKeywords) {
+      res[i++] = modifiersKeyword;
+    }
+    for (GrAnnotation modifiersAnnotation : modifiersAnnotations) {
+      res[i++] = modifiersAnnotation;
+    }
+
+    return res;
   }
 
   public boolean hasExplicitVisibilityModifiers() {

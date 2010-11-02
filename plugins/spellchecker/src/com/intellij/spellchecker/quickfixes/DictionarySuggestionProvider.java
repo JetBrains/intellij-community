@@ -56,8 +56,4 @@ public class DictionarySuggestionProvider implements NameSuggestionProvider {
     result.addAll(set);
     return null;
   }
-
-  public Collection<LookupElement> completeName(PsiElement element, PsiElement nameSuggestionContext, String prefix) {
-    return null;
-  }
 }

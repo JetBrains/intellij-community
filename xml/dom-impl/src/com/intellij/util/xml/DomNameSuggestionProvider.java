@@ -43,10 +43,6 @@ public class DomNameSuggestionProvider implements NameSuggestionProvider {
     return null;
   }
 
-  public Collection<LookupElement> completeName(final PsiElement element, final PsiElement nameSuggestionContext, final String prefix) {
-    return null;
-  }
-
   @Nullable
   private static String getNameFromNameValue(final Object o, final boolean local) {
     if (o == null || o instanceof String) {

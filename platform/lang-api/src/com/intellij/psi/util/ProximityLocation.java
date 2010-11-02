@@ -32,7 +32,7 @@ public class ProximityLocation implements UserDataHolder {
   private final Module myPositionModule;
   private final ProcessingContext myContext;
 
-  public ProximityLocation(@NotNull final PsiElement position, @NotNull final Module positionModule) {
+  public ProximityLocation(final PsiElement position, final Module positionModule) {
     this(position, positionModule, new ProcessingContext());
   }
 
@@ -42,17 +42,19 @@ public class ProximityLocation implements UserDataHolder {
     myContext = context;
   }
 
+  @Nullable
   public Module getPositionModule() {
     return myPositionModule;
   }
 
-  @NotNull
+  @Nullable
   public PsiElement getPosition() {
     return myPosition;
   }
 
+  @Nullable
   public Project getProject() {
-    return myPosition.getProject();
+    return myPosition != null ? myPosition.getProject() : null;
   }
 
   @Override

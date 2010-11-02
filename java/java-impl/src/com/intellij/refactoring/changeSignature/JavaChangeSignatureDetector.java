@@ -326,7 +326,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       final PsiMethod method = (PsiMethod)currentInfo.getMethod();
       return getSignatureRange(method).contains(element.getTextRange());
     } else if (currentInfo instanceof RenameChangeInfo) {
-      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNamedElement().getNameIdentifier();
+      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNameIdentifier();
       return nameIdentifier != null && nameIdentifier.getTextRange().contains(element.getTextRange());
     }
     return false;

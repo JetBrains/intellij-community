@@ -366,10 +366,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @Nullable
   private XmlNSDescriptor getImplicitNamespaceDescriptor(String ns) {
-    Module module = ModuleUtil.findModuleForPsiElement(this);
+    PsiFile file = getContainingFile();
+    if (file == null) return null;
+    Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module != null) {
       for (ImplicitNamespaceDescriptorProvider provider : Extensions.getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
-        XmlNSDescriptor nsDescriptor = provider.getNamespaceDescriptor(module, ns);
+        XmlNSDescriptor nsDescriptor = provider.getNamespaceDescriptor(module, ns, file);
         if (nsDescriptor != null) return nsDescriptor;
       }
     }

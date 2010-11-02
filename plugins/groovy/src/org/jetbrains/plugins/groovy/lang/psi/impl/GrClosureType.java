@@ -104,9 +104,7 @@ public class GrClosureType extends PsiClassType {
 
   @Nullable
   public String getCanonicalText() {
-    PsiClass resolved = resolve();
-    if (resolved == null) return null;
-    return resolved.getQualifiedName();
+    return GrClosableBlock.GROOVY_LANG_CLOSURE;
   }
 
   @Nullable
