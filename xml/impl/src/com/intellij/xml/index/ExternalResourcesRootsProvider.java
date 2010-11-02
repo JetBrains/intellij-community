@@ -21,9 +21,11 @@ import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,25 +36,27 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
 
   public Set<VirtualFile> getAdditionalRootsToIndex() {
 
+    ExternalResourceManagerImpl manager = (ExternalResourceManagerImpl)ExternalResourceManagerEx.getInstance();
+    List<String> urls = manager.getStandardResources();
+    Set<String> dirs = new HashSet<String>(ContainerUtil.map(urls, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        int endIndex = s.lastIndexOf('/');
+        return endIndex > 0 ? s.substring(0, endIndex) : s;
+      }
+    }));
+
     HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    for (String url : dirs) {
+      VirtualFile file = VfsUtil.findRelativeFile(url, null);
+      if (file != null) {
+        roots.add(file);
+      }
+    }
 
     String path = FetchExtResourceAction.getExternalResourcesPath();
     VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);
-
-    ExternalResourceManagerImpl manager = (ExternalResourceManagerImpl)ExternalResourceManagerEx.getInstance();
-    List<String> urls = manager.getStandardResources();
-    for (String url : urls) {
-      VirtualFile file = VfsUtil.findRelativeFile(url, null);
-      if (file != null) {
-        VirtualFile parent = file.getParent();
-        if (parent != null && ("standardSchemas".equals(parent.getName()) || parent.equals(extResources))) {
-          roots.add(parent);
-        }
-        else {
-          roots.add(file);
-        }
-      }
-    }
+    ContainerUtil.addIfNotNull(extResources, roots);
     
     return roots;
   }

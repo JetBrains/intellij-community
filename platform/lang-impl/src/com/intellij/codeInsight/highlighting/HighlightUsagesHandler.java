@@ -435,10 +435,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   public static String getShortcutText() {
-    Shortcut shortcut = ActionManager.getInstance()
+    final Shortcut[] shortcuts = ActionManager.getInstance()
       .getAction(IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE)
       .getShortcutSet()
-      .getShortcuts()[0];
-    return KeymapUtil.getShortcutText(shortcut);
+      .getShortcuts();
+    if (shortcuts.length == 0) {
+      return "<no key assigned>";
+    }
+    return KeymapUtil.getShortcutText(shortcuts[0]);
   }
 }
