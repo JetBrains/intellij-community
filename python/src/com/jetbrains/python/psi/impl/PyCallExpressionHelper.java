@@ -544,7 +544,10 @@ public class PyCallExpressionHelper {
         // check length of myTupleArg
         PyType tuple_arg_type = null;
         if (type_context != null) {
-          tuple_arg_type = type_context.getType(PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class));
+          final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
+          if (expression != null) {
+            tuple_arg_type = type_context.getType(expression);
+          }
         }
         int tuple_length;
         boolean tuple_length_known;

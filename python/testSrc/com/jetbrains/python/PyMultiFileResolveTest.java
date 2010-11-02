@@ -215,6 +215,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "do_stuff", "/src/mypackage1.py");
   }
 
+  public void testImportPackageIntoSelf() {
+    assertResolvesTo(PyFunction.class, "foo", "/src/mygame/display.py");
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
@@ -236,7 +240,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   protected PsiElement doResolve() throws Exception {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
-    final PsiReference ref = psiFile.findReferenceAt(offset);
+    final PsiPolyVariantReference ref = (PsiPolyVariantReference) psiFile.findReferenceAt(offset);
     final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
@@ -246,7 +250,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
       }
     });
     try {
-      return ref.resolve();
+      final ResolveResult[] resolveResults = ref.multiResolve(false);
+      if (resolveResults.length == 0) {
+        return null;
+      }
+      return resolveResults[0].isValidResult() ? resolveResults [0].getElement() : null;
     }
     finally {
       psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
