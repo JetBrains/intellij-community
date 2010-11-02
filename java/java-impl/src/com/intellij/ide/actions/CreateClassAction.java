@@ -17,9 +17,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -48,6 +55,13 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
       builder.addKind("Enum", Icons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", Icons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+    }
+
+    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+      final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
+      if (handler.handlesTemplate(template) && handler.canCreate(new PsiDirectory[]{directory})) {
+        builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
+      }
     }
   }
 

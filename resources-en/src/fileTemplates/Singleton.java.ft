@@ -1,12 +1,12 @@
 #if (${PACKAGE_NAME} != "")package ${PACKAGE_NAME};#end
 #parse("File Header.java")
-public class ${Name}{
-    private static ${Name} ourInstance = new ${Name}();
+public class ${NAME}{
+    private static ${NAME} ourInstance = new ${NAME}();
 
-    public static ${Name} getInstance() {
+    public static ${NAME} getInstance() {
         return ourInstance;
     }
 
-    private ${Name}() {
+    private ${NAME}() {
     }
 }
