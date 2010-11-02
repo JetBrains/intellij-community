@@ -38,6 +38,9 @@ public class OpenedInEditorWeigher extends ProximityWeigher {
   });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getProject() == null){
+      return null;
+    }
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
     return virtualFile != null && ArrayUtil.find(OPENED_EDITORS.getValue(location), virtualFile) != -1;
   }
