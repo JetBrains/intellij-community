@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -96,7 +97,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void markEverythingDirty() {
-    if (myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
+    if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
       public void run() {
@@ -144,33 +145,36 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
-    final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
-    final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
+    try {
+      final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
+      final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        convertPaths(filesDirty, filesConverted);
-        convertPaths(dirsRecursivelyDirty, dirsConverted);
-      }
-    });
-    final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
-                              || dirsConverted != null && ! dirsConverted.isEmpty();
-    if (! haveStuff) return;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          convertPaths(filesDirty, filesConverted);
+          convertPaths(dirsRecursivelyDirty, dirsConverted);
+        }
+      });
+      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
+                                || dirsConverted != null && ! dirsConverted.isEmpty();
+      if (! haveStuff) return;
 
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(final DirtBuilder dirt) {
-        if (filesConverted != null) {
-          for (FilePathUnderVcs root : filesConverted) {
-            dirt.addDirtyFile(root);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(final DirtBuilder dirt) {
+          if (filesConverted != null) {
+            for (FilePathUnderVcs root : filesConverted) {
+              dirt.addDirtyFile(root);
+            }
+          }
+          if (dirsConverted != null) {
+            for (FilePathUnderVcs root : dirsConverted) {
+              dirt.addDirtyDirRecursively(root);
+            }
           }
         }
-        if (dirsConverted != null) {
-          for (FilePathUnderVcs root : dirsConverted) {
-            dirt.addDirtyDirRecursively(root);
-          }
-        }
-      }
-    });
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   private void takeDirt(final Consumer<DirtBuilder> filler) {
@@ -200,54 +204,63 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
-    final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
-    final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
+    try {
+      final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
+      final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        convert(filesDirty, filesConverted);
-        convert(dirsRecursivelyDirty, dirsConverted);
-      }
-    });
-    final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
-    if (! haveStuff) return;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          convert(filesDirty, filesConverted);
+          convert(dirsRecursivelyDirty, dirsConverted);
+        }
+      });
+      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
+      if (! haveStuff) return;
 
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(final DirtBuilder dirt) {
-        if (filesConverted != null) {
-          for (VcsRoot root : filesConverted) {
-            dirt.addDirtyFile(root);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(final DirtBuilder dirt) {
+          if (filesConverted != null) {
+            for (VcsRoot root : filesConverted) {
+              dirt.addDirtyFile(root);
+            }
+          }
+          if (dirsConverted != null) {
+            for (VcsRoot root : dirsConverted) {
+              dirt.addDirtyDirRecursively(root);
+            }
           }
         }
-        if (dirsConverted != null) {
-          for (VcsRoot root : dirsConverted) {
-            dirt.addDirtyDirRecursively(root);
-          }
-        }
-      }
-    });
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   public void fileDirty(final VirtualFile file) {
-    final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-    if (vcs == null) return;
-    final VcsRoot root = new VcsRoot(vcs, file);
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyFile(root);
-      }
-    });
+    try {
+      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
+      if (vcs == null) return;
+      final VcsRoot root = new VcsRoot(vcs, file);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(DirtBuilder dirtBuilder) {
+          dirtBuilder.addDirtyFile(root);
+        }
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   public void fileDirty(final FilePath file) {
-    final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-    if (vcs == null) return;
-    final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyFile(root);
-      }
-    });
+    try {
+      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
+      if (vcs == null) return;
+      final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(DirtBuilder dirtBuilder) {
+          dirtBuilder.addDirtyFile(root);
+        }
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
@@ -255,25 +268,31 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {
-    final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
-    if (vcs == null) return;
-    final VcsRoot root = new VcsRoot(vcs, dir);
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyDirRecursively(root);
-      }
-    });
+    try {
+      final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
+      if (vcs == null) return;
+      final VcsRoot root = new VcsRoot(vcs, dir);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(DirtBuilder dirtBuilder) {
+          dirtBuilder.addDirtyDirRecursively(root);
+        }
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   public void dirDirtyRecursively(final FilePath path) {
-    final AbstractVcs vcs = myGuess.getVcsForDirty(path);
-    if (vcs == null) return;
-    final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
-    takeDirt(new Consumer<DirtBuilder>() {
-      public void consume(DirtBuilder dirtBuilder) {
-        dirtBuilder.addDirtyDirRecursively(root);
-      }
-    });
+    try {
+      final AbstractVcs vcs = myGuess.getVcsForDirty(path);
+      if (vcs == null) return;
+      final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
+      takeDirt(new Consumer<DirtBuilder>() {
+        public void consume(DirtBuilder dirtBuilder) {
+          dirtBuilder.addDirtyDirRecursively(root);
+        }
+      });
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   private class MyProgressHolder {
