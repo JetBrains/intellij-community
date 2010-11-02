@@ -168,7 +168,7 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     PsiElement[] elements = createPatternTree(pattern, PatternTreeContext.File, fileType, project, false);
 
     for (PsiElement element : elements) {
-      if (element instanceof JSExpressionStatement) {
+      if (element instanceof JSExpressionStatement || element instanceof JSVarStatement) {
         PsiElement lastChild = element.getLastChild();
         if (!(lastChild instanceof LeafPsiElement && ((LeafPsiElement)lastChild).getElementType() == JSTokenTypes.SEMICOLON)) {
           throw new UnsupportedPatternException(SSRBundle.message("replacement.template.expression.not.supported", fileType.getName()));

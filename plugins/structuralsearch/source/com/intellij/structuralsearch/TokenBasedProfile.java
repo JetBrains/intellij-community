@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
-import com.intellij.structuralsearch.impl.matcher.TokenBasedMatchResult;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -18,7 +17,10 @@ import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -196,6 +198,7 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
 
   private static class MyReplaceHandler extends StructuralReplaceHandler {
     private final Project myProject;
+    private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
 
     private MyReplaceHandler(Project project) {
       myProject = project;
@@ -205,13 +208,14 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
       if (info.getMatchesCount() == 0) return;
       assert info instanceof ReplacementInfoImpl;
       MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
-      assert result instanceof TokenBasedMatchResult;
+      //assert result instanceof TokenBasedMatchResult;
       PsiElement element = info.getMatch(0);
       if (element == null) return;
       PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
       assert file != null;
-      TokenBasedMatchResult tokenBasedResult = (TokenBasedMatchResult)result;
-      RangeMarker rangeMarker = tokenBasedResult.getRangeMarker();
+      //TokenBasedMatchResult tokenBasedResult = (TokenBasedMatchResult)result;
+      //RangeMarker rangeMarker = tokenBasedResult.getRangeMarker();
+      RangeMarker rangeMarker = myRangeMarkers.get(info);
       Document document = rangeMarker.getDocument();
       document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
       PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
@@ -224,14 +228,14 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
       PsiElement element = result.getMatch();
       PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      assert result instanceof TokenBasedMatchResult;
-      TokenBasedMatchResult res = (TokenBasedMatchResult)result;
-      TextRange textRange = res.getTextRangeInFile();
+      //assert result instanceof TokenBasedMatchResult;
+      //TokenBasedMatchResult res = (TokenBasedMatchResult)result;
+      TextRange textRange = result.getMatchRef().getElement().getTextRange();
       assert textRange != null;
       RangeMarker rangeMarker = document.createRangeMarker(textRange);
       rangeMarker.setGreedyToLeft(true);
       rangeMarker.setGreedyToRight(true);
-      res.setRangeMarker(rangeMarker);
+      myRangeMarkers.put(info, rangeMarker);
     }
   }
 }

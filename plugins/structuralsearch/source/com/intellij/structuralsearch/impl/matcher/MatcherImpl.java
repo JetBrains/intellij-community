@@ -271,9 +271,9 @@ public class MatcherImpl {
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if (TokenBasedSearcher.canProcess(compiledPattern)) {
-      TokenBasedSearcher searcher = new TokenBasedSearcher(this);
-      searcher.search(compiledPattern);
+    if (/*TokenBasedSearcher.canProcess(compiledPattern)*/ false) {
+      //TokenBasedSearcher searcher = new TokenBasedSearcher(this);
+      //searcher.search(compiledPattern);
       if (isTesting) {
         matchContext.getSink().matchingFinished();
         return;
@@ -284,7 +284,8 @@ public class MatcherImpl {
         // testing mode;
         final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
 
-        if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(elements[0].getParent())) {
+        PsiElement parent = elements[0].getParent();
+        if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
           visitor.matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
         }
         else {
