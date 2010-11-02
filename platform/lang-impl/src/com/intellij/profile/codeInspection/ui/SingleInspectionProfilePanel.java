@@ -763,27 +763,19 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         });
         chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope));
+        chooser.setMinimumSize(new Dimension(150, chooser.getPreferredSize().height));
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
-        withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0,
-                                                                                                              GridBagConstraints.WEST,
-                                                                                                              GridBagConstraints.NONE,
-                                                                                                              new Insets(0, 5, 5, 10), 0, 0));
-        Dimension dimension = new Dimension(150, chooser.getPreferredSize().height);
-        chooser.setPreferredSize(dimension);
-        chooser.setMinimumSize(dimension);
-        withSeverity.add(chooser, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                         new Insets(0, 0, 5, 0), 0, 0));
+        withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
+                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
+                                                GridBagConstraints.NONE, new Insets(0, 5, 5, 10), 0, 0));
+        withSeverity.add(chooser, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.WEST,
+                                                         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
 
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();
-        if (comp != null) {
-          withSeverity.add(comp, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                          new Insets(0, 0, 0, 0), 0, 0));
-        }
-        else {
-          withSeverity.add(new JPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                                new Insets(0, 0, 0, 0), 0, 0));
-        }
+        withSeverity.add(comp != null ? comp : new JPanel(),
+                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
         myOptionsPanel.add(withSeverity, BorderLayout.CENTER);
       }
