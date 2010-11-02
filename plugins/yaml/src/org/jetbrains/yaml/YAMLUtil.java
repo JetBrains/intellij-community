@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -149,6 +150,7 @@ public class YAMLUtil {
     return createI18nRecord(file, key.split("\\."), text);
   }
 
+  @Nullable
   public static YAMLKeyValue createI18nRecord(final YAMLFile file, final String[] key, final String text) {
     final YAMLPsiElement root = file.getDocuments().get(0);
     if (root != null){
@@ -182,6 +184,9 @@ public class YAMLUtil {
           @SuppressWarnings({"ConstantConditions"})
           final ASTNode[] generatedChildren = generatedNode.getChildren(null);
           final ASTNode valueNode = value.getNode();
+          if (valueNode instanceof LeafElement){
+            return (YAMLKeyValue)value.replace(generatedChildren[3].getChildren(null)[0].getPsi());
+          }
           //noinspection ConstantConditions
           valueNode.addChild(generatedChildren[1]);
           valueNode.addChild(generatedChildren[2]);
