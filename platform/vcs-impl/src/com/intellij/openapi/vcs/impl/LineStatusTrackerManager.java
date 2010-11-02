@@ -45,6 +45,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -319,6 +320,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         return;
       }
 
+      final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
       myApplication.invokeLater(new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -326,7 +328,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
               log("initializing tracker for file " + myVirtualFile.getPath());
               final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
               if (tracker != null) {
-                tracker.initialize(lastUpToDateContent);
+                tracker.initialize(converted);
               }
             }
           });

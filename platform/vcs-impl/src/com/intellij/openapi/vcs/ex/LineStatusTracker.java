@@ -79,7 +79,7 @@ public class LineStatusTracker {
       public void run() {
         try {
           myUpToDateDocument.setReadOnly(false);
-          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
+          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), upToDateContent);
           myUpToDateDocument.setReadOnly(true);
           reinstallRanges();
 
@@ -536,13 +536,6 @@ public class LineStatusTracker {
       }
       return new TextRange(startOffset, endOffset);
     }
-  }
-
-  public static LineStatusTracker createOn(final Document doc, final String upToDateContent, final Project project) {
-    final Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent));
-    final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
-    tracker.initialize(upToDateContent);
-    return tracker;
   }
 
   public static LineStatusTracker createOn(final Document doc, final Project project) {
