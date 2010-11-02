@@ -168,7 +168,12 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, BUFFER_SIZE - page_offset);
       final ByteBuffer buffer = getBuffer(page);
-      buffer.position(page_offset);
+      try {
+        buffer.position(page_offset);
+      }
+      catch (IllegalArgumentException iae) {
+        throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
+      }
       buffer.get(dst, o, page_len);
 
       l -= page_len;
@@ -189,7 +194,12 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, BUFFER_SIZE - page_offset);
       final ByteBuffer buffer = getBuffer(page);
-      buffer.position(page_offset);
+      try {
+        buffer.position(page_offset);
+      }
+      catch (IllegalArgumentException iae) {
+        throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
+      }
       buffer.put(src, o, page_len);
 
       l -= page_len;
