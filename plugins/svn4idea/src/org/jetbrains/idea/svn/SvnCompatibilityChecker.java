@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -70,7 +71,12 @@ public class SvnCompatibilityChecker {
                 public void run() {
                   new VcsBalloonProblemNotifier(myProject, message, MessageType.WARNING).run();
                 }
-              }, ModalityState.NON_MODAL);
+              }, ModalityState.NON_MODAL, new Condition() {
+                @Override
+                public boolean value(Object o) {
+                  return (! myProject.isOpen()) || myProject.isDisposed();
+                }
+              });
             }
           }
         });
