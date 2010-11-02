@@ -243,6 +243,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                       final String singleFileTitle,
                                                       final String singleFilePromptTemplate,
                                                       final VcsShowConfirmationOption confirmationOption) {
+    if (files == null || files.isEmpty()) {
+      return null;
+    }
+
     if (files.size() == 1 && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
       if (ConfirmationDialog

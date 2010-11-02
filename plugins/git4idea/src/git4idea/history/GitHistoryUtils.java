@@ -125,7 +125,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=tformat:%x03%x01%x03%H%x03%ct%x03%an%x20%x3C%ae%x3E%x03%cn%x20%x3C%ce%x3E%x03%x02%x03%s%x03%b%x03%x02%x01",
+                    "--pretty=tformat:%x04%x01%x04%H%x04%ct%x04%an%x20%x3C%ae%x3E%x04%cn%x20%x3C%ce%x3E%x04%x02%x04%s%x04%b%x04%x02%x01",
                     "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
@@ -282,11 +282,11 @@ public class GitHistoryUtils {
   }
 
   private static class MyTokenAccumulator {
-    // %x03%x02%x03%s%x03%x02%x01%b%x03%x01%x03
-    private final static String ourCommentStartMark = "\u0003\u0002\u0003";
-    private final static String ourCommentEndMark = "\u0003\u0002\u0001";
-    private final static String ourLineEndMark = "\u0003\u0001\u0003";
-    private static final String TOKEN_DELIMITER = "\u0003";
+    // %x04%x02%x04%s%x04%x02%x01%b%x04%x01%x04
+    private final static String ourCommentStartMark = "\u0004\u0002\u0004";
+    private final static String ourCommentEndMark = "\u0004\u0002\u0001";
+    private final static String ourLineEndMark = "\u0004\u0001\u0004";
+    private static final String TOKEN_DELIMITER = "\u0004";
     private static final String LINE_DELIMITER = "\u0002";
 
     private final StringBuilder myBuffer = new StringBuilder();
@@ -380,18 +380,18 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=format:%H%x03%ct%x03%an%x20%x3C%ae%x3E%x03%cn%x20%x3C%ce%x3E%x03%s%n%n%b%x03", "--encoding=UTF-8");
+                    "--pretty=format:%H%x04%ct%x04%an%x20%x3C%ae%x3E%x04%cn%x20%x3C%ce%x3E%x04%s%n%n%b%x04", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
     List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
-    StringTokenizer tk = new StringTokenizer(output, "\u0003\n", false);
+    StringTokenizer tk = new StringTokenizer(output, "\u0004\n", false);
     String prefix = root.getPath() + "/";
     while (tk.hasMoreTokens()) {
-      final GitRevisionNumber revision = new GitRevisionNumber(tk.nextToken("\u0003\n"), GitUtil.parseTimestamp(tk.nextToken("\u0003")));
-      final String author = GitUtil.adjustAuthorName(tk.nextToken("\u0003"), tk.nextToken("\u0003"));
-      final String message = tk.nextToken("\u0003").trim();
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0003\n")), false);
+      final GitRevisionNumber revision = new GitRevisionNumber(tk.nextToken("\u0004\n"), GitUtil.parseTimestamp(tk.nextToken("\u0004")));
+      final String author = GitUtil.adjustAuthorName(tk.nextToken("\u0004"), tk.nextToken("\u0004"));
+      final String message = tk.nextToken("\u0004").trim();
+      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0004\n")), false);
       rc.add(new GitFileRevision(project, revisionPath, revision, author, message, null));
     }
     return rc;
@@ -406,7 +406,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", "--pretty=format:%x03%H%x03%ct%x03", "--encoding=UTF-8");
+    h.addParameters("--name-only", "--pretty=format:%x03%H%x04%ct%x04", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
@@ -415,9 +415,9 @@ public class GitHistoryUtils {
 
     while (tk.hasMoreTokens()) {
       final String line = tk.nextToken();
-      final StringTokenizer tk2 = new StringTokenizer(line, "\u0003\n", false);
-      final String hash = tk2.nextToken("\u0003\n");
-      final String dateString = tk2.nextToken("\u0003");
+      final StringTokenizer tk2 = new StringTokenizer(line, "\u0004\n", false);
+      final String hash = tk2.nextToken("\u0004\n");
+      final String dateString = tk2.nextToken("\u0004");
       final Date date = GitUtil.parseTimestamp(dateString);
       rc.add(new Pair<SHAHash, Date>(new SHAHash(hash), date));
     }
@@ -437,9 +437,9 @@ public class GitHistoryUtils {
     // todo think of name+email linkage in a single field
     h.addParameters(parameters);
     /*h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=format:%x03%H%x03%ct%x03%an%x03%ae%x03%cn%x03%ce%x03[%P]%x03[%d]%x03%s%n%n%b%x03", "--encoding=UTF-8");*/
+                    "--pretty=format:%x03%H%x04%ct%x04%an%x04%ae%x04%cn%x04%ce%x04[%P]%x04[%d]%x04%s%n%n%b%x04", "--encoding=UTF-8");*/
     h.addParameters("--name-only",
-                    "--pretty=format:%x03%h%x03%H%x03%ct%x03%an%x03%ae%x03%cn%x03%ce%x03[%p]%x03[%d]%x03%s%n%n%b%x03", "--encoding=UTF-8");
+                    "--pretty=format:%x03%h%x04%H%x04%ct%x04%an%x04%ae%x04%cn%x04%ce%x04[%p]%x04[%d]%x04%s%n%n%b%x04", "--encoding=UTF-8");
 
     h.endOptions();
     h.addRelativePaths(path);
@@ -457,7 +457,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-only",
-                    "--pretty=format:%x03%h%x03%H%x03%ct%x03%an%x03%ae%x03%cn%x03%ce%x03[%p]%x03[%d]%x03%s%n%n%b%x03", "--encoding=UTF-8");
+                    "--pretty=format:%x03%h%x04%H%x04%ct%x04%an%x04%ae%x04%cn%x04%ce%x04[%p]%x04[%d]%x04%s%n%n%b%x04", "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
     h.endOptions();
@@ -473,18 +473,18 @@ public class GitHistoryUtils {
 
     while (tk.hasMoreTokens()) {
       final String line = tk.nextToken();
-      final StringTokenizer tk2 = new StringTokenizer(line, "\u0003\n", false);
+      final StringTokenizer tk2 = new StringTokenizer(line, "\u0004\n", false);
       //while (tk2.hasMoreTokens()) {
-      final String shortHash = tk2.nextToken("\u0003");
-      final String hash = tk2.nextToken("\u0003\n");
-      final String dateString = tk2.nextToken("\u0003");
+      final String shortHash = tk2.nextToken("\u0004");
+      final String hash = tk2.nextToken("\u0004\n");
+      final String dateString = tk2.nextToken("\u0004");
       final Date date = GitUtil.parseTimestamp(dateString);
-      final String authorName = tk2.nextToken("\u0003");
-      final String authorEmail = tk2.nextToken("\u0003");
-      final String committerName = tk2.nextToken("\u0003");
-      final String committerEmail = tk2.nextToken("\u0003");
+      final String authorName = tk2.nextToken("\u0004");
+      final String authorEmail = tk2.nextToken("\u0004");
+      final String committerName = tk2.nextToken("\u0004");
+      final String committerEmail = tk2.nextToken("\u0004");
       // parent hashes
-      final String parents = removeSquareBraces(tk2.nextToken("\u0003"));
+      final String parents = removeSquareBraces(tk2.nextToken("\u0004"));
       final Set<String> parentsHashes;
       if (!StringUtil.isEmptyOrSpaces(parents)) {
         final String[] parentsSplit = parents.split(" "); // todo if parent = 000000
@@ -497,7 +497,7 @@ public class GitHistoryUtils {
         parentsHashes = Collections.emptySet();
       }
       // decorate
-      final String decorate = tk2.nextToken("\u0003");
+      final String decorate = tk2.nextToken("\u0004");
       final String[] refNames = parseRefNames(decorate);
       final List<String> tags = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
       final List<String> branches = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
@@ -515,7 +515,7 @@ public class GitHistoryUtils {
         }
       }
 
-      final String message = tk2.nextToken("\u0003").trim();
+      final String message = tk2.nextToken("\u0004").trim();
 
       final List<FilePath> pathsList = new LinkedList<FilePath>();
       if (tk2.hasMoreTokens()) {
@@ -549,7 +549,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", "--pretty=format:%x01%h%x03%ct%x03%p", "--encoding=UTF-8");
+    h.addParameters("--name-only", "--pretty=format:%x01%h%x04%ct%x04%p", "--encoding=UTF-8");
 
     h.endOptions();
     h.addRelativePaths(path);
@@ -560,7 +560,7 @@ public class GitHistoryUtils {
     while (tk.hasMoreTokens()) {
       final String line = tk.nextToken();
       final String[] subLines = line.split("\n");
-      final StringTokenizer tk2 = new StringTokenizer(subLines[0], "\u0003", false);
+      final StringTokenizer tk2 = new StringTokenizer(subLines[0], "\u0004", false);
 
       final String hash = tk2.nextToken();
       final long time;
