@@ -4,8 +4,8 @@ import imp
 import sys
 import types
 import re
-from pycharm.tcmessages import TeamcityServiceMessages
-from pycharm.tcunittest import TeamcityTestRunner
+from tcmessages import TeamcityServiceMessages
+from tcunittest import TeamcityTestRunner
 
 try:
   import unittest2 as unittest
@@ -102,14 +102,14 @@ for arg in sys.argv[1:]:
         modules = [loadSource(a[0])]
 
     for module in modules:
-      all.addTests(testLoader.loadTestsFromModule(module))
+      all.addTests(testLoader.loadTestsFromModule(module, True))
   elif len(a) == 2:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
     module = loadSource(a[0])
     all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
   else:
-    # From method in testcase
+    # From method in class or from function
     debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
     module = loadSource(a[0])
     if a[1] == "":

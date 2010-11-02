@@ -191,6 +191,10 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
                getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
                getClassName().equals(cfg.getClassName()) &&
                getMethodName().equals(cfg.getMethodName());
+      case TEST_FUNCTION:
+        return getScriptName().equals(cfg.getScriptName()) &&
+               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+               getMethodName().equals(cfg.getMethodName());
       default:
         throw new IllegalStateException("Unknown test type: " + getTestType());
     }

@@ -2,7 +2,7 @@ import traceback, sys
 from unittest import TestResult
 import datetime
 
-from pycharm.tcmessages import TeamcityServiceMessages
+from tcmessages import TeamcityServiceMessages
 
 def strclass(cls):
     if not cls.__name__:
@@ -26,6 +26,10 @@ class TeamcityTestResult(TestResult):
             if test._testMethodName == "runTest":
                 return str(test)
             return test._testMethodName
+        elif hasattr(test, '__testMethodName'):
+            if test.__testMethodName == "runTest":
+                return str(test)
+            return test.__testMethodName
         else:
             return str(test)
 

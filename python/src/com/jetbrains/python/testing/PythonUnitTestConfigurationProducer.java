@@ -103,10 +103,10 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
     final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
 
-    configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_CLASS);
+    configuration.setTestType(
+      PythonUnitTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
     if (!setupConfigurationScript(configuration, pyClass)) return null;
-
     configuration.setName(configuration.suggestedName());
 
     myPsiElement = pyClass;
@@ -187,10 +187,8 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   private static boolean setupConfigurationScript(PythonUnitTestRunConfiguration cfg, PyElement element) {
     final PyFile containingFile = PyUtil.getContainingPyFile(element);
     if (containingFile == null) return false;
-
     final VirtualFile vFile = containingFile.getVirtualFile();
     if (vFile == null) return false;
-
     final VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
 
