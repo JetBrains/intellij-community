@@ -46,20 +46,25 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       if (o instanceof PsiClassOwner) {
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
+        final VirtualFile file = classOwner.getVirtualFile();
 
         if (classOwner instanceof PsiCompiledElement) {
           //do not show duplicated items if jar file contains classes and sources
-          final PsiElement sourceElement = classOwner.getNavigationElement();
-          if (sourceElement instanceof PsiFile) {
-            PsiFile sourceFile = (PsiFile)sourceElement;
-            if (classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), sourceFile.getContainingDirectory())) {
-              continue;
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+          if (file != null && fileIndex.isInLibraryClasses(file)) {
+            final PsiElement sourceElement = classOwner.getNavigationElement();
+            if (sourceElement instanceof PsiFile) {
+              PsiFile sourceFile = (PsiFile)sourceElement;
+              final VirtualFile virtualSourceFile = sourceFile.getVirtualFile();
+              if (virtualSourceFile != null && fileIndex.isInLibrarySource(virtualSourceFile) &&
+                  classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), sourceFile.getContainingDirectory())) {
+                continue;
+              }
             }
           }
         }
 
         PsiClass[] classes = classOwner.getClasses();
-        final VirtualFile file = classOwner.getVirtualFile();
         if (fileInRoots(file)) {
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement)) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));
