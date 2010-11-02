@@ -720,6 +720,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
 
       marker.done(PyElementTypes.STATEMENT_LIST);
+      marker.setCustomEdgeTokenBinders(null, FollowingCommentBinder.INSTANCE);
       if (endMarker != null) {
         endMarker.done(elType);
       }

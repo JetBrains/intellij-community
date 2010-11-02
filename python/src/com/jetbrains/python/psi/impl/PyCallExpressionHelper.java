@@ -176,6 +176,10 @@ public class PyCallExpressionHelper {
   ) {
     //return getImplicitArgumentCount(functionBeingCalled, null, null, qualifierIsAnInstance(callReference, TypeEvalContext.fast()));
     if (typeContext == null) typeContext = TypeEvalContext.fast();
+    final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
+    if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
+      return 1;
+    }
     QualifiedResolveResult followed = callReference.followAssignmentsChain(typeContext);
     return getImplicitArgumentCount(functionBeingCalled, null, null, isQualifiedByInstance(functionBeingCalled, followed.getLastQualifier(), typeContext));
   }
@@ -540,7 +544,10 @@ public class PyCallExpressionHelper {
         // check length of myTupleArg
         PyType tuple_arg_type = null;
         if (type_context != null) {
-          tuple_arg_type = type_context.getType(PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class));
+          final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
+          if (expression != null) {
+            tuple_arg_type = type_context.getType(expression);
+          }
         }
         int tuple_length;
         boolean tuple_length_known;

@@ -13,10 +13,11 @@ public abstract class PyLexerTestCase extends TestCase {
     int tokenPos = 0;
     while (lexer.getTokenType() != null) {
       if (idx >= expectedTokens.length) {
-        StringBuilder remainingTokens = new StringBuilder(lexer.getTokenType().toString());
+        StringBuilder remainingTokens = new StringBuilder("\"" + lexer.getTokenType().toString() + "\"");
         lexer.advance();
         while (lexer.getTokenType() != null) {
-          remainingTokens.append(" ").append(lexer.getTokenType().toString());
+          remainingTokens.append(",");
+          remainingTokens.append(" \"").append(lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
         fail("Too many tokens. Following tokens: " + remainingTokens.toString());

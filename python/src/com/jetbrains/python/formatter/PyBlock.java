@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -118,7 +119,7 @@ public class PyBlock implements ASTBlock {
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
     if (childType == PyElementTypes.STATEMENT_LIST || childType == PyElementTypes.IMPORT_ELEMENT) {
-      if (hasLineBreakBefore(child)) {
+      if (hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNormalIndent();
       }
     }
@@ -164,18 +165,26 @@ public class PyBlock implements ASTBlock {
         childAlignment = getAlignmentForChildren();
       }
     }
-    try { // maybe enter was pressed and cut us from a previous (nested) statement list
+
+    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
+      childIndent = Indent.getNormalIndent();
+    }
+
+    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
+  }
+
+  private static boolean isAfterStatementList(ASTNode child) {
+    try {
       PsiElement prev = sure(child.getPsi().getPrevSibling());
       sure(prev instanceof PyStatement);
       PsiElement lastchild = PsiTreeUtil.getDeepestLast(prev);
       sure(lastchild.getParent() instanceof PyStatementList);
-      childIndent = Indent.getNormalIndent();
+      return true;
     }
-    catch (IncorrectOperationException ignored) {
+    catch (IncorrectOperationException e) {
       // not our cup of tea
+      return false;
     }
-
-    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
   }
 
   private static boolean needListAlignment(ASTNode child) {
@@ -189,15 +198,22 @@ public class PyBlock implements ASTBlock {
     return true;
   }
 
-  private static boolean hasLineBreakBefore(ASTNode child) {
-    return isWhitespaceWithLineBreaks(child.getTreePrev()) || isWhitespaceWithLineBreaks(child.getFirstChildNode());
+  private static boolean hasLineBreaksBefore(ASTNode child, int minCount) {
+    return isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(child.getTreePrev()), minCount) ||
+           isWhitespaceWithLineBreaks(child.getFirstChildNode(), minCount);
   }
 
-  private static boolean isWhitespaceWithLineBreaks(ASTNode node) {
+  private static boolean isWhitespaceWithLineBreaks(ASTNode node, int minCount) {
     if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
       String prevNodeText = node.getText();
-      if (prevNodeText.indexOf('\n') >= 0) {
-        return true;
+      int count = 0;
+      for(int i=0; i<prevNodeText.length(); i++) {
+        if (prevNodeText.charAt(i) == '\n') {
+          count++;
+          if (count == minCount) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -412,7 +428,7 @@ public class PyBlock implements ASTBlock {
       // doesn't request childAttributes from the correct block
       while (lastChild != null) {
         IElementType last_type = lastChild.getElementType();
-        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
+        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreaksBefore(lastChild, 1)) {
           if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
             break;
           }

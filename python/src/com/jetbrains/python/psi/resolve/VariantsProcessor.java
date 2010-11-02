@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.jetbrains.python.codeInsight.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
@@ -56,7 +57,8 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
     if (!myPlainNamesOnly) {
-      if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null) {
+      if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
+          !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
       }
       else if (item.getObject() instanceof PyClass) {
@@ -67,6 +69,17 @@ public class VariantsProcessor implements PsiScopeProcessor {
       return setItemNotice(item, myNotice);
     }
     return item;
+  }
+
+  private static boolean isSingleArgDecoratorCall(PsiElement elementInCall, PyFunction callee) {
+    if (callee.getParameterList().getParameters().length > 1) {
+      return false;
+    }
+    PyDecorator decorator = PsiTreeUtil.getParentOfType(elementInCall, PyDecorator.class);
+    if (decorator == null) {
+      return false;
+    }
+    return PsiTreeUtil.isAncestor(decorator.getCallee(), elementInCall, false);
   }
 
   protected static LookupElementBuilder setItemNotice(final LookupElementBuilder item, String notice) {

@@ -1,0 +1,17 @@
+import unittest
+
+class Failure(unittest.TestCase):
+    """Unloadable or unexecutable test.
+    """
+    __test__ = False # do not collect
+    def __init__(self, exc_class, exc_val):
+        self.exc_class = exc_class
+        self.exc_val = exc_val
+        unittest.TestCase.__init__(self)
+
+    def __str__(self):
+        return "Failure: %s (%s)" % (
+            getattr(self.exc_class, '__name__', self.exc_class), self.exc_val)
+
+    def runTest(self):
+        raise self.exc_class(self.exc_val)

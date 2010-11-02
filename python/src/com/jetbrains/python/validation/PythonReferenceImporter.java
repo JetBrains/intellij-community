@@ -110,7 +110,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
           PsiFile srcfile = symbol.getContainingFile();
-          if (srcfile != null && srcfile != existing_import_file) {
+          if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile()) {
             VirtualFile vfile = srcfile.getVirtualFile();
             if (vfile != null) {
               String import_path = ResolveImportUtil.findShortestImportableName(node, vfile);

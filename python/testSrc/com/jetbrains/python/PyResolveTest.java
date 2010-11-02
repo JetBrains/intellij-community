@@ -375,4 +375,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testLambdaToClass() {  // PY-2182
     assertResolvesTo(PyClass.class, "TestTwo");
   }
+
+  public void testImportInTryExcept() {  // PY-2197
+    assertResolvesTo(PyFile.class, "sys.py");
+  }
 }

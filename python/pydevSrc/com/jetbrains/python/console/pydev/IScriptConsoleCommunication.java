@@ -9,10 +9,6 @@
  *******************************************************************************/
 package com.jetbrains.python.console.pydev;
 
-import com.jetbrains.python.console.pydev.ICallback;
-import com.jetbrains.python.console.pydev.InterpreterResponse;
-
-
 /**
  * Interface for the console communication.
  *
@@ -46,13 +42,11 @@ public interface IScriptConsoleCommunication {
      * @return the description to be shown to the user
      * @throws Exception
      */
-    public String getDescription(String text) throws Exception;
+    String getDescription(String text) throws Exception;
 
     /**
      * Stops the communication with the server. Should ask the server to terminate at this point.
      * @throws Exception
      */
     void close() throws Exception;
-
-
 }
