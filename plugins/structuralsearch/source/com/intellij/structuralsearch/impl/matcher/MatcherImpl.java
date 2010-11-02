@@ -315,7 +315,11 @@ public class MatcherImpl {
   }
 
   private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
-    final Language ourPatternLanguage = ((LanguageFileType)options.getFileType()).getLanguage();
+    LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
+    assert profile != null;
+    PsiElement node = compiledPattern.getNodes().current();
+    final Language ourPatternLanguage = node != null ? profile.getLanguage(node) : ((LanguageFileType)options.getFileType()).getLanguage();
     final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
     boolean ourOptimizedScope = searchScope != null;
@@ -323,9 +327,6 @@ public class MatcherImpl {
 
     if (searchScope instanceof GlobalSearchScope) {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
-      LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
-      assert profile != null;
       final ContentIterator ci = new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {

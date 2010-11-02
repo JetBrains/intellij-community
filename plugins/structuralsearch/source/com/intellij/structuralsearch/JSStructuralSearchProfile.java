@@ -109,6 +109,12 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   @NotNull
   @Override
   protected MatchingStrategy getMatchingStrategy(PsiElement root) {
+    if (root != null) {
+      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(root);
+      if (profile != null && profile.getLanguage(root) == JavaScriptSupportLoader.ECMA_SCRIPT_L4) {
+        return JSMatchingStrategy.getInstanceEcma();
+      }
+    }
     return JSMatchingStrategy.getInstance();
   }
 
@@ -198,6 +204,10 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   @NotNull
   @Override
   public Language getLanguage(PsiElement element) {
+    return getLanguageForElement(element);
+  }
+
+  public static Language getLanguageForElement(PsiElement element) {
     if (element.getLanguage() instanceof JavascriptLanguage && !(element instanceof JSFile)) {
       PsiFile file = element.getContainingFile();
       if (file instanceof JSFile) {
