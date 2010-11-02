@@ -183,8 +183,8 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   private void throwCanceledException(final Project project, final Throwable t) {
     synchronized (myLock) {
-      // allow NPE & assertion catch only if project is closed and being disposed
-      if (! project.isOpen()) {
+      // allow NPE & assertion _catch_ only if project is closed and being disposed
+      if (project.isOpen()) {
         Rethrow.reThrowRuntime(t);
       }
     }
