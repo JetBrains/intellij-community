@@ -183,7 +183,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void removeContent(final Content content) {
-    if (myContentManager != null) { // for unit tests
+    if (myContentManager != null && (! myContentManager.isDisposed())) { // for unit tests
       myContentManager.removeContent(content, true);
     }
   }

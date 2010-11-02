@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.StringTokenizer;
 
@@ -57,7 +58,7 @@ public class XmlElementSignatureProvider extends ElementSignatureProvider {
   }
 
   @Override
-  protected PsiElement restoreBySignatureTokens(PsiFile file, PsiElement parent, String type, StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
     if (type.equals("tag")) {
       String name = tokenizer.nextToken();
 

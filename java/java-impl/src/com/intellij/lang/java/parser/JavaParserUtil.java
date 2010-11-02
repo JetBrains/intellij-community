@@ -50,20 +50,20 @@ public class JavaParserUtil {
     @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
   }
 
-  public static final WhitespacesAndCommentsProcessor GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsProcessor() {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
-  private static class PrecedingWhitespacesAndCommentsProcessor implements WhitespacesAndCommentsProcessor {
+  private static class PrecedingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     private final boolean myAfterEmptyImport;
 
-    public PrecedingWhitespacesAndCommentsProcessor(final boolean afterImport) {
+    public PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
       this.myAfterEmptyImport = afterImport;
     }
 
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
       getter) {
       if (tokens.size() == 0) return 0;
 
@@ -93,8 +93,8 @@ public class JavaParserUtil {
     }
   }
 
-  private static class TrailingWhitespacesAndCommentsProcessor implements WhitespacesAndCommentsProcessor {
-    public int process(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+  private static class TrailingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
+    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       if (tokens.size() == 0) return 0;
 
       int result = 0;
@@ -118,9 +118,9 @@ public class JavaParserUtil {
     TokenSet.create(JavaElementType.PACKAGE_STATEMENT),
     ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ElementType.FULL_MEMBER_BIT_SET, ElementType.JAVA_STATEMENT_BIT_SET);
 
-  public static final WhitespacesAndCommentsProcessor PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsProcessor(false);
-  public static final WhitespacesAndCommentsProcessor SPECIAL_PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsProcessor(true);
-  public static final WhitespacesAndCommentsProcessor TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsProcessor();
+  public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsBinder(false);
+  public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsBinder(true);
+  public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsBinder();
 
   private JavaParserUtil() { }
 
@@ -198,9 +198,9 @@ public class JavaParserUtil {
 
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
     marker.done(type);
-    final WhitespacesAndCommentsProcessor left = PRECEDING_COMMENT_SET.contains(type) ? PRECEDING_COMMENT_BINDER : null;
-    final WhitespacesAndCommentsProcessor right = TRAILING_COMMENT_SET.contains(type) ? TRAILING_COMMENT_BINDER : null;
-    marker.setCustomEdgeProcessors(left, right);
+    final WhitespacesAndCommentsBinder left = PRECEDING_COMMENT_SET.contains(type) ? PRECEDING_COMMENT_BINDER : null;
+    final WhitespacesAndCommentsBinder right = TRAILING_COMMENT_SET.contains(type) ? TRAILING_COMMENT_BINDER : null;
+    marker.setCustomEdgeTokenBinders(left, right);
   }
 
   @Nullable

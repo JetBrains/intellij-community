@@ -96,8 +96,8 @@ public class FileParser {
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
-      impListInfo.first.setCustomEdgeProcessors(JavaParserUtil.PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
-      firstDeclaration.setCustomEdgeProcessors(JavaParserUtil.SPECIAL_PRECEDING_COMMENT_BINDER, null);
+      impListInfo.first.setCustomEdgeTokenBinders(JavaParserUtil.PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeTokenBinders(JavaParserUtil.SPECIAL_PRECEDING_COMMENT_BINDER, null);
     }
   }
 

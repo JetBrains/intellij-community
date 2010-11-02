@@ -37,7 +37,7 @@ public abstract class ElementSignatureProvider {
   public abstract String getSignature(PsiElement element);
 
   @Nullable
-  public PsiElement restoreBySignature(PsiFile file, String signature) {
+  public PsiElement restoreBySignature(@NotNull PsiFile file, String signature) {
     int semicolonIndex = signature.indexOf(';');
     PsiElement parent;
 
@@ -57,7 +57,7 @@ public abstract class ElementSignatureProvider {
   }
 
   @Nullable
-  protected PsiElement restoreBySignatureTokens(PsiFile file, PsiElement parent, String type, StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
     return null;
   }
 

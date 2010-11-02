@@ -149,7 +149,7 @@ public class ITNReporter extends ErrorReportSubmitter {
             else {
               msg = DiagnosticBundle.message("error.report.sending.failure");
             }
-            if (Messages.showYesNoDialog(parentComponent, msg,
+            if (Messages.showYesNoDialog(project, msg,
                                          ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
