@@ -581,7 +581,10 @@ public class ResolveImportUtil {
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
       ret = ((PyFile)parent).getElementNamed(referencedName);
-      if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class)) return ret;
+      if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
+          PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
+        return ret;
+      }
       if (possible_ret != null) return possible_ret;
     }
     else if (parent instanceof PsiDirectory) {

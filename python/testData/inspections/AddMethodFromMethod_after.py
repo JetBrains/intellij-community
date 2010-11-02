@@ -7,3 +7,8 @@ class A:
 
     def y(self, param, a):
         pass
+
+# Some comment
+
+class B:
+    pass

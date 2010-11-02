@@ -41,7 +41,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public int getStubVersion() {
-    return 31;
+    return 32;
   }
 
   @Override

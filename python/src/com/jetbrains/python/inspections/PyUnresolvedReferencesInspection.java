@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.patterns.Matcher;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.validation.PythonReferenceImporter;
 import org.jetbrains.annotations.Nls;
@@ -348,6 +349,17 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
             continue;            
+          }
+          if (unusedImport instanceof PyImportElement) {
+            if (ResolveImportUtil.resolveImportElement((PyImportElement)unusedImport) == null) {
+              continue;
+            }
+          }
+          else {
+            assert importStatement instanceof PyFromImportStatement;
+            if (ResolveImportUtil.resolveFromImportStatementSource((PyFromImportStatement)importStatement) == null) {
+              continue;
+            }
           }
           if (unusedImport instanceof PyStarImportElement || areAllImportsUnused(importStatement, unusedImports)) {
             unusedStatements.add(importStatement);

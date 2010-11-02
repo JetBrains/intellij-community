@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
@@ -175,6 +174,16 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    <caret>\n" +
            "def bar(): pass"
     );
+  }
+
+  public void testIndentAfterTrailingComment() {  // PY-2137
+    doTest("def foo()\n" +
+           "    a = 1\n" +
+           "    #comment<caret>\n",
+           "def foo()\n" +
+           "    a = 1\n" +
+           "    #comment\n" +
+           "    <caret>\n");
   }
 
   /*

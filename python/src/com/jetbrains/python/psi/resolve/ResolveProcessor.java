@@ -53,26 +53,26 @@ public class ResolveProcessor implements PsiScopeProcessor {
       final VirtualFile file = ((PyFile)element).getVirtualFile();
       if (file != null) {
         if (myName.equals(file.getNameWithoutExtension())) {
-          return setResult(element);
+          return setResult(element, null);
         }
         else if (PyNames.INIT_DOT_PY.equals(file.getName())) {
           VirtualFile dir = file.getParent();
           if ((dir != null) && myName.equals(dir.getName())) {
-            return setResult(element);
+            return setResult(element, null);
           }
         }
       }
     }
     else if (element instanceof PsiNamedElement) {
       if (myName.equals(((PsiNamedElement)element).getName())) {
-        return setResult(element);
+        return setResult(element, null);
       }
     }
     else if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       String referencedName = expr.getReferencedName();
       if (referencedName != null && referencedName.equals(myName)) {
-        return setResult(element);
+        return setResult(element, null);
       }
     }
     else if (element instanceof NameDefiner) {
@@ -85,13 +85,15 @@ public class ResolveProcessor implements PsiScopeProcessor {
           return false;
         }
 
-        setResult(by_name);
+        setResult(by_name, definer);
         if (!PsiTreeUtil.isAncestor(element, by_name, true)) {
           addNameDefiner(definer);
         }
         // we can have same module imported directly and as part of chain (import os; import os.path)
         // direct imports always take precedence over imported modules
-        if (!(myResult instanceof PyImportedModule)) {
+        // also, if some name is defined both in 'try' and 'except' parts of the same try/except statement,
+        // we prefer the declaration in the 'try' part
+        if (!(myResult instanceof PyImportedModule) && PsiTreeUtil.getParentOfType(element, PyExceptPart.class) == null) {
           return false;
         }
       }
@@ -122,8 +124,8 @@ public class ResolveProcessor implements PsiScopeProcessor {
   public void handleEvent(Event event, Object associated) {
   }
 
-  private boolean setResult(PsiElement result) {
-    if (myResult == null || getScope(myResult) == getScope(result)) {
+  private boolean setResult(PsiElement result, @Nullable PsiElement definer) {
+    if (myResult == null || getScope(myResult) == getScope(result) || (definer != null && getScope(myResult) == getScope(definer))) {
       myResult = result;
     }
     return false;

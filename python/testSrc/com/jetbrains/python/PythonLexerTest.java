@@ -105,7 +105,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testIndentedCommentAndCode() {
     doTest("if a:\n #b\n c",
            "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:IDENTIFIER");
+           "Py:INDENT", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:IDENTIFIER");
   }
 
   public void testWithNotKeyword() {
@@ -156,6 +156,29 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   public void testIncompleteTripleQuotedString() {  // PY-1768
     doTest("'''abc\nd", "Py:STRING_LITERAL");
+  }
+
+  public void testDedentBeforeComment() {  // PY-2209 & friends
+    doTest("class UserProfile:\n" +
+           "    pass\n" +
+           "\n" +
+           "#noinspection PyUnusedLocal\n" +
+           "def foo(sender):\n" +
+           "    pass",
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:DEDENT", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD");
+  }
+
+  public void testDedentAfterComment() { // PY-2137
+    doTest("def foo():\n" +
+           "    pass\n" +
+           "    #comment\n",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK");
   }
 
   private static void doTest(String text, String... expectedTokens) {

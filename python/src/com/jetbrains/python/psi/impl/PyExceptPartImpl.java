@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +12,13 @@ import java.util.ArrayList;
 /**
  * @author dcheryasov
  */
-public class PyExceptPartImpl extends PyElementImpl implements PyExceptPart {
+public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implements PyExceptPart {
   public PyExceptPartImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyExceptPartImpl(PyExceptPartStub stub) {
+    super(stub, PyElementTypes.EXCEPT_PART);
   }
 
   @Override

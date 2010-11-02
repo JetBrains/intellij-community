@@ -248,6 +248,13 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testImportInTryExcept() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PsiElement element = file.findExportedName("sys");
+    assertTrue(element != null ? element.toString() : "null", element instanceof PyImportElement);
+    assertNotParsed(file);
+  }
+
   private PyFile getTestFile() {
     return getTestFile(getTestName(false) + ".py");
   }

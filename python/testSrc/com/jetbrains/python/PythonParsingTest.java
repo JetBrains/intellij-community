@@ -223,6 +223,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testCommentBeforeMethod() { // PY-2209 & friends
+    doTest();
+  }
+
+  public void testCommentAtEndOfMethod() { // PY-2137
+    doTest();
+  }
+
+  public void testCommentAtBeginningOfStatementList() {  // PY-2108
+    doTest();
+  }
+
+  public void testCommentBetweenClasses() {  // PY-1598
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
