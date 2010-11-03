@@ -39,6 +39,7 @@ import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -116,21 +117,39 @@ public class GitHistoryUtils {
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
 
+  /*
+   === Smart full log with renames ===
+   'git log --follow' does detect renames, but it has a bug - merge commits aren't handled properly: they just dissapear from the history.
+   See http://kerneltrap.org/mailarchive/git/2009/1/30/4861054 and the whole thread about that: --follow is buggy, but maybe it won't be fixed.
+   To get the whole history through renames we do the following:
+   1. 'git log <file>' - and we get the history since the first rename, if there was one.
+   2. 'git show -M --name-status <first_commit_id>', where <first_commit_id> is the hash of the first commit in the history we got in #1.
+      With this command we get the rename-detection-friendly information about the first commit.
+      If the first commit was ADDING the file, then there were no renames with this file, we have the full history.
+      But if the first commit was RENAMING the file, we are going to query for the history before rename.
+      Now we have the previous name of the file:
+
+        ~/sandbox/git # git show --oneline --name-status -M 4185b97
+        4185b97 renamed a to b
+        R100    a       b
+
+   3. 'git log <rename_commit_id> -- <previous_file_name>' - get the history of a before the given commit.
+      We need to specify <rename_commit_id> here, because <previous_file_name> could have some new history, which has nothing common with our <file>.
+      Then we repeat 2 and 3 until the first commit is ADDING the file, not RENAMING it.
+
+    TODO: handle multiple repositories configuration: a file can be moved from one repo to another
+   */
   public static void history(final Project project, FilePath path, final Consumer<GitFileRevision> consumer,
                              final Consumer<VcsException> exceptionConsumer) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    final GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SUBJECT, BODY);
-    h.setNoSSH(true);
-    h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--follow", "--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.setNameInOutput(false);
-    h.endOptions();
-    h.addRelativePaths(path);
+    final GitLogParser logParser = new GitLogParser(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY);
+    logParser.setNameInOutput(false);
 
-    final MyTokenAccumulator accumulator = new MyTokenAccumulator(parser);
+    final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
+    final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
+    final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(path);
 
     final Consumer<GitLogRecord> resultAdapter = new Consumer<GitLogRecord>() {
       public void consume(GitLogRecord record) {
@@ -139,6 +158,13 @@ public class GitHistoryUtils {
           return;
         }
         final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
+        firstCommit.set(record.getHash());
+        final String[] parentHashes = record.getParentsHashes();
+        if (parentHashes == null || parentHashes.length < 1) {
+          firstCommitParent.set(null);
+        } else {
+          firstCommitParent.set(parentHashes[0]);
+        }
         final String message = record.getFullMessage();
 
         FilePath revisionPath = new FilePathImpl(root);
@@ -146,6 +172,9 @@ public class GitHistoryUtils {
           final List<FilePath> paths = record.getFilePaths(root);
           if (paths.size() > 0) {
             revisionPath = paths.get(0);
+          } else {
+            // no paths are shown for merge commits, so we're using the saved path we're inspecting now
+            revisionPath = currentPath.get();
           }
 
           final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
@@ -157,36 +186,79 @@ public class GitHistoryUtils {
       }
     };
 
-    final Semaphore semaphore = new Semaphore();
-    h.addLineListener(new GitLineHandlerAdapter() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        final GitLogRecord record = accumulator.acceptLine(line);
-        if (record != null) {
-          resultAdapter.consume(record);
-        }
-      }
+    while (currentPath.get() != null && firstCommitParent.get() != null) {
+      GitLineHandler logHandler = getLogHandler(project, root, logParser, currentPath.get(), firstCommitParent.get());
+      final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
+      final Semaphore semaphore = new Semaphore();
 
-      @Override
-      public void startFailed(Throwable exception) {
-        //noinspection ThrowableInstanceNeverThrown
-        exceptionConsumer.consume(new VcsException(exception));
-        semaphore.up();
-      }
-
-      @Override
-      public void processTerminated(int exitCode) {
-        super.processTerminated(exitCode);
-        final GitLogRecord record = accumulator.processLast();
-        if (record != null) {
-          resultAdapter.consume(record);
+      logHandler.addLineListener(new GitLineHandlerAdapter() {
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          final GitLogRecord record = accumulator.acceptLine(line);
+          if (record != null) {
+            resultAdapter.consume(record);
+          }
         }
-        semaphore.up();
+
+        @Override
+        public void startFailed(Throwable exception) {
+          //noinspection ThrowableInstanceNeverThrown
+          exceptionConsumer.consume(new VcsException(exception));
+          semaphore.up();
+        }
+
+        @Override
+        public void processTerminated(int exitCode) {
+          super.processTerminated(exitCode);
+          final GitLogRecord record = accumulator.processLast();
+          if (record != null) {
+            resultAdapter.consume(record);
+          }
+          semaphore.up();
+        }
+      });
+      semaphore.down();
+      logHandler.start();
+      semaphore.waitFor();
+
+      currentPath.set(getFirstCommitRenamePath(project, root, firstCommit.get()));
+    }
+
+  }
+
+  private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit) {
+    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8", lastCommit);
+    h.endOptions();
+    h.addRelativePaths(path);
+    return h;
+  }
+
+  /**
+   * Gets info of the given commit and checks if it was RENAME. If yes, returns the old file path, which file was renamed from.
+   * If it's not a rename, returns null.
+   */
+  @Nullable
+  private static FilePath getFirstCommitRenamePath(Project project, VirtualFile root, String commit) throws VcsException {
+    final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    final GitLogParser parser = new GitLogParser(HASH);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    parser.setNameInOutput(true);
+    final String output = h.run();
+    final GitLogRecord record = parser.parseOneRecord(output);
+    if (record.getNameStatus() == 'R') {
+      final List<FilePath> paths = record.getFilePaths(root);
+      final String message = "Rename commit should have 2 paths. Here's the output: [" + output + "]";
+      if (!LOG.assertTrue(paths.size() == 2, message)) {
+        throw new VcsException(message);
       }
-    });
-    semaphore.down();
-    h.start();
-    semaphore.waitFor();
+      return paths.get(0);
+    }
+    return null;
   }
 
   private static class MyTokenAccumulator {
