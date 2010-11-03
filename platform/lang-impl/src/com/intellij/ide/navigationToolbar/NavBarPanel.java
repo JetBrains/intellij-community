@@ -103,6 +103,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private final Alarm myListUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm myModelUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
+  private Container myHintContainer;
+  private Component myContextComponent;
+  private Runnable myRunWhenListRebuilt;
+
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
 
@@ -323,6 +327,12 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
 
     rebuildComponent();
+
+    if (myRunWhenListRebuilt != null) {
+      Runnable r = myRunWhenListRebuilt;
+      myRunWhenListRebuilt = null;
+      r.run();
+    }
   }
 
   @Nullable
@@ -572,16 +582,41 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
     myModel.setSelectedIndex(myList.size() - 1);
 
-    if (myHint != null) {
-      Rectangle bounds = myHint.getBounds();
-      myHint.updateBounds(bounds.x, bounds.y);
-    }
+    final Runnable afterUpdate = new Runnable() {
+      public void run() {
+        if (myModel.hasChildren(object)) {
+          restorePopup();
+        }
+        else {
+          doubleClick(object);
+        }
+      }
+    };
 
-    if (myModel.hasChildren(object)) {
-      restorePopup();
+    if (myHint != null) {
+      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+        @Override
+        public void run(final RelativePoint relativePoint) {
+          runWhenListRebuilt(new Runnable() {
+            @Override
+            public void run() {
+              myHint.setSize(getPreferredSize());
+              myHint.setLocation(relativePoint);
+              afterUpdate.run();
+            }
+          });
+        }
+      });
+    } else {
+      afterUpdate.run();
     }
-    else {
-      doubleClick(object);
+  }
+
+  private void runWhenListRebuilt(Runnable runnable) {
+    if (myListUpdateAlarm.getActiveRequestCount() > 0) {
+      myRunWhenListRebuilt = runnable;
+    } else {
+      runnable.run();
     }
   }
 
@@ -765,6 +800,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   public void installBorder(final int rightOffset, final boolean isDocked) {
     setBorder(new Border() {
       public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+        if (!isDocked) return;
+
         g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
 
        boolean drawTopBorder = true;
@@ -836,31 +873,62 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         cancelPopup();
       }
     };
-    myHint.setForceLightweightPopup(true);
+    myHint.setForceShowAsPopup(true);
+    myHint.setFocusRequestor(this);
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         hideHint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window focusedWindow = focusManager.getFocusedWindow();
     if (editor == null) {
-      final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
-      final Component owner = focusManager.getFocusOwner();
-      final Component cmp = relativePoint.getComponent();
-      if (cmp instanceof JComponent && cmp.isShowing()) {
-        myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                    owner instanceof JComponent ? (JComponent)owner : null, new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
-      }
+      myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+        @Override
+        public void run(RelativePoint relativePoint) {
+          final Component owner = focusManager.getFocusOwner();
+          final Component cmp = relativePoint.getComponent();
+          if (cmp instanceof JComponent && cmp.isShowing()) {
+            myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
+                        owner instanceof JComponent ? (JComponent)owner : null, new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
+          }
+        }
+      });
     }
     else {
-      final Container container = focusedWindow != null ? focusedWindow : editor.getContentComponent();
-      final Point p = AbstractPopup.getCenterOf(container, this);
-      p.x -= container.getLocation().x; //make NavBar visible in case of two monitors; p should be relative
-      p.y = container.getHeight() / 4;      
-      HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true);
+      myHintContainer = editor.getContentComponent();
+      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+        @Override
+        public void run(RelativePoint rp) {
+          Point p = rp.getPointOn(myHintContainer).getPoint();
+          HintManagerImpl.getInstanceImpl()
+            .showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true, new HintHint(editor, p));
+        }
+      });
     }
     select();
+  }
+
+  private AsyncResult<RelativePoint> getHintContainerShowPoint() {
+    final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
+    if (myHintContainer != null) {
+      final Point p = AbstractPopup.getCenterOf(myHintContainer, this);
+      p.y -= myHintContainer.getHeight() / 4;
+      result.setDone(RelativePoint.fromScreen(p));
+    } else {
+      if (myContextComponent != null) {
+        result.setDone(JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent)));
+      } else {
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+          @Override
+          public void run(DataContext dataContext) {
+            myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+            result.setDone(JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent)));
+          }
+        });
+      }
+    }
+    return result;
   }
 
   public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {

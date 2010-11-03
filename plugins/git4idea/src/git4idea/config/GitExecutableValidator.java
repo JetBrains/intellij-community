@@ -15,17 +15,14 @@
  */
 package git4idea.config;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -44,7 +41,7 @@ public class GitExecutableValidator {
   private final Project myProject;
 
   public static GitExecutableValidator getInstance(Project project) {
-    return ServiceManager.getService(project, GitExecutableValidator.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitExecutableValidator.class);
   }
 
   public GitExecutableValidator(Project project) {

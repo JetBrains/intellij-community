@@ -38,6 +38,9 @@ public class SamePsiMemberWeigher extends ProximityWeigher {
   });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getPosition() == null){
+      return null;
+    }
     if (!INSIDE_PSI_MEMBER.getValue(location)) {
       return 0;
     }

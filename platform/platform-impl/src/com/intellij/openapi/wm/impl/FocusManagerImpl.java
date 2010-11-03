@@ -73,7 +73,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
-      if (isFocusTransferReady() && !isIdleQueueEmpty()) {
+      if (canFlushIdleRequests()) {
         flushIdleRequests();
       }
       else {
@@ -81,6 +81,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
   };
+
+  private boolean canFlushIdleRequests() {
+    return isFocusTransferReady() && !isIdleQueueEmpty();
+  }
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
   private final Map<IdeFrame, WeakReference<Component>> myLastFocusedAtDeactivation = new HashMap<IdeFrame, WeakReference<Component>>();
@@ -412,11 +416,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
       if (isPendingKeyEventsRedispatched()) {
-        final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
-        myIdleRequests.clear();
-        for (Runnable each : all) {
-          if (each != null) {
-            each.run();
+        IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+        if (canFlushIdleRequests()) {
+          final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
+          myIdleRequests.clear();
+          for (Runnable each : all) {
+            if (each != null) {
+              each.run();
+            }
           }
         }
       }

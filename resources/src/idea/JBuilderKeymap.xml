@@ -28,6 +28,9 @@
     <action id="CollapseAll">
       <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     </action>
+    <action id="CollapseRegion">
+      <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    </action>
     <action id="CollapseBlock"/>
     <action id="CopyElement"/>
     <action id="CopyPaths"/>

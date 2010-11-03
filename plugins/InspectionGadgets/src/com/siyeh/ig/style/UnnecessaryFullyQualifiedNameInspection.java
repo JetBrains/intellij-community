@@ -36,7 +36,6 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.psiutils.StringUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -111,30 +110,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (file == null) {
                 return;
             }
-            final PsiImportList importList = file.getImportList();
-            if (importList == null) {
-                return;
-            }
+
             final PsiElement target = referenceElement.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
             final PsiClass aClass = (PsiClass) target;
-            final String qualifiedName = aClass.getQualifiedName();
-            if (qualifiedName == null) {
-                return;
-            }
-            final String containingPackageName = file.getPackageName();
-            @NonNls final String packageName =
-                    ClassUtil.extractPackageName(qualifiedName);
-            if (!containingPackageName.equals(packageName) &&
-                    importList.findSingleClassImportStatement(qualifiedName) == null) {
-                if (importList.findOnDemandImportStatement(packageName) == null ||
-                        ImportUtils.hasDefaultImportConflict(qualifiedName, file) ||
-                        ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
-                    addImport(importList, aClass);
-                }
-            }
+            ImportUtils.addImportIfNeeded(file, aClass);
             final String fullyQualifiedText = referenceElement.getText();
             final QualificationRemover qualificationRemover =
                     new QualificationRemover(fullyQualifiedText);
@@ -159,17 +141,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                         "unnecessary.fully.qualified.name.status.bar.escape.highlighting.message2",
                         Integer.valueOf(elementCount - 1)));
             }
-        }
-
-        private static void addImport(PsiImportList importList, PsiClass aClass)
-                throws IncorrectOperationException {
-            final Project project = importList.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiElementFactory elementFactory =
-                    psiFacade.getElementFactory();
-            final PsiImportStatement importStatement =
-                    elementFactory.createImportStatement(aClass);
-            importList.add(importStatement);
         }
 
         private static class QualificationRemover

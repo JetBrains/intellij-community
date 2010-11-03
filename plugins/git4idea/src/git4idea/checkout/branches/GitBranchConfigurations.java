@@ -15,14 +15,13 @@
  */
 package git4idea.checkout.branches;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -319,7 +318,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
    * @return the git settings
    */
   public static GitBranchConfigurations getInstance(Project project) {
-    return ServiceManager.getService(project, GitBranchConfigurations.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitBranchConfigurations.class);
   }
 
 

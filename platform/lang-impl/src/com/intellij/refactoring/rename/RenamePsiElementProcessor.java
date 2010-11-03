@@ -19,6 +19,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,6 +47,10 @@ public abstract class RenamePsiElementProcessor {
   private static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
   public abstract boolean canProcessElement(@Nullable PsiElement element);
+
+  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    return new RenameDialog(project, element, nameSuggestionContext, editor);
+  }
 
   public void renameElement(final PsiElement element, String newName, UsageInfo[] usages,
                      RefactoringElementListener listener) throws IncorrectOperationException {

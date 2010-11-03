@@ -37,6 +37,9 @@ public class SamePackageWeigher extends ProximityWeigher {
   });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getPosition() == null) {
+      return null;
+    }
     final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
     if (placePackage == null) {
       return false;
