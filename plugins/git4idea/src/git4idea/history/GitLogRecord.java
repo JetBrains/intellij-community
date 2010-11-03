@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -36,10 +36,10 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  */
 class GitLogRecord {
   private final Map<GitLogParser.GitLogOption, String> myOptions;
-  private final Collection<String> myPaths;
+  private final List<String> myPaths;
   private final char myNameStatus;
 
-  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, Collection<String> paths, char nameStatus) {
+  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, char nameStatus) {
     myOptions = options;
     myPaths = paths;
     myNameStatus = nameStatus;
@@ -58,6 +58,7 @@ class GitLogRecord {
     return myPaths;
   }
 
+  @NotNull
   public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
     List<FilePath> res = new ArrayList<FilePath>();
     String prefix = root.getPath() + "/";
@@ -101,6 +102,10 @@ class GitLogRecord {
 
   String[] getParentsShortHashes() {
     return myOptions.get(SHORT_PARENTS).split(" ");
+  }
+
+  String[] getParentsHashes() {
+    return myOptions.get(PARENTS).split(" ");
   }
 
   /**

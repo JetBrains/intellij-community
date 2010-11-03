@@ -158,6 +158,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myThreadTracker = new ThreadTracker();
 
     setUpProject();
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+
     storeSettings();
     ourTestCase = this;
     if (myProject != null) {
@@ -182,15 +184,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
     File projectFile = getIprFile();
-    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = createProject(projectFile, getClass().getName() + "." + getName());
+    myProjectManager.setCurrentTestProject(myProject);
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     setUpModule();
 
     setUpJdk();
 
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
     runStartupActivities();

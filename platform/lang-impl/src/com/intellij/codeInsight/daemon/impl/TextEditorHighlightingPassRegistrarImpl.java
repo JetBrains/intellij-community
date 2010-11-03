@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: anna
@@ -156,59 +156,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
     });
 
-    //sort is mainly for tests which expect passes to be run sequentially and produce correct results
-    return topoSort(id2Pass);
-  }
-
-  private static List<TextEditorHighlightingPass> topoSort(final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass) {
-    final Set<TextEditorHighlightingPass> topPasses = new THashSet<TextEditorHighlightingPass>(id2Pass.size());
-    id2Pass.forEachValue(new TObjectProcedure<TextEditorHighlightingPass>() {
-      public boolean execute(TextEditorHighlightingPass object) {
-        topPasses.add(object);
-        return true;
-      }
-    });
-    id2Pass.forEachValue(new TObjectProcedure<TextEditorHighlightingPass>() {
-      public boolean execute(TextEditorHighlightingPass pass) {
-        for (int id : pass.getCompletionPredecessorIds()) {
-          TextEditorHighlightingPass pred = id2Pass.get(id);
-          if (pred != null) {  //can be null if filtered out by passesToIgnore
-            topPasses.remove(pred);
-          }
-        }
-        for (int id : pass.getStartingPredecessorIds()) {
-          TextEditorHighlightingPass pred = id2Pass.get(id);
-          if (pred != null) {  //can be null if filtered out by passesToIgnore
-            topPasses.remove(pred);
-          }
-        }
-        return true;
-      }
-    });
-    List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>();
-    for (TextEditorHighlightingPass topPass : topPasses) {
-      layout(topPass, result, id2Pass);
-    }
-    return result;
-  }
-
-  private static void layout(@NotNull final TextEditorHighlightingPass pass,
-                             @NotNull final List<TextEditorHighlightingPass> result,
-                             @NotNull final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass) {
-    if (result.contains(pass)) return;
-    for (int id : pass.getCompletionPredecessorIds()) {
-      TextEditorHighlightingPass pred = id2Pass.get(id);
-      if (pred != null) {
-        layout(pred, result, id2Pass);
-      }
-    }
-    for (int id : pass.getStartingPredecessorIds()) {
-      TextEditorHighlightingPass pred = id2Pass.get(id);
-      if (pred != null) {
-        layout(pred, result, id2Pass);
-      }
-    }
-    result.add(pass);
+    return (List)Arrays.asList(id2Pass.getValues());
   }
 
   private void checkForCycles() {

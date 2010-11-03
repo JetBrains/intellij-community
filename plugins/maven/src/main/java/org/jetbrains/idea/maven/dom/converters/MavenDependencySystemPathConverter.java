@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +27,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +113,7 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
           }
 
           if (directory != null) {
+            systemItemCollection = new THashSet<PsiFileSystemItem>(systemItemCollection);
             systemItemCollection.add(directory);
           }
         }

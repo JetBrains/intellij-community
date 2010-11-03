@@ -174,5 +174,13 @@ public class IdeTooltip extends ComparableObject.Impl {
     myCalloutShift = calloutShift;
     return this;
   }
+
+  public void setComponent(Component component) {
+    myComponent = component;
+  }
+
+  public void setPoint(Point point) {
+    myPoint = point;
+  }
 }
 

@@ -29,6 +29,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -880,6 +881,12 @@ public class DocumentationManager {
 
     if (myEditor != null) {
       hint.showInBestPositionFor(myEditor);
+      return;
+    }
+
+    final ChooseByNamePopup chooseByNamePopup = ChooseByNamePopup.getActivePopup(myProject);
+    if (chooseByNamePopup != null) {
+      chooseByNamePopup.showItemPopup(hint);
       return;
     }
 

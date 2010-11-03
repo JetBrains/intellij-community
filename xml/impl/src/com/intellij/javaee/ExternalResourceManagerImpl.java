@@ -312,7 +312,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private static boolean isImplicitNamespaceDescriptor(String url) {
     for (ImplicitNamespaceDescriptorProvider namespaceDescriptorProvider : Extensions
       .getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
-      if (namespaceDescriptorProvider.getNamespaceDescriptor(null, url) != null) return true;
+      if (namespaceDescriptorProvider.getNamespaceDescriptor(null, url, null) != null) return true;
     }
     return false;
   }

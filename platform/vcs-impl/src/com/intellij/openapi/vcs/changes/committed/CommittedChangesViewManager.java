@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
@@ -74,6 +75,11 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
       public void run() {
         myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
                                               myProject, vcsRoot);
+      }
+    }, new Condition() {
+      @Override
+      public boolean value(Object o) {
+        return (! myProject.isOpen()) || myProject.isDisposed();
       }
     });
   }

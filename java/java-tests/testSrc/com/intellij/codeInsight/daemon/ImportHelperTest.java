@@ -36,7 +36,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
-  
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -256,7 +256,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @CanChangeDocumentDuringHighlighting
   @DoNotWrapInCommand
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() throws Throwable {
     @NonNls String text = "class S { ArrayList<caret> }";
@@ -286,7 +285,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @CanChangeDocumentDuringHighlighting
   @DoNotWrapInCommand
   public void testAutoImportWorks() throws Throwable {
     @NonNls final String text = "class S { JFrame x; <caret> }";
@@ -307,7 +305,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
   }
 
-  @CanChangeDocumentDuringHighlighting
   @DoNotWrapInCommand
   public void testAutoImportOfGenericReference() throws Throwable {
     @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
@@ -337,7 +334,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-   @CanChangeDocumentDuringHighlighting
    @DoNotWrapInCommand
    public void testAutoOptimizeUnresolvedImports() throws Throwable {
      @NonNls String text = "import xxx.yyy; class S { } <caret> ";

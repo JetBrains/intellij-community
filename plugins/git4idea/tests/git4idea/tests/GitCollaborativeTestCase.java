@@ -31,7 +31,7 @@ public class GitCollaborativeTestCase extends GitTestCase {
 
   @Override
   protected GitTestRepository initRepositories() throws Exception {
-    myParentRepo = GitTestRepository.create(this);
+    myParentRepo = GitTestRepository.create(this, "--bare");
     myRepo = GitTestRepository.cloneFrom(myParentRepo);
     myRepo.setName(MAIN_USER_NAME, MAIN_USER_EMAIL);
     myBrotherRepo = GitTestRepository.cloneFrom(myParentRepo);

@@ -20,17 +20,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class KnownPackageWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
-    if (location == null) {
-      return null;
-    }
+  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {

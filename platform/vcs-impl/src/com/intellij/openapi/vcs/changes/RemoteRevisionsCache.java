@@ -19,6 +19,7 @@ import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -136,9 +137,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   }
 
   public void directoryMappingChanged() {
-    updateOnDirectoryMappingChanged();
-    myRemoteRevisionsNumbersCache.directoryMappingChanged();
-    myRemoteRevisionsStateCache.directoryMappingChanged();
+    try {
+      updateOnDirectoryMappingChanged();
+      myRemoteRevisionsNumbersCache.directoryMappingChanged();
+      myRemoteRevisionsStateCache.directoryMappingChanged();
+    } catch (ProcessCanceledException ignore) {
+    }
   }
 
   public void plus(final Pair<String, AbstractVcs> pair) {

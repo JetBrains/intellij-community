@@ -159,12 +159,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     boolean markAsNeedsStrippingLater = false;
+    CharSequence text = myText.getCharArray();
     for (int line = 0; line < myLineSet.getLineCount(); line++) {
       if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
       int start = -1;
       final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
       int lineStart = myLineSet.getLineStart(line);
-      CharSequence text = myText.getCharArray();
       for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
         char c = text.charAt(offset);
         if (c != ' ' && c != '\t') {
@@ -189,6 +189,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
             });
           }
         });
+        text = myText.getCharArray();
       }
     }
 

@@ -318,8 +318,8 @@ public class GitRebaseDialog extends DialogWrapper {
       myRemoteBranches.clear();
       myTags.clear();
       final VirtualFile root = gitRoot();
-      GitBranch.list(myProject, root, true, false, myLocalBranches);
-      GitBranch.list(myProject, root, false, true, myRemoteBranches);
+      GitBranch.list(myProject, root, true, false, myLocalBranches, null);
+      GitBranch.list(myProject, root, false, true, myRemoteBranches, null);
       GitTag.list(myProject, root, myTags);
       myCurrentBranch = GitBranch.current(myProject, root);
     }

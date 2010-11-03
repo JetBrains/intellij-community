@@ -139,13 +139,20 @@ public class ResolveUtil {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    return processNonCodeMethods(type, processor, place);
+    return processNonCodeMethods(type, processor, place, state);
   }
 
   public static boolean processNonCodeMethods(PsiType type,
                                               PsiScopeProcessor processor,
                                               GroovyPsiElement place) {
-    if (!NonCodeMembersContributor.runContributors(type, processor, place, ResolveState.initial())) {
+    return processNonCodeMethods(type, processor, place, ResolveState.initial());
+  }
+
+  public static boolean processNonCodeMethods(PsiType type,
+                                              PsiScopeProcessor processor,
+                                              GroovyPsiElement place,
+                                              ResolveState state) {
+    if (!NonCodeMembersContributor.runContributors(type, processor, place, state)) {
       return false;
     }
 

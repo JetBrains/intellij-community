@@ -48,13 +48,14 @@ public class GitTestRepository {
 
   /**
    * Creates a new Mercurial repository in a new temporary test directory.
-   * @param testCase reference to the test case instance.
+   * @param testCase   reference to the test case instance.
+   * @param parameters optional array of parameters passed to 'git init'
    * @return created repository.
    */
-  public static GitTestRepository create(GitTestCase testCase) throws Exception {
+  public static GitTestRepository create(GitTestCase testCase, String... parameters) throws Exception {
     final TempDirTestFixture dirFixture = createFixtureDir();
     final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = testCase.executeCommand(repo, "init");
+    final ProcessOutput processOutput = testCase.executeCommand(repo, join("init", parameters));
     AbstractVcsTestCase.verify(processOutput);
     return new GitTestRepository(testCase, dirFixture);
   }
@@ -62,7 +63,7 @@ public class GitTestRepository {
   public static GitTestRepository cloneFrom(GitTestRepository parent) throws Exception {
     final TempDirTestFixture dirFixture = createFixtureDir();
     final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = parent.getTest().executeCommand(repo, "clone", parent.getDir().getPath(), repo.getPath());
+    final ProcessOutput processOutput = parent.getTest().executeCommand(repo, "clone", parent.getDirFixture().getTempDirPath(), repo.getPath());
     AbstractVcsTestCase.verify(processOutput);
     return new GitTestRepository(parent.getTest(), dirFixture);
   }
@@ -222,8 +223,8 @@ public class GitTestRepository {
     execute(true, "pull");
   }
 
-  public void push() throws IOException {
-    execute(true, "push");
+  public void push(String... params) throws IOException {
+    execute(true, join("push", params));
   }
 
   public void rm(String... filenames) throws Exception {
@@ -301,8 +302,8 @@ public class GitTestRepository {
     }
   }
 
-  public void branch() throws IOException {
-    execute(false, "branch");
+  public ProcessOutput branch(String... parameters) throws IOException {
+    return execute(false, join("branch", parameters));
   }
 
   @NotNull

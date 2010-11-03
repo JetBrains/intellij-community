@@ -213,7 +213,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public boolean isVisible() {
-    return myIsRealPopup ? (myPopup != null && myPopup.isVisible()) : myComponent.isShowing();
+    if (myIsRealPopup) {
+      return myPopup != null && myPopup.isVisible();
+    } else if (myCurrentIdeTooltip != null) {
+      return myComponent.isShowing() || IdeTooltipManager.getInstance().isQueuedToShow(myCurrentIdeTooltip);
+    } else {
+      return myComponent.isShowing();
+    }
   }
 
   public final boolean isRealPopup() {
@@ -311,9 +317,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (isRealPopup()) {
       myPopup.setLocation(point.getScreenPoint());
     } else {
-      if (myHintHint.isAwtTooltip()) {
-        //todo kirillk
-        throw new UnsupportedOperationException();
+      if (myCurrentIdeTooltip != null) {
+        Point screenPoint = point.getScreenPoint();
+        if (!screenPoint.equals(new RelativePoint(myCurrentIdeTooltip.getComponent(), myCurrentIdeTooltip.getPoint()).getScreenPoint())) {
+          myCurrentIdeTooltip.setPoint(point.getPoint());
+          myCurrentIdeTooltip.setComponent(point.getComponent());
+          IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true);
+        }
       } else {
         Point targetPoint = point.getPoint(myComponent.getParent());
         myComponent.setLocation(targetPoint);
@@ -330,7 +340,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     } else {
       //todo kirillk
       if (myHintHint.isAwtTooltip()) {
-        throw new UnsupportedOperationException();
+        return;
       } else {
         myComponent.setSize(size);
 

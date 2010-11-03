@@ -162,7 +162,6 @@ public class TestIntegrationUtils {
     }
 
     TemplateManager.getInstance(project).startTemplate(editor, template, adapter);
-    PsiDocumentManager.getInstance(targetClass.getProject()).commitDocument(editor.getDocument());
   }
 
   private static Template createTestMethodTemplate(MethodKind methodKind,

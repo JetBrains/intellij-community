@@ -54,6 +54,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract void unblockReloadingProjectOnExternalChanges();
 
   @Nullable
+  @TestOnly
   public abstract Project getCurrentTestProject();
 
   @TestOnly
