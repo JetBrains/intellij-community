@@ -260,8 +260,6 @@ public class MatcherImpl {
    */
   protected void findMatches(MatchResultSink sink, final MatchOptions options) throws MalformedPatternException, UnsupportedPatternException
   {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     CompiledPattern compiledPattern = prepareMatching(sink, options);
     if (compiledPattern== null) {
       return;
