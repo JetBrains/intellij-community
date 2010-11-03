@@ -17,8 +17,10 @@ package com.intellij.openapi.vcs.changes.pending;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -29,6 +31,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class DuringChangeListManagerUpdateTestScheme {
@@ -49,7 +52,11 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     final ProjectLevelVcsManagerImpl projectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
     projectLevelVcsManager.registerVcs(vcs);
-    projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
+    //projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
+    final ArrayList<VcsDirectoryMapping> list =
+      new ArrayList<VcsDirectoryMapping>(projectLevelVcsManager.getDirectoryMappings());
+    list.add(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(mockVcsRoot.getAbsolutePath()), vcs.getName()));
+    projectLevelVcsManager.setDirectoryMappings(list);
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
     assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1: "size: " + projectLevelVcsManager.getRootsUnderVcs(vcsFound).length;
