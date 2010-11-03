@@ -51,6 +51,8 @@ public class SameLogicalRootWeigher extends ProximityWeigher {
 
   @Nullable
   private static LogicalRoot findLogicalRoot(PsiElement element) {
+    if (element == null) return null;
+
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
 
