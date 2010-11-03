@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
@@ -99,7 +100,9 @@ public class MoveFilesOrDirectoriesUtil {
             manager.checkMove(psiElement, targetDirectory);
           }
 
-          new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory, false, false, moveCallback, new Runnable() {
+          new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory,
+                                              RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
+                                              false, false, moveCallback, new Runnable() {
             public void run() {
               if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
             }
