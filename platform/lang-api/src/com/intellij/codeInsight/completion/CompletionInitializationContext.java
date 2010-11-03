@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +71,11 @@ public class CompletionInitializationContext {
   @Deprecated
   public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
     myFileCopyPatcher = fileCopyPatcher;
+  }
+
+  @NotNull
+  public Language getPositionLanguage() {
+    return PsiUtilBase.getLanguageInEditor(getEditor(), getProject());
   }
 
   @NotNull
