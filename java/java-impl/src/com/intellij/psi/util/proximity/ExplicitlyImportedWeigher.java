@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public class ExplicitlyImportedWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getPosition() == null){
+      return null;
+    }
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
       if (qname != null) {

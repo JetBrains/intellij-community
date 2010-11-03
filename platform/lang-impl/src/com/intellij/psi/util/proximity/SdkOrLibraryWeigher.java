@@ -32,6 +32,9 @@ import java.util.List;
 public class SdkOrLibraryWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getProject() == null){
+      return null;
+    }
     final VirtualFile file = PsiUtilBase.getVirtualFile(element);
     if (file != null) {
       List<OrderEntry> orderEntries = ProjectRootManager.getInstance(location.getProject()).getFileIndex().getOrderEntriesForFile(file);

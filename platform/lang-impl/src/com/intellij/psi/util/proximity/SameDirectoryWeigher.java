@@ -38,6 +38,9 @@ public class SameDirectoryWeigher extends ProximityWeigher {
   });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getPosition() == null){
+      return null;
+    }
     final PsiDirectory placeDirectory = PLACE_DIRECTORY.getValue(location);
     if (placeDirectory == null) {
       return false;
