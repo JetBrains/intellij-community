@@ -24,6 +24,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -103,6 +104,20 @@ public class ArtifactPropertiesEditors {
         }
       }
     }
+  }
+
+  @Nullable
+  public static String getHelpId(String title) {
+    if (ArtifactPropertiesEditor.VALIDATION_TAB.equals(title)) {
+      return "reference.project.structure.artifacts.validation";
+    }
+    else if (ArtifactPropertiesEditor.PRE_PROCESSING_TAB.equals(title)) {
+      return "reference.project.structure.artifacts.preprocessing";
+    }
+    else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB.equals(title)) {
+      return "reference.project.structure.artifacts.postprocessing";
+    }
+    return null;
   }
 
   private class PropertiesEditorInfo {
