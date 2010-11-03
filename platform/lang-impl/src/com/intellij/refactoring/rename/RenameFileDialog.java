@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +48,7 @@ public class RenameFileDialog extends RenameDialog {
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchForReferences = new NonFocusableCheckBox();
-    myCbSearchForReferences.setText("Search for references");
+    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE);
     panel.add(myCbSearchForReferences, gbConstraints);
 

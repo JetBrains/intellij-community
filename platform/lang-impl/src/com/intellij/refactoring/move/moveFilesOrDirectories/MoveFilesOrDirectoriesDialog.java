@@ -33,9 +33,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -58,6 +60,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   private final Project myProject;
   private final Callback myCallback;
   private PsiDirectory myTargetDirectory;
+  private JCheckBox myCbSearchForReferences;
 
   public MoveFilesOrDirectoriesDialog(Project project, Callback callback) {
     super(project, true);
@@ -102,6 +105,12 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     FileChooserFactory.getInstance().installFileCompletion(textFieldWithStoredHistory.getTextEditor(), descriptor, true, getDisposable());
     myTargetDirectoryField.setTextFieldPreferredWidth(60);
     panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
+
+    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
+    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+    panel.add(myCbSearchForReferences, new GridBagConstraints(0, 2, 1, 1, 1, 0,
+                                                              GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                              new Insets(4, 8, 4, 8), 0, 0));
 
     textFieldWithStoredHistory.addDocumentListener(new DocumentAdapter(){
       @Override
@@ -157,6 +166,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
 
   protected void doOKAction() {
     myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
+    RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         final Runnable action = new Runnable() {
