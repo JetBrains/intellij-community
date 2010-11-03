@@ -602,4 +602,6 @@
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
+
+  <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor"/>
 </extensions>

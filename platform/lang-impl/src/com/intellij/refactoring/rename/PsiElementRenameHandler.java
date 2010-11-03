@@ -127,7 +127,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     element = processor.substituteElementToRename(element, editor);
     if (element == null) return;
 
-    final RenameDialog dialog = new RenameDialog(project, element, nameSuggestionContext, editor);
+    final RenameDialog dialog = processor.createRenameDialog(project, element, nameSuggestionContext, editor);
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();
       if (strings != null && strings.length > 0) {
