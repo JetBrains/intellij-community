@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -426,14 +427,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void printThreadDump() {
-    final Map<Thread, StackTraceElement[]> traces = Thread.getAllStackTraces();
-    for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
-      System.out.println("\n" + entry.getKey().getName() + "\n");
-      final StackTraceElement[] value = entry.getValue();
-      for (final StackTraceElement stackTraceElement : value) {
-        System.out.println(" at " + stackTraceElement);
-      }
-    }
+    PerformanceWatcher.getInstance().dumpThreadsToConsole();
   }
 
   public static void assertEmpty(final Object[] array) {
