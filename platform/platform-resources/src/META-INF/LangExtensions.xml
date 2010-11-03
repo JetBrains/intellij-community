@@ -579,4 +579,6 @@
   <highlightVisitor implementation="com.intellij.refactoring.changeSignature.ChangeSignatureGestureVisitor"/>
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.EditorEscapeHandler" id="hide-cs-gesture" order="after hide-hints"/>
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
+
+  <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor"/>
 </extensions>
