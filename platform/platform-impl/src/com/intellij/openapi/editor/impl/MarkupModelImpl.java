@@ -59,6 +59,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void dispose() {
+    myHighlighterTree.dispose();
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 
 import java.util.Map;
 
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 public abstract class PerIndexDocumentMap<T> {
 
-  private final Map<Document, Map<ID, T>> myVersions = new ConcurrentFactoryMap<Document, Map<ID, T>>() {
+  private final Map<Document, Map<ID, T>> myVersions = new ConcurrentWeakFactoryMap<Document, Map<ID, T>>() {
     protected Map<ID, T> create(final Document document) {
       return new ConcurrentFactoryMap<ID,T>() {
         protected T create(ID key) {

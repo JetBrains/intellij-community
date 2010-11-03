@@ -557,6 +557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(mySoftWrapModel);
 
     myFoldingModel.removeListener(mySoftWrapModel);
+    myFoldingModel.dispose();
 
     mySoftWrapModel.release();
 
