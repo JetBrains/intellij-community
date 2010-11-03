@@ -171,8 +171,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void dispose() {
-    for (final WidgetBean bean : myWidgetMap.values()) {
-      Disposer.dispose(bean.widget);
+    final Iterator<WidgetBean> iterator = myWidgetMap.values().iterator();
+    //noinspection WhileLoopReplaceableByForEach
+    while (iterator.hasNext()) {
+      Disposer.dispose(iterator.next().widget);
     }
 
     myWidgetMap.clear();
