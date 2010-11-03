@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -26,7 +26,7 @@ public abstract class ExcludedFileIndex {
   protected final Project myProject;
 
   public static ExcludedFileIndex getInstance(Project project) {
-    return ServiceManager.getService(project, ExcludedFileIndex.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
   }
 
   protected ExcludedFileIndex(final Project project) {

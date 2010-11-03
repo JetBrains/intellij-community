@@ -164,7 +164,7 @@ public class CommitHelper {
 
       processor.doBeforeRefresh();
 
-      AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
+      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     } catch (Exception e) {
       LOG.error(e);
       if (e instanceof RuntimeException) {

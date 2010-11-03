@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -179,6 +180,18 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
       throwCanceledException(project, new NullPointerException());
     }
     return component;
+  }
+
+  public <T> T safeGetService(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
+    try {
+      return ServiceManager.getService(project, componentClass);
+    }
+    catch (NullPointerException e) {
+      throwCanceledException(project, e);
+    } catch (AssertionError e) {
+      throwCanceledException(project, e);
+    }
+    return null;
   }
 
   private void throwCanceledException(final Project project, final Throwable t) {
