@@ -123,8 +123,11 @@ public class GitHistoryUtils {
    See http://kerneltrap.org/mailarchive/git/2009/1/30/4861054 and the whole thread about that: --follow is buggy, but maybe it won't be fixed.
    To get the whole history through renames we do the following:
    1. 'git log <file>' - and we get the history since the first rename, if there was one.
-   2. 'git show -M --name-status <first_commit_id>', where <first_commit_id> is the hash of the first commit in the history we got in #1.
-      With this command we get the rename-detection-friendly information about the first commit.
+   2. 'git show -M --follow --name-status <first_commit_id> -- <file>'
+      where <first_commit_id> is the hash of the first commit in the history we got in #1.
+      With this command we get the rename-detection-friendly information about the first commit of the given file history.
+      (by specifying the <file> we filter out other changes in that commit; but in that case rename detection requires '--follow' to work,
+      that's safe for one commit though)
       If the first commit was ADDING the file, then there were no renames with this file, we have the full history.
       But if the first commit was RENAMING the file, we are going to query for the history before rename.
       Now we have the previous name of the file:
@@ -221,7 +224,7 @@ public class GitHistoryUtils {
       logHandler.start();
       semaphore.waitFor();
 
-      currentPath.set(getFirstCommitRenamePath(project, root, firstCommit.get()));
+      currentPath.set(getFirstCommitRenamePath(project, root, firstCommit.get(), currentPath.get()));
     }
 
   }
@@ -241,19 +244,22 @@ public class GitHistoryUtils {
    * If it's not a rename, returns null.
    */
   @Nullable
-  private static FilePath getFirstCommitRenamePath(Project project, VirtualFile root, String commit) throws VcsException {
+  private static FilePath getFirstCommitRenamePath(Project project, VirtualFile root, String commit, FilePath filePath) throws VcsException {
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     final GitLogParser parser = new GitLogParser(HASH);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+
+    h.addParameters("-M", "--follow", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    h.endOptions();
+    h.addRelativePaths(filePath);
     parser.setNameInOutput(true);
     final String output = h.run();
     final GitLogRecord record = parser.parseOneRecord(output);
     if (record.getNameStatus() == 'R') {
       final List<FilePath> paths = record.getFilePaths(root);
-      final String message = "Rename commit should have 2 paths. Here's the output: [" + output + "]";
-      if (!LOG.assertTrue(paths.size() == 2, message)) {
+      final String message = "Rename commit should have 2 paths. Commit: " + commit;
+      if (!LOG.assertTrue(paths.size() == 2, message + " Output: [" + output + "]")) {
         throw new VcsException(message);
       }
       return paths.get(0);
