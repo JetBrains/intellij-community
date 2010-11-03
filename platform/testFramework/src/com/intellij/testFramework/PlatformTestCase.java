@@ -158,6 +158,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myThreadTracker = new ThreadTracker();
 
     setUpProject();
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+
     storeSettings();
     ourTestCase = this;
     if (myProject != null) {
