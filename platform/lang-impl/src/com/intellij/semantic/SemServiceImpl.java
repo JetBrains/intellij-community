@@ -17,19 +17,12 @@ package com.intellij.semantic;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
@@ -59,7 +52,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentWeakHashMap<PsiFile, FileChunk> myCache = new ConcurrentWeakHashMap<PsiFile, FileChunk>();
+  private final ConcurrentWeakHashMap<PsiElement, FileChunk> myCache = new ConcurrentWeakHashMap<PsiElement, FileChunk>();
   private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
   private final MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
@@ -178,9 +171,9 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    final PsiFile file = psi.getContainingFile();
+    final PsiElement root = getRootElement(psi);
 
-    List<T> cached = _getCachedSemElements(key, true, psi, file);
+    List<T> cached = _getCachedSemElements(key, true, psi, root);
     if (cached != null) {
       return cached;
     }
@@ -195,11 +188,23 @@ public class SemServiceImpl extends SemService{
         result.addAll((List<T>)list);
       }
     }
-    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, file);
+    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, root);
     for (SemKey semKey : map.keySet()) {
       persistent.putIfAbsent(semKey, map.get(semKey));
     }
     return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
+  }
+
+  @NotNull
+  private static PsiElement getRootElement(@NotNull PsiElement psi) {
+    if (psi instanceof PsiDirectory || psi instanceof PsiDirectoryContainer) {
+      return psi;
+    }
+    final PsiFile file = psi.getContainingFile();
+    if (file != null) {
+      return file;
+    }
+    throw new AssertionError("The element should be in a file: " + psi);
   }
 
   @NotNull 
@@ -220,12 +225,12 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   public <T extends SemElement> List<T> getCachedSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    return _getCachedSemElements(key, false, psi, psi.getContainingFile());
+    return _getCachedSemElements(key, false, psi, getRootElement(psi));
   }
 
   @Nullable
-  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element, PsiFile file) {
-    final FileChunk chunk = myCache.get(file);
+  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element, PsiElement root) {
+    final FileChunk chunk = myCache.get(root);
     if (chunk == null) return null;
 
     final ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
@@ -268,21 +273,21 @@ public class SemServiceImpl extends SemService{
   }
 
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
-    cacheOrGetMap(psi, psi.getContainingFile()).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
+    cacheOrGetMap(psi, getRootElement(psi)).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
   }
 
   @Override
   public void clearCachedSemElements(@NotNull PsiElement psi) {
-    final FileChunk chunk = myCache.get(psi.getContainingFile());
+    final FileChunk chunk = myCache.get(getRootElement(psi));
     if (chunk != null) {
       chunk.map.remove(psi);
     }
   }
 
-  private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(final PsiElement element, PsiFile file) {
-    FileChunk chunk = myCache.get(file);
+  private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(final PsiElement element, @NotNull PsiElement root) {
+    FileChunk chunk = myCache.get(root);
     if (chunk == null) {
-      chunk = ConcurrencyUtil.cacheOrGet(myCache, file, new FileChunk());
+      chunk = ConcurrencyUtil.cacheOrGet(myCache, root, new FileChunk());
     }
 
     ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
