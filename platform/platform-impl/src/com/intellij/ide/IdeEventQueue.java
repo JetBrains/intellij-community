@@ -705,7 +705,7 @@ public class IdeEventQueue extends EventQueue {
     private final int myTimeout;
 
 
-    public MyFireIdleRequest(final Runnable runnable, final int timeout) {
+    public MyFireIdleRequest(@NotNull Runnable runnable, final int timeout) {
       myTimeout = timeout;
       myRunnable = runnable;
     }
