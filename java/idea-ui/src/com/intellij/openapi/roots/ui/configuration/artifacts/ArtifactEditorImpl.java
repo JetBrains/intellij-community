@@ -483,6 +483,15 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myShowSpecificContentOptionsButton = new FixedSizeButton(16);
   }
 
+  public String getHelpTopic() {
+    final int tab = myTabbedPane.getSelectedIndex();
+    if (tab == 0) {
+      return "reference.project.structure.artifacts.output";
+    }
+    String helpId = ArtifactPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
+    return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
+  }
+
   private class MyDataProvider implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
