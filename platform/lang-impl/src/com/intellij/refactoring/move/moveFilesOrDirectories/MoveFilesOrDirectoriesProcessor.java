@@ -45,6 +45,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     "#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
 
   private final PsiElement[] myElementsToMove;
+  private final boolean mySearchForReferences;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
   private final PsiDirectory myNewParent;
@@ -60,9 +61,21 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     boolean searchInNonJavaFiles,
     MoveCallback moveCallback,
     Runnable prepareSuccessfulCallback) {
+    this(project, elements, newParent, true, searchInComments, searchInNonJavaFiles, moveCallback, prepareSuccessfulCallback);
+  }
+
+  public MoveFilesOrDirectoriesProcessor(
+    Project project,
+    PsiElement[] elements,
+    PsiDirectory newParent,
+    final boolean searchForReferences, boolean searchInComments,
+    boolean searchInNonJavaFiles,
+    MoveCallback moveCallback,
+    Runnable prepareSuccessfulCallback) {
     super(project, prepareSuccessfulCallback);
     myElementsToMove = elements;
     myNewParent = newParent;
+    mySearchForReferences = searchForReferences;
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
@@ -87,6 +100,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   private void findElementUsages(ArrayList<UsageInfo> result, PsiElement element) {
+    if (!mySearchForReferences) {
+      return;
+    }
     if (element instanceof PsiFile) {
       final List<UsageInfo> usages = MoveFileHandler.forElement((PsiFile)element)
         .findUsages(((PsiFile)element), myNewParent, mySearchInComments, mySearchInNonJavaFiles);
@@ -94,7 +110,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         result.addAll(usages);
         myFoundUsages.put((PsiFile)element, usages);
       }
-    } else if (element instanceof PsiDirectory) {
+    }
+    else if (element instanceof PsiDirectory) {
       for (PsiElement childElement : element.getChildren()) {
         findElementUsages(result, childElement);
       }
