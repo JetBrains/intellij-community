@@ -76,22 +76,7 @@ public class SemServiceImpl extends SemService{
         }
       }
     });
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        clearCache();
-      }
 
-      @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
-        clearCache();
-      }
-
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        clearCache();
-      }
-    });
     ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
       public void run() {
         if (!isInsideAtomicChange()) {
