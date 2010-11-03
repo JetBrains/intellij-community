@@ -327,7 +327,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   public String setText(final String text, final String requestor) {
     if (text == null || text.length() == 0) {
-      if ((requestor == null && myCurrentRequestor == null) || (requestor != null && !requestor.equals(myCurrentRequestor))
+      if ((requestor != null && !requestor.equals(myCurrentRequestor))
           || (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor))) {
         return myInfoPanel.getText();
       }

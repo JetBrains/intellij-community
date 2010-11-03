@@ -213,11 +213,13 @@ def layoutLinux(Map args, String home, Paths paths) {
     [paths.distAll, paths.distUnix].each {
       tarfileset(dir: it, prefix: tarRoot) {
         exclude(name: "bin/*.sh")
+        exclude(name: "bin/fsnotifier*")
       }
     }
 
     tarfileset(dir: paths.distUnix, filemode: "755", prefix: tarRoot) {
       include(name: "bin/*.sh")
+      include(name: "bin/fsnotifier*")
     }
   }
 

@@ -88,8 +88,7 @@ public class FileWatcher {
         startupProcess();
       }
     }
-    catch (IOException e) {
-      // Ignore
+    catch (IOException ignore) {
     }
 
     if (notifierProcess != null) {
@@ -194,15 +193,21 @@ public class FileWatcher {
 
     shutdownProcess();
 
-    @NonNls final String executableName = SystemInfo.isWindows ? "fsnotifier.exe" : "fsnotifier";
+    @NonNls final String executableName = SystemInfo.isWindows ? "fsnotifier.exe"
+                                          : SystemInfo.isLinux && SystemInfo.isAMD64 ? "fsnotifier64"
+                                            : "fsnotifier";
 
-    String alternatePathToFilewatcherExecutable = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (alternatePathToFilewatcherExecutable != null) {
-      if (!new File(alternatePathToFilewatcherExecutable).exists()) {
-        alternatePathToFilewatcherExecutable = null;
+    String alternatePathToExecutable = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (alternatePathToExecutable != null) {
+      if (!new File(alternatePathToExecutable).isFile()) {
+        alternatePathToExecutable = null;
       }
     }
-    final String pathToExecutable = alternatePathToFilewatcherExecutable != null? FileUtil.toSystemDependentName(alternatePathToFilewatcherExecutable) : PathManager.getBinPath() + File.separatorChar + executableName;
+    final String pathToExecutable = alternatePathToExecutable != null
+                                    ? FileUtil.toSystemDependentName(alternatePathToExecutable)
+                                    : PathManager.getBinPath() + File.separatorChar + executableName;
+    if (!new File(pathToExecutable).canExecute()) return;
+
     notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
     
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
@@ -215,8 +220,7 @@ public class FileWatcher {
         try {
           writeLine(EXIT_COMMAND);
         }
-        catch (IOException e) {
-          // Do nothing
+        catch (IOException ignore) {
         }
       }
 
@@ -328,7 +332,7 @@ public class FileWatcher {
     }
   }
 
-  private String ensureEndsWithSlash(String path) {
+  private static String ensureEndsWithSlash(String path) {
     if (path.endsWith("/") || path.endsWith(File.separator)) return path;
     return path + '/';
   }

@@ -627,6 +627,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private static void lookupItemSelected(final CompletionProgressIndicator context, @NotNull final LookupElement item, final char completionChar,
                                          final List<LookupElement> items) {
+    if (context.getHandler().autopopup) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
+    }
+
     final Editor editor = context.getEditor();
     final PsiFile file = context.getParameters().getOriginalFile();
     final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor);

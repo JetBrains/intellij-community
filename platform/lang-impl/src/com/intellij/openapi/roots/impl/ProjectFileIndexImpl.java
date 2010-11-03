@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -76,7 +77,9 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   private DirectoryInfo getInfoForDirectory(@NotNull VirtualFile file) {
     if ((! myProject.isOpen()) || myProject.isDisposed()) {
-      throw new ProcessCanceledException();
+      if (StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
+        throw new ProcessCanceledException();
+      }
     }
     return myDirectoryIndex.getInfoForDirectory(file);
   }

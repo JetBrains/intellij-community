@@ -262,6 +262,7 @@ public class VcsUtil {
 
   @Nullable
   public static VirtualFile getVirtualFileWithRefresh(final File file) {
+    if (file == null) return null;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile result = lfs.findFileByIoFile(file);
     if (result == null) {
