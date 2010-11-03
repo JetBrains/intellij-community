@@ -15,14 +15,14 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
 public class EnvironmentUtil {
-  private static Map<String, String> ourEnviromentProperties = new ProcessBuilder().environment();
+  private static final Map<String, String> ourEnviromentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
 
   private EnvironmentUtil() {
   }
