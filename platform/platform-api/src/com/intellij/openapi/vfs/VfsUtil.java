@@ -144,7 +144,10 @@ public class VfsUtil {
           copyFile(requestor, child, toDir);
         }
         else {
-          VirtualFile newChild = toDir.createChildDirectory(requestor, child.getName());
+          VirtualFile newChild = toDir.findChild(child.getName());
+          if (newChild == null) {
+            newChild = toDir.createChildDirectory(requestor, child.getName());
+          }
           copyDirectory(requestor, child, newChild, filter);
         }
       }
