@@ -157,7 +157,7 @@
 
     <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingActionGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction" use-shortcut-of="CollapseAll"/>
+      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
       <separator/>
       <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
       <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
