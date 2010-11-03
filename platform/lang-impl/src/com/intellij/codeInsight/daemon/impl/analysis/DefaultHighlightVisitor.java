@@ -16,21 +16,16 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.concurrency.JobUtil;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -40,35 +35,25 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
-  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl() {
-    // need synchronize since several annotators can run concurrently
-    @Override
-    protected synchronized Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-      return super.createAnnotation(range, severity, message);
-    }
-  };
+  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
   private final DumbService myDumbService;
-  private ProgressIndicator myProgressIndicator;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
+    myAnnotationHolder.setSession(myAnnotationHolder.getCurrentAnnotationSession());
   }
                                                      
   public boolean suitableForFile(final PsiFile file) {
@@ -85,14 +70,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
-    myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       action.run();
     }
     finally {
-      synchronized (myAnnotationHolder) {
-        myAnnotationHolder.clear();
-      }
+      myAnnotationHolder.clear();
     }
     return true;
   }
@@ -105,52 +87,29 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return 2;
   }
 
-  private static final PerThreadMap<Annotator,Language> cachedAnnotators = new PerThreadMap<Annotator, Language>() {
-    @NotNull
-    @Override
-    public Collection<Annotator> initialValue(@NotNull Language key) {
-      return LanguageAnnotators.INSTANCE.allForLanguage(key);
-    }
-  };
-  
-  static {
-    LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
-      public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
-      }
-
-      public void extensionRemoved(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
-      }
-    });
-  }
-
   private void runAnnotators(final PsiElement element, final HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
-    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
+    List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
     annotationHolder.setSession(holder.getAnnotationSession());
 
-    if (!JobUtil.invokeConcurrentlyUnderProgress(annotators, new Processor<Annotator>() {
-      public boolean process(Annotator annotator) {
-        if (dumb && !DumbService.isDumbAware(annotator)) {
-          return true;
-        }
-
-        annotator.annotate(element, annotationHolder);
-        return true;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < annotators.size(); i++) {
+      Annotator annotator = annotators.get(i);
+      if (dumb && !DumbService.isDumbAware(annotator)) {
+        continue;
       }
-    }, true, myProgressIndicator)) throw new ProcessCanceledException();
 
-    synchronized (annotationHolder) {
-      if (annotationHolder.hasAnnotations()) {
-        for (Annotation annotation : annotationHolder) {
-          holder.add(HighlightInfo.fromAnnotation(annotation));
-        }
-        annotationHolder.clear();
-      }
-      annotationHolder.setSession(null);
+      annotator.annotate(element, annotationHolder);
     }
+
+    if (annotationHolder.hasAnnotations()) {
+      for (Annotation annotation : annotationHolder) {
+        holder.add(HighlightInfo.fromAnnotation(annotation));
+      }
+      annotationHolder.clear();
+    }
+    annotationHolder.setSession(null);
   }
 
   private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {
