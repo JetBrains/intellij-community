@@ -47,10 +47,17 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
    * @param virtualFileFilter preliminary filter for facet descriptor file
    * @param psiFileFilter filter for facet descriptors
    * @param detector detector
+   *
+   * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
+   * Use {@link #registerUniversalDetector} instead
    */
   void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull Condition<PsiFile> psiFileFilter,
                                 @NotNull FacetDetector<PsiFile, C> detector);
 
+  /**
+   * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
+   * Use {@link #registerUniversalDetector} instead
+   */
   void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
                                 @NotNull ElementPattern<? extends PsiFile> psiFilePattern, @NotNull FacetDetector<PsiFile, C> facetDetector);
 
@@ -61,6 +68,9 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
    * @param psiFilePattern filter for facet descriptors
    * @param facetDetector detector
    * @param selector {@link UnderlyingFacetSelector} instance which will be used to select a parent facet for a detected facet
+   *
+   * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
+   * Use {@link #registerUniversalSubFacetDetector} instead
    */
   <U extends FacetConfiguration>
   void registerOnTheFlySubFacetDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
