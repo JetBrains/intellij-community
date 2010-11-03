@@ -46,13 +46,15 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
+    final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
 
-    if(node.getText() != null) {
-      node.getText().appendToComponent(this);
+    if (node != null) {
+      final SimpleColoredText text = node.getText();
+      if (text != null) {
+        text.appendToComponent(this);
+      }
+      setIcon(node.getIcon());
     }
-
-    setIcon(node.getIcon());
   }
 
   @Nullable
