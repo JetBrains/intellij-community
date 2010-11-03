@@ -21,6 +21,7 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -53,24 +54,24 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public String[] getNames(final boolean checkBoxState) {
     final Set<String> names = new ConcurrentHashSet<String>();
 
-    JobUtil.invokeConcurrentlyUnderMyProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
       @Override
       public boolean process(ChooseByNameContributor contributor) {
         try {
           ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
         }
-        catch(ProcessCanceledException ex) {
+        catch (ProcessCanceledException ex) {
           // index corruption detected, ignore
         }
-        catch(IndexNotReadyException ex) {
+        catch (IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
           LOG.error(ex);
         }
         return true;
       }
-    }, false);
+    }, false, ProgressManager.getInstance().getProgressIndicator());
 
     return ArrayUtil.toStringArray(names);
   }
@@ -100,7 +101,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
-    JobUtil.invokeConcurrentlyUnderMyProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
       @Override
       public boolean process(ChooseByNameContributor contributor) {
         try {
@@ -118,7 +119,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         }
         return true;
       }
-    }, false);
+    }, false, ProgressManager.getInstance().getProgressIndicator());
     
     return ArrayUtil.toObjectArray(items);
   }

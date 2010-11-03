@@ -173,7 +173,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        if (!JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
+        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, new Processor<Property>() {
           public boolean process(final Property property) {
             if (original != null) {
               if (original.isCanceled()) return false;
@@ -183,7 +183,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
             processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
             return true;
           }
-        }, false)) throw new ProcessCanceledException();
+        }, false, progress)) throw new ProcessCanceledException();
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         Map<String, Set<String>> keyToDifferentValues = new HashMap<String, Set<String>>();

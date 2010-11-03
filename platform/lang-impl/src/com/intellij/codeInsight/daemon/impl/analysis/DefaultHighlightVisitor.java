@@ -29,6 +29,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -61,6 +63,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
   private final DumbService myDumbService;
+  private ProgressIndicator myProgressIndicator;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
@@ -82,6 +85,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
+    myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       action.run();
     }
@@ -127,7 +131,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     final boolean dumb = myDumbService.isDumb();
     annotationHolder.setSession(holder.getAnnotationSession());
 
-    if (!JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
+    if (!JobUtil.invokeConcurrentlyUnderProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
         if (dumb && !DumbService.isDumbAware(annotator)) {
           return true;
@@ -136,7 +140,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         annotator.annotate(element, annotationHolder);
         return true;
       }
-    }, true)) throw new ProcessCanceledException();
+    }, true, myProgressIndicator)) throw new ProcessCanceledException();
 
     synchronized (annotationHolder) {
       if (annotationHolder.hasAnnotations()) {
