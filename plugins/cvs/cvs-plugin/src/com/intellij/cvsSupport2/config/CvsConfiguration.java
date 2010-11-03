@@ -17,8 +17,8 @@ package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -82,7 +82,7 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
 
 
   public static CvsConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, CvsConfiguration.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsConfiguration.class);
   }
 
   public static VcsShowConfirmationOption.Value convertToEnumValue(boolean value, boolean onOk) {

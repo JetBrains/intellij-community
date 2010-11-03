@@ -15,8 +15,8 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -102,7 +102,7 @@ public class GitProjectLogManager {
   }
 
   public static GitProjectLogManager getInstance(final Project project) {
-    return ServiceManager.getService(project, GitProjectLogManager.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitProjectLogManager.class);
   }
 
   /*public void projectClosed() {
