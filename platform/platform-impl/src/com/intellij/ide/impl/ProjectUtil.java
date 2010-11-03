@@ -183,7 +183,7 @@ public class ProjectUtil {
 
   public static int confirmOpenNewProject() {
     final GeneralSettings settings = GeneralSettings.getInstance();
-    if (settings.getConfirmOpenNewProject() < 0) {
+    if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       return Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
                                  new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
                                        CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(),
