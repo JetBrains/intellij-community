@@ -394,7 +394,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     for (String testName : testNames) {
       final PsiClass psiClass =
-          facade.findClass(testName.substring(0, testName.lastIndexOf(".")), GlobalSearchScope.projectScope(project));
+          facade.findClass(StringUtil.getPackageName(testName), GlobalSearchScope.projectScope(project));
       if (psiClass != null) {
         final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(testName.lastIndexOf(".") + 1), true);
         if (testsByName.length == 1) {
