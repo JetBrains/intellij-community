@@ -78,7 +78,7 @@ public abstract class ResourceInspection extends BaseInspection {
             while (parentStatement != null &&
                     !(parentStatement instanceof PsiTryStatement)) {
                 parentStatement =
-                        PsiTreeUtil.getParentOfType(statement,
+                        PsiTreeUtil.getParentOfType(parentStatement,
                                 PsiStatement.class);
             }
             if (parentStatement != null) {
