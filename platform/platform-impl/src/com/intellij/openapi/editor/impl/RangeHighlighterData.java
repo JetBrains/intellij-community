@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -225,17 +226,18 @@ class RangeHighlighterData {
     myModel.removeHighlighter(rangeHighlighter);
   }
 
-  public void changeAttributesInBatch(@NotNull Runnable change) {
+  // returns true if change was detected
+  boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
     inBatchChange = true;
+    boolean result;
     try {
-      change.run();
+      change.consume(rangeHighlighter);
     }
     finally {
       inBatchChange = false;
-      if (changed) {
-        changed= false;
-        ((MarkupModelImpl)myModel).fireAttributesChanged(rangeHighlighter);
-      }
+      result = changed;
+      changed = false;
     }
+    return result;
   }
 }

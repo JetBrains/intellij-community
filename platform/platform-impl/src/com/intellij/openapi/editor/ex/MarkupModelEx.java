@@ -17,9 +17,11 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +45,18 @@ public interface MarkupModelEx extends MarkupModel, Iterable<RangeHighlighterEx>
   boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   @NotNull
   Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval);
+
+  // optimization: creates highlighter and fires only one event: highlighterCreated
+  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                          int endOffset,
+                                                          int layer,
+                                                          TextAttributes textAttributes,
+                                                          HighlighterTargetArea targetArea,
+                                                          boolean isPersistent,
+                                                          Consumer<RangeHighlighterEx> changeAttributesAction);
+
+  // runs change attributes action and fires highlighterChanged event if there were changes
+  void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
 
   interface SweepProcessor<T> {
     boolean process(int offset, T interval, boolean atStart, Collection<T> overlappingIntervals);
