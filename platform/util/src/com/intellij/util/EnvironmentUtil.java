@@ -16,129 +16,23 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 
 public class EnvironmentUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
-  private static Map<String, String> ourEnviromentProperties;
+  private static Map<String, String> ourEnviromentProperties = new ProcessBuilder().environment();
 
   private EnvironmentUtil() {
-
   }
 
   public static @NonNls Map<String, String> getEnviromentProperties() {
-    if (ourEnviromentProperties == null) {
-      List vars = getProcEnvironment();
-      ourEnviromentProperties = new HashMap<String, String>();
-      if (vars != null) {
-        for (Iterator i = vars.iterator(); i.hasNext();) {
-          String entry = (String)i.next();
-          int pos = entry.indexOf('=');
-          if (pos != -1) {
-            String prop = entry.substring(0, pos);
-            String val = entry.substring(pos + 1);
-            //if (SystemInfo.isWindows) prop = prop.toLowerCase();
-            ourEnviromentProperties.put(prop, val);
-          }
-        }
-      }
-    }
-
     return ourEnviromentProperties;
   }
 
   public static String[] getFlattenEnvironmentProperties() {
-    ArrayList<String> result = new ArrayList<String>();
-    Map<String, String> enviromentProperties = getEnviromentProperties();
-    if (enviromentProperties != null) {
-      for (Iterator iterator = enviromentProperties.keySet().iterator(); iterator.hasNext();) {
-        String envName = (String)iterator.next();
-        result.add(envName + "=" + enviromentProperties.get(envName));
-      }
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  private static synchronized List getProcEnvironment() {
-    List procEnvironment = new ArrayList();
-
-    try {
-      String[] procEnvCommand = getProcEnvCommand();
-      Process process = Runtime.getRuntime().exec(procEnvCommand);
-      if (process == null) return null;
-      InputStream processIn = process.getInputStream();
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      while (true) {
-        int b = processIn.read();
-        if (b < 0) break;
-        out.write(b);
-      }
-      int exitCode = process.waitFor();
-      if (exitCode < 0) return null;
-//      process.destroy();
-
-      BufferedReader in = new BufferedReader(new StringReader(out.toString()));
-
-      String var = null;
-      String line;
-      String lineSep = SystemProperties.getLineSeparator();
-      while ((line = in.readLine()) != null) {
-        if (line.indexOf('=') == -1) {
-          if (var == null) {
-            var = lineSep + line;
-          }
-          else {
-            var += lineSep + line;
-          }
-        }
-        else {
-          if (var != null) {
-            procEnvironment.add(var);
-          }
-          var = line;
-        }
-      }
-      if (var != null) {
-        procEnvironment.add(var);
-      }
-    }
-    catch (Throwable exc) {
-      LOG.debug(exc);
-    }
-
-    return procEnvironment;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String[] getProcEnvCommand() {
-    if (SystemInfo.isOS2) {
-      String[] cmd = {"cmd", "/c", "set"};
-      return cmd;
-    }
-    else if (SystemInfo.isWindows) {
-      if (!SystemInfo.isWindows9x) {
-        String[] cmd = {"cmd", "/c", "set"};
-        return cmd;
-      }
-      else {
-        String[] cmd = {"command.com", "/c", "set"};
-        return cmd;
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      String[] cmd = {"/usr/bin/env"};
-      return cmd;
-    }
-
-    return null;
+    return getEnvironment();
   }
 
   public static String[] getEnvironment() {
