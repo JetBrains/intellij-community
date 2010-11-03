@@ -45,6 +45,8 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FILE = true;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_FILE = true;
 
+  public boolean RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = true;
+
   public RefactoringSettings getState() {
     return this;
   }

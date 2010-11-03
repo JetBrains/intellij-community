@@ -15,8 +15,8 @@
  */
 package git4idea.config;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -223,7 +223,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     if (project == null || project.isDisposed()) {
       return null;
     }
-    return ServiceManager.getService(project, GitVcsSettings.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
   }
 
   /**

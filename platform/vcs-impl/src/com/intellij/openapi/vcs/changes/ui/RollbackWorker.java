@@ -155,7 +155,7 @@ public class RollbackWorker {
 
       doRefresh(myProject, changesToRefresh);
 
-      AbstractVcsHelper.getInstanceChecked(myProject).showErrors(myExceptions, VcsBundle.message("changes.action.rollback.text"));
+      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("changes.action.rollback.text"));
     }
 
     private void doRefresh(final Project project, final List<Change> changesToRefresh) {

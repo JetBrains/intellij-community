@@ -16,7 +16,11 @@
 
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.*;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -47,7 +51,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
     Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
 
   public static IssueNavigationConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, IssueNavigationConfiguration.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
   }
 
   private List<IssueNavigationLink> myLinks = new ArrayList<IssueNavigationLink>();

@@ -36,16 +36,9 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
   public CharSequence decompile(final VirtualFile file) {
     assert file.getFileType() == StdFileTypes.CLASS;
 
-    final Project project;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      project = ((ProjectManagerEx)ProjectManager.getInstance()).getCurrentTestProject();
-      assert project != null;
-    }
-    else {
-      final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      if (projects.length == 0) return "";
-      project = projects[0];
-    }
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0) return "";
+    final Project project = projects[0];
 
     final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
     for (ContentBasedClassFileProcessor processor : processors) {

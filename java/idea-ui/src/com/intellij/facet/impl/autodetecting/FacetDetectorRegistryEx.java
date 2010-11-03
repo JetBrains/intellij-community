@@ -100,14 +100,11 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
     VirtualFilePattern wizardPattern = fileNamePattern.xmlWithRootTag(StandardPatterns.string().equalTo(rootTag));
 
     if (underlyingFacetSelector != null) {
-      registerSubFacetDetectorForWizard(StdFileTypes.XML, wizardPattern, detector, underlyingFacetSelector);
+      registerUniversalSubFacetDetector(StdFileTypes.XML, wizardPattern, detector, underlyingFacetSelector);
     }
     else {
-      registerDetectorForWizard(StdFileTypes.XML, wizardPattern, detector);
+      registerUniversalDetector(StdFileTypes.XML, wizardPattern, detector);
     }
-
-    registerOnTheFlySubFacetDetector(StdFileTypes.XML, fileNamePattern, XmlPatterns.xmlFile().withRootTag(XmlPatterns.xmlTag().withName(rootTag)),
-                             convertDetector(detector), underlyingFacetSelector);
   }
 
   public void registerDetectorForWizard(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {

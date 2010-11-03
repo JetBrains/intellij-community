@@ -16,10 +16,10 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +69,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public static SvnBranchConfigurationManager getInstance(final Project project) {
-    return ServiceManager.getService(project, SvnBranchConfigurationManager.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
   }
 
   public static class ConfigurationBean {

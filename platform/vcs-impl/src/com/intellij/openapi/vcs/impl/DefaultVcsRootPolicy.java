@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public abstract class DefaultVcsRootPolicy {
   public static DefaultVcsRootPolicy getInstance(Project project) {
-    return ServiceManager.getService(project, DefaultVcsRootPolicy.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, DefaultVcsRootPolicy.class);
   }
 
   public abstract void addDefaultVcsRoots(final NewMappings mappingList, AbstractVcs vcs, List<VirtualFile> result);

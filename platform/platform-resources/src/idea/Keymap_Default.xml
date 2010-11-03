@@ -375,6 +375,10 @@
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
   <action id="PreviousOccurence">
     <keyboard-shortcut first-keystroke="control alt UP"/>
   </action>
