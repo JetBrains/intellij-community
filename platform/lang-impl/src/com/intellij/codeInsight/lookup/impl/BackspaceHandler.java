@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
@@ -36,6 +37,10 @@ public class BackspaceHandler extends EditorActionHandler {
     if (lookup == null){
       myOriginalHandler.execute(editor, dataContext);
       return;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("backspace");
     }
 
     lookup.performGuardedChange(new Runnable() {
@@ -55,6 +60,10 @@ public class BackspaceHandler extends EditorActionHandler {
     if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
       final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
       if (process instanceof CompletionProgressIndicator) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("restaring");
+        }
+
         ((CompletionProgressIndicator)process).scheduleRestart();
         return;
       }

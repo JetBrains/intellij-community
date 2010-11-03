@@ -193,11 +193,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = scope.getScope();
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
-      return JobUtil.invokeConcurrentlyUnderMyProgress(Arrays.asList(scopeElements), new Processor<PsiElement>() {
+      return JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), new Processor<PsiElement>() {
         public boolean process(PsiElement scopeElement) {
           return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
         }
-      }, false);
+      }, false, progress);
     }
   }
 
@@ -251,7 +251,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
       final int size = files.size();
-      boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(files, new Processor<VirtualFile>() {
+      boolean completed = JobUtil.invokeConcurrentlyUnderProgress(files, new Processor<VirtualFile>() {
         public boolean process(final VirtualFile vfile) {
           final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
             public PsiFile compute() {
@@ -288,7 +288,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
           return !canceled.get();
         }
-      }, false);
+      }, false, progress);
 
       if (pceThrown.get()) {
         throw new ProcessCanceledException();

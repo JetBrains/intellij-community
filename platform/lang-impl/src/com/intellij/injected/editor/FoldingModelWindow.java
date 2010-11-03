@@ -27,7 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +64,13 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
-    return region == null || addFoldRegion(region) ? region : null;
+    if (region == null) return null;
+    if (!addFoldRegion(region)) {
+      region.dispose();
+      return null;
+    }
+
+    return region;
   }
 
   public boolean addFoldRegion(@NotNull final FoldRegion region) {

@@ -18,9 +18,9 @@ package net.sf.cglib.proxy;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.util.ReflectionCache;
-import net.sf.cglib.asm.ClassVisitor;
-import net.sf.cglib.asm.Label;
-import net.sf.cglib.asm.Type;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 import net.sf.cglib.core.*;
 
 import java.lang.reflect.Constructor;
@@ -505,18 +505,18 @@ public class AdvancedEnhancer extends AbstractClassGenerator
                   Constants.SOURCE_FILE);
     List constructorInfo = CollectionUtils.transform(constructors, MethodInfoTransformer.getInstance());
 
-    e.declare_field(Constants.ACC_PRIVATE, BOUND_FIELD, Type.BOOLEAN_TYPE, null, null);
+    e.declare_field(Constants.ACC_PRIVATE, BOUND_FIELD, Type.BOOLEAN_TYPE, null);
     if (!interceptDuringConstruction) {
-      e.declare_field(Constants.ACC_PRIVATE, CONSTRUCTED_FIELD, Type.BOOLEAN_TYPE, null, null);
+      e.declare_field(Constants.ACC_PRIVATE, CONSTRUCTED_FIELD, Type.BOOLEAN_TYPE, null);
     }
-    e.declare_field(Constants.PRIVATE_FINAL_STATIC, THREAD_CALLBACKS_FIELD, THREAD_LOCAL, null, null);
-    e.declare_field(Constants.PRIVATE_FINAL_STATIC, STATIC_CALLBACKS_FIELD, CALLBACK_ARRAY, null, null);
+    e.declare_field(Constants.PRIVATE_FINAL_STATIC, THREAD_CALLBACKS_FIELD, THREAD_LOCAL, null);
+    e.declare_field(Constants.PRIVATE_FINAL_STATIC, STATIC_CALLBACKS_FIELD, CALLBACK_ARRAY, null);
     if (serialVersionUID != null) {
-      e.declare_field(Constants.PRIVATE_FINAL_STATIC, Constants.SUID_FIELD_NAME, Type.LONG_TYPE, serialVersionUID, null);
+      e.declare_field(Constants.PRIVATE_FINAL_STATIC, Constants.SUID_FIELD_NAME, Type.LONG_TYPE, serialVersionUID);
     }
 
     for (int i = 0; i < callbackTypes.length; i++) {
-      e.declare_field(Constants.ACC_PRIVATE, getCallbackField(i), callbackTypes[i], null, null);
+      e.declare_field(Constants.ACC_PRIVATE, getCallbackField(i), callbackTypes[i], null);
     }
     final Map<Method, MethodInfo> methodInfoMap = new HashMap<Method, MethodInfo>();
     for (Method method : actualMethods) {
@@ -792,7 +792,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitGetCallback(ClassEmitter ce, int[] keys) {
-    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, GET_CALLBACK, null, null);
+    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, GET_CALLBACK, null);
     e.load_this();
     e.invoke_static_this(BIND_CALLBACKS);
     e.load_this();
@@ -812,7 +812,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitSetCallback(ClassEmitter ce, int[] keys) {
-    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SET_CALLBACK, null, null);
+    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SET_CALLBACK, null);
     e.load_this();
     e.load_arg(1);
     e.load_arg(0);
@@ -835,7 +835,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitSetCallbacks(ClassEmitter ce) {
-    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SET_CALLBACKS, null, null);
+    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SET_CALLBACKS, null);
     e.load_this();
     e.load_arg(0);
     for (int i = 0; i < callbackTypes.length; i++) {
@@ -849,7 +849,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitGetCallbacks(ClassEmitter ce) {
-    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, GET_CALLBACKS, null, null);
+    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, GET_CALLBACKS, null);
     e.load_this();
     e.invoke_static_this(BIND_CALLBACKS);
     e.load_this();
@@ -867,7 +867,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitNewInstanceCallbacks(ClassEmitter ce) {
-    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, NEW_INSTANCE, null, null);
+    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, NEW_INSTANCE, null);
     e.load_arg(0);
     e.invoke_static_this(SET_THREAD_CALLBACKS);
     emitCommonNewInstance(e);
@@ -884,7 +884,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitNewInstanceCallback(ClassEmitter ce) {
-    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SINGLE_NEW_INSTANCE, null, null);
+    CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SINGLE_NEW_INSTANCE, null);
     switch (callbackTypes.length) {
       case 0:
         // TODO: make sure Callback is null
@@ -906,7 +906,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private void emitNewInstanceMultiarg(ClassEmitter ce, List constructors) {
-    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, MULTIARG_NEW_INSTANCE, null, null);
+    final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, MULTIARG_NEW_INSTANCE, null);
     e.load_arg(2);
     e.invoke_static_this(SET_THREAD_CALLBACKS);
     e.new_instance_this();
@@ -974,6 +974,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     se.putfield(THREAD_CALLBACKS_FIELD);
 
     CallbackGenerator.Context context = new CallbackGenerator.Context() {
+      public ClassLoader getClassLoader() {
+  	return AdvancedEnhancer.this.getClassLoader();
+      }
       public int getOriginalModifiers(MethodInfo method) {
         return originalModifiers.get(method);
       }
@@ -1028,7 +1031,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private void emitSetThreadCallbacks(ClassEmitter ce) {
     CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC | Constants.ACC_STATIC,
                                     SET_THREAD_CALLBACKS,
-                                    null,
                                     null);
     e.getfield(THREAD_CALLBACKS_FIELD);
     e.load_arg(0);
@@ -1040,7 +1042,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private void emitSetStaticCallbacks(ClassEmitter ce) {
     CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC | Constants.ACC_STATIC,
                                     SET_STATIC_CALLBACKS,
-                                    null,
                                     null);
     e.load_arg(0);
     e.putfield(STATIC_CALLBACKS_FIELD);
@@ -1065,7 +1066,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private void emitBindCallbacks(ClassEmitter ce) {
     CodeEmitter e = ce.begin_method(Constants.PRIVATE_FINAL_STATIC,
                                     BIND_CALLBACKS,
-                                    null,
                                     null);
     Local me = e.make_local();
     e.load_arg(0);

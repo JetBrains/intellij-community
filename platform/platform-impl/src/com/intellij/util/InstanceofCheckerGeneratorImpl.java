@@ -17,9 +17,9 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import net.sf.cglib.asm.ClassVisitor;
-import net.sf.cglib.asm.Label;
-import net.sf.cglib.asm.Type;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 import net.sf.cglib.core.*;
 
 import java.lang.reflect.Modifier;
@@ -82,16 +82,17 @@ public class InstanceofCheckerGeneratorImpl extends InstanceofCheckerGenerator {
     public void generateClass(ClassVisitor classVisitor) throws Exception {
       ClassEmitter cv = new ClassEmitter(classVisitor);
 
-      cv.visit(Constants.V1_2, Modifier.PUBLIC, "com/intellij/util/InstanceofChecker$$$$$" + myCheckedClass.getName().replace('.', '$'), toInternalName(Object.class), new String[]{toInternalName(Condition.class)}, Constants.SOURCE_FILE);
+      cv.visit(Constants.V1_2, Modifier.PUBLIC, "com/intellij/util/InstanceofChecker$$$$$" + myCheckedClass.getName().replace('.', '$'), null, toInternalName(Object.class), new String[]{toInternalName(Condition.class)});
+      cv.visitSource(Constants.SOURCE_FILE, null);
       final Signature signature = new Signature("<init>", "()V");
-      final CodeEmitter cons = cv.begin_method(Modifier.PUBLIC, signature, new Type[0], null);
+      final CodeEmitter cons = cv.begin_method(Modifier.PUBLIC, signature, new Type[0]);
       cons.load_this();
       cons.dup();
       cons.super_invoke_constructor(signature);
       cons.return_value();
       cons.end_method();
 
-      final CodeEmitter e = cv.begin_method(Modifier.PUBLIC, new Signature("value", "(L" + toInternalName(Object.class) + ";)Z"), new Type[0], null);
+      final CodeEmitter e = cv.begin_method(Modifier.PUBLIC, new Signature("value", "(L" + toInternalName(Object.class) + ";)Z"), new Type[0]);
       e.load_arg(0);
       e.instance_of(Type.getType(myCheckedClass));
 

@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -92,7 +93,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManagerImpl.getInstance()).cleanupForNextTest();
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
@@ -152,16 +153,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
-    if (toInitializeDaemon) {
-      daemonCodeAnalyzer.projectOpened();
-    }
-    daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+    daemonCodeAnalyzer.prepareForTest(toInitializeDaemon);
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
-
-    myRunCommandForTest = wrapInCommand();
+    myRunCommandForTest = !annotatedWith(DoNotWrapInCommand.class);
   }
 
   @Override
@@ -171,7 +168,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       DaemonCodeAnalyzer.getInstance(getProject()).projectClosed();
     }
     super.tearDown();
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManagerImpl.getInstance()).assertPointersDisposed();
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
@@ -331,15 +328,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @Target({ElementType.METHOD, ElementType.TYPE})
   public @interface DoNotWrapInCommand {}
 
-  private boolean wrapInCommand() {
-    return !annotatedWith(DoNotWrapInCommand.class);
-  }
-
   private boolean annotatedWith(Class annotationClass) {
-    String methodName = "test" + getTestName(false);
     Class aClass = getClass();
     if (aClass.getAnnotation(annotationClass) != null) return true;
     Method method = null;
+    String methodName = "test" + getTestName(false);
     while (aClass != null) {
       try {
         method = aClass.getDeclaredMethod(methodName);

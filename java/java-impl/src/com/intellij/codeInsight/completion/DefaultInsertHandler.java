@@ -21,7 +21,6 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -103,7 +102,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
     }
 
-    if (tailType == TailType.DOT){
+    if (tailType == TailType.DOT && !(item.getObject() instanceof PsiClass)) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 

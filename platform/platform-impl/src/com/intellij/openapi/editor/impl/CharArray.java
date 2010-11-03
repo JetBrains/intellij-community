@@ -43,20 +43,25 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myBufferSize = bufferSize;
   }
 
-  protected abstract DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced);
+  protected abstract DocumentEvent beforeChangedUpdate(DocumentImpl subj,
+                                                       int offset,
+                                                       CharSequence oldString,
+                                                       CharSequence newString,
+                                                       boolean wholeTextReplaced);
   protected abstract void afterChangedUpdate(DocumentEvent event, long newModificationStamp);
 
-  public void setText(CharSequence chars) {
+  public void setText(DocumentImpl subj, CharSequence chars) {
     myOriginalSequence = chars;
     myArray = null;
     myCount = chars.length();
     myStringRef = null;
-    trimToSize();
+    trimToSize(subj);
   }
 
-  public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp,
+  public void replace(DocumentImpl subj,
+                      int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp,
                       boolean wholeTextReplaced) {
-    final DocumentEvent event = beforeChangedUpdate(startOffset, toDelete, newString, wholeTextReplaced);
+    final DocumentEvent event = beforeChangedUpdate(subj, startOffset, toDelete, newString, wholeTextReplaced);
     doReplace(startOffset, endOffset, newString);
     afterChangedUpdate(event, newModificationStamp);
   }
@@ -77,8 +82,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
     }
   }
 
-  public void remove(int startIndex, int endIndex, CharSequence toDelete) {
-    DocumentEvent event = beforeChangedUpdate(startIndex, toDelete, null, false);
+  public void remove(DocumentImpl subj, int startIndex, int endIndex, CharSequence toDelete) {
+    DocumentEvent event = beforeChangedUpdate(subj, startIndex, toDelete, null, false);
     doRemove(startIndex, endIndex);
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
   }
@@ -95,12 +100,12 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myCount -= endIndex - startIndex;
   }
 
-  public void insert(CharSequence s, int startIndex) {
-    DocumentEvent event = beforeChangedUpdate(startIndex, null, s, false);
+  public void insert(DocumentImpl subj, CharSequence s, int startIndex) {
+    DocumentEvent event = beforeChangedUpdate(subj, startIndex, null, s, false);
     doInsert(s, startIndex);
 
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
-    trimToSize();
+    trimToSize(subj);
   }
 
   private void doInsert(final CharSequence s, final int startIndex) {
@@ -207,10 +212,10 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return newArray;
   }
 
-  private void trimToSize() {
+  private void trimToSize(DocumentImpl subj) {
     if (myBufferSize != 0 && myCount > myBufferSize) {
       // make a copy
-      remove(0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
+      remove(subj,0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
     }
   }
 }

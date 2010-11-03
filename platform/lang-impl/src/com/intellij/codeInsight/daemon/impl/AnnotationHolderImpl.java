@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -84,6 +85,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
     //noinspection HardCodedStringLiteral
     //TODO: FIXME
+    @NonNls
     String tooltip = message == null ? null : "<html><body>" + XmlStringUtil.escapeString(message) + "</body></html>";
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);

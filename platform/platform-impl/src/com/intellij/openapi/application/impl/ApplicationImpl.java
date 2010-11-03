@@ -105,7 +105,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile boolean myDisposeInProgress = false;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
+  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
     System.getProperty("dump.threads.on.long.write.action.waiting"), 0);
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
@@ -786,10 +786,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             try {
               Thread.sleep(ourDumpThreadsOnLongWriteActionWaiting);
               if (!stopped.get()) {
-                getComponent(PerformanceWatcher.class).dumpThreads(true);
+                PerformanceWatcher.getInstance().dumpThreads(true);
               }
             }
-            catch (InterruptedException e) {
+            catch (InterruptedException ignored) {
             }
           }
         }
@@ -899,7 +899,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private static void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
-
   }
 
   public void assertIsDispatchThread() {

@@ -53,6 +53,13 @@ abstract class FoldRegionsTree {
     myCachedEndOffsets = null;
     myCachedStartOffsets = null;
     myCachedFoldedLines = null;
+
+    if (myRegions != null) {
+      for (FoldRegion region : myRegions) {
+        region.dispose();
+      }
+    }
+
     myRegions = new ArrayList<FoldRegion>();
   }
 

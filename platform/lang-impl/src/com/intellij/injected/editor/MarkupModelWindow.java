@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +58,25 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
                                               @NotNull final HighlighterTargetArea targetArea) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighter(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, targetArea);
+  }
+
+  @Override
+  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                   int endOffset,
+                                                                   int layer,
+                                                                   TextAttributes textAttributes,
+                                                                   HighlighterTargetArea targetArea,
+                                                                   boolean isPersistent,
+                                                                   Consumer<RangeHighlighterEx> changeAttributesAction) {
+    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
+    return myHostModel.addRangeHighlighterAndChangeAttributes(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes,
+                                                              targetArea, isPersistent, changeAttributesAction);
+  }
+
+  @Override
+  public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
+    myHostModel.changeAttributesInBatch(highlighter, changeAttributesAction);
   }
 
   @NotNull
@@ -124,5 +144,4 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
     // todo convert
     return myHostModel.sweep(start, end, sweepProcessor);
   }
-
 }

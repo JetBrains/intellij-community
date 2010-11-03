@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="JMock1" level="project" />
+    <orderEntry type="library" scope="TEST" name="asm" level="project" />
     <orderEntry type="library" scope="TEST" name="CGLIB" level="project" />
     <orderEntry type="library" name="Mocks" level="project" />
   </component>

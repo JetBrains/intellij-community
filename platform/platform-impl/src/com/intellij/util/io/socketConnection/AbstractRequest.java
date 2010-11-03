@@ -18,8 +18,8 @@ package com.intellij.util.io.socketConnection;
 /**
  * @author nik
  */
-public abstract class AbstractRequest {
+public interface AbstractRequest {
 
-  public abstract int getId();
+  int getId();
 
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,6 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -45,7 +44,6 @@ public class PerformanceWatcher implements ApplicationComponent {
   private int mySwingThreadCounter;
   private final Semaphore myShutdownSemaphore = new Semaphore(1);
   private ThreadMXBean myThreadMXBean;
-  private Method myDumpAllThreadsMethod;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   //private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private File myLogDir;
@@ -56,12 +54,18 @@ public class PerformanceWatcher implements ApplicationComponent {
   private int UNRESPONSIVE_THRESHOLD = 5;
   private int UNRESPONSIVE_INTERVAL = 5;
 
+  public static PerformanceWatcher getInstance() {
+    return ServiceManager.getService(PerformanceWatcher.class);
+  }
+
   @NotNull
   public String getComponentName() {
     return "PerformanceWatcher";
   }
 
   public void initComponent() {
+    myThreadMXBean = ManagementFactory.getThreadMXBean();
+
     if (shallNotWatch()) return;
 
     final String threshold = System.getProperty("performance.watcher.threshold");
@@ -96,14 +100,6 @@ public class PerformanceWatcher implements ApplicationComponent {
                         + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myLogDir.mkdirs();
     myCurHangLogDir = myLogDir;
-    myThreadMXBean = ManagementFactory.getThreadMXBean();
-    // this method was added in JDK 1.6 so we have to all it through reflection
-    try {
-      myDumpAllThreadsMethod = ThreadMXBean.class.getMethod("dumpAllThreads", boolean.class, boolean.class);
-    }
-    catch (NoSuchMethodException e) {
-      myDumpAllThreadsMethod = null;
-    }
 
     try {
       myShutdownSemaphore.acquire();
@@ -226,45 +222,44 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  private void dumpThreadsToFile(final OutputStreamWriter f) {
+  public static void dumpThreadsToConsole() {
+    getInstance().dumpThreadsToFile(new OutputStreamWriter(System.err));
+  }
+
+  public static String dumpThreadsToString() {
+    StringWriter writer = new StringWriter();
+    getInstance().dumpThreadsToFile(writer);
+    return writer.toString();
+  }
+
+  private void dumpThreadsToFile(final Writer f) {
     boolean dumpSuccessful = false;
-    if (myDumpAllThreadsMethod != null) {
-        try {
-          ThreadInfo[] threads = (ThreadInfo[])myDumpAllThreadsMethod.invoke(myThreadMXBean, false, false);
-          for(ThreadInfo info: threads) {
-            if (info != null) {
-              dumpThreadInfo(info, f);
-            }
-          }
-          dumpSuccessful = true;
+
+    try {
+      ThreadInfo[] threads = myThreadMXBean.dumpAllThreads(false, false);
+      for(ThreadInfo info: threads) {
+        if (info != null) {
+          dumpThreadInfo(info, f);
         }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
-          e.printStackTrace();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+      }
+      dumpSuccessful = true;
     }
+    catch (Exception ignored) {
+
+    }
+
     if (!dumpSuccessful) {
       final long[] threadIds = myThreadMXBean.getAllThreadIds();
       final ThreadInfo[] threadInfo = myThreadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
       for (ThreadInfo info : threadInfo) {
         if (info != null) {
-          try {
-            dumpThreadInfo(info, f);
-          }
-          catch (IOException e) {
-            e.printStackTrace();
-          }
+          dumpThreadInfo(info, f);
         }
       }
     }
   }
 
-  private void dumpThreadInfo(final ThreadInfo info, final OutputStreamWriter f) throws IOException {
+  private void dumpThreadInfo(final ThreadInfo info, final Writer f) {
     StackTraceElement[] stackTraceElements = info.getStackTrace();
     dumpCallStack(info, f, stackTraceElements);
     if (info.getThreadName().equals("AWT-EventQueue-1")) {
@@ -289,13 +284,34 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  private static void dumpCallStack(final ThreadInfo info, final OutputStreamWriter f,
-                                    final StackTraceElement[] stackTraceElements) throws IOException {
-    f.write("\"" + info.getThreadName() + "\"\n");
-    for(StackTraceElement element: stackTraceElements) {
-      f.write("\tat " + element.toString() + "\n");
+  private static void dumpCallStack(final ThreadInfo info, final Writer f, final StackTraceElement[] stackTraceElements) {
+    try {
+      StringBuilder sb = new StringBuilder("\"" + info.getThreadName() + "\"" +
+                                           " Id=" + info.getThreadId() + " " +
+                                           info.getThreadState());
+      if (info.getLockName() != null) {
+          sb.append(" on " + info.getLockName());
+      }
+      if (info.getLockOwnerName() != null) {
+          sb.append(" owned by \"" + info.getLockOwnerName() +
+                    "\" Id=" + info.getLockOwnerId());
+      }
+      if (info.isSuspended()) {
+          sb.append(" (suspended)");
+      }
+      if (info.isInNative()) {
+          sb.append(" (in native)");
+      }
+
+      f.write(sb + "\n");
+      for (StackTraceElement element : stackTraceElements) {
+        f.write("\tat " + element.toString() + "\n");
+      }
+      f.write("\n");
     }
-    f.write("\n");
+    catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private class SwingThreadRunnable implements Runnable {

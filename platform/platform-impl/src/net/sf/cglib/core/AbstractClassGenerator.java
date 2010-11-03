@@ -15,7 +15,7 @@
  */
 package net.sf.cglib.core;
 
-import net.sf.cglib.asm.ClassReader;
+import org.objectweb.asm.ClassReader;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;

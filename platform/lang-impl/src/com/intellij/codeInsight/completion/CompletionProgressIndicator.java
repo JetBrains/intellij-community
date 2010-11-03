@@ -577,6 +577,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("later");
+        }
+
         if (myEditor.isDisposed() || project.isDisposed()) {
           return;
         }
@@ -584,6 +588,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
           return;
         }
+
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("invoking");
+        }
+
 
         if (!isOutdated()) {
           closeAndFinish(false);
