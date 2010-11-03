@@ -4,8 +4,8 @@ import imp
 import sys
 import types
 import re
-from pycharm.tcmessages import TeamcityServiceMessages
-from pycharm.tcunittest import TeamcityTestRunner
+from tcmessages import TeamcityServiceMessages
+from tcunittest import TeamcityTestRunner
 
 try:
   import unittest2 as unittest
@@ -102,18 +102,26 @@ for arg in sys.argv[1:]:
         modules = [loadSource(a[0])]
 
     for module in modules:
-      all.addTests(testLoader.loadTestsFromModule(module))
+      all.addTests(testLoader.loadTestsFromModule(module, True))
   elif len(a) == 2:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
     module = loadSource(a[0])
-    all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
+    all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
   else:
-    # From method in testcase
+    # From method in class or from function
     debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
     module = loadSource(a[0])
-    testCaseClass = getattr(module, a[1])
-    all.addTest(testCaseClass(a[2]))
+    if a[1] == "":
+        # test function, not method
+        all.addTest(testLoader.makeTest(getattr(module, a[2])))
+    else:
+        testCaseClass = getattr(module, a[1])
+        try:
+            all.addTest(testCaseClass(a[2]))
+        except:
+            # class is not a testcase inheritor
+            all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
 
 debug("/ Loaded " + str(all.countTestCases()) + " tests")
 TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())

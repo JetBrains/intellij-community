@@ -50,12 +50,25 @@ class LazySuite(unittest.TestSuite):
         is_suite = isinstance(tests, unittest.TestSuite)
         if hasattr(tests, '__call__') and not is_suite:
             self.test_generator = tests()
+            self.test_generator_counter = list(tests())
         elif is_suite:
             self.addTests([tests])
             self.test_generator = None
+            self.test_generator_counter = None
         else:
             self.addTests(tests)
             self.test_generator = None
+            self.test_generator_counter = None
+
+    def countTestCases(self):
+        counter = 0
+        generator = self.test_generator_counter
+        if generator is not None:
+            for test in generator:
+                counter +=1
+        for test in self._precache:
+            counter += test.countTestCases()
+        return counter
 
     _tests = property(_get_tests, _set_tests, None,
                       "Access the tests in this suite.")
@@ -63,7 +76,6 @@ class LazySuite(unittest.TestSuite):
 class ContextSuite(LazySuite):
     """A suite with context.
     """
-    failureException = unittest.TestCase.failureException
     was_setup = False
     was_torndown = False
     classSetup = ('setup_class', 'setup_all', 'setupClass', 'setupAll',
@@ -79,14 +91,13 @@ class ContextSuite(LazySuite):
                        'tearDownPackage')
 
     def __init__(self, tests=(), context=None, factory=None,
-                 config=None, can_split=True):
+                 config=None):
         self.context = context
         self.factory = factory
         if config is None:
             config = Config()
         self.config = config
         self.has_run = False
-        self.can_split = can_split
         self.error_context = None
         LazySuite.__init__(self, tests)
 
@@ -208,17 +219,6 @@ class ContextSuite(LazySuite):
     _tests = property(_get_wrapped_tests, LazySuite._set_tests, None,
                       "Access the tests in this suite. Tests are returned "
                       "inside of a context wrapper.")
-
-    def countTestCases(self):
-        counter = 0
-        generator = self.test_generator
-        if generator is not None:
-            for test in generator:
-                counter +=1
-        for test in self._precache:
-            counter +=1
-        return counter
-
 
 class ContextSuiteFactory(object):
     suiteClass = ContextSuite

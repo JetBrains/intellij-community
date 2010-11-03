@@ -31,6 +31,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JRadioButton myTestMethodRB;
   private JPanel myCommonOptionsPlaceholder;
   private LabeledComponent myPatternComponent;
+  private JRadioButton myTestFunctionRB;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
@@ -66,6 +67,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myTestScriptRB.addActionListener(testTypeListener);
     myTestClassRB.addActionListener(testTypeListener);
     myTestMethodRB.addActionListener(testTypeListener);
+    myTestFunctionRB.addActionListener(testTypeListener);
   }
 
   public String getClassName() {
@@ -118,8 +120,11 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     else if (myTestClassRB.isSelected()) {
       return TestType.TEST_CLASS;
     }
-    else {
+    else if (myTestMethodRB.isSelected()) {
       return TestType.TEST_METHOD;
+    }
+    else {
+      return TestType.TEST_FUNCTION;
     }
   }
 
@@ -134,11 +139,12 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     setSelectedIfNeeded(testType == TestType.TEST_SCRIPT, myTestScriptRB);
     setSelectedIfNeeded(testType == TestType.TEST_CLASS, myTestClassRB);
     setSelectedIfNeeded(testType == TestType.TEST_METHOD, myTestMethodRB);
+    setSelectedIfNeeded(testType == TestType.TEST_FUNCTION, myTestFunctionRB);
 
     myTestFolderComponent.setEnabled(testType == TestType.TEST_FOLDER);
     myTestScriptComponent.setEnabled(testType != TestType.TEST_FOLDER);
     myTestClassComponent.setEnabled(testType == TestType.TEST_CLASS || testType == TestType.TEST_METHOD);
-    myTestMethodComponent.setEnabled(testType == TestType.TEST_METHOD);
+    myTestMethodComponent.setEnabled(testType == TestType.TEST_METHOD || testType == TestType.TEST_FUNCTION);
     myPatternComponent.setEnabled(testType == TestType.TEST_FOLDER);
   }
 
