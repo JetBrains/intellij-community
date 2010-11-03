@@ -59,6 +59,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private IdeTooltip myCurrentIdeTooltip;
   private HintHint myHintHint;
+  private JComponent myFocusRequestor;
 
   public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
@@ -71,6 +72,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public void setForceShowAsPopup(final boolean forceShowAsPopup) {
     myForceShowAsPopup = forceShowAsPopup;
+  }
+
+  public void setFocusRequestor(JComponent c) {
+    myFocusRequestor = c;
   }
 
   public void setTitle(final String title) {
@@ -168,11 +173,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
     else {
       myIsRealPopup = true;
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, null)
-        .setRequestFocus(false)
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, myFocusRequestor)
+        .setRequestFocus(myFocusRequestor != null)
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)
+        .setModalContext(false)
         .setShowShadow(!myForceLightweightPopup && myForceShowAsPopup)
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)

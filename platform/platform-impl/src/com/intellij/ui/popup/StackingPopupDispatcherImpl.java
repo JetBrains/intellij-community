@@ -189,12 +189,11 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
    }
   }
 
-  public void requestFocus() {
-    if (myStack.isEmpty()) return;
+  public boolean requestFocus() {
+    if (myStack.isEmpty()) return false;
 
     final AbstractPopup popup = (AbstractPopup)myStack.peek();
-    popup.requestFocus();
-
+    return popup.requestFocus();
   }
 
   public boolean close() {

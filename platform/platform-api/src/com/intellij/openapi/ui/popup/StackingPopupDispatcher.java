@@ -44,7 +44,7 @@ public abstract class StackingPopupDispatcher implements IdePopupEventDispatcher
 
   public abstract boolean dispatchKeyEvent(KeyEvent e);
 
-  public abstract void requestFocus();
+  public abstract boolean requestFocus();
 
   public abstract boolean close();
 

@@ -91,4 +91,10 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
     return closed;
   }
+
+  public boolean requestDefaultFocus(boolean forced) {
+    if (!isPopupActive()) return false;
+
+    return myDispatchStack.get(myDispatchStack.size() - 1).requestFocus();
+  }
 }

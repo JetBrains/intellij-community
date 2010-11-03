@@ -40,6 +40,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -545,8 +546,8 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static void fixStickyFocusedComponents(AWTEvent e) {
-    if (!(e instanceof InputEvent)) return;
+  public void fixStickyFocusedComponents(@Nullable AWTEvent e) {
+    if (e != null && !(e instanceof InputEvent)) return;
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
@@ -569,16 +570,23 @@ public class IdeEventQueue extends EventQueue {
         Window showingWindow = mgr.getActiveWindow();
         if (showingWindow != null) {
           final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-          fm.doWhenFocusSettlesDown(new Runnable() {
+          Runnable requestDefaultFocus = new Runnable() {
             public void run() {
               if (mgr.getFocusOwner() == null) {
+                if (getPopupManager().requestDefaultFocus(false)) return;
+
                 final Application app = ApplicationManager.getApplication();
                 if (app != null && app.isActive()) {
                   fm.requestDefaultFocus(false);
                 }
               }
             }
-          });
+          };
+          if (e != null) {
+            fm.doWhenFocusSettlesDown(requestDefaultFocus);
+          } else {
+            requestDefaultFocus.run();
+          }
         }
       }
     }
