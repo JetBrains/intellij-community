@@ -151,7 +151,7 @@ public class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             public void visitElement(PsiElement element) {
                 annotator.annotate(element, new AnnotationHolderImpl() {
-                    public Annotation createErrorAnnotation(ASTNode astNode, String string) {
+                    public Annotation createErrorAnnotation(@NotNull ASTNode astNode, String string) {
                         error[0] = string;
                         return super.createErrorAnnotation(astNode, string);
                     }
@@ -161,7 +161,7 @@ public class MyPsiUtil {
                         return super.createErrorAnnotation(element, string);
                     }
 
-                    public Annotation createErrorAnnotation(TextRange textRange, String string) {
+                    public Annotation createErrorAnnotation(@NotNull TextRange textRange, String string) {
                         error[0] = string;
                         return super.createErrorAnnotation(textRange, string);
                     }
