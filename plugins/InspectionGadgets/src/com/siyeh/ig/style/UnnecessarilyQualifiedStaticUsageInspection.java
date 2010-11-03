@@ -166,8 +166,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             }
             final PsiElement target = referenceElement.resolve();
             if ((!(target instanceof PsiField) || m_ignoreStaticFieldAccesses) &&
-                    (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls) &&
-                    !(target instanceof PsiClass)) {
+                    (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls)) {
                 return false;
             }
             if (m_ignoreStaticAccessFromStaticContext) {
