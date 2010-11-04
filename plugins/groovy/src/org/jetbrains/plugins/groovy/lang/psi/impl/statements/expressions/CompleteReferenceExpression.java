@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -176,6 +178,16 @@ public class CompleteReferenceExpression {
     String[] sameQualifier = getVariantsWithSameQualifier(qualifier, refExpr);
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor, true);
+
+      for (PsiElement e = refExpr.getParent(); e != null; e = e.getParent()) {
+        if (e instanceof GrClosableBlock) {
+          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, (GrClosableBlock)e);
+          for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
+            contributor.processMembers((GrClosableBlock)e, processor, refExpr, state);
+          }
+        }
+      }
+
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
       if (qualifier != null) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
