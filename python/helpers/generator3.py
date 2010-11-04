@@ -588,6 +588,8 @@ class ModuleRedeclarator(object):
         ("binascii", None, "hexlify"): "(data)",
         ("binascii", None, "unhexlify"): "(hexstr)",
 
+        ("time", None, "ctime"): "(seconds=None)",
+
         ("datetime", "date", "__new__"): "(cls, year=None, month=None, day=None)",
         ("datetime", "date", "fromordinal"): "(cls, ordinal)",
         ("datetime", "date", "fromtimestamp"): "(cls, timestamp)",
@@ -611,8 +613,8 @@ class ModuleRedeclarator(object):
         ("datetime", "datetime", "isoformat"): "(self, sep='T')",
         ("datetime", "datetime", "now"): "(cls, tz=None)",
         ("datetime", "datetime", "strptime"): "(cls, date_string, format)",
-        ("datetime", "datetime", "replace"
-        ): "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+        ("datetime", "datetime", "replace" ):
+          "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
         ("datetime", "datetime", "time"): "(self)",
         ("datetime", "datetime", "timetuple"): "(self)",
         ("datetime", "datetime", "timetz"): "(self)",
