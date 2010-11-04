@@ -22,13 +22,13 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.openapi.command.CommandProcessor
 
-/**
+ /**
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -74,10 +74,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   }
 
   private void addClassToProject(@Nullable String packageName, @NotNull String name) throws IOException {
-    StringBuilder builder = new StringBuilder();
-    if (packageName != null) builder.append("package ").append(packageName).append(";");
-    builder.append("class ").append(name).append("{}");
-    myFixture.addClass(builder.toString());
+    myFixture.addClass("package $packageName; public class $name {}");
   }
 
   public void testInFieldDeclaration() throws Exception {doTest(false);}
@@ -169,5 +166,24 @@ anotherMethod()
 abcMethod()<caret>"""
 
   }
+
+  public void testNewClassName() {
+    addClassToProject("foo", "Fxoo")
+    myFixture.configureByText("a.groovy", "new Fxo<caret>\n")
+    myFixture.completeBasic()
+    myFixture.checkResult """import foo.Fxoo
+
+new Fxoo()<caret>\n"""
+
+  }
+
+  public void testNewImportedClassName() {
+    myFixture.configureByText("a.groovy", "new ArrayLi<caret>\n")
+    myFixture.completeBasic()
+    myFixture.checkResult "new ArrayList(<caret>)\n"
+
+  }
+
+
 
 }

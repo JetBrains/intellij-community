@@ -203,15 +203,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     };
 
-  public static boolean isReferenceInNewExpression(PsiElement reference) {
-    if (!(reference instanceof GrCodeReferenceElement)) return false;
-
-    PsiElement parent = reference.getParent();
-    while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
-    if (parent instanceof GrAnonymousClassDefinition) parent = parent.getParent();
-    return parent instanceof GrNewExpression;
-  }
-
   public GroovyCompletionContributor() {
     extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
       @Override
