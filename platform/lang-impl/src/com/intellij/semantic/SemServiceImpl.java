@@ -16,14 +16,17 @@
 package com.intellij.semantic;
 
 import com.intellij.ProjectTopics;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
@@ -39,6 +42,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -52,7 +56,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentWeakHashMap<PsiElement, FileChunk> myCache = new ConcurrentWeakHashMap<PsiElement, FileChunk>();
+  private final ConcurrentWeakHashMap<PsiElement, SoftReference<FileChunk>> myCache = new ConcurrentWeakHashMap<PsiElement, SoftReference<FileChunk>>();
   private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
   private final MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
@@ -144,7 +148,13 @@ public class SemServiceImpl extends SemService{
   }
 
   public void clearCache() {
-    myCache.clear();
+    for (PsiElement element : myCache.keySet()) {
+      final FileChunk chunk = obtainChunk(element);
+      if (chunk != null) {
+        chunk.unhinge();
+      }
+      myCache.remove(element);
+    }
   }
 
   @Override
@@ -230,7 +240,7 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element, PsiElement root) {
-    final FileChunk chunk = myCache.get(root);
+    final FileChunk chunk = obtainChunk(root);
     if (chunk == null) return null;
 
     final ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
@@ -272,22 +282,29 @@ public class SemServiceImpl extends SemService{
     return new ArrayList<T>(result);
   }
 
+  @Nullable
+  private FileChunk obtainChunk(PsiElement root) {
+    final SoftReference<FileChunk> ref = myCache.get(root);
+    return ref == null ? null : ref.get();
+  }
+
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
     cacheOrGetMap(psi, getRootElement(psi)).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
   }
 
   @Override
   public void clearCachedSemElements(@NotNull PsiElement psi) {
-    final FileChunk chunk = myCache.get(getRootElement(psi));
+    final FileChunk chunk = obtainChunk(getRootElement(psi));
     if (chunk != null) {
       chunk.map.remove(psi);
     }
   }
 
   private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(final PsiElement element, @NotNull PsiElement root) {
-    FileChunk chunk = myCache.get(root);
+    FileChunk chunk = obtainChunk(root);
     if (chunk == null) {
-      chunk = ConcurrencyUtil.cacheOrGet(myCache, root, new FileChunk());
+      chunk = new FileChunk(root);
+      myCache.putIfAbsent(root, new SoftReference(chunk));
     }
 
     ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
@@ -298,7 +315,30 @@ public class SemServiceImpl extends SemService{
   }
 
   private static class FileChunk {
+    private static final Key<FileChunk> SEM_SERVICE_CHUNK = Key.create("semServiceChunkHardReference");
     final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> map = new StripedLockConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
+    @Nullable final PsiElement anchor;
+
+    FileChunk(PsiElement root) {
+      if (root instanceof PsiFile) {
+        final ASTNode node = root.getNode();
+        if (node instanceof LazyParseableElement && ((LazyParseableElement)node).isParsed()) {
+          final PsiElement child = root.getFirstChild();
+          if (child != null) {
+            anchor = child;
+            child.putUserData(SEM_SERVICE_CHUNK, this);
+            return;
+          }
+        }
+      }
+      anchor = null;
+    }
+
+    void unhinge() {
+      if (anchor != null) {
+        anchor.putUserData(SEM_SERVICE_CHUNK, null);
+      }
+    }
   }
 
 }
