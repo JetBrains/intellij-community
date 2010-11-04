@@ -603,5 +603,5 @@
 
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
 
-  <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor"/>
+  <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
 </extensions>
