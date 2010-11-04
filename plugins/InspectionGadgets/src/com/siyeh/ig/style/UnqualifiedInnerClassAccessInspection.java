@@ -153,11 +153,13 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
                     containingClass, new StringBuilder()).toString();
             document.replaceString(0, document.getTextLength(), text);
             documentManager.commitDocument(document);
-            final List<PsiElement> elements = new ArrayList();
-            for (SmartPsiElementPointer pointer : pointers) {
-                elements.add(pointer.getElement());
+            if (pointers.size() > 1) {
+                final List<PsiElement> elements = new ArrayList();
+                for (SmartPsiElementPointer pointer : pointers) {
+                    elements.add(pointer.getElement());
+                }
+                HighlightUtils.highlightElements(elements);
             }
-            HighlightUtils.highlightElements(elements);
         }
 
 
@@ -171,7 +173,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             //noinspection SuspiciousMethodCalls
             if (references.contains(element)) {
                 final String shortClassName = aClass.getName();
-                if (isReferenceToTarget(shortClassName, aClass, element)) {
+                if (isReferenceToTargetClass(shortClassName, aClass, element)) {
                     out.append(shortClassName);
                 } else {
                     out.append(aClass.getQualifiedName());
@@ -189,15 +191,18 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             return out;
         }
 
-        private static boolean isReferenceToTarget(
+        private static boolean isReferenceToTargetClass(
                 String referenceText, PsiClass targetClass, PsiElement context) {
             final PsiManager manager = targetClass.getManager();
             final JavaPsiFacade facade =
                     JavaPsiFacade.getInstance(manager.getProject());
             final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-            final PsiClass referencedCLass =
+            final PsiClass referencedClass =
                     resolveHelper.resolveReferencedClass(referenceText, context);
-            return manager.areElementsEquivalent(targetClass, referencedCLass);
+            if (referencedClass == null) {
+                return true;
+            }
+            return manager.areElementsEquivalent(targetClass, referencedClass);
         }
     }
 
@@ -256,13 +261,13 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override
-        public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            super.visitReferenceElement(reference);
-            if (reference.isQualified()) {
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            if (expression.isQualified()) {
                 return;
             }
-            final PsiElement target = reference.resolve();
+            final PsiElement target = expression.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
@@ -271,7 +276,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             if (containingClass == null) {
                 return;
             }
-            registerError(reference, containingClass.getName());
+            registerError(expression, containingClass.getName());
         }
     }
 }

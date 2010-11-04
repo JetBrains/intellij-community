@@ -36,6 +36,10 @@ public class ImportUtils{
     }
 
     public static void addImportIfNeeded(PsiJavaFile file, PsiClass aClass) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (file.equals(containingFile)) {
+            return;
+        }
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null) {
             return;
