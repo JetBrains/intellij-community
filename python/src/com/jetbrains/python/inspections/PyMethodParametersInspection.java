@@ -49,6 +49,14 @@ public class PyMethodParametersInspection extends PyInspection {
       super(holder);
     }
 
+
+    private static boolean among(@NotNull String what, String... variants) {
+      for (String s : variants) {
+        if (what.equals(s)) return true;
+      }
+      return false;
+    }
+
     @Override
     public void visitPyFunction(final PyFunction node) {
       PsiElement cap = PyUtil.getConcealingParent(node);
@@ -65,7 +73,7 @@ public class PyMethodParametersInspection extends PyInspection {
           }
         }
         final String method_name = node.getName();
-        boolean isSpecialMetaclassMethod = isMetaclassMethod && (PyNames.INIT.equals(method_name) || "__call__".equals(method_name));
+        boolean isSpecialMetaclassMethod = isMetaclassMethod && among(method_name, PyNames.INIT, "__call__");
         final boolean is_staticmethod = flags.contains(STATICMETHOD);
         if (params.length == 0) {
           // check for "staticmetod"
@@ -109,8 +117,18 @@ public class PyMethodParametersInspection extends PyInspection {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyBundle.message("INSP.usually.named.cls"),
+                  PyBundle.message("INSP.usually.named.$0", CLS),
                   new RenameParameterQuickFix(CLS)
+                );
+              }
+            }
+            else if (isMetaclassMethod && PyNames.NEW.equals(method_name)) {
+              final String[] POSSIBLE_PARAM_NAMES = {"typ", "meta"}; // TODO: move to style settings
+              if (!among(pname, POSSIBLE_PARAM_NAMES)) {
+                registerProblem(
+                  PyUtil.sure(params[0].getNode()).getPsi(),
+                  PyBundle.message("INSP.usually.named.$0", POSSIBLE_PARAM_NAMES[0]),
+                  new RenameParameterQuickFix(POSSIBLE_PARAM_NAMES[0])
                 );
               }
             }
