@@ -418,8 +418,6 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
 
-
-
     if (processAppActivationEvents(e)) return;
 
     if (!typeaheadFlushing) {
@@ -531,8 +529,7 @@ public class IdeEventQueue extends EventQueue {
 
 
       if (showingWindow != null && showingWindow != wnd) {
-        final Method setActive =
-          ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), resetMethod, Window.class);
+        final Method setActive = ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), resetMethod, Window.class);
         if (setActive != null) {
           try {
             setActive.setAccessible(true);
@@ -546,51 +543,58 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void fixStickyFocusedComponents(@Nullable AWTEvent e) {
-    if (e != null && !(e instanceof InputEvent)) return;
+  public boolean fixStickyFocusedComponents(@Nullable AWTEvent e) {
+    boolean attemptedToFix = false;
+
+    if (e != null && !(e instanceof InputEvent)) return attemptedToFix;
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
     if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
+      attemptedToFix = true;
       fixStickyWindow(mgr, mgr.getActiveWindow(), "setGlobalActiveWindow");
       fixStickyWindow(mgr, mgr.getFocusedWindow(), "setGlobalFocusedWindow");
     }
 
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
+      attemptedToFix = true;
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null) {
 
         IdeEventQueue queue = IdeEventQueue.getInstance();
-        boolean mouseEventsAhead = e instanceof MouseEvent
-                                   || queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null
-                                   || queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null
-                                   || queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+        boolean mouseEventsAhead = e instanceof MouseEvent ||
+                                   queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
+                                   queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
+                                   queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
 
         if (!mouseEventsAhead) {
-        Window showingWindow = mgr.getActiveWindow();
-        if (showingWindow != null) {
-          final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-          Runnable requestDefaultFocus = new Runnable() {
-            public void run() {
-              if (mgr.getFocusOwner() == null) {
-                if (getPopupManager().requestDefaultFocus(false)) return;
+          Window showingWindow = mgr.getActiveWindow();
+          if (showingWindow != null) {
+            final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
+            Runnable requestDefaultFocus = new Runnable() {
+              public void run() {
+                if (mgr.getFocusOwner() == null) {
+                  if (getPopupManager().requestDefaultFocus(false)) return;
 
-                final Application app = ApplicationManager.getApplication();
-                if (app != null && app.isActive()) {
-                  fm.requestDefaultFocus(false);
+                  final Application app = ApplicationManager.getApplication();
+                  if (app != null && app.isActive()) {
+                    fm.requestDefaultFocus(false);
+                  }
                 }
               }
+            };
+            if (e != null) {
+              fm.doWhenFocusSettlesDown(requestDefaultFocus);
             }
-          };
-          if (e != null) {
-            fm.doWhenFocusSettlesDown(requestDefaultFocus);
-          } else {
-            requestDefaultFocus.run();
+            else {
+              requestDefaultFocus.run();
+            }
           }
         }
       }
     }
-  }
+
+    return attemptedToFix;
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {
@@ -720,10 +724,12 @@ public class IdeEventQueue extends EventQueue {
 
 
     public void run() {
-       myRunnable.run();
+      myRunnable.run();
       synchronized (myLock) {
         if (myIdleListeners.contains(myRunnable)) // do not reschedule if not interested anymore
+        {
           myIdleRequestsAlarm.addRequest(this, myTimeout, ModalityState.NON_MODAL);
+        }
       }
     }
 
@@ -791,7 +797,8 @@ public class IdeEventQueue extends EventQueue {
     if (EventQueue.isDispatchThread()) {
       myReady.add(runnable);
       maybeReady();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myReady.add(runnable);
@@ -817,27 +824,33 @@ public class IdeEventQueue extends EventQueue {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
         KeyEvent ke = ((KeyEvent)e);
-        boolean pureAlt =  ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK;
+        boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK;
         if (!pureAlt) {
           myPureAltWasPressed = false;
           myWaitingForAltRelease = false;
           myWaiterScheduled = false;
-        } else {
+        }
+        else {
           Application app = ApplicationManager.getApplication();
-          if (app == null || !SystemInfo.isWindows || !Registry.is("actionSystem.win.supressAlt") || !UISettings.getInstance().HIDE_TOOL_STRIPES) {
+          if (app == null ||
+              !SystemInfo.isWindows ||
+              !Registry.is("actionSystem.win.supressAlt") ||
+              !UISettings.getInstance().HIDE_TOOL_STRIPES) {
             return !dispatch;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {
             myPureAltWasPressed = true;
             dispatch = !myWaitingForAltRelease;
-          } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+          }
+          else if (ke.getID() == KeyEvent.KEY_RELEASED) {
             if (myWaitingForAltRelease) {
               myPureAltWasPressed = false;
               myWaitingForAltRelease = false;
               myWaiterScheduled = false;
               dispatch = false;
-            } else {
+            }
+            else {
               myWaiterScheduled = true;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {

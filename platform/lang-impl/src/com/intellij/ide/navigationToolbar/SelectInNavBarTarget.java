@@ -63,7 +63,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    navBar(frame).select();
+    navBar(frame).selectTail();
   }
 
   private static NavBarPanel navBar(IdeFrameImpl frame) {
@@ -80,7 +80,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   protected void select(PsiElement element, boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    navBar(frame).select();
+    navBar(frame).selectTail();
   }
 
 }
