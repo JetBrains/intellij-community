@@ -13,7 +13,7 @@ from nose_helper.failure import Failure
 from nose_helper.config import Config
 from nose_helper.selector import defaultSelector
 from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, add_path
-from nose_helper.util import transplant_class
+from nose_helper.util import transplant_class, transplant_func
 from nose_helper.suite import ContextSuiteFactory, ContextList
 
 op_normpath = os.path.normpath
@@ -57,16 +57,16 @@ class TestLoader(unittest.TestLoader):
             except:
                 exc = sys.exc_info()
                 yield Failure(exc[0], exc[1], exc[2])
-        return self.suiteClass(generate, context=generator, can_split=False)
+        return self.suiteClass(generate, context=generator)
 
-    def loadTestsFromModule(self, module):
+    def loadTestsFromModule(self, module, direct = None):
         """Load all tests from module and return a suite containing
         them.
         """
         tests = []
         test_funcs = []
         test_classes = []
-        if self.selector.wantModule(module):
+        if self.selector.wantModule(module) or direct:
             for item in dir(module):
                 test = getattr(module, item, None)
                 if isclass(test):
@@ -114,7 +114,6 @@ class TestLoader(unittest.TestLoader):
         """Given a test object and its parent, return a test case
         or test suite.
         """
-
         if isinstance(obj, unittest.TestCase):
             return obj
         elif isclass(obj):
@@ -132,6 +131,15 @@ class TestLoader(unittest.TestLoader):
             else:
                 return MethodTestCase(obj)
         elif isfunction(obj):
+            if hasattr(obj, "__module__"):
+                if parent and obj.__module__ != parent.__name__:
+                    obj = transplant_func(obj, parent.__name__)
+            else:
+                if parent:
+                    obj = transplant_func(obj, parent.__name__)
+                else:
+                    obj = transplant_func(obj)
+
             if isgenerator(obj):
                 return self.loadTestsFromGenerator(obj, parent)
             else:
@@ -164,3 +172,4 @@ class TestLoader(unittest.TestLoader):
             test_func, arg = (test[0], test[1:])
         return test_func, arg
 
+defaultLoader = TestLoader()

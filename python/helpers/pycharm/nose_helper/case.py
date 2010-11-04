@@ -115,7 +115,11 @@ class FunctionTestCase(TestBase):
 
     def __get_module__(self):
         func, arg = self._descriptors()
-        return func.__module__
+        if hasattr(func, "__module__"):
+            return func.__module__
+        else:
+            #TODO[kate]: get module of function in jython < 2.2
+            return "Unknown module"
 
     def _descriptors(self):
         """In most cases, this is the function itself and no arguments. For
@@ -148,13 +152,16 @@ class MethodTestCase(TestBase):
             method_name = self.method.__name__
             self.test = getattr(self.inst, method_name)
         TestBase.__init__(self)
-
         self.__class__.__module__ = self.__get_module__()
         self.__class__.__name__ = ""
 
     def __get_module__(self):
         func, arg = self._descriptors()
-        return "%s.%s" % (func.__module__, self.cls.__name__)
+        if hasattr(func, "__module__"):
+            return "%s.%s" % (func.__module__, self.cls.__name__)
+        else:
+            #TODO[kate]: get module of function in jython < 2.2
+            return "Unknown module"
 
     def __str__(self):
         func, arg = self._descriptors()

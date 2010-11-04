@@ -8,9 +8,14 @@ try:
     # for python 3
     from types import ClassType, TypeType
     class_types = (ClassType, TypeType)
-    from compiler.consts import CO_GENERATOR
 except:
     class_types = (type, )
+
+try:
+    #for jython
+    from compiler.consts import CO_GENERATOR
+except:
+    CO_GENERATOR=0x20
 
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 PYTHON_VERSION_MINOR = sys.version_info[1]
@@ -93,9 +98,12 @@ def try_run(obj, names):
 
 def src(filename):
     """Find the python source file for a .pyc, .pyo
+    or $py.class file on jython
     """
     if filename is None:
         return filename
+    if sys.platform.startswith('java') and filename.endswith('$py.class'):
+        return '.'.join((filename[:-9], 'py'))
     base, ext = os.path.splitext(filename)
     if ext in ('.pyc', '.pyo', '.py'):
         return '.'.join((base, 'py'))
@@ -133,3 +141,40 @@ def add_path(path, config=None):
                 sys.path.insert(0, dirpath)
                 added.append(dirpath)
     return added
+
+def transplant_func(func, module = None):
+    """
+    Make a function imported from module A appear as if it is located
+    in module B.
+    """
+
+    def newfunc(*arg, **kw):
+        return func(*arg, **kw)
+
+    newfunc = make_decorator(func)(newfunc)
+    if module is None:
+        newfunc.__module__ = inspect.getmodule(func)
+    else:
+        newfunc.__module__ = module
+    return newfunc
+
+def make_decorator(func):
+    """
+    Wraps a test decorator so as to properly replicate metadata
+    of the decorated function.
+    """
+    def decorate(newfunc):
+        if hasattr(func, 'compat_func_name'):
+            name = func.compat_func_name
+        else:
+            name = func.__name__
+        newfunc.__dict__ = func.__dict__
+        newfunc.__doc__ = func.__doc__
+        if not hasattr(newfunc, 'compat_co_firstlineno'):
+            newfunc.compat_co_firstlineno = func.func_code.co_firstlineno
+        try:
+            newfunc.__name__ = name
+        except TypeError:
+            newfunc.compat_func_name = name
+        return newfunc
+    return decorate

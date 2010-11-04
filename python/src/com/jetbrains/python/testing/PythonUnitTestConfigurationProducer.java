@@ -78,18 +78,18 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   private RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     if (pyFunction == null || !PythonUnitTestUtil.isTestCaseFunction(pyFunction)) return null;
-
     final PyClass containingClass = pyFunction.getContainingClass();
-    if (containingClass == null) return null;
-
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from function");
     final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
-
-    configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_METHOD);
     configuration.setMethodName(pyFunction.getName());
-    configuration.setClassName(containingClass.getName());
+    if (containingClass != null) {
+      configuration.setClassName(containingClass.getName());
+      configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_METHOD);
+    }
+    else {
+      configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_FUNCTION);
+    }
     if (!setupConfigurationScript(configuration, pyFunction)) return null;
-
     configuration.setName(configuration.suggestedName());
     myPsiElement = pyFunction;
     return settings;
@@ -103,10 +103,10 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
     final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
 
-    configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_CLASS);
+    configuration.setTestType(
+      PythonUnitTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
     if (!setupConfigurationScript(configuration, pyClass)) return null;
-
     configuration.setName(configuration.suggestedName());
 
     myPsiElement = pyClass;
@@ -161,7 +161,7 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     if (file == null || !(file instanceof PyFile)) return null;
 
     final PyFile pyFile = (PyFile)file;
-    final List<PyClass> testCases = PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
+    final List<PyStatement> testCases = PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
     if (testCases.isEmpty()) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from file");
@@ -187,10 +187,8 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   private static boolean setupConfigurationScript(PythonUnitTestRunConfiguration cfg, PyElement element) {
     final PyFile containingFile = PyUtil.getContainingPyFile(element);
     if (containingFile == null) return false;
-
     final VirtualFile vFile = containingFile.getVirtualFile();
     if (vFile == null) return false;
-
     final VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
 
