@@ -49,14 +49,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessarilyQualfiedInnerClassAccessFix();
+        return new UnnecessarilyQualifiedInnerClassAccessFix();
     }
 
-    private static class UnnecessarilyQualfiedInnerClassAccessFix
+    private static class UnnecessarilyQualifiedInnerClassAccessFix
             extends InspectionGadgetsFix {
 
         @NotNull
-        @Override
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessarily.qualified.inner.class.access.quickfix");
