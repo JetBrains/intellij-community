@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 10, 29, 19, 56, 45) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 11, 4, 13, 40, 45) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -547,7 +547,7 @@ class ModuleRedeclarator(object):
     # Some functions and methods of some builtin classes have special signatures.
     # {("class", "method"): ("signature_string")}
     PREDEFINED_BUILTIN_SIGS = {
-        ("type", "__new__"): "(cls, what, bases=None, dict=None)", # two sigs squeezed into one
+        ("type", "__init__"): "(cls, what, bases=None, dict=None)", # two sigs squeezed into one
         ("object", "__init__"): "(self)",
         ("object", "__new__"): "(cls, *more)", # only for the sake of parameter names readability
         ("object", "__subclasshook__"): "(cls, subclass)", # trusting PY-1818 on sig
@@ -1638,6 +1638,9 @@ if __name__ == "__main__":
 
     # go on
     for name in names:
+        if name.endswith(".py"):
+          sys.stderr.write("Ignored a regular Python file " + name + "\n")
+          continue
         if not quiet:
             sys.stdout.write(name + "\n")
             sys.stdout.flush()
