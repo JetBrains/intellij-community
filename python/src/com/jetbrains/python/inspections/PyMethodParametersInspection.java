@@ -111,24 +111,23 @@ public class PyMethodParametersInspection extends PyInspection {
                 return;
               }
             }
-            // TODO: check for style settings
-            String CLS = "cls";
-            if (flags.contains(CLASSMETHOD) || isSpecialMetaclassMethod) {
-              if (!CLS.equals(pname)) {
-                registerProblem(
-                  PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyBundle.message("INSP.usually.named.$0", CLS),
-                  new RenameParameterQuickFix(CLS)
-                );
-              }
-            }
-            else if (isMetaclassMethod && PyNames.NEW.equals(method_name)) {
+            String CLS = "cls"; // TODO: move to style settings
+            if (isMetaclassMethod && PyNames.NEW.equals(method_name)) {
               final String[] POSSIBLE_PARAM_NAMES = {"typ", "meta"}; // TODO: move to style settings
               if (!among(pname, POSSIBLE_PARAM_NAMES)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
                   PyBundle.message("INSP.usually.named.$0", POSSIBLE_PARAM_NAMES[0]),
                   new RenameParameterQuickFix(POSSIBLE_PARAM_NAMES[0])
+                );
+              }
+            }
+            else if (flags.contains(CLASSMETHOD) || isSpecialMetaclassMethod || PyNames.NEW.equals(method_name)) {
+              if (!CLS.equals(pname)) {
+                registerProblem(
+                  PyUtil.sure(params[0].getNode()).getPsi(),
+                  PyBundle.message("INSP.usually.named.$0", CLS),
+                  new RenameParameterQuickFix(CLS)
                 );
               }
             }
