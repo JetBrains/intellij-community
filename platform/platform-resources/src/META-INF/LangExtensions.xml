@@ -369,8 +369,7 @@
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameLogicalRootWeigher" id="sameLogicalRoot" order="after openedInEditor"/>
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule" order="after sameLogicalRoot"/>
-  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameProjectWeigher" id="sameProject" order="after sameModule"/>
-  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary" order="after sameProject"/>
+  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary" order="after sameModule"/>
 
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NegativeStatisticsWeigher" id="negativeStats" order="first"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats" order="after negativeStats"/>
