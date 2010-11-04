@@ -171,7 +171,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             //noinspection SuspiciousMethodCalls
             if (references.contains(element)) {
                 final String shortClassName = aClass.getName();
-                if (isReferenceToTarget(shortClassName, aClass, element)) {
+                if (isReferenceToTargetClass(shortClassName, aClass, element)) {
                     out.append(shortClassName);
                 } else {
                     out.append(aClass.getQualifiedName());
@@ -189,15 +189,18 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             return out;
         }
 
-        private static boolean isReferenceToTarget(
+        private static boolean isReferenceToTargetClass(
                 String referenceText, PsiClass targetClass, PsiElement context) {
             final PsiManager manager = targetClass.getManager();
             final JavaPsiFacade facade =
                     JavaPsiFacade.getInstance(manager.getProject());
             final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-            final PsiClass referencedCLass =
+            final PsiClass referencedClass =
                     resolveHelper.resolveReferencedClass(referenceText, context);
-            return manager.areElementsEquivalent(targetClass, referencedCLass);
+            if (referencedClass == null) {
+                return true;
+            }
+            return manager.areElementsEquivalent(targetClass, referencedClass);
         }
     }
 
