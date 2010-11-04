@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,38 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCatchBlockParameterInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "assignment.to.catch.block.parameter.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "assignment.to.catch.block.parameter.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new ExtractParameterAsLocalVariableFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new AssignmentToCatchBlockParameterVisitor();
     }
