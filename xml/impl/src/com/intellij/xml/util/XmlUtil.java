@@ -586,7 +586,6 @@ public class XmlUtil {
 
       final PsiElementVisitor copyVisitor = new PsiRecursiveElementWalkingVisitor() {
         public void visitElement(final PsiElement element) {
-          CodeEditUtil.setNodeGenerated(element.getNode(), false); // these nodes won't be changed via PSI, so it'll save some memory
           final PsiElement originalElement = element.getCopyableUserData(originalKey);
           if (originalElement != null) {
             originalElement.putCopyableUserData(originalKey, null);
