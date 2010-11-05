@@ -18,6 +18,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomAnchor;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,7 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public interface DomExtension {
-  Key<DomElement> KEY_DECLARATION = new Key<DomElement>("DOM_DECLARATION");
+  Key<DomAnchor> KEY_DECLARATION = Key.create("DOM_DECLARATION");
 
   @NotNull
   Type getType();
