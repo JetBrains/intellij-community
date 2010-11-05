@@ -467,7 +467,7 @@ public class PyCallExpressionHelper {
           PyNamedParameter n_par = par.getAsNamed();
           if (n_par != null) {
             cnt += 1;
-            slots.put(n_par, arg);
+            slots.put(n_par, PyUtil.peelArgument(arg));
             mapped_args.add(arg);
           }
           else {
