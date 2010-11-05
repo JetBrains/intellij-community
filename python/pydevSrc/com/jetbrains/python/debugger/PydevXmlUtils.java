@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger;
 
+import com.jetbrains.python.console.pydev.AbstractPyCodeCompletion;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -11,6 +13,8 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -20,6 +24,9 @@ import java.util.List;
 public class PydevXmlUtils {
 
   static SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+
+  private PydevXmlUtils() {
+  }
 
   static SAXParser getSAXParser() throws Exception {
     SAXParser parser = null;
@@ -42,6 +49,51 @@ public class PydevXmlUtils {
       }
     }
     return null;
+  }
+
+  public static List<PydevCompletionVariant> decodeCompletions(Object fromServer) {
+    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
+
+    List completionList = objectToList(fromServer);
+
+    for (Object o : completionList) {
+      List comp = objectToList(o);
+
+      //name, doc, args, type
+      final int type = extractInt(comp.get(3));
+      final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
+                                                           AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
+
+      ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
+    }
+    return ret;
+  }
+
+  public static List objectToList(Object object) {
+    List list;
+    if (object instanceof Collection) {
+      list = new ArrayList((Collection)object);
+    }
+    else if (object instanceof Object[]) {
+      list = Arrays.asList((Object[])object);
+    }
+    else {
+      throw new IllegalStateException("cant handle type of " + object);
+    }
+    return list;
+  }
+
+  /**
+   * Extracts an int from an object
+   *
+   * @param objToGetInt the object that should be gotten as an int
+   * @return int with the int the object represents
+   */
+  public static int extractInt(Object objToGetInt) {
+    if (objToGetInt instanceof Integer) {
+      return (Integer)objToGetInt;
+    }
+    return Integer.parseInt(objToGetInt.toString());
   }
 
   /**
@@ -76,11 +128,11 @@ public class PydevXmlUtils {
   }
 
 
-  public static List<Object[]> xmlToCompletions(String payload) throws Exception {
+  public static List<PydevCompletionVariant> xmlToCompletions(String payload) throws Exception {
     SAXParser parser = getSAXParser();
     XMLToCompletionsInfo info = new XMLToCompletionsInfo();
     parser.parse(new ByteArrayInputStream(payload.getBytes()), info);
-    return info.getCompletions();
+    return decodeCompletions(info.getCompletions());
   }
 }
 

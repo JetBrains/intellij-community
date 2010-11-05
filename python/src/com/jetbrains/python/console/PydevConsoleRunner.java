@@ -21,8 +21,6 @@ import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.console.pydev.ICallback;
-import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,17 +179,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   @NotNull
   @Override
   protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
-    return new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), new ConsoleCommandExecutor() {
-      @Override
-      public boolean isWaitingForInput() {
-        return myPydevConsoleCommunication.waitingForInput;
-      }
-
-      @Override
-      public void execInterpreter(String s, ICallback<Object, InterpreterResponse> callback) {
-        myPydevConsoleCommunication.execInterpreter(s, callback);
-      }
-    });
+    return new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
   }
 
 

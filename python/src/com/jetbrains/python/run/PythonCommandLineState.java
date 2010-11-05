@@ -25,13 +25,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.python.console.ConsoleCommandExecutor;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
-import com.jetbrains.python.console.pydev.ICallback;
-import com.jetbrains.python.console.pydev.InterpreterResponse;
-import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -221,30 +216,5 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
   }
 
-  public static class PyDebugProcessConsoleCommandExecutor implements ConsoleCommandExecutor {
-    @NotNull
-    private final PyDebugProcess myDebugProcess;
 
-    public PyDebugProcessConsoleCommandExecutor(@NotNull PyDebugProcess debugProcess) {
-      myDebugProcess = debugProcess;
-    }
-
-    @Override
-    public boolean isWaitingForInput() {
-      return false;
-    }
-
-    @Override
-    public void execInterpreter(
-      String s,
-      ICallback<Object, InterpreterResponse> callback) {
-      try {
-        myDebugProcess.evaluate(s, true);
-        callback.call(new InterpreterResponse("", null, false, isWaitingForInput()));
-      }
-      catch (PyDebuggerException e) {
-        callback.call(new InterpreterResponse(null, "", false, isWaitingForInput()));
-      }
-    }
-  }
 }

@@ -185,6 +185,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute);
   }
 
+  public String consoleExec(String command) throws PyDebuggerException {
+    dropFrameCaches();
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command);
+  }
+
   public List<PyDebugValue> loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
@@ -319,4 +325,5 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     }
     return null;
   }
+
 }

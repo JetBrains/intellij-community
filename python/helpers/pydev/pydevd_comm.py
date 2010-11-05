@@ -101,6 +101,7 @@ CMD_CHANGE_VARIABLE = 117
 CMD_RUN_TO_LINE = 118
 CMD_RELOAD_CODE = 119
 CMD_GET_COMPLETIONS = 120
+CMD_CONSOLE_EXEC = 121
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -126,6 +127,7 @@ ID_TO_MEANING = {
     '118':'CMD_RUN_TO_LINE',
     '119':'CMD_RELOAD_CODE',
     '120':'CMD_GET_COMPLETIONS',
+    '121':'CMD_CONSOLE_EXEC',
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
@@ -693,6 +695,33 @@ class InternalEvaluateExpression(InternalThreadCommand):
             exc = GetExceptionTracebackStr()
             sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
+            dbg.writer.addCommand(cmd)
+
+#=======================================================================================================================
+# InternalConsoleExec
+#=======================================================================================================================
+class InternalConsoleExec(InternalThreadCommand):
+    """ gets the value of a variable """
+
+    def __init__(self, seq, thread_id, frame_id, expression):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.expression = expression
+
+    def doIt(self, dbg):
+        """ Converts request into python variable """
+        try:
+            result = pydevd_vars.consoleExec(self.thread_id, self.frame_id, self.expression)
+            xml = "<xml>"
+            xml += pydevd_vars.varToXML(result, "")
+            xml += "</xml>"
+            cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
             dbg.writer.addCommand(cmd)
            
 #=======================================================================================================================

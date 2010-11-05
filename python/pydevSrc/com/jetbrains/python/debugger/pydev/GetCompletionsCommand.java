@@ -1,7 +1,6 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PydevXmlUtils;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +13,6 @@ import java.util.List;
 public class GetCompletionsCommand extends AbstractFrameCommand {
 
   private String myActionToken;
-  private boolean isError = false;
-  private int responseCode;
-  private String payload;
   private List<PydevCompletionVariant> myCompletions = null;
 
   public GetCompletionsCommand(final RemoteDebugger debugger,
@@ -37,7 +33,7 @@ public class GetCompletionsCommand extends AbstractFrameCommand {
   protected void processResponse(ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {
-      myCompletions = PydevConsoleCommunication.decodeCompletions(PydevXmlUtils.xmlToCompletions(response.getPayload()));
+      myCompletions = PydevXmlUtils.xmlToCompletions(response.getPayload());
     }
     catch (Exception e) {
       throw new PyDebuggerException("cant obtain completions", e);

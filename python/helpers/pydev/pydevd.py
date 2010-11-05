@@ -21,10 +21,12 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_RUN_TO_LINE, \
                          CMD_RELOAD_CODE, \
                          CMD_VERSION, \
+                         CMD_CONSOLE_EXEC, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
                          InternalEvaluateExpression, \
+                         InternalConsoleExec, \
                          InternalGetFrame, \
                          InternalGetVariable, \
                          InternalTerminateThread, \
@@ -642,8 +644,14 @@ class PyDB:
                     int_cmd = InternalEvaluateExpression(seq, thread_id, frame_id, expression,
                         cmd_id == CMD_EXEC_EXPRESSION)
                     self.postInternalCommand(int_cmd, thread_id)
-                        
-                        
+
+                elif cmd_id == CMD_CONSOLE_EXEC :
+                    #command to exec expression in console, in case expression is only partially valid 'False' is returned
+                    #text is: thread\tstackframe\tLOCAL\texpression
+                    thread_id, frame_id, scope, expression = text.split('\t', 3)
+                    int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression,                        )
+                    self.postInternalCommand(int_cmd, thread_id)
+
                 else:
                     #I have no idea what this is all about
                     cmd = self.cmdFactory.makeErrorMessage(seq, "unexpected command " + str(cmd_id))

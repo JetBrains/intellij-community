@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.codeStyle.HelperFactory;
 import com.intellij.psi.impl.source.codeStyle.IndentHelper;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 
@@ -35,14 +36,14 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private int myCurrentIndentSize = -1;
   private IndentHelper myIndentHelper;
 
-  private final ConsoleCommandExecutor myConsoleCommandExecutor;
+  private final ConsoleCommunication myConsoleCommunication;
 
   public PydevConsoleExecuteActionHandler(LanguageConsoleViewImpl consoleView,
                                           ProcessHandler myProcessHandler,
-                                          ConsoleCommandExecutor consoleCommandExecutor) {
+                                          ConsoleCommunication consoleCommunication) {
     super(myProcessHandler);
     myConsoleView = consoleView;
-    myConsoleCommandExecutor = consoleCommandExecutor;
+    myConsoleCommunication = consoleCommunication;
     myIndentHelper = HelperFactory.createHelper(PythonFileType.INSTANCE, consoleView.getConsole().getProject());
   }
 
@@ -98,9 +99,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       }
     }
 
-    if (myConsoleCommandExecutor != null) {
-      final boolean waitedForInputBefore = myConsoleCommandExecutor.isWaitingForInput();
-      myConsoleCommandExecutor.execInterpreter(myInputBuffer.toString(), new ICallback<Object, InterpreterResponse>() {
+    if (myConsoleCommunication != null) {
+      final boolean waitedForInputBefore = myConsoleCommunication.isWaitingForInput();
+      myConsoleCommunication.execInterpreter(myInputBuffer.toString(), new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
@@ -144,7 +145,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         }
       });
       // After requesting input we got no call back to change prompt, change it manually
-      if (waitedForInputBefore && !myConsoleCommandExecutor.isWaitingForInput()) {
+      if (waitedForInputBefore && !myConsoleCommunication.isWaitingForInput()) {
         console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
         scrollDown(currentEditor);
       }

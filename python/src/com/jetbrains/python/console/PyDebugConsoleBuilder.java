@@ -19,7 +19,6 @@ package com.jetbrains.python.console;
 import com.google.common.collect.Lists;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 
@@ -44,8 +43,8 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
     return consoleView;
   }
 
-  protected ConsoleViewImpl createConsole() {
-    return new PydevLanguageConsoleView(myProject, "");
+  protected  ConsoleView createConsole() {
+    return new PythonDebugLanguageConsoleView(myProject);
   }
 
   public void addFilter(final Filter filter) {

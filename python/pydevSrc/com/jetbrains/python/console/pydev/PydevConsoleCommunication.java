@@ -6,20 +6,23 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.debugger.PydevXmlUtils;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Communication with Xml-rpc with the client.
  *
  * @author Fabio
  */
-public class PydevConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler, ConsoleCommunication {
+public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler {
 
   /**
    * XML-RPC client for sending messages to the server.
@@ -27,24 +30,39 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   private IPydevXmlRpcClient client;
 
   /**
-   * Responsible for getting the stdout of the process.
-   */
-  private final ThreadStreamReader stdOutReader;
-
-  /**
-   * Responsible for getting the stderr of the process.
-   */
-  private final ThreadStreamReader stdErrReader;
-
-  /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
   private WebServer webServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
-  private final Project myProject;
-  public static final int MAX_ATTEMPTS = 3;
-  public static final long TIMEOUT = (long)(10e9);
+  /**
+   * Responsible for getting the stdout of the process.
+   */
+  protected final ThreadStreamReader stdOutReader;
+  /**
+   * Responsible for getting the stderr of the process.
+   */
+  protected final ThreadStreamReader stdErrReader;
+
+  /**
+   * Input that should be sent to the server (waiting for raw_input)
+   */
+  protected volatile String inputReceived;
+  /**
+   * Response that should be sent back to the shell.
+   */
+  protected volatile InterpreterResponse nextResponse;
+  /**
+   * Helper to keep on busy loop.
+   */
+  private volatile Object lock2 = new Object();
+  /**
+   * Keeps a flag indicating that we were able to communicate successfully with the shell at least once
+   * (if we haven't we may retry more than once the first time, as jython can take a while to initialize
+   * the communication)
+   */
+  private volatile boolean firstCommWorked = false;
+
 
   /**
    * Initializes the xml-rpc communication.
@@ -54,9 +72,11 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    * @throws MalformedURLException
    */
   public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
-    myProject = project;
-    stdOutReader = new ThreadStreamReader(process.getInputStream());
+    super(project);
+
     stdErrReader = new ThreadStreamReader(process.getErrorStream());
+    stdOutReader = new ThreadStreamReader(process.getInputStream());
+
     stdOutReader.start();
     stdErrReader.start();
 
@@ -100,36 +120,9 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    */
 
   /**
-   * Signals that the next command added should be sent as an input to the server.
-   */
-  public volatile boolean waitingForInput;
-
-  /**
-   * Input that should be sent to the server (waiting for raw_input)
-   */
-  private volatile String inputReceived;
-
-  /**
-   * Response that should be sent back to the shell.
-   */
-  private volatile InterpreterResponse nextResponse;
-
-  /**
    * Helper to keep on busy loop.
    */
   private volatile Object lock = new Object();
-
-  /**
-   * Helper to keep on busy loop.
-   */
-  private volatile Object lock2 = new Object();
-
-  /**
-   * Keeps a flag indicating that we were able to communicate successfully with the shell at least once
-   * (if we haven't we may retry more than once the first time, as jython can take a while to initialize
-   * the communication)
-   */
-  private volatile boolean firstCommWorked = false;
 
 
   /**
@@ -165,7 +158,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    * @return a Pair with (null, more) or (error, false)
    * @throws XmlRpcException
    */
-  private Pair<String, Boolean> exec(final String command) throws XmlRpcException {
+  protected Pair<String, Boolean> exec(final String command) throws XmlRpcException {
     Object execute = client.execute("addExec", new Object[]{command});
 
     Object object;
@@ -178,28 +171,35 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     else {
       object = execute;
     }
-    boolean more;
-
-    String errorContents = null;
     if (object instanceof Boolean) {
-      more = (Boolean)object;
+      return new Pair<String, Boolean>(null, (Boolean)object);
     }
     else {
-      String str = object.toString();
-
-      String lower = str.toLowerCase();
-      if (lower.equals("true") || lower.equals("1")) {
-        more = true;
-      }
-      else if (lower.equals("false") || lower.equals("0")) {
-        more = false;
-      }
-      else {
-        more = false;
-        errorContents = str;
-      }
+      return parseExecResponseString(object.toString());
     }
-    return new Pair<String, Boolean>(errorContents, more);
+  }
+
+  /**
+   * @return completions from the client
+   */
+  public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
+    if (waitingForInput) {
+      return Collections.emptyList();
+    }
+    final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
+
+    return PydevXmlUtils.decodeCompletions(fromServer);
+  }
+
+
+  /**
+   * @return the description of the given attribute in the shell
+   */
+  public String getDescription(String text) throws Exception {
+    if (waitingForInput) {
+      return "Unable to get description: waiting for input.";
+    }
+    return client.execute("getDescription", new Object[]{text}).toString();
   }
 
   /**
@@ -317,76 +317,5 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
         }
       }, "Waiting for REPL response", true, myProject);
     }
-  }
-
-  /**
-   * @return completions from the client
-   */
-  public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
-    if (waitingForInput) {
-      return Collections.emptyList();
-    }
-    final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
-
-    final List<PydevCompletionVariant> ret = decodeCompletions(fromServer);
-
-    return ret;
-  }
-
-  public static List<PydevCompletionVariant> decodeCompletions(Object fromServer) {
-    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
-
-    List complList = objectToList(fromServer);
-
-    for (Object o : complList) {
-      List comp = objectToList(o);
-
-      //name, doc, args, type
-      final int type = extractInt(comp.get(3));
-      final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
-                                                           AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
-
-      ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
-    }
-    return ret;
-  }
-
-  private static List objectToList(Object object) {
-    List list;
-    if (object instanceof Collection) {
-      list = new ArrayList((Collection)object);
-    }
-    else if (object instanceof Object[]) {
-      list = Arrays.asList((Object[])object);
-    }
-    else {
-      throw new IllegalStateException("cant handle type of " + object);
-    }
-    return list;
-  }
-
-
-  /**
-   * Extracts an int from an object
-   *
-   * @param objToGetInt the object that should be gotten as an int
-   * @return int with the int the object represents
-   */
-  private static int extractInt(Object objToGetInt) {
-    if (objToGetInt instanceof Integer) {
-      return (Integer)objToGetInt;
-    }
-    return Integer.parseInt(objToGetInt.toString());
-  }
-
-
-  /**
-   * @return the description of the given attribute in the shell
-   */
-  public String getDescription(String text) throws Exception {
-    if (waitingForInput) {
-      return "Unable to get description: waiting for input.";
-    }
-    return client.execute("getDescription", new Object[]{text}).toString();
   }
 }

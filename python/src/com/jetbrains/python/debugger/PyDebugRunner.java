@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
@@ -23,6 +22,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.PydevLanguageConsoleView;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -51,7 +51,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof AbstractPythonRunConfiguration;
   }
 
-  protected RunContentDescriptor doExecute(Project project, Executor executor, RunProfileState state,
+  protected RunContentDescriptor doExecute(final Project project, Executor executor, RunProfileState profileState,
                                            RunContentDescriptor contentToReuse,
                                            ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -65,7 +65,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       throw new ExecutionException("Failed to find free socket port", e);
     }
 
-    final PythonCommandLineState pyState = (PythonCommandLineState)state;
+    final PythonCommandLineState pyState = (PythonCommandLineState)profileState;
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = env.getRunProfile();
     final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(pyState, profile, serverLocalPort));
@@ -77,9 +77,7 @@ public class PyDebugRunner extends GenericProgramRunner {
           PyDebugProcess pyDebugProcess =
             new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
 
-          registerConsoleEvaluateActions(result, pyDebugProcess);
-
-          setDebugConsoleCommunication(result, pyDebugProcess);
+          createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
 
           return pyDebugProcess;
         }
@@ -87,28 +85,27 @@ public class PyDebugRunner extends GenericProgramRunner {
     return session.getRunContentDescriptor();
   }
 
-  private static void registerConsoleEvaluateActions(final ExecutionResult result, PyDebugProcess pyDebugProcess) {
+  private static void createConsoleCommunicationAndSetupActions(@NotNull final Project project, @NotNull final ExecutionResult result, @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();
     ProcessHandler processHandler = result.getProcessHandler();
 
-    if (console instanceof LanguageConsoleViewImpl) {
-      LanguageConsoleViewImpl consoleView = (LanguageConsoleViewImpl)console;
-      PythonCommandLineState.PyDebugProcessConsoleCommandExecutor consoleCommandExecutor = new PythonCommandLineState.PyDebugProcessConsoleCommandExecutor(pyDebugProcess);
-      List<AnAction> actions = AbstractConsoleRunnerWithHistory
-                       .createConsoleExecActions(consoleView.getConsole(), processHandler, new PydevConsoleExecuteActionHandler(consoleView,
-                                                                                                                                processHandler,
-                                                                                                                                consoleCommandExecutor))
-                       .getActionsAsList();
-      AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), consoleView.getComponent());
-    }
-  }
+    if (console instanceof PythonDebugLanguageConsoleView) {
+      PydevLanguageConsoleView pydevConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
+      //consoleView.getConsole().setFullEditorMode(true);
 
-  private static void setDebugConsoleCommunication(final ExecutionResult result, final PyDebugProcess debugProcess) {
-    ExecutionConsole console = result.getExecutionConsole();
-    if (console instanceof PydevLanguageConsoleView) {
-      PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)console;
-      ConsoleCommunication communication = new PyDebugConsoleCommunication(debugProcess);
-      consoleView.setConsoleCommunication(communication);
+
+      ConsoleCommunication consoleCommunication = new PyDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
+      pydevConsoleView.setConsoleCommunication(consoleCommunication);
+
+      List<AnAction> actions = AbstractConsoleRunnerWithHistory
+                       .createConsoleExecActions(
+                         pydevConsoleView.getConsole(), processHandler, new PydevConsoleExecuteActionHandler(pydevConsoleView,
+                                                                                                                                processHandler,
+                                                                                                                                consoleCommunication))
+                       .getActionsAsList();
+
+
+      AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pydevConsoleView.getComponent());
     }
   }
 

@@ -105,6 +105,12 @@ public class RemoteDebugger {
     return command.getValue();
   }
 
+  public String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException {
+    final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
+    command.execute();
+    return command.getValue();
+  }
+
   public List<PyDebugValue> loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
     final GetFrameCommand command = new GetFrameCommand(this, threadId, frameId);
     command.execute();
@@ -273,6 +279,8 @@ public class RemoteDebugger {
     final SuspendCommand command = new SuspendCommand(this, threadId);
     execute(command);
   }
+
+
 
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;

@@ -4,6 +4,8 @@
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from console import pydevconsole
+from code import compile_command
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -347,9 +349,6 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
     except:
         traceback.print_exc()
 
-def evaluateExpressionConsole(expression):
-    pass
-
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression
@@ -405,6 +404,29 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
         del frame
+
+def consoleExec(thread_id, frame_id, expression):
+    '''returns 'False' in case expression is partialy correct
+    '''
+    frame = findFrame(thread_id, frame_id)
+
+    expression = str(expression.replace('@LINE@', '\n'))
+
+    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+    #(Names not resolved in generator expression in method)
+    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+    updated_globals = {}
+    updated_globals.update(frame.f_globals)
+    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+
+    try:
+        result = compile_command(expression)
+        if result is None:
+            return True
+
+        evaluateExpression(thread_id, frame_id, expression, True)
+    except:
+        evaluateExpression(thread_id, frame_id, expression, True)
 
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):

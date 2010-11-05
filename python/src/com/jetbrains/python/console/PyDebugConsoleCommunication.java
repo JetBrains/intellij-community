@@ -1,19 +1,28 @@
 package com.jetbrains.python.console;
 
-import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebuggerException;
 
 import java.util.List;
 
 /**
  * @author traff
  */
-public class PyDebugConsoleCommunication implements ConsoleCommunication {
+public class PyDebugConsoleCommunication extends AbstractConsoleCommunication {
   private final PyDebugProcess myDebugProcess;
+  private final ConsoleViewImpl myTextConsoleView;
 
-  public PyDebugConsoleCommunication(PyDebugProcess debugProcess) {
+  private final StringBuilder myExpression = new StringBuilder();
+
+
+  public PyDebugConsoleCommunication(Project project, PyDebugProcess debugProcess, ConsoleViewImpl textConsoleView) {
+    super(project);
     myDebugProcess = debugProcess;
+    myTextConsoleView = textConsoleView;
   }
 
   @Override
@@ -24,5 +33,38 @@ public class PyDebugConsoleCommunication implements ConsoleCommunication {
   @Override
   public String getDescription(String text) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public boolean isWaitingForInput() {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  protected Pair<String, Boolean> exec(final String command) throws PyDebuggerException {
+    String value = myDebugProcess.consoleExec(command);
+    return parseExecResponseString(value);
+  }
+
+  public void execInterpreter(
+    String s,
+    ICallback<Object, InterpreterResponse> callback) {
+    try {
+      myExpression.append(s);
+      Pair<String, Boolean> executed = exec(myExpression.toString());
+
+      String errorContents = executed.first;
+      if ("None".equals(errorContents)) {
+        errorContents = null;
+      }
+      boolean more = executed.second;
+
+      if (!more) {
+        myExpression.setLength(0);
+      }
+      callback.call(new InterpreterResponse("", errorContents, more, isWaitingForInput()));
+    }
+    catch (PyDebuggerException e) {
+      callback.call(new InterpreterResponse(null, "", false, isWaitingForInput()));
+    }
   }
 }
