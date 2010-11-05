@@ -163,7 +163,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               processHandler.startNotify();
               project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
               started = true;
-              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
+              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler), project);
             }
           }
         }
