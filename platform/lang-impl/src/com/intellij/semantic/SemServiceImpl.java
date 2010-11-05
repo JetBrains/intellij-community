@@ -26,6 +26,7 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
@@ -321,13 +322,15 @@ public class SemServiceImpl extends SemService{
 
     FileChunk(PsiElement root) {
       if (root instanceof PsiFile) {
-        final ASTNode node = root.getNode();
-        if (node instanceof LazyParseableElement && ((LazyParseableElement)node).isParsed()) {
-          final PsiElement child = root.getFirstChild();
-          if (child != null) {
-            anchor = child;
-            child.putUserData(SEM_SERVICE_CHUNK, this);
-            return;
+        if (!(root instanceof PsiFileImpl) || ((PsiFileImpl)root).getStubTree() == null) {
+          final ASTNode node = root.getNode();
+          if (node instanceof LazyParseableElement && ((LazyParseableElement)node).isParsed()) {
+            final PsiElement child = root.getFirstChild();
+            if (child != null) {
+              anchor = child;
+              child.putUserData(SEM_SERVICE_CHUNK, this);
+              return;
+            }
           }
         }
       }
