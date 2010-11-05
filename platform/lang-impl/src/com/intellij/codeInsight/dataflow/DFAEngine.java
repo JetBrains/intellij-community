@@ -87,13 +87,13 @@ public class DFAEngine<E> {
         worklist.add(instruction);
         visited[number] = true;
 
-        // It is essential to apply this check!!!
-        // This gives us more chances that resulting info will be closer to expected result
-        // Also it is used as indicator that "equals" method is implemented correctly in E
         while (true) {
           // Check if canceled
           ProgressManager.checkCanceled();
 
+          // It is essential to apply this check!!!
+          // This gives us more chances that resulting info will be closer to expected result
+          // Also it is used as indicator that "equals" method is implemented correctly in E
           count++;
           if (count > limit){
              if (LOG.isDebugEnabled()){
