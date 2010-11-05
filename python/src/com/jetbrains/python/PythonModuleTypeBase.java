@@ -12,9 +12,9 @@ import javax.swing.*;
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-  private final Icon myBigIcon = IconLoader.getIcon("/com/jetbrains/python/python_24.png");
-  private final Icon myOpenIcon = IconLoader.getIcon("/com/jetbrains/python/pythonOpen.png");
-  private final Icon myClosedIcon = IconLoader.getIcon("/com/jetbrains/python/pythonClosed.png");
+  private final Icon myBigIcon = IconLoader.getIcon("/com/jetbrains/python/icons/python_24.png");
+  private final Icon myOpenIcon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonOpen.png");
+  private final Icon myClosedIcon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonClosed.png");
 
   protected PythonModuleTypeBase() {
     super(PYTHON_MODULE);

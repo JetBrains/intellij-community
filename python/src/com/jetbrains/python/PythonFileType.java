@@ -29,7 +29,7 @@ public class PythonFileType extends LanguageFileType {
 
   public PythonFileType() {
     super(new PythonLanguage());
-    _icon = IconLoader.getIcon("pythonFile.png");
+    _icon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonFile.png");
   }
 
   @NotNull

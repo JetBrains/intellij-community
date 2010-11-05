@@ -23,7 +23,7 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
     addFactory(new PythonUnitTestConfigurationFactory(this));
   }
 
-  private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/python.png");
+  private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {

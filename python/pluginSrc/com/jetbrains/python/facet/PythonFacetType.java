@@ -27,7 +27,7 @@ import java.util.List;
  * @author yole
  */
 public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
-  public static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/python.png");
+  public static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
 
   @NonNls
   private static final String ID = "Python";
