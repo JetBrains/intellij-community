@@ -200,10 +200,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     if (runner != null && environment != null) {
-      RestartAction restarAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
                                                      myRunContentDescriptor, environment);
-      group.add(restarAction);
-      restarAction.registerShortcut(myUi.getComponent());
+      group.add(restartAction);
+      restartAction.registerShortcut(myUi.getComponent());
     }
 
     addActionToGroup(group, XDebuggerActions.RESUME);

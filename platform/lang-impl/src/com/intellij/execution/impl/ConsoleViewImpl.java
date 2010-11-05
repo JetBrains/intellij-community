@@ -393,7 +393,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
           if (e.getNewLength() == 0 && e.getOffset() == 0) {
-            // string has beeen removed from the beginning, move tokens down
+            // string has been removed from the beginning, move tokens down
             synchronized (LOCK) {
               int toRemoveLen = e.getOldLength();
               int tIndex = findTokenInfoIndexByOffset(toRemoveLen);
@@ -1447,6 +1447,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
     final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
+
     final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
       protected Editor getEditor(AnActionEvent e) {
@@ -1478,7 +1479,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return consoleActions;
   }
 
-  private void scrollToTheEnd() {
+  protected void scrollToTheEnd() {
     myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
     myEditor.getSelectionModel().removeSelection();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
