@@ -51,6 +51,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -569,6 +570,37 @@ public class XmlUtil {
       targetFile = _targetFile;
     }
 
+    private static <T extends PsiElement> T copyElementPreservingOriginalLinks(final T element) {
+      final Key<PsiElement> originalKey = XmlElement.ORIGINAL_ELEMENT;
+      final PsiElementVisitor originalVisitor = new PsiRecursiveElementWalkingVisitor() {
+        public void visitElement(final PsiElement element) {
+          if (element instanceof XmlElement) {
+            element.putCopyableUserData(originalKey, element);
+          }
+          super.visitElement(element);
+        }
+      };
+      originalVisitor.visitElement(element);
+
+      final PsiElement fileCopy = element.copy();
+
+      final PsiElementVisitor copyVisitor = new PsiRecursiveElementWalkingVisitor() {
+        public void visitElement(final PsiElement element) {
+          CodeEditUtil.setNodeGenerated(element.getNode(), false); // these nodes won't be changed via PSI, so it'll save some memory
+          final PsiElement originalElement = element.getCopyableUserData(originalKey);
+          if (originalElement != null) {
+            originalElement.putCopyableUserData(originalKey, null);
+            element.putCopyableUserData(originalKey, null);
+            element.putUserData(originalKey, originalElement);
+          }
+          super.visitElement(element);
+        }
+
+      };
+      copyVisitor.visitElement(fileCopy);
+      return (T) fileCopy;
+    }
+
     private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
       if (deepFlag) if (!processor.execute(element)) return false;
 
@@ -648,7 +680,7 @@ public class XmlUtil {
               PsiElement[] result = new PsiElement[includeTag.length];
               for (int i = 0; i < includeTag.length; i++) {
                 XmlTag xmlTag = includeTag[i];
-                final PsiElement psiElement = PsiUtilBase.copyElementPreservingOriginalLinks(xmlTag, XmlElement.ORIGINAL_ELEMENT);
+                final PsiElement psiElement = copyElementPreservingOriginalLinks(xmlTag);
                 psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
                 psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xmlTag);
                 result[i] = psiElement;
