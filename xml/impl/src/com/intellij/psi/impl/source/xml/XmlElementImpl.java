@@ -107,10 +107,10 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
         if (anchor != null) {
           final PsiElement original = anchor.retrieve();
           if (original != null) {
-            final int endOffset = getTextRange().getEndOffset();
+            final int endOffset = getTextRange().getEndOffset() + original.getTextRange().getStartOffset();
 
             PsiElement candidate = original.findElementAt(getTextRange().getStartOffset() - root.getTextRange().getStartOffset());
-            while (candidate != null && candidate.getTextRange().getEndOffset() < endOffset) {
+            while (candidate != null && candidate.getStartOffsetInParent() == 0 && candidate.getTextRange().getEndOffset() < endOffset) {
               candidate = candidate.getParent();
             }
 
