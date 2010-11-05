@@ -43,7 +43,7 @@
   <problem>
     <file>first_arg.py</file>
     <line>65</line>
-    <description>Usually first parameter of such methods is named 'cls'</description>
+    <description>Usually first parameter of such methods is named 'typ'</description>
   </problem>
   <problem>
     <file>first_arg.py</file>

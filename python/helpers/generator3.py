@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 10, 4, 15, 53, 2) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 11, 4, 13, 40, 45) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -506,42 +506,48 @@ class ModuleRedeclarator(object):
         else:
             self.out("# no doc", indent)
 
-        # Some values are known to be of no use in source and needs to be suppressed.
-        # Dict is keyed by module names, with "*" meaning "any module";
-        # values are lists of names of members whose value must be pruned.
-
+    # Some values are known to be of no use in source and needs to be suppressed.
+    # Dict is keyed by module names, with "*" meaning "any module";
+    # values are lists of names of members whose value must be pruned.
     SKIP_VALUE_IN_MODULE = {
         "sys": (
-        "modules", "path_importer_cache", "argv", "builtins",
-        "last_traceback", "last_type", "last_value",
+            "modules", "path_importer_cache", "argv", "builtins",
+            "last_traceback", "last_type", "last_value", "builtin_module_names",
         ),
         "posix": (
-        "environ",
+            "environ",
         ),
         "zipimport": (
-        "_zip_directory_cache",
+            "_zip_directory_cache",
         ),
         "*":   (BUILTIN_MOD_NAME,)
     }
 
+    # {"module": ("name",..)}: omit the names from the skeleton at all.
+    OMIT_NAME_IN_MODULE = {}
+
+    if version[0] >= 3:
+        v = OMIT_NAME_IN_MODULE.get(BUILTIN_MOD_NAME, []) + ["True", "False", "None", "__debug__"]
+        OMIT_NAME_IN_MODULE[BUILTIN_MOD_NAME] = v
+
     ADD_VALUE_IN_MODULE = {
-      "sys": ("exc_value = Exception()", "exc_traceback=None"), # only present after an exception in current thread
+        "sys": ("exc_value = Exception()", "exc_traceback=None"), # only present after an exception in current thread
     }
 
     # Some values are special and are better represented by hand-crafted constructs.
     # Dict is keyed by (module name, member name) and value is the replacement.
     REPLACE_MODULE_VALUES = {
-        (BUILTIN_MOD_NAME, "None"): "object()",
-        # numpy
         ("numpy.core.multiarray", "typeinfo") : "{}",
     }
     if version[0] <= 2:
+        REPLACE_MODULE_VALUES[(BUILTIN_MOD_NAME, "None")] = "object()"
         for std_file in ("stdin", "stdout", "stderr"):
             REPLACE_MODULE_VALUES[("sys", std_file)] = "file('')" #
 
-        # Some functions and methods of some builtin classes have special signatures.
-        # {("class", "method"): ("signature_string")}
+    # Some functions and methods of some builtin classes have special signatures.
+    # {("class", "method"): ("signature_string")}
     PREDEFINED_BUILTIN_SIGS = {
+        ("type", "__init__"): "(cls, what, bases=None, dict=None)", # two sigs squeezed into one
         ("object", "__init__"): "(self)",
         ("object", "__new__"): "(cls, *more)", # only for the sake of parameter names readability
         ("object", "__subclasshook__"): "(cls, subclass)", # trusting PY-1818 on sig
@@ -582,6 +588,8 @@ class ModuleRedeclarator(object):
         ("binascii", None, "hexlify"): "(data)",
         ("binascii", None, "unhexlify"): "(hexstr)",
 
+        ("time", None, "ctime"): "(seconds=None)",
+
         ("datetime", "date", "__new__"): "(cls, year=None, month=None, day=None)",
         ("datetime", "date", "fromordinal"): "(cls, ordinal)",
         ("datetime", "date", "fromtimestamp"): "(cls, timestamp)",
@@ -605,8 +613,8 @@ class ModuleRedeclarator(object):
         ("datetime", "datetime", "isoformat"): "(self, sep='T')",
         ("datetime", "datetime", "now"): "(cls, tz=None)",
         ("datetime", "datetime", "strptime"): "(cls, date_string, format)",
-        ("datetime", "datetime", "replace"
-        ): "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
+        ("datetime", "datetime", "replace" ):
+          "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
         ("datetime", "datetime", "time"): "(self)",
         ("datetime", "datetime", "timetuple"): "(self)",
         ("datetime", "datetime", "timetz"): "(self)",
@@ -839,6 +847,22 @@ class ModuleRedeclarator(object):
                             return None
                         return mname + inner_name
         return None
+
+    _initializers = ( # what if types are not hashable in some strange implementation?
+      (dict, "{}"),
+      (tuple, "()"),
+      (list, "[]"),
+    )
+    def inventInitializer(self, a_type):
+      """
+      Returns an innocuous initializer expression for a_type, or "None"
+      """
+      for t, r in self._initializers:
+          if t == a_type:
+              return r
+      # NOTE: here we could handle things like defaultdict, sets, etc if we wanted
+      return "None"
+
 
     def fmtValue(self, p_value, indent, prefix="", postfix="", as_name=None, seen_values=None):
         """
@@ -1396,11 +1420,15 @@ class ModuleRedeclarator(object):
                 self._defined[item_name] = True
             self.out("", 0) # empty line after group
         #
+        omitted_names = self.OMIT_NAME_IN_MODULE.get(p_name, [])
         if vars_simple:
             prefix = "" # try to group variables by common prefix
             PREFIX_LEN = 2 # default prefix length if we can't guess better
             self.out("# Variables with simple values", 0)
             for item_name in sortedNoCase(vars_simple.keys()):
+                if item_name in omitted_names:
+                  self.out("# definition of " + item_name + " omitted", 0)
+                  continue
                 item = vars_simple[item_name]
                 # track the prefix
                 if len(item_name) >= PREFIX_LEN:
@@ -1418,7 +1446,8 @@ class ModuleRedeclarator(object):
                 if replacement is not None:
                     self.out(item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced", 0)
                 elif self.isSkippedInModule(p_name, item_name):
-                    self.out(item_name + " = None # real value of type " + str(type(item)) + " skipped", 0)
+                    t_item = type(item)
+                    self.out(item_name + " = " + self.inventInitializer(t_item) +  " # real value of type " + str(t_item) + " skipped", 0)
                 else:
                     self.fmtValue(item, 0, prefix=item_name + " = ")
                 self._defined[item_name] = True
@@ -1428,6 +1457,9 @@ class ModuleRedeclarator(object):
             self.out("# functions", 0)
             self.out("", 0)
             for item_name in sortedNoCase(funcs.keys()):
+                if item_name in omitted_names:
+                  self.out("# definition of " + item_name + " omitted", 0)
+                  continue
                 item = funcs[item_name]
                 self.redoFunction(item, item_name, 0, p_modname=p_name)
                 self._defined[item_name] = True
@@ -1450,6 +1482,9 @@ class ModuleRedeclarator(object):
                         break         # ...and need not go fartehr than first known child
                 cls_list.insert(ins_index, (cls_name, getMRO(cls)))
             for item_name in [cls_item[0] for cls_item in cls_list]:
+                if item_name in omitted_names:
+                  self.out("# definition of " + item_name + " omitted", 0)
+                  continue
                 item = classes[item_name]
                 self.redoClass(item, item_name, 0, p_modname=p_name)
                 self._defined[item_name] = True
@@ -1461,12 +1496,16 @@ class ModuleRedeclarator(object):
             self.out("# variables with complex values", 0)
             self.out("", 0)
             for item_name in sortedNoCase(vars_complex.keys()):
+                if item_name in omitted_names:
+                  self.out("# definition of " + item_name + " omitted", 0)
+                  continue
                 item = vars_complex[item_name]
                 replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
                 if replacement is not None:
                     self.out(item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced", 0)
                 elif self.isSkippedInModule(p_name, item_name):
-                    self.out(item_name + " = None # real value of type " + str(type(item)) + " skipped", 0)
+                    t_item = type(item)
+                    self.out(item_name + " = " + self.inventInitializer(t_item) +  " # real value of type " + str(t_item) + " skipped", 0)
                 else:
                     self.fmtValue(item, 0, prefix=item_name + " = ", as_name=item_name)
                 self._defined[item_name] = True
@@ -1601,6 +1640,9 @@ if __name__ == "__main__":
 
     # go on
     for name in names:
+        if name.endswith(".py"):
+          sys.stderr.write("Ignored a regular Python file " + name + "\n")
+          continue
         if not quiet:
             sys.stdout.write(name + "\n")
             sys.stdout.flush()
