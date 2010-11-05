@@ -36,8 +36,15 @@ public class PyConsoleHighlightingUtil {
   }
 
   public static void processOutput(final LanguageConsoleImpl console, String string, final Key attributes) {
-    final ConsoleViewContentType outputType =
-      attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
+    final ConsoleViewContentType outputType;
+    if (attributes == ProcessOutputTypes.STDERR) {
+      outputType = ConsoleViewContentType.ERROR_OUTPUT;
+    } else
+    if (attributes == ProcessOutputTypes.SYSTEM) {
+      outputType = ConsoleViewContentType.SYSTEM_OUTPUT;
+    } else {
+      outputType = ConsoleViewContentType.NORMAL_OUTPUT;
+    }
     // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {

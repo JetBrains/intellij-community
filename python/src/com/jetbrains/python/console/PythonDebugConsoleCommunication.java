@@ -12,14 +12,14 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PyDebugConsoleCommunication extends AbstractConsoleCommunication {
+public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
   private final PyDebugProcess myDebugProcess;
   private final ConsoleViewImpl myTextConsoleView;
 
   private final StringBuilder myExpression = new StringBuilder();
 
 
-  public PyDebugConsoleCommunication(Project project, PyDebugProcess debugProcess, ConsoleViewImpl textConsoleView) {
+  public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess, ConsoleViewImpl textConsoleView) {
     super(project);
     myDebugProcess = debugProcess;
     myTextConsoleView = textConsoleView;
@@ -37,7 +37,7 @@ public class PyDebugConsoleCommunication extends AbstractConsoleCommunication {
 
   @Override
   public boolean isWaitingForInput() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   protected Pair<String, Boolean> exec(final String command) throws PyDebuggerException {
@@ -64,7 +64,8 @@ public class PyDebugConsoleCommunication extends AbstractConsoleCommunication {
       callback.call(new InterpreterResponse("", errorContents, more, isWaitingForInput()));
     }
     catch (PyDebuggerException e) {
-      callback.call(new InterpreterResponse(null, "", false, isWaitingForInput()));
+      myExpression.setLength(0);
+      callback.call(new InterpreterResponse("", "", false, isWaitingForInput()));
     }
   }
 }

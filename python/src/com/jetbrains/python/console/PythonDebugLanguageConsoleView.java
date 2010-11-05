@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -13,6 +14,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
@@ -37,19 +39,27 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   private final ConsoleViewImpl myTextConsole;
 
-  private Project myProject;
-
   public boolean myIsDebugConsole = false;
+
+  private ProcessHandler myProcessHandler;
 
   public PythonDebugLanguageConsoleView(final Project project) {
     super(new CardLayout());
-    myProject = project;
-    myPydevConsoleView = new PydevLanguageConsoleView(myProject, "");
-    myTextConsole = (ConsoleViewImpl)TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+    myPydevConsoleView = createConsoleView(project);
+    myTextConsole = (ConsoleViewImpl)TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
     showDebugConsole(false);
+  }
+
+  private static PydevLanguageConsoleView createConsoleView(Project project) {
+    return new PydevLanguageConsoleView(project, "") {
+      @Override
+      public void print(String s, ConsoleViewContentType contentType) {
+        LanguageConsoleImpl.printToConsole(getConsole(), s, contentType, null);
+      }
+    };
   }
 
 
@@ -115,9 +125,9 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
 
-
   @Override
   public void attachToProcess(ProcessHandler processHandler) {
+    myProcessHandler = processHandler;
     myPydevConsoleView.attachToProcess(processHandler);
     myTextConsole.attachToProcess(processHandler);
   }
@@ -191,7 +201,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
 
     public ShowDebugConsoleAction(final PythonDebugLanguageConsoleView console) {
-      super(ExecutionBundle.message("run.configuration.show.command.line.action.name"), null, IconLoader.getIcon("/actions/pause.png"));
+      super(ExecutionBundle.message("run.configuration.show.command.line.action.name"), null,
+            IconLoader.getIcon("/com/jetbrains/python/icons/debug/commandLine.png"));
       myConsole = console;
     }
 
@@ -206,6 +217,20 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
           update(event);
         }
       });
+    }
+
+    public void update(final AnActionEvent event) {
+      super.update(event);
+      final Presentation presentation = event.getPresentation();
+      final boolean isRunning = myConsole.myProcessHandler != null && !myConsole.myProcessHandler.isProcessTerminated();
+      if (isRunning) {
+        presentation.setEnabled(true);
+      }
+      else {
+        myConsole.showDebugConsole(false);
+        presentation.putClientProperty(SELECTED_PROPERTY, false);
+        presentation.setEnabled(false);
+      }
     }
   }
 }

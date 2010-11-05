@@ -19,7 +19,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.console.PyDebugConsoleCommunication;
+import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.PydevLanguageConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -91,10 +91,8 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     if (console instanceof PythonDebugLanguageConsoleView) {
       PydevLanguageConsoleView pydevConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
-      //consoleView.getConsole().setFullEditorMode(true);
 
-
-      ConsoleCommunication consoleCommunication = new PyDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
+      ConsoleCommunication consoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
       pydevConsoleView.setConsoleCommunication(consoleCommunication);
 
       List<AnAction> actions = AbstractConsoleRunnerWithHistory
