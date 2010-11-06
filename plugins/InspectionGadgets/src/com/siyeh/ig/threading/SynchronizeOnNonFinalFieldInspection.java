@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,28 +26,33 @@ import org.jetbrains.annotations.Nullable;
 
 public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "synchronize.on.non.final.field.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "synchronize.on.non.final.field.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiField field = (PsiField) infos[0];
         return MakeFieldFinalFix.buildFix(field);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SynchronizeOnNonFinalFieldVisitor();
     }
