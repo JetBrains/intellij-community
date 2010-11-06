@@ -2,7 +2,6 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -18,6 +17,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -56,8 +57,10 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   private static PydevLanguageConsoleView createConsoleView(Project project) {
     return new PydevLanguageConsoleView(project, "") {
       @Override
-      public void print(String s, ConsoleViewContentType contentType) {
-        LanguageConsoleImpl.printToConsole(getConsole(), s, contentType, null);
+      protected EditorEx createRealEditor() {
+        EditorEx editor = myConsole.getHistoryViewer();
+        editor.setHighlighter(createHighlighter());
+        return editor;
       }
     };
   }
@@ -107,8 +110,12 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   @Override
   public void print(String s, ConsoleViewContentType contentType) {
-    myPydevConsoleView.print(s, contentType);
-    myTextConsole.print(s, contentType);
+    if (myIsDebugConsole) {
+      myPydevConsoleView.print(s, contentType);
+    }
+    else {
+      myTextConsole.print(s, contentType);
+    }
   }
 
   @Override

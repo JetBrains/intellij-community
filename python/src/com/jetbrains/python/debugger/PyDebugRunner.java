@@ -19,9 +19,8 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.console.PythonDebugConsoleCommunication;
-import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.PydevLanguageConsoleView;
+import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -79,31 +78,40 @@ public class PyDebugRunner extends GenericProgramRunner {
 
           createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
 
+
           return pyDebugProcess;
         }
       });
     return session.getRunContentDescriptor();
   }
 
-  private static void createConsoleCommunicationAndSetupActions(@NotNull final Project project, @NotNull final ExecutionResult result, @NotNull PyDebugProcess debugProcess) {
+  private static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
+                                                                @NotNull final ExecutionResult result,
+                                                                @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();
     ProcessHandler processHandler = result.getProcessHandler();
 
     if (console instanceof PythonDebugLanguageConsoleView) {
       PydevLanguageConsoleView pydevConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
 
-      ConsoleCommunication consoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
+
+      ConsoleCommunication consoleCommunication =
+        new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
       pydevConsoleView.setConsoleCommunication(consoleCommunication);
 
+      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pydevConsoleView,
+                                                                                                                    processHandler,
+                                                                                                                    consoleCommunication);
+
+      debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
+
       List<AnAction> actions = AbstractConsoleRunnerWithHistory
-                       .createConsoleExecActions(
-                         pydevConsoleView.getConsole(), processHandler, new PydevConsoleExecuteActionHandler(pydevConsoleView,
-                                                                                                                                processHandler,
-                                                                                                                                consoleCommunication))
-                       .getActionsAsList();
+        .createConsoleExecActions(
+          pydevConsoleView.getConsole(), processHandler, consoleExecuteActionHandler).getActionsAsList();
 
 
-      AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pydevConsoleView.getComponent());
+      AbstractConsoleRunnerWithHistory
+        .registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pydevConsoleView.getComponent());
     }
   }
 
