@@ -85,9 +85,8 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 626;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
-            new ArrayList(NUM_INSPECTIONS);
+            new ArrayList();
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry =
@@ -844,7 +843,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SafeLockInspection.class);
         m_inspectionClasses.add(SignalWithoutCorrespondingAwaitInspection.class);
         m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
-        m_inspectionClasses.add(SynchronizationOnLocalVariableOrMethodParameterInspection .class);
+        m_inspectionClasses.add(SynchronizationOnLocalVariableOrMethodParameterInspection.class);
+        m_inspectionClasses.add(SynchronizationOnStaticFieldInspection.class);
         m_inspectionClasses.add(SynchronizeOnLockInspection.class);
         m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
         m_inspectionClasses.add(SynchronizedOnLiteralObjectInspection.class);
