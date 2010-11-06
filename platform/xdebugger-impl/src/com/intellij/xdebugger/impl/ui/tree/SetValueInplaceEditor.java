@@ -15,7 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.ui.Messages;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -75,8 +75,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
         DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
-            //todo[nik] show hint instead
-            Messages.showErrorDialog(myTree, errorMessage);
+            HintManager.getInstance().showErrorHint(myExpressionEditor.getEditor(), errorMessage);
           }
         });
       }
