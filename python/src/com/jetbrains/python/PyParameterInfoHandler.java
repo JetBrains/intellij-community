@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -156,11 +157,17 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final List<PyExpression> args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     for (PyExpression arg : args) {
       if (arg.getTextRange().contains(current_param_offset)) {
-        PyNamedParameter param = result.getPlainMappedParams().get(arg);
-        if (param != null) {
-          final Integer param_index = param_indexes.get(param);
-          if  (param_index < hint_flags.size()) {
-            hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+        PsiElement seeker = arg;
+        while (seeker != arglist && seeker != null && !result.getPlainMappedParams().containsKey(seeker)) {
+          seeker = seeker.getParent(); // flattener may have flattened a tuple arg that is mapped to a plain param; find it.
+        }
+        if (seeker instanceof PyExpression) {
+          PyNamedParameter param = result.getPlainMappedParams().get((PyExpression)seeker);
+          if (param != null) {
+            final Integer param_index = param_indexes.get(param);
+            if  (param_index < hint_flags.size()) {
+              hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+            }
           }
         }
         else if (arg == result.getTupleArg()) {
