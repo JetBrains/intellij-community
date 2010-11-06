@@ -110,12 +110,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   @Override
   public void print(String s, ConsoleViewContentType contentType) {
-    if (myIsDebugConsole) {
-      myPydevConsoleView.print(s, contentType);
-    }
-    else {
-      myTextConsole.print(s, contentType);
-    }
+    myPydevConsoleView.print(s, contentType);
+    myTextConsole.print(s, contentType);
   }
 
   @Override
