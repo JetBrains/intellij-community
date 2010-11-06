@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,67 +19,53 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeFieldFinalFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
+public class SynchronizationOnStaticFieldInspection extends BaseInspection {
 
-    @Override
+    @Nls
     @NotNull
+    @Override
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "synchronize.on.non.final.field.display.name");
+                "synchronization.on.static.field.display.name");
     }
 
-    @Override
     @NotNull
+    @Override
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "synchronize.on.non.final.field.problem.descriptor");
-    }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
+                "synchronization.on.static.field.problem.descriptor");
     }
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnNonFinalFieldVisitor();
+        return new SynchronizationOnStaticFieldVisitor();
     }
 
-    private static class SynchronizeOnNonFinalFieldVisitor
+    private static class SynchronizationOnStaticFieldVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
+        @Override
+        public void visitSynchronizedStatement(
+                PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();
             if (!(lockExpression instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReference reference = lockExpression.getReference();
-            if (reference == null) {
+            final PsiReferenceExpression expression =
+                    (PsiReferenceExpression) lockExpression;
+            final PsiElement target = expression.resolve();
+            if (!(target instanceof PsiField)) {
                 return;
             }
-            final PsiElement element = reference.resolve();
-            if (!(element instanceof PsiField)) {
+            final PsiField field = (PsiField) target;
+            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerError(lockExpression, field);
+            registerError(lockExpression);
         }
     }
 }

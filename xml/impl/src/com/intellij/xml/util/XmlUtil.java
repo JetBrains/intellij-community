@@ -152,6 +152,7 @@ public class XmlUtil {
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
+  public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
 
   private XmlUtil() {
@@ -648,9 +649,9 @@ public class XmlUtil {
               PsiElement[] result = new PsiElement[includeTag.length];
               for (int i = 0; i < includeTag.length; i++) {
                 XmlTag xmlTag = includeTag[i];
-                final PsiElement psiElement = PsiUtilBase.copyElementPreservingOriginalLinks(xmlTag, XmlElement.ORIGINAL_ELEMENT);
+                final PsiElement psiElement = xmlTag.copy();
                 psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
-                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xmlTag);
+                psiElement.putUserData(ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
                 result[i] = psiElement;
               }
               return Result.create(result, included);

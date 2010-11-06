@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,12 +48,32 @@ import java.util.Set;
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
+  private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
+    public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
+      final DomAnchor anchor = domElement.getChildDescription().getUserData(DomExtension.KEY_DECLARATION);
+      final ExtensionPoint extensionPoint = (ExtensionPoint)anchor.retrieveDomElement();
+      assert extensionPoint != null;
+
+      String interfaceName = extensionPoint.getInterface().getStringValue();
+      final Project project = extensionPoint.getManager().getProject();
+
+      if (interfaceName != null) {
+        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
+        registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)));
+      }
+      else {
+        final String beanClassName = extensionPoint.getBeanClass().getStringValue();
+        if (beanClassName != null) {
+          registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(beanClassName, GlobalSearchScope.allScope(project)));
+        }
+      }
+    }
+  };
 
 
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = extensions.getXmlElement();
     if (xmlElement == null) return;
-    final PsiManager psiManager = xmlElement.getManager();
 
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
 
@@ -66,29 +87,31 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       prefix = "";
     }
 
-    registerExtensions(prefix, ideaPlugin, registrar, psiManager);
+    registerExtensions(prefix, ideaPlugin, registrar);
     final Collection<String> dependencies = getDependencies(ideaPlugin);
     for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(extensions))) {
       final String value = plugin.getPluginId();
       // value == null for "included" platform plugins like DomPlugin.xml, XmlPlugin.xml, etc.
       if (value == null || dependencies.contains(value)) {
-        registerExtensions(prefix, plugin, registrar, psiManager);
+        registerExtensions(prefix, plugin, registrar);
       }
     }
 
   }
 
-  private static void registerExtensions(final String prefix, final IdeaPlugin plugin, final DomExtensionsRegistrar registrar,
-                                         final PsiManager psiManager) {
+  private static void registerExtensions(final String prefix, final IdeaPlugin plugin, final DomExtensionsRegistrar registrar) {
     final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
     for (ExtensionPoints points : plugin.getExtensionPoints()) {
       for (ExtensionPoint point : points.getExtensionPoints()) {
-        registerExtensionPoint(registrar, point, psiManager, prefix, pluginId);
+        registerExtensionPoint(registrar, point, prefix, pluginId);
       }
     }
   }
 
-  private static void registerExtensionPoint(final DomExtensionsRegistrar registrar, final ExtensionPoint extensionPoint, final PsiManager manager, String prefix, @Nullable String pluginId) {
+  private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
+                                             final ExtensionPoint extensionPoint,
+                                             String prefix,
+                                             @Nullable String pluginId) {
     final XmlTag tag = extensionPoint.getXmlTag();
     String epName = tag.getAttributeValue("name");
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
@@ -98,36 +121,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(prefix.length())), Extension.class);
     domExtension.setDeclaringElement(extensionPoint);
-    domExtension.addExtender(new DomExtender() {
-      public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
-        final String interfaceName = extensionPoint.getInterface().getStringValue();
-        if (interfaceName != null) {
-          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
-
-          final PsiClass implClass =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
-          if (implClass != null) {
-            registerXmlb(registrar, implClass);
-          }
-        }
-        else {
-          final String beanClassName = extensionPoint.getBeanClass().getStringValue();
-          if (beanClassName != null) {
-            final PsiClass beanClass =
-              JavaPsiFacade.getInstance(manager.getProject()).findClass(beanClassName, GlobalSearchScope.allScope(manager.getProject()));
-
-            if (beanClass != null) {
-              registerXmlb(registrar, beanClass);
-            }
-          }
-        }
-      }
-    });
+    domExtension.addExtender(EXTENSION_EXTENDER);
   }
 
-  private static void registerXmlb(final DomExtensionsRegistrar registrar, final PsiClass beanClass) {
-    final PsiField[] fields = beanClass.getAllFields();
-    for (PsiField field : fields) {
+  private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass) {
+    if (beanClass == null) return;
+
+    for (PsiField field : beanClass.getAllFields()) {
       if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
         registerField(registrar, field);
       }
@@ -279,7 +279,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   interface SimpleTagValue extends DomElement {
     @TagValue
-    String getValue();
+    String getTagValue();
   }
 
 }

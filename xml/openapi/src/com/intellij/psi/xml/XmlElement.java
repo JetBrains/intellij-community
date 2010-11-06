@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiElementProcessor;
  */
 public interface XmlElement extends PsiElement {
   Key<XmlElement> INCLUDING_ELEMENT = Key.create("INCLUDING_ELEMENT");
-  Key<PsiElement> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
   Key<PsiElement> DEPENDING_ELEMENT = Key.create("DEPENDING_ELEMENT");
 
   XmlElement[] EMPTY_ARRAY = new XmlElement[0];
