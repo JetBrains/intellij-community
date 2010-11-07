@@ -34,7 +34,7 @@ import java.awt.event.ActionListener;
 
 public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> {
   private CommonJavaParametersPanel myCommonProgramParameters;
-  private LabeledComponent<TextFieldWithBrowseButton> myMainClass;
+  private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> myMainClass;
   private LabeledComponent<JComboBox> myModule;
   private JPanel myWholePanel;
 
