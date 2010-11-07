@@ -20,14 +20,21 @@ public class CheckBoxList extends JBList {
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
   private CheckBoxListListener checkBoxListListener;
 
-  public CheckBoxList(final ListModel dataModel, final CheckBoxListListener checkBoxListListener) {
-    this();
-    setModel(dataModel);
+  public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
+    this(new CheckBoxListModel(), checkBoxListListener);
+  }
+  public CheckBoxList(final CheckBoxListModel dataModel, final CheckBoxListListener checkBoxListListener) {
+    this(dataModel);
     setCheckBoxListListener(checkBoxListListener);
   }
 
   public CheckBoxList() {
+    this(new CheckBoxListModel());
+  }
+
+  public CheckBoxList(final CheckBoxListModel dataModel) {
     super();
+    setModel(dataModel);
     setCellRenderer(new CellRenderer());
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setBorder(BorderFactory.createEtchedBorder());
@@ -68,6 +75,10 @@ public class CheckBoxList extends JBList {
     });
   }
 
+  public CheckBoxListModel getCBModel() {
+    return (CheckBoxListModel)getModel();
+  }
+
   public boolean isItemSelected(int index) {
     return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
   }
@@ -76,6 +87,10 @@ public class CheckBoxList extends JBList {
     boolean value = !checkbox.isSelected();
     checkbox.setSelected(value);
     repaint();
+
+    final CheckBoxListModel model = getCBModel();
+    model.fireContentsChanged(model, index, index);
+
     if (checkBoxListListener != null) {
       checkBoxListListener.checkBoxSelectionChanged(index, value);
     }
@@ -123,4 +138,10 @@ public class CheckBoxList extends JBList {
     return isSelected ? getSelectionForeground() : getForeground();
   }
 
+  public static class CheckBoxListModel extends DefaultListModel {
+    @Override
+    protected void fireContentsChanged(Object source, int index0, int index1) {
+      super.fireContentsChanged(source, index0, index1);
+    }
+  }
 }
