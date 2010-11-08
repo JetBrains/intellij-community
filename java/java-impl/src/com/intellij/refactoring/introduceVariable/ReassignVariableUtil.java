@@ -150,24 +150,24 @@ public class ReassignVariableUtil {
     }
   }
 
-  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager) {
+  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager, final String defaultText) {
     final PsiType[] types = typeSelectorManager.getTypesForAll();
     return new Expression() {
       @Override
       public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-        return new TextResult(typeSelectorManager.getDefaultType().getPresentableText());
+        return new TextResult(defaultText);
       }
 
       @Override
       public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
-        return new TextResult(typeSelectorManager.getDefaultType().getPresentableText());
+        return new TextResult(defaultText);
       }
 
       @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         LookupElement[] result = new LookupElement[types.length];
         for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-          result[i] = LookupElementBuilder.create(types[i].getPresentableText());
+          result[i] = LookupElementBuilder.create(types[i], types[i].getPresentableText());
         }
         return result;
       }
