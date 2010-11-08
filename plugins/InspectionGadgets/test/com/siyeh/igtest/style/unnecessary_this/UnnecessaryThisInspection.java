@@ -53,4 +53,20 @@ public class UnnecessaryThisInspection
             throwable.printStackTrace();
         }
     }
+
+    public void foo(String s) {}
+
+    class D{
+
+        private void foo(String s) {}
+    }
+    class C extends D {
+
+        class Box {
+
+            void bar() {
+                UnnecessaryThisInspection.this.foo("");
+            }
+        }
+    }
 }
