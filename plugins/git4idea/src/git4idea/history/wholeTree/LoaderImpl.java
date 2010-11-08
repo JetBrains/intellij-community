@@ -160,7 +160,7 @@ public class LoaderImpl implements Loader {
 
           myTreeComposite.clearMembers();
 
-          final List<LoaderBase> endOfTheList = new LinkedList<LoaderBase>();
+          final List<LoaderBase> endOfTheList = new ArrayList<LoaderBase>();
           final Consumer<CommitHashPlusParents> consumer = createCommitsHolderConsumer(drawHierarchy);
           final RefreshingCommitsPackConsumer listConsumer = new RefreshingCommitsPackConsumer(current, consumer);
 

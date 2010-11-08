@@ -174,7 +174,7 @@ public class GitUsersComponent {
     private boolean myStartReached;
 
     private UsersData() {
-      myUsers = new LinkedList<String>();
+      myUsers = new ArrayList<String>();
       final long now = System.currentTimeMillis();
       myCloserDate = new UpdatedReference<Long>(now);
       myEarlierDate = new UpdatedReference<Long>(now + 1);
@@ -327,7 +327,7 @@ public class GitUsersComponent {
       final long earlierUpdate = in.readLong();
       data.setEarlierDate(new UpdatedReference<Long>(earlierDate, earlierUpdate));
 
-      final List<String> users = new LinkedList<String>();
+      final List<String> users = new ArrayList<String>();
       final int size = in.readInt();
       for (int i = 0; i < size; i++) {
         users.add(in.readUTF());

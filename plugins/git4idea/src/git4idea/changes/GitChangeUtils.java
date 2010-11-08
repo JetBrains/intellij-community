@@ -122,7 +122,7 @@ public class GitChangeUtils {
   }
 
   public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
-    final Collection<String> result = new LinkedList<String>();
+    final Collection<String> result = new ArrayList<String>();
 
     while (s.hasMoreData()) {
       if (s.isEol()) {
