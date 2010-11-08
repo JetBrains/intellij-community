@@ -56,7 +56,7 @@ public abstract class PyCommandLineTestCase extends PyLightFixtureTestCase {
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
       PyDebugRunner debugRunner = (PyDebugRunner)RunnerRegistry.getInstance().findRunnerById(PyDebugRunner.PY_DEBUG_RUNNER);
       final GeneralCommandLine generalCommandLine =
-        state.generateCommandLine(debugRunner.createCommandLinePatchers(state, configuration, PORT));
+        state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(state, configuration, PORT));
       return generalCommandLine.getParametersList().getList();
     }
     catch (ExecutionException e) {
