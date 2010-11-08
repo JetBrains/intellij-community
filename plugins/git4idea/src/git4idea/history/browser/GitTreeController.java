@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUCache;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
@@ -158,8 +159,8 @@ class GitTreeController implements ManageGitTreeView {
     private void loadCommitsUsingMemoryAndNativeFilters(final Collection<String> startingPoints, final Pair<Date, SHAHash> beforePoint,
                                     final Date afterPoint, final Collection<ChangesFilter.Filter> filters, final int maxCnt) throws VcsException {
       assert maxCnt > 0;
-      final List<ChangesFilter.MemoryFilter> memoryFilters = new LinkedList<ChangesFilter.MemoryFilter>();
-      final List<ChangesFilter.Filter> commandFilters = new LinkedList<ChangesFilter.Filter>();
+      final List<ChangesFilter.MemoryFilter> memoryFilters = new SmartList<ChangesFilter.MemoryFilter>();
+      final List<ChangesFilter.Filter> commandFilters = new SmartList<ChangesFilter.Filter>();
       for (ChangesFilter.Filter filter : filters) {
         final ChangesFilter.CommandParametersFilter commandFilter = filter.getCommandParametersFilter();
         if (commandFilter == null) {
@@ -319,8 +320,8 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   private void loadTagsNBranches() {
-    final List<String> branches = new LinkedList<String>();
-    final List<String> tags = new LinkedList<String>();
+    final List<String> branches = new ArrayList<String>();
+    final List<String> tags = new ArrayList<String>();
 
     try {
       myAccess.loadAllBranches(branches);
@@ -381,7 +382,7 @@ class GitTreeController implements ManageGitTreeView {
       myAlarm.addRequest(new Runnable() {
         public void run() {
           // start from beginning
-          final List<Pair<Date, SHAHash>> wayList = new LinkedList<Pair<Date, SHAHash>>();
+          final List<Pair<Date, SHAHash>> wayList = new SmartList<Pair<Date, SHAHash>>();
 
           while (true) {
             final Pair<Date, SHAHash> startFrom = wayList.isEmpty() ? null : wayList.get(wayList.size() - 1);
@@ -438,7 +439,7 @@ class GitTreeController implements ManageGitTreeView {
     final Application application = ApplicationManager.getApplication();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        final List<CommittedChangeList> loaded = new LinkedList<CommittedChangeList>();
+        final List<CommittedChangeList> loaded = new ArrayList<CommittedChangeList>();
         final Set<Long> requested = new HashSet<Long>(hashes.size());
         for (SHAHash hash : hashes) {
           requested.add(GitChangeUtils.longForSHAHash(hash.getValue()));
@@ -483,11 +484,11 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public List<String> getAllBranchesOrdered() {
-    return new ArrayList<String>(myBranches.get());
+    return Collections.unmodifiableList(myBranches.get());
   }
 
   public List<String> getAllTagsOrdered() {
-    return new ArrayList<String>(myTags.get());
+    return Collections.unmodifiableList(myTags.get());
   }
 
   public boolean isInitialized() {
@@ -566,7 +567,7 @@ class GitTreeController implements ManageGitTreeView {
       myLock = new Object();
       myStartingPoints = new HashSet<String>();
       myFilters = new HashSet<ChangesFilter.Filter>();
-      myContinuationPoints = new LinkedList<Pair<Date, SHAHash>>();
+      myContinuationPoints = new SmartList<Pair<Date, SHAHash>>();
     }
 
     public boolean isDirty() {
