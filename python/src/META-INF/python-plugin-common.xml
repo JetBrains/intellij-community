@@ -278,6 +278,8 @@
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.lang.template.DjangoUrlsCompletionContributor"/>
 
+    <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
