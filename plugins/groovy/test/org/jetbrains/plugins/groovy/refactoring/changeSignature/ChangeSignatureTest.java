@@ -224,6 +224,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo[0]);
   }
 
+  public void testClosureArgs() {
+    doTest(new SimpleInfo[]{new SimpleInfo(0)});
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
