@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -332,13 +333,21 @@ public abstract class ResourceManager {
     return dir != null && isResourceDirectory(dir);
   }
 
+  public static boolean isResourceDirectory(VirtualFile dir, Project project) {
+    Module module = ModuleUtil.findModuleForFile(dir, project);
+    if (module != null) {
+      AndroidFacet facet = AndroidFacet.getInstance(module);
+      return facet != null && facet.getLocalResourceManager().isResourceDir(dir);
+    }
+    return false;
+  }
+
   public static boolean isResourceDirectory(PsiDirectory dir) {
     // check facet settings
     VirtualFile vf = dir.getVirtualFile();
-    Module module = ModuleUtil.findModuleForPsiElement(dir);
-    if (module != null) {
-      AndroidFacet facet = AndroidFacet.getInstance(module);
-      return facet != null && facet.getLocalResourceManager().isResourceDir(vf);
+
+    if (isResourceDirectory(vf, dir.getProject())) {
+      return true;
     }
 
     // method can be invoked for system resource dir, so we should check it

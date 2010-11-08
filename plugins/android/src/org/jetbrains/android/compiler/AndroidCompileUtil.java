@@ -27,9 +27,7 @@ import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -187,16 +185,24 @@ public class AndroidCompileUtil {
   // must be invoked in a read action!
 
   public static void removeDuplicatingClasses(final Module module, @NotNull final String packageName, @NotNull String className,
-                                              @Nullable final File classFile) {
+                                              @Nullable final File classFile, String sourceRootPath) {
+    if (sourceRootPath == null) {
+      return;
+    }
+    VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByPath(sourceRootPath);
+    if (sourceRoot == null) {
+      return;
+    }
     final Project project = module.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String interfaceQualifiedName = packageName + '.' + className;
     PsiClass[] classes = facade.findClasses(interfaceQualifiedName, GlobalSearchScope.moduleScope(module));
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiClass c : classes) {
       PsiFile psiFile = c.getContainingFile();
       if (className.equals(FileUtil.getNameWithoutExtension(psiFile.getName()))) {
         VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
+        if (virtualFile != null && projectFileIndex.getSourceRootForFile(virtualFile) == sourceRoot) {
           final String path = virtualFile.getPath();
           File f = new File(path);
           if (!f.equals(classFile) && f.exists()) {
