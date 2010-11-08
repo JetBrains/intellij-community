@@ -173,4 +173,18 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
       }
     });
   }
+
+  public Self afterSibling(final ElementPattern<? extends ParentType> pattern) {
+    return with(new PatternCondition<T>("afterSibling") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        final ParentType parent = getParent(t);
+        if (parent == null) return false;
+        final ParentType[] children = getChildren(parent);
+        final int i = Arrays.asList(children).indexOf(t);
+        if (i <= 0) return false;
+        return pattern.accepts(children[i - 1], context);
+      }
+    });
+  }
 }

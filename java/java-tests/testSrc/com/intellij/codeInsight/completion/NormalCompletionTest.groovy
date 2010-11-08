@@ -597,6 +597,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest(); }
+  public void testReturningTypeVariable() throws Throwable { doTest(); }
+  public void testReturningTypeVariable2() throws Throwable { doTest(); }
+  public void testReturningTypeVariable3() throws Throwable { doTest(); }
 
   public void testCaseTailType() throws Throwable { doTest(); }
 
