@@ -97,6 +97,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myFocused = true;
   private String myAdditionalPrefix = "";
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
+  private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private volatile boolean myCalculating;
   private final JLabel myAdComponent;
   private volatile String myAdText;
@@ -112,7 +113,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProject = project;
     myEditor = editor;
 
-    myProcessIcon.setVisible(false);
+    myIconPanel.setVisible(false);
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
 
@@ -127,13 +128,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(scrollPane, BorderLayout.NORTH);
     scrollPane.setBorder(null);
 
-    JPanel bottomPanel = new JPanel(new BorderLayout());
-
-    bottomPanel.add(myProcessIcon, BorderLayout.EAST);
     myAdComponent = HintUtil.createAdComponent(null);
-    bottomPanel.add(myAdComponent, BorderLayout.CENTER);
-    getComponent().add(bottomPanel, BorderLayout.SOUTH);
+    getComponent().add(myAdComponent, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
+
+    myIconPanel.setBackground(Color.LIGHT_GRAY);
+    myIconPanel.add(myProcessIcon);
 
     final ListModel model = myList.getModel();
     addEmptyItem((DefaultListModel)model);
@@ -164,7 +164,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void setCalculating(final boolean calculating) {
     myCalculating = calculating;
-    myProcessIcon.setVisible(calculating);
+    myIconPanel.setVisible(calculating);
     if (calculating) {
       myProcessIcon.resume();
     } else {
@@ -306,11 +306,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateListHeight(model);
 
-    myAdComponent.setPreferredSize(null);
     myAdComponent.setText(myAdText);
-    if (myAdText != null) {
-      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
-    }
 
     if (hasItems) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
@@ -583,6 +579,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Point p = calculatePosition();
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
+
+    getComponent().getRootPane().getLayeredPane().add(myIconPanel, 42, 0);
 
     myShownStamp = System.currentTimeMillis();
   }
@@ -975,6 +973,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       Point point = calculatePosition();
       updateBounds(point.x,point.y);
+
+      final Dimension size = myProcessIcon.getPreferredSize();
+      myIconPanel.setBounds(getComponent().getRootPane().getLayeredPane().getWidth() - size.width, 0, size.width, size.height);
 
       HintManagerImpl.adjustEditorHintPosition(this, myEditor, point);
     }
