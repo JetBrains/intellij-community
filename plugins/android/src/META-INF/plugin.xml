@@ -137,6 +137,7 @@
     <projectService serviceInterface="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"
                     serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>
     <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
+    <problemFileHighlightFilter implementation="org.jetbrains.android.AndroidProblemFileHighlightingFilter"/>
   </extensions>
 
   <extensionPoints>
