@@ -33,6 +33,7 @@ public class AnnotationParserTest extends JavaParsingTestCase {
   public void testArray() { doParserTest("@Endorsers({\"Children\", \"Unscrupulous dentists\"})"); }
   public void testNested() { doParserTest("@Author(@Name(first=\"Eugene\", second=\"Wampirchik\"))"); }
   public void testQualifiedAnnotation() { doParserTest("@org.jetbrains.annotations.Nullable"); }
+  public void testExtraCommaInList() { doParserTest("@Anno({0, 1,})"); }
 
   public void testParameterizedAnnotation () { doParserTest("@Nullable<T>"); }
   public void testFirstNameMissed() { doParserTest("@Anno(value1, param2=value2)"); }
