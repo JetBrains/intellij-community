@@ -4,9 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -88,6 +86,13 @@ public abstract class StructuralSearchProfile {
   }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
+
+  public boolean isMyFile(PsiFile file, @NotNull Language language, Language... patternLanguages) {
+    if (isMyLanguage(language) && ArrayUtil.find(patternLanguages, language) >= 0) {
+      return true;
+    }
+    return false;
+  }
 
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,

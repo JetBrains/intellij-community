@@ -11,6 +11,7 @@ import gnu.trove.THashSet;
 */
 abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   private final THashSet<String> scanned;
+  private final THashSet<String> scannedText;
   private final THashSet<String> scannedComments;
   private final THashSet<String> scannedLiterals;
   protected int scanRequest;
@@ -23,6 +24,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
     scanRequest = 0;
     scanned = new THashSet<String>();
+    scannedText = new THashSet<String>();
     scannedComments = new THashSet<String>();
     scannedLiterals = new THashSet<String>();
   }
@@ -60,7 +62,17 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
     return false;
   }
 
+  public boolean addWordToSearchInText(final String refname) {
+    if (!scannedText.contains(refname)) {
+      doAddSearchWordInText(refname);
+      scannedText.add(refname);
+      return true;
+    }
+    return false;
+  }
+
   protected abstract void doAddSearchJavaReservedWordInCode(final String refname);
+  protected abstract void doAddSearchWordInText(final String refname);
   protected abstract void doAddSearchWordInCode(final String refname);
   protected abstract void doAddSearchWordInComments(final String refname);
   protected abstract void doAddSearchWordInLiterals(final String refname);

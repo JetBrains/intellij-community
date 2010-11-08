@@ -13,6 +13,8 @@ public interface OptimizingSearchHelper {
 
   boolean addWordToSearchInCode(final String refname);
 
+  boolean addWordToSearchInText(final String refname);
+
   boolean addWordToSearchInComments(final String refname);
 
   boolean addWordToSearchInLiterals(final String refname);

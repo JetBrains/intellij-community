@@ -35,6 +35,9 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
   @Override
   public void visitElement(PsiElement element) {
     super.visitElement(element);
+    if (element instanceof JSFile) {
+      result = true;
+    }
     if (JSStructuralSearchProfile.getLanguageForElement(element) != myLanguage) {
       result = false;
     }
@@ -104,14 +107,6 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
   public void visitJSClass(JSClass aClass) {
     result = true;
     super.visitJSClass(aClass);
-  }
-
-  @Override
-  public void visitJSElement(JSElement node) {
-    if (node instanceof JSFile) {
-      result = true;
-    }
-    super.visitJSElement(node);
   }
 
   public boolean continueMatching(PsiElement start) {

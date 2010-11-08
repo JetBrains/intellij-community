@@ -31,6 +31,11 @@ public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     append(refname, "reserved in code:");
   }
 
+  @Override
+  protected void doAddSearchWordInText(String refname) {
+    append(refname, "in text:");
+  }
+
   private void append(final String refname, final String str) {
     if (builder.length() == lastLength) builder.append("[");
     else builder.append("|");

@@ -4,9 +4,6 @@ import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.TokenBasedSearcher;
-import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 
 import java.io.IOException;
 
@@ -21,12 +18,10 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "object.indexOf( \"text\" );\n";
     doTest(s, "host.indexOf( \"name\" )", 1, 3);
     doTest(s, "location.host.$method$($arg$) ;", 1, 3);
-    // todo:[ekudel] fix this
-    //doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 1, 2);
+    doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 1, 2);
     doTest(s, "host.indexOf(\"name\");", 1, 3);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1, 3);
-    // todo:[ekudel] fix this
-    //doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1, 2);
+    doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1, 2);
   }
 
   public void test2() {
@@ -69,9 +64,8 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "host.indexOf('name') ;\n" +
                "object.indexOf( \"text\" );\n" +
                "object.indexOf( \"text\" );\n";
-    // todo:[ekudel] fix this
-    //doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 2, 3);
-    //doTest(s, "$var$.indexOf($arg$);$var$.indexOf($arg1$);", 1, 3);
+    doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 2, 3);
+    doTest(s, "$var$.indexOf($arg$);$var$.indexOf($arg1$);", 1, 3);
   }
 
   public void test7() {
@@ -247,18 +241,18 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                                 "</script>", 1, 1, StdFileTypes.HTML);*/
   }
 
-  /*public void testInMxml() throws IOException {
+  public void testInMxml() throws IOException {
     doTestByFile("script.mxml", "var $i$ = $val$", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("script.mxml", "for (var i = 0; i < n; i++)", 1, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("script.mxml", "for (var $i$ = 0; $i$ < n; $i$++)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("script.mxml", "$func$();", 1, 3, JavaScriptSupportLoader.JAVASCRIPT, "as");
 
     // todo: test AS in XML attribute values
-  }*/
+  }
 
   public void testAsFunc() throws IOException {
-    doTestByFile("class.as", "function $name$('_param*)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("class.as", "$a$+$b$", 0, 0);
+    doTestByFile("class.as", "function $name$('_param*)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("class.as", "$a$+$b$", 1, 5, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTestByFile("class.as", "public static function sum('_param*)", 0, 0);
     doTestByFile("class.as", "public static function sum('_param*)", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
@@ -323,10 +317,10 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(expectedOccurences,
                  findMatches(source, pattern, true, patternFileType, patternFileExtension, sourceFileType, sourceFileExtension,
                              physicalSourceFile).size());
-    CompiledPattern compiledPattern = PatternCompiler.compilePattern(myProject, options);
+    /*CompiledPattern compiledPattern = PatternCompiler.compilePattern(myProject, options);
     assertTrue(TokenBasedSearcher.canProcess(compiledPattern));
     TokenBasedSearcher searcher = new TokenBasedSearcher(testMatcher);
     int lexicalOccurences = searcher.search(compiledPattern);
-    assertEquals(expectedLexicalOccurences, lexicalOccurences);
+    assertEquals(expectedLexicalOccurences, lexicalOccurences);*/
   }
 }

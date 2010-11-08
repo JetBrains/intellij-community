@@ -56,6 +56,10 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     helper.processAllFilesWithWordInText(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor(), true);
   }
 
+  protected void doAddSearchWordInText(final String refname) {
+    helper.processAllFilesWithWordInText(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor(), true);
+  }
+
   protected void doAddSearchWordInCode(final String refname) {
     helper.processAllFilesWithWord(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor(), true);
   }

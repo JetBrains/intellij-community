@@ -28,6 +28,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,6 +150,14 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof JavascriptLanguage || language instanceof JSLanguageDialect;
+  }
+
+  @Override
+  public boolean isMyFile(PsiFile file, @NotNull Language lang, Language... patternLanguages) {
+    if (file != null && JavaScriptSupportLoader.isFlexMxmFile(file) && ArrayUtil.find(patternLanguages, JavaScriptSupportLoader.ECMA_SCRIPT_L4) >= 0) {
+      return true;
+    }
+    return super.isMyFile(file, lang, patternLanguages);
   }
 
   private boolean containsFunctionOrClass(PsiElement[] elements) {
@@ -338,7 +347,9 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
       if (myGlobalVisitor.getContext().getSearchHelper().doOptimizing()) {
         if (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER) {
           OptimizingSearchHelper helper = myGlobalVisitor.getContext().getSearchHelper();
-          if (helper.addWordToSearchInCode(element.getText())) {
+          boolean added = helper.addWordToSearchInText(element.getText());
+          added = helper.addWordToSearchInCode(element.getText()) || added;
+          if (added) {
             helper.endTransaction();
           }
         }

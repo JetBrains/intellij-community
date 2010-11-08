@@ -38,6 +38,7 @@ import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -336,16 +337,12 @@ public class MatcherImpl {
               return true;
             }
 
-            if (profile.isMyLanguage(file.getLanguage())) {
-            /*if (options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile ||
-                options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile
-               ) {*/
-              final FileViewProvider viewProvider = file.getViewProvider();
+            final FileViewProvider viewProvider = file.getViewProvider();
 
-              for(Language lang: viewProvider.getLanguages()) {
-                if (lang != ourPatternLanguage && lang != ourPatternLanguage2) continue;
+            for(Language lang: viewProvider.getLanguages()) {
+              if (profile.isMyFile(file, lang, ourPatternLanguage, ourPatternLanguage2)) {
                 ++totalFilesToScan;
-                scheduler.addOneTask ( new MatchOneFile(viewProvider.getPsi(lang)));
+                scheduler.addOneTask(new MatchOneFile(viewProvider.getPsi(lang)));
               }
             }
           }
@@ -405,10 +402,13 @@ public class MatcherImpl {
 
       for (int i = 0; i < elementsToScan.length; ++i) {
         final PsiElement psiElement = elementsToScan[i];
+
         if (psiElement == null) continue;
         final Language language = psiElement.getLanguage();
 
-        if (language == ourPatternLanguage || language == ourPatternLanguage2) { // prevent duplicate usages
+        PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
+
+        if (profile.isMyFile(file, language, ourPatternLanguage, ourPatternLanguage2)) {
           scheduler.addOneTask(new MatchOneFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
@@ -673,6 +673,14 @@ public class MatcherImpl {
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
       match(el);
+    }
+    if (element instanceof PsiLanguageInjectionHost) {
+      ((PsiLanguageInjectionHost)element).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        @Override
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+          match(injectedPsi);
+        }
+      });
     }
   }
 
