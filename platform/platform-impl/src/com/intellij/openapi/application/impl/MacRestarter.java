@@ -46,7 +46,7 @@ public class MacRestarter {
     try {
       final String executablePath = Foundation.toStringViaUTF8(stringURL);
       final URL url = new URL(executablePath);
-      final String path = url.getPath();
+      final String path = url.getPath().replace("%20", " ");
       if (path.contains(".app")) {
         final int appIndex = path.indexOf(".app");
         final String appPath = path.substring(0, appIndex + 4);
