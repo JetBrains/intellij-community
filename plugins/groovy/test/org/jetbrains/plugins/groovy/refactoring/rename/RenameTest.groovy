@@ -225,6 +225,31 @@ class A {
     return newName;
   }
 
+  public void _testRecursivePathRename() {
+    def file = myFixture.configureByText("SomeBean.groovy", """
+class SomeBean {
+
+  SomeBean someBean<caret>
+
+  static {
+    new SomeBean().someBean.someBean.someBean.someBean.toString()
+  }
+}
+""")
+    myFixture.renameElementAtCaret "b"
+
+    assertEquals """
+class SomeBean {
+
+  SomeBean b
+
+  static {
+    new SomeBean().b.b.b.b.toString()
+  }
+}
+""", file.text
+  }
+
   public void testDontAutoRenameDynamicallyTypeUsage() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Goo {

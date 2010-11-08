@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scriptingContext;
 
+import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanelStub;
 import com.intellij.ide.scriptingContext.ui.ScriptingContextsConfigurable;
 import com.intellij.ide.scriptingContext.ui.ScriptingLibrariesPanel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,14 +31,20 @@ import javax.swing.*;
  * @author Rustam Vishnyakov
  */
 public abstract class LangScriptingContextConfigurable implements Configurable, Configurable.Composite {
-  private ScriptingLibrariesPanel myPanel;
-  private ScriptingLibraryManager myLibManager;
+  private final ScriptingLibrariesPanelStub myPanel;
+  private final ScriptingLibraryManager myLibManager;
   private ScriptingContextsConfigurable myContextsConfigurable;
+  private final String productName = System.getProperty("idea.platform.prefix");
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
-    myPanel = new ScriptingLibrariesPanel(provider, project, myLibManager);
+    myPanel = useDedicatedLibraryUI() ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
     myContextsConfigurable = new ScriptingContextsConfigurable(project, provider);
+  }
+
+  private boolean useDedicatedLibraryUI() {
+    //TODO<rv> Find a better way to check it
+    return "WebStorm".equalsIgnoreCase(productName) || "PhpStorm".equalsIgnoreCase(productName);
   }
 
   @Nls
