@@ -119,6 +119,8 @@ public class AndroidUtils {
   public static final String EXT_NATIVE_LIB = "so";
   @NonNls public static final String RES_OVERLAY_DIR_NAME = "res-overlay";
 
+  private static final int TIMEOUT = 30000;
+
   private AndroidUtils() {
   }
 
@@ -345,7 +347,7 @@ public class AndroidUtils {
         device.executeShellCommand(command, receiver, 0);
       }
       else {
-        device.executeShellCommand(command, receiver);
+        device.executeShellCommand(command, receiver, TIMEOUT);
       }
       if (infinite && !receiver.isCancelled()) {
         attempt++;
