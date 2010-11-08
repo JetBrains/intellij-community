@@ -713,7 +713,7 @@ public class GitUtil {
     if (file == null || path.length == 0) return null;
 
     VirtualFile current = file;
-    final List<VirtualFile> backTrace = new LinkedList<VirtualFile>();
+    final List<VirtualFile> backTrace = new ArrayList<VirtualFile>();
     int idx = path.length - 1;
     while (current != null) {
       if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {

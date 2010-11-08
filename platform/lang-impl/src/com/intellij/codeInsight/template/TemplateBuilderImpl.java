@@ -46,6 +46,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private final Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
   private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
   private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
+  private final Map<RangeMarker, Boolean> mySkipOnStartMap = new HashMap<RangeMarker, Boolean>();
   private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
   private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(RangeMarker.BY_START_OFFSET);
 
@@ -79,10 +80,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt) {
-    final RangeMarker key = wrapElement(element);
-    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
-    myVariableNamesMap.put(key, varName);
-    replaceElement(key, expression);
+    replaceElement(element, varName, expression, alwaysStopAt, false);
   }
 
   public void replaceElement(PsiReference ref, String varName, Expression expression, boolean alwaysStopAt) {
@@ -201,7 +199,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
                                     : myVariableNamesMap.get(element);
 
         if (expression != null) {
-          template.addVariable(variableName, expression, expression, alwaysStopAt);
+          final Boolean skipOnStart = mySkipOnStartMap.get(element);
+          template.addVariable(variableName, expression, expression, alwaysStopAt, skipOnStart != null && skipOnStart.booleanValue());
         }
         else {
           template.addVariableSegment(variableName);
@@ -257,5 +256,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
 
     TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
+  }
+
+  public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt, boolean skipOnStart) {
+    final RangeMarker key = wrapElement(element);
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, varName);
+    mySkipOnStartMap.put(key, Boolean.valueOf(skipOnStart));
+    replaceElement(key, expression);
   }
 }

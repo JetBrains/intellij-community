@@ -70,15 +70,19 @@ class GitLogRecord {
     return res;
   }
 
+  private String lookup(GitLogParser.GitLogOption key) {
+    return shortBuffer(myOptions.get(key));
+  }
+
   // trivial access methods
-  String getHash() { return myOptions.get(HASH); }
-  String getShortHash() { return myOptions.get(SHORT_HASH); }
-  String getAuthorName() { return myOptions.get(AUTHOR_NAME); }
-  String getAuthorEmail() { return myOptions.get(AUTHOR_EMAIL); }
-  String getCommitterName() { return myOptions.get(COMMITTER_NAME); }
-  String getCommitterEmail() { return myOptions.get(COMMITTER_EMAIL); }
-  String getSubject() { return myOptions.get(SUBJECT); }
-  String getBody() { return myOptions.get(BODY); }
+  String getHash() { return lookup(HASH); }
+  String getShortHash() { return lookup(SHORT_HASH); }
+  String getAuthorName() { return lookup(AUTHOR_NAME); }
+  String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
+  String getCommitterName() { return lookup(COMMITTER_NAME); }
+  String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
+  String getSubject() { return lookup(SUBJECT); }
+  String getBody() { return lookup(BODY); }
 
   // access methods with some formatting or conversion
 
@@ -101,11 +105,11 @@ class GitLogRecord {
   }
 
   String[] getParentsShortHashes() {
-    return myOptions.get(SHORT_PARENTS).split(" ");
+    return lookup(SHORT_PARENTS).split(" ");
   }
 
   String[] getParentsHashes() {
-    return myOptions.get(PARENTS).split(" ");
+    return lookup(PARENTS).split(" ");
   }
 
   /**
@@ -117,17 +121,17 @@ class GitLogRecord {
   Pair<List<String>, List<String>> getTagsAndBranches(Collection<String> allBranchesSet) {
     final String decorate = myOptions.get(REF_NAMES);
     final String[] refNames = parseRefNames(decorate);
-    final List<String> tags = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
-    final List<String> branches = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
+    final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
+    final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
     for (String refName : refNames) {
       if (allBranchesSet.contains(refName)) {
         // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
         if (!branches.contains(refName)) {
-          branches.add(refName);
+          branches.add(shortBuffer(refName));
         }
       } else {
         if (!tags.contains(refName)) {
-          tags.add(refName);
+          tags.add(shortBuffer(refName));
         }
       }
     }
@@ -140,6 +144,10 @@ class GitLogRecord {
     if ((startParentheses == -1) || (endParentheses == -1)) return ArrayUtil.EMPTY_STRING_ARRAY;
     final String refs = decorate.substring(startParentheses + 1, endParentheses);
     return refs.split(", ");
+  }
+
+  private static String shortBuffer(String raw) {
+    return new String(raw);
   }
 
 }

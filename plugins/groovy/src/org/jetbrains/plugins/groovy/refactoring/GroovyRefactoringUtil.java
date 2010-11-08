@@ -452,11 +452,8 @@ public abstract class GroovyRefactoringUtil {
     if (ref instanceof GrEnumConstant) return (GrEnumConstant)ref;
     if (ref instanceof GrConstructorInvocation) return (GrCall)ref;
     PsiElement parent = ref.getParent();
-    if (parent instanceof GrMethodCallExpression) {
-      return (GrMethodCallExpression)parent;
-    }
-    else if (parent instanceof GrNewExpression) {
-      return (GrNewExpression)parent;
+    if (parent instanceof GrCall) {
+      return (GrCall)parent;
     }
     else {
       return null;

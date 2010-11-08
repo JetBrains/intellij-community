@@ -46,7 +46,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
   }
 
-  private static final boolean DEBUG_REGISTRATION = true;
+  private static final boolean DEBUG_REGISTRATION = false;
 
   private AreaPicoContainerImpl myPicoContainer;
   private Throwable myCreationTrace = null;

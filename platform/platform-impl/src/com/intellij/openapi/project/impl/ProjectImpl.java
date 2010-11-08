@@ -80,13 +80,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
 
-  @NonNls private static final String PROJECT_LAYER = "project-components";
-
   public boolean myOptimiseTestLoadSpeed;
   @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  @NonNls private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
-           "This method will cease to exist in IDEA 7.0 final release.\n" +
-           "Please contact plugin developers for plugin update.";
 
   private final Condition myDisposedCondition = new Condition() {
     public boolean value(final Object o) {
@@ -325,7 +320,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assert application.isHeadlessEnvironment() || application.isUnitTestMode() || application.isDispatchThread() || application.isInModalProgressThread();
+    assert application.isDispatchThread();
+
+    // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeProject()
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
+
     LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {
       myManager.removeProjectManagerListener(this, myProjectManagerListener);
@@ -472,10 +471,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public static class UnableToSaveProjectNotification extends Notification {
     private Project myProject;
-    private String[] myFileNames;
+    private final String[] myFileNames;
 
     private UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
-      super("Project Settings", "Could not save project!", buildMessage(readOnlyFiles), NotificationType.ERROR, new NotificationListener() {
+      super("Project Settings", "Could not save project!", buildMessage(), NotificationType.ERROR, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
@@ -501,7 +500,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       return myFileNames;
     }
 
-    private static String buildMessage(final VirtualFile[] readOnlyFiles) {
+    private static String buildMessage() {
       final StringBuffer sb = new StringBuffer(
         "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them.");
       return sb.append(" <a href=\"\">Try to save project again</a>.</p>").toString();
@@ -517,5 +516,4 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       super.expire();
     }
   }
-
 }

@@ -35,7 +35,10 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for actions that affect the entire git repository.
@@ -45,7 +48,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   /**
    * The task delayed until end of the primary action. These tasks happen after repository refresh.
    */
-  final LinkedList<TransactionRunnable> myDelayedTasks = new LinkedList<TransactionRunnable>();
+  final List<TransactionRunnable> myDelayedTasks = new ArrayList<TransactionRunnable>();
 
   /**
    * {@inheritDoc}

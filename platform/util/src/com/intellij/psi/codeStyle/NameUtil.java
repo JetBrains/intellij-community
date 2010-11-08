@@ -415,7 +415,12 @@ public class NameUtil {
         return false;
       }
 
-      return myMatcher.matches(name, myPattern);
+      try {
+        return myMatcher.matches(name, myPattern);
+      }
+      catch (ArrayIndexOutOfBoundsException e) {
+        throw new RuntimeException("Name=" + name + "; pattern=" + myPattern.getPattern() , e);
+      }
     }
 
     private static String preparePattern(String pattern) {

@@ -26,7 +26,7 @@ import git4idea.i18n.GitBundle;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,7 +68,7 @@ public class CurrentBranchDialog extends DialogWrapper {
   /**
    * The branches to merge
    */
-  private final List<GitBranch> myBranches = new LinkedList<GitBranch>();
+  private final List<GitBranch> myBranches = new ArrayList<GitBranch>();
   /**
    * The repository tracked for the current branch
    */

@@ -44,7 +44,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
   private final VirtualFilePointer myRoot;
   @NonNls public static final String ELEMENT_NAME = "content";
-  private final LinkedHashSet<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
+  private final TreeSet<SourceFolder> mySourceFolders = new TreeSet<SourceFolder>(ContentFolderComparator.INSTANCE);
   private final TreeSet<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
   private final TreeSet<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
   @NonNls public static final String URL_ATTRIBUTE = "url";

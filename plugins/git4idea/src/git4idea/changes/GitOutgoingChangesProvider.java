@@ -98,7 +98,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final Collection<U> result = new ArrayList<U>(revisions);
     for (Iterator<U> iterator = result.iterator(); iterator.hasNext();) {
       final U t = iterator.next();
-      final LinkedList<String> branches = new LinkedList<String>();
+      final List<String> branches = new ArrayList<String>();
       // we do not use passed revision convertor since it returns just recent commit on repo
       final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, filePatchConvertor.convert(t), null);
       if (revision == null) continue; // will be true for new files; they are anyway outgoing 

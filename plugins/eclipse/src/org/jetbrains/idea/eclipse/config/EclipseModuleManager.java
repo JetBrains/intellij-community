@@ -126,6 +126,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
 
   public void setForceConfigureJDK() {
     myForceConfigureJDK = true;
+    myExpectedModuleSourcePlace++;
   }
 
   public void registerEclipseLibUrl(String url) {

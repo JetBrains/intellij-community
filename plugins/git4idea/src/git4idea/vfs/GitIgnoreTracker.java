@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -341,10 +342,10 @@ public class GitIgnoreTracker {
      */
     private void checkExcludeFile(VirtualFile file) {
       String path = file.getPath();
-      LinkedList<VirtualFile> toDirty = null;
+      List<VirtualFile> toDirty = null;
       synchronized (myExcludeFiles) {
         if (myExcludeFilesPaths.contains(path)) {
-          toDirty = new LinkedList<VirtualFile>();
+          toDirty = new ArrayList<VirtualFile>();
           for (Map.Entry<VirtualFile, String> entry : myExcludeFiles.entrySet()) {
             if (path.equals(entry.getValue())) {
               toDirty.add(entry.getKey());

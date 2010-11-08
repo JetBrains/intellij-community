@@ -27,8 +27,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -39,13 +39,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -55,7 +52,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -65,7 +61,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
@@ -367,6 +363,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     if (expr == null) {
+      if (ReassignVariableUtil.reassign(editor)) return false;
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
       showErrorMessage(project, editor, message);
       return false;
@@ -475,11 +472,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             public void run() {
               ApplicationManager.getApplication().runWriteAction(runnable);
               if (isInplaceAvailableOnDataContext) {
-                PsiVariable elementToRename = variable.get().getElement();
+                final PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-                  new VariableInplaceRenamer(elementToRename, editor)
-                    .performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>(){
+                  final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
+                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, declarationStatement);
+                  final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
+                    @Override
+                    protected void addAdditionalVariables(TemplateBuilderImpl builder) {
+                      builder.replaceElement(elementToRename.getTypeElement(), "Variable_Type", ReassignVariableUtil
+                        .createExpression(typeSelectorManager), false, true);
+                    }
+                  };
+                  renamer.setAdvertisementText(
+                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType()));
+                  renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
                       @Override
                       public void consume(Boolean apply) {
                         if (apply) {
@@ -492,6 +499,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
                         }
+                        editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
                         exprMarker.dispose();
                       }
                     });

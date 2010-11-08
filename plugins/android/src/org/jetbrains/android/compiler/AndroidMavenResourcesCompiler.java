@@ -106,7 +106,8 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               String className = FileUtil.getNameWithoutExtension(genItem.myGeneratedFile);
-              AndroidCompileUtil.removeDuplicatingClasses(genItem.myModule, genItem.myPackage, className, genItem.myGeneratedFile);
+              AndroidCompileUtil.removeDuplicatingClasses(genItem.myModule, genItem.myPackage, className, genItem.myGeneratedFile,
+                                                          genItem.mySourceRootPath);
             }
           });
         }
@@ -132,12 +133,14 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
     final Module myModule;
     final String myPackage;
     final File myGeneratedFile;
+    final String mySourceRootPath;
 
     private MyGenerationItem(@NotNull Module module, @NotNull String aPackage, @NotNull String sourceRootPath) {
       myModule = module;
       myPackage = aPackage;
       myGeneratedFile =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+      mySourceRootPath = sourceRootPath;
     }
 
     @Nullable

@@ -120,7 +120,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myShowDirectoryField ? myTargetDirectoryField.getChildComponent() : myNewNameField;
+    return myNewNameField;
   }
 
   protected JComponent createCenterPanel() {

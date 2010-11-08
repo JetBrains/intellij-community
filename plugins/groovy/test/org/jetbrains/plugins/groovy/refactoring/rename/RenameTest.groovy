@@ -186,7 +186,31 @@ class A {
 }"""
   }
 
-
+  public void _testRenameFieldWithNonstandardName() {
+    def file = myFixture.configureByText("a.groovy", """
+class SomeBean {
+  String xXx<caret> = "field"
+  public String getxXx() {
+    return "method"
+  }
+  public static void main(String[] args) {
+    println(new SomeBean().xXx)
+  }
+}
+""")
+    myFixture.renameElementAtCaret "xXx777"
+    assertEquals """
+class SomeBean {
+  String xXx777 = "field"
+  public String getxXx777() {
+    return "method"
+  }
+  public static void main(String[] args) {
+    println(new SomeBean().xXx777)
+  }
+}
+""", file.text
+  }
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
@@ -223,6 +247,31 @@ class A {
       newName = "set" + StringUtil.capitalize(newName);
     }
     return newName;
+  }
+
+  public void _testRecursivePathRename() {
+    def file = myFixture.configureByText("SomeBean.groovy", """
+class SomeBean {
+
+  SomeBean someBean<caret>
+
+  static {
+    new SomeBean().someBean.someBean.someBean.someBean.toString()
+  }
+}
+""")
+    myFixture.renameElementAtCaret "b"
+
+    assertEquals """
+class SomeBean {
+
+  SomeBean b
+
+  static {
+    new SomeBean().b.b.b.b.toString()
+  }
+}
+""", file.text
   }
 
   public void testDontAutoRenameDynamicallyTypeUsage() throws Exception {
