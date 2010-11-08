@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -494,7 +495,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           anchor = argumentList.addAfter(fromText, anchor);
         }
       }
-
+      if (argumentList instanceof GrCommandArgumentList && argumentList.getAllArguments().length == 0) {
+        argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
+      }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);
     }
 
