@@ -66,6 +66,10 @@ public class RenameUtil {
 
     Collection<PsiReference> refs = processor.findReferences(element);
     for (PsiReference ref : refs) {
+      if (ref == null) {
+        LOG.error("null reference from processor " + processor);
+        continue;
+      }
       PsiElement referenceElement = ref.getElement();
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
