@@ -59,6 +59,7 @@ public class ExpressionParser {
   private static final TokenSet ARGS_LIST_END = TokenSet.create(JavaTokenType.RPARENTH, JavaTokenType.RBRACE, JavaTokenType.RBRACKET);
   private static final TokenSet ARGS_LIST_CONTINUE = TokenSet.create(
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
+  private static final TokenSet CONSTRUCTOR_CALL = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
 
   private ExpressionParser() { }
 
@@ -553,18 +554,33 @@ public class ExpressionParser {
       beforeAnnotation.drop();
     }
 
-    if (tokenType == JavaTokenType.THIS_KEYWORD) {
-      final PsiBuilder.Marker expr = builder.mark();
-      builder.mark().done(JavaElementType.REFERENCE_PARAMETER_LIST);
-      builder.advanceLexer();
-      expr.done(builder.getTokenType() != JavaTokenType.LPARENTH ? JavaElementType.THIS_EXPRESSION : JavaElementType.REFERENCE_EXPRESSION);
-      return expr;
+    PsiBuilder.Marker expr = null;
+    if (tokenType == JavaTokenType.LT) {
+      expr = builder.mark();
+
+      if (!ReferenceParser.parseReferenceParameterList(builder, false, false)) {
+        expr.rollbackTo();
+        return null;
+      }
+
+      tokenType = builder.getTokenType();
+      if (!CONSTRUCTOR_CALL.contains(tokenType)) {
+        expr.rollbackTo();
+        return null;
+      }
     }
-    if (tokenType == JavaTokenType.SUPER_KEYWORD) {
-      final PsiBuilder.Marker expr = builder.mark();
-      builder.mark().done(JavaElementType.REFERENCE_PARAMETER_LIST);
+
+    if (CONSTRUCTOR_CALL.contains(tokenType)) {
+      if (expr == null) {
+        expr = builder.mark();
+        builder.mark().done(JavaElementType.REFERENCE_PARAMETER_LIST);
+      }
       builder.advanceLexer();
-      expr.done(builder.getTokenType() != JavaTokenType.LPARENTH ? JavaElementType.SUPER_EXPRESSION : JavaElementType.REFERENCE_EXPRESSION);
+      expr.done(builder.getTokenType() == JavaTokenType.LPARENTH
+                ? JavaElementType.REFERENCE_EXPRESSION
+                : tokenType == JavaTokenType.THIS_KEYWORD
+                  ? JavaElementType.THIS_EXPRESSION
+                  : JavaElementType.SUPER_EXPRESSION);
       return expr;
     }
     if (tokenType == JavaTokenType.NEW_KEYWORD) {
