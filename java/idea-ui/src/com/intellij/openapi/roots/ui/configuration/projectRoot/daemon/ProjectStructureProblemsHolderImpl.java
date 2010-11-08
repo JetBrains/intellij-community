@@ -1,10 +1,12 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,12 +15,14 @@ import java.util.List;
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 
-  public void registerError(@NotNull String message) {
-    registerProblem(new ProjectStructureProblemDescription(message, ProjectStructureProblemDescription.Severity.ERROR));
+  public void registerError(@NotNull String message, String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix) {
+    final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.<ConfigurationErrorQuickFix>emptyList();
+    registerProblem(new ProjectStructureProblemDescription(message, description, ProjectStructureProblemDescription.Severity.ERROR, place, fixes));
   }
 
-  public void registerWarning(@NotNull String message) {
-    registerProblem(new ProjectStructureProblemDescription(message, ProjectStructureProblemDescription.Severity.WARNING));
+  public void registerWarning(@NotNull String message, String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix) {
+    final List<ConfigurationErrorQuickFix> fixes = Collections.singletonList(fix);
+    registerProblem(new ProjectStructureProblemDescription(message, description, ProjectStructureProblemDescription.Severity.WARNING, place, fixes));
   }
 
   public void registerProblem(final @NotNull ProjectStructureProblemDescription description) {

@@ -1,12 +1,9 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
+ * Copyright 2000-2010 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +12,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.ui.navigation.Place;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author nik
  */
-public interface ProjectStructureProblemsHolder {
-  void registerError(@NotNull String message, @Nullable String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix);
+public abstract class ConfigurationErrorQuickFix {
+  private final String myActionName;
 
-  void registerWarning(@NotNull String message, @Nullable String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix);
+  protected ConfigurationErrorQuickFix(String actionName) {
+    myActionName = actionName;
+  }
 
-  void registerProblem(@NotNull ProjectStructureProblemDescription description);
+  public String getActionName() {
+    return myActionName;
+  }
+
+  public abstract void performFix();
 }

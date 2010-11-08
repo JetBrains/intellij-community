@@ -364,6 +364,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
+  public Place createModulePlace(@NotNull Module module) {
+    return createPlaceFor(myModulesConfig).putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
+  }
+
   public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
     Place place = createPlaceFor(myModulesConfig);
     if (facetToSelect != null) {
@@ -379,17 +383,27 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback selectProjectOrGlobalLibrary(@NotNull Library library, boolean requestFocus) {
-    Place place = createPlaceFor(getConfigurableFor(library));
-    place.putPath(BaseStructureConfigurable.TREE_NAME, library.getName());
+    Place place = createProjectOrGlobalLibraryPlace(library);
     return navigateTo(place, requestFocus);
   }
 
+  public Place createProjectOrGlobalLibraryPlace(Library library) {
+    Place place = createPlaceFor(getConfigurableFor(library));
+    place.putPath(BaseStructureConfigurable.TREE_NAME, library.getName());
+    return place;
+  }
+
   public ActionCallback select(@Nullable Artifact artifact, boolean requestFocus) {
+    Place place = createArtifactPlace(artifact);
+    return navigateTo(place, requestFocus);
+  }
+
+  public Place createArtifactPlace(Artifact artifact) {
     Place place = createPlaceFor(myArtifactsStructureConfigurable);
     if (artifact != null) {
       place.putPath(BaseStructureConfigurable.TREE_NAME, artifact.getName());
     }
-    return navigateTo(place, requestFocus);
+    return place;
   }
 
   public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
