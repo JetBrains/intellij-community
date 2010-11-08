@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -73,6 +74,11 @@ public class XDebuggerFramesList extends DebuggerFramesList {
                                          final int index,
                                          final boolean selected,
                                          final boolean hasFocus) {
+      // Fix GTK background
+      if (UIUtil.isUnderGTKLookAndFeel()){
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        UIUtil.changeBackGround(this, background);
+      }
       if (value == null) {
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;
