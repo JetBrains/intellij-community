@@ -596,6 +596,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest(); }
+
   public void testCaseTailType() throws Throwable { doTest(); }
 
   def doPrimitiveTypeTest() {
