@@ -114,6 +114,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     final IAndroidTarget myAndroidTarget;
     final File myGeneratedFile;
     final String myPackageName;
+    final String mySourceRootPath;
 
     public IdlGenerationItem(@NotNull Module module,
                              @NotNull VirtualFile file,
@@ -126,6 +127,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       myTestSource = testSource;
       myAndroidTarget = androidTarget;
       myPackageName = packageName;
+      mySourceRootPath = sourceRootPath;
       myGeneratedFile =
         new File(sourceRootPath, packageName.replace('.', File.separatorChar) + File.separator + file.getNameWithoutExtension() + ".java");
     }
@@ -222,7 +224,9 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
               public void run() {
                 if (idlItem.myModule.getProject().isDisposed()) return;
                 String className = FileUtil.getNameWithoutExtension(idlItem.myGeneratedFile);
-                AndroidCompileUtil.removeDuplicatingClasses(idlItem.myModule, idlItem.myPackageName, className, idlItem.myGeneratedFile);
+                AndroidCompileUtil.removeDuplicatingClasses(idlItem.myModule, idlItem.myPackageName, className,
+                                                            idlItem.myGeneratedFile.exists() ? idlItem.myGeneratedFile : null,
+                                                            idlItem.mySourceRootPath);
               }
             });
           }

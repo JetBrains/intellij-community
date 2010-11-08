@@ -124,7 +124,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                   return;
                 }
                 String className = FileUtil.getNameWithoutExtension(aptItem.myGeneratedFile);
-                AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aptItem.myPackage, className, aptItem.myGeneratedFile);
+                AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aptItem.myPackage, className, aptItem.myGeneratedFile,
+                                                            aptItem.mySourceRootPath);
               }
             });
           }

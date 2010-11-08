@@ -142,7 +142,8 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
                   Manifest manifest = myFacet.getManifest();
                   String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
                   if (myCachedPackage != null && !myCachedPackage.equals(aPackage)) {
-                    AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null);
+                    String aptGenDirPath = myFacet.getAptGenSourceRootPath();
+                    AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
                   }
                   myCachedPackage = aPackage;
                   myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
