@@ -44,6 +44,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -273,7 +274,11 @@ public class NavBarModel {
       if (text != null) {
         boolean truncated = false;
         if (window != null) {
-          final int windowWidth = window.getWidth();
+          Rectangle wndBounds = window.getBounds();
+          Rectangle rec = ScreenUtil.getScreenRectangle(wndBounds.x, wndBounds.y);
+
+          final int windowWidth = rec.width;
+
           while (window.getFontMetrics(window.getFont()).stringWidth(text) + 100 > windowWidth && text.length() > 10) {
             text = text.substring(0, text.length() - 10);
             truncated = true;

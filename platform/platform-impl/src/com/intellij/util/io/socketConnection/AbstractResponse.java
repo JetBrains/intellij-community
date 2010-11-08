@@ -18,5 +18,5 @@ package com.intellij.util.io.socketConnection;
 /**
  * @author nik
  */
-public abstract class AbstractResponse {
+public interface AbstractResponse {
 }

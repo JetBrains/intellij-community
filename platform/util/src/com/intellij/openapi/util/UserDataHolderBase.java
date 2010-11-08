@@ -81,6 +81,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
     if (value == null) {
       map.remove(key);
+      if (map.isEmpty()) {
+        synchronized (MAP_LOCK) {
+          if (myUserMap != null && myUserMap.isEmpty()) {
+            myUserMap = null;
+          }
+        }
+      }
     }
     else {
       map.put(key, value);

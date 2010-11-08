@@ -207,6 +207,19 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   }
 
   /**
+   * Invoked in a read action in parallel to the completion process. Used to calculate the replacement offset
+   * (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#setReplacementOffset(int)})
+   * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
+   * e.g. doing {@link com.intellij.psi.PsiFile#findReferenceAt(int)}
+   *
+   * Guaranteed to be invoked before any lookup element is selected
+   *
+   * @param context context
+   */
+  public void duringCompletion(@NotNull CompletionInitializationContext context) {
+  }
+
+  /**
    * @param actionId
    * @return String representation of action shortcut. Useful while advertising something
    * @see #advertise(CompletionParameters)
@@ -223,7 +236,7 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
     });
   }
 
-  public static List<CompletionContributor> forLanguage(Language language) {
+  public static List<CompletionContributor> forLanguage(@NotNull Language language) {
     return MyExtensionPointManager.INSTANCE.forKey(language);
   }
 

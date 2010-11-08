@@ -274,8 +274,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
-
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        attributesChanged(highlighter);
+      }
+
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        attributesChanged(highlighter);
+      }
+
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int start = highlighter.getAffectedAreaStartOffset();
         int end = highlighter.getAffectedAreaEndOffset();
         int startLine = myDocument.getLineNumber(start);
@@ -288,14 +295,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           updateGutterSize();
         }
         updateCaretCursor();
-      }
-
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        afterAdded(highlighter);
-      }
-
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
-        afterAdded(highlighter);
       }
     };
 
@@ -558,6 +557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(mySoftWrapModel);
 
     myFoldingModel.removeListener(mySoftWrapModel);
+    myFoldingModel.dispose();
 
     mySoftWrapModel.release();
 

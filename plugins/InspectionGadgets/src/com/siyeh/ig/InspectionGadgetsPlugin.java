@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+* Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -85,9 +85,8 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 621;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
-            new ArrayList(NUM_INSPECTIONS);
+            new ArrayList();
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry =
@@ -731,6 +730,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(RedundantImplementsInspection.class);
         m_inspectionClasses.add(ReturnThisInspection.class);
         m_inspectionClasses.add(TypeParameterExtendsObjectInspection.class);
+        m_inspectionClasses.add(UnnecessarilyQualifiedInnerClassAccessInspection.class);
         m_inspectionClasses.add(UnnecessarilyQualifiedStaticUsageInspection.class);
         m_inspectionClasses.add(UnnecessaryAnnotationParenthesesInspection.class);
         m_inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
@@ -750,6 +750,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessarySuperQualifierInspection.class);
         m_inspectionClasses.add(UnnecessaryThisInspection.class);
         m_inspectionClasses.add(UnqualifiedFieldAccessInspection.class);
+        m_inspectionClasses.add(UnqualifiedInnerClassAccessInspection.class);
         m_inspectionClasses.add(UnqualifiedStaticUsageInspection.class);
     }
 
@@ -842,7 +843,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SafeLockInspection.class);
         m_inspectionClasses.add(SignalWithoutCorrespondingAwaitInspection.class);
         m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
-        m_inspectionClasses.add(SynchronizationOnLocalVariableOrMethodParameterInspection .class);
+        m_inspectionClasses.add(SynchronizationOnLocalVariableOrMethodParameterInspection.class);
+        m_inspectionClasses.add(SynchronizationOnStaticFieldInspection.class);
         m_inspectionClasses.add(SynchronizeOnLockInspection.class);
         m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
         m_inspectionClasses.add(SynchronizedOnLiteralObjectInspection.class);

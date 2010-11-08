@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.PomManager;
@@ -242,7 +243,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
     try {
       final PsiFile fileFromText = PsiFileFactory.getInstance(getProject())
-        .createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this, false));
+        .createFileFromText(containingFile.getName() + ".dtd", DTDLanguage.INSTANCE, XmlUtil.generateDocumentDTD(this, false), false, false);
       if (fileFromText instanceof XmlFile) {
         return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
       }

@@ -18,17 +18,14 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -38,7 +35,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +45,7 @@ import java.util.List;
  * @author yole
  */
 public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
-  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl() {
-    // need synchronize since several annotators can run concurrently
-    @Override
-    protected synchronized Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-      return super.createAnnotation(range, severity, message);
-    }
-  };
+  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
@@ -86,9 +76,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       action.run();
     }
     finally {
-      synchronized (myAnnotationHolder) {
-        myAnnotationHolder.clear();
-      }
+      myAnnotationHolder.clear();
     }
     return true;
   }
@@ -108,7 +96,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       return LanguageAnnotators.INSTANCE.allForLanguage(key);
     }
   };
-  
+
   static {
     LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
       public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
@@ -127,26 +115,23 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     final boolean dumb = myDumbService.isDumb();
     annotationHolder.setSession(holder.getAnnotationSession());
 
-    if (!JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
-      public boolean process(Annotator annotator) {
-        if (dumb && !DumbService.isDumbAware(annotator)) {
-          return true;
-        }
-
-        annotator.annotate(element, annotationHolder);
-        return true;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < annotators.size(); i++) {
+      Annotator annotator = annotators.get(i);
+      if (dumb && !DumbService.isDumbAware(annotator)) {
+        continue;
       }
-    }, true)) throw new ProcessCanceledException();
 
-    synchronized (annotationHolder) {
-      if (annotationHolder.hasAnnotations()) {
-        for (Annotation annotation : annotationHolder) {
-          holder.add(HighlightInfo.fromAnnotation(annotation));
-        }
-        annotationHolder.clear();
-      }
-      annotationHolder.setSession(null);
+      annotator.annotate(element, annotationHolder);
     }
+
+    if (annotationHolder.hasAnnotations()) {
+      for (Annotation annotation : annotationHolder) {
+        holder.add(HighlightInfo.fromAnnotation(annotation));
+      }
+      annotationHolder.clear();
+    }
+    annotationHolder.setSession(null);
   }
 
   private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {

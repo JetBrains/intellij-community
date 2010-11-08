@@ -519,27 +519,26 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final PsiFile file = context.getFile();
-    final Project project = context.getProject();
-
-    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
 
     if (file instanceof PsiJavaFile) {
+      JavaCompletionUtil.initOffsets(file, context.getProject(), context.getOffsetMap());
+
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
-    }
 
-    if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
-      if (semicolonNeeded(context)) {
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
-        return;
+      if (context.getCompletionType() == CompletionType.BASIC) {
+        if (semicolonNeeded(context)) {
+          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+          return;
+        }
+
+        final PsiElement element = file.findElementAt(context.getStartOffset());
+
+        if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
+          return;
+        }
+
+        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
       }
-
-      final PsiElement element = file.findElementAt(context.getStartOffset());
-
-      if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
-        return;
-      }
-
-      context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
     }
   }
 

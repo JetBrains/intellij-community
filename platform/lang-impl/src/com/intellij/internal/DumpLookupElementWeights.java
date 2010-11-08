@@ -16,16 +16,21 @@
 
 package com.intellij.internal;
 
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
-import java.util.Arrays;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -45,11 +50,37 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
   }
 
   public static void dumpLookupElementWeights(final LookupImpl lookup) {
-    final ListModel model = lookup.getList().getModel();
+    final List<LookupElement> items = lookup.getItems();
     final int count = lookup.getPreferredItemsCount();
-    for (int i = 0; i < model.getSize(); i++) {
-      final LookupElement item = (LookupElement)model.getElementAt(i);
-      System.out.println(item.getLookupString() + Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT)));
+    final Pattern pattern = Pattern.compile("[\\[ ](([a-zA-Z0-9.@])+)=(([a-zA-Z0-9.@])+)[,\\]]");
+    Map<String, String> values = new HashMap<String, String>();
+    Set<String> toExclude = new HashSet<String>();
+    for (LookupElement item : items) {
+      final String weight = Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT));
+      final Matcher matcher = pattern.matcher(weight);
+      int start = 0;
+      while (matcher.find(start)) {
+        start = matcher.end();
+        final String name = matcher.group(1);
+        final String value = matcher.group(3);
+        values.put(name, values.containsKey(name) && !value.equals(values.get(name)) ? null : value);
+      }
+    }
+
+    for (String name : values.keySet()) {
+      final String value = values.get(name);
+      if (value != null) {
+        toExclude.add(name + "=" + value);
+      }
+    }
+
+    for (int i = 0; i < items.size(); i++) {
+      LookupElement item = items.get(i);
+      String weight = Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT));
+      for (String s : toExclude) {
+        weight = StringUtil.replace(weight, s, "", false);
+      }
+      System.out.println(item.getLookupString() + weight);
       if (i == count - 1) {
         System.out.println("------------");
       }

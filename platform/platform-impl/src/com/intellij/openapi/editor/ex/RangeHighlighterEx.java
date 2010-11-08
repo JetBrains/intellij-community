@@ -26,7 +26,6 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.NotNull;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   boolean isAfterEndOfLine();
@@ -38,6 +37,4 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   long getId();
 
   void setTextAttributes(TextAttributes textAttributes);
-
-  void changeAttributesInBatch(@NotNull Runnable change);
 }

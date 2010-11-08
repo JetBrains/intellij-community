@@ -15,24 +15,36 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class ExplicitlyImportedWeigher extends ProximityWeigher {
+  private static final NullableLazyKey<PsiPackage, ProximityLocation>
+    PLACE_PACKAGE = NullableLazyKey.create("placePackage", new NullableFunction<ProximityLocation, PsiPackage>() {
+    @Override
+    public PsiPackage fun(ProximityLocation location) {
+      return PsiTreeUtil.getContextOfType(location.getPosition(), PsiPackage.class, false);
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
-    if (location.getPosition() == null){
+    final PsiElement position = location.getPosition();
+    if (position == null){
       return null;
     }
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
       if (qname != null) {
-        final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
+        final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(position, PsiJavaFile.class, false);
         if (psiJavaFile != null) {
           final PsiImportList importList = psiJavaFile.getImportList();
           if (importList != null) {
@@ -46,6 +58,17 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
           }
         }
       }
+
+    }
+    if (element instanceof PsiMember) {
+      final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
+      if (placePackage == null) {
+        return false;
+      }
+
+      Module elementModule = ModuleUtil.findModuleForPsiElement(element);
+      return location.getPositionModule() == elementModule &&
+             placePackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false));
     }
     return false;
   }

@@ -218,7 +218,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                 final List<PsiElement> elements,
                                 final LocalInspectionToolSession session,
                                 final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
-    boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         indicator.checkCanceled();
 
@@ -245,7 +245,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         return true;
       }
-    }, myFailFastOnAcquireReadAction);
+    }, myFailFastOnAcquireReadAction, indicator);
     if (!result) throw new ProcessCanceledException();
     inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, session);
   }
@@ -280,32 +280,33 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                             final List<PsiElement> elements,
                             final LocalInspectionToolSession session,
                             List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
-    boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(init, new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
-      @Override
-      public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
-        LocalInspectionTool tool = trinity.first;
-        indicator.checkCanceled();
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(init,
+                                                             new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
+                                                               @Override
+                                                               public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
+                                                                 LocalInspectionTool tool = trinity.first;
+                                                                 indicator.checkCanceled();
 
-        ApplicationManager.getApplication().assertReadAccessAllowed();
+                                                                 ApplicationManager.getApplication().assertReadAccessAllowed();
 
-        ProblemsHolder holder = trinity.second;
-        PsiElementVisitor elementVisitor = trinity.third;
-        for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-          PsiElement element = elements.get(i);
-          indicator.checkCanceled();
-          element.accept(elementVisitor);
-        }
+                                                                 ProblemsHolder holder = trinity.second;
+                                                                 PsiElementVisitor elementVisitor = trinity.third;
+                                                                 for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+                                                                   PsiElement element = elements.get(i);
+                                                                   indicator.checkCanceled();
+                                                                   element.accept(elementVisitor);
+                                                                 }
 
-        advanceProgress(1);
+                                                                 advanceProgress(1);
 
-        tool.inspectionFinished(session, holder);
+                                                                 tool.inspectionFinished(session, holder);
 
-        if (holder.hasResults()) {
-          appendDescriptors(myFile, holder.getResults(), tool);
-        }
-        return true;
-      }
-    }, myFailFastOnAcquireReadAction);
+                                                                 if (holder.hasResults()) {
+                                                                   appendDescriptors(myFile, holder.getResults(), tool);
+                                                                 }
+                                                                 return true;
+                                                               }
+                                                             }, myFailFastOnAcquireReadAction, indicator);
     if (!result) {
       throw new ProcessCanceledException();
     }
@@ -316,7 +317,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void inspectInjectedPsi(final List<PsiElement> elements,
                                   final List<LocalInspectionTool> tools,
                                   final boolean onTheFly,
-                                  final boolean ignoreSuppressed, final ProgressIndicator indicator,
+                                  final boolean ignoreSuppressed,
+                                  final ProgressIndicator indicator,
                                   final LocalInspectionToolSession session) {
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
@@ -327,12 +329,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }, false);
     }
     if (injected.isEmpty()) return;
-    if (!JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         doInspectInjectedPsi(injectedPsi, tools, onTheFly, ignoreSuppressed, indicator, session);
         return true;
       }
-    }, myFailFastOnAcquireReadAction)) throw new ProcessCanceledException();
+    }, myFailFastOnAcquireReadAction, indicator)) throw new ProcessCanceledException();
   }
 
   public Collection<HighlightInfo> getHighlights() {

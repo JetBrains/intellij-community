@@ -45,6 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -410,14 +411,11 @@ public class UpdateHighlightersUtil {
 
     int layer = getLayer(info, severityRegistrar);
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, layer);
-    if (highlighter == null) {
-      highlighter = createRangeHighlighter(infoStartOffset, infoEndOffset, markup, layer);
-    }
 
-    final RangeHighlighterEx finalHighlighter = highlighter;
     final int finalInfoEndOffset = infoEndOffset;
-    highlighter.changeAttributesInBatch(new Runnable() {
-      public void run() {
+    Consumer<RangeHighlighterEx> changeAttributes = new Consumer<RangeHighlighterEx>() {
+      @Override
+      public void consume(RangeHighlighterEx finalHighlighter) {
         finalHighlighter.setTextAttributes(info.getTextAttributes(psiFile, colorsScheme));
 
         info.highlighter = finalHighlighter;
@@ -433,7 +431,8 @@ public class UpdateHighlightersUtil {
 
         if (ranges2markersCache != null) ranges2markersCache.put(new TextRange(infoStartOffset, finalInfoEndOffset), info.highlighter);
         if (info.quickFixActionRanges != null) {
-          List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
+          List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
+            new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
             TextRange textRange = pair.second;
             RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
@@ -443,18 +442,21 @@ public class UpdateHighlightersUtil {
         }
         info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
       }
-    });
+    };
+
+    if (highlighter == null) {
+      highlighter = markup.addRangeHighlighterAndChangeAttributes(infoStartOffset, infoEndOffset, layer, null,
+                                                                  HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
+    }
+    else {
+      markup.changeAttributesInBatch(highlighter, changeAttributes);
+    }
 
     assert Comparing.equal(info.getTextAttributes(psiFile, colorsScheme), highlighter.getTextAttributes()) : "Info: " +
                                                                                                info.getTextAttributes(psiFile, colorsScheme) +
                                                                                                "; colorsSheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
                                                                                                "; highlighter:" +
                                                                                                highlighter.getTextAttributes();
-  }
-
-  @NotNull
-  private static RangeHighlighterEx createRangeHighlighter(int infoStartOffset, int infoEndOffset, MarkupModelEx markup, int layer) {
-    return (RangeHighlighterEx)markup.addRangeHighlighter(infoStartOffset, infoEndOffset, layer, null, HighlighterTargetArea.EXACT_RANGE);
   }
 
   private static int getLayer(HighlightInfo info, SeverityRegistrar severityRegistrar) {

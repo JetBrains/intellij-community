@@ -540,33 +540,6 @@ public class PsiUtilBase {
     return elt;
   }
 
-  public static <T extends PsiElement> T copyElementPreservingOriginalLinks(final T element, final Key<PsiElement> originalKey) {
-    final PsiElementVisitor originalVisitor = new PsiRecursiveElementWalkingVisitor() {
-      public void visitElement(final PsiElement element) {
-        element.putCopyableUserData(originalKey, element);
-        super.visitElement(element);
-      }
-    };
-    originalVisitor.visitElement(element);
-
-    final PsiElement fileCopy = element.copy();
-
-    final PsiElementVisitor copyVisitor = new PsiRecursiveElementWalkingVisitor() {
-      public void visitElement(final PsiElement element) {
-        final PsiElement originalElement = element.getCopyableUserData(originalKey);
-        if (originalElement != null) {
-          originalElement.putCopyableUserData(originalKey, null);
-          element.putCopyableUserData(originalKey, null);
-          element.putUserData(originalKey, originalElement);
-        }
-        super.visitElement(element);
-      }
-
-    };
-    copyVisitor.visitElement(fileCopy);
-    return (T) fileCopy;
-  }
-
   public static boolean hasErrorElementChild(PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiErrorElement) return true;

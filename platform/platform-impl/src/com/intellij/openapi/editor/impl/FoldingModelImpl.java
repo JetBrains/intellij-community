@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -144,7 +143,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
-    return region == null || addFoldRegion(region) ? region : null;
+    if (region == null) return null;
+    if (!addFoldRegion(region)) {
+      region.dispose();
+      return null;
+    }
+
+    return region;
   }
 
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
@@ -248,9 +253,16 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     final FoldingGroup group = region.getGroup();
     if (group != null) {
       myGroups.removeValue(group, region);
-      }
+    }
+
     myFoldTree.removeRegion(region);
     myFoldRegionsProcessed = true;
+    region.dispose();
+  }
+
+  public void dispose() {
+    myGroups.clear();
+    myFoldTree.clear();
   }
 
   public void expandFoldRegion(FoldRegion region) {

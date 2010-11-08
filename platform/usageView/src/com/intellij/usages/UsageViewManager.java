@@ -71,12 +71,11 @@ public abstract class UsageViewManager {
   public abstract UsageView getSelectedUsageView();
 
   public static boolean isSelfUsage(Usage usage, UsageTarget[] searchForTarget) {
-    boolean selfUsage = false;
-
     if (!(usage instanceof PsiElementUsage)) return false;
     final PsiElement element = ((PsiElementUsage)usage).getElement();
     if (element == null) return false;
 
+    boolean selfUsage = false;
     for(UsageTarget ut:searchForTarget) {
       if (ut instanceof PsiElementUsageTarget) {
         if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {

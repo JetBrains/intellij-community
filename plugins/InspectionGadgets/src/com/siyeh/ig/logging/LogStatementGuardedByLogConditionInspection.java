@@ -305,6 +305,7 @@ public class LogStatementGuardedByLogConditionInspection
                 if (isLogGuardCheck(condition)) {
                     return true;
                 }
+                element = ifStatement;
             }
         }
 

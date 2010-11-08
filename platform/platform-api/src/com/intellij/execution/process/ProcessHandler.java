@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
@@ -116,6 +118,16 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public boolean isProcessTerminating() {
     return myState.get() == STATE_TERMINATING;
+  }
+
+  public void addProcessListener(final ProcessListener listener, Disposable parentDisposable) {
+    addProcessListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeProcessListener(listener);
+      }
+    });
   }
 
   public void addProcessListener(final ProcessListener listener) {

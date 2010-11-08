@@ -50,11 +50,16 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -171,8 +176,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 dummyIdentifierChanger = current.get();
               }
             };
-            for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor,
-                                                                                                                             project))) {
+            for (final CompletionContributor contributor : CompletionContributor.forLanguage(initializationContext[0].getPositionLanguage())) {
               if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
                 continue;
               }
@@ -265,7 +269,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
-                                                                        final CompletionProgressIndicator indicator, final CompletionInitializationContext initContext) {
+                                                                        final CompletionProgressIndicator indicator,
+                                                                        final CompletionInitializationContext initContext) {
 
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
@@ -279,36 +284,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     startSemaphore.down();
     startSemaphore.down();
 
-    final Semaphore offsets = new Semaphore();
-    offsets.down();
-
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              startSemaphore.up();
-              ProgressManager.checkCanceled();
-
-              if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
-                try {
-                  final int selectionEndOffset = initContext.getSelectionEndOffset();
-                  final PsiReference reference = initContext.getFile().findReferenceAt(selectionEndOffset);
-                  if (reference != null) {
-                    initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
-                  }
-                }
-                catch (IndexNotReadyException ignored) {
-                }
-              }
-            }
-          });
-        }
-        catch (ProcessCanceledException ignored) {
-        }
-        finally {
-          offsets.up();
-        }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            startSemaphore.up();
+            indicator.duringCompletion(initContext);
+          }
+        });
       }
     });
 
@@ -328,7 +311,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                     }
                   });
 
-                offsets.waitFor();
+                indicator.ensureDuringCompletionPassed();
 
                 data.set(result);
               }
@@ -347,16 +330,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
-    final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
-    for (TextRange range : ranges) {
-      if (range.contains(selectionEndOffset)) {
-        return range.getEndOffset();
-      }
-    }
-
-    return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
-  }
 
 
   private static void spawnProcess(final ProgressIndicator indicator, final Runnable process) {

@@ -1,4 +1,4 @@
-package com.siyeh.igtest.resources.io;
+package com.siyeh.igtest.resources.io.plain;
 
 import java.io.*;
 
