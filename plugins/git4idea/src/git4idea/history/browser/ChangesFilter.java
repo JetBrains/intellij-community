@@ -36,7 +36,7 @@ public class ChangesFilter {
     private MemoryFilter myResult;
 
     protected Merger() {
-      myFilters = new LinkedList<MemoryFilter>();
+      myFilters = new ArrayList<MemoryFilter>();
     }
 
     protected abstract boolean acceptImpl(MemoryFilter filter);
@@ -81,7 +81,7 @@ public class ChangesFilter {
     final Merger[] mergers = {new UsersMerger()};
     if (filters.isEmpty()) return Collections.emptyList();
 
-    final List<MemoryFilter> result = new LinkedList<MemoryFilter>();
+    final List<MemoryFilter> result = new ArrayList<MemoryFilter>();
     for (Filter filter : filters) {
       boolean taken = false;
       for (Merger combiner : mergers) {
@@ -361,7 +361,7 @@ public class ChangesFilter {
     // todo optimization here
     public boolean addPath(final VirtualFile vf) {
       final Collection<VirtualFile> filesWeAlreadyHave = myMap.values();
-      final Collection<VirtualFile> childrenToRemove = new LinkedList<VirtualFile>();
+      final Collection<VirtualFile> childrenToRemove = new ArrayList<VirtualFile>();
       for (VirtualFile current : filesWeAlreadyHave) {
         if (current.equals(vf)) return false; // doesnt add exact same
         if (VfsUtil.isAncestor(vf, current, false)) {

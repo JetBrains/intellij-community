@@ -158,7 +158,7 @@ public class SSHConfig {
           host.myPort = parseInt(argument);
         }
         else if ("PreferredAuthentications".equalsIgnoreCase(keyword)) {
-          final LinkedList<String> list = parseList(argument);
+          final List<String> list = parseList(argument);
           list.retainAll(ALLOWED_METHODS);
           if (!list.isEmpty()) {
             host.myPreferredMethods = Collections.unmodifiableList(list);
@@ -254,8 +254,8 @@ public class SSHConfig {
     return "yes".equals(value);
   }
 
-  private static LinkedList<String> parseList(final String arg) {
-    LinkedList<String> values = new LinkedList<String>();
+  private static List<String> parseList(final String arg) {
+    List<String> values = new ArrayList<String>();
     for (String a : arg.split("[ \t,]+")) {
       if (a.length() == 0) {
         continue;

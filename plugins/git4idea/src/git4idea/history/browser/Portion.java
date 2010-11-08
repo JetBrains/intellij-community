@@ -49,10 +49,10 @@ public class Portion implements AsynchConsumer<GitCommit> {
     
     myNameToHash = new HashMap<String, SHAHash>();
     myHolder = new HashMap<String, Integer>();
-    myOrdered = new LinkedList<GitCommit>();
+    myOrdered = new ArrayList<GitCommit>();
     
-    myRoots = new LinkedList<GitCommit>();
-    myLeafs = new LinkedList<GitCommit>();
+    myRoots = new ArrayList<GitCommit>();
+    myLeafs = new ArrayList<GitCommit>();
 
     myOrphanMap = new MultiMap<String, GitCommit>();
     myUsers = new HashSet<String>();

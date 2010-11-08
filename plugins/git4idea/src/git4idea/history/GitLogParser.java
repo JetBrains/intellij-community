@@ -161,10 +161,10 @@ class GitLogParser {
       line = infoAndPath[0];
       if (infoAndPath.length > 1) {
         // taking the last element, thus avoiding possible blank line
-        final List<String> nameAndPathSplit = new LinkedList<String>(Arrays.asList(infoAndPath[infoAndPath.length-1].split("[\\s]")));
+        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("[\\s]")));
         // not relying that separator is tab => so splitting by any whitespace.
         // Then removing blank (or whitespace) lines which could appear by this splitting:
-        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext(); ) {
+        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext();) {
           if (it.next().trim().isEmpty()) {
             it.remove();
           }
