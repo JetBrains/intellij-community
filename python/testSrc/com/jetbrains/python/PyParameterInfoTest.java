@@ -349,6 +349,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg_c>").getTextOffset()).check("a,b,c", new String[]{"c"});
   }
 
+  public void testTupleArgPlainParam() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("a,b,c", new String[]{"b,"});
+  }
+
+
 
   public void testStaticmethod() throws Exception {
     Map<String, PsiElement> marks = loadTest();
