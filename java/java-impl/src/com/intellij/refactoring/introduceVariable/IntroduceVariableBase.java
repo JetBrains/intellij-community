@@ -486,7 +486,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                     }
                   };
                   renamer.setAdvertisementText(
-                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType()));
+                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll()));
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
                       @Override
                       public void consume(Boolean apply) {

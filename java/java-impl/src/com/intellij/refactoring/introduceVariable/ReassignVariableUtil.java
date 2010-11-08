@@ -174,7 +174,8 @@ public class ReassignVariableUtil {
     };
   }
 
-  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type) {
+  @Nullable
+  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
     if (processor.size() > 0) {
       final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
@@ -183,6 +184,6 @@ public class ReassignVariableUtil {
         return "Press " + shortcuts[0] + " to reassign existing variable";
       }
     }
-    return "Press Shift Tab to change type";
+    return typesForAll.length > 1 ? "Press Shift Tab to change type" : null;
   }
 }
