@@ -18,7 +18,8 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -36,19 +36,19 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -58,9 +58,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
@@ -71,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
@@ -230,9 +231,16 @@ public class GroovyCompletionUtil {
           }
         }
       }
-      else if (context instanceof GrMethodCallExpression && element instanceof PsiMethod) {
-        final PsiMethod method = generateMethodInCategory(candidate);
-        result.add(setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element)));
+      else if (element instanceof PsiMethod) {
+        final PsiMethod method;
+        if (ResolveUtil.isInUseScope(candidate)) {
+          method = generateMethodInCategory(candidate);
+        }
+        else {
+          method = (PsiMethod)element;
+        }
+        result.add(setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate,
+                                                                                                      ((PsiMethod)element).getName())));
         continue;
       }
       if (element instanceof PsiClass) {
@@ -258,7 +266,7 @@ public class GroovyCompletionUtil {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    LookupElementBuilder builder = LookupElementBuilder.create(element, importedName).setPresentableText(importedName);
+    LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).setPresentableText(importedName);
     return setupLookupBuilder(element, substitutor, builder);
   }
 
@@ -456,4 +464,64 @@ public class GroovyCompletionUtil {
     }
     return TailType.insertChar(editor, offset, ')');
   }
+
+  private static final Set<String> COLLECTION_METHOD_NAMES = new HashSet<String>();
+  public static final Set<String> OPERATOR_METHOD_NAMES = new HashSet<String>();
+  static {
+    COLLECTION_METHOD_NAMES.add("each");
+    COLLECTION_METHOD_NAMES.add("any");
+    COLLECTION_METHOD_NAMES.add("every");
+    COLLECTION_METHOD_NAMES.add("reverseEach");
+    COLLECTION_METHOD_NAMES.add("collect");
+    COLLECTION_METHOD_NAMES.add("collectAll");
+    COLLECTION_METHOD_NAMES.add("find");
+    COLLECTION_METHOD_NAMES.add("findAll");
+    COLLECTION_METHOD_NAMES.add("retainAll");
+    COLLECTION_METHOD_NAMES.add("removeAll");
+    COLLECTION_METHOD_NAMES.add("split");
+    COLLECTION_METHOD_NAMES.add("groupBy");
+    COLLECTION_METHOD_NAMES.add("groupEntriesBy");
+    COLLECTION_METHOD_NAMES.add("findLastIndexOf");
+    COLLECTION_METHOD_NAMES.add("findIndexValues");
+    COLLECTION_METHOD_NAMES.add("findIndexOf");
+
+    OPERATOR_METHOD_NAMES.add("plus");
+    OPERATOR_METHOD_NAMES.add("minus");
+    OPERATOR_METHOD_NAMES.add("multiply");
+    OPERATOR_METHOD_NAMES.add("power");
+    OPERATOR_METHOD_NAMES.add("div");
+    OPERATOR_METHOD_NAMES.add("mod");
+    OPERATOR_METHOD_NAMES.add("or");
+    OPERATOR_METHOD_NAMES.add("and");
+    OPERATOR_METHOD_NAMES.add("xor");
+    OPERATOR_METHOD_NAMES.add("next");
+    OPERATOR_METHOD_NAMES.add("previous");
+    OPERATOR_METHOD_NAMES.add("getAt");
+    OPERATOR_METHOD_NAMES.add("putAt");
+    OPERATOR_METHOD_NAMES.add("leftShift");
+    OPERATOR_METHOD_NAMES.add("rightShift");
+    OPERATOR_METHOD_NAMES.add("isCase");
+    OPERATOR_METHOD_NAMES.add("bitwiseNegate");
+    OPERATOR_METHOD_NAMES.add("negative");
+    OPERATOR_METHOD_NAMES.add("positive");
+  }
+
+
+
+  public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor) {
+    String name = gdkMethod.getStaticMethod().getName();
+
+    final PsiType baseType = gdkMethod.getStaticMethod().getParameterList().getParameters()[0].getType();
+    if (!TypeConversionUtil.erasure(baseType).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return false;
+
+    final PsiType type = substitutor != null ? substitutor.substitute(baseType) : baseType;
+
+    if (COLLECTION_METHOD_NAMES.contains(name)) {
+      return !(type instanceof PsiArrayType) && !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE);
+    }
+    if ("with".equals(name)) return false;
+
+    return true;
+  }
+
 }

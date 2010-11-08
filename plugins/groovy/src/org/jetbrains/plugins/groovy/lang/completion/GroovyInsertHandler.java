@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -53,6 +54,11 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     @NonNls Object obj = item.getObject();
+
+    if (obj instanceof GroovyResolveResult) {
+      obj = ((GroovyResolveResult)obj).getElement();
+    }
+
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
