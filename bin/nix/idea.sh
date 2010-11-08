@@ -101,4 +101,7 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
 cd "$IDEA_BIN_HOME"
-exec $IDEA_JDK/bin/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $*
+while true ; do
+  $IDEA_JDK/bin/java $JVM_ARGS -Djb.restart.code=88 $IDEA_MAIN_CLASS_NAME $*
+  test $? -ne 88 && break
+done
