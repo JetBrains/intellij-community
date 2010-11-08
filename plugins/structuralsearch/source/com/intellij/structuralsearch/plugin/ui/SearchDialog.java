@@ -453,6 +453,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         }
       }
     );
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     manager.searchAndShowUsages(
       new UsageTarget[]{
