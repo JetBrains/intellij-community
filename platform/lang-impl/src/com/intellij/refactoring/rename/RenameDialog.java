@@ -188,6 +188,12 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.weighty = 1;
     panel.add(myNameSuggestionsField.getComponent(), gbConstraints);
 
+    createCheckboxes(panel, gbConstraints);
+
+    return panel;
+  }
+
+  protected void createCheckboxes(JPanel panel, GridBagConstraints gbConstraints) {
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
@@ -229,8 +235,6 @@ public class RenameDialog extends RefactoringDialog {
         myAutomaticRenamers.put(factory, checkBox);
       }
     }
-
-    return panel;
   }
 
   protected void doHelpAction() {

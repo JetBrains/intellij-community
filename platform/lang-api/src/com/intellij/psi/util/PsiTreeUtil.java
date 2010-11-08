@@ -238,7 +238,9 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T getChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (instanceOf(child, aClass)) return (T)child;
+      if (instanceOf(child, aClass)) {
+        return (T)child;
+      }
     }
     return null;
   }
@@ -432,12 +434,15 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    while (element != null && !instanceOf(element, aClass)) {
+    while (element != null) {
+      if (instanceOf(element, aClass)) {
+        return (T)element;
+      }
       if (element instanceof PsiFile) return null;
       element = element.getParent();
     }
 
-    return (T)element;
+    return null;
   }
 
   @Nullable

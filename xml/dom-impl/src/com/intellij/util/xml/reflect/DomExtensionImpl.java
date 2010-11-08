@@ -21,6 +21,7 @@ import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
+import com.intellij.util.xml.impl.DomAnchorImpl;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class DomExtensionImpl implements DomExtension {
   }
 
   public DomExtension setDeclaringElement(@NotNull DomElement declaringElement) {
-    putUserData(KEY_DECLARATION, declaringElement);
+    putUserData(KEY_DECLARATION, DomAnchorImpl.createAnchor(declaringElement));
     return this;
   }
 

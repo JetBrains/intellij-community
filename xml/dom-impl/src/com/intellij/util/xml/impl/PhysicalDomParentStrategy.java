@@ -79,14 +79,33 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     if (this == o) return true;
     if (!(o instanceof PhysicalDomParentStrategy)) return false;
 
-    final PhysicalDomParentStrategy that = (PhysicalDomParentStrategy)o;
+    final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
+    if (xmlElementsEqual(myElement, thatElement)) {
+      if (myElement != thatElement) {
+        assert myElement.getNavigationElement() == thatElement.getNavigationElement();
+      }
+      return true;
+    }
+    return false;
+  }
 
-    if (!myElement.equals(that.myElement)) return false;
+  private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
+    if (fst.equals(snd)) return true;
 
-    return true;
+    if (fst.isPhysical() || snd.isPhysical()) return false;
+    if (fst.getTextLength() != snd.getTextLength()) return false;
+    if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
+
+    final PsiElement parent1 = fst.getParent();
+    final PsiElement parent2 = snd.getParent();
+    return parent1 != null && parent2 != null && xmlElementsEqual(parent1, parent2);
   }
 
   public int hashCode() {
+    if (!myElement.isPhysical()) {
+      return myElement.getNavigationElement().hashCode();
+    }
+
     return myElement.hashCode();
   }
 }

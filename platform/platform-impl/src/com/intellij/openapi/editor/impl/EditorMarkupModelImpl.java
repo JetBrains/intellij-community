@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -88,13 +89,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditor = editor;
   }
 
-  @Override
-  protected void assertDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
-  }
-
-  private int offsetToLine(int offset) {
-    final Document document = myEditor.getDocument();
+  private int offsetToLine(int offset, Document document) {
     if (offset > document.getTextLength()) {
       return document.getLineCount();
     }
@@ -153,8 +148,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int y = e.getY();
 
     for (RangeHighlighter each : highlighters) {
-      int eachStartY = offsetToYPosition(each.getStartOffset());
-      int eachEndY = offsetToYPosition(each.getEndOffset());
+      ProperTextRange range = offsetToYPosition(each.getStartOffset(), each.getEndOffset());
+      int eachStartY = range.getStartOffset();
+      int eachEndY = range.getEndOffset();
       int eachY = eachStartY + (eachEndY - eachStartY) / 2;
       if (Math.abs(e.getY() - eachY) < minDelta) {
         y = eachY;
@@ -179,7 +175,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
-      final int newYPos = offsetToYPosition(highlighter.getStartOffset());
+      final int newYPos = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
 
       if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
         nearestMarker = highlighter;
@@ -282,10 +278,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   void repaint(int startOffset, int endOffset) {
     markDirtied();
 
-    int startY = offsetToYPosition(startOffset);
-    int endY = offsetToYPosition(endOffset) + getMinHeight();
+    ProperTextRange range = offsetToYPosition(startOffset, endOffset);
 
-    myEditor.getVerticalScrollBar().repaint(0, startY, PREFERRED_WIDTH, endY - startY);
+    myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + getMinHeight());
   }
 
   private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
@@ -421,8 +416,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
           Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
 
-          final int ys = offsetToYPosition(highlighter.getStartOffset());
-          int ye = offsetToYPosition(highlighter.getEndOffset());
+          ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
+          final int ys = range.getStartOffset();
+          int ye = range.getEndOffset();
           if (ye - ys < getMinHeight()) ye = ys + getMinHeight();
 
           yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, width, yStart[0]);
@@ -737,18 +733,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private int offsetToYPosition(int offset) {
-    int lineNumber = offsetToLine(offset);
+  private ProperTextRange offsetToYPosition(int start, int end) {
     if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
       recalcEditorDimensions();
     }
+    Document document = myEditor.getDocument();
+    int startLineNumber = offsetToLine(start, document);
+    int startY;
+    int lineCount;
     if (myEditorSourceHeight < myEditorTargetHeight) {
-      return (myEditorScrollbarTop + lineNumber * myEditor.getLineHeight());
+      lineCount = 0;
+      startY = myEditorScrollbarTop + startLineNumber * myEditor.getLineHeight();
     }
     else {
-      final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      return (myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight));
+      lineCount = myEditorSourceHeight / myEditor.getLineHeight();
+      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * myEditorTargetHeight);
     }
+
+    int endY;
+    if (document.getLineNumber(start) == document.getLineNumber(end)) {
+      endY = startY; // both offsets are on the same line, no need to recalc Y position
+    }
+    else {
+      int endLineNumber = offsetToLine(end, document);
+      if (myEditorSourceHeight < myEditorTargetHeight) {
+        endY = myEditorScrollbarTop + endLineNumber * myEditor.getLineHeight();
+      }
+      else {
+        endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * myEditorTargetHeight);
+      }
+    }
+    return new ProperTextRange(startY, endY);
   }
 
   private int yPositionToOffset(int y, boolean beginLine) {

@@ -319,8 +319,10 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
             myEventCount + "; current event count = " + currentEventCount
         );
         */
+        if (false) {
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
                   currentEventCount);
+        }
       }
 
       Component _component = myRef.get();

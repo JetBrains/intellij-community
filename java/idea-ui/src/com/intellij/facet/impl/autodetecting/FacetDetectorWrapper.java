@@ -67,6 +67,8 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
 
   @Nullable
   protected FacetInfo2<Module> detectFacet(@NotNull final Module module, VirtualFile virtualFile, S source) {
+    if (!myFacetType.isSuitableModuleType(module.getModuleType())) return null;
+
     String url = virtualFile.getUrl();
     if (!myAutodetectionFilter.isAutodetectionEnabled(module, myFacetType, url)) {
       LOG.debug("Autodetection disabled for " + myFacetType.getPresentableName() + " facets in module " + module.getName());

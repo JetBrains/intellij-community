@@ -98,7 +98,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
   }
 
   public String getHelpTopic() {
-    return "reference.settingsdialog.project.structure.artifacts";
+    return myEditor.getHelpTopic();
   }
 
   @Override

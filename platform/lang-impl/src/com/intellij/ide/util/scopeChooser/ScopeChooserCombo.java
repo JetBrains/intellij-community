@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -51,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -99,13 +99,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myValidationManager.addScopeListener(myScopeListener);
     addActionListener(createScopeChooserListener());
 
-    combo.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof ScopeDescriptor) {
-          setText(((ScopeDescriptor)value).getDisplay());
-        }
-        return this;
+    combo.setRenderer(new ListCellRendererWrapper<ScopeDescriptor>(combo.getRenderer()) {
+      @Override
+      public void customize(final JList list, final ScopeDescriptor value, final int index, final boolean selected, final boolean hasFocus) {
+        if (value != null) setText(value.getDisplay());
       }
     });
 

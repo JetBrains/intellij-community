@@ -45,6 +45,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -207,7 +208,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
           if (! shouldBeInstalled) {
             releaseTracker(document);
             return;
-          } else if ((! tracker.isBaseLoaded())) {
+          } else if ((LineStatusTracker.BaseLoadState.LOADING == tracker.getBaseLoaded())) {
             return; // will be recalculated
           } else {
             tracker.resetForBaseRevisionLoad();
@@ -260,29 +261,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void installTracker(final VirtualFile virtualFile, final Document document) {
-    /*ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (virtualFile == null || virtualFile instanceof LightVirtualFile) return;
-    if (! virtualFile.isInLocalFileSystem()) return;
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return;
-    final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
-    if (statusManager == null) return;
-    final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
-    if (activeVcs == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.info("installTracker() for file " + virtualFile.getPath() + " failed: no active VCS");
-      }
-      return;
-    }
-    final FileStatus status = statusManager.getStatus(virtualFile);
-    if (status == FileStatus.NOT_CHANGED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) {
-      if (LOG.isDebugEnabled()) {
-        LOG.info("installTracker() for file " + virtualFile.getPath() + " failed: status=" + status);
-        System.out.println("installTracker() for file " + virtualFile.getPath() + " failed: status=" + status);
-      }
-      return;
-    }   */
-
     myApplication.runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -331,15 +309,18 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
       if (! myVirtualFile.isValid()) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: virtual file not valid");
+        reportTrackerBaseLoadFailed();
         return;
       }
 
       final String lastUpToDateContent = myStatusProvider.getBaseVersionContent(myVirtualFile);
       if (lastUpToDateContent == null) {
         log("installTracker() for file " + myVirtualFile.getPath() + " failed: no up to date content");
+        reportTrackerBaseLoadFailed();
         return;
       }
 
+      final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
       myApplication.invokeLater(new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -347,7 +328,28 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
               log("initializing tracker for file " + myVirtualFile.getPath());
               final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
               if (tracker != null) {
-                tracker.initialize(lastUpToDateContent);
+                tracker.initialize(converted);
+              }
+            }
+          });
+        }
+      }, new Condition() {
+        @Override
+        public boolean value(final Object ignore) {
+          return (! myProject.isOpen()) || myProject.isDisposed();
+        }
+      });
+    }
+
+    private void reportTrackerBaseLoadFailed() {
+      myApplication.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              log("base revision load failed for file " + myVirtualFile.getPath());
+              final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
+              if (tracker != null) {
+                tracker.baseRevisionLoadFailed();
               }
             }
           });

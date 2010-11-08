@@ -274,8 +274,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
-
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        attributesChanged(highlighter);
+      }
+
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        attributesChanged(highlighter);
+      }
+
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int start = highlighter.getAffectedAreaStartOffset();
         int end = highlighter.getAffectedAreaEndOffset();
         int startLine = myDocument.getLineNumber(start);
@@ -288,14 +295,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           updateGutterSize();
         }
         updateCaretCursor();
-      }
-
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        afterAdded(highlighter);
-      }
-
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
-        afterAdded(highlighter);
       }
     };
 
@@ -542,6 +541,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void release() {
+    assertIsDispatchThread();
     if (isReleased) {
       LOG.error("Double release. First released at:  =====\n" + myReleasedAt+"\n======");
     }
@@ -557,6 +557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.removeDocumentListener(mySoftWrapModel);
 
     myFoldingModel.removeListener(mySoftWrapModel);
+    myFoldingModel.dispose();
 
     mySoftWrapModel.release();
 
@@ -575,7 +576,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.dispose();
     Disposer.dispose(myCaretModel);
     clearCaretThread();
-    //myFoldingModel.dispose(); TODO range marker tree
 
     myFocusListeners.clear();
   }
@@ -1035,12 +1035,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean isCaretActive() {
-    return myCaretCursor.isActive();
+    synchronized (ourCaretBlinkingCommand) {
+      return ourCaretBlinkingCommand.myEditor == this;
+    }
   }
 
   @TestOnly
   public void setCaretActive() {
-    myCaretCursor.setActive();
+    synchronized (ourCaretBlinkingCommand) {
+      ourCaretBlinkingCommand.myEditor = this;
+    }
   }
 
   public int offsetToVisualLine(int offset) {
@@ -2876,10 +2880,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LogicalPosition logFoldEnd = offsetToLogicalPosition(lastCollapsedBefore.getEndOffset(), false);
       VisualPosition visFoldEnd = logicalToVisualPosition(logFoldEnd, false);
 
-      line = logFoldEnd.line + (visiblePos.line - visFoldEnd.line);
+      line = logFoldEnd.line + visiblePos.line - visFoldEnd.line;
       if (visFoldEnd.line == visiblePos.line) {
         if (visiblePos.column >= visFoldEnd.column) {
-          column = logFoldEnd.column + (visiblePos.column - visFoldEnd.column);
+          column = logFoldEnd.column + visiblePos.column - visFoldEnd.column;
         }
         else {
           return offsetToLogicalPosition(lastCollapsedBefore.getStartOffset(), false);
@@ -3424,11 +3428,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isActive() {
       synchronized (ourCaretBlinkingCommand) {
         return myIsShown;
-      }
-    }
-    public void setActive() {
-      synchronized (ourCaretBlinkingCommand) {
-        myIsShown = true;
       }
     }
 

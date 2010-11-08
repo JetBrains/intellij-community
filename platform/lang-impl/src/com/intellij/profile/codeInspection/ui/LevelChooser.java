@@ -24,24 +24,32 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.SeverityEditorDialog;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TreeSet;
 
 public class LevelChooser extends ComboboxWithBrowseButton {
-  private final MyRenderer ourRenderer = new MyRenderer();
-
   public LevelChooser(final SeverityRegistrar severityRegistrar) {
     final JComboBox comboBox = getComboBox();
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     comboBox.setModel(model);
     fillModel(model, severityRegistrar);
-    comboBox.setRenderer(ourRenderer);
+
+    comboBox.setRenderer(new ListCellRendererWrapper<HighlightSeverity>(comboBox.getRenderer()) {
+      @Override
+      public void customize(final JList list, final HighlightSeverity value, final int index, final boolean selected, final boolean hasFocus) {
+        if (value != null) {
+          setText(SingleInspectionProfilePanel.renderSeverity(value));
+          setIcon(HighlightDisplayLevel.find(value).getIcon());
+        }
+      }
+    });
+
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
@@ -83,17 +91,5 @@ public class LevelChooser extends ComboboxWithBrowseButton {
 
   public void setLevel(HighlightDisplayLevel level) {
     getComboBox().setSelectedItem(level.getSeverity());
-  }
-
-  private static class MyRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof HighlightSeverity) {
-        HighlightSeverity severity = (HighlightSeverity)value;
-        setText(SingleInspectionProfilePanel.renderSeverity(severity));
-        setIcon(HighlightDisplayLevel.find(severity).getIcon());
-      }
-      return this;
-    }
   }
 }

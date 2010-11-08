@@ -26,7 +26,7 @@ public interface IdePopupEventDispatcher {
   Component getComponent();
   boolean dispatch(AWTEvent event);
 
-  void requestFocus();
+  boolean requestFocus();
 
   boolean close();
 }

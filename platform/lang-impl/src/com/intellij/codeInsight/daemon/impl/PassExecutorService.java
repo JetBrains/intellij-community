@@ -340,15 +340,15 @@ public abstract class PassExecutorService implements Disposable {
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
 
-                myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
+                myUpdateProgress.cancel(e); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
-                myUpdateProgress.cancel();
+                myUpdateProgress.cancel(e);
                 LOG.error(e);
                 throw e;
               }
               catch (Error e) {
-                myUpdateProgress.cancel();
+                myUpdateProgress.cancel(e);
                 LOG.error(e);
                 throw e;
               }

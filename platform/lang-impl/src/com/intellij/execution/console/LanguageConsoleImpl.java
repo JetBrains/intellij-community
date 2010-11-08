@@ -359,23 +359,23 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
-    final int promptOffset = history.getTextLength();
     history.insertString(history.getTextLength(), myPrompt);
-    markupModel.addRangeHighlighter(promptOffset, history.getTextLength(), HighlighterLayer.SYNTAX, ConsoleViewContentType.USER_INPUT.getAttributes(),
+    markupModel.addRangeHighlighter(history.getTextLength() - myPrompt.length(), history.getTextLength(), HighlighterLayer.SYNTAX,
+                                    ConsoleViewContentType.USER_INPUT.getAttributes(),
                                     HighlighterTargetArea.EXACT_RANGE);
 
-    final int offset = history.getTextLength();
+    int offset = history.getTextLength();
     final String text = consoleEditor.getDocument().getText(textRange);
     history.insertString(offset, text);
+    offset = history.getTextLength() - text.length(); //offset can be changed after text trimming after insert due to buffer constraints
     final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(0);
     while (!iterator.atEnd()) {
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(iterator.getStart(), localOffset) - localOffset;
       final int end = Math.min(iterator.getEnd(), textRange.getEndOffset()) - localOffset;
-      if (start <= end) {
-        markupModel.addRangeHighlighter(start + offset, end + offset, HighlighterLayer.SYNTAX, iterator.getTextAttributes(),
-                                        HighlighterTargetArea.EXACT_RANGE);
-      }
+      markupModel.addRangeHighlighter(start + offset, end + offset, HighlighterLayer.SYNTAX, iterator.getTextAttributes(),
+                                      HighlighterTargetArea.EXACT_RANGE);
+
       iterator.advance();
     }
     if (myDoSaveErrorsToHistory) {
@@ -426,8 +426,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     newEditorSize.height = Math.min(Math.max(panelSize.height - minHistorySize, 2 * myConsoleEditor.getLineHeight()),
                                     contentSize.height + myConsoleEditor.getScrollPane().getHorizontalScrollBar().getHeight());
     newEditorSize.width = width + myConsoleEditor.getScrollPane().getHorizontalScrollBar().getHeight();
-    myConsoleEditor.getSettings().setAdditionalColumnsCount(2 + (width - contentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myConsoleEditor));
-    myHistoryViewer.getSettings().setAdditionalColumnsCount(2 + (width - historyContentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myHistoryViewer));
+    myConsoleEditor.getSettings()
+      .setAdditionalColumnsCount(2 + (width - contentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myConsoleEditor));
+    myHistoryViewer.getSettings()
+      .setAdditionalColumnsCount(2 + (width - historyContentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myHistoryViewer));
 
     final Dimension editorSize = myConsoleEditor.getComponent().getSize();
     if (!editorSize.equals(newEditorSize)) {
@@ -435,7 +437,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     final boolean scrollToEnd = forceScrollToEnd || shouldScrollHistoryToEnd();
     final Dimension newHistorySize = new Dimension(
-      width, Math.max(0, Math.min(minHistorySize == 0? 0 : historyContentSize.height + SEPARATOR_THICKNESS,
+      width, Math.max(0, Math.min(minHistorySize == 0 ? 0 : historyContentSize.height + SEPARATOR_THICKNESS,
                                   panelSize.height - newEditorSize.height)));
     final Dimension historySize = myHistoryViewer.getComponent().getSize();
     if (!historySize.equals(newHistorySize)) {
@@ -507,7 +509,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void registerActionShortcuts(JComponent component) {
-    final ArrayList<AnAction> actionList = (ArrayList<AnAction>)myConsoleEditor.getComponent().getClientProperty(AnAction.ourClientProperty);
+    final ArrayList<AnAction> actionList =
+      (ArrayList<AnAction>)myConsoleEditor.getComponent().getClientProperty(AnAction.ourClientProperty);
     if (actionList != null) {
       for (AnAction anAction : actionList) {
         anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
@@ -567,7 +570,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void configureFullEditor() {
     if (myFullEditor == null || myFullEditorActions == null) return;
     final JPanel header = new JPanel(new BorderLayout());
-    header.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true).getComponent(), BorderLayout.EAST);
+    header.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true).getComponent(),
+               BorderLayout.EAST);
     myFullEditor.setHeaderComponent(header);
     myFullEditor.getSettings().setLineMarkerAreaShown(false);
   }
@@ -588,7 +592,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final TextAttributes attributes;
     if (additionalType == null) {
       attributes = mainAttributes;
-    } else {
+    }
+    else {
       attributes = additionalType.getAttributes().clone();
       attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
     }

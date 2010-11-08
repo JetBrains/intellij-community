@@ -45,11 +45,11 @@ public class InspectionTestUtil {
     List<Element> expectedProblems = new ArrayList<Element>(expectedDoc.getRootElement().getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<Element>(doc.getRootElement().getChildren("problem"));
 
-    Element[] expectedArrayed = expectedProblems.toArray(new Element[expectedProblems.size()]);
+    Element[] expectedArray = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;
 
 expected:
-    for (Element expectedProblem : expectedArrayed) {
+    for (Element expectedProblem : expectedArray) {
       Element[] reportedArrayed = reportedProblems.toArray(new Element[reportedProblems.size()]);
       for (Element reportedProblem : reportedArrayed) {
         if (compareProblemWithExpected(reportedProblem, expectedProblem, checkRange)) {
@@ -64,8 +64,7 @@ expected:
       failed = true;
     }
 
-    for (Object reportedProblem1 : reportedProblems) {
-      Element reportedProblem = (Element)reportedProblem1;
+    for (Element reportedProblem : reportedProblems) {
       Document extra = new Document((Element)reportedProblem.clone());
       System.out.println("The following has been unexpectedly reported: " + new String(JDOMUtil.printDocument(extra, "\n")));
       failed = true;

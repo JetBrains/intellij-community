@@ -326,7 +326,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     if (injectedFiles.isEmpty()) return true;
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
 
-    return JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(injectedFiles), new Processor<PsiFile>() {
+    return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
 
@@ -335,13 +335,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
           if (textRange.isEmpty()) continue;
           String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
+          HighlightInfo info =
+            HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
           infos.add(info);
         }
 
         HighlightInfoHolder holder = createInfoHolder(injectedPsi);
         runHighlightVisitosForInjected(injectedPsi, holder, progress);
-        for (int i=0; i<holder.size();i++) {
+        for (int i = 0; i < holder.size(); i++) {
           HighlightInfo info = holder.get(i);
           final int startOffset = documentWindow.injectedToHost(info.startOffset);
           final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
@@ -349,7 +350,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         holder.clear();
         highlightInjectedSyntax(injectedPsi, holder);
-        for (int i=0; i<holder.size();i++) {
+        for (int i = 0; i < holder.size(); i++) {
           HighlightInfo info = holder.get(i);
           final int startOffset = info.startOffset;
           final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
@@ -374,7 +375,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         return true;
       }
-    }, true);
+    }, true, progress);
   }
 
   private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {

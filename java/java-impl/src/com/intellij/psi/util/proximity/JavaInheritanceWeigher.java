@@ -35,8 +35,8 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
-    if (location == null) {
+  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getPosition() == null){
       return null;
     }
     if (element instanceof PsiClass && isTooGeneral((PsiClass)element)) return false;
@@ -47,7 +47,12 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
       return false;
     }
 
-    PsiClass placeClass = findPlaceClass(element, location.getPosition());
+
+    final PsiElement position = location.getPosition();
+    if (position == null) {
+      return false;
+    }
+    PsiClass placeClass = findPlaceClass(element, position);
     if (placeClass == null) return false;
 
     while (contextClass != null) {

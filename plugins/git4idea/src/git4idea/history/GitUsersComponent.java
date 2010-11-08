@@ -16,8 +16,8 @@
 package git4idea.history;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -94,7 +94,7 @@ public class GitUsersComponent {
   }
 
   public static GitUsersComponent getInstance(final Project project) {
-    return ServiceManager.getService(project, GitUsersComponent.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitUsersComponent.class);
   }
 
   @Nullable

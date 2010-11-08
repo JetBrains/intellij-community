@@ -36,6 +36,7 @@ import java.util.Collection;
 
 /**
  * @author peter
+ * @see com.intellij.find.findUsages.FindUsagesHandlerFactory
  */
 public abstract class FindUsagesHandler {
   // return this handler if you want to cancel the search

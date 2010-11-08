@@ -24,7 +24,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -36,9 +35,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,11 +58,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myHighlighterTree = new RangeHighlighterTree(myDocument);
   }
 
-  protected void assertDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-  }
-
   public void dispose() {
+    myHighlighterTree.dispose();
   }
 
   @NotNull
@@ -80,7 +78,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
 
-    return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true);
+    return addRangeHighlighterAndChangeAttributes(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true, null);
   }
 
   private static int getFirstNonspaceCharOffset(Document doc, int lineNumber) {
@@ -108,22 +106,42 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return myCachedHighlighters;
   }
 
-  private RangeHighlighter addRangeHighlighter(int startOffset,
-                                               int endOffset,
-                                               int layer,
-                                               TextAttributes textAttributes,
-                                               HighlighterTargetArea targetArea,
-                                               boolean isPersistent) {
-    RangeHighlighterEx segmentHighlighter = isPersistent
+  @Override
+  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                   int endOffset,
+                                                                   int layer,
+                                                                   TextAttributes textAttributes,
+                                                                   HighlighterTargetArea targetArea,
+                                                                   boolean isPersistent,
+                                                                   @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
+    RangeHighlighterEx highlighter = isPersistent
                                             ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
                                             : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
 
-    RangeMarkerImpl marker = (RangeMarkerImpl)segmentHighlighter;
+    RangeMarkerImpl marker = (RangeMarkerImpl)highlighter;
     marker.registerInDocument();
 
     myCachedHighlighters = null;
-    fireAfterAdded(segmentHighlighter);
-    return segmentHighlighter;
+    if (changeAttributesAction != null) {
+      if (isPersistent) {
+        ((PersistentRangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
+      }
+      else {
+        ((RangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
+      }
+    }
+    fireAfterAdded(highlighter);
+    return highlighter;
+  }
+
+  @Override
+  public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
+    boolean changed = highlighter instanceof PersistentRangeHighlighterImpl
+                      ? ((PersistentRangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction)
+                      : ((RangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
+    if (changed) {
+      fireAttributesChanged(highlighter);
+    }
   }
 
   void addRangeHighlighter(RangeHighlighterEx marker) {
@@ -138,7 +156,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                               int layer,
                                               TextAttributes textAttributes,
                                               @NotNull HighlighterTargetArea targetArea) {
-    return addRangeHighlighter(startOffset, endOffset, layer, textAttributes, targetArea, false);
+    return addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, targetArea, false, null);
   }
 
   public void removeHighlighter(RangeHighlighter segmentHighlighter) {

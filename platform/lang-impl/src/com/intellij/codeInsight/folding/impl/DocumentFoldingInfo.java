@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
@@ -67,6 +66,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   }
 
   public void loadFromEditor(Editor editor) {
+    LOG.assertTrue(!editor.isDisposed());
     clear();
 
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
@@ -126,9 +126,8 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         FoldRegion region = FoldingUtil.findFoldRegion(editor, marker.getStartOffset(), marker.getEndOffset());
         if (region == null) {
           String placeHolderText = myPlaceholderTexts.get(marker);
-          region = ((FoldingModelEx)editor.getFoldingModel()).createFoldRegion(marker.getStartOffset(), marker.getEndOffset(), placeHolderText, null);  
-          //may fail to add in case intersecting region exists
-          if (region == null || !editor.getFoldingModel().addFoldRegion(region)) return;
+          region = editor.getFoldingModel().addFoldRegion(marker.getStartOffset(), marker.getEndOffset(), placeHolderText);
+          if (region == null) return;
         }
 
         boolean state = myExpandedStates.get(i).booleanValue();

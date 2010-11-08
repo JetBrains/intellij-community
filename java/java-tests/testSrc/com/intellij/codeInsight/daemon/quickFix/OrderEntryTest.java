@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -36,7 +37,10 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     VirtualFile projectFile = tempProjectRootDir.findChild("orderEntry.ipr");
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
-    simulateProjectOpen();
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
+    mm.projectOpened();
+    setUpJdk();
     myModule = ModuleManager.getInstance(getProject()).getModules()[0];
   }
 

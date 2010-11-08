@@ -59,7 +59,7 @@ public class GitChangeProviderTest extends GitSingleUserTestCase {
     myChangeProvider = (GitChangeProvider) GitVcs.getInstance(myProject).getChangeProvider();
     myDirtyScope = new VcsDirtyScopeImpl(GitVcs.getInstance(myProject), myProject);
 
-    myFiles = createFileStructure("a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    myFiles = GitTestUtil.createFileStructure(myProject, myRepo, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
     myRepo.commit();
   }
@@ -272,36 +272,6 @@ public class GitChangeProviderTest extends GitSingleUserTestCase {
       }
       result.put(filePath, change);
     }
-    return result;
-  }
-
-  /**
-   * <p>Creates file structure for given paths. Path element should be a relative (from project root)
-   * path to a file or a directory. All intermediate paths will be created if needed.
-   * To create a dir without creating a file pass "dir/" as a parameter.</p>
-   * <p>Usage example:
-   * <code>createFileStructure("a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt", "anotherdir/");</code></p>
-   * <p>This will create files a.txt and b.txt in the project dir, create directories dir, dir/subdir and anotherdir,
-   * and create file c.txt in dir and d.txt in dir/subdir.</p>
-   * <p>Note: use forward slash to denote directories, even if it is backslash that separates dirs in your system.</p>
-   * <p>All files are populated with "initial content" string.</p>
-   */
-  private Map<String, VirtualFile> createFileStructure(String... paths) {
-    Map<String, VirtualFile> result = new HashMap<String, VirtualFile>();
-
-    for (String path : paths) {
-      String[] pathElements = path.split("/");
-      boolean lastIsDir = path.endsWith("/");
-      VirtualFile currentParent = myRepo.getDir();
-      for (int i = 0; i < pathElements.length-1; i++) {
-        currentParent = createDirInCommand(currentParent, pathElements[i]);
-      }
-
-      String lastElement = pathElements[pathElements.length-1];
-      currentParent = lastIsDir ? createDirInCommand(currentParent, lastElement) : createFileInCommand(currentParent, lastElement, "initial content");
-      result.put(path, currentParent);
-    }
-
     return result;
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -46,7 +47,7 @@ import java.util.ListIterator;
 public class LineStatusTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   // true -> have contents
-  private boolean myBaseLoaded;
+  private BaseLoadState myBaseLoaded;
 
   private final Document myDocument;
   private final Document myUpToDateDocument;
@@ -66,19 +67,19 @@ public class LineStatusTracker {
     myUpToDateDocument = upToDateDocument;
     myUpToDateDocument.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
-    myBaseLoaded = false;
+    myBaseLoaded = BaseLoadState.LOADING;
     myRanges = new ArrayList<Range>();
   }
 
   public void initialize(@NotNull final String upToDateContent) {
     ApplicationManager.getApplication().isReadAccessAllowed();
-    LOG.assertTrue(!myBaseLoaded);
+    LOG.assertTrue(BaseLoadState.LOADING == myBaseLoaded);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
           myUpToDateDocument.setReadOnly(false);
-          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
+          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), upToDateContent);
           myUpToDateDocument.setReadOnly(true);
           reinstallRanges();
 
@@ -88,7 +89,7 @@ public class LineStatusTracker {
           }
         }
         finally {
-          myBaseLoaded = true;
+          myBaseLoaded = BaseLoadState.LOADED;
         }
       }
     });
@@ -202,7 +203,7 @@ public class LineStatusTracker {
     return myApplication.runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (!myBaseLoaded) return false;
+        if (BaseLoadState.LOADING == myBaseLoaded) return false;
         return myApplication.runWriteAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
@@ -211,7 +212,7 @@ public class LineStatusTracker {
             myUpToDateDocument.setReadOnly(true);
             removeHighlightersFromMarkupModel();
             myRanges.clear();
-            myBaseLoaded = false;
+            myBaseLoaded = BaseLoadState.LOADING;
             return true;
           }
         });
@@ -227,41 +228,43 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
 
     public void beforeDocumentChange(DocumentEvent e) {
-      if (myBulkUpdate || (! myBaseLoaded)) return;
+      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
-      myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
-      myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
-      if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
+      try {
+        myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
+        myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
+        if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
 
-      myLinesBeforeChange = myDocument.getLineNumber(e.getOffset() + e.getOldLength()) - myDocument.getLineNumber(e.getOffset());
+        myLinesBeforeChange = myDocument.getLineNumber(e.getOffset() + e.getOldLength()) - myDocument.getLineNumber(e.getOffset());
 
-      Range firstChangedRange = getLastRangeBeforeLine(myFirstChangedLine);
+        Range firstChangedRange = getLastRangeBeforeLine(myFirstChangedLine);
 
-      if (firstChangedRange == null) {
-        myUpToDateFirstLine = myFirstChangedLine;
-      }
-      else if (firstChangedRange.containsLine(myFirstChangedLine)) {
-        myFirstChangedLine = firstChangedRange.getOffset1();
-        myUpToDateFirstLine = firstChangedRange.getUOffset1();
-      }
-      else {
-        myUpToDateFirstLine = firstChangedRange.getUOffset2() + (myFirstChangedLine - firstChangedRange.getOffset2());
-      }
+        if (firstChangedRange == null) {
+          myUpToDateFirstLine = myFirstChangedLine;
+        }
+        else if (firstChangedRange.containsLine(myFirstChangedLine)) {
+          myFirstChangedLine = firstChangedRange.getOffset1();
+          myUpToDateFirstLine = firstChangedRange.getUOffset1();
+        }
+        else {
+          myUpToDateFirstLine = firstChangedRange.getUOffset2() + (myFirstChangedLine - firstChangedRange.getOffset2());
+        }
 
-      Range myLastChangedRange = getLastRangeBeforeLine(myLastChangedLine);
+        Range myLastChangedRange = getLastRangeBeforeLine(myLastChangedLine);
 
-      if (myLastChangedRange == null) {
-        myUpToDateLastLine = myLastChangedLine;
+        if (myLastChangedRange == null) {
+          myUpToDateLastLine = myLastChangedLine;
+        }
+        else if (myLastChangedRange.containsLine(myLastChangedLine)) {
+          myUpToDateLastLine = myLastChangedRange.getUOffset2();
+          myLastChangedLine = myLastChangedRange.getOffset2();
+        }
+        else {
+          myUpToDateLastLine = myLastChangedRange.getUOffset2() + (myLastChangedLine - myLastChangedRange.getOffset2());
+        }
+      } catch (ProcessCanceledException ignore) {
       }
-      else if (myLastChangedRange.containsLine(myLastChangedLine)) {
-        myUpToDateLastLine = myLastChangedRange.getUOffset2();
-        myLastChangedLine = myLastChangedRange.getOffset2();
-      }
-      else {
-        myUpToDateLastLine = myLastChangedRange.getUOffset2() + (myLastChangedLine - myLastChangedRange.getOffset2());
-      }
-
     }
 
     @Nullable
@@ -275,48 +278,51 @@ public class LineStatusTracker {
     }
 
     public void documentChanged(DocumentEvent e) {
-      if (myBulkUpdate || (! myBaseLoaded)) return;
+      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
-      int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      int linesAfterChange = line - myDocument.getLineNumber(e.getOffset());
-      int linesShift = linesAfterChange - myLinesBeforeChange;
+      try {
 
-      List<Range> rangesAfterChange = getRangesAfter(myRanges, myLastChangedLine);
-      List<Range> rangesBeforeChange = getRangesBefore(myRanges, myFirstChangedLine);
+        int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
+        int linesAfterChange = line - myDocument.getLineNumber(e.getOffset());
+        int linesShift = linesAfterChange - myLinesBeforeChange;
 
-      List<Range> changedRanges = getChangedRanges(myFirstChangedLine, myLastChangedLine);
+        List<Range> rangesAfterChange = getRangesAfter(myRanges, myLastChangedLine);
+        List<Range> rangesBeforeChange = getRangesBefore(myRanges, myFirstChangedLine);
 
-      int newSize = rangesBeforeChange.size() + changedRanges.size() + rangesAfterChange.size();
-      if (myRanges.size() != newSize) {
-        LOG.info("Ranges: " + myRanges + "; first changed line: " + myFirstChangedLine + "; last changed line: " + myLastChangedLine);
-        LOG.assertTrue(false);
-      }
+        List<Range> changedRanges = getChangedRanges(myFirstChangedLine, myLastChangedLine);
 
-
-      myLastChangedLine += linesShift;
-
-
-      List<Range> newChangedRanges = getNewChangedRanges();
-
-      shiftRanges(rangesAfterChange, linesShift);
-
-      if (!changedRanges.equals(newChangedRanges)) {
-        replaceRanges(changedRanges, newChangedRanges);
-
-        myRanges = new ArrayList<Range>();
-
-        myRanges.addAll(rangesBeforeChange);
-        myRanges.addAll(newChangedRanges);
-        myRanges.addAll(rangesAfterChange);
-
-        myRanges = mergeRanges(myRanges);
-
-        for (Range range : myRanges) {
-          if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+        int newSize = rangesBeforeChange.size() + changedRanges.size() + rangesAfterChange.size();
+        if (myRanges.size() != newSize) {
+          LOG.info("Ranges: " + myRanges + "; first changed line: " + myFirstChangedLine + "; last changed line: " + myLastChangedLine);
+          LOG.assertTrue(false);
         }
-      }
 
+
+        myLastChangedLine += linesShift;
+
+
+        List<Range> newChangedRanges = getNewChangedRanges();
+
+        shiftRanges(rangesAfterChange, linesShift);
+
+        if (!changedRanges.equals(newChangedRanges)) {
+          replaceRanges(changedRanges, newChangedRanges);
+
+          myRanges = new ArrayList<Range>();
+
+          myRanges.addAll(rangesBeforeChange);
+          myRanges.addAll(newChangedRanges);
+          myRanges.addAll(rangesAfterChange);
+
+          myRanges = mergeRanges(myRanges);
+
+          for (Range range : myRanges) {
+            if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+          }
+        }
+      } catch (ProcessCanceledException ignore) {
+      }
     }
 
     private List<Range> getNewChangedRanges() {
@@ -532,19 +538,23 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(final Document doc, final String upToDateContent, final Project project) {
-    final Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent));
-    final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
-    tracker.initialize(upToDateContent);
-    return tracker;
-  }
-
   public static LineStatusTracker createOn(final Document doc, final Project project) {
     final Document document = EditorFactory.getInstance().createDocument("");
     return new LineStatusTracker(doc, document, project);
   }
 
-  public boolean isBaseLoaded() {
+  public BaseLoadState getBaseLoaded() {
     return myBaseLoaded;
+  }
+
+  public void baseRevisionLoadFailed() {
+    myApplication.assertWriteAccessAllowed();
+    myBaseLoaded = BaseLoadState.FAILED;
+  }
+
+  public static enum BaseLoadState {
+    LOADING,
+    FAILED,
+    LOADED
   }
 }

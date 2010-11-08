@@ -68,7 +68,7 @@ class GitLogParser {
    */
   enum GitLogOption {
     SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
-    SHORT_PARENTS("p"), REF_NAMES("d");
+    SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d");
 
     private String myPlaceholder;
     private GitLogOption(String placeholder) { myPlaceholder = placeholder; }
@@ -154,7 +154,7 @@ class GitLogParser {
 
     // parsing status and path (if given)
     char nameStatus = 0;
-    final Collection<String> paths = new HashSet<String>(1);
+    final List<String> paths = new ArrayList<String>(1);
 
     if (myNameStatusOutputted != NameStatus.NONE) {
       final String[] infoAndPath = line.split(RECORD_END);

@@ -15,7 +15,7 @@
  */
 package git4idea.rollback;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -233,6 +233,6 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @return a project-specific instance of the service
    */
   public static GitRollbackEnvironment getInstance(final Project project) {
-    return ServiceManager.getService(project, GitRollbackEnvironment.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitRollbackEnvironment.class);
   }
 }

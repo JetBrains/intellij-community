@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +33,40 @@ import java.util.List;
 public class ImportUtils{
 
     private ImportUtils(){
+    }
+
+    public static void addImportIfNeeded(PsiJavaFile file, PsiClass aClass) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (file.equals(containingFile)) {
+            return;
+        }
+        final String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null) {
+            return;
+        }
+        final PsiImportList importList = file.getImportList();
+        if (importList == null) {
+            return;
+        }
+        final String containingPackageName = file.getPackageName();
+        @NonNls final String packageName =
+                ClassUtil.extractPackageName(qualifiedName);
+        if (containingPackageName.equals(packageName) ||
+                importList.findSingleClassImportStatement(qualifiedName) != null) {
+            return;
+        }
+        if (importList.findOnDemandImportStatement(packageName) != null &&
+                !hasDefaultImportConflict(qualifiedName, file) &&
+                !hasOnDemandImportConflict(qualifiedName, file)) {
+            return;
+        }
+        final Project project = importList.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory elementFactory =
+                psiFacade.getElementFactory();
+        final PsiImportStatement importStatement =
+                elementFactory.createImportStatement(aClass);
+        importList.add(importStatement);
     }
 
     public static boolean nameCanBeStaticallyImported(

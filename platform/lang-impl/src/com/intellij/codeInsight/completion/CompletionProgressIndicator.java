@@ -33,16 +33,21 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -96,6 +101,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     public void itemSelected(LookupEvent event) {
+      ensureDuringCompletionPassed();
+
       finishCompletionProcess();
 
       LookupElement item = event.getItem();
@@ -112,6 +119,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       finishCompletionProcess();
     }
   };
+  private final Semaphore myDuringCompletionSemaphore = new Semaphore();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
@@ -138,6 +146,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     trackModifiers();
+
+    myDuringCompletionSemaphore.down();
   }
 
   public OffsetMap getOffsetMap() {
@@ -157,6 +167,51 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myBackgrounded;
   }
+
+  void duringCompletion(CompletionInitializationContext initContext) {
+    try {
+      ProgressManager.checkCanceled();
+
+      if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
+        try {
+          final int selectionEndOffset = initContext.getSelectionEndOffset();
+          final PsiReference reference = initContext.getFile().findReferenceAt(selectionEndOffset);
+          if (reference != null) {
+            initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
+          }
+        }
+        catch (IndexNotReadyException ignored) {
+        }
+      }
+
+      for (CompletionContributor contributor : CompletionContributor.forLanguage(initContext.getPositionLanguage())) {
+        if (DumbService.getInstance(initContext.getProject()).isDumb() && !DumbService.isDumbAware(contributor)) {
+          continue;
+        }
+
+        contributor.duringCompletion(initContext);
+      }
+    } catch (ProcessCanceledException ignored) {
+    } finally {
+      myDuringCompletionSemaphore.up();
+    }
+  }
+
+  void ensureDuringCompletionPassed() {
+    myDuringCompletionSemaphore.waitFor();
+  }
+
+  private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
+    final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
+    for (TextRange range : ranges) {
+      if (range.contains(selectionEndOffset)) {
+        return range.getEndOffset();
+      }
+    }
+
+    return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
+  }
+
 
   private void scheduleAdvertising() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -577,6 +632,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("later");
+        }
+
         if (myEditor.isDisposed() || project.isDisposed()) {
           return;
         }
@@ -584,6 +643,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
           return;
         }
+
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("invoking");
+        }
+
 
         if (!isOutdated()) {
           closeAndFinish(false);

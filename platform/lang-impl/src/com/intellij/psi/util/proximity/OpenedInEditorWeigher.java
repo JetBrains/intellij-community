@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -38,8 +37,8 @@ public class OpenedInEditorWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
-    if (location == null) {
+  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getProject() == null){
       return null;
     }
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);

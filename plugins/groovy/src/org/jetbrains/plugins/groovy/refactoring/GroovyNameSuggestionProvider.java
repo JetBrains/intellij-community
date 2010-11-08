@@ -55,9 +55,4 @@ public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
     }
     return null;
   }
-
-  @Override
-  public Collection<LookupElement> completeName(PsiElement element, @Nullable PsiElement nameSuggestionContext, String prefix) {
-    return null;
-  }
 }

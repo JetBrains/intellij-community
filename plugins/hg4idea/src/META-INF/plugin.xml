@@ -12,6 +12,7 @@
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>

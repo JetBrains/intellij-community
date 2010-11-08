@@ -17,17 +17,19 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author cdr
  */
 public class DaemonProgressIndicator extends ProgressIndicatorBase {
-  public DaemonProgressIndicator() {
-  }
+  private boolean debug;
 
   public synchronized void stop() {
     super.stop();
-    cancel();
+    super.cancel();
   }
 
   public synchronized void stopIfRunning() {
@@ -35,8 +37,31 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
       stop();
     }
     else {
-      cancel();
+      super.cancel();
     }
+  }
+
+  @Override
+  public void cancel() {
+    if (debug) {
+      putUserData(KILL_TRACE, new Throwable("Daemon Progress Canceled"));
+    }
+    super.cancel();
+  }
+
+  public void cancel(@NotNull Throwable cause) {
+    if (debug) {
+      putUserData(KILL_TRACE, new Throwable("Daemon Progress Canceled Because of", cause));
+    }
+    super.cancel();
+  }
+
+  @Override
+  public void start() {
+    assert !isCanceled() : "canceled";
+    assert !isRunning() : "running";
+    assert !wasStarted() : "was started";
+    super.start();
   }
 
   public boolean waitFor(int millisTimeout) {
@@ -50,4 +75,10 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
     }
     return isCanceled();
   }
+
+  @TestOnly
+  public void setDebug(boolean debug) {
+    this.debug = debug;
+  }
+  public static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
 }

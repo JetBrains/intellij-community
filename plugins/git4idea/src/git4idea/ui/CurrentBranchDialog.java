@@ -152,7 +152,7 @@ public class CurrentBranchDialog extends DialogWrapper {
     }
     myRepositoryComboBox.setSelectedItem(myTrackedRepository);
     myBranches.clear();
-    GitBranch.list(myProject, root, true, true, myBranches);
+    GitBranch.list(myProject, root, true, true, myBranches, null);
     trackedRemoteUpdated();
   }
 

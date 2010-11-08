@@ -272,7 +272,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
           (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         template.addTextSegment(" ");
-        template.addVariable(new MacroCallNode(new CompleteSmartMacro()), true);
+        template.addVariable(new MacroCallNode(new CompleteMacro()), true);
         template.addTextSegment("=\"");
         template.addEndVariable();
         template.addTextSegment("\"");

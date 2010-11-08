@@ -60,15 +60,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
   private final LineSet myLineSet = new LineSet();
-  private final CharArray myText = new CharArray(0) {
-    protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-      return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
-    }
-
-    protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
-      changedUpdate(event, newModificationStamp);
-    }
-  };
+  private final CharArray myText = new MyCharArray();
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
@@ -116,7 +108,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(CharSequence chars) {
     this();
     assertValidSeparators(chars);
-    myText.setText(chars);
+    myText.setText(this, chars);
     DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
     myLineSet.documentCreated(event);
   }
@@ -159,12 +151,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     boolean markAsNeedsStrippingLater = false;
+    CharSequence text = myText.getCharArray();
     for (int line = 0; line < myLineSet.getLineCount(); line++) {
       if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
       int start = -1;
       final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
       int lineStart = myLineSet.getLineStart(line);
-      CharSequence text = myText.getCharArray();
       for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
         char c = text.charAt(offset);
         if (c != ' ' && c != '\t') {
@@ -189,6 +181,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
             });
           }
         });
+        text = myText.getCharArray();
       }
     }
 
@@ -351,7 +344,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    myText.insert(s, offset);
+    myText.insert(this, s, offset);
   }
 
   public void deleteString(int startOffset, int endOffset) {
@@ -367,7 +360,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    myText.remove(startOffset, endOffset,sToDelete);
+    myText.remove(this, startOffset, endOffset,sToDelete);
   }
 
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
@@ -412,7 +405,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp, wholeTextReplaced);
+    myText.replace(this, startOffset, endOffset, sToDelete, s,newModificationStamp, wholeTextReplaced);
   }
 
   private void assertBounds(final int startOffset, final int endOffset) {
@@ -788,6 +781,24 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     for (MarkupModel markupModel : myProjectToMarkupModelMap.values()) {
       ((MarkupModelImpl)markupModel).normalize();
+    }
+  }
+
+  private static class MyCharArray extends CharArray {
+    public MyCharArray() {
+      super(0);
+    }
+
+    protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
+                                                int offset,
+                                                CharSequence oldString,
+                                                CharSequence newString,
+                                                boolean wholeTextReplaced) {
+      return subj.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+    }
+
+    protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+      ((DocumentImpl)event.getDocument()).changedUpdate(event, newModificationStamp);
     }
   }
 }

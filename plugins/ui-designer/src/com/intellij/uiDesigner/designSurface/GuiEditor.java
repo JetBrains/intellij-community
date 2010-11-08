@@ -424,7 +424,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
   public void refreshAndSave(final boolean forceSync) {
     // Update property inspector
     final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
-    manager.getPropertyInspector().synchWithTree(forceSync);
+    final PropertyInspector propertyInspector = manager.getPropertyInspector();
+    if (propertyInspector != null) {
+      propertyInspector.synchWithTree(forceSync);
+    }
 
     refresh();
     saveToFile();

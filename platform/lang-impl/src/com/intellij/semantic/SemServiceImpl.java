@@ -16,27 +16,24 @@
 package com.intellij.semantic;
 
 import com.intellij.ProjectTopics;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiAnchor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
@@ -46,6 +43,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -59,7 +57,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentMap<Object, ConcurrentMap<SemKey, List<SemElement>>> myCache = new StripedLockConcurrentHashMap<Object, ConcurrentMap<SemKey, List<SemElement>>>();
+  private final ConcurrentWeakHashMap<PsiElement, SoftReference<FileChunk>> myCache = new ConcurrentWeakHashMap<PsiElement, SoftReference<FileChunk>>();
   private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
   private final MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
@@ -76,22 +74,7 @@ public class SemServiceImpl extends SemService{
         }
       }
     });
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        clearCache();
-      }
 
-      @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
-        clearCache();
-      }
-
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        clearCache();
-      }
-    });
     ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
       public void run() {
         if (!isInsideAtomicChange()) {
@@ -166,7 +149,13 @@ public class SemServiceImpl extends SemService{
   }
 
   public void clearCache() {
-    myCache.clear();
+    for (PsiElement element : myCache.keySet()) {
+      final FileChunk chunk = obtainChunk(element);
+      if (chunk != null) {
+        chunk.unhinge();
+      }
+      myCache.remove(element);
+    }
   }
 
   @Override
@@ -193,7 +182,9 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    List<T> cached = _getCachedSemElements(key, psi, true);
+    final PsiElement root = getRootElement(psi);
+
+    List<T> cached = _getCachedSemElements(key, true, psi, root);
     if (cached != null) {
       return cached;
     }
@@ -208,11 +199,23 @@ public class SemServiceImpl extends SemService{
         result.addAll((List<T>)list);
       }
     }
-    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi);
+    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, root);
     for (SemKey semKey : map.keySet()) {
       persistent.putIfAbsent(semKey, map.get(semKey));
     }
     return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
+  }
+
+  @NotNull
+  private static PsiElement getRootElement(@NotNull PsiElement psi) {
+    if (psi instanceof PsiDirectory || psi instanceof PsiDirectoryContainer) {
+      return psi;
+    }
+    final PsiFile file = psi.getContainingFile();
+    if (file != null) {
+      return file;
+    }
+    throw new AssertionError("The element should be in a file: " + psi);
   }
 
   @NotNull 
@@ -233,12 +236,15 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   public <T extends SemElement> List<T> getCachedSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    return _getCachedSemElements(key, psi, false);
+    return _getCachedSemElements(key, false, psi, getRootElement(psi));
   }
 
   @Nullable
-  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, PsiElement psi, boolean paranoid) {
-    final ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(cacheKey(psi));
+  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element, PsiElement root) {
+    final FileChunk chunk = obtainChunk(root);
+    if (chunk == null) return null;
+
+    final ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
     if (map == null) return null;
 
     List<T> singleList = null;
@@ -277,30 +283,65 @@ public class SemServiceImpl extends SemService{
     return new ArrayList<T>(result);
   }
 
-  private static Object cacheKey(PsiElement psi) {
-    if (psi instanceof StubBasedPsiElement) {
-      return PsiAnchor.create(psi);
-    }
-
-    return psi;
+  @Nullable
+  private FileChunk obtainChunk(PsiElement root) {
+    final SoftReference<FileChunk> ref = myCache.get(root);
+    return ref == null ? null : ref.get();
   }
 
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
-    cacheOrGetMap(psi).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
+    cacheOrGetMap(psi, getRootElement(psi)).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
   }
 
   @Override
   public void clearCachedSemElements(@NotNull PsiElement psi) {
-    myCache.remove(cacheKey(psi));
+    final FileChunk chunk = obtainChunk(getRootElement(psi));
+    if (chunk != null) {
+      chunk.map.remove(psi);
+    }
   }
 
-  private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(PsiElement psi) {
-    final Object key = cacheKey(psi);
-    ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(key);
+  private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(final PsiElement element, @NotNull PsiElement root) {
+    FileChunk chunk = obtainChunk(root);
+    if (chunk == null) {
+      chunk = new FileChunk(root);
+      myCache.putIfAbsent(root, new SoftReference(chunk));
+    }
+
+    ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myCache, key, new StripedLockConcurrentHashMap<SemKey, List<SemElement>>());
+      map = ConcurrencyUtil.cacheOrGet(chunk.map, element, new StripedLockConcurrentHashMap<SemKey, List<SemElement>>());
     }
     return map;
+  }
+
+  private static class FileChunk {
+    private static final Key<FileChunk> SEM_SERVICE_CHUNK = Key.create("semServiceChunkHardReference");
+    final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> map = new StripedLockConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
+    @Nullable final PsiElement anchor;
+
+    FileChunk(PsiElement root) {
+      if (root instanceof PsiFile) {
+        if (!(root instanceof PsiFileImpl) || ((PsiFileImpl)root).getStubTree() == null) {
+          final ASTNode node = root.getNode();
+          if (node instanceof LazyParseableElement && ((LazyParseableElement)node).isParsed()) {
+            final PsiElement child = root.getFirstChild();
+            if (child != null) {
+              anchor = child;
+              child.putUserData(SEM_SERVICE_CHUNK, this);
+              return;
+            }
+          }
+        }
+      }
+      anchor = null;
+    }
+
+    void unhinge() {
+      if (anchor != null) {
+        anchor.putUserData(SEM_SERVICE_CHUNK, null);
+      }
+    }
   }
 
 }

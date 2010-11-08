@@ -50,12 +50,20 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
         }
         paths.add(StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/"));
       }
+      String target;
       if (paths.size() == 1) {
-        presentation.setText("Put Into /" + paths.iterator().next());
+        final String path = paths.iterator().next();
+        if (path.length() > 0) {
+          target = "/" + path;
+        }
+        else {
+          target = "output root";
+        }
       }
       else {
-        presentation.setText("Put into default locations");
+        target = "default locations";
       }
+      presentation.setText("Put into " + target);
     }
     presentation.setVisible(enabled);
     presentation.setEnabled(enabled);

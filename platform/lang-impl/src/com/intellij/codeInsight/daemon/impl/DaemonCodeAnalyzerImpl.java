@@ -29,6 +29,7 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -97,18 +98,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private IntentionHintComponent myLastIntentionHint; //guarded by this
   private volatile boolean myDisposed;
-  private boolean myInitialized;
+  private volatile boolean myInitialized;
 
   @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private DaemonListeners myDaemonListeners;
-  private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
   private int myModificationCount = 0;
 
-  //   @TestOnly
-  private boolean allowToInterrupt = true;
+  private volatile boolean allowToInterrupt = true;
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
@@ -170,13 +169,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public List<HighlightInfo> runPasses(@NotNull PsiFile file,
                                        @NotNull Document document,
                                        @NotNull TextEditor textEditor,
-                                       @NotNull final DaemonProgressIndicator progress,
                                        @NotNull int[] toIgnore,
-                                       boolean allowDirt) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+                                       boolean canChangeDocument) {
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    assert !application.isWriteAccessAllowed();
 
     // pump first so that queued event do not interfere
+    UIUtil.dispatchAllInvocationEvents();
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
@@ -185,42 +185,62 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(document, file, ignoreId);
     }
-    fileStatusMap.allowDirt(allowDirt);
+    fileStatusMap.allowDirt(canChangeDocument);
 
     TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
     final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
     HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
 
+    final DaemonProgressIndicator progress = new DaemonProgressIndicator();
+    progress.setDebug(true);
+    progress.start();
     myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
-
-    while (!progress.isCanceled()) {
-      progress.waitFor(100);
-      try {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-      catch (RuntimeException e) {
-        e.printStackTrace();
-        throw e;
-      }
-      catch (Error e) {
-        e.printStackTrace();
-        throw e;
-      }
-      catch (Throwable e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
-    }
-    UIUtil.dispatchAllInvocationEvents();
-    UIUtil.dispatchAllInvocationEvents();
-
     try {
+      while (progress.isRunning()) {
+        if (progress.isCanceled() && progress.isRunning()) {
+          // write action sneaked in the AWT. restart
+          waitForTermination();
+          return runPasses(file, document, textEditor, toIgnore, canChangeDocument);
+        }
+        progress.waitFor(100);
+        try {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        catch (RuntimeException e) {
+          e.printStackTrace();
+          throw e;
+        }
+        catch (Error e) {
+          e.printStackTrace();
+          throw e;
+        }
+        catch (Throwable e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }
+      UIUtil.dispatchAllInvocationEvents();
+      UIUtil.dispatchAllInvocationEvents();
+
       return getHighlights(document, null, project);
     }
     finally {
       fileStatusMap.allowDirt(true);
-      myPassExecutorService.cancelAll(true);
+      waitForTermination();
     }
+  }
+
+  @TestOnly
+  public void prepareForTest(boolean initialize) {
+    if (initialize) {
+      projectOpened();
+    }
+    setUpdateByTimerEnabled(false);
+    waitForTermination();
+  }
+
+  private void waitForTermination() {
+    myPassExecutorService.cancelAll(true);
   }
 
   @NotNull
@@ -236,8 +256,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
-    myStatusBarUpdater = new StatusBarUpdater(myProject);
-    Disposer.register(myProject, myStatusBarUpdater);
+    StatusBarUpdater statusBarUpdater = new StatusBarUpdater(myProject);
+    Disposer.register(myProject, statusBarUpdater);
 
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     Disposer.register(myProject, myDaemonListeners);

@@ -858,7 +858,12 @@ public class AbstractPopup implements JBPopup {
   protected void afterShow() {
   }
 
-  protected final void requestFocus() {
+  protected final boolean requestFocus() {
+    if (!myFocusable) return false;
+
+    _requestFocus();
+
+
     getFocusManager().requestFocus(new FocusCommand() {
       @Override
       public ActionCallback run() {
@@ -866,6 +871,8 @@ public class AbstractPopup implements JBPopup {
         return new ActionCallback.Done();
       }
     }, true);
+
+    return true;
   }
 
   private void _requestFocus() {

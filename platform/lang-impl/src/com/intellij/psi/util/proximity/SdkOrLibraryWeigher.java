@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,8 +31,8 @@ import java.util.List;
 */
 public class SdkOrLibraryWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, @Nullable final ProximityLocation location) {
-    if (location == null) {
+  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (location.getProject() == null){
       return null;
     }
     final VirtualFile file = PsiUtilBase.getVirtualFile(element);

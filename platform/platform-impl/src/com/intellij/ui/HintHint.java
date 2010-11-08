@@ -41,6 +41,8 @@ public class HintHint {
   private Color myTextFg;
   private Color myTextBg;
   private Color myBorderColor;
+  private Font myFont;
+  private int myCalloutShift;
 
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
@@ -119,7 +121,7 @@ public class HintHint {
   }
 
   public Font getTextFont() {
-    return getTooltipManager().getTextFont(myAwtTooltip);
+    return myFont != null ? myFont : getTooltipManager().getTextFont(myAwtTooltip);
   }
 
   public String getUlImg() {
@@ -174,8 +176,10 @@ public class HintHint {
   }
 
   public void initStyleFrom(JComponent component) {
+    setTextFg(component.getForeground()).setTextBg(component.getBackground()).setFont(component.getFont());
     myTextFg = component.getForeground();
     myTextBg = component.getBackground();
+    myFont = component.getFont();
   }
 
   public HintHint setTextFg(Color textFg) {
@@ -188,8 +192,22 @@ public class HintHint {
     return this;
   }
 
+  public HintHint setFont(Font font) {
+    myFont = font;
+    return this;
+  }
+
   public HintHint setBorderColor(Color borderColor) {
     myBorderColor = borderColor;
+    return this;
+  }
+
+  public int getCalloutShift() {
+    return myCalloutShift;
+  }
+
+  public HintHint setCalloutShift(int calloutShift) {
+    myCalloutShift = calloutShift;
     return this;
   }
 }

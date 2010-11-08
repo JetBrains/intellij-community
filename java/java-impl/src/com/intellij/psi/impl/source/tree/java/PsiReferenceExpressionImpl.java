@@ -384,12 +384,27 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
           return true;
         }
+        else if (element instanceof PsiClass && seemsScrambled((PsiClass)element)) {
+          return true;
+        }
 
         return super.execute(element, state);
       }
 
     };
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  private static boolean seemsScrambled(PsiClass element) {
+    if (!(element instanceof PsiCompiledElement)) {
+      return false;
+    }
+
+    final String qualifiedName = element.getQualifiedName();
+    return qualifiedName != null &&
+           qualifiedName.length() <= 2 &&
+           qualifiedName.length() > 0 &&
+           Character.isLowerCase(qualifiedName.charAt(0));
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +64,8 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     data.setTextAttributes(textAttributes);
   }
 
-  public void changeAttributesInBatch(@NotNull Runnable change) {
-    data.changeAttributesInBatch(change);
+  boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
+    return data.changeAttributesInBatch(change);
   }
 
   public int getLayer() {

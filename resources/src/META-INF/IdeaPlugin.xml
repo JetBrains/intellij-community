@@ -775,15 +775,13 @@
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SamePsiMemberWeigher" id="samePsiMember"
-             order="before openedInEditor"/>
+             order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ExplicitlyImportedWeigher" id="explicitlyImported"
-             order="after openedInEditor"/>
+             order="before openedInEditor"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.JavaInheritanceWeigher" id="javaInheritance"
-             order="after explicitlyImported"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SamePackageWeigher" id="samePackage"
-             order="after javaInheritance, before sameLogicalRoot"/>
+             order="after explicitlyImported, before sameLogicalRoot"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.KnownPackageWeigher" id="knownPackage"
-             order="after sameProject, before sdkOrLibrary"/>
+             order="after sameModule, before sdkOrLibrary"/>
 
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>

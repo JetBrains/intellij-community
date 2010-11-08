@@ -59,7 +59,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
             final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
-                completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent());
+                completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(), parameters.getInvocationCount() >= 1);
             for (final LookupElement item : lookupSet) {
               if (item instanceof LookupItem) {
                 ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
@@ -75,7 +75,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
         final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
-        completeFieldName(lookupSet, variable, result.getPrefixMatcher());
+        completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
         completeMethodName(lookupSet, variable, result.getPrefixMatcher());
         for (final LookupElement item : lookupSet) {
           result.addElement(item);
@@ -96,7 +96,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
   }
 
-  private static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, PsiVariable var){
+  private static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, PsiVariable var, boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
     final VariableKind variableKind = codeStyleManager.getVariableKind(var);
@@ -120,7 +120,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (set.isEmpty()) {
+    if (set.isEmpty() && includeOverlapped) {
       suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, "")) {
         public void nameChoosen(String name) {
         }
@@ -219,7 +219,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     return ArrayUtil.toStringArray(unresolvedRefs);
   }
 
-  private static void completeFieldName(Set<LookupElement> set, PsiVariable var, final PrefixMatcher matcher){
+  private static void completeFieldName(Set<LookupElement> set, PsiVariable var, final PrefixMatcher matcher, boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(var.getProject());
@@ -237,7 +237,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     final String[] suggestedNames = suggestedNameInfo.names;
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
 
-    if (set.isEmpty()) {
+    if (set.isEmpty() && includeOverlapped) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(variableKind);
       if(variableKind != VariableKind.STATIC_FINAL_FIELD){
@@ -246,8 +246,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
 
 
-        suggestedNameInfo = new SuggestedNameInfo(
-          getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
+      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
         public void nameChoosen(String name) {
         }
       };

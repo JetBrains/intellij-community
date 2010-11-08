@@ -16,9 +16,9 @@
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -108,7 +108,7 @@ public class CvsTabbedWindow {
   }
 
   public static CvsTabbedWindow getInstance(Project project) {
-    return ServiceManager.getService(project, CvsTabbedWindow.class);
+    return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsTabbedWindow.class);
   }
 
   private int getComponentAt(int i, boolean select) {

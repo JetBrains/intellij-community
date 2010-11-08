@@ -92,10 +92,6 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
       }
     };
     if (myParentThreadHasReadAccess) {
-      if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-        // all tests unfortunately are run from within write action, so they cannot really run read action in any thread
-        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
-      }
       // have to start "real" read action so that we cannot start write action until we are finished here
       if (myFailFastOnAcquireReadAction) {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {

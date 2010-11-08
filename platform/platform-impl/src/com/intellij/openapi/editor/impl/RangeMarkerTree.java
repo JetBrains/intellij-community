@@ -31,6 +31,9 @@ import java.util.*;
  * User: cdr
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
+  private final PrioritizedDocumentListener myListener;
+  private final Document myDocument;
+
   private static final EqualStartIntervalComparator<RangeMarkerEx> RANGEMARKER_COMPARATOR = new EqualStartIntervalComparator<RangeMarkerEx>() {
     public int compare(RangeMarkerEx o1, RangeMarkerEx o2) {
       boolean greedyL1 = o1.isGreedyToLeft();
@@ -53,7 +56,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   protected RangeMarkerTree(Document document, EqualStartIntervalComparator<T> comparator) {
     super(comparator);
 
-    document.addDocumentListener(new PrioritizedDocumentListener() {
+    myDocument = document;
+    myListener = new PrioritizedDocumentListener() {
       public int getPriority() {
         return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
       }
@@ -63,11 +67,17 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       public void documentChanged(DocumentEvent e) {
         updateMarkersOnChange(e);
       }
-    });
+    };
+
+    document.addDocumentListener(myListener);
   }
 
   public RangeMarkerTree(Document document) {
     this(document, (EqualStartIntervalComparator<T>)RANGEMARKER_COMPARATOR);
+  }
+
+  public void dispose() {
+    myDocument.removeDocumentListener(myListener);
   }
 
   @Override

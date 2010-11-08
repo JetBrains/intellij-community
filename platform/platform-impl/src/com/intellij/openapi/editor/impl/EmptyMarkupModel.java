@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,22 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                               @Nullable TextAttributes textAttributes,
                                               @NotNull HighlighterTargetArea targetArea) {
     throw new ProcessCanceledException();
+  }
+
+  @Override
+  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                   int endOffset,
+                                                                   int layer,
+                                                                   TextAttributes textAttributes,
+                                                                   HighlighterTargetArea targetArea,
+                                                                   boolean isPersistent,
+                                                                   Consumer<RangeHighlighterEx> changeAttributesAction) {
+    throw new ProcessCanceledException();
+  }
+
+  @Override
+  public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
   }
 
   @NotNull
