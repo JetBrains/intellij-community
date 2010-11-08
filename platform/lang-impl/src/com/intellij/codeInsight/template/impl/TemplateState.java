@@ -473,7 +473,7 @@ public class TemplateState implements Disposable {
         itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ', lookupItems);
       }
       else {
-        runLookup(currentSegmentNumber, lookupItems, psiFile);
+        runLookup(currentSegmentNumber, lookupItems, expressionNode.getAdvertisingText(), psiFile);
       }
     }
     else {
@@ -486,12 +486,14 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
-  private void runLookup(final int currentSegmentNumber, final LookupElement[] lookupItems, final PsiFile psiFile) {
+  private void runLookup(final int currentSegmentNumber, final LookupElement[] lookupItems, String advertisingText, final PsiFile psiFile) {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
     final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems);
+    ((LookupImpl)lookup).setAdvertisementText(advertisingText);
+    ((LookupImpl)lookup).refreshUi();
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {
@@ -864,6 +866,9 @@ public class TemplateState implements Disposable {
     }
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0) return false;
+    if (myCurrentVariableNumber == -1) {
+      if (myTemplate.skipOnStart(currentVariableNumber)) return false;
+    }
     int start = mySegments.getSegmentStart(segmentNumber);
     ExpressionContext context = createExpressionContext(start);
     Result result = expression.calculateResult(context);

@@ -139,12 +139,16 @@ public class TemplateImpl extends Template implements SchemeElement {
     return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
   }
 
-  public Variable addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(String name,
+                              Expression expression,
+                              Expression defaultValueExpression,
+                              boolean isAlwaysStopAt,
+                              boolean skipOnStart) {
     if (mySegments != null) {
       Segment segment = new Segment(name, myTemplateText.length());
       mySegments.add(segment);
     }
-    Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt);
+    Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt, skipOnStart);
     myVariables.add(variable);
     return variable;
   }
@@ -440,6 +444,10 @@ public class TemplateImpl extends Template implements SchemeElement {
     for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
       getTemplateContext().setEnabled(entry.getKey(), entry.getValue().booleanValue());
     }
+  }
+
+  public boolean skipOnStart(int i) {
+    return myVariables.get(i).skipOnStart();
   }
 
   private static class Segment {
