@@ -604,9 +604,12 @@ public class FileBasedIndex implements ApplicationComponent {
    */
   public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
-      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-      return index == null || index.processAllKeys(processor);
+      if (index == null) {
+        return true;
+      }
+      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
+      return index.processAllKeys(processor);
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -779,13 +782,13 @@ public class FileBasedIndex implements ApplicationComponent {
                                         @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
                                         final GlobalSearchScope filter) {
     try {
-      final Project project = filter.getProject();
-      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
       }
+      final Project project = filter.getProject();
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      ensureUpToDate(indexId, project, filter);
 
       final Lock readLock = index.getReadLock();
       try {
@@ -850,13 +853,13 @@ public class FileBasedIndex implements ApplicationComponent {
 
   public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {
     try {
-      final Project project = filter.getProject();
-      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
       }
+      final Project project = filter.getProject();
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      ensureUpToDate(indexId, project, filter);
 
       final Lock readLock = index.getReadLock();
       try {
