@@ -201,10 +201,10 @@ public class PyCallExpressionHelper {
     boolean isByInstance
   ) {
     int implicit_offset = 0;
+    if (isByInstance) implicit_offset += 1;
     PyFunction method = callable.asMethod();
     if (method == null) return implicit_offset;
     //
-    if (isByInstance) implicit_offset += 1;
     // wrapped flags?
     if (wrappedFlag != null) {
       if (flags != null) {
