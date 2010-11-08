@@ -147,8 +147,8 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     myListenerList.remove(UISettingsListener.class,listener);
   }
 
-  private void setDefaultFontSettings(){
-    FONT_FACE = "Dialog";
+  private void setDefaultFontSettings() {
+    FONT_FACE = SystemInfo.isLinux && ApplicationManager.getApplication().isUnitTestMode() ? "Dialog.plain" : "Dialog";
     FONT_SIZE = 12;
   }
 

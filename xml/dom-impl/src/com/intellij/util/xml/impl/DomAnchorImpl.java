@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -73,6 +74,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       LOG.error(diag);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
+  }
+
+
+  @Override
+  public PsiElement getPsiElement() {
+    T t = retrieveDomElement();
+    return t == null ? null : t.getXmlElement();
   }
 
   @Nullable
@@ -134,6 +142,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return myParent.getContainingFile();
     }
   }
+
   private static class IndexedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final DomAnchorImpl myParent;
     private final AbstractDomChildrenDescription myDescr;

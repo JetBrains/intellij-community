@@ -16,13 +16,15 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.xml.util.PsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
  */
-public interface DomAnchor<T extends DomElement> {
+public interface DomAnchor<T extends DomElement> extends PsiElementPointer {
+
   @Nullable
   T retrieveDomElement();
 
