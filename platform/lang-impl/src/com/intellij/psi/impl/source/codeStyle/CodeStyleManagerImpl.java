@@ -170,6 +170,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     CaretModel caretModel = editor.getCaretModel();
     String indent = getLineIndent(file, caretModel.getOffset());
+    if (indent == null) {
+      return;
+    }
     int tabSize = getSettings().getTabSize(file.getFileType());
     int indentColumn = indentWithInVisualColumns(indent, tabSize);
     VisualPosition position = caretModel.getVisualPosition();
