@@ -105,5 +105,7 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
 cd "$PYCHARM_BIN_HOME"
-exec $PYCHARM_JDK/bin/java $JVM_ARGS $PYCHARM_MAIN_CLASS_NAME $*
-
+while true ; do
+  $PYCHARM_JDK/bin/java $JVM_ARGS -Djb.restart.code=88 $PYCHARM_MAIN_CLASS_NAME $*
+  test $? -ne 88 && break
+done
