@@ -119,7 +119,7 @@ class FunctionTestCase(TestBase):
             return func.__module__
         else:
             #TODO[kate]: get module of function in jython < 2.2
-            return "Unknown module"
+            return "Unknown module."
 
     def _descriptors(self):
         """In most cases, this is the function itself and no arguments. For
@@ -161,7 +161,7 @@ class MethodTestCase(TestBase):
             return "%s.%s" % (func.__module__, self.cls.__name__)
         else:
             #TODO[kate]: get module of function in jython < 2.2
-            return "Unknown module"
+            return "Unknown module."
 
     def __str__(self):
         func, arg = self._descriptors()
