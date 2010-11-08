@@ -33,9 +33,9 @@ import java.beans.Introspector;
  * @author ilyas
  */
 public class GroovyPropertyUtils {
-  private static final String IS_PREFIX = "is";
-  private static final String GET_PREFIX = "get";
-  private static final String SET_PREFIX = "set";
+  public static final String IS_PREFIX = "is";
+  public static final String GET_PREFIX = "get";
+  public static final String SET_PREFIX = "set";
 
   private GroovyPropertyUtils() {
   }

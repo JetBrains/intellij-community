@@ -53,6 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -67,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -495,6 +498,12 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         }
       }
 
+      GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
+      if (argumentList instanceof GrCommandArgumentList &&
+          argumentList.getAllArguments().length == 0 &&
+          (call == null || call.getClosureArguments().length == 0)) {
+        argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
+      }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);
     }
 

@@ -41,6 +41,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -104,8 +105,12 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               else {
                 o = variant;
               }
+
               if (o instanceof PsiElement) {
                 type = getTypeByElement((PsiElement)o, position);
+              }
+              else if (o instanceof GroovyResolveResult) {
+                type = getTypeByElement(((GroovyResolveResult)o).getElement(), position);
               }
               else if (o instanceof String) {
                 if ("true".equals(o) || "false".equals(o)) {
@@ -115,7 +120,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               if (type == null) return;
               for (TypeConstraint info : infos) {
                 if (info.satisfied(type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
-                  final LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(o);
+                  final LookupElement lookupElement =
+                    variant instanceof LookupElement ? (LookupElement)variant : GroovyCompletionUtil.getLookupElement(o);
                   result.addElement(lookupElement);
                   break;
                 }

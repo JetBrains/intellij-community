@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.ResolveResult;
 
 import java.util.ArrayList;
 
@@ -39,7 +40,10 @@ public class JavaMethodMergingContributor extends CompletionContributor {
       LookupElement best = null;
       final ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
       for (LookupElement item : items) {
-        final Object o = item.getObject();
+        Object o = item.getObject();
+        if (o instanceof ResolveResult) {
+          o = ((ResolveResult)o).getElement();
+        }
         if (item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }

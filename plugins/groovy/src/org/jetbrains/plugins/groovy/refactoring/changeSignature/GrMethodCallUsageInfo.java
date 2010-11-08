@@ -27,16 +27,12 @@ import com.intellij.refactoring.changeSignature.PossiblyIncorrectUsage;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -80,13 +76,14 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, mySubstitutor);
     myToChangeArguments = isToChangeArguments;
     myToCatchExceptions = isToCatchExceptions;
-    final GrArgumentList list = PsiUtil.getArgumentsList(element);
-    if (list == null) {
+    final GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
+    if (call == null) {
       myMapToArguments = GrClosureSignatureUtil.ArgInfo.empty_array();
     }
     else {
-      myMapToArguments =
-        GrClosureSignatureUtil.mapParametersToArguments(signature, list);
+      myMapToArguments = GrClosureSignatureUtil
+        .mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(), call, call.getClosureArguments(),
+                                  false);
     }
   }
 
