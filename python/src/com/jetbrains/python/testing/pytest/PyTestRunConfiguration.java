@@ -100,6 +100,10 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     if (runner.exists()) return runner.getPath();
     runner = new File(new File(bin_dir.getParentFile(), "scripts"), PY_TEST);
     if (runner.exists()) return runner.getPath();
+    runner = new File(new File(bin_dir.getParentFile(), "local"), PY_TEST);
+    if (runner.exists()) return runner.getPath();
+    runner = new File(new File (new File(bin_dir.getParentFile(), "local"), "bin"), PY_TEST);
+    if (runner.exists()) return runner.getPath();
     return null;
   }
 }
