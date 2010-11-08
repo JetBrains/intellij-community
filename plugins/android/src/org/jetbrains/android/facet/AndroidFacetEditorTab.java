@@ -455,7 +455,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.ASSETS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absAssetsPath, false);
 
     String absApkPath = (String)myApkPathCombo.getComboBox().getEditor().getItem();
-    if (absResPath.length() == 0) {
+    if (absApkPath.length() == 0) {
       myConfiguration.APK_PATH = "";
     }
     else {
