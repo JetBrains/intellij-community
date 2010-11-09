@@ -70,6 +70,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
     }
 
+  @Nullable
   private Icon computeIcon(final int flags) {
     PsiElement psiElement = (PsiElement)this;
     Icon baseIcon = LastComputedIcon.get(psiElement, flags);
@@ -84,12 +85,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
 
     if (isToDeferIconLoading()) {
-      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), new Function<ElementIconRequest, Icon>() {
+      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), new NullableFunction<ElementIconRequest, Icon>() {
         public Icon fun(ElementIconRequest request) {
-          return computeIconNow(request.getElement(), request.getFlags());
+          final PsiElement element = request.getElement();
+          if (!element.isValid()) return null;
+          if (element.getProject().isDisposed()) return null;
+          return computeIconNow(element, request.getFlags());
         }
       });
     } else {
+      if (!psiElement.isValid()) return null;
       return computeIconNow(psiElement, flags);
     }
   }
@@ -98,8 +103,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return Registry.is("psi.deferIconLoading");
   }
 
+  @Nullable
   private Icon computeIconNow(PsiElement element, int flags) {
-    if (!element.isValid()) return null;
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
@@ -166,6 +171,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   }
 
+  @Nullable
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
 
