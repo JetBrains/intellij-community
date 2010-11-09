@@ -348,6 +348,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (isFlushingIdleRequests()) {
+          SwingUtilities.invokeLater(this);
+        }
+
         if (myRunContext != null) {
           runnable.run();
           return;
@@ -479,7 +483,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public boolean dispatch(KeyEvent e) {
     if (!Registry.is("actionSystem.fixLostTyping")) return false;
 
-    if (myFlushingIdleRequestsEntryCount > 0) return false;
+    if (isFlushingIdleRequests()) return false;
 
     if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
       for (FocusCommand each : myFocusRequests) {
@@ -500,6 +504,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     else {
       return false;
     }
+  }
+
+  private boolean isFlushingIdleRequests() {
+    return myFlushingIdleRequestsEntryCount > 0;
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
