@@ -97,7 +97,7 @@ public class ReassignVariableUtil {
   }
 
   @Nullable
-  private static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
+  static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
     if (declaration != null) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiVariable) {
