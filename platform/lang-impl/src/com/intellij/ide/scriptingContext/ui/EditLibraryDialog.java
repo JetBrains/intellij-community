@@ -50,6 +50,7 @@ public class EditLibraryDialog extends DialogWrapper {
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
+  private JButton myAttachFromButton;
   private Project myProject;
   private FileTableModel myFileTableModel;
   private VirtualFile mySelectedFile;
@@ -65,6 +66,14 @@ public class EditLibraryDialog extends DialogWrapper {
         addFiles();
       }
     });
+
+    myAttachFromButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        attachFromDirectory();
+      }
+    });
+
     myFileTableModel = new FileTableModel();
     myFileTable.setModel(myFileTableModel);
 
@@ -135,14 +144,31 @@ public class EditLibraryDialog extends DialogWrapper {
     FileChooserDescriptor chooserDescriptor = new LibFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
     if (files.length == 1 && files[0] != null) {
-      myFileTableModel.addFile(files[0], false);
+      myFileTableModel.addFile(files[0]);
+    }
+  }
+
+  private void attachFromDirectory() {
+    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    chooserDescriptor.setTitle("Select a directory to attach files from");  //TODO<rv> Move to resources
+    VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
+    if (files.length == 1 && files[0] != null) {
+      VirtualFile chosenDir  = files[0];
+      if (chosenDir.isDirectory() && chosenDir.isValid()) {
+        if (myLibName.getText().isEmpty()) myLibName.setText(chosenDir.getName());
+        for (VirtualFile file : chosenDir.getChildren()) {
+          if (file.isValid() && !file.isDirectory() && myProvider.acceptsExtension(file.getExtension())) {
+            myFileTableModel.addFile(file);
+          }
+        }
+      }
     }
   }
 
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
       super (true, false, false, true, false, false);
-      setTitle("Select library file");
+      setTitle("Select library file"); //TODO<rv> Move to resources
     }
 
     @Override
@@ -158,14 +184,14 @@ public class EditLibraryDialog extends DialogWrapper {
     }
   }
 
-  private static class FileTableModel extends AbstractTableModel {
+  private class FileTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
       switch(column) {
         case FILE_LOCATION_COL:
-          return "Location";
-        case FILE_TYPE_COL:
+          return "Location"; //TODO<rv> Move to resources
+        case FILE_TYPE_COL: //TODO<rv> Move to resources
           return "Type";
       }
       return "";
@@ -182,9 +208,9 @@ public class EditLibraryDialog extends DialogWrapper {
     private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     private HashSet<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
 
-    public void addFile(VirtualFile file, boolean isCompact) {
+    public void addFile(VirtualFile file) {
       myFiles.add(file);
-      if (isCompact) {
+      if (myProvider.isCompact(file)) {
         myCompactFiles.add(file);
       }
       fireTableDataChanged();
@@ -286,7 +312,7 @@ public class EditLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!isLibNameValid(myLibName.getText())) {
-      Messages.showErrorDialog(myProject, "Invalid library name", "Error");
+      Messages.showErrorDialog(myProject, "Invalid library name", "Error"); //TODO<rv> Move to resources
       return;
     }
     super.doOKAction();
