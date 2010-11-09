@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy;
 
-import static com.intellij.codeInsight.ChangeContextUtil.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -35,6 +34,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.codeInsight.ChangeContextUtil.*;
 
 /**
  * @author Maxim.Medvedev
