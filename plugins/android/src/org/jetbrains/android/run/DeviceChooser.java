@@ -61,6 +61,8 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
   private JTable myDeviceTable;
   private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
 
+  private int[] mySelectedRows;
+
   public DeviceChooser(@NotNull AndroidFacet facet, boolean multipleSelection, @Nullable String[] selectedSerials) {
     super(facet.getModule().getProject(), true);
     setTitle(AndroidBundle.message("choose.device.dialog.title"));
@@ -191,13 +193,19 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     }
   }
 
+  @Override
+  protected void doOKAction() {
+    mySelectedRows = myDeviceTable.getSelectedRows();
+    super.doOKAction();
+  }
+
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
   @NotNull
   public IDevice[] getSelectedDevices() {
-    int[] rows = myDeviceTable.getSelectedRows();
+    int[] rows = mySelectedRows != null ? mySelectedRows : myDeviceTable.getSelectedRows();
     List<IDevice> result = new ArrayList<IDevice>();
     for (int row : rows) {
       if (row >= 0) {
