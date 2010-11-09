@@ -28,6 +28,6 @@ public abstract class ClosureMissingMethodContributor {
 
   public static final ExtensionPointName<ClosureMissingMethodContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureMissingMethodContributor");
 
-  public abstract boolean processMembers(GrClosableBlock closure, PsiScopeProcessor processor, GrReferenceExpression ref, ResolveState state);
+  public abstract boolean processMembers(GrClosableBlock closure, PsiScopeProcessor processor, GrReferenceExpression refExpr, ResolveState state);
 
 }

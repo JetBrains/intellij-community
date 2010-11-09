@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public class EditorFragmentComponent extends JPanel {
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManagerImpl.HIDE_BY_ANY_KEY : 0) | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManagerImpl.HIDE_BY_ANY_KEY : 0) | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p));
     return hint;
   }
 

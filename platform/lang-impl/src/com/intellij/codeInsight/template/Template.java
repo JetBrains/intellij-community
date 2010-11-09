@@ -29,7 +29,15 @@ public abstract class Template {
   }
   public abstract Variable addVariable(Expression expression, boolean isAlwaysStopAt);
 
-  public abstract Variable addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);
+  public Variable addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+    return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
+  }
+
+  public abstract Variable addVariable(@NonNls String name,
+                                       Expression expression,
+                                       Expression defaultValueExpression,
+                                       boolean isAlwaysStopAt,
+                                       boolean skipOnStart);
   public abstract Variable addVariable(@NonNls String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
 
   public abstract void addEndVariable();

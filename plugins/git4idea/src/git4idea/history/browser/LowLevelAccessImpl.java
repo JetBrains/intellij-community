@@ -50,7 +50,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                                                    @NotNull final Collection<String> endPoints,
                                                    @NotNull final Collection<ChangesFilter.Filter> filters,
                                                    int useMaxCnt) throws VcsException {
-    final List<String> parameters = new LinkedList<String>();
+    final List<String> parameters = new ArrayList<String>();
     if (useMaxCnt > 0) {
       parameters.add("--max-count=" + useMaxCnt);
     }
@@ -76,7 +76,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
   public Runnable loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                                     final Consumer<CommitHashPlusParents> consumer) throws VcsException {
-    final List<String> parameters = new LinkedList<String>();
+    final List<String> parameters = new ArrayList<String>();
     for (ChangesFilter.Filter filter : filters) {
       filter.getCommandParametersFilter().applyToCommandLine(parameters);
     }
@@ -101,7 +101,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
                              int maxCnt, List<String> branches) throws VcsException {
-    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
+    final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
     if (beforePoint != null) {
       filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
     }
@@ -136,7 +136,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                           @NotNull final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt)
     throws VcsException {
 
-    final List<String> parameters = new LinkedList<String>();
+    final List<String> parameters = new ArrayList<String>();
     if (useMaxCnt > 0) {
       parameters.add("--max-count=" + (useMaxCnt + 1));
     }
@@ -166,14 +166,14 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   public Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
-    final List<String> result = new LinkedList<String>();
+    final List<String> result = new ArrayList<String>();
     GitBranch.listAsStrings(myProject, myRoot, false, true, result, hash.getValue());
     GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
     return result;
   }
 
   public Collection<String> getTagsWithCommit(final SHAHash hash) throws VcsException {
-    final List<String> result = new LinkedList<String>();
+    final List<String> result = new ArrayList<String>();
     GitTag.listAsStrings(myProject, myRoot, result, hash.getValue());
     return result;
   }

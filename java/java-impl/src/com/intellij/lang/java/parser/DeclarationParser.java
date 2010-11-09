@@ -291,7 +291,7 @@ public class DeclarationParser {
           declaration.rollbackTo();
           return null;
         }
-        return parseMethodFromLeftParenth(builder, declaration, false);
+        return parseMethodFromLeftParenth(builder, declaration, false, true);
       }
       idPos.drop();
     }
@@ -345,7 +345,7 @@ public class DeclarationParser {
         if (typeParams == null) {
           emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
         }
-        return parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE));
+        return parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE), false);
       }
     }
 
@@ -396,10 +396,17 @@ public class DeclarationParser {
   }
 
   private static PsiBuilder.Marker parseMethodFromLeftParenth(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                              final boolean anno) {
+                                                              final boolean anno, final boolean constructor) {
     parseParameterList(builder);
 
-    eatBrackets(builder);
+    if (constructor && builder.getTokenType() == JavaTokenType.LBRACKET) {
+      final PsiBuilder.Marker marker = builder.mark();
+      eatBrackets(builder, false);
+      marker.error(JavaErrorMessages.message("expected.semicolon"));
+    }
+    else {
+      eatBrackets(builder, true);
+    }
 
     if (areTypeAnnotationsSupported(builder)) {
       final PsiBuilder.Marker receiver = builder.mark();
@@ -551,7 +558,7 @@ public class DeclarationParser {
     }
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
-      eatBrackets(builder);
+      eatBrackets(builder, true);
       done(param, JavaElementType.PARAMETER);
       return param;
     }
@@ -586,7 +593,7 @@ public class DeclarationParser {
     while (true) {
       shouldRollback = true;
 
-      if (!eatBrackets(builder)) {
+      if (!eatBrackets(builder, true)) {
         unclosed = true;
       }
 
@@ -648,10 +655,10 @@ public class DeclarationParser {
     return declaration;
   }
 
-  private static boolean eatBrackets(final PsiBuilder builder) {
+  private static boolean eatBrackets(final PsiBuilder builder, final boolean withError) {
     while (expect(builder, JavaTokenType.LBRACKET)) {
       if (!expect(builder, JavaTokenType.RBRACKET)) {
-        error(builder, JavaErrorMessages.message("expected.rbracket"));
+        if (withError) error(builder, JavaErrorMessages.message("expected.rbracket"));
         return false;
       }
     }
@@ -810,7 +817,9 @@ public class DeclarationParser {
         break;
       }
       else if (expect(builder, JavaTokenType.COMMA)) {
-        parseAnnotationValue(builder);
+        if (builder.getTokenType() != JavaTokenType.RBRACE) {
+          parseAnnotationValue(builder);
+        }
       }
       else {
         error(builder, JavaErrorMessages.message("expected.rbrace"));

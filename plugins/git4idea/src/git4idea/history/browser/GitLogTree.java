@@ -114,7 +114,7 @@ public class GitLogTree implements GitTreeViewI {
     myMainSplitter.setDividerWidth(3);
     myFiltersSplitter.setDividerWidth(3);
 
-    myInitWaiters = new LinkedList<Runnable>();
+    myInitWaiters = new ArrayList<Runnable>();
     myCommitsList = new JBList();
     myController.init();
   }
@@ -1547,7 +1547,7 @@ public class GitLogTree implements GitTreeViewI {
           if (wasEmpty) {
             myFiltering.addFilter(myFilter);
           } else {
-            final List<StructureNode> toRemove = new LinkedList<StructureNode>();
+            final List<StructureNode> toRemove = new ArrayList<StructureNode>();
             for (StructureNode child : getChildren()) {
               final VirtualFile file = child.getFile();
               if (! myFilter.containsFile(file)) {
@@ -1657,7 +1657,7 @@ public class GitLogTree implements GitTreeViewI {
         myText = text;
         myType = type;
         myIcon = icon;
-        myChildren = myAllowsChildren ? new LinkedList<Child>() : Collections.<Child>emptyList();
+        myChildren = myAllowsChildren ? new ArrayList<Child>() : Collections.<Child>emptyList();
         myDescriptor = new PresentableNodeDescriptor(myProject, myParent == null ? null : myParent.getDescriptor()) {
           @Override
           public PresentableNodeDescriptor getChildToHighlightAt(int index) {

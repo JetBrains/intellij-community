@@ -51,10 +51,10 @@ public class CherryPicker {
     myListsCache = listsCache;
     myAccess = access;
 
-    myExceptions = new LinkedList<VcsException>();
-    myWarnings = new LinkedList<VcsException>();
+    myExceptions = new ArrayList<VcsException>();
+    myWarnings = new ArrayList<VcsException>();
 
-    myDirtyFiles = new LinkedList<FilePath>();
+    myDirtyFiles = new ArrayList<FilePath>();
     myMessagesInOrder = new ArrayList<String>(hashes.size());
     myFilesToMove = new HashMap<String, Collection<FilePath>>();
   }

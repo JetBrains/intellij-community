@@ -31,7 +31,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -39,7 +38,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +58,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -88,6 +85,12 @@ public class VariableInplaceRenamer {
   private ArrayList<RangeHighlighter> myHighlighters;
   private final Editor myEditor;
   private final Project myProject;
+
+  public void setAdvertisementText(String advertisementText) {
+    myAdvertisementText = advertisementText;
+  }
+
+  private String myAdvertisementText;
 
   private static final Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
@@ -178,7 +181,8 @@ public class VariableInplaceRenamer {
     for (PsiReference ref : refs) {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
     }
-    
+    addAdditionalVariables(builder);
+
     final PsiElement scope1 = scope;
     final int renameOffset = myElementToRename.getTextOffset();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -258,6 +262,9 @@ public class VariableInplaceRenamer {
 
     myEditor.putUserData(INPLACE_RENAMER, this);
     return true;
+  }
+
+  protected void addAdditionalVariables(TemplateBuilderImpl builder) {
   }
 
   protected void addReferenceAtCaret(Collection<PsiReference> refs) {
@@ -458,6 +465,11 @@ public class VariableInplaceRenamer {
 
     public Result calculateResult(ExpressionContext context) {
       return new TextResult(myName);
+    }
+
+    @Override
+    public String getAdvertisingText() {
+      return myAdvertisementText;
     }
   }
 }

@@ -30,7 +30,7 @@ public class GitLogHelper {
   @NotNull
   public Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, int maxCnt, List<String> branches) throws VcsException {
-    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
+    final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
     if (beforePoint != null) {
       filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
     }

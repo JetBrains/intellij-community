@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -32,8 +33,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
@@ -61,16 +64,34 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         return cache.getAllClassNames();
       }
     });
-    ProgressManager.checkCanceled();
-    Arrays.sort(names, new Comparator<String>() {
+
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+
+    List<String> sorted = new ArrayList<String>(names.length);
+    for (int i = 0; i < names.length; i++) {
+      String name = names[i];
+      if (parameters.nameMatches(name)) {
+        sorted.add(name);
+      }
+      if (indicator != null && i % 512 == 0) {
+        indicator.checkCanceled();
+      }
+    }
+
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+
+    Collections.sort(sorted, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareToIgnoreCase(o2);
       }
     });
 
-    for (final String name : names) {
-      if (!parameters.nameMatches(name)) continue;
-
+    for (final String name : sorted) {
       ProgressManager.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
         public PsiClass[] compute() {

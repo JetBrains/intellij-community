@@ -24,8 +24,10 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,6 +43,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -143,6 +146,32 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       LOG.error("end=" + start + "; end=" + file);
     }
 
+    Editor editor = PsiUtilBase.findEditor(file);
+    
+    // There is a possible case that cursor is located at the end of the line that contains only white spaces. For example:
+    //     public void foo() {
+    //         <caret>
+    //     }
+    // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
+    // So, we check if it should be preserved and restore it after formatting if necessary
+    boolean fixCaretPosition = false;
+    if (editor != null) {
+      int caretOffset = editor.getCaretModel().getOffset();
+      Document document = editor.getDocument();
+      CharSequence text = document.getCharsSequence();
+      int caretLine = document.getLineNumber(Math.max(Math.min(caretOffset, document.getTextLength() - 1), 0));
+      int lineStartOffset = document.getLineStartOffset(caretLine);
+      fixCaretPosition = true;
+      for (int i = caretOffset; i>= lineStartOffset; i--) {
+        char c = text.charAt(i);
+        if (c != ' ' && c != '\t' && c != '\n') {
+          fixCaretPosition = false;
+          break;
+        }
+      }
+    }
+    
+
     boolean formatFromStart = startOffset == 0;
     boolean formatToEnd = endOffset == file.getTextLength();
 
@@ -159,6 +188,38 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       postProcessText(file, new TextRange(formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
                                           formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
     }
+
+    if (!fixCaretPosition) {
+      return;
+    }
+    CaretModel caretModel = editor.getCaretModel();
+    String indent = getLineIndent(file, caretModel.getOffset());
+    if (indent == null) {
+      return;
+    }
+    int tabSize = getSettings().getTabSize(file.getFileType());
+    int indentColumn = indentInVisualColumns(indent, tabSize);
+    VisualPosition position = caretModel.getVisualPosition();
+    if (indentColumn != position.column) {
+      caretModel.moveToVisualPosition(new VisualPosition(position.line, indentColumn));
+    }
+  }
+  
+  private static int indentInVisualColumns(String indent, int tabSize) {
+    if (tabSize <= 1) {
+      return indent.length();
+    }
+    int result = 0;
+    for (int i = 0; i < indent.length(); i++) {
+      char c = indent.charAt(i);
+      if (c == '\t') {
+        result += tabSize - result % tabSize;
+      }
+      else {
+        result++;
+      }
+    }
+    return result;
   }
 
   private PsiElement reformatRangeImpl(final PsiElement element,

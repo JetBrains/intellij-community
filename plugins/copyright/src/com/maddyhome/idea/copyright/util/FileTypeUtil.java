@@ -162,7 +162,6 @@ public class FileTypeUtil
             {
                 line = StringUtil.trimStart(StringUtil.trimStart(line.trim(), pre.toString()), open);
                 line = StringUtil.trimEnd(line, close);
-                if (line.isEmpty()) continue;
                 preview.append(leader).append(pre);
                 int len = 0;
                 if (pre.length() > 0 && line.length() > 0)

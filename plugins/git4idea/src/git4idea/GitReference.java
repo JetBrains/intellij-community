@@ -37,7 +37,7 @@ public abstract class GitReference implements Comparable<GitReference> {
    * @param name the used name
    */
   public GitReference(@NotNull String name) {
-    myName = name;
+    myName = new String(name);
   }
 
   /**

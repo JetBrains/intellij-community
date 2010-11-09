@@ -496,19 +496,29 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateEditorComponent(final boolean forced) {
+    activateEditorComponent(forced, false);
+  }
+  private void activateEditorComponent(final boolean forced, boolean now) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
         activateEditorComponentImpl(getSplittersFromFocus(), commandList, forced);
         execute(commandList);
       }
-    });
+    };
+
+    if (now) {
+      runnable.run();
+    } else {
+      getFocusManager().doWhenFocusSettlesDown(runnable);
+
+    }
   }
 
   private EditorsSplitters getSplittersFromFocus() {
@@ -2035,10 +2045,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
       final String activeId = getActiveToolWindowId();
       if (myEditorComponentActive || activeId == null || getToolWindow(activeId) == null) {
-        activateEditorComponent(forced);
+        activateEditorComponent(forced, true);
       }
       else {
-        activateToolWindow(activeId, forced, false);
+        activateToolWindow(activeId, forced, true);
       }
     }
     return new ActionCallback.Done();

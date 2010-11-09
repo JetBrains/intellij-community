@@ -346,7 +346,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     }
 
     @Override
-    public void fix() {
+    public void fix(JComponent contextComponent) {
     }
 
     @Override

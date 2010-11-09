@@ -23,6 +23,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public interface PopupComponent {
 
@@ -144,6 +146,14 @@ public interface PopupComponent {
 
     public void hide(boolean dispose) {
       myPopup.hide();
+
+      Window wnd = getWindow();
+      if (wnd instanceof JWindow) {
+        JRootPane rootPane = ((JWindow)wnd).getRootPane();
+        if (rootPane != null) {
+          ReflectionUtil.resetField(rootPane, "clientProperties");
+        }
+      }
     }
 
     public void show() {

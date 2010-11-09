@@ -29,5 +29,10 @@ public abstract class Expression {
 
   @Nullable
   public abstract LookupElement[] calculateLookupItems(ExpressionContext context);
+
+  @Nullable
+  public String getAdvertisingText() {
+    return null;
+  }
 }
 

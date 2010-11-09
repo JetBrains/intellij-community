@@ -44,7 +44,7 @@ public class TreeSkeletonImpl implements TreeSkeleton {
     assert (size2Power < 16) && (wireEventsIdxSize2Power < 16) && (size2Power > 1) && (wireEventsIdxSize2Power > 1);
 
     myList = new BigArray<Commit>(size2Power);
-    myWireEvents = new LinkedList<WireEvent>(); // todo can use another structure, a list of arrays?
+    myWireEvents = new ArrayList<WireEvent>(); // todo can use another structure, a list of arrays?
     myWiresIndex = new WiresIndex(wireEventsIdxSize2Power);
     myAsCommitList = new ReadonlyList<Commit>() {
       @Override

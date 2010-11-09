@@ -76,7 +76,7 @@ public class GitTag extends GitReference {
       if (line.length() == 0) {
         continue;
       }
-      tags.add(line);
+      tags.add(new String(line));
     }
   }
 

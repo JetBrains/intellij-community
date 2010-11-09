@@ -89,6 +89,8 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }
   public void testUnclosed4() { doParserTest("{ void f(int a,, }", false, false); }
   public void testUnclosed5() { doParserTest("{ void f(int a,); }", false, false); }
+  public void testConstructorBrackets() { doParserTest("{ A() [] { } }", false, false); }
+
   public void testGenericMethod() { doParserTest("{ public static <E> test();\n" +
                                                  " <E> void test1();\n" +
                                                  " <E1 extends Integer, E2 extends Runnable> String test2(); }", false, false); }

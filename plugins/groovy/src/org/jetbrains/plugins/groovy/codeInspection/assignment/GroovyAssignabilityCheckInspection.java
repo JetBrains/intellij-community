@@ -268,7 +268,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,
                                                   PsiMethod method, PsiType[] argumentTypes) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
-      if (elementToHighlight == null) {
+      if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) {
         elementToHighlight = place;
       }
 

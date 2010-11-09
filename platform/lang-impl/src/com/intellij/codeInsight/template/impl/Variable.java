@@ -27,12 +27,14 @@ public class Variable implements Cloneable {
 
   private String myDefaultValueString;
   private Expression myDefaultValueExpression;
+  private boolean mySkipOnStart;
 
-  public Variable(String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt) {
+  public Variable(String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;
     myExpression = expression;
     myDefaultValueExpression = defaultValueExpression;
     myAlwaysStopAt = alwaysStopAt;
+    mySkipOnStart = skipOnStart;
   }
 
   public Variable(String name, String expression, String defaultValueString, boolean alwaysStopAt) {
@@ -40,6 +42,7 @@ public class Variable implements Cloneable {
     myExpressionString = expression;
     myDefaultValueString = defaultValueString;
     myAlwaysStopAt = alwaysStopAt;
+    mySkipOnStart = false;
   }
 
   public String getExpressionString() {
@@ -103,6 +106,7 @@ public class Variable implements Cloneable {
     final Variable variable = (Variable) o;
 
     if (myAlwaysStopAt != variable.myAlwaysStopAt) return false;
+    if (mySkipOnStart != variable.mySkipOnStart) return false;
     if (myDefaultValueString != null ? !myDefaultValueString.equals(variable.myDefaultValueString) : variable.myDefaultValueString != null) return false;
     if (myExpressionString != null ? !myExpressionString.equals(variable.myExpressionString) : variable.myExpressionString != null) return false;
     if (myName != null ? !myName.equals(variable.myName) : variable.myName != null) return false;
@@ -114,8 +118,13 @@ public class Variable implements Cloneable {
     int result;
     result = (myName != null ? myName.hashCode() : 0);
     result = 29 * result + (myAlwaysStopAt ? 1 : 0);
+    result = 29 * result + (mySkipOnStart ? 1 : 0);
     result = 29 * result + (myExpressionString != null ? myExpressionString.hashCode() : 0);
     result = 29 * result + (myDefaultValueString != null ? myDefaultValueString.hashCode() : 0);
     return result;
+  }
+
+  public boolean skipOnStart() {
+    return mySkipOnStart;
   }
 }

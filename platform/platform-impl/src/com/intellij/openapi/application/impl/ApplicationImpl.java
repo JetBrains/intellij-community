@@ -104,6 +104,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myDoNotSave = false;
   private volatile boolean myDisposeInProgress = false;
 
+  private int myRestartCode = 0;
+  private volatile int myExitCode = 0;
+
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
     System.getProperty("dump.threads.on.long.write.action.waiting"), 0);
@@ -225,6 +228,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           });
         }
       });
+    }
+
+    final String s = System.getProperty("jb.restart.code");
+    if (s != null) {
+      try {
+        myRestartCode = Integer.parseInt(s);
+      } catch (NumberFormatException ignore) {
+      }
     }
   }
 
@@ -678,7 +689,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         if (!canExit()) return;
 
-        if (disposeSelf()) System.exit(0);
+        if (disposeSelf()) System.exit(myExitCode);
       }
     };
     
@@ -1146,7 +1157,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isRestartCapable() {
-    return SystemInfo.isWindows || SystemInfo.isMacOSSnowLeopard;
+    return SystemInfo.isWindows || SystemInfo.isMacOSSnowLeopard || myRestartCode > 0;
   }
 
   public void restart() {
@@ -1156,8 +1167,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     else if (SystemInfo.isMacOSSnowLeopard) {
       MacRestarter.restart();
     }
+    else if (myRestartCode > 0) {
+      myExitCode = myRestartCode;
+      exit(true);
+    }
     else {
-      exit();
+      exit(true);
     }
   }
 

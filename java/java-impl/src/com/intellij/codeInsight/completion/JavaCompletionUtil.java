@@ -922,6 +922,14 @@ public class JavaCompletionUtil {
       // Invoke parameters popup
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
+
+    if (tailType == TailType.SEMICOLON) {
+      PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+      if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(file.findElementAt(context.getTailOffset() - 1))) {
+        return;
+      }
+    }
+
     if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
       tailType.processTail(editor, context.getTailOffset());
     }

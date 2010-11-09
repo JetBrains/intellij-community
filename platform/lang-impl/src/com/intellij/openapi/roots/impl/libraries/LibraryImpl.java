@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -204,14 +205,18 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return clone;
   }
 
-  public boolean allPathsValid(OrderRootType type) {
+  public List<String> getInvalidRootUrls(OrderRootType type) {
     final List<VirtualFilePointer> pointers = myRoots.get(type).getList();
+    List<String> invalidPaths = null;
     for (VirtualFilePointer pointer : pointers) {
       if (!pointer.isValid()) {
-        return false;
+        if (invalidPaths == null) {
+          invalidPaths = new SmartList<String>();
+        }
+        invalidPaths.add(pointer.getUrl());
       }
     }
-    return true;
+    return invalidPaths != null ? invalidPaths : Collections.<String>emptyList();
   }
 
   @Override

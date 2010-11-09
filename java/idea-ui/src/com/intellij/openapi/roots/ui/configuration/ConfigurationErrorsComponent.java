@@ -31,6 +31,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,9 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private static final Icon FIX = IconLoader.findIcon("/actions/quickfixBulb.png");
   private static final Icon IGNORE = IconLoader.findIcon("/toolbar/unknown.png");
   private static final Icon NAVIGATE = IconLoader.findIcon("/general/autoscrollToSource.png");
+
+  @NonNls private static final String FIX_ACTION_NAME = "FIX";
+  @NonNls private static final String NAVIGATE_ACTION_NAME = "NAVIGATE";
 
   private ConfigurationErrorsListModel myConfigurationErrorsListModel;
   private ErrorView myCurrentView;
@@ -212,10 +216,13 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
             final Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(renderer, point.x, point.y);
             if (deepestComponentAt instanceof ToolbarAlikeButton) {
               final String name = ((ToolbarAlikeButton)deepestComponentAt).getButtonName();
-              if ("FIX".equals(name)) {
-                onClickFix(error);
-                error.fix();
-              } else {
+              if (FIX_ACTION_NAME.equals(name)) {
+                onClickFix(error, (JComponent)deepestComponentAt);
+              }
+              else if (NAVIGATE_ACTION_NAME.equals(name)) {
+                error.navigate();
+              }
+              else {
                 onClickIgnore(error);
               }
             }
@@ -232,8 +239,8 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       }
     }
 
-    private void onClickFix(@NotNull final ConfigurationError error) {
-      error.fix();
+    private void onClickFix(@NotNull final ConfigurationError error, JComponent component) {
+      error.fix(component);
     }
 
     @Override
@@ -386,11 +393,11 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       myFixGroup.setOpaque(false);
       myFixGroup.setLayout(new BoxLayout(myFixGroup, BoxLayout.Y_AXIS));
 
-      myFixGroup.add(new ToolbarAlikeButton(FIX, "FIX") {});
+      myFixGroup.add(new ToolbarAlikeButton(FIX, FIX_ACTION_NAME) {});
       myFixGroup.add(Box.createHorizontalStrut(3));
       buttons.add(myFixGroup);
 
-      buttons.add(new ToolbarAlikeButton(NAVIGATE, "NAVIGATE") {});
+      buttons.add(new ToolbarAlikeButton(NAVIGATE, NAVIGATE_ACTION_NAME) {});
       buttons.add(Box.createHorizontalStrut(3));
 
       buttons.add(new ToolbarAlikeButton(IGNORE, "IGNORE") {});
@@ -572,7 +579,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
           public void onClick() {
             final Object o = myModel.getElementAt(0);
             if (o instanceof ConfigurationError) {
-              ((ConfigurationError)o).fix();
+              ((ConfigurationError)o).fix(this);
               updateView();
               final Container ancestor = SwingUtilities.getAncestorOfClass(ConfigurationErrorsComponent.class, this);
               if (ancestor != null && ancestor instanceof JComponent) {

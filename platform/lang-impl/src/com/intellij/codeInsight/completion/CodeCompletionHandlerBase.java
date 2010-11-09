@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -424,6 +425,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final int offset2,
                                     final CompletionProgressIndicator indicator,
                                     final LookupElement[] items) {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CodeCompletionHandlerBase.completionFinished");
+      System.out.println("items " + Arrays.asList(items));
+    }
+
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
       handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator);
@@ -436,11 +442,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
         indicator.fillInCommonPrefix(false);
       }
-    } else if (decision instanceof AutoCompletionDecision.InsertItem) {
+    }
+    else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish(true);
       indicator.rememberDocumentState();
-      indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
+      indicator.getOffsetMap()
+        .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion

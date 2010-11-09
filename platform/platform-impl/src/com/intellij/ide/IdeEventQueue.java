@@ -39,6 +39,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -569,6 +571,26 @@ public class IdeEventQueue extends EventQueue {
 
         if (!mouseEventsAhead) {
           Window showingWindow = mgr.getActiveWindow();
+          if (showingWindow == null) {
+            Method getNativeFocusOwner = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "getNativeFocusOwner");
+            if (getNativeFocusOwner != null) {
+              getNativeFocusOwner.setAccessible(true);
+              try {
+                Object owner = getNativeFocusOwner.invoke(mgr);
+                if (owner instanceof Component) {
+                  Component nativeFocusOwner = (Component)owner;
+                  if (nativeFocusOwner instanceof Window) {
+                    showingWindow = (Window)nativeFocusOwner;
+                  } else {
+                    showingWindow = SwingUtilities.getWindowAncestor(nativeFocusOwner);
+                  }
+                }
+              }
+              catch (Exception e1) {
+                LOG.debug(e1);
+              }
+            }
+          }
           if (showingWindow != null) {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
             Runnable requestDefaultFocus = new Runnable() {

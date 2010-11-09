@@ -187,6 +187,26 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       return methodResolver.getCandidates();
     }
 
+    // Search in ClosureMissingMethodContributor
+    if (!isQualified() && getParent() instanceof GrMethodCall) {
+      boolean resolve = false;
+      for (PsiElement e = this.getParent(); !resolve && e != null; e = e.getParent()) {
+        if (e instanceof GrClosableBlock) {
+          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, (GrClosableBlock)e);
+          for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
+            if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, state)) {
+              resolve = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!allVariants && methodResolver.hasApplicableCandidates()) {
+        return methodResolver.getCandidates();
+      }
+    }
+
     //search for fields inside its class
     if (!allVariants) {
       for (GroovyResolveResult candidate : propertyCandidates) {
@@ -194,25 +214,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (element instanceof GrField) {
           final PsiClass containingClass = ((PsiField)element).getContainingClass();
           if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return propertyCandidates;
-        }
-      }
-
-      // Search in ClosureMissingMethodContributor
-      if (!isQualified() && getParent() instanceof GrMethodCall) {
-        boolean resolve = false;
-        for (PsiElement e = this.getParent(); !resolve && e != null; e = e.getParent()) {
-          if (e instanceof GrClosableBlock) {
-            for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
-              if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, ResolveState.initial())) {
-                resolve = true;
-                break;
-              }
-            }
-          }
-        }
-
-        if (methodResolver.hasApplicableCandidates()) {
-          return methodResolver.getCandidates();
         }
       }
     }
@@ -577,7 +578,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       String name = refExpr.getReferenceName();
       if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      Kind kind = refExpr.getKind();
       if (incompleteCode) {
         ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(refExpr, name);
         refExpr.resolveImpl(processor);
@@ -585,7 +585,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (propertyCandidates.length > 0) return propertyCandidates;
       }
 
-      switch (kind) {
+      switch (refExpr.getKind()) {
         case METHOD_OR_PROPERTY:
           return refExpr.resolveMethodOrProperty();
         case TYPE_OR_PROPERTY:

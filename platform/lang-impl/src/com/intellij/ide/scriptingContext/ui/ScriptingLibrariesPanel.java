@@ -32,7 +32,7 @@ import java.awt.event.ActionListener;
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingLibrariesPanel {
+public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
   private JPanel myTopPanel;
   private JButton myAddLibraryButton;
   private JButton myRemoveLibraryButton;

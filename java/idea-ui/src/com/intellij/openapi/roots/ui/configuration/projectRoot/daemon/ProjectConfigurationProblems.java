@@ -67,7 +67,7 @@ public class ProjectConfigurationProblems {
       final List<ProjectStructureProblemDescription> descriptions = problemsHolder.getProblemDescriptions();
       if (descriptions != null) {
         for (ProjectStructureProblemDescription description : descriptions) {
-          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(description);
+          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(myContext, description);
           myErrors.put(element, error);
           ConfigurationErrors.Bus.addError(error, myContext.getProject());
         }
@@ -79,20 +79,6 @@ public class ProjectConfigurationProblems {
     if (errors == null) return;
     for (ConfigurationError error : errors) {
       ConfigurationErrors.Bus.removeError(error, myContext.getProject());
-    }
-  }
-
-  private static class ProjectConfigurationProblem extends ConfigurationError {
-    public ProjectConfigurationProblem(ProjectStructureProblemDescription description) {
-      super(description.getMessage(), description.getMessage());
-    }
-
-    @Override
-    public void navigate() {
-    }
-
-    @Override
-    public void fix() {
     }
   }
 }

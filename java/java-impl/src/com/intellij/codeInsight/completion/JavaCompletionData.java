@@ -37,6 +37,7 @@ import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -594,6 +595,22 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       for (String primitiveType : PRIMITIVE_TYPES) {
         if (!PsiKeyword.VOID.equals(primitiveType)) {
           result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
+        }
+      }
+    }
+
+    final ProcessingContext context = new ProcessingContext();
+    if (psiElement().afterLeaf(
+      psiElement().withText(">").withParent(
+        psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList"))).accepts(position, context)) {
+      final PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
+      PsiElement current = list.getParent().getParent();
+      if (current instanceof PsiField) {
+        current = current.getParent();
+      }
+      if (current instanceof PsiClass) {
+        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
+          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
         }
       }
     }
