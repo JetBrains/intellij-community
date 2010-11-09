@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,25 +35,32 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
   }
 
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final boolean enabled = isEnabled(dataContext);
+    final Navigatable target = getTarget(dataContext);
+    boolean enabled = target != null;
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       event.getPresentation().setVisible(enabled);
     }
     else {
       event.getPresentation().setEnabled(enabled);
     }
+    if (target != null && target instanceof NavigatableWithText) {
+      event.getPresentation().setText(((NavigatableWithText)target).getNavigateActionText(myFocusEditor));
+    }
+    else {
+      event.getPresentation().setText(getTemplatePresentation().getText());
+    }
   }
 
-  private boolean isEnabled(final DataContext dataContext) {
+  private Navigatable getTarget(final DataContext dataContext) {
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
-        if (navigatable.canNavigate()) return true;
+        if (navigatable.canNavigate()) return navigatable;
       }
     }
-    return false;    
+    return null;
   }
 
   @Nullable
