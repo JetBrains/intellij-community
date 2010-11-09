@@ -46,19 +46,18 @@ public class MavenModificationTracker implements ModificationTracker, MavenProje
   }
 
   @Override
-  public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
+  public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     inc();
   }
 
   @Override
-  public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+  public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     inc();
   }
 
   @Override
   public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                              @Nullable NativeMavenProjectHolder nativeMavenProject,
-                              Object message) {
+                              @Nullable NativeMavenProjectHolder nativeMavenProject) {
     inc();
   }
 
@@ -68,7 +67,7 @@ public class MavenModificationTracker implements ModificationTracker, MavenProje
   }
 
   @Override
-  public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
+  public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     inc();
   }
 

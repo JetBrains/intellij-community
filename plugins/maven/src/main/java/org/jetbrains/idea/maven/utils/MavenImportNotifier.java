@@ -50,11 +50,16 @@ public class MavenImportNotifier extends SimpleProjectComponent {
     myMavenProjectsManager.addManagerListener(new MavenProjectsManager.Listener() {
       public void activated() {
         init();
-        scheduleUpdate();
+        scheduleUpdate(false);
       }
 
-      public void scheduledImportsChanged() {
-        scheduleUpdate();
+      public void projectsScheduled() {
+        scheduleUpdate(false);
+      }
+
+      @Override
+      public void importAndResolveScheduled() {
+        scheduleUpdate(true);
       }
     });
   }
@@ -64,32 +69,31 @@ public class MavenImportNotifier extends SimpleProjectComponent {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
         for (FileEditor each : source.getEditors(file)) {
-          updateNotification(file, each);
+          updateNotification(file, each, false);
         }
       }
     }, myProject);
     myUpdatesQueue.activate();
   }
 
-  private void scheduleUpdate() {
+  private void scheduleUpdate(final boolean close) {
     myUpdatesQueue.queue(new Update(myUpdatesQueue) {
       public void run() {
-        updateNotifications();
+        doUpdateNotifications(close);
       }
     });
   }
 
-  private void updateNotifications() {
+  private void doUpdateNotifications(boolean close) {
     for (VirtualFile f : myFileEditorManager.getOpenFiles()) {
       for (FileEditor e : myFileEditorManager.getEditors(f)) {
-        updateNotification(f, e);
+        updateNotification(f, e, close);
       }
     }
   }
 
-  private void updateNotification(VirtualFile file, FileEditor editor) {
-    if (myMavenProjectsManager.getImportingSettings().isImportAutomatically()
-        || !myMavenProjectsManager.hasScheduledImports()) {
+  private void updateNotification(VirtualFile file, FileEditor editor, boolean close) {
+    if (close || myMavenProjectsManager.getImportingSettings().isImportAutomatically() || !myMavenProjectsManager.hasScheduledProjects()) {
       JComponent panel = editor.getUserData(PANEL_KEY);
       if (panel == null) return;
 
@@ -113,14 +117,12 @@ public class MavenImportNotifier extends SimpleProjectComponent {
   }
 
   private class NotifierPanel extends EditorNotificationPanel {
-
     private NotifierPanel() {
-
       myLabel.setIcon(MavenIcons.MAVEN_ICON);
 
       createActionLabel(ProjectBundle.message("maven.project.import.changed"), new Runnable() {
         public void run() {
-          myMavenProjectsManager.performScheduledImport();
+          myMavenProjectsManager.scheduleImportAndResolve();
         }
       });
       createActionLabel(ProjectBundle.message("maven.project.import.enable.auto"), new Runnable() {
@@ -131,14 +133,7 @@ public class MavenImportNotifier extends SimpleProjectComponent {
     }
 
     public void update() {
-      int projectsCount = myMavenProjectsManager.getScheduledProjectsCount();
-      String s;
-      if (projectsCount == 0) {
-        s = ProjectBundle.message("maven.project.something.changed");
-      }
-      else {
-        s = ProjectBundle.message("maven.project.changed", projectsCount, projectsCount == 1 ? " is" : "s are");
-      }
+      String s = ProjectBundle.message("maven.project.changed");
       myLabel.setText(s);
       myLabel.setToolTipText(s);
     }

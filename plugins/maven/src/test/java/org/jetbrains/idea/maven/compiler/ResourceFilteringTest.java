@@ -16,7 +16,8 @@
 package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,6 +30,16 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  @Override
+  protected boolean runInWriteAction() {
+    return false;
+  }
+
   public void testBasic() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}");
 
@@ -44,6 +55,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
+
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=1");
@@ -230,8 +242,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "  </resources>" +
                   "</build>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
         MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                                   getModule("project"),
                                                                   new MavenDefaultModifiableModelsProvider(myProject));
@@ -239,8 +251,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
         adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
         adapter.getRootModel().commit();
       }
-    });
-
+    }.execute();
 
     assertSources("project", "src/main/resources", "src/main/ideaRes");
 
@@ -848,7 +859,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   public void testDoNotFilterButCopyBigFiles() throws Exception {
     assertFalse(CompilerConfiguration.getInstance(myProject).isResourceFile("file.xyz"));
     assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), StdFileTypes.UNKNOWN);
-    
+
     createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);
 
     importProject("<groupId>test</groupId>" +

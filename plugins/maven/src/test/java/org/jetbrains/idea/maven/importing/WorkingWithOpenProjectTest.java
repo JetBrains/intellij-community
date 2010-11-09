@@ -76,7 +76,6 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
       }
     });
 
-
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");

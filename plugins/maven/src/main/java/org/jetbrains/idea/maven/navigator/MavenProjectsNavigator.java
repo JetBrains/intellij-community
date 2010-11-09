@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunManagerListener;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -323,11 +322,15 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       scheduleStructureUpdate();
     }
 
-    public void scheduledImportsChanged() {
+    public void projectsScheduled() {
     }
 
     @Override
-    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, Object message) {
+    public void importAndResolveScheduled() {
+    }
+
+    @Override
+    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, boolean fromImport) {
       scheduleStructureRequest(new Runnable() {
         public void run() {
           myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored));
@@ -345,13 +348,12 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
     }
 
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject,
-                                Object message) {
+                                NativeMavenProjectHolder nativeMavenProject) {
       scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.<MavenProject>emptyList());
     }
 
