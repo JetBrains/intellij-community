@@ -179,7 +179,7 @@ public class FSRecords implements Forceable {
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = new Storage(attributesFile.getCanonicalPath());
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath());
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, new PagedFileStorage.StorageLock(false));
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, new PagedFileStorage.PageCache());
 
         if (myRecords.length() == 0) {
           cleanRecord(0); // Clean header

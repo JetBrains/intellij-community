@@ -416,6 +416,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+    return contentsToByteArray(file, true);
+  }
+
+  @NotNull
+  public byte[] contentsToByteArray(final VirtualFile file, boolean cacheContent) throws IOException {
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     synchronized (INPUT_LOCK) {
@@ -426,7 +431,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final byte[] content = delegate.contentsToByteArray(file);
 
-      if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD && !noCaching) {
+      if (cacheContent && !delegate.isReadOnly() && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD && !noCaching) {
         synchronized (INPUT_LOCK) {
           writeContent(file, content, delegate.isReadOnly());
 
