@@ -619,6 +619,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     setActiveConfiguration(tempConfiguration);
   }
 
+  public static boolean isEditBeforeRun(@NotNull final RunnerAndConfigurationSettings configuration) {
+    return configuration.isEditBeforeRun();
+  }
+
+  public void setEditBeforeRun(@NotNull final RunConfiguration configuration, final boolean edit) {
+    final RunnerAndConfigurationSettings settings = getSettings(configuration);
+    if (settings != null) settings.setEditBeforeRun(edit);
+  }
+
   public void setActiveConfiguration(final RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }

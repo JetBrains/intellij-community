@@ -76,7 +76,7 @@ public class IndexingStamp {
         myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
-              DataInputOutputUtil.writeINT(stream, (int)id.getUniqueId());
+              DataInputOutputUtil.writeINT(stream, id.getUniqueId());
               DataInputOutputUtil.writeTIME(stream, timestamp);
               count[0]++;
               return true;

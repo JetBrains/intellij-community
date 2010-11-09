@@ -16,20 +16,20 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -49,7 +49,9 @@ public class ExecutionPointHighlighter {
   public void show(final @NotNull XSourcePosition position, final boolean useSelection) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
-        doShow(position, useSelection);
+        if (!myProject.isDisposed()) {
+          doShow(position, useSelection);
+        }
       }
     });
   }

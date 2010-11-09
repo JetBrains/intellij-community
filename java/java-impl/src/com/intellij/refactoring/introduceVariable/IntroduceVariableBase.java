@@ -462,8 +462,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
+        typeSelectorManager.setAllOccurences(choice != OccurrencesChooser.ReplaceChoice.NO);
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
-        final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
+        final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -501,6 +502,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           editor.getCaretModel().moveToOffset(startOffset);
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
+                        typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         exprMarker.dispose();
                       }
                     });
@@ -816,7 +818,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
       @Override
       public PsiType getSelectedType() {
-        return typeSelectorManager.getDefaultType();
+        final PsiType selectedType = typeSelectorManager.getTypeSelector().getSelectedType();
+        return selectedType != null ? selectedType : typeSelectorManager.getDefaultType();
       }
 
       @Override

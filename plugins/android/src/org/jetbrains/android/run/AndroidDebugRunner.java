@@ -35,10 +35,8 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
-import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.dom.manifest.Instrumentation;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
@@ -81,24 +79,6 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
         process.detachProcess();
       }
     }
-  }
-
-  @Override
-  public void execute(@NotNull Executor executor,
-                      @NotNull ExecutionEnvironment env,
-                      @Nullable Callback callback) throws ExecutionException {
-    if (!AndroidEnableDdmsAction.isDdmsEnabled()) {
-      Project project = env.getProject();
-      int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
-                                       AndroidBundle.message("android.ddms.disabled.dialog.title"),
-                                       Messages.getQuestionIcon());
-      if (result != 0) {
-        return;
-      }
-      AndroidEnableDdmsAction.setDdmsEnabled(project, true);
-    }
-
-    super.execute(executor, env, callback);
   }
 
   @Override
