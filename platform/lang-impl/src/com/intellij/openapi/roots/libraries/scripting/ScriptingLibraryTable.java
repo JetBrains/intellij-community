@@ -156,5 +156,13 @@ public class ScriptingLibraryTable {
     public String getName() {
       return myName;
     }
+
+    public boolean containsFile(VirtualFile file) {
+      return mySourceFiles.contains(file) || myCompactFiles.contains(file);
+    }
+
+    public boolean isEmpty() {
+      return mySourceFiles.isEmpty() && myCompactFiles.isEmpty();
+    }
   }
 }

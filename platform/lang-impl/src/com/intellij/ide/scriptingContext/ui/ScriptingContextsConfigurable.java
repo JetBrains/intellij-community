@@ -44,7 +44,7 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   @Nls
   @Override
   public String getDisplayName() {
-    return "Usage Context";
+    return "Usage";
   }
 
   @Override
