@@ -359,7 +359,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
-      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
+      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module).putPath(ModuleEditor.MODULE_TAB, tab);
     }
     return navigateTo(place, requestFocus);
   }

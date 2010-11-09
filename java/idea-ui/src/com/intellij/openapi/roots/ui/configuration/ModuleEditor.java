@@ -60,6 +60,7 @@ import java.util.List;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
+  public static final String MODULE_TAB = "moduleTab";
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
@@ -246,12 +247,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    myTabbedPane.setSelectedTitle((String)place.getPath("moduleTab"));
+    myTabbedPane.setSelectedTitle((String)place.getPath(MODULE_TAB));
     return new ActionCallback.Done();
   }
 
   public void queryPlace(@NotNull final Place place) {
-    place.putPath("moduleTab", ourSelectedTabName);
+    place.putPath(MODULE_TAB, ourSelectedTabName);
   }
 
   public static String getSelectedTab(){
