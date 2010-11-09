@@ -84,7 +84,7 @@ fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
-JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
+JVM_ARGS=`eval echo $JVM_ARGS $REQUIRED_JVM_ARGS`
 
 CLASSPATH=../lib/bootstrap.jar
 CLASSPATH=$CLASSPATH:../lib/util.jar
