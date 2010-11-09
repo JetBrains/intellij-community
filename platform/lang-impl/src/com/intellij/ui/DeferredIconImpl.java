@@ -47,7 +47,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private boolean myNeedReadAction;
   private boolean myDone;
 
-  private Disposer<T> myDisposer;
+  private IconDisposer<T> myDisposer;
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
@@ -276,12 +276,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
 
-  public DeferredIconImpl setDisposer(Disposer<T> disposer) {
+  public DeferredIconImpl setDisposer(IconDisposer<T> disposer) {
     myDisposer = disposer;
     return this;
   }
 
-  public interface Disposer<T> {
+  public interface IconDisposer<T> {
 
     void dispose(T key);
 
