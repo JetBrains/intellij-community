@@ -60,6 +60,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting("hl.xml");
   }
 
+  public void testCheckLayoutAttrs() throws Throwable {
+    doTestHighlighting("layoutAttrs.xml");
+  }
+
   public void testUnknownAttribute() throws Throwable {
     doTestHighlighting("hl1.xml");
   }
