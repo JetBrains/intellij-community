@@ -14,6 +14,7 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
@@ -167,7 +168,7 @@ public class ReassignVariableUtil {
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         LookupElement[] result = new LookupElement[types.length];
         for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-          result[i] = LookupElementBuilder.create(types[i], types[i].getPresentableText());
+          result[i] = PsiTypeLookupItem.createLookupItem(types[i], null);
         }
         return result;
       }
