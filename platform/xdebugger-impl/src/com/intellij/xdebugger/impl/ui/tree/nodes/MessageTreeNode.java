@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -106,7 +105,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     final List<String> lines = StringUtil.split(errorMessage, "\n");
     for (int i = 0; i < lines.size(); i++) {
       messages.add(new MessageTreeNode(tree, parent, lines.get(i), XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES,
-                                       XDebuggerUIConstants.ERROR_MESSAGE_ICON, i == 0 ? link : null));
+                                       XDebuggerUIConstants.ERROR_MESSAGE_ICON, i == lines.size() - 1 ? link : null));
     }
     return messages;
   }
