@@ -15,17 +15,15 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import com.intellij.util.ui.UIUtil;
 
 public class ColorPanel extends JPanel {
   public static final Color[] fixedColors;
@@ -35,7 +33,7 @@ public class ColorPanel extends JPanel {
   public static final Color BLUE_GREEN = new Color(0, 128, 128);
   public static final Color DARK_YELLOW = new Color(128, 128, 0);
   public static final Color DARK_RED = new Color(128, 0, 0);
-  public static final Color DISABLED_COLOR = UIUtil.getPanelBackgound();
+  public static final Color DISABLED_COLOR = UIUtil.getPanelBackground();
   private static Color[] myCustomColors;
   @NonNls private String myActionCommand = "colorPanelChanged";
   private boolean isFiringEvent = false;

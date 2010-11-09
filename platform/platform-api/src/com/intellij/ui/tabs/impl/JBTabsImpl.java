@@ -1502,8 +1502,8 @@ public class JBTabsImpl extends JComponent
       if (isPaintFocus()) {
         if (bgColor == null) {
           alpha = 150;
-          shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
-          shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+          shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
+          shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
         }
         else {
           alpha = 255;

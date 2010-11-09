@@ -59,7 +59,7 @@ public class DiffStatusBar extends JPanel {
   private void addComponent(final LegendTypeDescriptor diffType) {
     JComponent component = new JPanel() {
       public void paint(Graphics g) {
-        setBackground(UIUtil.getPanelBackgound());
+        setBackground(UIUtil.getPanelBackground());
         super.paint(g);
         FontMetrics metrics = getFontMetrics(getFont());
 

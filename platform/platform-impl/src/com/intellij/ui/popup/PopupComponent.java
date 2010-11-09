@@ -23,8 +23,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public interface PopupComponent {
 
@@ -140,7 +138,7 @@ public interface PopupComponent {
 
       if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
         final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
-        c.setBackground(UIUtil.getPanelBackgound());
+        c.setBackground(UIUtil.getPanelBackground());
       }
     }
 

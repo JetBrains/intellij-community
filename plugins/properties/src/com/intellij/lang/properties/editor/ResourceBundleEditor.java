@@ -159,7 +159,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void updateUI() {
         super.updateUI();
-        getViewport().setBackground(UIManager.getColor("Panel.background"));
+        getViewport().setBackground(UIUtil.getPanelBackground());
       }
     }, VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class DescriptionLabel extends JLabel {
   @Override
   public void updateUI() {
     super.updateUI();
-    setForeground(UIManager.getColor("Panel.background").darker());
+    setForeground(UIUtil.getPanelBackground().darker());
     int size = getFont().getSize();
     if (size >= 12) {
       size -= 2;

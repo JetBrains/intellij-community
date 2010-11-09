@@ -379,7 +379,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         }
       });
 
-      setBackground(UIUtil.getPanelBackgound());
+      setBackground(UIUtil.getPanelBackground());
 
       addMouseMotionListener(new MouseMotionListener() {
         public void mouseMoved(MouseEvent e) {
@@ -657,7 +657,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       scrollPane.setBorder(null);
-      scrollPane.getViewport().setBackground(UIUtil.getPanelBackgound());
+      scrollPane.getViewport().setBackground(UIUtil.getPanelBackground());
 
       final JComponent buttonBar = buildFilterBar(list, project);
       model.addListDataListener(new ListDataListener() {

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -139,7 +140,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                   final TreeUI ui = ((JTree)actualTarget).getUI();
                   if (ui instanceof BasicTreeUI) {
                     // this call is "fake" and only need to reset tree layout cache
-                    ((BasicTreeUI)ui).setLeftChildIndent(((Integer)UIManager.get("Tree.leftChildIndent")).intValue());
+                    ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
                   }
                 }
               }
