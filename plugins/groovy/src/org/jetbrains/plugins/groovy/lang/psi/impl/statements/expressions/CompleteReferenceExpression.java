@@ -290,7 +290,7 @@ public class CompleteReferenceExpression {
     return result.toArray(new LookupElement[result.size()]);
   }
 
-  private static LookupElementBuilder createPropertyLookupElement(String propName, PsiType propType, PsiSubstitutor substitutor) {
+  public static LookupElementBuilder createPropertyLookupElement(String propName, PsiType propType, PsiSubstitutor substitutor) {
     if (!PsiUtil.isValidReferenceName(propName)) {
       propName = "'" + propName + "'";
     }

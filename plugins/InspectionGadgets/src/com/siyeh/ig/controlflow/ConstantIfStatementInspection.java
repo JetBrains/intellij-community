@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,33 +26,36 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class ConstantIfStatementInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "constant.if.statement.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "constant.if.statement.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantIfStatementVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         //if (PsiUtil.isInJspFile(location)) {
         //    return null;
@@ -103,7 +106,8 @@ public class ConstantIfStatementInspection extends BaseInspection {
                 final PsiCodeBlock block =
                         ((PsiBlockStatement)branch).getCodeBlock();
                 final boolean hasConflicts =
-                        containsConflictingDeclarations(block, parentBlock);
+                        VariableSearchUtils.containsConflictingDeclarations(
+                                block, parentBlock);
                 if (hasConflicts) {
                     final String elseText = branch.getText();
                     replaceStatement(statement, elseText);
@@ -112,9 +116,12 @@ public class ConstantIfStatementInspection extends BaseInspection {
                     final PsiStatement[] statements = block.getStatements();
                     if (statements.length > 0) {
                         assert containingElement != null;
-                        final PsiElement added = containingElement.addRangeBefore(statements[0], statements[statements.length - 1], statement);
+                        final PsiElement added =
+                                containingElement.addRangeBefore(statements[0],
+                                        statements[statements.length - 1], statement);
                         final Project project = statement.getProject();
-                        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+                        final CodeStyleManager codeStyleManager =
+                                CodeStyleManager.getInstance(project);
                         codeStyleManager.reformat(added);
                     }
                     statement.delete();
@@ -123,43 +130,6 @@ public class ConstantIfStatementInspection extends BaseInspection {
                 final String elseText = branch.getText();
                 replaceStatement(statement, elseText);
             }
-        }
-
-        private static boolean containsConflictingDeclarations(
-                PsiCodeBlock block, PsiCodeBlock parentBlock) {
-            final PsiStatement[] statements = block.getStatements();
-            final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
-            for (final PsiStatement statement : statements) {
-                if (statement instanceof PsiDeclarationStatement) {
-                    final PsiDeclarationStatement declaration =
-                            (PsiDeclarationStatement)statement;
-                    final PsiElement[] vars = declaration.getDeclaredElements();
-                    for (PsiElement var : vars) {
-                        if (var instanceof PsiLocalVariable) {
-                            declaredVars.add(var);
-                        }
-                    }
-                }
-            }
-            for (Object declaredVar : declaredVars) {
-                final PsiLocalVariable variable =
-                        (PsiLocalVariable)declaredVar;
-                final String variableName = variable.getName();
-                if (conflictingDeclarationExists(variableName, parentBlock,
-                        block)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private static boolean conflictingDeclarationExists(
-                String name, PsiCodeBlock parentBlock,
-                PsiCodeBlock exceptBlock) {
-            final ConflictingDeclarationVisitor visitor =
-                    new ConflictingDeclarationVisitor(name, exceptBlock);
-            parentBlock.accept(visitor);
-            return visitor.hasConflictingDeclaration();
         }
     }
 
@@ -179,52 +149,6 @@ public class ConstantIfStatementInspection extends BaseInspection {
             if (BoolUtils.isTrue(condition) || BoolUtils.isFalse(condition)) {
                 registerStatementError(statement);
             }
-        }
-    }
-
-    private static class ConflictingDeclarationVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private final String variableName;
-        private final PsiCodeBlock exceptBlock;
-        private boolean hasConflictingDeclaration = false;
-
-        ConflictingDeclarationVisitor(String variableName,
-                                      PsiCodeBlock exceptBlock) {
-            super();
-            this.variableName = variableName;
-            this.exceptBlock = exceptBlock;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element) {
-            if (!hasConflictingDeclaration) {
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitCodeBlock(PsiCodeBlock block) {
-            if (hasConflictingDeclaration) {
-                return;
-            }
-            if (block.equals(exceptBlock)) {
-                return;
-            }
-            super.visitCodeBlock(block);
-        }
-
-        @Override public void visitVariable(PsiVariable variable) {
-            if (hasConflictingDeclaration) {
-                return;
-            }
-            super.visitVariable(variable);
-            final String name = variable.getName();
-            if (name != null && name.equals(variableName)) {
-                hasConflictingDeclaration = true;
-            }
-        }
-
-        public boolean hasConflictingDeclaration() {
-            return hasConflictingDeclaration;
         }
     }
 }

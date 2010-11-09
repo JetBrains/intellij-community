@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -110,20 +111,29 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   public void setErrorMessage(final @NotNull String errorMessage) {
+    setErrorMessage(errorMessage, null);
+  }
+
+  @Override
+  public void setErrorMessage(@NotNull final String errorMessage, @Nullable final XDebuggerTreeNodeHyperlink link) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        setMessageNode(MessageTreeNode.createErrorMessage(myTree, XValueContainerNode.this, errorMessage));
+        setMessageNodes(MessageTreeNode.createErrorMessages(myTree, XValueContainerNode.this, errorMessage, link));
       }
     });
   }
 
   protected void setMessageNode(final MessageTreeNode messageNode) {
+    setMessageNodes(Collections.singletonList(messageNode));
+  }
+
+  private void setMessageNodes(final List<MessageTreeNode> messages) {
     myCachedAllChildren = null;
     final int[] indices = getNodesIndices(myMessageChildren);
     final TreeNode[] nodes = getChildNodes(indices);
     myMessageChildren = Collections.emptyList();
     fireNodesRemoved(indices, nodes);
-    myMessageChildren = Collections.singletonList(messageNode);
+    myMessageChildren = messages;
     myCachedAllChildren = null;
     fireNodesInserted(myMessageChildren);
   }

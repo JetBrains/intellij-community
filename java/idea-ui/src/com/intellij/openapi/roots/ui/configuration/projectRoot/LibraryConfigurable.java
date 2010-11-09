@@ -171,4 +171,10 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   public String getHelpTopic() {
     return "preferences.jdkGlobalLibs";  //todo
   }
+
+  public void updateComponent() {
+    if (myLibraryEditorComponent != null) {
+      myLibraryEditorComponent.updateRootsTree();
+    }
+  }
 }

@@ -17,6 +17,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * User: spLeaner
  */
@@ -65,7 +67,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
   /**
    * Called when user invokes "Fix" action
    */
-  public void fix() {
+  public void fix(JComponent contextComponent) {
   }
 
   public boolean canBeFixed() {

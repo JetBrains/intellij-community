@@ -5173,6 +5173,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
+  public static boolean isChangeFontSize(MouseWheelEvent e) {
+    return SystemInfo.isMac
+           ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
+           : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
+  }
+
   private class MyScrollPane extends JBScrollPane {
 
 
@@ -5182,10 +5188,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
-        boolean changeFontSize = SystemInfo.isMac
-                                 ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
-                                 : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
-        if (changeFontSize) {
+        if (isChangeFontSize(e)) {
           setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
           return;
         }

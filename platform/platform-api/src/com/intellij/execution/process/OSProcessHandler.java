@@ -246,6 +246,9 @@ public class OSProcessHandler extends ProcessHandler {
       }
       catch (InterruptedException ignore) {
       }
+      catch (IOException e) {
+        LOG.info(e);
+      }
       catch (Exception e) {
         LOG.error(e);
       }

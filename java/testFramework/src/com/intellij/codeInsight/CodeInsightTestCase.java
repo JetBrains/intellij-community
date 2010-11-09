@@ -623,14 +623,28 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void type(char c) {
+    type(c, getEditor());
+  }
+
+  protected static void type(char c, Editor editor) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
+    DataContext dataContext = DataManager.getInstance().getDataContext();
+    if (c == '\n') {
+      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+      return;
+    }
     TypedAction action = actionManager.getTypedAction();
-    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+    action.actionPerformed(editor, c, dataContext);
   }
 
   protected void caretRight() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+  protected void deleteLine() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
     action.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
 
@@ -647,15 +661,18 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void backspace() {
+    backspace(getEditor());
+  }
+  protected void backspace(final Editor editor) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
 
-        actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
       }
-    }, "backspace", getEditor().getDocument());
+    }, "backspace", editor.getDocument());
   }
 
   protected void ctrlShiftF7() {

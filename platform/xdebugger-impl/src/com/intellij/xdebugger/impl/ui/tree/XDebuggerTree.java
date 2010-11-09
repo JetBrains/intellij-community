@@ -28,6 +28,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,8 +79,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
       protected void handleTagClick(Object tag, MouseEvent event) {
-        if (tag instanceof XDebuggerNodeLink) {
-          ((XDebuggerNodeLink)tag).onClick(event);
+        if (tag instanceof XDebuggerTreeNodeHyperlink) {
+          ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
         }
       }
     }.install(this);

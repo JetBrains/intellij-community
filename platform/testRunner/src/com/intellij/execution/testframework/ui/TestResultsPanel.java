@@ -42,10 +42,11 @@ import java.beans.PropertyChangeListener;
 public abstract class TestResultsPanel extends JPanel implements Disposable {
   private JScrollPane myLeftPane;
   private JComponent myStatisticsComponent;
-  private Splitter mySplitter;
+  private Splitter myStatisticsSplitter;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
   private final String mySplitterProportionProperty;
+  private final String myStatisticsSplitterProportionProperty;
   private final float mySplitterDefaultProportion;
   protected final RunnerSettings myRunnerSettings;
   protected final ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -62,6 +63,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     myProperties = properties;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
+    myStatisticsSplitterProportionProperty = mySplitterProportionProperty + "_Statistics";
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
   }
@@ -89,7 +91,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    mySplitter = new Splitter();
+    myStatisticsSplitter = createSplitter(myStatisticsSplitterProportionProperty, 0.5f);
     new AwtVisitor(myConsole) {
       public boolean visit(Component component) {
         if (component instanceof JScrollPane) {
@@ -99,23 +101,27 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
         return false;
       }
     };
-    mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
+    myStatisticsSplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
     if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      mySplitter.setSecondComponent(myStatisticsComponent);
+      showStatistics();
     }
     myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
       public void onChanged(Boolean value) {
         if (value.booleanValue()) {
-          mySplitter.setSecondComponent(myStatisticsComponent);
+          showStatistics();
         }
         else {
-          mySplitter.setSecondComponent(null);
+          myStatisticsSplitter.setSecondComponent(null);
         }
       }
     });
-    rightPanel.add(mySplitter, BorderLayout.CENTER);
+    rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     setLeftComponent(testTreeView);
+  }
+
+  private void showStatistics() {
+    myStatisticsSplitter.setSecondComponent(myStatisticsComponent);
   }
 
   protected abstract JComponent createStatisticsPanel();

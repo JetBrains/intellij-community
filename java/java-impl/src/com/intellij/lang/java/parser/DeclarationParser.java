@@ -817,7 +817,9 @@ public class DeclarationParser {
         break;
       }
       else if (expect(builder, JavaTokenType.COMMA)) {
-        parseAnnotationValue(builder);
+        if (builder.getTokenType() != JavaTokenType.RBRACE) {
+          parseAnnotationValue(builder);
+        }
       }
       else {
         error(builder, JavaErrorMessages.message("expected.rbrace"));

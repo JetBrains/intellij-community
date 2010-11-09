@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -98,6 +99,7 @@ public class TraverseUIStarter implements ApplicationStarter {
         processCodeStyleConfigurable((CodeStyleSchemesConfigurable)configurable, configurableElement);
       }
       root.addContent(configurableElement);
+      configurable.disposeUIResources();
     }
     JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
 
