@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -35,7 +34,6 @@ import java.util.List;
  * @author nik
  */
 public class MessageTreeNode extends XDebuggerTreeNode {
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(XDebuggerUIConstants.ERROR_MESSAGE_ICON);
   private boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
@@ -106,8 +104,8 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     List<MessageTreeNode> messages = new ArrayList<MessageTreeNode>(1);
     final List<String> lines = StringUtil.split(errorMessage, "\n");
     for (int i = 0; i < lines.size(); i++) {
-      final Icon icon = i == 0 ? XDebuggerUIConstants.ERROR_MESSAGE_ICON : EMPTY_ICON;
-      messages.add(new MessageTreeNode(tree, parent, lines.get(i), XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES, icon, i == 0 ? link : null));
+      messages.add(new MessageTreeNode(tree, parent, lines.get(i), XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES,
+                                       XDebuggerUIConstants.ERROR_MESSAGE_ICON, i == lines.size() - 1 ? link : null));
     }
     return messages;
   }

@@ -156,10 +156,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     // So, we check if it should be preserved and restore it after formatting if necessary
     boolean fixCaretPosition = false;
     if (editor != null) {
-      int caretOffset = editor.getCaretModel().getOffset();
       Document document = editor.getDocument();
+      int caretOffset = editor.getCaretModel().getOffset();
+      caretOffset = Math.max(Math.min(caretOffset, document.getTextLength() - 1), 0);
       CharSequence text = document.getCharsSequence();
-      int caretLine = document.getLineNumber(Math.max(Math.min(caretOffset, document.getTextLength() - 1), 0));
+      int caretLine = document.getLineNumber(caretOffset);
       int lineStartOffset = document.getLineStartOffset(caretLine);
       fixCaretPosition = true;
       for (int i = caretOffset; i>= lineStartOffset; i--) {
