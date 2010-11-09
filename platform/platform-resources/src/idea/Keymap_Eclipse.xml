@@ -59,7 +59,7 @@
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" />
       <keyboard-shortcut first-keystroke="shift control P" />
     </action>
-    <action id="EditorCutLineEnd">
+    <action id="EditorDeleteToLineEnd">
       <keyboard-shortcut first-keystroke="shift control DELETE" />
     </action>
     <action id="EditorDeleteLine">
