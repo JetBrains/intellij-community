@@ -344,16 +344,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public boolean shouldScrollHistoryToEnd() {
-    final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
-    final int lineNum = (visibleArea.y + visibleArea.height + myHistoryViewer.getLineHeight()) / myHistoryViewer.getLineHeight();
-    final int lineCount = myHistoryViewer.getDocument().getLineCount();
-    return lineNum == lineCount;
+    return myHistoryViewer.getCaretModel().getOffset() == myHistoryViewer.getDocument().getTextLength();
   }
 
   private void scrollHistoryToEnd() {
     final int lineCount = myHistoryViewer.getDocument().getLineCount();
     if (lineCount == 0) return;
-    myHistoryViewer.getCaretModel().moveToOffset(myHistoryViewer.getDocument().getLineStartOffset(lineCount - 1));
+    myHistoryViewer.getCaretModel().moveToOffset(myHistoryViewer.getDocument().getLineStartOffset(lineCount - 1), false);
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
