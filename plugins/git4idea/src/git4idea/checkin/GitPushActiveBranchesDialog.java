@@ -15,19 +15,25 @@
  */
 package git4idea.checkin;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
@@ -42,6 +48,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -56,71 +63,41 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The dialog that allows pushing active branches.
  */
 public class GitPushActiveBranchesDialog extends DialogWrapper {
-  /**
-   * Amount of digits to show in commit prefix
-   */
-  private final static int HASH_PREFIX_SIZE = 8;
-  /**
-   * The view commit button
-   */
-  private JButton myViewButton;
-  /**
-   * The root panel
-   */
-  private JPanel myPanel;
-  /**
-   * Fetch changes from remote repository
-   */
-  private JButton myFetchButton;
-  /**
-   * Rebase commits to new roots
-   */
-  private JButton myRebaseButton;
-  /**
-   * The commit tree (sorted by vcs roots)
-   */
-  private CheckboxTree myCommitTree;
-  /**
-   * Save files policy option
-   */
-  private JRadioButton myStashRadioButton;
-  /**
-   * Save files policy option
-   */
-  private JRadioButton myShelveRadioButton;
-  /**
-   * The root node
-   */
-  private CheckedTreeNode myTreeRoot;
-  /**
-   * The context project
-   */
+  private static final int HASH_PREFIX_SIZE = 8; // Amount of digits to show in commit prefix
+
   private final Project myProject;
-  /**
-   * The vcs roots for the project
-   */
   private final List<VirtualFile> myVcsRoots;
 
+  private JPanel myRootPanel;
+  private JButton myViewButton; // view commits
+  private JButton myFetchButton;
+  private JButton myRebaseButton;
+  private JButton myPushButton;
+
+  private CheckboxTree myCommitTree; // The commit tree (sorted by vcs roots)
+  private CheckedTreeNode myTreeRoot;
+
+  private JRadioButton myStashRadioButton; // Save files policy option
+  private JRadioButton myShelveRadioButton;
+
+  private BackgroundTaskQueue myTaskQueue;
+
   /**
-   * A modification of Runnable with the roots-parameter. 
+   * A modification of Runnable with the roots-parameter.
    * Also for user code simplification myInvokeInAwt variable stores the need of calling run in AWT thread.
    */
   private static abstract class PushActiveBranchRunnable {
-    private final boolean myInvokeInAwt;
-    PushActiveBranchRunnable(boolean invokeInAwt) {
-      myInvokeInAwt = invokeInAwt;
-    }
     abstract void run(List<Root> roots);
   }
 
   /**
-   * The constructor
-   *
+   * Constructs new dialog. Loads settings, registers listeners.
    * @param project  the project
    * @param vcsRoots the vcs roots
    * @param roots    the loaded information about roots
@@ -129,8 +106,11 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myVcsRoots = vcsRoots;
+    myTaskQueue = new BackgroundTaskQueue(myProject, "Update and Push operations...");
+
     updateTree(roots, null);
-    TreeUtil.expandAll(myCommitTree);
+    updateUI();
+
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings != null) {
       UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton, null);
@@ -171,23 +151,184 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     });
     myFetchButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        doFetch();
+        fetch();
       }
     });
     myRebaseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        doRebase();
+        rebase();
       }
     });
+
+    myPushButton.addActionListener(new ActionListener() {
+      @Override public void actionPerformed(ActionEvent e) {
+        push();
+      }
+    });
+
     setTitle(GitBundle.getString("push.active.title"));
-    setOKButtonText(GitBundle.getString("push.active.button"));
+    setOKButtonText(GitBundle.getString("push.active.rebase.and.push"));
     init();
   }
 
   /**
-   * Perform fetch operation
+   * Show dialog for the project
    */
-  private void doFetch() {
+  public static void showDialogForProject(final Project project) {
+    GitVcs vcs = GitVcs.getInstance(project);
+    List<VirtualFile> roots = GitRepositoryAction.getGitRoots(project, vcs);
+    if (roots == null) {
+      return;
+    }
+    List<VcsException> pushExceptions = new ArrayList<VcsException>();
+    showDialog(project, roots, pushExceptions);
+    vcs.showErrors(pushExceptions, GitBundle.getString("push.active.action.name"));
+  }
+
+  /**
+   * Show the dialog
+   * @param project    the context project
+   * @param vcsRoots   the vcs roots in the project
+   * @param exceptions the collected exceptions
+   */
+  public static void showDialog(final Project project, final List<VirtualFile> vcsRoots, final Collection<VcsException> exceptions) {
+    final List<Root> emptyRoots = loadRoots(project, vcsRoots, exceptions, false); // collect roots without fetching - just to show dialog
+    if (!exceptions.isEmpty()) {
+      exceptions.addAll(exceptions);
+      return;
+    }
+    final GitPushActiveBranchesDialog d = new GitPushActiveBranchesDialog(project, vcsRoots, emptyRoots);
+    d.refreshTree(true, null); // start initial fetch
+    d.show();
+    if (d.isOK()) {
+      d.rebaseAndPush();
+    }
+  }
+
+  /**
+   * This is called when "Rebase and Push" button (default button) is pressed.
+   * 1. Closes the dialog.
+   * 2. Fetches project and rebases.
+   * 3. Repeats step 2 if needed - while current repository is behind the parent one.
+   * 4. Then pushes.
+   * It may fail on one of these steps (especially on rebasing with conflict) - then a notification error will be shown and the process
+   * will be interrupted.
+   */
+  private void rebaseAndPush() {
+    final Task.Backgroundable rebaseAndPushTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        List<VcsException> exceptions = new ArrayList<VcsException>(1);
+        do {
+          final RebaseInfo rebaseInfo = collectRebaseInfo();
+
+          final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, true); // fetch
+          if (!exceptions.isEmpty()) {
+            notifyExceptionWhenClosed("Failed to fetch.", exceptions);
+            return;
+          }
+          updateTree(roots, rebaseInfo.uncheckedCommits);
+
+          executeRebase(exceptions, rebaseInfo);
+          if (!exceptions.isEmpty()) {
+            notifyExceptionWhenClosed("Failed to rebase.", exceptions);
+            return;
+          }
+          GitUtil.refreshFiles(myProject, rebaseInfo.roots);
+        } while (isRebaseNeeded());
+
+        final Collection<Root> rootsToPush = getRootsToPush(); // collect roots from the dialog
+        exceptions = executePushCommand(rootsToPush);
+        if (!exceptions.isEmpty()) {
+          notifyExceptionWhenClosed("Failed to push", exceptions);
+          return;
+        }
+      }
+    };
+    myTaskQueue.run(rebaseAndPushTask);
+  }
+
+  /**
+   * Notifies about error, when 'rebase and push' task is executed, i.e. when the dialog is closed.
+   */
+  private void notifyExceptionWhenClosed(String title, Collection<VcsException> exceptions) {
+    final String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
+      @Override public String fun(VcsException e) {
+        return e.getLocalizedMessage();
+      }
+    }, "<br/>");
+    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, content, NotificationType.ERROR), myProject);
+  }
+
+  /**
+   * Pushes selected commits synchronously in foreground.
+   */
+  private void push() {
+    final Collection<Root> rootsToPush = getRootsToPush();
+    final AtomicReference<Collection<VcsException>> errors = new AtomicReference<Collection<VcsException>>();
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        errors.set(executePushCommand(rootsToPush));
+      }
+    }, GitBundle.getString("push.active.pushing"), true, myProject);
+    if (errors.get() != null && !errors.get().isEmpty()) {
+      GitUIUtil.showOperationErrors(myProject, errors.get(), GitBundle.getString("push.active.pushing"));
+    }
+    refreshTree(false, null);
+  }
+
+  /**
+   * Executes 'git push' for the given roots to push.
+   * Returns the list of errors if there were any.
+   */
+  private List<VcsException> executePushCommand(final Collection<Root> rootsToPush) {
+    final ArrayList<VcsException> errors = new ArrayList<VcsException>();
+    for (Root r : rootsToPush) {
+      GitLineHandler h = new GitLineHandler(myProject, r.root, GitCommand.PUSH);
+      String src = r.commitToPush != null ? r.commitToPush : r.branch;
+      h.addParameters("-v", r.remote, src + ":" + r.remoteBranch);
+      GitPushUtils.trackPushRejectedAsError(h, "Rejected push (" + r.root.getPresentableUrl() + "): ");
+      errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(h));
+    }
+    return errors;
+  }
+
+  /**
+   * From the dialog collects roots and commits to be pushed.
+   * @return roots to be pushed.
+   */
+  private Collection<Root> getRootsToPush() {
+    final ArrayList<Root> rootsToPush = new ArrayList<Root>();
+    for (int i = 0; i < myTreeRoot.getChildCount(); i++) {
+      CheckedTreeNode node = (CheckedTreeNode) myTreeRoot.getChildAt(i);
+      Root r = (Root)node.getUserObject();
+      if (r.remote == null || r.commits.size() == 0) {
+        continue;
+      }
+      boolean topCommit = true;
+      for (int j = 0; j < node.getChildCount(); j++) {
+        if (node.getChildAt(j) instanceof CheckedTreeNode) {
+          CheckedTreeNode commitNode = (CheckedTreeNode)node.getChildAt(j);
+          if (commitNode.isChecked()) {
+            Commit commit = (Commit)commitNode.getUserObject();
+            if (!topCommit) {
+              r.commitToPush = commit.revision.asString();
+            }
+            rootsToPush.add(r);
+            break;
+          }
+          topCommit = false;
+        }
+      }
+    }
+    return rootsToPush;
+  }
+
+  /**
+   * Executes when FETCH button is pressed.
+   * Fetches repository in background. Then updates the commit tree.
+   */
+  private void fetch() {
     Map<VirtualFile, Set<String>> unchecked = new HashMap<VirtualFile, Set<String>>();
     for (int i = 0; i < myTreeRoot.getChildCount(); i++) {
       Set<String> uncheckedCommits = new HashSet<String>();
@@ -210,7 +351,6 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
   /**
    * The rebase operation is needed if the current branch is behind remote branch or if some commit is not selected.
-   *
    * @return true if rebase is needed for at least one vcs root
    */
   private boolean isRebaseNeeded() {
@@ -242,9 +382,50 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   }
 
   /**
-   * Preform rebase operation
+   * This is called when rebase is pressed: executes rebase in background.
    */
-  private void doRebase() {
+  private void rebase() {
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final RebaseInfo rebaseInfo = collectRebaseInfo();
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        executeRebase(exceptions, rebaseInfo);
+      }
+    }, GitBundle.getString("push.active.rebasing"), true, myProject);
+    if (!exceptions.isEmpty()) {
+      GitUIUtil.showOperationErrors(myProject, exceptions, "git rebase");
+    }
+    refreshTree(false, rebaseInfo.uncheckedCommits);
+    GitUtil.refreshFiles(myProject, rebaseInfo.roots);
+  }
+
+  private void executeRebase(final List<VcsException> exceptions, final RebaseInfo rebaseInfo) {
+    GitPushRebaseProcess process = new GitPushRebaseProcess(GitVcs.getInstance(myProject), myProject, exceptions, rebaseInfo.policy, rebaseInfo.reorderedCommits, rebaseInfo.rootsWithMerges);
+    process.doUpdate(ProgressManager.getInstance().getProgressIndicator(), rebaseInfo.roots);
+  }
+
+  private static class RebaseInfo {
+    final Set<VirtualFile> rootsWithMerges;
+    private final Map<VirtualFile, Set<String>> uncheckedCommits;
+    private final Set<VirtualFile> roots;
+    private final GitVcsSettings.UpdateChangesPolicy policy;
+    final Map<VirtualFile,List<String>> reorderedCommits;
+
+    public RebaseInfo(Map<VirtualFile, List<String>> reorderedCommits,
+                      Set<VirtualFile> rootsWithMerges,
+                      Map<VirtualFile, Set<String>> uncheckedCommits, Set<VirtualFile> roots,
+                      GitVcsSettings.UpdateChangesPolicy policy) {
+
+      this.reorderedCommits = reorderedCommits;
+      this.rootsWithMerges = rootsWithMerges;
+      this.uncheckedCommits = uncheckedCommits;
+      this.roots = roots;
+      this.policy = policy;
+    }
+  }
+
+  private RebaseInfo collectRebaseInfo() {
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final Set<VirtualFile> rootsWithMerges = new HashSet<VirtualFile>();
     final Map<VirtualFile, List<String>> reorderedCommits = new HashMap<VirtualFile, List<String>>();
@@ -309,22 +490,10 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         reorderedCommits.put(r.root, reordered);
       }
     }
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
     final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
     assert p == GitVcsSettings.UpdateChangesPolicy.STASH || p == GitVcsSettings.UpdateChangesPolicy.SHELVE;
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    final GitVcs vcs = GitVcs.getInstance(myProject);
-    progressManager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        GitPushRebaseProcess process = new GitPushRebaseProcess(vcs, myProject, exceptions, p, reorderedCommits, rootsWithMerges);
-        process.doUpdate(progressManager.getProgressIndicator(), roots);
-      }
-    }, GitBundle.getString("push.active.rebasing"), false, myProject);
-    refreshTree(false, uncheckedCommits);
-    if (!exceptions.isEmpty()) {
-      GitUIUtil.showOperationErrors(myProject, exceptions, "git rebase");
-    }
-    GitUtil.refreshFiles(myProject, roots);
+
+    return new RebaseInfo(reorderedCommits, rootsWithMerges, uncheckedCommits, roots, p);
   }
 
   /**
@@ -334,16 +503,13 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * @param unchecked the map from vcs root to commit identifiers that should be unchecked
    */
   private void refreshTree(final boolean fetchData, final Map<VirtualFile, Set<String>> unchecked) {
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-    loadRoots(myProject, myVcsRoots, exceptions, fetchData, new PushActiveBranchRunnable(true) {
+    myCommitTree.setPaintBusy(true);
+    loadRootsInBackground(fetchData, new PushActiveBranchRunnable(){
       @Override
-      public void run(final List<Root> roots) {
-        if (!exceptions.isEmpty()) {
-          //noinspection ThrowableResultOfMethodCallIgnored
-          GitUIUtil.showOperationErrors(myProject, exceptions, "Refreshing root information");
-          return;
-        }
+      void run(List<Root> roots) {
         updateTree(roots, unchecked);
+        updateUI();
+        myCommitTree.setPaintBusy(false);
       }
     });
   }
@@ -351,11 +517,15 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   /**
    * Update the tree according to the list of loaded roots
    *
+   *
    * @param roots            the list of roots to add to the tree
    * @param uncheckedCommits the map from vcs root to commit identifiers that should be uncheckedCommits
    */
   private void updateTree(List<Root> roots, Map<VirtualFile, Set<String>> uncheckedCommits) {
     myTreeRoot.removeAllChildren();
+    if (roots == null) {
+      roots = Collections.emptyList();
+    }
     for (Root r : roots) {
       CheckedTreeNode rootNode = new CheckedTreeNode(r);
       Status status = new Status();
@@ -370,6 +540,10 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
       myTreeRoot.add(rootNode);
     }
+  }
+
+  // Execute from AWT thread.
+  private void updateUI() {
     ((DefaultTreeModel)myCommitTree.getModel()).reload(myTreeRoot);
     TreeUtil.expandAll(myCommitTree);
     updateButtons();
@@ -435,7 +609,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
     }
     boolean rebaseNeeded = isRebaseNeeded();
-    setOKActionEnabled(wasCheckedNode && error == null && !rebaseNeeded);
+    myPushButton.setEnabled(wasCheckedNode && error == null && !rebaseNeeded);
     setErrorText(error);
     myRebaseButton.setEnabled(rebaseNeeded && !reorderMerges);
   }
@@ -445,7 +619,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    */
   @Override
   protected JComponent createCenterPanel() {
-    return myPanel;
+    return myRootPanel;
   }
 
   /**
@@ -473,164 +647,95 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * @param fetchData  if true, the data for remote is fetched.
    * @return the loaded information about vcs roots
    */
-  private static void loadRoots(final Project project,
+  private static List<Root> loadRoots(final Project project,
                               final List<VirtualFile> roots,
                               final Collection<VcsException> exceptions,
-                              final boolean fetchData, final PushActiveBranchRunnable postActivity) {
-    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("push.active.fetching")) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        final ArrayList<Root> rc = new ArrayList<Root>();
-        for (VirtualFile root : roots) {
-          try {
-            Root r = new Root();
-            rc.add(r);
-            r.root = root;
-            GitBranch b = GitBranch.current(project, root);
-            if (b != null) {
-              r.branch = b.getFullName();
-              r.remote = b.getTrackedRemoteName(project, root);
-              r.remoteBranch = b.getTrackedBranchName(project, root);
-              if (r.remote != null) {
-                if (fetchData && !r.remote.equals(".")) {
-                  GitLineHandler fetch = new GitLineHandler(project, root, GitCommand.FETCH);
-                  fetch.addParameters(r.remote, "-v");
-                  Collection<VcsException> exs = GitHandlerUtil.doSynchronouslyWithExceptions(fetch);
-                  exceptions.addAll(exs);
-                }
-                GitBranch tracked = b.tracked(project, root);
-                assert tracked != null : "Tracked branch cannot be null here";
-                GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitCommand.LOG);
-                unmerged.addParameters("--pretty=format:%H", r.branch + ".." + tracked.getFullName());
-                unmerged.setNoSSH(true);
-                unmerged.setStdoutSuppressed(true);
-                StringScanner su = new StringScanner(unmerged.run());
-                while (su.hasMoreData()) {
-                  if (su.line().trim().length() != 0) {
-                    r.remoteCommits++;
-                  }
-                }
-                GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitCommand.LOG);
-                toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.branch);
-                toPush.setNoSSH(true);
-                toPush.setStdoutSuppressed(true);
-                StringScanner sp = new StringScanner(toPush.run());
-                while (sp.hasMoreData()) {
-                  if (sp.isEol()) {
-                    sp.line();
-                    continue;
-                  }
-                  Commit c = new Commit();
-                  c.root = r;
-                  String hash = sp.spaceToken();
-                  String time = sp.spaceToken();
-                  c.revision = new GitRevisionNumber(hash, new Date(Long.parseLong(time) * 1000L));
-                  c.authorTime = sp.spaceToken();
-                  c.message = sp.line();
-                  c.isMerge = sp.line().indexOf(' ') != -1;
-                  r.commits.add(c);
-                }
+                              final boolean fetchData) {
+    final ArrayList<Root> rc = new ArrayList<Root>();
+    for (VirtualFile root : roots) {
+      try {
+        Root r = new Root();
+        rc.add(r);
+        r.root = root;
+        GitBranch b = GitBranch.current(project, root);
+        if (b != null) {
+          r.branch = b.getFullName();
+          r.remote = b.getTrackedRemoteName(project, root);
+          r.remoteBranch = b.getTrackedBranchName(project, root);
+          if (r.remote != null) {
+            if (fetchData && !r.remote.equals(".")) {
+              GitLineHandler fetch = new GitLineHandler(project, root, GitCommand.FETCH);
+              fetch.addParameters(r.remote, "-v");
+              Collection<VcsException> exs = GitHandlerUtil.doSynchronouslyWithExceptions(fetch);
+              exceptions.addAll(exs);
+            }
+            GitBranch tracked = b.tracked(project, root);
+            assert tracked != null : "Tracked branch cannot be null here";
+            GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitCommand.LOG);
+            unmerged.addParameters("--pretty=format:%H", r.branch + ".." + tracked.getFullName());
+            unmerged.setNoSSH(true);
+            unmerged.setStdoutSuppressed(true);
+            StringScanner su = new StringScanner(unmerged.run());
+            while (su.hasMoreData()) {
+              if (su.line().trim().length() != 0) {
+                r.remoteCommits++;
               }
             }
-          }
-          catch (VcsException e) {
-            exceptions.add(e);
-          }
-        }
-
-        if (postActivity.myInvokeInAwt) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              postActivity.run(rc);
+            GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitCommand.LOG);
+            toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.branch);
+            toPush.setNoSSH(true);
+            toPush.setStdoutSuppressed(true);
+            StringScanner sp = new StringScanner(toPush.run());
+            while (sp.hasMoreData()) {
+              if (sp.isEol()) {
+                sp.line();
+                continue;
+              }
+              Commit c = new Commit();
+              c.root = r;
+              String hash = sp.spaceToken();
+              String time = sp.spaceToken();
+              c.revision = new GitRevisionNumber(hash, new Date(Long.parseLong(time) * 1000L));
+              c.authorTime = sp.spaceToken();
+              c.message = sp.line();
+              c.isMerge = sp.line().indexOf(' ') != -1;
+              r.commits.add(c);
             }
-          });
-        } else {
-          postActivity.run(rc);
+          }
         }
       }
-    });
-  }
-
-  /**
-   * Show dialog for the project
-   *
-   * @param project the project to show dialog for
-   */
-  public static void showDialogForProject(final Project project) {
-    GitVcs vcs = GitVcs.getInstance(project);
-    List<VirtualFile> roots = GitRepositoryAction.getGitRoots(project, vcs);
-    if (roots == null) {
-      return;
+      catch (VcsException e) {
+        exceptions.add(e);
+      }
     }
-    List<VcsException> pushExceptions = new ArrayList<VcsException>();
-    showDialog(project, roots, pushExceptions);
-    vcs.showErrors(pushExceptions, GitBundle.getString("push.active.action.name"));
+    return rc;
   }
 
   /**
-   * Show the dialog
-   *
-   * @param project    the context project
-   * @param vcsRoots   the vcs roots in the project
-   * @param exceptions the collected exceptions
+   * Loads roots (fetches) in background. When finished, executes the given task in the AWT thread.
+   * @param postUiTask
    */
-  public static void showDialog(final Project project, final List<VirtualFile> vcsRoots, final Collection<VcsException> exceptions) {
-    loadRoots(project, vcsRoots, exceptions, true, new PushActiveBranchRunnable(true) {
-      @Override
-      public void run(final List<Root> roots) {
-
+  private void loadRootsInBackground(final boolean fetchData, @Nullable final PushActiveBranchRunnable postUiTask) {
+    Task.Backgroundable fetchTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Collection<VcsException> exceptions = new HashSet<VcsException>(1);
+        final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, fetchData);
         if (!exceptions.isEmpty()) {
-            Messages.showErrorDialog(project, GitBundle.getString("push.active.fetch.failed"),
-                                       GitBundle.getString("push.active.fetch.failed.title"));
+          setErrorText(GitBundle.getString("push.active.fetch.failed"));
           return;
         }
 
-        GitPushActiveBranchesDialog d = new GitPushActiveBranchesDialog(project, vcsRoots, roots);
-        d.show();
-        if (d.isOK()) {
-          final ArrayList<Root> rootsToPush = new ArrayList<Root>();
-          for (int i = 0; i < d.myTreeRoot.getChildCount(); i++) {
-            CheckedTreeNode node = (CheckedTreeNode)d.myTreeRoot.getChildAt(i);
-            Root r = (Root)node.getUserObject();
-            if (r.remote == null || r.commits.size() == 0) {
-              continue;
-            }
-            boolean topCommit = true;
-            for (int j = 0; j < node.getChildCount(); j++) {
-              if (node.getChildAt(j) instanceof CheckedTreeNode) {
-                CheckedTreeNode commitNode = (CheckedTreeNode)node.getChildAt(j);
-                if (commitNode.isChecked()) {
-                  Commit commit = (Commit)commitNode.getUserObject();
-                  if (!topCommit) {
-                    r.commitToPush = commit.revision.asString();
-                  }
-                  rootsToPush.add(r);
-                  break;
-                }
-                topCommit = false;
-              }
-            }
-          }
-          final ProgressManager manager = ProgressManager.getInstance();
-          final ArrayList<VcsException> errors = new ArrayList<VcsException>();
-          manager.runProcessWithProgressSynchronously(new Runnable() {
+        if (postUiTask != null) {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            @Override
             public void run() {
-              for (Root r : rootsToPush) {
-                GitLineHandler h = new GitLineHandler(project, r.root, GitCommand.PUSH);
-                String src = r.commitToPush != null ? r.commitToPush : r.branch;
-                h.addParameters("-v", r.remote, src + ":" + r.remoteBranch);
-                GitPushUtils.trackPushRejectedAsError(h, "Rejected push (" + r.root.getPresentableUrl() + "): ");
-                errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(h));
-              }
+              postUiTask.run(roots);
             }
-          }, GitBundle.getString("push.active.pushing"), false, project);
-          if (!errors.isEmpty()) {
-            GitUIUtil.showOperationErrors(project, errors, GitBundle.getString("push.active.pushing"));
-          }
+          }, ModalityState.stateForComponent(getRootPane()));
         }
-
       }
-    });
-
+    };
+    myTaskQueue.run(fetchTask);
   }
 
   /**
