@@ -52,4 +52,8 @@ public interface RunnerAndConfigurationSettings {
   void setTemporary(boolean temporary);
 
   Factory<RunnerAndConfigurationSettings> createFactory();
+
+  void setEditBeforeRun(boolean b);
+
+  boolean isEditBeforeRun();
 }

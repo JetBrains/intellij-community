@@ -382,10 +382,6 @@
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
     </reference>
     
-    <reference ref="ModuleSettings">
-      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
-    </reference>
-
     <group id="StructureViewCompileGroup">
       <separator/>
       <reference ref="ToggleMethodBreakpoint"/>

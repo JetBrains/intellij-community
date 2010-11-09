@@ -40,10 +40,16 @@ import java.awt.datatransfer.StringSelection;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
-    super(new Handler());
+    super(new Handler(true));
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  static class Handler extends EditorWriteActionHandler {
+    private final boolean myCopyToClipboard;
+
+    Handler(boolean copyToClipboard) {
+      myCopyToClipboard = copyToClipboard;
+    }
+
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
       if (doc.getLineCount() == 0) return;
@@ -56,7 +62,9 @@ public class CutLineEndAction extends EditorAction {
         return;
       }
 
-      copyToClipboard(doc, caretOffset, lineEndOffset, dataContext, editor);
+      if (myCopyToClipboard) {
+        copyToClipboard(doc, caretOffset, lineEndOffset, dataContext, editor);
+      }
 
       final int lineStartOffset = doc.getLineStartOffset(lineNumber);
       if (StringUtil.isEmptyOrSpaces(doc.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString())) {

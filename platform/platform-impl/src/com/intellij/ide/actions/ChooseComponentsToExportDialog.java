@@ -68,6 +68,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     final Set<ComponentElementProperties> componentElementProperties = new LinkedHashSet<ComponentElementProperties>(componentToContainingListElement.values());
     myChooser = new ElementsChooser<ComponentElementProperties>(true);
+    myChooser.setColorUnmarkedElements(false);
     for (final ComponentElementProperties componentElementProperty : componentElementProperties) {
       myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }

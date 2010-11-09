@@ -57,6 +57,7 @@
       <action id="EditorLineStart" class="com.intellij.openapi.editor.actions.LineStartAction"/>
       <action id="EditorLineEnd" class="com.intellij.openapi.editor.actions.LineEndAction"/>
       <action id="EditorCutLineEnd" class="com.intellij.openapi.editor.actions.CutLineEndAction"/>
+      <action id="EditorDeleteToLineEnd" class="com.intellij.openapi.editor.actions.DeleteToLineEndAction"/>
       <action id="EditorTextStart" class="com.intellij.openapi.editor.actions.TextStartAction"/>
       <action id="EditorTextEnd" class="com.intellij.openapi.editor.actions.TextEndAction"/>
       <action id="EditorLineStartWithSelection" class="com.intellij.openapi.editor.actions.LineStartWithSelectionAction"/>
