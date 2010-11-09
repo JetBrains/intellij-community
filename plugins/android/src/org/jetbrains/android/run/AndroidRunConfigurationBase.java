@@ -16,14 +16,14 @@
 
 package org.jetbrains.android.run;
 
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.Log;
+import com.android.ddmlib.*;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
@@ -45,6 +45,7 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jdom.Element;
+import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -171,9 +172,29 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (facet == null) {
       throw new ExecutionException(AndroidBundle.message("no.facet.error", module.getName()));
     }
+
+    Project project = env.getProject();
+
+    if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
+      boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+      if (ddmsEnabled && isDdmsCorrupted(facet)) {
+        ddmsEnabled = false;
+        AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+      }
+
+      if (!ddmsEnabled) {
+        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
+                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
+                                              Messages.getQuestionIcon());
+        if (result != 0) {
+          return null;
+        }
+        AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+      }
+    }
+
     AndroidFacetConfiguration configuration = facet.getConfiguration();
     AndroidPlatform platform = configuration.getAndroidPlatform();
-    Project project = module.getProject();
     if (platform == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
       ModulesConfigurator.showFacetSettingsDialog(facet, null);
@@ -206,6 +227,21 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       }
     }
     return null;
+  }
+
+  private static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
+    AndroidDebugBridge bridge = facet.getDebugBridge();
+    if (bridge != null) {
+      IDevice[] devices = bridge.getDevices();
+      if (devices.length > 0) {
+        Client[] clients = devices[0].getClients();
+        if (clients.length > 0) {
+          ClientData clientData = clients[0].getClientData();
+          return clientData == null || clientData.getVmIdentifier() == null;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
