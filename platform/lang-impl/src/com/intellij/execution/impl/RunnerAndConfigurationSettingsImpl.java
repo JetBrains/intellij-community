@@ -57,6 +57,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   protected static final String DUMMY_ELEMENT_NANE = "dummy";
   @NonNls
   private static final String TEMPORARY_ATTRIBUTE = "temporary";
+  @NonNls
+  private static final String EDIT_BEFORE_RUN = "editBeforeRun";
+
 
   /** for compatibility */
   @NonNls
@@ -73,6 +76,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
 
   private boolean myTemporary;
+  private boolean myEditBeforeRun;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -122,6 +126,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return myConfiguration.getName();
   }
 
+  @Override
+  public void setEditBeforeRun(boolean b) {
+    myEditBeforeRun = b;
+  }
+
+  @Override
+  public boolean isEditBeforeRun() {
+    return myEditBeforeRun;
+  }
+
   @Nullable
   private ConfigurationFactory getFactory(final Element element) {
     final String typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE);
@@ -130,9 +144,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
+    myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
 
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
@@ -192,6 +206,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
+
+      if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
       if (myTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
       }

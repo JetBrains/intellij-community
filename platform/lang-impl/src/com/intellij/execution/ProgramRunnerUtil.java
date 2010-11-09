@@ -58,7 +58,7 @@ public class ProgramRunnerUtil {
       return;
     }
 
-    if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
+    if (!RunManagerImpl.canRunConfiguration(configuration, executor) || RunManagerImpl.isEditBeforeRun(configuration)) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
       if (!result) {
         return;
