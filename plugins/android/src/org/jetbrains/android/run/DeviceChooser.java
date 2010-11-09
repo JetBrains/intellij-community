@@ -53,7 +53,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * To change this template use File | Settings | File Templates.
  */
 public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.IDeviceChangeListener {
-  private static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
+  public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
   private final AndroidFacet myFacet;
   @Nullable

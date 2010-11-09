@@ -27,6 +27,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -44,8 +45,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.converters.values.BooleanValueConverter;
 import org.jdom.Element;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
+import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -163,6 +166,15 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return true;
   }
 
+  private static boolean containsRealDevice(@NotNull IDevice[] devices) {
+    for (IDevice device : devices) {
+      if (!device.isEmulator()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public RunProfileState getState(@NotNull final Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
     if (module == null) {
@@ -175,21 +187,13 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
     Project project = env.getProject();
 
-    if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
-      boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
-      if (ddmsEnabled && isDdmsCorrupted(facet)) {
-        ddmsEnabled = false;
-        AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+    boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
+    if (debug) {
+      if (!activateDdmsIfNeccessary(facet)) {
+        return null;
       }
-
-      if (!ddmsEnabled) {
-        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
-                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
-                                              Messages.getQuestionIcon());
-        if (result != 0) {
-          return null;
-        }
-        AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+      if (!CHOOSE_DEVICE_MANUALLY) {
+        checkDebuggableOption(facet);
       }
     }
 
@@ -210,7 +214,17 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       if (platform.getSdk().getDebugBridge(project) == null) return null;
       String[] deviceSerialNumbers = ArrayUtil.EMPTY_STRING_ARRAY;
       if (CHOOSE_DEVICE_MANUALLY) {
-        deviceSerialNumbers = chooseDevicesManually(facet);
+        IDevice[] devices = chooseDevicesManually(facet);
+        if (devices.length > 0) {
+          if (debug && containsRealDevice(devices)) {
+            checkDebuggableOption(facet);
+          }
+          deviceSerialNumbers = new String[devices.length];
+          for (int i = 0; i < devices.length; i++) {
+            deviceSerialNumbers[i] = devices[i].getSerialNumber();
+            PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(deviceSerialNumbers));
+          }
+        }
         if (deviceSerialNumbers.length == 0) return null;
       }
       AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
@@ -227,6 +241,51 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       }
     }
     return null;
+  }
+
+  private static void checkDebuggableOption(@NotNull AndroidFacet facet) {
+    Manifest manifest = facet.getManifest();
+    // validated in checkConfiguration()
+    assert manifest != null;
+    final Application application = manifest.getApplication();
+    if (application != null) {
+      String debuggable = application.getDebuggable().getValue();
+      BooleanValueConverter booleanValueConverter = BooleanValueConverter.getInstance(true);
+      if (debuggable == null || !booleanValueConverter.isTrue(debuggable)) {
+        Project project = facet.getModule().getProject();
+        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.manifest.debuggable.attribute.not.true.warning"),
+                                              CommonBundle.getWarningTitle(),
+                                              Messages.getWarningIcon());
+        if (result == 0) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              application.getDebuggable().setValue("true");
+            }
+          });
+        }
+      }
+    }
+  }
+
+  private static boolean activateDdmsIfNeccessary(@NotNull AndroidFacet facet) {
+    Project project = facet.getModule().getProject();
+    boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+    if (ddmsEnabled && isDdmsCorrupted(facet)) {
+      ddmsEnabled = false;
+      AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+    }
+
+    if (!ddmsEnabled) {
+      int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
+                                            AndroidBundle.message("android.ddms.disabled.dialog.title"),
+                                            Messages.getQuestionIcon());
+      if (result != 0) {
+        return false;
+      }
+      AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+    }
+    return true;
   }
 
   private static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
@@ -308,22 +367,16 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
   }
 
   @NotNull
-  private String[] chooseDevicesManually(@NotNull AndroidFacet facet) {
-    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(getProject());
-    String value = propertiesComponent.getValue(ANDROID_TARGET_DEVICES_PROPERTY);
+  private IDevice[] chooseDevicesManually(@NotNull AndroidFacet facet) {
+    String value = PropertiesComponent.getInstance(getProject()).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
     String[] selectedSerials = value != null ? fromString(value) : null;
     DeviceChooser chooser = new DeviceChooser(facet, supportMultipleDevices(), selectedSerials);
     chooser.show();
     IDevice[] devices = chooser.getSelectedDevices();
     if (chooser.getExitCode() != DeviceChooser.OK_EXIT_CODE || devices.length == 0) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return DeviceChooser.EMPTY_DEVICE_ARRAY;
     }
-    String[] serials = new String[devices.length];
-    for (int i = 0; i < devices.length; i++) {
-      serials[i] = devices[i].getSerialNumber();
-    }
-    propertiesComponent.setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(serials));
-    return serials;
+    return devices;
   }
 
   @Override
