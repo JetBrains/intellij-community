@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package com.intellij.xdebugger.frame;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 
 /**
+ * Describes a hyperlink inside a debugger node
+ *
  * @author nik
  */
-public abstract class XDebuggerNodeLink {
+public abstract class XDebuggerTreeNodeHyperlink {
   private String myLinkText;
 
-  protected XDebuggerNodeLink(String linkText) {
+  protected XDebuggerTreeNodeHyperlink(@NotNull String linkText) {
     myLinkText = linkText;
   }
 
+  @NotNull
   public String getLinkText() {
     return myLinkText;
   }

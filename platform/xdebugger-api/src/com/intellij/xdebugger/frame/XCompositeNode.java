@@ -17,6 +17,7 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -47,4 +48,11 @@ public interface XCompositeNode extends Obsolescent {
    * @param errorMessage message describing the error
    */
   void setErrorMessage(@NotNull String errorMessage);
+
+  /**
+   * Indicates that an error occurs
+   * @param errorMessage message describing the error
+   * @param link describes a hyperlink which will be appended to the error message
+   */
+  void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link);
 }
