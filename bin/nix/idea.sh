@@ -26,7 +26,11 @@ if [ -z "$IDEA_JDK" ]; then
   fi
   if [ -z "$IDEA_JDK" ]; then
     echo ERROR: cannot start IntelliJ IDEA.
-    echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
+    echo No JDK found to run IDEA. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+    echo
+    echo Press Enter to continue.
+    read IGNORE
+    exit 1
   fi
 fi
 
@@ -36,7 +40,7 @@ grep 'OpenJDK' $VERSION_LOG
 OPEN_JDK=$?
 grep '64-Bit' $VERSION_LOG
 BITS=$?
-rm /tmp/java.version.log
+rm $VERSION_LOG
 if [ $OPEN_JDK -eq 0 ]; then
   echo WARNING: You are launching IDE using OpenJDK Java runtime
   echo
