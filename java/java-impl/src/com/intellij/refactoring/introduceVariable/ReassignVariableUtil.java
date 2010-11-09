@@ -150,31 +150,32 @@ public class ReassignVariableUtil {
     }
   }
 
-  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager) {
+  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager, final String defaultText) {
     final PsiType[] types = typeSelectorManager.getTypesForAll();
     return new Expression() {
       @Override
       public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-        return new TextResult(typeSelectorManager.getDefaultType().getPresentableText());
+        return new TextResult(defaultText);
       }
 
       @Override
       public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
-        return new TextResult(typeSelectorManager.getDefaultType().getPresentableText());
+        return new TextResult(defaultText);
       }
 
       @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         LookupElement[] result = new LookupElement[types.length];
         for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-          result[i] = LookupElementBuilder.create(types[i].getPresentableText());
+          result[i] = LookupElementBuilder.create(types[i], types[i].getPresentableText());
         }
         return result;
       }
     };
   }
 
-  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type) {
+  @Nullable
+  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
     if (processor.size() > 0) {
       final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
@@ -183,6 +184,6 @@ public class ReassignVariableUtil {
         return "Press " + shortcuts[0] + " to reassign existing variable";
       }
     }
-    return "Press Shift Tab to change type";
+    return typesForAll.length > 1 ? "Press Shift Tab to change type" : null;
   }
 }

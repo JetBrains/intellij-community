@@ -480,12 +480,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
                     @Override
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
-                      builder.replaceElement(elementToRename.getTypeElement(), "Variable_Type", ReassignVariableUtil
-                        .createExpression(typeSelectorManager), false, true);
+                      final PsiTypeElement typeElement = elementToRename.getTypeElement();
+                      builder.replaceElement(typeElement, "Variable_Type", ReassignVariableUtil
+                        .createExpression(typeSelectorManager, typeElement.getText()), false, true);
                     }
                   };
                   renamer.setAdvertisementText(
-                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType()));
+                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll()));
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
                       @Override
                       public void consume(Boolean apply) {
