@@ -242,7 +242,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       showErrorMessage(project, editor, message);
       return false;
     }
-    
+
     // Getting settings
     Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurrences, tempContainer);
     GroovyIntroduceVariableDialog dialog = getDialog(project, editor, selectedExpr, type, occurrences, false, validator);

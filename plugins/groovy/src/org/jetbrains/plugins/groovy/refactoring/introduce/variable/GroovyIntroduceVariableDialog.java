@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
+package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -30,11 +30,13 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -42,11 +44,10 @@ import java.awt.event.*;
 import java.util.EventListener;
 import java.util.HashMap;
 
-public class GroovyIntroduceVariableDialog extends DialogWrapper {
+public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog {
 
   private final Project myProject;
   private final GrExpression myExpression;
-  private final PsiType myType;
   private final int myOccurrencesCount;
   private final GroovyIntroduceVariableBase.Validator myValidator;
   private HashMap<String, PsiType> myTypeMap = null;
@@ -65,17 +66,13 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
   private JButton buttonOK;
   public String myEnteredName;
 
-  public GroovyIntroduceVariableDialog(Project project,
-                                       GrExpression expression,
-                                       PsiType psiType,
-                                       int occurrencesCount,
+  public GroovyIntroduceVariableDialog(GrIntroduceContext context,
                                        GroovyIntroduceVariableBase.Validator validator,
                                        String[] possibleNames) {
-    super(project, true);
-    myProject = project;
-    myExpression = expression;
-    myType = psiType;
-    myOccurrencesCount = occurrencesCount;
+    super(context.project, true);
+    myProject = context.project;
+    myExpression = context.expression;
+    myOccurrencesCount = context.occurrences.length;
     myValidator = validator;
     setUpNameComboBox(possibleNames);
 
@@ -114,6 +111,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
     return myCbIsFinal.isSelected();
   }
 
+  @Nullable
   private PsiType getSelectedType() {
     if (!myCbTypeSpec.isSelected() || !myCbTypeSpec.isEnabled()) {
       return null;
@@ -134,15 +132,17 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
     myTypeLabel.setLabelFor(myTypeComboBox);
 
     // Type specification
-    if (myType == null) {
+    final PsiType exprType = myExpression.getType();
+    if (exprType == null) {
       myCbTypeSpec.setSelected(false);
       myCbTypeSpec.setEnabled(false);
       myTypeComboBox.setEnabled(false);
-    } else {
+    }
+    else {
       final boolean specifyVarTypeExplicitly = GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY;
       myCbTypeSpec.setSelected(specifyVarTypeExplicitly);
       myTypeComboBox.setEnabled(specifyVarTypeExplicitly);
-      myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
+      myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(exprType);
       for (String typeName : myTypeMap.keySet()) {
         myTypeComboBox.addItem(typeName);
       }
@@ -241,10 +241,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
   }
 
-  GrExpression getExpression() {
-    return myExpression;
-  }
-
   class DataChangedListener implements EventListener {
     void dataChanged() {
       updateOkStatus();
@@ -282,11 +278,11 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
       mySelectedType = dialog.getSelectedType();
     }
 
-    public String getEnteredName() {
+    public String getName() {
       return myEnteredName;
     }
 
-    public boolean isReplaceAllOccurrences() {
+    public boolean replaceAllOccurences() {
       return myIsReplaceAllOccurrences;
     }
 

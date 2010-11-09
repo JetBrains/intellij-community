@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy;
+package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.Language;
