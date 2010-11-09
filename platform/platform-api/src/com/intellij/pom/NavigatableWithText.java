@@ -15,9 +15,12 @@
  */
 package com.intellij.pom;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author yole
  */
 public interface NavigatableWithText extends Navigatable {
+  @Nullable
   String getNavigateActionText(boolean focusEditor);
 }

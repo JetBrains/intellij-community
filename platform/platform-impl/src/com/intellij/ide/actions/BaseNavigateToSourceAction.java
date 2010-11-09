@@ -46,13 +46,20 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
       event.getPresentation().setEnabled(enabled);
     }
     if (target != null && target instanceof NavigatableWithText) {
-      event.getPresentation().setText(((NavigatableWithText)target).getNavigateActionText(myFocusEditor));
+      final String navigateActionText = ((NavigatableWithText)target).getNavigateActionText(myFocusEditor);
+      if (navigateActionText != null) {
+        event.getPresentation().setText(navigateActionText);
+      }
+      else {
+        event.getPresentation().setText(getTemplatePresentation().getText());
+      }
     }
     else {
       event.getPresentation().setText(getTemplatePresentation().getText());
     }
   }
 
+  @Nullable
   private Navigatable getTarget(final DataContext dataContext) {
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables != null) {
