@@ -461,10 +461,10 @@ public class TokenBasedSearcher {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-        Collection<TokenIndexKey> keys = fileBasedIndex.getAllKeys(TokenIndex.ID, project);
+        Collection<TokenIndexKey> keys = fileBasedIndex.getAllKeys(TokenIndex.INDEX_ID, project);
         for (TokenIndexKey key : keys) {
           if (intersect(key.getLanguages(), languageIds)) {
-            List<List<Token>> list = fileBasedIndex.getValues(TokenIndex.ID, key, (GlobalSearchScope)scope);
+            List<List<Token>> list = fileBasedIndex.getValues(TokenIndex.INDEX_ID, key, (GlobalSearchScope)scope);
             for (List<Token> tokens : list) {
               result.addAll(tokens);
             }

@@ -25,8 +25,7 @@ import java.util.Map;
 public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Token>> {
   private static final int FILE_BLOCK_SIZE = 100;
 
-  public static final ID<TokenIndexKey, List<Token>> ID = new ID<TokenIndexKey, List<Token>>("token.index") {
-  };
+  public static final ID<TokenIndexKey, List<Token>> INDEX_ID = ID.create("token.index");
 
   private static final int VERSION = 3;
 
@@ -106,7 +105,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
 
   @Override
   public ID<TokenIndexKey, List<Token>> getName() {
-    return ID;
+    return INDEX_ID;
   }
 
   private static int getBlockId(String filePath) {
