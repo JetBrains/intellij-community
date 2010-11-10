@@ -48,7 +48,7 @@ public abstract class PsiAnchor {
   public abstract int getStartOffset();
   public abstract int getEndOffset();
 
-  public static PsiAnchor create(final PsiElement element) {
+  public static PsiAnchor create(@NotNull final PsiElement element) {
     LOG.assertTrue(element.isValid());
 
     if (element instanceof PsiFile) {
