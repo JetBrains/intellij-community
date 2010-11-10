@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
 
     try {
-      final File tempFile = File.createTempFile("temp", "");
+      final File tempFile = FileUtil.createTempFile("temp", "");
       tempFile.deleteOnExit();
       final ProjectData projectData = currentSuite.getCoverageData(coverageDataManager);
       new SaveHook(tempFile, true, new IdeaClassFinder(project, (JavaCoverageSuite)currentSuite)).save(projectData);
