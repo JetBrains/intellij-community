@@ -85,7 +85,7 @@ public class CodeInsightUtilBase {
     T elementInRange = findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
                                           (Class<? extends T>)element.getClass(),
                                           language);
-    ((RangeMarkerEx)rangeMarker).dispose();
+    rangeMarker.dispose();
     return elementInRange;
   }
 

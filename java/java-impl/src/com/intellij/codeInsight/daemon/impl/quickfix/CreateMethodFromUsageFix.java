@@ -229,7 +229,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
     newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-    ((RangeMarkerEx)rangeMarker).dispose();
+    rangeMarker.dispose();
 
     if (!shouldBeAbstract) {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
