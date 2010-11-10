@@ -111,7 +111,13 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   protected static final PagedFileStorage.StorageLock ourLock = new PagedFileStorage.StorageLock();
 
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(8192, 8192);
+  private static final int ENUMERATION_CACHE_SIZE;
+  static {
+    String property = System.getProperty("idea.enumerationCacheSize");
+    ENUMERATION_CACHE_SIZE = property == null ? 8192 : Integer.valueOf(property);
+  }
+
+  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
