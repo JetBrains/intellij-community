@@ -274,7 +274,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         if (referenceElement != null) {
           PsiElement resolved = referenceElement.resolve();
           if (resolved != null) {
-            PsiMethod[] methods = ((PsiClass)resolved).findMethodsByName(((PsiNameValuePair)parent).getName(), false);
+            final String name = ((PsiNameValuePair)parent).getName();
+            PsiMethod[] methods = ((PsiClass)resolved).findMethodsByName(name == null? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name, false);
             if (methods.length == 1) {
               return methods[0];
             }
