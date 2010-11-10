@@ -16,11 +16,13 @@
 package org.jetbrains.idea.maven.facade;
 
 
+import org.jetbrains.idea.maven.facade.embedder.MavenFacadeLoggerWrapper;
+
 public class MavenFacadeGlobalsManager {
-  private static MavenFacadeLogger myLogger;
+  private static MavenFacadeLoggerWrapper myLogger;
   private static MavenFacadeDownloadListener myDownloadListener;
 
-  public static MavenFacadeLogger getLogger() {
+  public static MavenFacadeLoggerWrapper getLogger() {
     return myLogger;
   }
 
@@ -30,7 +32,7 @@ public class MavenFacadeGlobalsManager {
 
 
   public static void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) {
-    myLogger = logger;
+    myLogger = new MavenFacadeLoggerWrapper(logger);
     myDownloadListener = downloadListener;
   }
 }

@@ -30,7 +30,8 @@ import java.awt.*;
 /**
  * @author spleaner
  */
-public interface StatusBar extends StatusBarInfo {
+public interface StatusBar extends StatusBarInfo, Disposable {
+
   @SuppressWarnings({"AbstractClassNeverImplemented"})
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
@@ -85,4 +86,15 @@ public interface StatusBar extends StatusBarInfo {
   void updateWidget(@NotNull String id);
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
+
+  StatusBar createChild();
+
+  JComponent getComponent();
+
+  StatusBar findChild(Component c);
+
+  IdeFrame getFrame();
+
+  void install(IdeFrame frame);
+
 }

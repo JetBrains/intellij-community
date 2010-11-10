@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public final class PsiElementRef<T extends PsiElement> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiElementRef");
   private volatile PsiRefColleague<T> myColleague;
 
   public PsiElementRef(PsiRefColleague<T> colleague) {
@@ -92,6 +94,7 @@ public final class PsiElementRef<T extends PsiElement> {
       private final T myElement;
 
       public Real(@NotNull T element) {
+        LOG.assertTrue(element.isValid());
         myElement = element;
       }
 

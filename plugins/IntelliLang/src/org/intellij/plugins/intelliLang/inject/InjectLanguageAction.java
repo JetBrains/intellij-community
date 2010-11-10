@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -86,7 +85,7 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    doChooseLanguageToInject(new Processor<String>() {
+    doChooseLanguageToInject(editor, new Processor<String>() {
       public boolean process(final String languageId) {
         if (project.isDisposed()) return false;
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -108,7 +107,7 @@ public class InjectLanguageAction implements IntentionAction {
       for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
         if (support.addInjectionInPlace(language, host)) return;
       }
-      TemporaryPlacesRegistry.getInstance(project).addHostWithUndo(host, InjectedLanguage.create(languageId));
+      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);
     }
     finally {
       FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
@@ -119,22 +118,19 @@ public class InjectLanguageAction implements IntentionAction {
     return Configuration.getInstance().setHostInjectionEnabled(host, Collections.singleton(languageId), true);
   }
 
-  private static boolean doChooseLanguageToInject(final Processor<String> onChosen) {
+  private static boolean doChooseLanguageToInject(Editor editor, final Processor<String> onChosen) {
     final String[] langIds = InjectedLanguage.getAvailableLanguageIDs();
     Arrays.sort(langIds);
 
     final JList list = new JBList(langIds);
-    list.setCellRenderer(new DefaultListCellRenderer() {
+    list.setCellRenderer(new ListCellRendererWrapper<String>(list.getCellRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final String aValue = (String)value;
-        final Language language = InjectedLanguage.findLanguageById(aValue);
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        final Language language = InjectedLanguage.findLanguageById(value);
         assert language != null;
         final FileType ft = language.getAssociatedFileType();
         setIcon(ft != null ? ft.getIcon() : new EmptyIcon(16));
         setText(value + (ft != null ? " (" + ft.getDescription() + ")" : ""));
-        return this;
       }
     });
     new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
@@ -143,7 +139,7 @@ public class InjectLanguageAction implements IntentionAction {
         onChosen.process(string);
       }
     }).setFilteringEnabled(new Function.Self<Object, String>())
-      .createPopup().showInBestPositionFor(DataManager.getInstance().getDataContext());
+      .createPopup().showInBestPositionFor(editor);
     return true;
   }
 

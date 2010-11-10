@@ -60,7 +60,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
 
-    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" />
+    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" order="last" />
 
     <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
     <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>

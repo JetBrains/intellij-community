@@ -12,6 +12,7 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -151,30 +153,6 @@ public class ReassignVariableUtil {
     }
   }
 
-  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager, final String defaultText) {
-    final PsiType[] types = typeSelectorManager.getTypesForAll();
-    return new Expression() {
-      @Override
-      public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-        return new TextResult(defaultText);
-      }
-
-      @Override
-      public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
-        return new TextResult(defaultText);
-      }
-
-      @Override
-      public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        LookupElement[] result = new LookupElement[types.length];
-        for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-          result[i] = PsiTypeLookupItem.createLookupItem(types[i], null);
-        }
-        return result;
-      }
-    };
-  }
-
   @Nullable
   static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
@@ -186,5 +164,24 @@ public class ReassignVariableUtil {
       }
     }
     return typesForAll.length > 1 ? "Press Shift Tab to change type" : null;
+  }
+
+  public static Expression createExpression(final TypeExpression expression, final String defaultType) {
+    return new Expression() {
+      @Override
+      public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
+        return new TextResult(defaultType);
+      }
+
+      @Override
+      public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
+        return new TextResult(defaultType);
+      }
+
+      @Override
+      public LookupElement[] calculateLookupItems(ExpressionContext context) {
+        return expression.calculateLookupItems(context);
+      }
+    };
   }
 }

@@ -423,7 +423,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         boolean focusOk = getFocusOwner() != null;
         boolean attemptedToFixFocus = IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
 
-        if (canFlushIdleRequests()) {
+        if (canFlushIdleRequests() && myFlushingIdleRequestsEntryCount <= 1) {
           if (focusOk || !attemptedToFixFocus) {
             final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
             myIdleRequests.clear();

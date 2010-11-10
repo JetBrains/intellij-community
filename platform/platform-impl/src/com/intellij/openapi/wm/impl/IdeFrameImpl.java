@@ -79,7 +79,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application, final String[] commandLineArgs) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, commandLineArgs);
+    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, commandLineArgs, this);
     setRootPane(myRootPane);
 
     AppUIUtil.updateFrameIcon(this);

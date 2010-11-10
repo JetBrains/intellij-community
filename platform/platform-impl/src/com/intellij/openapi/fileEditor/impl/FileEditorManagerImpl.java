@@ -49,6 +49,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -149,9 +150,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public AsyncResult<EditorsSplitters> getActiveSplitters() {
+    final boolean async = Registry.is("ide.windowSystem.asyncSplitters");
+
     final AsyncResult<EditorsSplitters> result = new AsyncResult<EditorsSplitters>();
     final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-    fm.doWhenFocusSettlesDown(new Runnable() {
+    Runnable run = new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -159,7 +162,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           return;
         }
 
-        Component focusOwner = fm.getFocusOwner();
+        Component focusOwner = async ? fm.getFocusOwner() : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
         if (focusOwner != null) {
           Set<EditorsSplitters> splitters = getAllSplitters();
@@ -173,7 +176,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
         result.setDone(getMainSplitters());
       }
-    });
+    };
+
+    if (async) {
+      fm.doWhenFocusSettlesDown(run);
+    } else {
+      run.run();
+    }
+
     return result;
   }
 

@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,19 @@ public abstract class WindowManager {
    */
   public abstract Window suggestParentWindow(Project project);
 
+  /**
+   * Get the status bar for the project's main frame
+   * @param project
+   * @return
+   */
   public abstract StatusBar getStatusBar(Project project);
+
+  /**
+   * Get the status bar for the component, it may be either the main status bar or the status bar for an undocked window
+   * @param c
+   * @return
+   */
+  public abstract StatusBar getStatusBar(@NotNull Component c);
 
   public abstract JFrame getFrame(Project project);
 

@@ -400,6 +400,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return frame.getStatusBar();
   }
 
+  @Override
+  public StatusBar getStatusBar(@NotNull Component c) {
+    Component parent = UIUtil.findUltimateParent(c);
+    if (parent instanceof IdeFrame) {
+      return ((IdeFrame)parent).getStatusBar().findChild(c);
+    }
+
+    IdeFrame frame = findFrameFor(null);
+    if (frame != null) {
+      return frame.getStatusBar().findChild(c);
+    }
+
+    assert false : "Cannot find status bar for " + c;
+
+    return null;
+  }
+
   public IdeFrame findFrameFor(@Nullable final Project project) {
     IdeFrameImpl frame = null;
     if (project != null) {

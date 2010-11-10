@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -354,10 +355,13 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
   private static final MyAttributeProcessor ourLayoutAttrsProcessor = new MyAttributeProcessor() {
     @Override
     public void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element) {
-      if (element instanceof LayoutViewElement &&
-          SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey()) &&
-          ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
-        extension.addCustomAnnotation(new MyRequired());
+      if (element instanceof LayoutViewElement && SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
+        XmlElement xmlElement = element.getXmlElement();
+        String tagName = xmlElement instanceof XmlTag ? ((XmlTag)xmlElement).getName() : null;
+        if (!"merge".equals(tagName) &&
+            ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
+          extension.addCustomAnnotation(new MyRequired());
+        }
       }
     }
   };

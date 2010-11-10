@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.FinalUtils;
-import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,68 +77,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
         if (modifierList == null) {
             return;
         }
+        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    }
-
-    private static boolean isInitializedInOneInitializer(
-            @NotNull PsiField field){
-        final PsiClass aClass = field.getContainingClass();
-        if(aClass == null){
-            return false;
-        }
-        boolean initializedInOneInitializer = false;
-        final PsiClassInitializer[] initializers = aClass.getInitializers();
-        for(final PsiClassInitializer initializer : initializers){
-            if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
-            final PsiCodeBlock body = initializer.getBody();
-            if(InitializationUtils.blockAssignsVariableOrFails(body, field)) {
-                if (initializedInOneInitializer) {
-                    return false;
-                }
-                initializedInOneInitializer = true;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isInitializedInOneStaticInitializer(
-            @NotNull PsiField field){
-        final PsiClass aClass = field.getContainingClass();
-        if(aClass == null){
-            return false;
-        }
-        final PsiClassInitializer[] initializers = aClass.getInitializers();
-        boolean initializedInOneStaticInitializer = false;
-        for(final PsiClassInitializer initializer : initializers){
-            if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
-            final PsiCodeBlock body = initializer.getBody();
-            if(InitializationUtils.blockAssignsVariableOrFails(body, field)) {
-                if (initializedInOneStaticInitializer) {
-                    return false;
-                }
-                initializedInOneStaticInitializer = true;
-            }
-        }
-        return initializedInOneStaticInitializer;
-    }
-
-    private static boolean isInitializedInConstructors(
-            @NotNull PsiField field) {
-        final PsiClass containingClass = field.getContainingClass();
-        final PsiMethod[] constructors = containingClass.getConstructors();
-        if (constructors.length == 0) {
-            return false;
-        }
-        for (PsiMethod constructor : constructors) {
-            if (!InitializationUtils.methodAssignsVariableOrFails(
-                    constructor, field)) {
-                return false;
-            }
-        }
-        return true;
     }
 }

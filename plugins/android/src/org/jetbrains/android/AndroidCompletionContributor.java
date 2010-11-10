@@ -88,6 +88,7 @@ public class AndroidCompletionContributor extends CompletionContributor {
           }
           else if (LayoutDomFileDescription.isLayoutFile(xmlFile)) {
             resultSet.addElement(LookupElementBuilder.create("view"));
+            resultSet.addElement(LookupElementBuilder.create("merge"));
             Map<String, PsiClass> viewClassMap = AndroidDomExtender.getViewClassMap(facet);
             final PsiClass viewGroupClass = viewClassMap.get("ViewGroup");
             for (String tagName : viewClassMap.keySet()) {
