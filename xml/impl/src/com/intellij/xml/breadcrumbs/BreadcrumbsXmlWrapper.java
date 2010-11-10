@@ -86,7 +86,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
       public void fileStatusesChanged() {
-        if (myComponent != null) {
+        if (myComponent != null && myEditor != null) {
           final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
           myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
           updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
