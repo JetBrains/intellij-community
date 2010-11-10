@@ -9,7 +9,13 @@ import datetime
 from tcunittest import TeamcityTestResult
 
 class TeamcityDocTestResult(TeamcityTestResult):
+    """
+    DocTests Result extends TeamcityTestResult,
+    overrides some methods, specific for doc tests,
+    such as getTestName, getTestId.
+    """
     def getTestName(self, test):
+        print test.__dict__
         return test.source
 
     def getTestId(self, test):
@@ -31,11 +37,15 @@ class TeamcityDocTestResult(TeamcityTestResult):
         self.messages.testFailed(self.getTestName(test),
             message='Failure', details=err)
 
-    def addError(self, test, err):
+    def addError(self, test, err = ''):
         self.messages.testFailed(self.getTestName(test),
             message='Error', details=err)
 
 class DocTestRunner(doctest.DocTestRunner):
+    """
+    Specil runner for doctests,
+    overrides __run method to report results using TeamcityDocTestResult
+    """
     def __init__(self, verbose=None, optionflags=0):
         doctest.DocTestRunner.__init__(self, verbose, optionflags)
         self.stream = sys.stdout
@@ -81,7 +91,7 @@ class DocTestRunner(doctest.DocTestRunner):
             else:
                 exc_info = sys.exc_info()
                 exc_msg = traceback.format_exception_only(*exc_info[:2])[-1]
-                got += _exception_traceback(exc_info)
+                got += doctest._exception_traceback(exc_info)
 
                 if example.exc_msg is None:
                     outcome = BOOM
@@ -109,7 +119,7 @@ class DocTestRunner(doctest.DocTestRunner):
             elif outcome is BOOM:
                 self.result.startTest(example)
                 err = self._failure_header(test, example) + \
-                                'Exception raised:\n' + _indent(_exception_traceback(exc_info))
+                                'Exception raised:\n' + doctest._indent(doctest._exception_traceback(exc_info))
                 self.result.addError(example, err)
             else:
                 assert False, ("unknown outcome", outcome)
@@ -122,6 +132,11 @@ modules = {}
 from utrunner import debug, getModuleName, loadModulesFromFolderRec, loadModulesFromFolderUsingPattern
 
 def loadSource(fileName):
+  """
+  loads source from fileName,
+  we can't use tat function from utrunner, because of we
+  store modules in global variable.
+  """
   baseName = os.path.basename(fileName)
   moduleName = os.path.splitext(baseName)[0]
   if moduleName in modules: # add unique number to prevent name collisions
@@ -168,7 +183,7 @@ for arg in sys.argv[1:]:
 
   elif len(a) == 2:
     # From testcase
-    debug("/ from testcase " + a[1] + " in " + a[0])
+    debug("/ from class " + a[1] + " in " + a[0])
     module = loadSource(a[0])
     testcase = getattr(module, a[1])
     tests = finder.find(testcase, testcase.__name__)
@@ -176,15 +191,16 @@ for arg in sys.argv[1:]:
         runner.run(test)
   else:
     # From method in class or from function
-    debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
     module = loadSource(a[0])
     if a[1] == "":
         # test function, not method
+        debug("/ from method " + a[2] + " in " + a[0])
         testcase = getattr(module, a[2])
         tests = finder.find(testcase, testcase.__name__)
         for test in tests:
             runner.run(test)
     else:
+        debug("/ from method " + a[2] + " in class " +  a[1] + " in " + a[0])
         testCaseClass = getattr(module, a[1])
         testcase = getattr(testCaseClass, a[2])
         tests = finder.find(testcase, testcase.__name__)

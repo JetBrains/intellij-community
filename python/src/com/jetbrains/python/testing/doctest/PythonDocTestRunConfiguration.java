@@ -157,15 +157,15 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
   public String suggestedName() {
     switch (myTestType) {
       case TEST_CLASS:
-        return "Tests in " + myClassName;
+        return "Doctests in " + myClassName;
       case TEST_METHOD:
-        return "Test " + myClassName + "." + myMethodName;
+        return "Doctests in " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
-        return "Tests in " + myScriptName;
+        return "Doctests in " + myScriptName;
       case TEST_FOLDER:
-        return "Tests in " + FileUtil.toSystemDependentName(myFolderName);
+        return "Doctests in " + FileUtil.toSystemDependentName(myFolderName);
       case TEST_FUNCTION:
-        return "Test " + myMethodName;
+        return "Doctests in " + myMethodName;
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }

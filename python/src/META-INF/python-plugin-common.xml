@@ -67,6 +67,7 @@
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
 
     <configurationType implementation="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
 
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
