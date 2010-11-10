@@ -36,6 +36,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -544,7 +545,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
@@ -629,6 +630,23 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myEditors.clear();
   }
 
+  /**
+   * Renames target property if the one is available.
+   * <p/>
+   * <b>Note:</b> is assumed to be called under {@link WriteAction write action}.
+   * 
+   * @param oldName   old property name
+   * @param newName   new property name
+   */
+  public void renameProperty(@NotNull String oldName, @NotNull String newName) {
+    for (PropertiesFile properties : myResourceBundle.getPropertiesFiles(myProject)) {
+      Property property = properties.findPropertyByKey(oldName);
+      if (property != null) {
+        property.setName(newName);
+      }
+    }
+  }
+  
   public static class ResourceBundleEditorState implements FileEditorState {
     private final String myPropertyName;
 
@@ -638,6 +656,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
       return false;
+    }
+
+    public String getPropertyName() {
+      return myPropertyName;
     }
   }
 
