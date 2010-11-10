@@ -44,7 +44,8 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   }
 
   private static boolean isEnabled() {
-    return WebEditorOptions.getInstance().isBreadcrumbsEnabled();
+    final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
+    return webEditorOptions.isBreadcrumbsEnabled() || webEditorOptions.isBreadcrumbsEnabledInXml();
   }
 
   private static class MyFileEditorManagerListener implements FileEditorManagerListener {

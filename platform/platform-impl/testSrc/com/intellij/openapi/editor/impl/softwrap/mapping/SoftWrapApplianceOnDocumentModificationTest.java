@@ -158,6 +158,22 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     // Don't expect any exceptions here.
   }
 
+  public void testTypeNewLastLineAndSymbolOnIt() throws IOException {
+    // Inspired by IDEA-59439
+    String text = 
+      "This is a test document\n" +
+      "line1\n" +
+      "line2\n" +
+      "line3\n" +
+      "line4\n" +
+      "line5\n" +
+      "line6<caret>";
+    
+    init(700, text);
+    type("\nq");
+    assertEquals(new VisualPosition(7, 1), myEditor.offsetToVisualPosition(myEditor.getDocument().getTextLength()));
+  }
+  
   //private void init(final int visibleWidth) throws Exception {
   //  configureByFile(PATH + getFileName());
   //  initCommon(visibleWidth);

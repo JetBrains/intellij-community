@@ -37,6 +37,8 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -336,8 +338,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
           AndroidPlatform platform = getConfiguration().getAndroidPlatform();
           if (platform != null) {
             final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-            if (model.findLibraryOrderEntry(platform.getLibrary()) == null) {
-              LibraryOrderEntry entry = model.addLibraryEntry(platform.getLibrary());
+            Library library = platform.getLibrary();
+            if (!((LibraryEx)library).isDisposed() && model.findLibraryOrderEntry(library) == null) {
+              LibraryOrderEntry entry = model.addLibraryEntry(library);
               entry.setScope(DependencyScope.PROVIDED);
             }
             ApplicationManager.getApplication().runWriteAction(new Runnable() {

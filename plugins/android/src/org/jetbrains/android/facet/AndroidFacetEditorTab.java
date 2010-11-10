@@ -370,7 +370,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       pathFromConfig = toAbsolutePath(pathFromConfig);
     }
     String pathFromTextField = absPathFromTextField.trim();
-    return !Comparing.equal(pathFromConfig, pathFromTextField);
+    return !FileUtil.pathsEqual(pathFromConfig, pathFromTextField);
   }
 
   // if library was removed in the same project-structure dialog
