@@ -620,6 +620,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrimitiveTypesInForLoop5() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop6() throws Throwable { doPrimitiveTypeTest() }
 
+  public void testPrimitiveTypesInForLoopSpace() throws Throwable {
+    configure()
+    myFixture.type ' '
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   public void testSecondInvocationToFillCommonPrefix() throws Throwable {
     configure()
     type('a');

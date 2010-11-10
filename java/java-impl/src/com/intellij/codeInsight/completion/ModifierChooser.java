@@ -68,7 +68,7 @@ public class ModifierChooser
     });
 
     myMap.put(new OrFilter(new ClassFilter(PsiStatement.class), new ClassFilter(PsiCodeBlock.class)), new String[][]{
-      new String[]{"final", "synchronized"}
+      new String[]{"final"}
     });
 
     myMap.put(new ClassFilter(PsiParameterList.class), new String[][]{

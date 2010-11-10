@@ -541,6 +541,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
+    variant.addCompletion(PsiKeyword.SYNCHRONIZED, TailTypes.SYNCHRONIZED_LPARENTH);
   }
 
   @Override
