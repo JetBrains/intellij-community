@@ -198,6 +198,10 @@ public class NullityInferrer {
     }
 
     @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+    }
+
+    @Override
     public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       final PsiExpression condition = expression.getCondition();
       final PsiExpression thenExpression = expression.getThenExpression();
@@ -297,6 +301,10 @@ public class NullityInferrer {
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       sometimesNull = expressionIsSometimesNull(expression.getRExpression());
+    }
+
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
     }
 
     @Override
@@ -534,6 +542,12 @@ public class NullityInferrer {
           opposite = lOperand;
         }
         if (opposite != null && opposite.getType() == PsiType.NULL) {
+          if (parent.getParent() instanceof PsiAssertStatement) {
+            if (((PsiBinaryExpression)parent).getOperationTokenType() == JavaTokenType.NE) {
+              registerNotNullAnnotation(parameter);
+              return true;
+            }
+          }
           registerNullableAnnotation(parameter);
           return true;
         }
