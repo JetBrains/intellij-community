@@ -76,7 +76,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
 
   @Override
   public void reset() {
-    myLibManager.dropChanges();
+    myLibManager.reset();
     myPanel.resetTable();
   }
 

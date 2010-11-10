@@ -62,7 +62,7 @@ public class UI {
     ourColors.put("tooltip.error", Color.red);
     ourColors.put("tooltip.warning", Color.yellow.darker());
 
-    ourColors.put("toolbar.background", UIUtil.getPanelBackgound());
+    ourColors.put("toolbar.background", UIUtil.getPanelBackground());
     ourColors.put("toolbar.hover.background", UIUtil.getTreeSelectionBackground());
     ourColors.put("toolbar.selected.background", getColor("panel.custom.background"));
     ourColors.put("toolbar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());

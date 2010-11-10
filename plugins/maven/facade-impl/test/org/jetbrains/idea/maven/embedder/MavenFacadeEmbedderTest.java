@@ -51,7 +51,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
     super.tearDown();
   }
 
-  private void initEmbedder() {
+  private void initEmbedder() throws RemoteException {
     if (myEmbedder != null) releaseEmbedder();
 
     myEmbedderImpl = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));

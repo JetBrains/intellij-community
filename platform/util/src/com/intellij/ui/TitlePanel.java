@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -55,7 +57,7 @@ public class TitlePanel extends CaptionPanel {
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
-    myLabel.setForeground(active ? UIManager.getColor("Label.foreground") : Color.gray);
+    myLabel.setForeground(active ? UIUtil.getLabelForeground() : Color.gray);
   }
 
   public void setText(String titleText) {

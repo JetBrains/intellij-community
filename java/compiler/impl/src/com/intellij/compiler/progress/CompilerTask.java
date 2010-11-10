@@ -583,7 +583,7 @@ public class CompilerTask extends Task.Backgroundable {
         connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             connection.disconnect();
-            ProjectUtil.closeProject(project);
+            ProjectUtil.closeAndDispose(project);
           }
         });
         cancel();

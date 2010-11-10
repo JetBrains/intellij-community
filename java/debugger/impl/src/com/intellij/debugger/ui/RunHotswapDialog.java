@@ -105,7 +105,7 @@ public class RunHotswapDialog extends OptionsDialog {
     JLabel label = new JLabel(DebuggerBundle.message("hotswap.dialog.run.prompt"));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(label, BorderLayout.CENTER);
-    Icon icon = UIUtil.getOptionPanelQuestionIcon();
+    Icon icon = UIUtil.getQuestionIcon();
     if (icon != null) {
       label.setIcon(icon);
       label.setIconTextGap(7);

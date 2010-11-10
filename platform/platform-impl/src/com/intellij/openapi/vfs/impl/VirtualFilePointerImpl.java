@@ -62,21 +62,14 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     if (myFile != null) {
       return myFile.getName();
     }
-    else {
-      int index = myUrl.lastIndexOf('/');
-      return index >= 0 ? myUrl.substring(index + 1) : myUrl;
-    }
+    int index = myUrl.lastIndexOf('/');
+    return index >= 0 ? myUrl.substring(index + 1) : myUrl;
   }
 
   public VirtualFile getFile() {
     checkDisposed();
 
     update();
-    if (myFile != null && !myFile.isValid()) {
-      myUrl = myFile.getUrl();
-      myFile = null;
-      update();
-    }
     return myFile;
   }
 
@@ -84,6 +77,10 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   public String getUrl() {
     //checkDisposed(); no check here since Disposer might want to compute hashcode during dispose()
     update();
+    return getUrlNoUpdate();
+  }
+
+  private String getUrlNoUpdate() {
     return myUrl == null ? myFile.getUrl() : myUrl;
   }
 
@@ -151,6 +148,10 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     if (myLastUpdated == fsModCount) return;
     myLastUpdated = fsModCount;
 
+    if (myFile != null && !myFile.isValid()) {
+      myUrl = myFile.getUrl();
+      myFile = null;
+    }
     if (myFile == null) {
       LOG.assertTrue(myUrl != null, "Both file & url are null");
       myFile = myVirtualFileManager.findFileByUrl(myUrl);
@@ -166,7 +167,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   @Override
   public String toString() {
-    return myFile == null ? myUrl : myFile.getUrl();
+    return getUrlNoUpdate();
   }
 
   public void dispose() {
@@ -177,7 +178,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       if (TRACE_CREATION) {
         putUserData(KILL_TRACE, new Throwable());
       }
-      String url = getUrl();
+      String url = getUrlNoUpdate();
       disposed = true;
       ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(url, myListener);
     }

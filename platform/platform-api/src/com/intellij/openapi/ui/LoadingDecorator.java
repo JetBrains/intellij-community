@@ -173,7 +173,7 @@ public class LoadingDecorator {
           final Graphics2D g = mySnapshot.createGraphics();
           myPane.paint(g);
           final Component opaque = UIUtil.findNearestOpaque(this);
-          mySnapshotBg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackgound();
+          mySnapshotBg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
           g.dispose();
         }
         myProgress.resume();

@@ -15,24 +15,15 @@
  */
 package org.jetbrains.idea.maven.facade.embedder;
 
-import org.jetbrains.idea.maven.facade.MavenFacadeDownloadListener;
-
-import java.io.File;
 import java.rmi.RemoteException;
 
-public class MavenFacadeDownloadListenerWrapper {
-  private final MavenFacadeDownloadListener myWrappee;
-
-  public MavenFacadeDownloadListenerWrapper(MavenFacadeDownloadListener wrappee) {
-    myWrappee = wrappee;
+public class RuntimeRemoteException extends RuntimeException {
+  RuntimeRemoteException(RemoteException cause) {
+    super(cause);
   }
 
-  public void artifactDownloaded(File file, String relativePath) {
-    try {
-      myWrappee.artifactDownloaded(file, relativePath);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
+  @Override
+  public RemoteException getCause() {
+    return (RemoteException)super.getCause();
   }
 }

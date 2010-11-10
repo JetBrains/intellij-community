@@ -150,8 +150,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     ImportHelper importHelper = new ImportHelper(settings);
 
     PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(fqn, GlobalSearchScope.allScope(getProject()));
-        boolean b = importHelper.addImport(file, psiClass);
-        assertTrue(b);
+    boolean b = importHelper.addImport(file, psiClass);
+    assertTrue(b);
 
     assertOrder(file, expectedOrder);
   }
@@ -192,6 +192,22 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     String text = LoadTextUtil.loadText(vFile).toString();
     assertEquals(text, getFile().getText());
+  }
+  public void testConflictingClassesFromCurrentPackage() throws Throwable {
+    final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
+    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+        ImportHelper importHelper = new ImportHelper(settings);
+
+        PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.sql.Date", GlobalSearchScope.allScope(getProject()));
+        boolean b = importHelper.addImport((PsiJavaFile)file, psiClass);
+        assertFalse(b); // must fail
+      }
+    }.execute().throwException();
   }
 
   @DoNotWrapInCommand

@@ -75,7 +75,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
     myTitleLabel = new JLabel();
-    myTitleLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    myTitleLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     progressPanel.add(myTitleLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 5, 10), 0, 0));
 
     myProgressLabel = new JLabel();

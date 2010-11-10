@@ -197,7 +197,7 @@ public class NewProjectUtil {
                                            Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
       }
       if (exitCode == 1) { // "No" option
-        ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
+        ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
       }
     }
   }
