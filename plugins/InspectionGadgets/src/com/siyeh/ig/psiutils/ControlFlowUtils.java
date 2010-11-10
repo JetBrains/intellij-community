@@ -103,20 +103,25 @@ public class ControlFlowUtils{
         final PsiExpression test = loopStatement.getCondition();
         final PsiStatement body = loopStatement.getBody();
         return statementMayCompleteNormally(body) && !BoolUtils.isTrue(test)
-                || statementIsBreakTarget(loopStatement);
+                || statementIsBreakTarget(loopStatement)
+                || statementContainsContinueToAncestor(loopStatement);
     }
 
     private static boolean whileStatementMayReturnNormally(
             @NotNull PsiWhileStatement loopStatement){
         final PsiExpression test = loopStatement.getCondition();
         return !BoolUtils.isTrue(test)
-                || statementIsBreakTarget(loopStatement);
+                || statementIsBreakTarget(loopStatement)
+                || statementContainsContinueToAncestor(loopStatement);
     }
 
     private static boolean forStatementMayReturnNormally(
             @NotNull PsiForStatement loopStatement){
         final PsiExpression test = loopStatement.getCondition();
         if(statementIsBreakTarget(loopStatement)){
+            return true;
+        }
+        if (statementContainsContinueToAncestor(loopStatement)) {
             return true;
         }
         if(test == null){
@@ -274,6 +279,19 @@ public class ControlFlowUtils{
         final BreakFinder breakFinder = new BreakFinder(statement);
         statement.accept(breakFinder);
         return breakFinder.breakFound();
+    }
+
+    private static boolean statementContainsContinueToAncestor(
+            @NotNull PsiStatement statement){
+        PsiElement parent = statement.getParent();
+        while (parent instanceof PsiLabeledStatement) {
+            statement = (PsiStatement) parent;
+            parent = parent.getParent();
+        }
+        final ContinueToAncestorFinder continueToAncestorFinder =
+                new ContinueToAncestorFinder(statement);
+        statement.accept(continueToAncestorFinder);
+        return continueToAncestorFinder.continueToAncestorFound();
     }
 
     public static boolean statementContainsReturn(
@@ -691,6 +709,43 @@ public class ControlFlowUtils{
                 return;
             }
             containsCallToMethod = true;
+        }
+    }
+
+    private static class ContinueToAncestorFinder
+            extends JavaRecursiveElementVisitor {
+
+        private final PsiStatement statement;
+        private boolean found = false;
+
+        public ContinueToAncestorFinder(PsiStatement statement) {
+            this.statement = statement;
+        }
+
+        @Override
+        public void visitContinueStatement(
+                PsiContinueStatement continueStatement) {
+            if (found) {
+                return;
+            }
+            super.visitContinueStatement(continueStatement);
+            final PsiIdentifier labelIdentifier =
+                    continueStatement.getLabelIdentifier();
+            if (labelIdentifier == null) {
+                return;
+            }
+            final PsiStatement continuedStatement =
+                    continueStatement.findContinuedStatement();
+            if (continuedStatement == null) {
+                return;
+            }
+            if (PsiTreeUtil.isAncestor(continuedStatement, statement, true)) {
+                found = true;
+            }
+        }
+
+        public boolean continueToAncestorFound() {
+            return found;
         }
     }
 }
