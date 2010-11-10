@@ -63,6 +63,7 @@ public class IdeaSpecificSettings {
   @NonNls private static final String PROJECT_RELATED = "project-related";
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
+  @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
 
@@ -155,12 +156,20 @@ public class IdeaSpecificSettings {
   private static void replaceCollapsedByEclipseSourceRoots(Element libElement, Library.ModifiableModel modifiableModel) {
     String[] srcUrlsFromClasspath = modifiableModel.getUrls(OrderRootType.SOURCES);
     LOG.assertTrue(srcUrlsFromClasspath.length <= 1);
+    final String eclipseUrl = srcUrlsFromClasspath.length > 0 ? srcUrlsFromClasspath[0] : null;
     for (Object r : libElement.getChildren(SRCROOT_ATTR)) {
       final String url = ((Element)r).getAttributeValue("url");
-      modifiableModel.addRoot(url, OrderRootType.SOURCES);
-      if (srcUrlsFromClasspath != null && srcUrlsFromClasspath.length == 1 && areUrlsPointTheSame(url, srcUrlsFromClasspath[0])) {  //remove compound root
-        modifiableModel.removeRoot(srcUrlsFromClasspath[0], OrderRootType.SOURCES);
-        srcUrlsFromClasspath = null;
+      final String bindAttr = ((Element)r).getAttributeValue(SRCROOT_BIND_ATTR);
+      boolean notBind = bindAttr != null && !Boolean.parseBoolean(bindAttr);
+      if (notBind) {
+        modifiableModel.addRoot(url, OrderRootType.SOURCES);
+      }
+      else if (eclipseUrl != null && areUrlsPointTheSame(url, eclipseUrl) && !Comparing.strEqual(url, eclipseUrl)) {  //todo lost already configured additional src roots
+        modifiableModel.addRoot(url, OrderRootType.SOURCES);
+        if (srcUrlsFromClasspath != null && srcUrlsFromClasspath.length == 1) {  //remove compound root
+          modifiableModel.removeRoot(eclipseUrl, OrderRootType.SOURCES);
+          srcUrlsFromClasspath = null;
+        }
       }
     }
   }
@@ -278,9 +287,20 @@ public class IdeaSpecificSettings {
       element.setAttribute("scope", scope.name());
       if (libraryEntry.isModuleLevel()) {
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
+        String eclipseUrl = null;
+        if (urls.length > 0) {
+          eclipseUrl = urls[0];
+          final int jarSeparatorIdx = urls[0].indexOf(JarFileSystem.JAR_SEPARATOR);
+          if (jarSeparatorIdx > -1) {
+            eclipseUrl = eclipseUrl.substring(0, jarSeparatorIdx);
+          }
+        }
         for (String url : urls) {
           Element srcElement = new Element(SRCROOT_ATTR);
           srcElement.setAttribute("url", url);
+          if (!areUrlsPointTheSame(url, eclipseUrl)) {
+            srcElement.setAttribute(SRCROOT_BIND_ATTR, String.valueOf(false));
+          }
           element.addContent(srcElement);
         }
 
