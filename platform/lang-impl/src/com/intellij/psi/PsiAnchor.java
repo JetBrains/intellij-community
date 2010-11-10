@@ -19,6 +19,7 @@ package com.intellij.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
@@ -40,6 +41,7 @@ import java.util.Set;
  * @author db
  */
 public abstract class PsiAnchor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiAnchor");
   @Nullable
   public abstract PsiElement retrieve();
   public abstract PsiFile getFile();
@@ -47,6 +49,8 @@ public abstract class PsiAnchor {
   public abstract int getEndOffset();
 
   public static PsiAnchor create(final PsiElement element) {
+    LOG.assertTrue(element.isValid());
+
     if (element instanceof PsiFile) {
       return new HardReference(element);
     }
