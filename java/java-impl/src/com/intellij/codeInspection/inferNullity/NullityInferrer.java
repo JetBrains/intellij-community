@@ -199,8 +199,16 @@ public class NullityInferrer {
 
     @Override
     public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-      neverNull = expressionIsNeverNull(expression.getThenExpression()) &&
-                  expressionIsNeverNull(expression.getElseExpression());
+      final PsiExpression condition = expression.getCondition();
+      final PsiExpression thenExpression = expression.getThenExpression();
+      final PsiExpression elseExpression = expression.getElseExpression();
+      if (canTrunkImpossibleBrunch(condition, elseExpression)) {
+        neverNull = expressionIsNeverNull(thenExpression);
+        return;
+      }
+
+      neverNull = expressionIsNeverNull(thenExpression) ||
+                  expressionIsNeverNull(elseExpression);
     }
 
     @Override
@@ -241,6 +249,37 @@ public class NullityInferrer {
     }
   }
 
+  private static boolean trunkImpossibleBrunch(PsiExpression condition,
+                                               PsiExpression elseExpression,
+                                               PsiExpression rOperand,
+                                               PsiExpression lOperand) {
+    if (rOperand instanceof PsiLiteralExpression && "null".equals(rOperand.getText())) {
+      if (lOperand instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)lOperand).resolve();
+        if (resolve instanceof PsiVariable) {
+          if (((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ) {
+            if (elseExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)elseExpression).resolve() == resolve) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean canTrunkImpossibleBrunch(PsiExpression condition, PsiExpression elseExpression) {
+    if (condition instanceof PsiBinaryExpression) {
+      final PsiExpression rOperand = ((PsiBinaryExpression)condition).getROperand();
+      final PsiExpression lOperand = ((PsiBinaryExpression)condition).getLOperand();
+      if (trunkImpossibleBrunch(condition, elseExpression, rOperand, lOperand) ||
+          trunkImpossibleBrunch(condition, elseExpression, lOperand, rOperand)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class ExpressionIsSometimesNullVisitor extends JavaRecursiveElementWalkingVisitor{
     private boolean sometimesNull = false;
 
@@ -262,8 +301,16 @@ public class NullityInferrer {
 
     @Override
     public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-      sometimesNull = expressionIsSometimesNull(expression.getThenExpression()) ||
-                      expressionIsSometimesNull(expression.getElseExpression());
+      final PsiExpression condition = expression.getCondition();
+      final PsiExpression thenExpression = expression.getThenExpression();
+      final PsiExpression elseExpression = expression.getElseExpression();
+      if (canTrunkImpossibleBrunch(condition, elseExpression)) {
+        sometimesNull = expressionIsSometimesNull(thenExpression);
+        return;
+      }
+
+      sometimesNull = expressionIsSometimesNull(thenExpression) ||
+                      expressionIsSometimesNull(elseExpression);
     }
 
     @Override
