@@ -26,8 +26,10 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -463,6 +465,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
         typeSelectorManager.setAllOccurences(choice != OccurrencesChooser.ReplaceChoice.NO);
+        final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
         final Runnable runnable =
@@ -482,8 +485,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                     @Override
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
                       final PsiTypeElement typeElement = elementToRename.getTypeElement();
-                      builder.replaceElement(typeElement, "Variable_Type", ReassignVariableUtil
-                        .createExpression(typeSelectorManager, typeElement.getText()), false, true);
+                      builder.replaceElement(typeElement, "Variable_Type",
+                                             ReassignVariableUtil.createExpression(expression, typeElement.getText()), false, true);
                     }
                   };
                   renamer.setAdvertisementText(
