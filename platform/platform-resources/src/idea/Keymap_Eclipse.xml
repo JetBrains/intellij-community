@@ -65,6 +65,7 @@
     <action id="EditorDeleteLine">
       <keyboard-shortcut first-keystroke="control D" />
     </action>
+    <action id="EditorDuplicate"/>
     <action id="EditorDuplicateLines">
       <keyboard-shortcut first-keystroke="control alt DOWN" />
     </action>
