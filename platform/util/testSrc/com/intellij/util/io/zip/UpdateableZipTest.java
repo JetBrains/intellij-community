@@ -130,7 +130,7 @@ public class UpdateableZipTest extends TestCase {
 
 
   private File createTestUtilZip() throws Exception {
-    File zipFile = File.createTempFile("test", ".zip");
+    File zipFile = FileUtil.createTempFile("test", ".zip");
     ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
     appendEntry(zos, "/first", "first".getBytes());

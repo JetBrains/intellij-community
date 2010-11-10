@@ -73,7 +73,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     final StringBuilder sb = new StringBuilder();
     if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
     sb.append("\"").append(name).append("\"");
-    if (file != null) {
+    if (file != null && file.isPhysical()) {
       sb.append(" [").append(file.getName()).append("]");
     }
     return sb.toString();

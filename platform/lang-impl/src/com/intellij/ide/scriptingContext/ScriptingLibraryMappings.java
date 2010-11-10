@@ -75,6 +75,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   @Override
   public Collection<ScriptingLibraryTable.LibraryModel> getAvailableValues(VirtualFile file) {
+    myLibraryManager.reset();
     List<ScriptingLibraryTable.LibraryModel> libraries = getSingleLibraries();
     if (myCompoundLibMap.containsKey(file)) {
       libraries.add(myCompoundLibMap.get(file));

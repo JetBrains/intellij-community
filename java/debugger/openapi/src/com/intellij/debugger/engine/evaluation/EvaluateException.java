@@ -53,4 +53,17 @@ public class EvaluateException extends Exception {
   public void setTargetException(final ObjectReference targetException) {
     myTargetException = targetException;
   }
+
+  public String getMessage() {
+    final String errorMessage = super.getMessage();
+    if (errorMessage != null) {
+      return errorMessage;
+    }
+    final Throwable cause = getCause();
+    final String causeMessage = cause != null? cause.getMessage() : null;
+    if (causeMessage != null) {
+      return causeMessage;
+    }
+    return "unknown error";
+  }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.android.maven;
 
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
@@ -51,7 +52,7 @@ import java.util.Map;
  */
 public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
   public AndroidFacetImporter() {
-    super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", new AndroidFacetType(), "Android");
+    super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", FacetType.findInstance(AndroidFacetType.class), "Android");
   }
 
   @Override

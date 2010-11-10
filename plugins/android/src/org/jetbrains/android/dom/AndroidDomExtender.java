@@ -25,10 +25,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -60,6 +57,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -93,6 +91,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                     @NotNull StyleableDefinition[] styleables,
                                                     @Nullable String namespace,
                                                     DomExtensionsRegistrar registrar,
+                                                    MyAttributeProcessor processor,
                                                     String... skipNames) {
     Set<String> skippedAttrSet = new HashSet<String>();
     Collections.addAll(skippedAttrSet, skipNames);
@@ -107,7 +106,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
         String attrName = attrDef.getName();
         if (!skippedAttrSet.contains(attrName)) {
           skippedAttrSet.add(attrName);
-          registerAttribute(attrDef, namespace, registrar);
+          registerAttribute(attrDef, namespace, registrar, processor, element);
         }
       }
     }
@@ -120,7 +119,15 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     return formats.size() > 1;
   }
 
-  private static void registerAttribute(@NotNull AttributeDefinition attrDef, String namespaceKey, DomExtensionsRegistrar registrar) {
+  private interface MyAttributeProcessor {
+    void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element);
+  }
+
+  private static void registerAttribute(@NotNull AttributeDefinition attrDef,
+                                        String namespaceKey,
+                                        DomExtensionsRegistrar registrar,
+                                        @Nullable MyAttributeProcessor processor,
+                                        @NotNull DomElement element) {
     XmlName xmlName = new XmlName(attrDef.getName(), namespaceKey);
     Set<AttributeFormat> formats = attrDef.getFormats();
     Class valueClass = formats.size() == 1 ? getValueClass(formats.iterator().next()) : String.class;
@@ -130,14 +137,18 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (converter != null) {
       extension.setConverter(converter, mustBeSoft(converter, attrDef.getFormats()));
     }
+    if (processor != null) {
+      processor.process(xmlName, extension, element);
+    }
   }
 
   protected static void registerAttributes(AndroidFacet facet,
                                            DomElement element,
                                            @NotNull String[] styleableNames,
-                                           DomExtensionsRegistrar registrar) {
-    registerAttributes(facet, element, styleableNames, null, registrar);
-    registerAttributes(facet, element, styleableNames, SYSTEM_RESOURCE_PACKAGE, registrar);
+                                           DomExtensionsRegistrar registrar,
+                                           MyAttributeProcessor processor) {
+    registerAttributes(facet, element, styleableNames, null, registrar, processor);
+    registerAttributes(facet, element, styleableNames, SYSTEM_RESOURCE_PACKAGE, registrar, processor);
   }
 
   private static StyleableDefinition[] getStyleables(@NotNull AttributeDefinitions definitions, @NotNull String[] names) {
@@ -157,7 +168,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                            @Nullable String resPackage,
                                            DomExtensionsRegistrar registrar,
                                            String... skipNames) {
-    registerAttributes(facet, element, new String[]{styleableName}, resPackage, registrar, skipNames);
+    registerAttributes(facet, element, new String[]{styleableName}, resPackage, registrar, null, skipNames);
   }
 
   protected static void registerAttributes(AndroidFacet facet,
@@ -165,6 +176,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                            @NotNull String[] styleableNames,
                                            @Nullable String resPackage,
                                            DomExtensionsRegistrar registrar,
+                                           MyAttributeProcessor processor,
                                            String... skipNames) {
     ResourceManager manager = facet.getResourceManager(resPackage);
     if (manager == null) return;
@@ -172,7 +184,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (attrDefs == null) return;
     StyleableDefinition[] styleables = getStyleables(attrDefs, styleableNames);
     String namespace = getNamespaceKeyByResourcePackage(facet, resPackage);
-    registerStyleableAttributes(element, styleables, namespace, registrar, skipNames);
+    registerStyleableAttributes(element, styleables, namespace, registrar, processor, skipNames);
   }
 
   @NotNull
@@ -195,11 +207,12 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
   protected static void registerAttributesForClassAndSuperclasses(AndroidFacet facet,
                                                                   DomElement element,
                                                                   PsiClass c,
-                                                                  DomExtensionsRegistrar registrar) {
+                                                                  DomExtensionsRegistrar registrar,
+                                                                  MyAttributeProcessor processor) {
     while (c != null) {
       String styleableName = c.getName();
       if (styleableName != null) {
-        registerAttributes(facet, element, new String[]{styleableName}, registrar);
+        registerAttributes(facet, element, new String[]{styleableName}, registrar, processor);
       }
       c = getSuperclass(c);
     }
@@ -241,7 +254,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     PsiClass c = prefClassMap.get(prefClassName);
 
     // register attributes by preference class
-    registerAttributesForClassAndSuperclasses(facet, element, c, registrar);
+    registerAttributesForClassAndSuperclasses(facet, element, c, registrar, null);
 
     //register attributes by widget
     String suffix = "Preference";
@@ -249,7 +262,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       String widgetClassName = prefClassName.substring(0, prefClassName.length() - suffix.length());
       Map<String, PsiClass> viewClassMap = getViewClassMap(facet);
       PsiClass widgetClass = viewClassMap.get(widgetClassName);
-      registerAttributesForClassAndSuperclasses(facet, element, widgetClass, registrar);
+      registerAttributesForClassAndSuperclasses(facet, element, widgetClass, registrar, null);
     }
 
     if (c != null && isPreference(prefClassMap, c)) {
@@ -277,7 +290,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     final String styleableName = AndroidAnimationUtils.getStyleableNameByTagName(tagName);
     PsiClass c = facet.findClass(AndroidUtils.ANIMATION_PACKAGE + '.' + styleableName);
     if (c != null) {
-      registerAttributesForClassAndSuperclasses(facet, element, c, registrar);
+      registerAttributesForClassAndSuperclasses(facet, element, c, registrar, null);
     }
     else {
       registerAttributes(facet, element, styleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
@@ -303,30 +316,67 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     return ArrayUtil.toStringArray(names);
   }
 
-  private static void registerLayoutAttributes(AndroidFacet facet, DomElement element, XmlTag tag, DomExtensionsRegistrar registrar) {
+  private static void registerLayoutAttributes(AndroidFacet facet,
+                                               DomElement element,
+                                               XmlTag tag,
+                                               DomExtensionsRegistrar registrar,
+                                               MyAttributeProcessor processor) {
     XmlTag parentTag = tag.getParentTag();
     Map<String, PsiClass> map = getViewClassMap(facet);
     if (parentTag != null) {
       PsiClass c = map.get(parentTag.getName());
       while (c != null) {
-        registerLayoutAttributes(facet, element, c, registrar);
+        registerLayoutAttributes(facet, element, c, registrar, processor);
         c = getSuperclass(c);
       }
     }
     else {
       for (String className : map.keySet()) {
         PsiClass c = map.get(className);
-        registerLayoutAttributes(facet, element, c, registrar);
+        registerLayoutAttributes(facet, element, c, registrar, processor);
       }
     }
   }
 
-  private static void registerLayoutAttributes(AndroidFacet facet, DomElement element, PsiClass c, DomExtensionsRegistrar registrar) {
+  private static void registerLayoutAttributes(AndroidFacet facet,
+                                               DomElement element,
+                                               PsiClass c,
+                                               DomExtensionsRegistrar registrar,
+                                               MyAttributeProcessor processor) {
     String styleableName = c.getName();
     if (styleableName != null) {
       for (String suf : LAYOUT_ATTRIBUTES_SUFS) {
-        registerAttributes(facet, element, new String[]{styleableName + suf}, registrar);
+        registerAttributes(facet, element, new String[]{styleableName + suf}, registrar, processor);
       }
+    }
+  }
+
+  private static final MyAttributeProcessor ourLayoutAttrsProcessor = new MyAttributeProcessor() {
+    @Override
+    public void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element) {
+      if (element instanceof LayoutViewElement &&
+          SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey()) &&
+          ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
+        extension.addCustomAnnotation(new MyRequired());
+      }
+    }
+  };
+
+  private static class MyRequired implements Required {
+    public boolean value() {
+      return true;
+    }
+
+    public boolean nonEmpty() {
+      return true;
+    }
+
+    public boolean identifier() {
+      return false;
+    }
+
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
     }
   }
 
@@ -339,20 +389,20 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (element instanceof Include) {
       for (String className : map.keySet()) {
         PsiClass c = map.get(className);
-        registerLayoutAttributes(facet, element, c, registrar);
+        registerLayoutAttributes(facet, element, c, registrar, ourLayoutAttrsProcessor);
       }
       return;
     }
     String tagName = tag.getName();
     if (!tagName.equals("view")) {
       PsiClass c = map.get(tagName);
-      registerAttributesForClassAndSuperclasses(facet, element, c, registrar);
+      registerAttributesForClassAndSuperclasses(facet, element, c, registrar, ourLayoutAttrsProcessor);
     }
     else {
       String[] styleableNames = getClassNames(map.values());
-      registerAttributes(facet, element, styleableNames, registrar);
+      registerAttributes(facet, element, styleableNames, registrar, ourLayoutAttrsProcessor);
     }
-    registerLayoutAttributes(facet, element, tag, registrar);
+    registerLayoutAttributes(facet, element, tag, registrar, ourLayoutAttrsProcessor);
 
     for (String viewClassName : map.keySet()) {
       PsiClass viewClass = map.get(viewClassName);
@@ -376,7 +426,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (attrDefs == null) return;
     StyleableDefinition styleable = attrDefs.getStyleableByName(styleableName);
     if (styleable == null) return;
-    registerStyleableAttributes(element, new StyleableDefinition[]{styleable}, SdkConstants.NS_RESOURCES, registrar, skipNames);
+    registerStyleableAttributes(element, new StyleableDefinition[]{styleable}, SdkConstants.NS_RESOURCES, registrar, null, skipNames);
 
     Set<String> subtagSet = new HashSet<String>();
     Collections.addAll(subtagSet, AndroidManifestUtils.getStaticallyDefinedSubtags(element));
@@ -395,7 +445,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     AndroidFacet facet = AndroidFacet.getInstance(element);
     if (facet == null) return;
     XmlTag tag = element.getXmlTag();
-    registerExistingAttributes(facet, tag, registrar);
+    registerExistingAttributes(facet, tag, registrar, element);
     String tagName = tag.getName();
     Set<String> registeredSubtags = new HashSet<String>();
     if (element instanceof ManifestElement) {
@@ -449,7 +499,10 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
   }
 
-  private static void registerExistingAttributes(AndroidFacet facet, XmlTag tag, DomExtensionsRegistrar registrar) {
+  private static void registerExistingAttributes(AndroidFacet facet,
+                                                 XmlTag tag,
+                                                 DomExtensionsRegistrar registrar,
+                                                 AndroidDomElement element) {
     XmlAttribute[] attrs = tag.getAttributes();
     for (XmlAttribute attr : attrs) {
       String localName = attr.getLocalName();
@@ -460,7 +513,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
             attrDef = new AttributeDefinition(localName);
           }
           String namespace = attr.getNamespace();
-          registerAttribute(attrDef, namespace.length() > 0 ? namespace : null, registrar);
+          registerAttribute(attrDef, namespace.length() > 0 ? namespace : null, registrar, null, element);
         }
       }
     }

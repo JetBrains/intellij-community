@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
       }
     });
 
-    putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(this);
     if (SystemInfo.isWindowsXP) {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
@@ -584,7 +585,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   public Icon getExpandedHandle() {
     if (myExpandedHandle == null) {
-      myExpandedHandle = UIManager.getIcon("Tree.expandedIcon");
+      myExpandedHandle = UIUtil.getTreeExpandedIcon();
     }
 
     return myExpandedHandle;
@@ -592,7 +593,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   public Icon getCollapsedHandle() {
     if (myCollapsedHandle == null) {
-      myCollapsedHandle = UIManager.getIcon("Tree.collapsedIcon");
+      myCollapsedHandle = UIUtil.getTreeCollapsedIcon();
     }
 
     return myCollapsedHandle;

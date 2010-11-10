@@ -154,7 +154,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     //     }
     // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
     // So, we check if it should be preserved and restore it after formatting if necessary
-    boolean fixCaretPosition = false;
+    int visualColumnToRestore = -1;
+    
     if (editor != null) {
       Document document = editor.getDocument();
       int caretOffset = editor.getCaretModel().getOffset();
@@ -162,13 +163,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       CharSequence text = document.getCharsSequence();
       int caretLine = document.getLineNumber(caretOffset);
       int lineStartOffset = document.getLineStartOffset(caretLine);
-      fixCaretPosition = true;
+      boolean fixCaretPosition = true;
       for (int i = caretOffset; i>= lineStartOffset; i--) {
         char c = text.charAt(i);
         if (c != ' ' && c != '\t' && c != '\n') {
           fixCaretPosition = false;
           break;
         }
+      }
+      if (fixCaretPosition) {
+        visualColumnToRestore = editor.getCaretModel().getVisualPosition().column;
       }
     }
     
@@ -190,37 +194,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
                                           formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
     }
 
-    if (!fixCaretPosition) {
+    if (visualColumnToRestore < 0) {
       return;
     }
     CaretModel caretModel = editor.getCaretModel();
-    String indent = getLineIndent(file, caretModel.getOffset());
-    if (indent == null) {
-      return;
-    }
-    int tabSize = getSettings().getTabSize(file.getFileType());
-    int indentColumn = indentInVisualColumns(indent, tabSize);
     VisualPosition position = caretModel.getVisualPosition();
-    if (indentColumn != position.column) {
-      caretModel.moveToVisualPosition(new VisualPosition(position.line, indentColumn));
+    if (visualColumnToRestore != position.column) {
+      caretModel.moveToVisualPosition(new VisualPosition(position.line, visualColumnToRestore));
     }
-  }
-  
-  private static int indentInVisualColumns(String indent, int tabSize) {
-    if (tabSize <= 1) {
-      return indent.length();
-    }
-    int result = 0;
-    for (int i = 0; i < indent.length(); i++) {
-      char c = indent.charAt(i);
-      if (c == '\t') {
-        result += tabSize - result % tabSize;
-      }
-      else {
-        result++;
-      }
-    }
-    return result;
   }
 
   private PsiElement reformatRangeImpl(final PsiElement element,

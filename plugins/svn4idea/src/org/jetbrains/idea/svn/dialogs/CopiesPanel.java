@@ -131,7 +131,7 @@ public class CopiesPanel {
 
   private JTextField createField(final String text) {
     final JTextField field = new JTextField(text);
-    field.setBackground(UIUtil.getPanelBackgound());
+    field.setBackground(UIUtil.getPanelBackground());
     field.setEditable(false);                               
     field.setBorder(null);
     field.setFocusable(false);

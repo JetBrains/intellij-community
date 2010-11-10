@@ -389,7 +389,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }, ProjectBundle.message("project.load.progress"), true, project);
 
     if (!ok) {
-      closeProject(project, false);
+      closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
@@ -850,7 +850,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           return;
         }
 
-        if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
+        if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
           application.runWriteAction(new Runnable() {
             public void run() {
               for (final IFile originalFile : original) {
@@ -874,10 +874,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   */
 
   public boolean closeProject(final Project project) {
-    return closeProject(project, true);
+    return closeProject(project, true, false);
   }
 
-  private boolean closeProject(final Project project, final boolean save) {
+  private boolean closeProject(final Project project, final boolean save, final boolean dispose) {
     if (!isProjectOpened(project)) return true;
     if (!canClose(project)) return false;
 
@@ -889,22 +889,37 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         project.save();
       }
 
-      if (ensureCouldCloseIfUnableToSave(project)) {
-        fireProjectClosing(project);
-
-        myOpenProjects.remove(project);
-        cacheOpenProjects();
-
-        myChangedProjectFiles.remove(project);
-        fireProjectClosed(project);
+      if (!ensureCouldCloseIfUnableToSave(project)) {
+        return false;
       }
-      else return false;
+
+      fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myOpenProjects.remove(project);
+          cacheOpenProjects();
+
+          myChangedProjectFiles.remove(project);
+
+          fireProjectClosed(project);
+
+          if (dispose) {
+            Disposer.dispose(project);
+          }
+        }
+      });
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());
     }
 
     return true;
+  }
+
+  @Override
+  public boolean closeAndDispose(@NotNull final Project project) {
+    return closeProject(project, true, true);
   }
 
   private void fireProjectClosing(Project project) {

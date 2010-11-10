@@ -58,11 +58,11 @@ public abstract class CachedValueBase<T> {
       return new Data<T>(value, null, null);
     }
 
-    TLongArrayList timeStamps = new TLongArrayList();
-    List<Object> deps = new ArrayList<Object>();
+    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
+    List<Object> deps = new ArrayList<Object>(dependencies.length);
     collectDependencies(timeStamps, deps, dependencies);
 
-    return  new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
+    return new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {

@@ -111,7 +111,7 @@ public class UIUtil {
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
     if (component instanceof JLabel) {
-      Color color = UIManager.getColor(enabled ? "Label.foreground" : "Label.disabledForeground");
+      Color color = enabled ? getLabelForeground() : UIManager.getColor("Label.disabledForeground");
       if (color != null) {
         component.setForeground(color);
       }
@@ -198,8 +198,11 @@ public class UIUtil {
     return UIManager.getIcon("OptionPane.warningIcon");
   }
 
+  /**
+   * @deprecated use com.intellij.util.ui.UIUtil#getQuestionIcon()
+   */
   public static Icon getOptionPanelQuestionIcon() {
-    return UIManager.getIcon("OptionPane.questionIcon");
+    return getQuestionIcon();
   }
 
   @NotNull
@@ -300,8 +303,11 @@ public class UIUtil {
     return UIManager.getColor("textInactiveText");
   }
 
+  /**
+   * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()
+   */
   public static Color getActiveTextFieldBackgroundColor() {
-    return UIManager.getColor("TextField.background");
+    return getTextFieldBackground();
   }
 
   public static Color getInactiveTextFieldBackgroundColor() {
@@ -320,8 +326,11 @@ public class UIUtil {
     return UIManager.getColor("Tree.selectionForeground");
   }
 
+  /**
+   * @deprecated use com.intellij.util.ui.UIUtil#getInactiveTextColor()
+   */
   public static Color getTextInactiveTextColor() {
-    return UIManager.getColor("textInactiveText");
+    return getInactiveTextColor();
   }
 
   public static void installPopupMenuColorAndFonts(final JComponent contentPane) {
@@ -340,12 +349,12 @@ public class UIUtil {
     return UIManager.getColor("Tree.selectionBorderColor");
   }
 
-  public static Object getTreeRightChildIndent() {
-    return UIManager.get("Tree.rightChildIndent");
+  public static int getTreeRightChildIndent() {
+    return UIManager.getInt("Tree.rightChildIndent");
   }
 
-  public static Object getTreeLeftChildIndent() {
-    return UIManager.get("Tree.leftChildIndent");
+  public static int getTreeLeftChildIndent() {
+    return UIManager.getInt("Tree.leftChildIndent");
   }
 
   public static Color getToolTipBackground() {
@@ -402,7 +411,7 @@ public class UIUtil {
 
   public static Color getListBackground() {
     // Fixes most of the GTK+ L&F glitches
-    return UIUtil.isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
+    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
 
   public static Color getListForeground() {
@@ -418,7 +427,7 @@ public class UIUtil {
   }
 
   public static Color getTableFocusCellBackground() {
-    return UIManager.getColor("Table.focusCellBackground");
+    return UIManager.getColor(TABLE_FOCUS_CELL_BACKGROUND_PROPERTY);
   }
 
   public static Color getListSelectionBackground() {
@@ -494,11 +503,14 @@ public class UIUtil {
   }
 
   public static Color getTableFocusCellForeground() {
-    return UIManager.getColor("Table.focusCellForeground");
+  return UIManager.getColor("Table.focusCellForeground");
   }
 
+  /**
+   * @deprecated  use com.intellij.util.ui.UIUtil#getPanelBackground() instead
+   */
   public static Color getPanelBackgound() {
-    return UIManager.getColor("Panel.background");
+    return getPanelBackground();
   }
 
   public static Border getTextFieldBorder() {
@@ -1036,7 +1048,7 @@ public class UIUtil {
     URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
     String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
-    @Language("CSS")
+    //@Language("CSS")
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
       body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
@@ -1051,8 +1063,8 @@ public class UIUtil {
 
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() ||
-           "Nimbus".equals(UIManager.getLookAndFeel().getName()) ||
-           "GTK look and feel".equals(UIManager.getLookAndFeel().getName());
+           isUnderNimbusLookAndFeel() ||
+           isUnderGTKLookAndFeel();
   }
 
   public static Color getFocusedFillColor() {
@@ -1223,7 +1235,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit() {
     final HTMLEditorKit kit = new HTMLEditorKit();
 
-    Font font = UIManager.getFont("Label.font");
+    Font font = getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
@@ -1296,7 +1308,7 @@ public class UIUtil {
   @NonNls
   public static String toHtml(String html, final int hPadding) {
     html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
-    Font font = UIManager.getFont("Label.font");
+    Font font = getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
     return "<html><style>body { font-family: "
@@ -1396,8 +1408,8 @@ public class UIUtil {
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
-    private static final Icon TREE_COLLAPSED_ICON = (Icon)UIManager.get("Tree.collapsedIcon");
-    private static final Icon TREE_EXPANDED_ICON = (Icon)UIManager.get("Tree.expandedIcon");
+    private static final Icon TREE_COLLAPSED_ICON = getTreeCollapsedIcon();
+    private static final Icon TREE_EXPANDED_ICON = getTreeExpandedIcon();
     private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
     private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
 

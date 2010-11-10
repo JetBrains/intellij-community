@@ -181,7 +181,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
 
         @Override
         public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-            if (key.equals("name") && (nsURI == null || nsURI.length() == 0)) {
+            if (key.equals("name") && (nsURI == null || nsURI.length() == 0) && value != null) {
                 if (myMap.put(value, myKind) != null) {
                     myMap.put(value, Kind.ANYTHING);
                 }

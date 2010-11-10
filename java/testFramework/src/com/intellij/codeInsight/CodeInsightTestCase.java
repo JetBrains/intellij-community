@@ -139,7 +139,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
     File dir = createTempDirectory();
-    final File tempFile = File.createTempFile("aaa", "." + extension, dir);
+    final File tempFile = FileUtil.createTempFile(dir, "aaa", "." + extension, true);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {

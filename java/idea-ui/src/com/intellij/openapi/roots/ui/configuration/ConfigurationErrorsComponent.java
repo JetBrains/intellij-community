@@ -524,8 +524,9 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       if (myModel.getSize() == 0) {
         setBorder(null);
       } else {
-        if (getBorder() == null) setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
-                                                   BorderFactory.createLineBorder(UIUtil.getPanelBackgound().darker())));
+        if (getBorder() == null) setBorder(
+          BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
+                                             BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker())));
       }
 
       final List<ConfigurationError> errors = myModel.getErrors();

@@ -21,7 +21,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,8 +31,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -89,14 +86,8 @@ public class ProjectUtil {
   /**
    * @param project cannot be null
    */
-  public static boolean closeProject(@NotNull final Project project) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        if (!ProjectManagerEx.getInstanceEx().closeProject(project)) return false;
-        Disposer.dispose(project);
-        return true;
-      }
-    });
+  public static boolean closeAndDispose(@NotNull final Project project) {
+    return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
   }
 
   /**
@@ -158,7 +149,7 @@ public class ProjectUtil {
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = confirmOpenNewProject();
       if (exitCode == 1) { // "No" option
-        if (!closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
+        if (!closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
       else if (exitCode != 0) { // not "Yes"
         return null;

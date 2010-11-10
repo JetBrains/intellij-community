@@ -126,7 +126,7 @@ public class BrowserUtil {
   private static String redirectUrl(String url, @NonNls String urlString) throws IOException {
     if (url.indexOf('&') == -1 && (!urlString.startsWith("file:") || urlString.indexOf("#") == -1)) return urlString;
 
-    File redirect = File.createTempFile("redirect", ".html");
+    File redirect = FileUtil.createTempFile("redirect", ".html");
     redirect.deleteOnExit();
     FileWriter writer = new FileWriter(redirect);
     writer.write("<html><head></head><body><script type=\"text/javascript\">window.location=\"" + url + "\";</script></body></html>");

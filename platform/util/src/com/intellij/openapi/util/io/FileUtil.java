@@ -28,6 +28,7 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -52,8 +53,6 @@ public class FileUtil {
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
   private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L;
   private static String ourCanonicalTempPathCache = null;
-
-  //private static final byte[] BUFFER = new byte[1024 * 20];
 
   @Nullable
   public static String getRelativePath(File base, File file) {
@@ -370,6 +369,7 @@ public class FileUtil {
     int exceptionsCount = 0;
     while(true){
       try{
+        //noinspection SSBasedInspection
         return File.createTempFile(prefix, suffix, dir).getCanonicalFile();
       }
       catch(IOException e){ // Win32 createFileExclusively access denied
@@ -387,8 +387,9 @@ public class FileUtil {
     return ourCanonicalTempPathCache;
   }
 
-  public static void resetCanonicalTempPathCache() {
-    ourCanonicalTempPathCache = null;
+  @TestOnly
+  public static void resetCanonicalTempPathCache(final String tempPath) {
+    ourCanonicalTempPathCache = tempPath;
   }
 
   private static String calcCanonicalTempPath() {

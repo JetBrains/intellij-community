@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -30,8 +31,7 @@ public class SeparatorWithText extends JComponent {
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(VGAP, 0, VGAP, 0));
-    @NonNls final String labelFont = "Label.font";
-    setFont(UIManager.getFont(labelFont));
+    setFont(UIUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
   }
 

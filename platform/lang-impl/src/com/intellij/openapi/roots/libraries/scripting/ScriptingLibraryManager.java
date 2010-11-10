@@ -110,7 +110,7 @@ public class ScriptingLibraryManager {
     }
   }
 
-  public void dropChanges() {
+  public void reset() {
     myLibTable = null;
   }
 

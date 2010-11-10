@@ -54,20 +54,23 @@ public class MavenRehighlighter extends SimpleProjectComponent {
         rehighlight(myProject);
       }
 
-      public void scheduledImportsChanged() {
+      public void projectsScheduled() {
+      }
+
+      @Override
+      public void importAndResolveScheduled() {
       }
     });
 
     m.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         for (Pair<MavenProject, MavenProjectChanges> each : updated) {
           rehighlight(myProject, each.first);
         }
       }
 
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  NativeMavenProjectHolder nativeMavenProject,
-                                  Object message) {
+                                  NativeMavenProjectHolder nativeMavenProject) {
         rehighlight(myProject, projectWithChanges.first);
       }
 
@@ -75,7 +78,7 @@ public class MavenRehighlighter extends SimpleProjectComponent {
         rehighlight(myProject, project);
       }
 
-      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
+      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         rehighlight(myProject, projectWithChanges.first);
       }
 

@@ -57,9 +57,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +73,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -1430,6 +1426,8 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
         VirtualFile[] files = eachWindow.getFiles();
         for (int i = 0; i < files.length - 1 + 1; i++) {
           VirtualFile eachFile = files[i];
+          if (!eachFile.isValid()) continue;
+
           VirtualFile newFile = null;
           for (EditorFileSwapper each : swappers) {
             newFile = each.getFileToSwapTo(myProject, eachFile);

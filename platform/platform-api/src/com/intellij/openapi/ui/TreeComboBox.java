@@ -34,7 +34,7 @@ import java.util.Enumeration;
  * User: spLeaner
  */
 public class TreeComboBox extends JComboBox {
-  final static int INDENT = UIManager.getInt("Tree.leftChildIndent");
+  final static int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
 
   public TreeComboBox(@NotNull final TreeModel model) {
