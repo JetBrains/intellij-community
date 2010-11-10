@@ -2,7 +2,6 @@ package com.jetbrains.python.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.openapi.module.Module;
@@ -33,9 +32,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
   private static final String ID = "Python";
 
   public static PythonFacetType getInstance() {
-    final PythonFacetType facetType = (PythonFacetType)FacetTypeRegistry.getInstance().findFacetType(PythonFacet.ID);
-    assert facetType != null;
-    return facetType;
+    return findInstance(PythonFacetType.class);
   }
 
   public PythonFacetType() {
