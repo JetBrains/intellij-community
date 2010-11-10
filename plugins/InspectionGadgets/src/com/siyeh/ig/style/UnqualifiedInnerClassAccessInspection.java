@@ -261,13 +261,13 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (expression.isQualified()) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            if (reference.isQualified()) {
                 return;
             }
-            final PsiElement target = expression.resolve();
+            final PsiElement target = reference.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
@@ -276,7 +276,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             if (containingClass == null) {
                 return;
             }
-            registerError(expression, containingClass.getName());
+            registerError(reference, containingClass.getName());
         }
     }
 }
