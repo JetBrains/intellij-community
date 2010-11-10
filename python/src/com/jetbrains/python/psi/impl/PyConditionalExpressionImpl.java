@@ -20,11 +20,12 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
+    final PyExpression truePart = getTruePart();
     final PyExpression falsePart = getFalsePart();
-    if (falsePart == null) {
+    if (truePart == null || falsePart == null) {
       return null;
     }
-    return PyUnionType.union(context.getType(getTruePart()), context.getType(falsePart));
+    return PyUnionType.union(context.getType(truePart), context.getType(falsePart));
   }
 
   @Override
