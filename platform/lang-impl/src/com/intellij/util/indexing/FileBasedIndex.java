@@ -437,7 +437,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return index;
   }
 
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(ID<K, ?> indexId,
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(final ID<K, ?> indexId,
                                                                                        final KeyDescriptor<K> keyDescriptor,
                                                                                        MemoryIndexStorage<K, ?> storage) throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
@@ -446,19 +446,35 @@ public class FileBasedIndex implements ApplicationComponent {
 
     final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
       public void save(DataOutput out, Collection<K> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size());
-        for (K key : value) {
-          keyDescriptor.save(out, key);
+        try {
+          DataInputOutputUtil.writeINT(out, value.size());
+          for (K key : value) {
+            keyDescriptor.save(out, key);
+          }
+        }
+        catch (IOException e) {
+          throw e;
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException("Error saving data for index " + indexId, e);
         }
       }
 
       public Collection<K> read(DataInput in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(in);
-        final List<K> list = new ArrayList<K>();
-        for (int idx = 0; idx < size; idx++) {
-          list.add(keyDescriptor.read(in));
+        try {
+          final int size = DataInputOutputUtil.readINT(in);
+          final List<K> list = new ArrayList<K>();
+          for (int idx = 0; idx < size; idx++) {
+            list.add(keyDescriptor.read(in));
+          }
+          return list;
         }
-        return list;
+        catch (IOException e) {
+          throw e;
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException("Error reading data for index " + indexId, e);
+        }
       }
     };
     
