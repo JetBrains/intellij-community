@@ -40,7 +40,7 @@ public class MavenFacadeConsoleWrapper implements Logger {
         myWrappee.printMessage(level, message, throwable);
       }
       catch (RemoteException e) {
-        throw new RuntimeException(e);
+        //todo throw new RuntimeRemoteException(e); ???
       }
     }
   }
