@@ -191,16 +191,16 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
           for (PsiMethod method : psiClass.getMethods()) {
             final PsiModifierList modifiers = method.getModifierList();
             if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
-            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject())) continue;
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            if (ContainerUtil.find(parameters, new Condition<PsiParameter>() {
-              public boolean value(PsiParameter p) {
-                return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
-              }
-            }) == null) continue;
-            final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
-            if (!visitedSignatures.add(info.getMethodSignature())) continue;
-            myData.put(method, info);
+            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
+                ContainerUtil.find(method.getParameterList().getParameters(), new Condition<PsiParameter>() {
+                  public boolean value(PsiParameter p) {
+                    return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
+                  }
+                }) != null) {
+              final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
+              if (!visitedSignatures.add(info.getMethodSignature())) continue;
+              myData.put(method, info);
+            }
           }
         }
       }
