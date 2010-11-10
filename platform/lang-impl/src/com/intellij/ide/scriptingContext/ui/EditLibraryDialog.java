@@ -19,6 +19,7 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -42,8 +43,8 @@ public class EditLibraryDialog extends DialogWrapper {
   private static final int FILE_LOCATION_COL  = 0;
   private static final int FILE_TYPE_COL = 1;
 
-  private static final String SOURCE_TYPE = "Source";
-  private static final String COMPACT_TYPE = "Compact";
+  private final String mySourceTypeName;
+  private final String myCompactTypeName;
 
   private JPanel contentPane;
   private JTextField myLibName;
@@ -60,6 +61,8 @@ public class EditLibraryDialog extends DialogWrapper {
     super(true);
     setTitle(title);
     myProvider = provider;
+    mySourceTypeName = provider.getLibraryTypeName(OrderRootType.SOURCES);
+    myCompactTypeName = provider.getLibraryTypeName(OrderRootType.CLASSES);
     myAddFileButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -95,7 +98,7 @@ public class EditLibraryDialog extends DialogWrapper {
 
     TableColumn typeCol = myFileTable.getColumnModel().getColumn(FILE_TYPE_COL);
     typeCol.setMaxWidth(80);
-    MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {SOURCE_TYPE, COMPACT_TYPE}), myFileTableModel);
+    MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {mySourceTypeName, myCompactTypeName}), myFileTableModel);
     typeCol.setCellEditor(cellEditor);
   }
 
@@ -105,7 +108,7 @@ public class EditLibraryDialog extends DialogWrapper {
     myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
   }
 
-  private static class MyTableCellEditor extends DefaultCellEditor {
+  private class MyTableCellEditor extends DefaultCellEditor {
 
     private FileTableModel myFileTableModel;
     private VirtualFile myFile;
@@ -119,7 +122,7 @@ public class EditLibraryDialog extends DialogWrapper {
     public boolean stopCellEditing() {
       if (myFile != null) {
         Object value = getCellEditorValue();
-        myFileTableModel.setFileType(myFile, value.equals(COMPACT_TYPE));
+        myFileTableModel.setFileType(myFile, value.equals(myCompactTypeName));
       }
       return super.stopCellEditing();
     }
@@ -254,7 +257,7 @@ public class EditLibraryDialog extends DialogWrapper {
         case FILE_LOCATION_COL:
           return file;
         case FILE_TYPE_COL:
-          return myCompactFiles.contains(file) ? COMPACT_TYPE : SOURCE_TYPE;
+          return myCompactFiles.contains(file) ? myCompactTypeName : mySourceTypeName;
       }
       return "";
     }

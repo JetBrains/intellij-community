@@ -17,8 +17,10 @@ package com.intellij.ide.scriptingContext;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.sun.istack.internal.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,5 +38,8 @@ public abstract class LangScriptingContextProvider {
   public abstract ScriptingLibraryMappings getLibraryMappings(Project project);
 
   public abstract boolean isCompact(VirtualFile file);
+
+  @Nullable
+  public abstract String getLibraryTypeName(OrderRootType rootType);
 
 }
