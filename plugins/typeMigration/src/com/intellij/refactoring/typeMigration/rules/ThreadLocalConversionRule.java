@@ -75,7 +75,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
 
     if (context instanceof PsiReferenceExpression) {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression)context).getQualifierExpression();
-      return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), qualifierExpression != null ? qualifierExpression : (PsiExpression)context);
+      final PsiExpression expression = context.getParent() instanceof PsiMethodCallExpression && qualifierExpression != null
+                                       ? qualifierExpression
+                                       : (PsiExpression)context;
+      return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), expression);
     }
     else if (context instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;

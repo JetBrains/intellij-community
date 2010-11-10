@@ -163,7 +163,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
     }
     else if (methodName.equals("get")) {
       if (TypeConversionUtil.isAssignable(collectionType, arrayType.getComponentType())) {
-        return new TypeConversionDescriptor("$qualifier$.get($i$)", "$qualifier$[$i$]", (PsiExpression)context.getParent());
+        return new TypeConversionDescriptor("$qualifier$.get($i$)", "$qualifier$[$i$]", PsiTreeUtil.getParentOfType(context, PsiMethodCallExpression.class));
       }
     }
     else if (methodName.equals("set")) {

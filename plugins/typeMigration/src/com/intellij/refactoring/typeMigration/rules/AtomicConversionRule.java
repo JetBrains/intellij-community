@@ -176,7 +176,10 @@ public class AtomicConversionRule extends TypeConversionRule {
 
     if (context instanceof PsiReferenceExpression) {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression)context).getQualifierExpression();
-      return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()", qualifierExpression != null ? qualifierExpression : (PsiReferenceExpression)context );
+      final PsiExpression expression = context.getParent() instanceof PsiMethodCallExpression && qualifierExpression != null
+                                       ? qualifierExpression
+                                       : (PsiExpression)context;
+      return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()", expression);
     }
     else if (context instanceof PsiAssignmentExpression) {
       final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
