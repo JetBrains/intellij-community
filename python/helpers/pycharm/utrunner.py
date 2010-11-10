@@ -103,6 +103,7 @@ for arg in sys.argv[1:]:
 
     for module in modules:
       all.addTests(testLoader.loadTestsFromModule(module, True))
+
   elif len(a) == 2:
     # From testcase
     debug("/ from testcase " + a[1] + " in " + a[0])
@@ -123,6 +124,7 @@ for arg in sys.argv[1:]:
             # class is not a testcase inheritor
             all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
 
-debug("/ Loaded " + str(all.countTestCases()) + " tests")
-TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
-TeamcityTestRunner().run(all)
+if __name__ == "__main__":
+    debug("/ Loaded " + str(all.countTestCases()) + " tests")
+    TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
+    TeamcityTestRunner().run(all)
