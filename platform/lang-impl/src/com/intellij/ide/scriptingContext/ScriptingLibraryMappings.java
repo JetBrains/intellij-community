@@ -47,6 +47,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     return library.getName();
   }
 
+  public void reset() {
+    myLibraryManager.reset();
+  }
+
   @NotNull
   @Override
   protected String getValueAttribute() {
@@ -75,7 +79,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   @Override
   public Collection<ScriptingLibraryTable.LibraryModel> getAvailableValues(VirtualFile file) {
-    myLibraryManager.reset();
     List<ScriptingLibraryTable.LibraryModel> libraries = getSingleLibraries();
     if (myCompoundLibMap.containsKey(file)) {
       libraries.add(myCompoundLibMap.get(file));
@@ -127,7 +130,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   }
 
   public static class CompoundLibrary extends  ScriptingLibraryTable.LibraryModel {
-    private List<ScriptingLibraryTable.LibraryModel> myLibraries = new ArrayList<ScriptingLibraryTable.LibraryModel>();
+    private final Map<String, ScriptingLibraryTable.LibraryModel> myLibraries = new TreeMap<String, ScriptingLibraryTable.LibraryModel>();
 
     public CompoundLibrary() {
       super(null);
@@ -138,20 +141,19 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
 
     public void toggleLibrary(@NotNull ScriptingLibraryTable.LibraryModel library) {
-      for (ScriptingLibraryTable.LibraryModel lib : myLibraries) {
-        if (lib == library) {
-          myLibraries.remove(library);
-          return;
-        }
+      String libName = library.getName();
+      if (myLibraries.containsKey(libName)) {
+        myLibraries.remove(libName);
+        return;
       }
-      myLibraries.add(library);
+      myLibraries.put(libName, library);
     }
 
     @Override
     public String getName() {
       StringBuffer allNames = new StringBuffer();
       boolean isFirst = true;
-      for (ScriptingLibraryTable.LibraryModel library : myLibraries) {
+      for (ScriptingLibraryTable.LibraryModel library : myLibraries.values()) {
         allNames.append(isFirst ? "" : ", ");
         allNames.append(library.getName());
         isFirst = false;
@@ -161,7 +163,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
     @Override
     public boolean containsFile(VirtualFile file) {
-      for (ScriptingLibraryTable.LibraryModel library : myLibraries) {
+      for (ScriptingLibraryTable.LibraryModel library : myLibraries.values()) {
         if (library.containsFile(file)) return true;
       }
       return false;
