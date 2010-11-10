@@ -47,7 +47,7 @@ public class TempFiles {
   }
 
   public File createTempFile(String prefix, String postfix) throws IOException {
-    File tempFile = File.createTempFile(prefix, postfix);
+    File tempFile = FileUtil.createTempFile(prefix, postfix);
     tempFileCreated(tempFile);
     return tempFile;
   }

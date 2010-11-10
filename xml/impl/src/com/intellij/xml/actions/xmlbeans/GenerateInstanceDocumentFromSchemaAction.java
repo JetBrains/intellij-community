@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -104,7 +105,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     String pathToUse;
 
     try {
-      final File tempDir = File.createTempFile("xsd2inst","");
+      final File tempDir = FileUtil.createTempFile("xsd2inst", "");
       tempDir.delete();
       tempDir.mkdir();
 

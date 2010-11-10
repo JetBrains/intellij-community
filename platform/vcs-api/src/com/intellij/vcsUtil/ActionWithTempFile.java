@@ -48,7 +48,7 @@ public abstract class ActionWithTempFile {
   }
 
   private void init() throws IOException {
-    myTempFile = File.createTempFile(TMP_PREFIX, TMP_SUFFIX);
+    myTempFile = FileUtil.createTempFile(TMP_PREFIX, TMP_SUFFIX);
     FileUtil.delete(myTempFile);
     FileUtil.rename(mySourceFile, myTempFile);
   }

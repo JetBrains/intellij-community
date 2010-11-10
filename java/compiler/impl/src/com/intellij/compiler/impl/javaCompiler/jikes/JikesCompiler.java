@@ -159,7 +159,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, @NotNull final String outputPath) throws IOException {
 
-    myTempFile = File.createTempFile("jikes", ".tmp");
+    myTempFile = FileUtil.createTempFile("jikes", ".tmp");
     myTempFile.deleteOnExit();
 
     final List<VirtualFile> files = chunk.getFilesToCompile();

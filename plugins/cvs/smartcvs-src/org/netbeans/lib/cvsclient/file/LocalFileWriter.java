@@ -58,7 +58,7 @@ public final class LocalFileWriter implements ILocalFileWriter {
     // perform a sequence of readLines() until we've read the file from
     // the server - the file transmission is not followed by a newline.
     // Bah.
-    final File tempFile = File.createTempFile(RECEIVING_TMP_FILE_NAME, null);
+    final File tempFile = FileUtil.createTempFile(RECEIVING_TMP_FILE_NAME, null);
     try {
       writeFile(tempFile, length, inputStream);
 
