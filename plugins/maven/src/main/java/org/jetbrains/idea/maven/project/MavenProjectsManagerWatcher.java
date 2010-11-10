@@ -45,6 +45,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
@@ -54,7 +55,8 @@ import java.io.File;
 import java.util.*;
 
 public class MavenProjectsManagerWatcher {
-  public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =  Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
+  public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
+    Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
 
   private static final int DOCUMENT_SAVE_DELAY = 1000;
 
@@ -164,7 +166,10 @@ public class MavenProjectsManagerWatcher {
   private void addFilePointer(File settingsFile) {
     if (settingsFile == null) return;
 
-    myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(settingsFile.getParentFile()), false));
+    File parentFile = settingsFile.getParentFile();
+    if (parentFile != null) {
+      myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(parentFile), false));
+    }
 
     String url = VfsUtil.pathToUrl(getNormalizedPath(settingsFile));
     mySettingsFilesPointers
@@ -177,7 +182,7 @@ public class MavenProjectsManagerWatcher {
       }));
   }
 
-  private static String getNormalizedPath(File settingsFile) {
+  private static String getNormalizedPath(@NotNull File settingsFile) {
     String canonized = PathUtil.getCanonicalPath(settingsFile.getAbsolutePath());
     // todo hook for IDEADEV-40110
     assert canonized != null : "cannot normalize path for: " + settingsFile;
