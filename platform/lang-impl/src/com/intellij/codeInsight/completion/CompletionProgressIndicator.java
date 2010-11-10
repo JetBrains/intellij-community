@@ -436,7 +436,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
-    assert myToRestart == null;
+    LOG.assertTrue(myToRestart == null);
     myToRestart = false;
     cancel();
 
@@ -531,7 +531,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void cancelByWriteAction() {
     if (myToRestart != null) {
-      assert myToRestart == Boolean.FALSE; //explicit completionFinished was invoked before this write action
+      LOG.assertTrue(myToRestart == Boolean.FALSE); //explicit completionFinished was invoked before this write action
       return;
     }
 
