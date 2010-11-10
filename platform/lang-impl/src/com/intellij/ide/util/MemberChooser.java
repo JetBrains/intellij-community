@@ -300,7 +300,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       @Nullable
       public String convert(TreePath path) {
-        final MemberChooserObject delegate = ((ElementNode)path.getLastPathComponent()).getDelegate();
+        final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
+        if (lastPathComponent == null) return null;
+        final MemberChooserObject delegate = lastPathComponent.getDelegate();
         return delegate.getText();
       }
     });
