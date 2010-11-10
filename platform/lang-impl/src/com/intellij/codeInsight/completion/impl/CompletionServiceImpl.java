@@ -17,15 +17,12 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,21 +53,11 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<LookupElement> consumer,
-                                                      @NotNull final CompletionContributor contributor) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<CompletionResultSet>() {
-      public CompletionResultSet compute() {
-        final PsiElement position = parameters.getPosition();
-        if (!position.isValid()) {
-          throw new ProcessCanceledException();
-        }
-
-        final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
-
-        final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-
-        return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
-      }
-    });
+                                             @NotNull final CompletionContributor contributor) {
+    final PsiElement position = parameters.getPosition();
+    final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
+    final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
   }
 
   @Override
