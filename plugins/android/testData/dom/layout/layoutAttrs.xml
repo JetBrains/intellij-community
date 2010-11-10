@@ -6,5 +6,6 @@
   />
 
   <requestFocus />
+  <include />
 
 </LinearLayout>
