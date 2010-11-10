@@ -44,11 +44,9 @@ public class ApplicationManagerEx extends ApplicationManager {
     final Application old = ourApplication;
     Disposer.register(parent, new Disposable() {
       public void dispose() {
-        ourApplication = old;
-        CachedSingletonsRegistry.cleanupCachedFields();
+        setApplication(old);
       }
     });
-    ourApplication = instance;
-    CachedSingletonsRegistry.cleanupCachedFields();
+    setApplication(instance);
   }
 }
