@@ -77,7 +77,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
-  private long myShownStamp = -1;
   private String myInitialPrefix;
   private LookupArranger myArranger;
 
@@ -493,10 +492,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
-    if (justShown()) {
-      return;
-    }
-
     final LookupElement item = (LookupElement)myList.getSelectedValue();
     doHide(false, true);
     if (item == null ||
@@ -535,10 +530,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     });
 
     fireItemSelected(item, completionChar);
-  }
-
-  public boolean justShown() {
-    return myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 42 && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public int getLookupStart() {
@@ -581,8 +572,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
 
     getComponent().getRootPane().getLayeredPane().add(myIconPanel, 42, 0);
-
-    myShownStamp = System.currentTimeMillis();
   }
 
   private void addListeners() {
