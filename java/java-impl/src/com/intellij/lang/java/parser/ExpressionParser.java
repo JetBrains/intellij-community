@@ -161,8 +161,7 @@ public class ExpressionParser {
         return parseUnary(builder);
 
       case TYPE:
-        final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseType(builder);
-        return typeInfo != null ? typeInfo.marker : null;
+        return ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
 
       default:
         assert false : "Unexpected type: " + type;
@@ -255,7 +254,7 @@ public class ExpressionParser {
       final PsiBuilder.Marker typeCast = builder.mark();
       builder.advanceLexer();
 
-      final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseType(builder);
+      final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
 
       if (typeInfo == null || builder.getTokenType() != JavaTokenType.RPARENTH) {
         typeCast.rollbackTo();
@@ -733,8 +732,7 @@ public class ExpressionParser {
   private static PsiBuilder.Marker parseClassObjectAccess(final PsiBuilder builder) {
     final PsiBuilder.Marker expr = builder.mark();
 
-    final PsiBuilder.Marker type = ReferenceParser.parseType(builder, false, false, false);
-    if (type == null) {
+    if (ReferenceParser.parseType(builder, 0) == null) {
       expr.drop();
       return null;
     }

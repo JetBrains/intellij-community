@@ -357,9 +357,9 @@ public class DeclarationParser {
 
   @NotNull
   private static PsiBuilder.Marker parseTypeNotNull(final PsiBuilder builder) {
-    final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseType(builder);
-    assert typeInfo != null : builder.getOriginalText();
-    return typeInfo.marker;
+    final PsiBuilder.Marker type = ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+    assert type != null : builder.getOriginalText();
+    return type;
   }
 
   @NotNull
@@ -399,14 +399,7 @@ public class DeclarationParser {
                                                               final boolean anno, final boolean constructor) {
     parseParameterList(builder);
 
-    if (constructor && builder.getTokenType() == JavaTokenType.LBRACKET) {
-      final PsiBuilder.Marker marker = builder.mark();
-      eatBrackets(builder, false);
-      marker.error(JavaErrorMessages.message("expected.semicolon"));
-    }
-    else {
-      eatBrackets(builder, true);
-    }
+    eatBrackets(builder, constructor, JavaErrorMessages.message("expected.semicolon"));
 
     if (areTypeAnnotationsSupported(builder)) {
       final PsiBuilder.Marker receiver = builder.mark();
@@ -544,21 +537,23 @@ public class DeclarationParser {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
-    final PsiBuilder.Marker type = ellipsis ? ReferenceParser.parseTypeWithEllipsis(builder, true, true) :
-                                              ReferenceParser.parseType(builder, true, true, false);
 
-    if (type == null && modListInfo.second) {
+    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
+    if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
+    final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseTypeInfo(builder, flags);
+
+    if (typeInfo == null && modListInfo.second) {
       param.rollbackTo();
       return null;
     }
 
-    if (type == null) {
+    if (typeInfo == null) {
       error(builder, JavaErrorMessages.message("expected.type"));
       emptyElement(builder, JavaElementType.TYPE);
     }
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
-      eatBrackets(builder, true);
+      eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, JavaErrorMessages.message("expected.rparen"));
       done(param, JavaElementType.PARAMETER);
       return param;
     }
@@ -593,7 +588,7 @@ public class DeclarationParser {
     while (true) {
       shouldRollback = true;
 
-      if (!eatBrackets(builder, true)) {
+      if (!eatBrackets(builder, false, null)) {
         unclosed = true;
       }
 
@@ -655,14 +650,25 @@ public class DeclarationParser {
     return declaration;
   }
 
-  private static boolean eatBrackets(final PsiBuilder builder, final boolean withError) {
+  private static boolean eatBrackets(final PsiBuilder builder, final boolean isError, @Nullable final String error) {
+    if (builder.getTokenType() != JavaTokenType.LBRACKET) return true;
+
+    final PsiBuilder.Marker marker = isError ? builder.mark() : null;
+
+    boolean result = true;
     while (expect(builder, JavaTokenType.LBRACKET)) {
       if (!expect(builder, JavaTokenType.RBRACKET)) {
-        if (withError) error(builder, JavaErrorMessages.message("expected.rbracket"));
-        return false;
+        if (!isError) error(builder, JavaErrorMessages.message("expected.rbracket"));
+        result = false;
+        break;
       }
     }
-    return true;
+
+    if (marker != null) {
+      marker.error(error);
+    }
+
+    return result;
   }
 
   @Nullable
