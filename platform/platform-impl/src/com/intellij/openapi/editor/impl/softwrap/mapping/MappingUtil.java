@@ -41,7 +41,7 @@ public class MappingUtil {
    *                  <code>-1</code> if it's not possible to perform such mapping
    */
   public static int getCacheEntryIndexForOffset(int offset, Document document, List<CacheEntry> cache) {
-    if (offset >= document.getTextLength()) {
+    if (offset >= document.getTextLength() && (cache.isEmpty() || cache.get(cache.size() - 1).endOffset < offset)) {
       if (cache.isEmpty()) {
         return -1;
       }
