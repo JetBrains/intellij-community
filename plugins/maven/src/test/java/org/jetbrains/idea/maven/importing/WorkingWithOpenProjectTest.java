@@ -37,7 +37,6 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    //ProjectManager.getInstance().closeProject(myProject);
     super.tearDown();
   }
 

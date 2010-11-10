@@ -322,7 +322,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     assert application.isDispatchThread();
 
-    // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeProject()
+    // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
 
     LOG.assertTrue(!isDisposed());

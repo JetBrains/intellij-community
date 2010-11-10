@@ -162,7 +162,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
               if (openProjects.length > 1) {
                 if (myProject != null && myProject.isOpen()) {
-                  ProjectUtil.closeProject(myProject);
+                  ProjectUtil.closeAndDispose(myProject);
                 }
                 app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
               }

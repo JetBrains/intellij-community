@@ -75,7 +75,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = ProjectUtil.confirmOpenNewProject();
       if (exitCode == 1) { // "No" option
-        if (!ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
+        if (!ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
       else if (exitCode != 0) { // not "Yes"
         return null;

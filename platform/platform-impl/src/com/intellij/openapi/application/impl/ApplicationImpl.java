@@ -278,7 +278,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       try {
         commandProcessor.executeCommand(project, new Runnable() {
           public void run() {
-            canClose.set(ProjectUtil.closeProject(project));
+            canClose.set(ProjectUtil.closeAndDispose(project));
           }
         }, ApplicationBundle.message("command.exit"), null);
       }
