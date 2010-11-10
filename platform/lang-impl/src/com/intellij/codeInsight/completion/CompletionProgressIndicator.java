@@ -436,7 +436,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
-    LOG.assertTrue(myToRestart == null);
     myToRestart = false;
     cancel();
 
