@@ -20,7 +20,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -62,13 +61,13 @@ import java.util.*;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.UsefulTestCase");
-  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
-  private static CodeStyleSettings myOldCodeStyleSettings;
-  private static final Random ourPRNG = new SecureRandom();
-  private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
-  private File myTempDir;
+  private static final Random PRNG = new SecureRandom();
+  private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
+
+  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
+  private CodeStyleSettings myOldCodeStyleSettings;
+  private String myTempDir;
 
   protected static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
@@ -98,11 +97,8 @@ public abstract class UsefulTestCase extends TestCase {
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "unitTest";
-      final String tempDirPath = ourOriginalTempDir + "/" + testName + ourPRNG.nextInt(Integer.MAX_VALUE);
-      setTmpDir(tempDirPath);
-      myTempDir = new File(tempDirPath);
-      assertTrue("can't setup temp directory: " + tempDirPath,
-                 myTempDir.mkdirs());
+      myTempDir = ORIGINAL_TEMP_DIR + "/" + testName + PRNG.nextInt(Integer.MAX_VALUE);
+      FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
   }
 
@@ -112,8 +108,8 @@ public abstract class UsefulTestCase extends TestCase {
     cleanupSwingDataStructures();
 
     if (shouldContainTempFiles()) {
-      FileUtil.asyncDelete(myTempDir);
-      setTmpDir(ourOriginalTempDir);
+      FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+      FileUtil.delete(new File(myTempDir));
     }
 
     super.tearDown();
@@ -678,24 +674,6 @@ public abstract class UsefulTestCase extends TestCase {
       if (shouldOccur && !wasThrown) {
         fail(exceptionCase.getAssertionErrorMessage());
       }
-    }
-  }
-
-  private static void setTmpDir(String path) {
-    System.setProperty("java.io.tmpdir", path);
-    FileUtil.resetCanonicalTempPathCache();
-
-    try {
-      Class<File> ioFile = File.class;
-      Field field = ioFile.getDeclaredField("tmpdir");
-      field.setAccessible(true);
-      field.set(ioFile, null);
-    }
-    catch (NoSuchFieldException ignore) {
-      // field was removed in JDK 1.6.0_12
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
     }
   }
 }
