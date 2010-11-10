@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class ToggleReadOnlyAttributePanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
+public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private static final Icon myLockedIcon = IconLoader.getIcon("/ide/readonly.png");
   private static final Icon myUnlockedIcon = IconLoader.getIcon("/ide/readwrite.png");
 
@@ -52,6 +52,12 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget, StatusBarW
   @NotNull
   public String ID() {
     return "ReadOnlyAttribute";
+  }
+
+
+  @Override
+  public StatusBarWidget copy() {
+    return new ToggleReadOnlyAttributePanel();
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {

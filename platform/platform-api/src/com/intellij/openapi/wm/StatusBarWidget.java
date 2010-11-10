@@ -37,6 +37,20 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
+  @NotNull
+  String ID();
+
+  @Nullable
+  WidgetPresentation getPresentation(@NotNull PlatformType type);
+
+  void install(@NotNull final StatusBar statusBar);
+
+  interface Multiframe extends StatusBarWidget {
+
+    StatusBarWidget copy();
+
+  }
+
   interface WidgetPresentation {
     @Nullable
     String getTooltipText();
@@ -70,14 +84,6 @@ public interface StatusBarWidget extends Disposable {
     @NotNull
     String getMaxValue();
   }
-
-  @NotNull
-  String ID();
-
-  @Nullable
-  WidgetPresentation getPresentation(@NotNull PlatformType type);
-
-  void install(@NotNull final StatusBar statusBar);
 
   class WidgetBorder implements Border {
     public static final WidgetBorder INSTANCE = new WidgetBorder();

@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -41,23 +42,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
+public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
   private String myText;
-  private StatusBar myStatusBar;
 
   public PositionPanel(@NotNull final Project project) {
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void selectionChanged(final FileEditorManagerEvent event) {
-        final Editor editor = getEditor();
-        if (editor != null) updatePosition(editor);
-      }
-    });
+    super(project);
+  }
+
+  @Override
+  public void selectionChanged(FileEditorManagerEvent event) {
+    final Editor editor = getEditor();
+    if (editor != null) updatePosition(editor);
   }
 
   @NotNull
   public String ID() {
     return "Position";
+  }
+
+  @Override
+  public StatusBarWidget copy() {
+    return new PositionPanel(getProject());
   }
 
   public WidgetPresentation getPresentation(@NotNull final PlatformType type) {
@@ -106,34 +111,18 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
     };
   }
 
-  @Nullable
-  private Editor getEditor() {
-    final Project project = getProject();
-    if (project != null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      return manager.getSelectedTextEditor();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
-  }
-
   public void dispose() {
     final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.removeCaretListener(this);
     multicaster.removeSelectionListener(this);
-    myStatusBar = null;
+    super.dispose();
   }
 
   public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
     final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addCaretListener(this);
     multicaster.addSelectionListener(this);
-    myStatusBar = statusBar;
   }
 
   private static void appendLogicalPosition(LogicalPosition caret, StringBuilder message) {
@@ -160,7 +149,7 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   }
 
   private void updatePosition(final Editor editor) {
-    if (editor == null) return;
+    if (!isOurEditor(editor)) return;
     myText = getPositionText(editor);
     myStatusBar.updateWidget(ID());
   }

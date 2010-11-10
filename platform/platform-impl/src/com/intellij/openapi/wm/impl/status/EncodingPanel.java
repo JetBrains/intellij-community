@@ -41,22 +41,27 @@ import java.nio.charset.Charset;
 /**
  * @author cdr
  */
-public class EncodingPanel implements StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
-  private StatusBar myStatusBar;
+public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.MultipleTextValuesPresentation {
   private String mySelected;
 
   public EncodingPanel(@NotNull final Project project) {
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        update();
-      }
+    super(project);
+  }
 
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        update();
-      }
-    });
+  @Override
+  public void selectionChanged(FileEditorManagerEvent event) {
+    update();
+  }
+
+
+  @Override
+  public void fileOpened(FileEditorManager source, VirtualFile file) {
+    update();
+  }
+
+  @Override
+  public StatusBarWidget copy() {
+    return new EncodingPanel(getProject());
   }
 
   @NotNull
@@ -66,14 +71,6 @@ public class EncodingPanel implements StatusBarWidget, StatusBarWidget.MultipleT
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
-  }
-
-  public void dispose() {
-    myStatusBar = null;
-  }
-
-  public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
   }
 
   @NotNull
@@ -122,30 +119,5 @@ public class EncodingPanel implements StatusBarWidget, StatusBarWidget.MultipleT
       setSelectedValue(charset);
       myStatusBar.updateWidget(ID());
     }
-  }
-
-  @Nullable
-  private VirtualFile getSelectedFile() {
-    final Editor editor = getEditor();
-    if (editor == null) return null;
-    Document document = editor.getDocument();
-    return FileDocumentManager.getInstance().getFile(document);
-  }
-
-  @Nullable
-  private Editor getEditor() {
-    final Project project = getProject();
-    if (project == null) return null;
-    return getEditor(project);
-  }
-
-  @Nullable
-  private static Editor getEditor(@NotNull final Project project) {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor();
-  }
-
-  @Nullable
-  private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
   }
 }

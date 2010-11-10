@@ -553,13 +553,15 @@ public class EditorsSplitters extends JPanel {
   public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
-    try {
-      getManager().fireSelectionChanged(oldEditor, newEditor);
-    }
-    finally {
-      setCurrentWindow(window);
-      myCurrentSelectedEditor = newEditor;
-    }
+
+    Runnable fireRunnable = new Runnable() {
+      public void run() {
+        getManager().fireSelectionChanged(oldEditor, newEditor);
+      }
+    };
+
+    setCurrentWindow(window);
+    myCurrentSelectedEditor = newEditor;
 
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
@@ -574,9 +576,13 @@ public class EditorsSplitters extends JPanel {
         }
 
         if (requestFocus && !alreadyFocused) {
-          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
+          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus).doWhenDone(fireRunnable);
+        } else {
+          fireRunnable.run();
         }
       }
+    } else {
+      fireRunnable.run();
     }
   }
 

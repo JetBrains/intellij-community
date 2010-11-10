@@ -26,9 +26,12 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.docking.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -347,7 +350,14 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myId = id;
       myContainer = container;
       setProject(project);
-      setComponent(myContainer.getComponent());
+
+      setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+
+      NonOpaquePanel comp = new NonOpaquePanel(new BorderLayout());
+      comp.add(myContainer.getComponent(), BorderLayout.CENTER);
+      comp.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+
+      setComponent(comp);
       addDisposable(container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
