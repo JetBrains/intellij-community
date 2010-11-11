@@ -545,21 +545,17 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public boolean fixStickyFocusedComponents(@Nullable AWTEvent e) {
-    boolean attemptedToFix = false;
-
-    if (e != null && !(e instanceof InputEvent)) return attemptedToFix;
+  public void fixStickyFocusedComponents(@Nullable AWTEvent e) {
+    if (e != null && !(e instanceof InputEvent)) return;
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
     if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
-      attemptedToFix = true;
       fixStickyWindow(mgr, mgr.getActiveWindow(), "setGlobalActiveWindow");
       fixStickyWindow(mgr, mgr.getFocusedWindow(), "setGlobalFocusedWindow");
     }
 
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
-      attemptedToFix = true;
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null) {
 
@@ -615,8 +611,6 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
-
-    return attemptedToFix;
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {
