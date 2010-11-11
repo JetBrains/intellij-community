@@ -622,6 +622,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
+        myRestartingPrefixConditions.clear();
         return;
       }
     }
