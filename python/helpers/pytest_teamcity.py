@@ -33,7 +33,6 @@ def pytest_collectreport(report):
         messages.testSuiteFinished(report.collector.name)
 
 def pytest_itemstart(item, node=None):
-    print item.__dict__
     if item._args:
         name = item.function.__name__ + str(item._args)
     else:
