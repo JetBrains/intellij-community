@@ -71,6 +71,13 @@ public class PythonSdkUpdater implements ProjectComponent {
     });
   }
 
+  public static boolean skeletonsUpToDate() {
+    final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
+    final File versionFile = new File(skeletonDir, "version");
+    int version = versionFile.exists() ? readVersion(versionFile) : -1;
+    return version == SKELETONS_VERSION;
+  }
+
   private static void updateSysPath(Module module) {
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk != null) {

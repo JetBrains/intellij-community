@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.PyArgumentList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,9 +27,9 @@ import java.util.Set;
  * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath()+ "/paramInfo/";
+  protected Map<String, PsiElement> loadTest() {
+    String fname = "/paramInfo/" + getTestName(false) + ".py";
+    return configureByFile(fname);
   }
 
   public void testSimpleFunction() throws Exception {
@@ -348,6 +347,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg_star>").getTextOffset()).check("a,b,c", new String[]{"a,", "b,"});
     feignCtrlP(marks.get("<arg_c>").getTextOffset()).check("a,b,c", new String[]{"c"});
   }
+
+  public void testTupleArgPlainParam() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("a,b,c", new String[]{"b,"});
+  }
+
 
 
   public void testStaticmethod() throws Exception {
