@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
             final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
             if (ref != null) {
               ref.bindToElementViaStaticImport(containingClass);
+              PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
             }
             super.handleInsert(context);
           }

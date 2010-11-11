@@ -38,6 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -466,10 +467,13 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  @Nullable
   public PsiClass getSourceMirrorClass() {
     PsiElement parent = getParent();
     final String name = getName();
     if (parent instanceof PsiFile) {
+      if (!(parent instanceof PsiClassOwner)) return null;
+
       PsiClassOwner fileNavigationElement = (PsiClassOwner)parent.getNavigationElement();
       for (PsiClass aClass : fileNavigationElement.getClasses()) {
         if (name.equals(aClass.getName())) return aClass;

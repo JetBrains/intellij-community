@@ -275,7 +275,14 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
-      final PsiType type = getAnnotationMethodType((PsiNameValuePair)initializer.getParent());
+      final PsiElement parent = initializer.getParent();
+      final PsiType type;
+      if (parent instanceof PsiNameValuePair) {
+        type = getAnnotationMethodType((PsiNameValuePair)parent);
+      }
+      else {
+        type = ((PsiAnnotationMethod)parent).getReturnType();
+      }
       if (type instanceof PsiArrayType) {
         myResult = new ExpectedTypeInfo[]{createInfoImpl(((PsiArrayType)type).getComponentType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN)};
       }

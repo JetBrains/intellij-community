@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,5 +28,8 @@ public abstract class CompletionConfidence {
   @Nullable
   public abstract Boolean shouldFocusLookup(@NotNull CompletionParameters parameters);
 
-
+  @Nullable
+  public Boolean shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    return null;
+  }
 }
