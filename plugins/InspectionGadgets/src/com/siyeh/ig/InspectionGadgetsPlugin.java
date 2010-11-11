@@ -821,7 +821,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerThreadingInspections() {
         m_inspectionClasses.add(AccessToNonThreadSafeStaticFieldFromInstanceInspection.class);
         m_inspectionClasses.add(AccessToStaticFieldLockedOnInstanceInspection.class);
-        m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         m_inspectionClasses.add(AwaitNotInLoopInspection.class);
         m_inspectionClasses.add(AwaitWithoutCorrespondingSignalInspection.class);
         m_inspectionClasses.add(BusyWaitInspection.class);
@@ -834,6 +833,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MethodMayBeSynchronizedInspection.class);
         m_inspectionClasses.add(NakedNotifyInspection.class);
         m_inspectionClasses.add(NestedSynchronizedStatementInspection.class);
+        m_inspectionClasses.add(NonAtomicOperationOnVolatileFieldInspection.class);
         m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
         m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
         m_inspectionClasses.add(NotifyNotInSynchronizedContextInspection.class);
