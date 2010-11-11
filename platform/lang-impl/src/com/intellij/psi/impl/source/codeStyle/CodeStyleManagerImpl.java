@@ -181,7 +181,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
   
-  private static int indentWithInVisualColumns(@NotNull String indent, int tabSize) {
+  private static int indentWithInVisualColumns(String indent, int tabSize) {
     if (tabSize <= 1) {
       return indent.length();
     }
