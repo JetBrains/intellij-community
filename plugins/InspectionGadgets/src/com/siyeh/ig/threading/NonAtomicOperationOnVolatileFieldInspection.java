@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.SynchronizationUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class NonAtomicOperationOnVolatileFieldInspection
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
-            final PsiField volatileField = findVolatileField(lhs);
+            final PsiField volatileField = findNonSynchronizedVolatileField(lhs);
             if (volatileField ==  null) {
                 return;
             }
@@ -88,7 +89,8 @@ public class NonAtomicOperationOnVolatileFieldInspection
             if (operand == null) {
                 return;
             }
-            final PsiField volatileField = findVolatileField(operand);
+            final PsiField volatileField =
+                    findNonSynchronizedVolatileField(operand);
             if (volatileField == null) {
                 return;
             }
@@ -99,7 +101,8 @@ public class NonAtomicOperationOnVolatileFieldInspection
         public void visitPostfixExpression(PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiExpression operand = expression.getOperand();
-            final PsiField volatileField = findVolatileField(operand);
+            final PsiField volatileField =
+                    findNonSynchronizedVolatileField(operand);
             if (volatileField == null) {
                 return;
             }
@@ -107,12 +110,16 @@ public class NonAtomicOperationOnVolatileFieldInspection
         }
 
         @Nullable
-        private static PsiField findVolatileField(PsiExpression expression) {
+        private static PsiField findNonSynchronizedVolatileField(
+                PsiExpression expression) {
             if (!(expression instanceof PsiReferenceExpression)) {
                 return null;
             }
             final PsiReferenceExpression reference =
                     (PsiReferenceExpression)expression;
+            if (SynchronizationUtil.isInSynchronizedContext(reference)) {
+                return null;
+            }
             final PsiElement referent = reference.resolve();
             if (!(referent instanceof PsiField)) {
                 return null;
