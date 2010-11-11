@@ -48,7 +48,8 @@ public final class HgCommandService {
 
   private final Project myProject;
   private final HgGlobalSettings mySettings;
-  private HgExecutableValidator validator;
+  private HgExecutableValidator myValidator;
+  private HgVcs myVcs;
 
   public HgCommandService(Project project, HgGlobalSettings settings) {
     myProject = project;
@@ -56,7 +57,9 @@ public final class HgCommandService {
     if (PROMPT_HOOKS_PLUGIN == null) {
       PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
     }
-    validator = new HgExecutableValidator(myProject);
+    myVcs = HgVcs.getInstance(myProject);
+    LOG.assertTrue(myVcs != null);
+    myValidator = myVcs.getExecutableValidator();
   }
 
   public static HgCommandService getInstance(Project project) {
@@ -83,19 +86,13 @@ public final class HgCommandService {
   }
 
   @Nullable
-  HgCommandResult execute(VirtualFile repo, List<String> hgOptions, String operation, List<String> arguments, Charset charset, boolean suppressCommandOutput) {
+  HgCommandResult execute(VirtualFile repo, List<String> hgOptions, String operation, List<String> arguments, Charset charset, boolean silent) {
     if (myProject.isDisposed()) {
-      return null;
-    }
-    final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) { return null; }
-
-    if (!validator.check(mySettings)) {
       return null;
     }
 
     final List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(vcs.getHgExecutable());
+    cmdLine.add(myVcs.getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -136,8 +133,15 @@ public final class HgCommandService {
       String workingDir = repo != null ? repo.getPath() : null;
       result = shellCommand.execute(cmdLine, workingDir, charset);
     } catch (ShellCommandException e) {
-      showError(e);
-      LOG.info(e.getMessage(), e);
+      if (!silent) {
+        if (myValidator.checkExecutableAndNotifyIfNeeded()) {
+          // if the problem was not with invalid executable - show error.
+          showError(e);
+          LOG.info(e.getMessage(), e);
+        }
+      } else {
+        LOG.info(e.getMessage(), e);
+      }
       return null;
     } catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
       LOG.info(e.getMessage(), e);
@@ -152,12 +156,11 @@ public final class HgCommandService {
     // logging to the Version Control console (without extensions and configs)
     final String cmdString = String.format("%s %s %s", HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
             StringUtils.join(arguments, " "));
-    final HgVcs hgVcs = vcs;
-    hgVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
-    if (!suppressCommandOutput) {
-      hgVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+    myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
+    if (!silent) {
+      myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
     }
-    hgVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+    myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
 
     return result;
 

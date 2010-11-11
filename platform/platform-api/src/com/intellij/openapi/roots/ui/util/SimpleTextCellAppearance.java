@@ -36,6 +36,10 @@ public class SimpleTextCellAppearance implements ModifiableCellAppearance {
     return result;
   }
 
+  public static SimpleTextCellAppearance synthetic(String text, Icon icon) {
+    return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
+  }
+
   public SimpleTextCellAppearance(@NotNull String text, Icon icon, SimpleTextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
@@ -55,9 +59,11 @@ public class SimpleTextCellAppearance implements ModifiableCellAppearance {
     return myTextAttributes;
   }
 
-  public static SimpleTextCellAppearance syntetic(String text, Icon icon) {
-    return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
+  public Icon getIcon() {
+    return myIcon;
   }
 
-  public void setIcon(Icon icon) { myIcon = icon; }
+  public void setIcon(Icon icon) {
+    myIcon = icon;
+  }
 }

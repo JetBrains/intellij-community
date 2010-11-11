@@ -23,7 +23,7 @@ class Test {
     return ((String)str);
   }
 
-  @Nullable
+  @NotNull
   String fram(@Nullable String str, boolean b) {
     if (str != null) {
       return b ? str : "not null strimg";

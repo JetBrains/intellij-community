@@ -12,63 +12,39 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.util.ExecutableValidator;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
 import org.zmlx.hg4idea.command.HgVersionCommand;
-import org.zmlx.hg4idea.ui.HgSetExecutableDialog;
 
-import java.lang.reflect.InvocationTargetException;
+public class HgExecutableValidator extends ExecutableValidator {
 
-public class HgExecutableValidator {
-
-  private static final Logger LOG = Logger.getInstance(HgExecutableValidator.class.getName());
-  private final Project myProject;
-  private boolean myValidHgExecutable;
+  private final HgVcs myVcs;
 
   public HgExecutableValidator(Project project) {
-    this.myProject = project;
+    super(project, HgVcs.NOTIFICATION_GROUP_ID, HgVcs.getInstance(project).getConfigurable());
+    myVcs = HgVcs.getInstance(project);
+    setMessagesAndTitles(HgVcsMessages.message("hg4idea.executable.notification.title"),
+                         HgVcsMessages.message("hg4idea.executable.notification.description"),
+                         HgVcsMessages.message("hg4idea.executable.dialog.title"),
+                         HgVcsMessages.message("hg4idea.executable.dialog.description"),
+                         HgVcsMessages.message("hg4idea.executable.dialog.error"),
+                         HgVcsMessages.message("hg4idea.executable.filechooser.title"),
+                         HgVcsMessages.message("hg4idea.executable.filechooser.description"));
   }
 
-  public boolean check(final HgGlobalSettings globalSettings) {
-    final HgVersionCommand command = new HgVersionCommand();
-    final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) {
-      return false;
-    }
-    if (command.isValid(vcs.getHgExecutable())) {
-      return true;
-    }
+  @Override
+  protected String getCurrentExecutable() {
+    return myVcs.getHgExecutable();
+  }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return false;
-    }
-    myValidHgExecutable = false;
+  @Override
+  public boolean isExecutableValid(String executable) {
+    return new HgVersionCommand().isValid(executable);
+  }
 
-    try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        public void run() {
-          String previousHgPath = globalSettings.getHgExecutable();
-          HgSetExecutableDialog dialog;
-          do {
-            dialog = new HgSetExecutableDialog(myProject);
-            dialog.setBadHgPath(previousHgPath);
-            dialog.show();
-            myValidHgExecutable = dialog.isOK() && command.isValid(dialog.getNewHgPath());
-            previousHgPath = dialog.getNewHgPath();
-          } while (!myValidHgExecutable && dialog.isOK());
-          if (myValidHgExecutable) {
-            globalSettings.setHgExecutable(dialog.getNewHgPath());
-          }
-        }
-      });
-    } catch (InvocationTargetException e) {
-      LOG.info(e);
-    } catch (InterruptedException e) {
-      LOG.info(e);
-    }
-    return myValidHgExecutable;
+  @Override
+  protected void saveCurrentExecutable(String executable) {
+    myVcs.getGlobalSettings().setHgExecutable(executable);
   }
 
 }
