@@ -26,7 +26,7 @@ public class MavenSettingsTest extends MavenTestCase {
     MavenGeneralSettings s = new MavenGeneralSettings();
     s.addListener(new MavenGeneralSettings.Listener() {
       @Override
-      public void pathsChanged() {
+      public void changed() {
         log[0] += "changed ";
       }
     });

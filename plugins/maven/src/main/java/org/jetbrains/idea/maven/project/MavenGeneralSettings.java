@@ -32,35 +32,54 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"UnusedDeclaration"})
 public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
   private String mavenHome = "";
   private String mavenSettingsFile = "";
-  private String overridenLocalRepository = "";
+  private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
+
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
   private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DO_NOT_UPDATE;
 
-  private volatile File myEffectiveLocalRepositoryCache;
-  private volatile Set<String> myDefaultPluginsCache;
+  private File myEffectiveLocalRepositoryCache;
+  private Set<String> myDefaultPluginsCache;
 
+  private int myBulkUpdateLevel = 0;
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public
+  public void beginUpdate() {
+    myBulkUpdateLevel++;
+  }
+
+  public void endUpdate() {
+    if (--myBulkUpdateLevel == 0) {
+      changed();
+    }
+  }
+
+  public void changed() {
+    if (myBulkUpdateLevel > 0) return;
+
+    myEffectiveLocalRepositoryCache = null;
+    myDefaultPluginsCache = null;
+    fireChanged();
+  }
+
   @NotNull
-  MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
+  public MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
   }
 
   public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
     if (value == null) return; // null may come from deserializator
     this.pluginUpdatePolicy = value;
+    changed();
   }
 
   @NotNull
@@ -71,6 +90,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy value) {
     if (value == null) return; // null may come from deserializator
     this.checksumPolicy = value;
+    changed();
   }
 
   @NotNull
@@ -81,6 +101,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setFailureBehavior(MavenExecutionOptions.FailureMode value) {
     if (value == null) return; // null may come from deserializator
     this.failureBehavior = value;
+    changed();
   }
 
   public
@@ -92,6 +113,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
     this.outputLevel = value;
+    changed();
   }
 
   public
@@ -103,6 +125,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setSnapshotUpdatePolicy(MavenExecutionOptions.SnapshotUpdatePolicy value) {
     if (value == null) return; // null may come from deserializator
     this.snapshotUpdatePolicy = value;
+    changed();
   }
 
   public boolean isWorkOffline() {
@@ -111,29 +134,30 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setWorkOffline(boolean workOffline) {
     this.workOffline = workOffline;
+    changed();
   }
 
   @NotNull
-  public String getOverridenLocalRepository() {
-    return overridenLocalRepository;
+  public String getOverriddenLocalRepository() {
+    return overriddenLocalRepository;
   }
 
   public File getEffectiveLocalRepository() {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenUtil.resolveLocalRepository(overridenLocalRepository, mavenHome, mavenSettingsFile);
+    result = MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile);
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
 
-  public void setOverridenLocalRepository(final @Nullable String overridenLocalRepository) {
-    if (overridenLocalRepository != null) {
-      if (!Comparing.equal(this.overridenLocalRepository, overridenLocalRepository)) {
-        this.overridenLocalRepository = overridenLocalRepository;
+  public void setOverriddenLocalRepository(final @Nullable String overridenLocalRepository) {
+    if (overridenLocalRepository == null) return;
 
-        localRepositoryChanged();
-      }
+    if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
+      this.overriddenLocalRepository = overridenLocalRepository;
+
+      changed();
     }
   }
 
@@ -147,7 +171,7 @@ public class MavenGeneralSettings implements Cloneable {
       this.mavenHome = mavenHome;
 
       myDefaultPluginsCache = null;
-      pathsChanged();
+      changed();
     }
   }
 
@@ -162,21 +186,12 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setMavenSettingsFile(@Nullable String mavenSettingsFile) {
-    if (mavenSettingsFile != null) {
-      if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
-        this.mavenSettingsFile = mavenSettingsFile;
-        pathsChanged();
-      }
+    if (mavenSettingsFile == null) return;
+
+    if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
+      this.mavenSettingsFile = mavenSettingsFile;
+      changed();
     }
-  }
-
-  public void localRepositoryChanged() {
-    pathsChanged();
-  }
-
-  private void pathsChanged() {
-    myEffectiveLocalRepositoryCache = null;
-    fidePathsChanged();
   }
 
   @Nullable
@@ -242,6 +257,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setPrintErrorStackTraces(boolean value) {
     printErrorStackTraces = value;
+    changed();
   }
 
   public boolean isUsePluginRegistry() {
@@ -250,6 +266,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setUsePluginRegistry(final boolean usePluginRegistry) {
     this.usePluginRegistry = usePluginRegistry;
+    changed();
   }
 
   public boolean isNonRecursive() {
@@ -258,6 +275,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setNonRecursive(final boolean nonRecursive) {
     this.nonRecursive = nonRecursive;
+    changed();
   }
 
   public boolean equals(final Object o) {
@@ -275,7 +293,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
-    if (!overridenLocalRepository.equals(that.overridenLocalRepository)) return false;
+    if (!overriddenLocalRepository.equals(that.overriddenLocalRepository)) return false;
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
 
@@ -287,7 +305,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = (workOffline ? 1 : 0);
     result = 31 * result + mavenHome.hashCode();
     result = 31 * result + mavenSettingsFile.hashCode();
-    result = 31 * result + overridenLocalRepository.hashCode();
+    result = 31 * result + overriddenLocalRepository.hashCode();
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
@@ -304,6 +322,7 @@ public class MavenGeneralSettings implements Cloneable {
     try {
       MavenGeneralSettings result = (MavenGeneralSettings)super.clone();
       result.myListeners = ContainerUtil.createEmptyCOWList();
+      result.myBulkUpdateLevel = 0;
       return result;
     }
     catch (CloneNotSupportedException e) {
@@ -319,13 +338,13 @@ public class MavenGeneralSettings implements Cloneable {
     myListeners.remove(l);
   }
 
-  private void fidePathsChanged() {
+  private void fireChanged() {
     for (Listener each : myListeners) {
-      each.pathsChanged();
+      each.changed();
     }
   }
 
   public interface Listener {
-    void pathsChanged();
+    void changed();
   }
 }

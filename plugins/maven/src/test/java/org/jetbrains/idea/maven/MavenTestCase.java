@@ -251,7 +251,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void setRepositoryPath(String path) {
-    getMavenGeneralSettings().setOverridenLocalRepository(path);
+    getMavenGeneralSettings().setOverriddenLocalRepository(path);
   }
 
   protected String getProjectPath() {
