@@ -89,8 +89,10 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
                 return;
             }
             final PsiJavaFile javaFile = (PsiJavaFile) containingFile;
-            final String innerClassName =
-                    qualifiedName + '.' + referenceElement.getText();
+            final String innerClassName = aClass.getQualifiedName();
+            if (innerClassName == null) {
+                return;
+            }
             final PsiImportList importList = javaFile.getImportList();
             if (importList == null) {
                 return;
@@ -213,7 +215,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         private final Set<PsiJavaCodeReferenceElement> references =
                 new HashSet();
 
-        private ReferenceCollector(String name, boolean onDemand) {
+        ReferenceCollector(String name, boolean onDemand) {
             this.name = name;
             this.onDemand = onDemand;
         }
@@ -247,6 +249,12 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             }
         }
 
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            visitReferenceElement(expression);
+        }
+
         public Collection<PsiJavaCodeReferenceElement> getReferences() {
             return references;
         }
@@ -278,5 +286,10 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             }
             registerError(reference, containingClass.getName());
         }
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitReferenceElement(expression);
+      }
     }
 }
