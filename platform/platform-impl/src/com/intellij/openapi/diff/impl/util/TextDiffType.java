@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -38,8 +39,8 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   public static final TextDiffType NONE = new TextDiffType(TextDiffTypeEnum.NONE, DiffBundle.message("diff.type.none.name"), null);
 
   private final TextDiffTypeEnum myType;
-  public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(new TextDiffType[]{DELETED, CHANGED, INSERT});
-  public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(new TextDiffType[]{DELETED, CHANGED, INSERT, CONFLICT});
+  public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(DELETED, CHANGED, INSERT);
+  public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(DELETED, CHANGED, INSERT, CONFLICT);
   private final TextAttributesKey myAttributesKey;
   private final String myDisplayName;
   public static final Convertor<TextDiffType, TextAttributesKey> ATTRIBUTES_KEY = new Convertor<TextDiffType, TextAttributesKey>() {
@@ -73,6 +74,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     return myDisplayName;
   }
 
+  @Nullable
   public Color getLegendColor(EditorColorsScheme colorScheme) {
     TextAttributes attributes = getTextAttributes(colorScheme);
     return attributes != null ? attributes.getBackgroundColor() : null;
@@ -86,14 +88,16 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     return scheme.getAttributes(myAttributesKey);
   }
 
-  public Color getPoligonColor(Editor editor1) {
-    return getLegendColor(editor1.getColorsScheme());
+  @Nullable
+  public Color getPolygonColor(Editor editor) {
+    return getLegendColor(editor.getColorsScheme());
   }
 
   public TextAttributes getTextAttributes(Editor editor1) {
     return getTextAttributes(editor1.getColorsScheme());
   }
 
+  @Nullable
   public Color getTextBackground(Editor editor) {
     TextAttributes attributes = getTextAttributes(editor);
     return attributes != null ? attributes.getBackgroundColor() : null;
