@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -29,6 +30,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +60,17 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public String getValue() {
-    return StringUtil.stripQuotesAroundValue(getText());
+    // it is more correct way to strip quotes since injected xml may have quotes encoded
+    String text = getText();
+    ASTNode startQuote = findChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER);
+    if (startQuote != null) {
+      text = StringUtil.trimStart(text, startQuote.getText());
+    }
+    ASTNode endQuote = findChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
+    if (endQuote != null) {
+      text = StringUtil.trimEnd(text, endQuote.getText());
+    }
+    return text;
   }
 
   public TextRange getValueTextRange() {
