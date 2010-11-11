@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -84,9 +85,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = myBaseIcon.get(flags);
     }
 
+    final Project project = psiElement.getProject();
     if (isToDeferIconLoading()) {
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), new NullableFunction<ElementIconRequest, Icon>() {
         public Icon fun(ElementIconRequest request) {
+          if (project.isDisposed()) return null;
           final PsiElement element = request.getElement();
           if (!element.isValid()) return null;
           if (element.getProject().isDisposed()) return null;
