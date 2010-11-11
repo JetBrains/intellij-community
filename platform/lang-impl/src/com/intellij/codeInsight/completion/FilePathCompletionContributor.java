@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
@@ -32,7 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,12 +86,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
         final PsiElement e = parameters.getPosition();
         final Project project = e.getProject();
 
-        final PsiReference psiReference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-          public PsiReference compute() {
-            //noinspection ConstantConditions
-            return parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
-          }
-        });
+        final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
 
         final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);
         if (fileReferencePair != null) {
@@ -102,6 +95,12 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
           final FileReferenceSet set = first.getFileReferenceSet();
           String prefix = set.getPathString().substring(0, parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement());
+          final String textBeforePosition = e.getContainingFile().getText().substring(0, parameters.getOffset());
+          if (!textBeforePosition.endsWith(prefix)) {
+            final int len = textBeforePosition.length();
+            final String fragment = len > 100 ? textBeforePosition.substring(len - 100) : textBeforePosition;
+            throw new AssertionError("prefix should be some actual file string just before caret: " + prefix + "\n text=" + fragment + ";\npathString=" + set.getPathString() + ";\nelementText=" + e.getParent().getText());
+          }
           
           final List<String>[] pathPrefixParts = new List[] {null};
           int lastSlashIndex;
@@ -133,28 +132,20 @@ public class FilePathCompletionContributor extends CompletionContributor {
               for (final String name : resultNames) {
                 ProgressManager.checkCanceled();
 
-                final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-                  public PsiFile[] compute() {
-                    return FilenameIndex.getFilesByName(project, name, scope);
-                  }
-                });
+                final PsiFile[] files = FilenameIndex.getFilesByName(project, name, scope);
 
                 if (files.length > 0) {
                   for (final PsiFile file : files) {
                     ProgressManager.checkCanceled();
 
-                    ApplicationManager.getApplication().runReadAction(new Runnable() {
-                      public void run() {
-                        final VirtualFile virtualFile = file.getVirtualFile();
-                        if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
-                          if (contextHelper.isMine(project, virtualFile)) {
-                            if (pathPrefixParts[0] == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts[0])) {
-                              __result.addElement(new FilePathLookupItem(file, contextHelper));
-                            }
-                          }
+                    final VirtualFile virtualFile = file.getVirtualFile();
+                    if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
+                      if (contextHelper.isMine(project, virtualFile)) {
+                        if (pathPrefixParts[0] == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts[0])) {
+                          __result.addElement(new FilePathLookupItem(file, contextHelper));
                         }
                       }
-                    });
+                    }
                   }
                 }
               }
@@ -220,11 +211,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     final ChooseByNameContributor[] nameContributors = ChooseByNameContributor.FILE_EP_NAME.getExtensions();
     for (final ChooseByNameContributor contributor : nameContributors) {
       try {
-        names.addAll(ApplicationManager.getApplication().runReadAction(new Computable<Collection<? extends String>>() {
-          public Collection<? extends String> compute() {
-            return Arrays.asList(contributor.getNames(project, false));
-          }
-        }));
+        names.addAll(Arrays.asList(contributor.getNames(project, false)));
       }
       catch (ProcessCanceledException ex) {
         // index corruption detected, ignore
