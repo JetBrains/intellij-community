@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 
@@ -34,7 +36,7 @@ public class GithubLoginPanel {
   private JTextPane mySignupTextField;
   private JPanel myPane;
 
-  public GithubLoginPanel() {
+  public GithubLoginPanel(final GithubLoginDialog dialog) {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -45,6 +47,18 @@ public class GithubLoginPanel {
       "<html>Do not have an account? <a href=\"" + SIGNUP_FOR_FREE_ACOUNT + "\">" + "Signup for free" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        dialog.clearErrors();
+      }
+    });
+    myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        dialog.clearErrors();
+      }
+    });
   }
 
   public JComponent getPanel() {
