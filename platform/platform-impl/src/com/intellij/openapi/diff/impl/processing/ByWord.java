@@ -221,8 +221,9 @@ class ByWord implements DiffPolicy{
     }
 
     private DiffFragment[] fragmentsByChar(String text1, String text2) {
-      DiffFragment[] fragments = BY_CHAR.buildFragments(myVersion1.getPrevChar() + text1,
-                                                        myVersion2.getPrevChar() + text2);
+      final String side1 = myVersion1.getPrevChar() + text1;
+      final String side2 = myVersion2.getPrevChar() + text2;
+      DiffFragment[] fragments = BY_CHAR.buildFragments(side1, side2);
       return Util.cutFirst(fragments);
     }
 
@@ -267,7 +268,7 @@ class ByWord implements DiffPolicy{
       String tail1 = myVersion1.getNotProcessedTail();
       String tail2 = myVersion2.getNotProcessedTail();
       if (tail1.length() == 0 && tail2.length() == 0) return;
-      DiffFragment[] fragments = fragmentsByChar(tail1, tail2);
+      DiffFragment[] fragments = BY_CHAR.buildFragments(tail1, tail2);
       if (myFragments.size() > 0) {
         DiffFragment lastFragment = myFragments.get(myFragments.size() - 1);
         if (lastFragment.isChange()) {

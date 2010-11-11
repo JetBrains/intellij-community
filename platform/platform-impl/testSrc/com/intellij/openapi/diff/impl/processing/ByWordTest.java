@@ -55,6 +55,22 @@ public class ByWordTest extends TestCase {
       new DiffFragment("\n", "\n")}, fragments);
   }
 
+  public void testIdea58505() {
+    DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
+    DiffFragment[] fragments = byWord.buildFragments("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {",
+                                                     "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {");
+    CHECK.compareAll(new DiffFragment[] {
+      new DiffFragment("   if (eventMerger!=null && ", "   if (eventMerger!=null && "),
+      new DiffFragment("!", "("),
+      new DiffFragment("dataSelection", "dataSelection"),
+      new DiffFragment(null, "=="),
+      new DiffFragment(null, "null || !dataSelection"),
+      new DiffFragment(".getValueIsAdjusting())", ".getValueIsAdjusting())"),
+      new DiffFragment(null, ")"),
+      new DiffFragment(" {", " {")
+    }, fragments);
+  }
+
   public void testExtractWords() {
     String text = "a b, c.d\n\n  x\n y";
     Word[] words = ByWord.buildWords(text, ComparisonPolicy.DEFAULT);
