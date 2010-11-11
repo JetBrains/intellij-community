@@ -77,7 +77,10 @@ public abstract class DiffMarkup implements EditorSource {
                                                          attributes, HighlighterTargetArea.EXACT_RANGE);
     }
     Color stripeBarColor = attributes.getErrorStripeColor();
-    if (stripeBarColor != null) rangeMarker.setErrorStripeMarkColor(stripeBarColor);
+    if (stripeBarColor != null) {
+      rangeMarker.setErrorStripeMarkColor(stripeBarColor);
+      rangeMarker.setThinErrorStripeMark(true);
+    }
     saveHighlighter(rangeMarker);
   }
 
