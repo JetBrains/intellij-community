@@ -209,14 +209,18 @@ public class UtilTest extends TestCase {
 
   public void testCutFirst() {
     prepareForFragments();
+
     CHECK.singleElement(Util.cutFirst(new DiffFragment[]{DiffFragment.unchanged("ab", "ac")}),
                         DiffFragment.unchanged("b", "c"));
-    CHECK.compareAll(Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "b"),
+
+    CHECK.compareAll(new DiffFragment[]{new DiffFragment(null, "c")},
+                     Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "b"),
                                                       new DiffFragment(null, "c"),
-                                                      new DiffFragment("a", null)}),
-                     new DiffFragment[]{new DiffFragment(null, "c")});
-    CHECK.compareAll(Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "ab"), new DiffFragment("c", "d")}),
-                     new DiffFragment[]{new DiffFragment(null, "b"), new DiffFragment(null, "d")});
+                                                      new DiffFragment("a", null)})
+                     );
+
+    CHECK.compareAll(new DiffFragment[]{new DiffFragment(null, "b"), new DiffFragment(null, "d")},
+                     Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "ab"), new DiffFragment("c", "d")}));
 
   }
 }
