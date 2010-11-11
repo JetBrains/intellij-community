@@ -25,6 +25,7 @@ import javax.swing.*;
 public class DiffToolbarImpl implements DiffToolbar {
   private final DefaultActionGroup myActionGroup  = new DefaultActionGroup();
   private ActionToolbar myActionToolbar;
+  private JComponent myTargetComponent;
 
   public void registerKeyboardActions(JComponent registerActionsTo) {
     AnAction[] actions = getAllActions();
@@ -54,9 +55,11 @@ public class DiffToolbarImpl implements DiffToolbar {
   }
 
   public JComponent getComponent() {
-    if (myActionToolbar == null)
+    if (myActionToolbar == null) {
       myActionToolbar = ActionManager.getInstance().
         createActionToolbar(ActionPlaces.UNKNOWN, myActionGroup, true);
+      myActionToolbar.setTargetComponent(myTargetComponent);
+    }
     return myActionToolbar.getComponent();
   }
 
@@ -77,5 +80,12 @@ public class DiffToolbarImpl implements DiffToolbar {
   public void reset(DiffRequest.ToolbarAddons toolBar) {
     myActionGroup.removeAll();
     toolBar.customize(this);
+  }
+
+  public void setTargetComponent(JComponent component) {
+    myTargetComponent = component;
+    if (myActionToolbar != null) {
+      myActionToolbar.setTargetComponent(component);
+    }
   }
 }
