@@ -74,7 +74,15 @@ class PyDBFrame:
         
         try:
             line = frame.f_lineno
-            
+
+            #if event == 'exception' and info.pydev_state != STATE_SUSPEND and breakpoint is not None:
+            #    (exception, value, traceback) = arg
+            #    print exception
+            #    curr_func_name = frame.f_code.co_name
+            #    if curr_func_name in ('?', '<module>'):
+            #        self.setSuspend(thread, CMD_SET_BREAK)
+            #        self.doWaitSuspend(thread, frame, event, arg)
+
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
             #(one for the line and the other for the return).
             if event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoint is not None \

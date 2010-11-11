@@ -343,31 +343,15 @@ public class PyUtil {
    */
   @NotNull
   public static PyClass[] getAllSuperClasses(@NotNull PyClass pyClass) {
-    Set<PyClass> superClasses = new HashSet<PyClass>();
-    /* ZZZ
-    List<PyClass> superClassesBuffer = new LinkedList<PyClass>();
-    while (true) {
-      final PyClass[] classes = pyClass.getSuperClasses();
-      if (classes.length == 0) {
-        break;
-      }
-      superClassesBuffer.addAll(Arrays.asList(classes));
-      if (!superClasses.containsAll(Arrays.asList(classes))) {
-        superClasses.addAll(Arrays.asList(classes));
-      }
-      else {
-        break;
-      }
-      if (!superClassesBuffer.isEmpty()) {
-        pyClass = superClassesBuffer.remove(0);
-      }
-      else {
-        break;
-      }
-    }
-    */
-    for (PyClass ancestor : pyClass.iterateAncestors()) superClasses.add(ancestor);
+    Set<PyClass> superClasses = getAllSuperClassesSet(pyClass);
     return superClasses.toArray(new PyClass[superClasses.size()]);
+  }
+
+  @NotNull
+  public static Set<PyClass> getAllSuperClassesSet(PyClass pyClass) {
+    Set<PyClass> superClasses = new HashSet<PyClass>();
+    for (PyClass ancestor : pyClass.iterateAncestors()) superClasses.add(ancestor);
+    return superClasses;
   }
 
   /**
@@ -703,4 +687,14 @@ public class PyUtil {
     }
     return null;
   }
+
+  public static boolean isExceptionClass(PyClass pyClass) {
+    for (PyClass c: pyClass.iterateAncestors()) {
+      if ("BaseException".equals(c.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
+
