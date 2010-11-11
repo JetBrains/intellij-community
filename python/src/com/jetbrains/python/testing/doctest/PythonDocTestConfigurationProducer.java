@@ -80,7 +80,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
     if (!parser.hasExample()) return null;
     final PyClass containingClass = pyFunction.getContainingClass();
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from function");
-    System.out.println("AAA" + settings.toString());
+
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();
     configuration.setMethodName(pyFunction.getName());
     if (containingClass != null) {

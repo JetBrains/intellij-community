@@ -150,6 +150,19 @@ def loadSource(fileName):
   modules[moduleName] = module
   return module
 
+def testfile(filename):
+    text, filename = doctest._load_testfile(filename, package, module_relative)
+
+    name = os.path.basename(filename)
+    globs = {}
+    globs['__name__'] = '__main__'
+
+    runner = DocTestRunner()
+    parser = doctest.DocTestParser()
+    # Read the file, convert it to a test, and run it.
+    test = parser.get_doctest(text, globs, name, filename, 0)
+    runner.run(test)
+
 runner = DocTestRunner()
 finder = doctest.DocTestFinder()
 
@@ -173,7 +186,12 @@ for arg in sys.argv[1:]:
         modules = loadModulesFromFolderRec(a[0])
       else:
         debug("/ from module " + a[0])
-        modules = [loadSource(a[0])]
+            # for doctests from non-python file
+        if a[0].rfind(".py") == -1:
+            testfile(a[0])
+            modules = []
+        else:
+            modules = [loadSource(a[0])]
 
     # for doctests
     for module in modules:
