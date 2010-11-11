@@ -23,6 +23,7 @@ public class GithubLoginDialog extends DialogWrapper {
     myGithubLoginPanel.setPassword(settings.getPassword());
     setTitle("Login to GitHub");
     setOKButtonText("Login");
+    setErrorText(null);
     init();
   }
 

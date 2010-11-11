@@ -16,25 +16,30 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.HyperlinkAdapter;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author oleg
  * @date 10/20/10
  */
-public class GithubLoginPanel {
+public class GithubSettingsPanel {
   private static final String SIGNUP_FOR_FREE_ACOUNT = "https://github.com/signup/free";
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JPanel myPane;
+  private JButton myTestButton;
 
-  public GithubLoginPanel() {
+  public GithubSettingsPanel() {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -45,6 +50,13 @@ public class GithubLoginPanel {
       "<html>Do not have an account? <a href=\"" + SIGNUP_FOR_FREE_ACOUNT + "\">" + "Signup for free" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    myTestButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean result = GithubUtil.testConnection(getLogin(), getPassword());
+        Messages.showInfoMessage(result ? "Connection successful" : "Cannot login using given credentials", result ? "Success" : "Fail");
+      }
+    });
   }
 
   public JComponent getPanel() {
