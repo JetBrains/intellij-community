@@ -411,7 +411,8 @@ public class PythonSdkType extends SdkType {
         try {
           sdkModificator.removeAllRoots();
           updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          if (!ApplicationManager.getApplication().isUnitTestMode() && PythonSdkUpdater.skeletonsUpToDate()) {
+            // if skeletons not up to date, they'll be built by PythonSdkUpdater
             generateSkeletons(indicator, sdk.getHomePath(), getSkeletonsPath(sdk.getHomePath()));
           }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
