@@ -135,6 +135,7 @@ public class GitStashUtils {
           shelveManager
             .unshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(), shelvedChangeList.getBinaryFiles(),
                                 changeManager.getDefaultChangeList(), false);
+          shelveManager.deleteChangeList(shelvedChangeList);
         }
         finally {
           l.setEventsSuppressed(false);
