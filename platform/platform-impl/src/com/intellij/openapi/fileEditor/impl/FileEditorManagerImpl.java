@@ -149,8 +149,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return Collections.unmodifiableSet(all);
   }
 
-  public AsyncResult<EditorsSplitters> getActiveSplitters() {
-    final boolean async = Registry.is("ide.windowSystem.asyncSplitters");
+  private AsyncResult<EditorsSplitters> getActiveSplitters(boolean syncUsage) {
+    final boolean async = Registry.is("ide.windowSystem.asyncSplitters") && !syncUsage;
 
     final AsyncResult<EditorsSplitters> result = new AsyncResult<EditorsSplitters>();
     final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
@@ -444,7 +444,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   public AsyncResult<EditorWindow> getActiveWindow() {
     final AsyncResult<EditorWindow> result = new AsyncResult<EditorWindow>();
-    getActiveSplitters().doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
+    getActiveSplitters(false).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
       @Override
       public void run(EditorsSplitters editorsSplitters) {
         result.setDone(editorsSplitters.getCurrentWindow());
@@ -699,7 +699,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     newSelectedComposite.getSelectedEditor().selectNotify();
 
     if (newEditorCreated) {
-      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this, file);
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(FileEditorManagerImpl.this, file);
+        }
+      });
 
       //Add request to watch this editor's virtual file
       final VirtualFile parentDir = file.getParent();
@@ -915,7 +920,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public EditorsSplitters getSplitters() {
-    EditorsSplitters active = getActiveSplitters().getResult();
+    EditorsSplitters active = getActiveSplitters(true).getResult();
     return active == null ? getMainSplitters() : active;
   }
 
@@ -1194,7 +1199,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-      publisher.selectionChanged(event);
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          publisher.selectionChanged(event);
+        }
+      });
     }
   }
 
