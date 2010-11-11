@@ -220,7 +220,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(), executor.getIcon())) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, false);
     }
   }
 

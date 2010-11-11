@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,6 +209,7 @@ public abstract class ProjectLevelVcsManager {
    * Adds a listener for receiving notifications about changes in VCS configuration for the project.
    *
    * @param listener the listener instance.
+   * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
   public abstract void addVcsListener(VcsListener listener);
@@ -216,6 +218,7 @@ public abstract class ProjectLevelVcsManager {
    * Removes a listener for receiving notifications about changes in VCS configuration for the project.
    *
    * @param listener the listener instance.
+   * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
   public abstract void removeVcsListener(VcsListener listener);
@@ -270,4 +273,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
+
+  public static Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
 }

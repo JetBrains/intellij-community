@@ -709,7 +709,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         IdeFocusManager mgr = getFocusManager();
         Runnable r = new Runnable() {
           public void run() {
-            myFocusTrackback.restoreFocus();
+            if (myFocusTrackback != null)  myFocusTrackback.restoreFocus();
             myFocusTrackback = null;
           }
         };

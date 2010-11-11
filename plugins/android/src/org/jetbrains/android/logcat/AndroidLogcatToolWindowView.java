@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.android.logcat;import com.android.ddmlib.AndroidDebugBridge;
+package org.jetbrains.android.logcat;
+
+import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogFilterModel;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidPlatformsComboBox;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -64,8 +59,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private JComboBox myDeviceCombo;
   private JPanel myConsoleWrapper;
   private JPanel myPanel;
-  private AndroidPlatformsComboBox myAndroidPlatformsCombo;
-  private JPanel myAndroidPlatformPanel;
   private JButton myClearLogButton;
   private JPanel mySearchComponentWrapper;
   private volatile IDevice myDevice;
@@ -101,21 +94,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     });
   }
 
-  private static Set<Library> getAndroidPlatformLibraries(Project project) {
-    ModuleManager manager = ModuleManager.getInstance(project);
-    Set<Library> result = new HashSet<Library>();
-    for (Module module : manager.getModules()) {
-      AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (facet != null) {
-        AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-        if (platform != null) {
-          result.add(platform.getLibrary());
-        }
-      }
-    }
-    return result;
-  }
-
   private class MyLoggingReader extends AndroidLoggingReader {
     @NotNull
     protected Object getLock() {
@@ -132,23 +110,18 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     myProject = project;
     Disposer.register(myProject, this);
 
-    final Set<Library> librarySet = getAndroidPlatformLibraries(project);
-    myAndroidPlatformsCombo.setFilter(new Condition<Library>() {
-      public boolean value(Library library) {
-        return librarySet.contains(library);
-      }
-    });
-    myAndroidPlatformsCombo.rebuildPlatforms();
-    if (myAndroidPlatformsCombo.getItemCount() > 0) {
-      myAndroidPlatformsCombo.setSelectedIndex(0);
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    if (facets.size() == 0) {
+      Messages.showErrorDialog(project, AndroidBundle.message("android.logcat.no.android.facets.error"), CommonBundle.getErrorTitle());
+      return;
     }
-    if (librarySet.size() < 2) {
-      if (librarySet.size() == 0) {
-        Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-        return;
-      }
-      myAndroidPlatformPanel.setVisible(false);
+    AndroidFacet facet = facets.get(0);
+    AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    if (platform == null) {
+      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
+      return;
     }
+
     myDeviceCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateLogConsole();
@@ -222,22 +195,10 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   protected abstract boolean isActive();
 
   public void activate() {
-    updatePlatforms();
     updateDevices();
     updateLogConsole();
     if (myLogConsole != null) {
       myLogConsole.activate();
-    }
-  }
-
-  private void updatePlatforms() {
-    Object selectedItem = myAndroidPlatformsCombo.getSelectedItem();
-    myAndroidPlatformsCombo.rebuildPlatforms();
-    if (selectedItem != null) {
-      myAndroidPlatformsCombo.setSelectedItem(selectedItem);
-    }
-    else if (myAndroidPlatformsCombo.getItemCount() > 0) {
-      myAndroidPlatformsCombo.setSelectedIndex(0);
     }
   }
 
@@ -262,9 +223,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   private void updateDevices() {
-    AndroidPlatform platform = myAndroidPlatformsCombo.getSelectedPlatform();
-    if (platform != null) {
-      final AndroidDebugBridge debugBridge = platform.getSdk().getDebugBridge(myProject);
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(myProject).getFacets(AndroidFacet.ID);
+    if (facets.size() > 0) {
+      final AndroidDebugBridge debugBridge = facets.get(0).getDebugBridge();
       if (debugBridge != null) {
         IDevice[] devices;
         try {
@@ -293,16 +254,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   public JPanel getContentPanel() {
     return myPanel;
-  }
-
-  private void createUIComponents() {
-    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    myAndroidPlatformsCombo = new AndroidPlatformsComboBox(new Computable<LibraryTable.ModifiableModel>() {
-      @Override
-      public LibraryTable.ModifiableModel compute() {
-        return table.getModifiableModel();
-      }
-    }, null);
   }
 
   public void dispose() {

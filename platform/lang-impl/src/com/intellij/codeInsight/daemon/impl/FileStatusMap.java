@@ -171,7 +171,7 @@ public class FileStatusMap implements Disposable {
       else if (status.dirtyScopes.containsKey(passId)) {
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          ((RangeMarkerEx)marker).dispose();
+          marker.dispose();
           status.dirtyScopes.put(passId, null);
         }
       }
@@ -217,7 +217,7 @@ public class FileStatusMap implements Disposable {
         LOG.assertTrue(status.dirtyScopes.containsKey(passId));
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          ((RangeMarkerEx)marker).dispose();
+          marker.dispose();
         }
         marker = document.createRangeMarker(0, document.getTextLength());
         status.dirtyScopes.put(passId, marker);
@@ -269,7 +269,7 @@ public class FileStatusMap implements Disposable {
     if (union.getEndOffset() > textLength) {
       union = union.intersection(new TextRange(0, textLength));
     }
-    ((RangeMarkerEx)old).dispose();
+    old.dispose();
     return document.createRangeMarker(union);
   }
 

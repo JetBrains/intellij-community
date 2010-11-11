@@ -53,13 +53,15 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * To change this template use File | Settings | File Templates.
  */
 public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.IDeviceChangeListener {
-  private static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
+  public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
   private final AndroidFacet myFacet;
   @Nullable
   private JPanel myPanel;
   private JTable myDeviceTable;
   private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
+
+  private int[] mySelectedRows;
 
   public DeviceChooser(@NotNull AndroidFacet facet, boolean multipleSelection, @Nullable String[] selectedSerials) {
     super(facet.getModule().getProject(), true);
@@ -191,13 +193,19 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     }
   }
 
+  @Override
+  protected void doOKAction() {
+    mySelectedRows = myDeviceTable.getSelectedRows();
+    super.doOKAction();
+  }
+
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
   @NotNull
   public IDevice[] getSelectedDevices() {
-    int[] rows = myDeviceTable.getSelectedRows();
+    int[] rows = mySelectedRows != null ? mySelectedRows : myDeviceTable.getSelectedRows();
     List<IDevice> result = new ArrayList<IDevice>();
     for (int row : rows) {
       if (row >= 0) {

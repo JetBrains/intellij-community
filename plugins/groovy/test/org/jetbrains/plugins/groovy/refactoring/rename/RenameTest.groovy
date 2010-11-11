@@ -186,7 +186,31 @@ class A {
 }"""
   }
 
-
+  public void _testRenameFieldWithNonstandardName() {
+    def file = myFixture.configureByText("a.groovy", """
+class SomeBean {
+  String xXx<caret> = "field"
+  public String getxXx() {
+    return "method"
+  }
+  public static void main(String[] args) {
+    println(new SomeBean().xXx)
+  }
+}
+""")
+    myFixture.renameElementAtCaret "xXx777"
+    assertEquals """
+class SomeBean {
+  String xXx777 = "field"
+  public String getxXx777() {
+    return "method"
+  }
+  public static void main(String[] args) {
+    println(new SomeBean().xXx777)
+  }
+}
+""", file.text
+  }
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";

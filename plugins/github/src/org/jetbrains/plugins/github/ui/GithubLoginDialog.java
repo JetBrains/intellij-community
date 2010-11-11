@@ -17,7 +17,7 @@ public class GithubLoginDialog extends DialogWrapper {
   // TODO: login to github must be merged with tasks server settings
   public GithubLoginDialog(final Project project) {
     super(project, true);
-    myGithubLoginPanel = new GithubLoginPanel();
+    myGithubLoginPanel = new GithubLoginPanel(this);
     final GithubSettings settings = GithubSettings.getInstance();
     myGithubLoginPanel.setLogin(settings.getLogin());
     myGithubLoginPanel.setPassword(settings.getPassword());
@@ -57,5 +57,9 @@ public class GithubLoginDialog extends DialogWrapper {
     } else {
       setErrorText("Cannot login with given credentials");
     }
+  }
+
+  public void clearErrors() {
+    setErrorText(null);
   }
 }

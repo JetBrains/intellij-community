@@ -32,9 +32,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -284,7 +282,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
 
   public Color getTextForeground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? Color.white : UIManager.getColor("ToolTip.foreground");
+    return useGraphite(awtTooltip) ? Color.white : UIUtil.getToolTipForeground();
   }
 
   public Color getLinkForeground(boolean awtTooltip) {
@@ -292,7 +290,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public Color getTextBackground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIManager.getColor("ToolTip.background");
+    return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIUtil.getToolTipBackground();
   }
 
   public String getUlImg(boolean awtTooltip) {

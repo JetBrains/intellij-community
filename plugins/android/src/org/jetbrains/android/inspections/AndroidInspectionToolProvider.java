@@ -27,6 +27,6 @@ import com.intellij.codeInspection.InspectionToolProvider;
  */
 public class AndroidInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[]{AndroidDomInspection.class, AndroidUnknownAttributeInspection.class};
+    return new Class[]{AndroidDomInspection.class/*, AndroidUnknownAttributeInspection.class*/};
   }
 }

@@ -87,7 +87,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
-  private final boolean myTestModeFlag;
+  private boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
 
@@ -278,7 +278,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       try {
         commandProcessor.executeCommand(project, new Runnable() {
           public void run() {
-            canClose.set(ProjectUtil.closeProject(project));
+            canClose.set(ProjectUtil.closeAndDispose(project));
           }
         }, ApplicationBundle.message("command.exit"), null);
       }
@@ -355,6 +355,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isUnitTestMode() {
     return myTestModeFlag;
+  }
+
+  public void setUnitTestMode(boolean testModeFlag) {
+    myTestModeFlag = testModeFlag;
   }
 
   public boolean isHeadlessEnvironment() {
@@ -689,7 +693,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         if (!canExit()) return;
 
-        if (disposeSelf()) System.exit(myExitCode);
+        boolean success = disposeSelf();
+        if (success && !isUnitTestMode()) {
+          System.exit(myExitCode);
+        }
       }
     };
     

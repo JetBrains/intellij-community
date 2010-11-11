@@ -124,6 +124,33 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         if (info.isToAbstract() || willBeUsedInSubclass(modifierListOwner, movedMembers, myTargetSuperClass, mySourceClass)) {
           PsiUtil.setModifierProperty(modifierListOwner, PsiModifier.PROTECTED, true);
         }
+        if (modifierListOwner instanceof PsiClass) {
+          modifierListOwner.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitMethod(PsiMethod method) {
+              check(method);
+            }
+
+            @Override
+            public void visitField(PsiField field) {
+              check(field);
+            }
+
+            @Override
+            public void visitClass(PsiClass aClass) {
+              check(aClass);
+              super.visitClass(aClass);
+            }
+
+            private void check(PsiMember member) {
+              if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+                if (willBeUsedInSubclass(member, movedMembers, myTargetSuperClass, mySourceClass)) {
+                  PsiUtil.setModifierProperty(member, PsiModifier.PROTECTED, true);
+                }
+              }
+            }
+          });
+        }
       }
       ChangeContextUtil.encodeContextInfo(info.getMember(), true);
     }

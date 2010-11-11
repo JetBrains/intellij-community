@@ -232,7 +232,7 @@ public class StatementParser {
         final PsiBuilder.Marker declStatement = builder.mark();
         final PsiBuilder.Marker decl = DeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
-          ReferenceParser.parseType(builder, false, false, false);
+          ReferenceParser.parseType(builder, 0);
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }
         done(declStatement, JavaElementType.DECLARATION_STATEMENT);

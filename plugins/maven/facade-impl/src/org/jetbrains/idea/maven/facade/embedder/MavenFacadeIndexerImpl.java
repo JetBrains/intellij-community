@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.facade.embedder;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
+import java.rmi.RemoteException;
 import java.util.*;
 
 public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFacadeIndexer {
@@ -53,7 +55,7 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
 
   private final TIntObjectHashMap<IndexingContext> myIndices = new TIntObjectHashMap<IndexingContext>();
 
-  public MavenFacadeIndexerImpl() {
+  public MavenFacadeIndexerImpl() throws RemoteException {
     myEmbedder = MavenFacadeEmbedderImpl.create(new MavenFacadeSettings());
 
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
@@ -121,18 +123,18 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
 
   public void updateIndex(int id, MavenFacadeSettings settings, MavenFacadeProgressIndicator indicator) throws
                                                                                                         MavenFacadeIndexerException,
-                                                                                                        MavenFacadeProcessCanceledException {
+                                                                                                        MavenFacadeProcessCanceledException,
+                                                                                                        RemoteException {
     IndexingContext index = getIndex(id);
-    MavenFacadeProgressIndicatorWrapper indicatorWrapper = new MavenFacadeProgressIndicatorWrapper(indicator);
 
     try {
       if (isLocal(index)) {
-        indicatorWrapper.setIndeterminate(true);
+        indicator.setIndeterminate(true);
         try {
-          myIndexer.scan(index, new MyScanningListener(indicatorWrapper), false);
+          myIndexer.scan(index, new MyScanningListener(indicator), false);
         }
         finally {
-          indicatorWrapper.setIndeterminate(false);
+          indicator.setIndeterminate(false);
         }
       }
       else {
@@ -142,17 +144,27 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
           request.setResourceFetcher(new MavenIndexFetcher(index.getRepositoryId(),
                                                            index.getRepositoryUrl(),
                                                            embedder.getComponent(WagonManager.class),
-                                                           new TransferListenerAdapter(indicatorWrapper) {
+                                                           new TransferListenerAdapter(indicator) {
                                                              @Override
                                                              protected void downloadProgress(long downloaded, long total) {
                                                                super.downloadProgress(downloaded, total);
-                                                               myIndicator.setFraction(((double)downloaded) / total);
+                                                               try {
+                                                                 myIndicator.setFraction(((double)downloaded) / total);
+                                                               }
+                                                               catch (RemoteException e) {
+                                                                 throw new RuntimeRemoteException(e);
+                                                               }
                                                              }
 
                                                              @Override
                                                              public void transferCompleted(TransferEvent event) {
                                                                super.transferCompleted(event);
-                                                               myIndicator.setText2("Processing indices...");
+                                                               try {
+                                                                 myIndicator.setText2("Processing indices...");
+                                                               }
+                                                               catch (RemoteException e) {
+                                                                 throw new RuntimeRemoteException(e);
+                                                               }
                                                              }
                                                            }));
           myUpdater.fetchAndUpdateIndex(request);
@@ -162,7 +174,10 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
         }
       }
     }
-    catch (MavenFacadeProgressIndicatorWrapper.RuntimeCanceledException e) {
+    catch (RuntimeRemoteException e) {
+      throw e.getCause();
+    }
+    catch (ProcessCanceledException e) {
       throw new MavenFacadeProcessCanceledException();
     }
     catch (Exception e) {
@@ -245,14 +260,14 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
     }
   }
 
-  public Collection<MavenArchetype> getArchetypes() {
+  public Collection<MavenArchetype> getArchetypes() throws RemoteException {
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
     doCollectArchetypes("nexus", result);
     return result;
   }
 
-  private void doCollectArchetypes(String roleHint, Set<MavenArchetype> result) {
+  private void doCollectArchetypes(String roleHint, Set<MavenArchetype> result) throws RemoteException {
     try {
       ArchetypeDataSource source = myEmbedder.getComponent(ArchetypeDataSource.class, roleHint);
       ArchetypeCatalog catalog = source.getArchetypeCatalog(new Properties());
@@ -276,27 +291,42 @@ public class MavenFacadeIndexerImpl extends MavenRemoteObject implements MavenFa
   }
 
   private static class MyScanningListener implements ArtifactScanningListener {
-    private final MavenFacadeProgressIndicatorWrapper p;
+    private final MavenFacadeProgressIndicator p;
 
-    public MyScanningListener(MavenFacadeProgressIndicatorWrapper indicator) {
+    public MyScanningListener(MavenFacadeProgressIndicator indicator) {
       p = indicator;
     }
 
     public void scanningStarted(IndexingContext ctx) {
-      p.checkCanceled();
+      try {
+        if (p.isCanceled()) throw new ProcessCanceledException();
+      }
+      catch (RemoteException e) {
+        throw new RuntimeRemoteException(e);
+      }
     }
 
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
-      p.checkCanceled();
+      try {
+        if (p.isCanceled()) throw new ProcessCanceledException();
+      }
+      catch (RemoteException e) {
+        throw new RuntimeRemoteException(e);
+      }
     }
 
     public void artifactError(ArtifactContext ac, Exception e) {
     }
 
     public void artifactDiscovered(ArtifactContext ac) {
-      p.checkCanceled();
-      ArtifactInfo info = ac.getArtifactInfo();
-      p.setText2(info.groupId + ":" + info.artifactId + ":" + info.version);
+      try {
+        if (p.isCanceled()) throw new ProcessCanceledException();
+        ArtifactInfo info = ac.getArtifactInfo();
+        p.setText2(info.groupId + ":" + info.artifactId + ":" + info.version);
+      }
+      catch (RemoteException e) {
+        throw new RuntimeRemoteException(e);
+      }
     }
   }
 }

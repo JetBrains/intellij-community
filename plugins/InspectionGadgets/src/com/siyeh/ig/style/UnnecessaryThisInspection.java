@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,17 +30,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryThisInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unnecessary.this.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.this.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryThisFix();
     }
@@ -66,6 +70,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryThisVisitor();
     }
@@ -103,8 +108,13 @@ public class UnnecessaryThisInspection extends BaseInspection {
                     registerError(qualifierExpression);
                     return;
                 }
-                if (VariableSearchUtils.existsLocalOrParameter(referenceName,
-                        expression)) {
+                final PsiElement target = expression.resolve();
+                if (!(target instanceof PsiVariable)) {
+                    return;
+                }
+                final PsiVariable variable = (PsiVariable) target;
+                if (!VariableSearchUtils.variableNameResolvesToTarget(
+                        referenceName, variable, expression)) {
                     return;
                 }
                 registerError(thisExpression);
@@ -124,24 +134,43 @@ public class UnnecessaryThisInspection extends BaseInspection {
                     final String methodName = calledMethod.getName();
                     PsiClass parentClass =
                             ClassUtils.getContainingClass(expression);
+                    final Project project = expression.getProject();
+                    final JavaPsiFacade psiFacade =
+                            JavaPsiFacade.getInstance(project);
+                    final PsiResolveHelper resolveHelper =
+                            psiFacade.getResolveHelper();
                     while (parentClass != null) {
                         if (qualifierName.equals(parentClass.getName())) {
                             registerError(thisExpression);
                         }
-                        //resolve will point to any _accessible_ method with the same name
                         final PsiMethod[] methods =
-                                parentClass.findMethodsByName(methodName,
-                                        true);
-                        //todo: filter only accessible methods
-                        if (methods.length > 0) {
-                            return;
+                                parentClass.findMethodsByName(methodName, true);
+                        for (PsiMethod method : methods) {
+                            final PsiClass containingClass =
+                                    method.getContainingClass();
+                            if (resolveHelper.isAccessible(method,
+                                    expression, containingClass)) {
+                                if (method.hasModifierProperty(
+                                        PsiModifier.PRIVATE) &&
+                                        !PsiTreeUtil.isAncestor(containingClass,
+                                                expression, true)) {
+                                    continue;
+                                }
+                                return;
+                            }
+
                         }
                         parentClass =
                                 ClassUtils.getContainingClass(parentClass);
                     }
                 } else {
-                    if (VariableSearchUtils.existsLocalOrParameter(referenceName,
-                            expression)) {
+                    final PsiElement target = expression.resolve();
+                    if (!(target instanceof PsiVariable)) {
+                        return;
+                    }
+                    final PsiVariable variable = (PsiVariable) target;
+                    if (!VariableSearchUtils.variableNameResolvesToTarget(
+                            referenceName, variable, expression)) {
                         return;
                     }
                     PsiClass parentClass =

@@ -21,21 +21,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlConditionalSection;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlEntityDecl;
-import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.*;
 
 /**
  * @author maxim.mossienko
  */
-public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlConditionalSection, XmlElementType {
+public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlConditionalSection {
   public XmlConditionalSectionImpl() {
-    super(XML_CONDITIONAL_SECTION);
+    super(XmlElementType.XML_CONDITIONAL_SECTION);
   }
 
   public boolean isIncluded(PsiFile targetFile) {
-    ASTNode child = findChildByType(XML_CONDITIONAL_SECTION_START);
+    ASTNode child = findChildByType(XmlTokenType.XML_CONDITIONAL_SECTION_START);
 
     if (child != null) {
       child = child.getTreeNext();
@@ -46,10 +43,10 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
 
       if (child != null) {
         IElementType elementType = child.getElementType();
-        if (elementType == XML_CONDITIONAL_INCLUDE) return true;
-        if (elementType == XML_CONDITIONAL_IGNORE) return false;
+        if (elementType == XmlTokenType.XML_CONDITIONAL_INCLUDE) return true;
+        if (elementType == XmlTokenType.XML_CONDITIONAL_IGNORE) return false;
 
-        if (elementType == XML_ENTITY_REF) {
+        if (elementType == XmlElementType.XML_ENTITY_REF) {
           XmlEntityRef xmlEntityRef = (XmlEntityRef)child.getPsi();
 
           final String text = xmlEntityRef.getText();
@@ -64,21 +61,19 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
               for (ASTNode e = decl.getNode().getFirstChildNode(); e != null; e = e.getTreeNext()) {
                 if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
                   final boolean b = StringUtil.stripQuotesAroundValue(e.getText()).equals("INCLUDE");
-                  //if (!b) System.out.println("Skipped:"+text);
                   return b;
                 }
               }
             }
           }
         }
-        ///System.out.println("Skipped:"+child.getText());
       }
     }
     return false;
   }
 
   public PsiElement getBodyStart() {
-    ASTNode child = findChildByType(XML_MARKUP_START);
+    ASTNode child = findChildByType(XmlTokenType.XML_MARKUP_START);
     if (child != null) child = child.getTreeNext();
     if (child != null) return child.getPsi();
     return null;

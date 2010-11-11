@@ -34,10 +34,20 @@ public class FileAttribute {
   private static final Set<String> ourRegisteredIds = new HashSet<String>();
   private final String myId;
   private final int myVersion;
+  private final boolean myFixedSize;
 
+  /**
+   * @deprecated
+   * @see #FileAttribute(String, int, boolean)
+   */
   public FileAttribute(@NonNls final String id, int version) {
+    this(id, version, false);
+  }
+
+  public FileAttribute(@NonNls final String id, int version, boolean fixedSize) {
     myId = id;
     myVersion = version;
+    myFixedSize = fixedSize;
     boolean added = ourRegisteredIds.add(id);
     assert added : "Attribute id='" + id+ "' is not unique";
   }
@@ -103,5 +113,9 @@ public class FileAttribute {
 
   public String getId() {
     return myId;
+  }
+
+  public boolean isFixedSize() {
+    return myFixedSize;
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
-import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
+import com.intellij.ide.scriptingContext.ScriptingLibraryMappings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.util.IconLoader;
@@ -30,10 +30,23 @@ import javax.swing.*;
  */
 public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<ScriptingLibraryTable.LibraryModel> {
 
-  public ScriptingContextsConfigurable(final Project project, final LangScriptingContextProvider provider) {
-    super(project, ScriptingLibraryTable.LibraryModel.class, provider.getLibraryMappings(project),
+  private final ScriptingLibraryMappings myScriptingLibraryMappings;
+
+  public ScriptingContextsConfigurable(final Project project, final ScriptingLibraryMappings mappings) {
+    super(project, ScriptingLibraryTable.LibraryModel.class, mappings,
           "Specify which libraries are used in specific files and/or directories.", "Library",
           "Override library settings for child directories and files?", "Override Library Settings");
+    myScriptingLibraryMappings = mappings;
+  }
+
+  public void resetMappings() {
+    myScriptingLibraryMappings.reset();
+  }
+
+  @Override
+  public void reset() {
+    resetMappings();
+    super.reset();
   }
 
   @Override
@@ -44,7 +57,7 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   @Nls
   @Override
   public String getDisplayName() {
-    return "Usage Context";
+    return "Usage Scope";
   }
 
   @Override

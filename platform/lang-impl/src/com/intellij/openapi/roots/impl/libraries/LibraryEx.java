@@ -22,13 +22,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 
+import java.util.List;
+
 /**
  *  @author dsl
  */
 public interface LibraryEx extends Library {
   Library cloneLibrary(RootModelImpl rootModel);
 
-  boolean allPathsValid(OrderRootType type);
+  List<String> getInvalidRootUrls(OrderRootType type);
 
   boolean isDisposed();
 
@@ -37,8 +39,6 @@ public interface LibraryEx extends Library {
   LibraryProperties getProperties();
 
   interface ModifiableModelEx extends ModifiableModel {
-    boolean allPathsValid(OrderRootType type);
-
     void setProperties(LibraryProperties properties);
 
     LibraryProperties getProperties();

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -224,17 +226,24 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
                  "    <parent>\n" +
                  "        <artifactId>project</artifactId>\n" +
                  "        <groupId>test</groupId>\n" +
                  "        <version>1</version>\n" +
                  "    </parent>\n" +
                  "    <modelVersion>4.0.0</modelVersion>\n" +
+                 "\n" +
                  "    <artifactId>module</artifactId>\n" +
                  "    <packaging>jar</packaging>\n" +
+                 "\n" +
                  "    <name>module</name>\n" +
                  "    <url>http://maven.apache.org</url>\n" +
+                 "\n" +
+                 "    <properties>\n" +
+                 "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
+                 "    </properties>\n" +
+                 "\n" +
                  "    <dependencies>\n" +
                  "        <dependency>\n" +
                  "            <groupId>junit</groupId>\n" +
@@ -324,9 +333,13 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   private void createNewModule(MavenId id) throws Exception {
     myBuilder.setProjectId(id);
 
-    ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-    myBuilder.createModule(model);
-    model.commit();
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+        myBuilder.createModule(model);
+        model.commit();
+      }
+    }.execute();
 
     resolveDependenciesAndImport();
   }

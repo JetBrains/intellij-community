@@ -19,10 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -117,9 +114,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
 
   @Override
-  public XDebuggerNodeLink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null) {
-      return new XDebuggerNodeLink(myFullValueEvaluator.getLinkText()) {
+      return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
         @Override
         public void onClick(MouseEvent event) {
           DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject());

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -94,7 +96,7 @@ public class SeparatorComponent extends JComponent {
    */
   public static JComponent createLabbeledLineSeparator(final String titleText, final Color containerBackgroungColor) {
     JLabel titleLabel = new JLabel(titleText);
-    titleLabel.setFont(UIManager.getFont("Label.font"));
+    titleLabel.setFont(UIUtil.getLabelFont());
     titleLabel.setForeground(Colors.DARK_BLUE);
 
     SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroungColor.darker(), containerBackgroungColor.brighter());

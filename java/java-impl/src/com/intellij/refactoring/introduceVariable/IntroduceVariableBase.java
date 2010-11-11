@@ -26,8 +26,10 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -462,8 +464,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
+        typeSelectorManager.setAllOccurences(choice != OccurrencesChooser.ReplaceChoice.NO);
+        final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
-        final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
+        final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
+        final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
+        for (PsiExpression occurrence : occurrences) {
+          occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
+        }
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -477,15 +485,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
                   editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, declarationStatement);
+                  editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
+                                     occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
                   final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
                     @Override
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
-                      builder.replaceElement(elementToRename.getTypeElement(), "Variable_Type", ReassignVariableUtil
-                        .createExpression(typeSelectorManager), false, true);
+                      final PsiTypeElement typeElement = elementToRename.getTypeElement();
+                      builder.replaceElement(typeElement, "Variable_Type",
+                                             ReassignVariableUtil.createExpression(expression, typeElement.getText()), false, true);
                     }
                   };
                   renamer.setAdvertisementText(
-                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType()));
+                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll()));
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
                       @Override
                       public void consume(Boolean apply) {
@@ -500,6 +511,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           editor.getCaretModel().moveToOffset(startOffset);
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
+                        for (RangeMarker occurrenceMarker : occurrenceMarkers) {
+                          occurrenceMarker.dispose();
+                        }
+                        editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
+                        typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         exprMarker.dispose();
                       }
                     });
@@ -815,7 +831,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
       @Override
       public PsiType getSelectedType() {
-        return typeSelectorManager.getDefaultType();
+        final PsiType selectedType = typeSelectorManager.getTypeSelector().getSelectedType();
+        return selectedType != null ? selectedType : typeSelectorManager.getDefaultType();
       }
 
       @Override

@@ -93,9 +93,14 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
         }
 
         if (element == null && file != null) {
-          final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-          if (ref instanceof PsiPolyVariantReference) {
-            element = ref.getElement();
+          try {
+            final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
+            if (ref instanceof PsiPolyVariantReference) {
+              element = ref.getElement();
+            }
+          }
+          catch (IndexNotReadyException e) {
+            element = null;
           }
         }
       }

@@ -254,15 +254,16 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                   if (target != null) {
                     AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
                     String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
-                    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
-                    assert manifestFile != null;
-                    String manifestPath = manifestFile.getPath();
-                    items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
-                                                    packageName, false));
-
-                    for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+                    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
+                    if (manifestFile != null) {
+                      String manifestPath = manifestFile.getPath();
                       items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
-                                                      libPackage, true));
+                                                      packageName, false));
+
+                      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+                        items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+                                                        libPackage, true));
+                      }
                     }
                   }
                 }

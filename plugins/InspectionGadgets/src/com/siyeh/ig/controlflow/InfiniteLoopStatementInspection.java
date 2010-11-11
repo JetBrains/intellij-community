@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteLoopStatementInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "infinite.loop.statement.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "infinite.loop.statement.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InfiniteLoopStatementsVisitor();
     }
@@ -50,12 +54,14 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
     private static class InfiniteLoopStatementsVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(
+                @NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             checkStatement(statement);
         }
 
-        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(
+                @NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             checkStatement(statement);
         }

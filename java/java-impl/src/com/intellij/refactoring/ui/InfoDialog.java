@@ -65,7 +65,7 @@ public class InfoDialog extends DialogWrapper{
     myTextArea = new JTextArea(myText);
     textPanel.add(myTextArea, BorderLayout.CENTER);
     myTextArea.setEditable(false);
-    myTextArea.setBackground(UIUtil.getPanelBackgound());
+    myTextArea.setBackground(UIUtil.getPanelBackground());
     Font font = myShowInFutureCheckBox.getFont();
     font = new Font(font.getName(), font.getStyle(), font.getSize() + 1);
     myTextArea.setFont(font);

@@ -62,27 +62,32 @@ public class DuplicateAction extends EditorAction {
       editor.getSelectionModel().setSelection(end, end+s.length());
     }
     else {
-      Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(editor);
-      int offset = caretModel.getOffset();
-
-      LogicalPosition lineStart = lines.first;
-      LogicalPosition nextLineStart = lines.second;
-      int start = editor.logicalPositionToOffset(lineStart);
-      int end = editor.logicalPositionToOffset(nextLineStart);
-      String s = document.getCharsSequence().subSequence(start, end).toString();
-      final int lineToCheck = nextLineStart.line - 1;
-
-      int newOffset = end + offset - start;
-      if(lineToCheck == document.getLineCount () /*empty document*/ ||
-         document.getLineSeparatorLength(lineToCheck) == 0) {
-        s = "\n"+s;
-        newOffset++;
-      }
-      document.insertString(end, s);
-
-      caretModel.moveToOffset(newOffset);
-      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+      duplicateLinesRange(editor, document, caretModel.getVisualPosition(), caretModel.getVisualPosition());
     }
+  }
+
+  static Pair<Integer, Integer> duplicateLinesRange(Editor editor, Document document, VisualPosition rangeStart, VisualPosition rangeEnd) {
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(editor, rangeStart, rangeEnd);
+    int offset = editor.getCaretModel().getOffset();
+
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
+    int start = editor.logicalPositionToOffset(lineStart);
+    int end = editor.logicalPositionToOffset(nextLineStart);
+    String s = document.getCharsSequence().subSequence(start, end).toString();
+    final int lineToCheck = nextLineStart.line - 1;
+
+    int newOffset = end + offset - start;
+    if(lineToCheck == document.getLineCount () /*empty document*/ ||
+       document.getLineSeparatorLength(lineToCheck) == 0) {
+      s = "\n"+s;
+      newOffset++;
+    }
+    document.insertString(end, s);
+
+    editor.getCaretModel().moveToOffset(newOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    return new Pair<Integer, Integer>(end, end+s.length());
   }
 
   @Override

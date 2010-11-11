@@ -47,7 +47,7 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final AnnotationListener myListener;
   private final boolean myIsGutterAction;
   private Map<String, Color> myColorScheme;
-  private boolean myShowBg = true;
+  private boolean myShowBg = ShowAnnotationColorsAction.isColorsEnabled();
   private boolean myShowAdditionalInfo = false;
 
   AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation, Map<String, Color> colorScheme) {

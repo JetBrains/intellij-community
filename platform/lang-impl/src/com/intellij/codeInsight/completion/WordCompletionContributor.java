@@ -113,8 +113,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return true;
     }
 
-    final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-    if (completion == null || !completion.isAutopopupCompletion()) {
+    if (parameters.getInvocationCount() > 0) {
       return true;
     }
 

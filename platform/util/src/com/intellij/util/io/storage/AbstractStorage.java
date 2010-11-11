@@ -201,7 +201,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   private static int calcCapacity(int requiredLength) {
-    return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
+    return Math.max(64, Math.min(nearestPowerOfTwo(requiredLength * 3 / 2), (requiredLength / 1024 + 1) * 1024));
   }
 
   private static int nearestPowerOfTwo(int n) {
@@ -211,10 +211,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       n /= 2;
     }
     return power;
-  }
-
-  public void writePageBytes(int page, byte[] bytes) {
-    //To change body of created methods use File | Settings | File Templates.
   }
 
   public StorageDataOutput writeStream(final int record) {
@@ -257,10 +253,10 @@ public abstract class AbstractStorage implements Disposable, Forceable {
           byte[] newbytes = new byte[newSize];
           System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
           System.arraycopy(bytes, 0, newbytes, oldSize, delta);
-          writeBytes(record, newbytes);
+          writeBytes(record, newbytes, false);
         }
         else {
-          writeBytes(record, bytes);
+          writeBytes(record, bytes, false);
         }
       }
       else {
@@ -271,7 +267,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  public void writeBytes(int record, byte[] bytes) throws IOException {
+  public void writeBytes(int record, byte[] bytes, boolean fixedSize) throws IOException {
     synchronized (myLock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -290,7 +286,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
           myDataTable.reclaimSpace(currentCapacity);
         }
 
-        final int newCapacity = calcCapacity(requiredLength);
+        final int newCapacity = fixedSize ? requiredLength : calcCapacity(requiredLength);
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
         myRecordsTable.setCapacity(record, newCapacity);
@@ -339,7 +335,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
     public void close() throws IOException {
       super.close();
-      myStorage.writeBytes(myRecordId, getByteStream().toByteArray());
+      myStorage.writeBytes(myRecordId, getByteStream().toByteArray(), false);
     }
 
     protected ByteArrayOutputStream getByteStream() {

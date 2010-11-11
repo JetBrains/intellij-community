@@ -82,6 +82,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
   }
 
+  public List<Pair<Place, PsiFile>> getResult() {
+    return result;
+  }
+
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
     escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();

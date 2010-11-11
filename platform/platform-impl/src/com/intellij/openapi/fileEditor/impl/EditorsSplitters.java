@@ -221,6 +221,14 @@ public class EditorsSplitters extends JPanel {
         }
         mySplittersElement = null;
       }
+      // clear empty splitters
+      for (EditorWindow window : getWindows()) {
+        if (window.getEditors().length == 0) {
+          for (EditorWindow sibling : window.findSiblings()) {
+            sibling.unsplit(false);
+          }
+        }
+      }
     }
   }
 
@@ -228,6 +236,7 @@ public class EditorsSplitters extends JPanel {
     mySplittersElement = element;
   }
 
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public JPanel readExternalPanel(final Element element, @Nullable JPanel panel) {
     final Element splitterElement = element.getChild("splitter");
@@ -263,11 +272,11 @@ public class EditorsSplitters extends JPanel {
       } else {
         window = findWindowWith(panel);
       }
-      try {
-        //noinspection unchecked
-        final List<Element> children = leaf.getChildren("file");
-        VirtualFile currentFile = null;
-        for (final Element file : children) {
+      //noinspection unchecked
+      final List<Element> children = leaf.getChildren("file");
+      VirtualFile currentFile = null;
+      for (final Element file : children) {
+        try {
           final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG));
           boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
           getManager().openFileImpl3(window, entry.myFile, false, entry, isCurrent);
@@ -281,15 +290,15 @@ public class EditorsSplitters extends JPanel {
             }
           }
         }
-        if (currentFile != null) {
-          final EditorComposite editor = window.findFileComposite(currentFile);
-          if (editor != null) {
-            window.setSelectedEditor(editor, true);
-          }
+        catch (InvalidDataException e) {
+          // OK
         }
       }
-      catch (InvalidDataException e) {
-        // OK
+      if (currentFile != null) {
+        final EditorComposite editor = window.findFileComposite(currentFile);
+        if (editor != null) {
+          window.setSelectedEditor(editor, true);
+        }
       }
       return window.myPanel;
     }
@@ -553,13 +562,15 @@ public class EditorsSplitters extends JPanel {
   public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
-    try {
-      getManager().fireSelectionChanged(oldEditor, newEditor);
-    }
-    finally {
-      setCurrentWindow(window);
-      myCurrentSelectedEditor = newEditor;
-    }
+
+    Runnable fireRunnable = new Runnable() {
+      public void run() {
+        getManager().fireSelectionChanged(oldEditor, newEditor);
+      }
+    };
+
+    setCurrentWindow(window);
+    myCurrentSelectedEditor = newEditor;
 
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
@@ -574,9 +585,13 @@ public class EditorsSplitters extends JPanel {
         }
 
         if (requestFocus && !alreadyFocused) {
-          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
+          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus).doWhenDone(fireRunnable);
+        } else {
+          fireRunnable.run();
         }
       }
+    } else {
+      fireRunnable.run();
     }
   }
 

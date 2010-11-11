@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -99,7 +100,7 @@ public class TestPackage extends TestObject {
     }
 
     try {
-      myTempFile = File.createTempFile("idea_junit", ".tmp");
+      myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
       myTempFile.deleteOnExit();
       myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
     }

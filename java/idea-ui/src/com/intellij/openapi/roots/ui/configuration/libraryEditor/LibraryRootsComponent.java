@@ -256,6 +256,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
+  public void updateRootsTree() {
+    if (myTreeBuilder != null) {
+      myTreeBuilder.queueUpdate();
+    }
+  }
+
   private class AttachItemAction implements ActionListener {
     private VirtualFile myLastChosen = null;
     private final AttachRootButtonDescriptor myDescriptor;
@@ -328,7 +334,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       });
       updateProperties();
-      myTreeBuilder.updateFromRoot();
+      myTreeBuilder.queueUpdate();
     }
     return filesToAttach;
   }
@@ -368,7 +374,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   protected void librariesChanged(boolean putFocusIntoTree) {
     updateProperties();
-    myTreeBuilder.updateFromRoot();
+    myTreeBuilder.queueUpdate();
     if (putFocusIntoTree) {
       myTree.requestFocus();
     }

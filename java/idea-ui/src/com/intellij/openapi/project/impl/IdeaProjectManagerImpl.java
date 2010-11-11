@@ -20,6 +20,7 @@ import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.impl.ConversionResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -33,8 +34,8 @@ import java.io.IOException;
  * @author mike
  */
 public class IdeaProjectManagerImpl extends ProjectManagerImpl {
-  public IdeaProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
-    super(virtualFileManagerEx);
+  public IdeaProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
+    super(virtualFileManagerEx, progressManager);
   }
 
   @NotNull

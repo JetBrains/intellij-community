@@ -216,8 +216,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      LOG.assertTrue(node != null);
-      if (node.getUserObject() instanceof ComponentPtrDescriptor) {
+      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {

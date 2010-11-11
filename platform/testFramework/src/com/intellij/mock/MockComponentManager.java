@@ -20,6 +20,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
@@ -148,5 +149,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public ComponentConfig getConfig(Class componentImplementation) {
     throw new UnsupportedOperationException("Method getConfig not implemented in " + getClass());
+  }
+
+  @NotNull
+  @Override
+  public Condition getDisposed() {
+    return Condition.FALSE;
   }
 }

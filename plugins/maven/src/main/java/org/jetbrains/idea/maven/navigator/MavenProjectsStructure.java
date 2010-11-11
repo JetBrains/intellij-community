@@ -709,17 +709,17 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       desc.append("<html>");
       desc.append("<table>");
       desc.append("<tr>");
-      desc.append("<td>");
-      desc.append("  <table>");
-      desc.append("  <tr>");
-      desc.append("  <td>Project:</td>");
-      desc.append("  <td nowrap>" + myMavenProject.getMavenId() + "</td>");
-      desc.append("  </tr>");
-      desc.append("  <tr>");
-      desc.append("  <td>Location:</td>");
-      desc.append("  <td nowrap>" + myMavenProject.getPath() + "</td>");
-      desc.append("  </tr>");
-      desc.append("  </table>");
+      desc.append("<td nowrap>");
+      desc.append("<table>");
+      desc.append("<tr>");
+      desc.append("<td nowrap>Project:</td>");
+      desc.append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>");
+      desc.append("</tr>");
+      desc.append("<tr>");
+      desc.append("<td nowrap>Location:</td>");
+      desc.append("<td nowrap>").append(myMavenProject.getPath()).append("</td>");
+      desc.append("</tr>");
+      desc.append("</table>");
       desc.append("</td>");
       desc.append("</tr>");
       appendProblems(desc);
@@ -734,20 +734,20 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       if (problems.isEmpty()) return;
 
       desc.append("<tr>");
-      desc.append("<td>");
+      desc.append("<td nowrap>");
       desc.append("<table>");
       boolean first = true;
       for (MavenProjectProblem each : problems) {
         desc.append("<tr>");
         if (first) {
-          desc.append("<td valign=top>" + MavenUtil.formatHtmlImage(ERROR_ICON_URL) + "</td>");
-          desc.append("<td valign=top>Problems:</td>");
+          desc.append("<td nowrap valign=top>").append(MavenUtil.formatHtmlImage(ERROR_ICON_URL)).append("</td>");
+          desc.append("<td nowrap valign=top>Problems:</td>");
           first = false;
         }
         else {
-          desc.append("<td colspan=2></td>");
+          desc.append("<td nowrap colspan=2></td>");
         }
-        desc.append("<td valign=top>" + wrappedText(each));
+        desc.append("<td nowrap valign=top>").append(wrappedText(each)).append("</td>");
         desc.append("</tr>");
       }
       desc.append("</table>");

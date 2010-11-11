@@ -34,8 +34,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author cdr
  */
-public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.TextPresentation {
-  private StatusBar myStatusBar;
+public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation {
 
   @NotNull
   public String ID() {
@@ -46,13 +45,11 @@ public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.Te
     return this;
   }
 
-  public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
+  @Override
+  public StatusBarWidget copy() {
+    return new InsertOverwritePanel();
   }
 
-  public void dispose() {
-    myStatusBar = null;
-  }
 
   @NotNull
   public String getText() {
@@ -87,19 +84,4 @@ public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.Te
     return null;
   }
 
-  @Nullable
-  private Editor getEditor() {
-    final Project project = getProject();
-    if (project != null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      return manager.getSelectedTextEditor();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
-  }
 }

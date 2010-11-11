@@ -42,6 +42,9 @@ public class HgTagBranchCommand {
   @Nullable
   public String getCurrentBranch() {
     HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "branch", null);
+    if (result == null) {
+      return null;
+    }
     List<String> output = result.getOutputLines();
     if (output == null || output.isEmpty()) {
       return null;

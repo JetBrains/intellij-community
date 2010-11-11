@@ -36,7 +36,7 @@ public class ForcedAntFileAttribute extends FileAttribute {
   private static final Key<Boolean> ourAntFileMarker = Key.create("_forced_ant_attribute_");
  
   public ForcedAntFileAttribute() {
-    super("_forced_ant_attribute_", 1);
+    super("_forced_ant_attribute_", 1, true);
   }
   
   public static boolean isAntFile(VirtualFile file) {

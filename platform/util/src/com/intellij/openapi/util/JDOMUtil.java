@@ -482,11 +482,12 @@ public class JDOMUtil {
    * Returns null if no escapement necessary.
    */
   @Nullable
-  private static String escapeChar(char c, boolean escapeLineEnds) {
+  private static String escapeChar(char c, boolean escapeSpaces, boolean escapeLineEnds) {
     switch (c) {
       case '\n': return escapeLineEnds ? "&#10;" : null;
       case '\r': return escapeLineEnds ? "&#13;" : null;
       case '\t': return escapeLineEnds ? "&#9;" : null;
+      case ' ' : return escapeSpaces  ? "&#20" : null;
       case '<':  return "&lt;";
       case '>':  return "&gt;";
       case '\"': return "&quot;";
@@ -497,15 +498,15 @@ public class JDOMUtil {
 
   @NotNull
   public static String escapeText(String text) {
-    return escapeText(text, false);
+    return escapeText(text, false, false);
   }
 
   @NotNull
-  private static String escapeText(String text, boolean escapeLineEnds) {
+  public static String escapeText(String text, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuffer buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
-      final String quotation = escapeChar(ch, escapeLineEnds);
+      final String quotation = escapeChar(ch, escapeSpaces, escapeLineEnds);
 
       if (buffer == null) {
         if (quotation != null) {
@@ -548,11 +549,11 @@ public class JDOMUtil {
 
   public static class MyXMLOutputter extends XMLOutputter {
     public String escapeAttributeEntities(String str) {
-      return escapeText(str, true);
+      return escapeText(str, false, true);
     }
 
     public String escapeElementEntities(String str) {
-      return escapeText(str, false);
+      return escapeText(str, false, false);
     }
   }
 

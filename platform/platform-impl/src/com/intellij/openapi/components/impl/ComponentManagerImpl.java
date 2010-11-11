@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
@@ -75,6 +76,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private boolean myHaveProgressManager = false;
+  private final Condition myDisposedCondition = new Condition() {
+    public boolean value(final Object o) {
+      return isDisposed();
+    }
+  };
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
@@ -429,6 +435,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public ComponentConfig getConfig(Class componentImplementation) {
     return myComponentsRegistry.getConfig(componentImplementation);
+  }
+
+  @NotNull
+  public Condition getDisposed() {
+    return myDisposedCondition;
   }
 
   private class ComponentsRegistry {

@@ -32,6 +32,7 @@ public class DiffToolbarComponent extends JPanel {
   public void resetToolbar(DiffRequest.ToolbarAddons toolBar) {
     if (myToolbar != null) remove(myToolbar.getComponent());
     myToolbar = new DiffToolbarImpl();
+    myToolbar.setTargetComponent(myWholeComponent);
     myToolbar.reset(toolBar);
     myToolbar.registerKeyboardActions(myWholeComponent);
     add(myToolbar.getComponent(), BorderLayout.CENTER);

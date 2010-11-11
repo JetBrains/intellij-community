@@ -29,16 +29,16 @@ import java.util.*;
 
 public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
   private final String myConfigPath;
-  private final CompoundShelfFileProcesor myFileProcessor;
+  private final CompoundShelfFileProcessor myFileProcessor;
 
   public ShelfManagerConfigurationMerger() {
     myConfigPath = PathManager.getConfigPath()+ "/shelf";
-    myFileProcessor = new CompoundShelfFileProcesor("shelf");
+    myFileProcessor = new CompoundShelfFileProcessor("shelf");
   }
 
   public ShelfManagerConfigurationMerger(final String configPath, final StreamProvider[] streamProviders) {
     myConfigPath = configPath;
-    myFileProcessor = new CompoundShelfFileProcesor(streamProviders, configPath);
+    myFileProcessor = new CompoundShelfFileProcessor(streamProviders, configPath);
   }
 
   public Element merge(final Element serverElement, final Element localElement) {

@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -341,7 +343,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
   public void testParentInLocalRepository() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    VirtualFile parent = createModulePom("parent",
+    final VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
                                          "<version>1</version>" +
@@ -355,7 +357,13 @@ public class StructureImportingTest extends MavenImportingTestCase {
                                          "  </dependency>" +
                                          "</dependencies>");
     executeGoal("parent", "install");
-    parent.delete(null);
+
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        parent.delete(null);
+      }
+    }.execute();
+
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>m</artifactId>" +
@@ -547,7 +555,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
     assertModuleGroupPath("module2", "module1 and modules");
   }
 

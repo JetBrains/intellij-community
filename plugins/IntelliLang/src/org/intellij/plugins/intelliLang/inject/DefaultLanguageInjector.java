@@ -24,9 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +65,7 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
             list.add(Trinity.create((PsiLanguageInjectionHost)host, injectedLanguage, range));
           }
           InjectorUtils.registerInjection(language, list, host.getContainingFile(), registrar);
+          InjectorUtils.registerSupport(support, true, registrar);
           break;
         }
       }

@@ -156,7 +156,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
       if (parent instanceof JComponent) {
         opaque = (JComponent)UIUtil.findNearestOpaque((JComponent)parent);
       }
-      Color bg = opaque != null ? opaque.getBackground() : UIManager.getColor("Panel.background");
+      Color bg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
       g.setColor(bg);
       g.fillRect(0, 0, getWidth(), getHeight());
     } 

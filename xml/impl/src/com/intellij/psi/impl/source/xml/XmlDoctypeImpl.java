@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlElementType {
+public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDoctypeImpl");
 
   public XmlDoctypeImpl() {
@@ -66,13 +66,13 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == XML_DOCTYPE_PUBLIC) {
+    if (i == XmlTokenType.XML_DOCTYPE_PUBLIC) {
       return XmlChildRole.XML_DOCTYPE_PUBLIC;
     }
-    else if (i == XML_DOCTYPE_SYSTEM) {
+    else if (i == XmlTokenType.XML_DOCTYPE_SYSTEM) {
       return XmlChildRole.XML_DOCTYPE_SYSTEM;
     }
-    else if (i == XML_NAME) {
+    else if (i == XmlTokenType.XML_NAME) {
       return XmlChildRole.XML_NAME;
     }
     else {
@@ -203,7 +203,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   }
 
   public XmlMarkupDecl getMarkupDecl() {
-    for(PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()){
+    for(PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()){
       if (child instanceof XmlMarkupDecl){
         return (XmlMarkupDecl)child;
       }
@@ -216,14 +216,14 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   public PsiReference[] getReferences() {
     final XmlElement dtdUrlElement = getDtdUrlElement();
     final PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
-    PsiReference uriRefs[] = null;
+    PsiReference[] uriRefs = null;
 
     if (dtdUrlElement != null) {
       uriRefs = new PsiReference[1];
       uriRefs[0] = new URLReference(XmlDoctypeImpl.this) {
         @NotNull
         public Object[] getVariants() {
-          return (docTypePublic != null)?
+          return docTypePublic != null ?
                  super.getVariants(): EMPTY_ARRAY;
         }
         @NotNull

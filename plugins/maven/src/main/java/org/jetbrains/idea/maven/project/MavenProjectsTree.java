@@ -260,14 +260,14 @@ public class MavenProjectsTree {
   }
 
   public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
-    setIgnoredState(projects, ignored, null);
+    setIgnoredState(projects, ignored, false);
   }
 
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored, Object message) {
-    doSetIgnoredState(projects, ignored, message);
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
+    doSetIgnoredState(projects, ignored, fromImport);
   }
 
-  private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, Object message) {
+  private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
     final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
     doChangeIgnoreStatus(new Runnable() {
       public void run() {
@@ -278,7 +278,7 @@ public class MavenProjectsTree {
           myIgnoredFilesPaths.removeAll(paths);
         }
       }
-    }, message);
+    }, fromImport);
   }
 
   public List<String> getIgnoredFilesPatterns() {
@@ -297,10 +297,10 @@ public class MavenProjectsTree {
   }
 
   private void doChangeIgnoreStatus(Runnable runnable) {
-    doChangeIgnoreStatus(runnable, null);
+    doChangeIgnoreStatus(runnable, false);
   }
 
-  private void doChangeIgnoreStatus(Runnable runnable, Object message) {
+  private void doChangeIgnoreStatus(Runnable runnable, boolean fromImport) {
     List<MavenProject> ignoredBefore;
     List<MavenProject> ignoredAfter;
 
@@ -318,7 +318,7 @@ public class MavenProjectsTree {
 
     if (ignored.isEmpty() && unignored.isEmpty()) return;
 
-    fireProjectsIgnoredStateChanged(ignored, unignored, message);
+    fireProjectsIgnoredStateChanged(ignored, unignored, fromImport);
   }
 
   private List<MavenProject> getIgnoredProjects() {
@@ -408,24 +408,23 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process, Object message) {
+  public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     Collection<String> explicitProfiles = getExplicitProfiles();
 
     MavenProjectReader projectReader = new MavenProjectReader();
-    update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process, message);
+    update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
 
     List<VirtualFile> obsoleteFiles = getRootProjectsFiles();
     obsoleteFiles.removeAll(managedFiles);
-    delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process, message);
+    delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
   }
 
   public void update(Collection<VirtualFile> files,
                      boolean force,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process,
-                     Object message) {
-    update(files, false, force, getExplicitProfiles(), new MavenProjectReader(), generalSettings, process, message);
+                     MavenProgressIndicator process) {
+    update(files, false, force, getExplicitProfiles(), new MavenProjectReader(), generalSettings, process);
   }
 
   private void update(Collection<VirtualFile> files,
@@ -434,8 +433,7 @@ public class MavenProjectsTree {
                       Collection<String> explicitProfiles,
                       MavenProjectReader projectReader,
                       MavenGeneralSettings generalSettings,
-                      MavenProgressIndicator process,
-                      Object message) {
+                      MavenProgressIndicator process) {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
@@ -462,7 +460,7 @@ public class MavenProjectsTree {
     }
 
     updateExplicitProfiles();
-    updateContext.fireUpdatedIfNecessary(message);
+    updateContext.fireUpdatedIfNecessary();
   }
 
   private void doAdd(final VirtualFile f,
@@ -700,17 +698,15 @@ public class MavenProjectsTree {
 
   public void delete(List<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process,
-                     Object message) {
-    delete(new MavenProjectReader(), files, getExplicitProfiles(), generalSettings, process, message);
+                     MavenProgressIndicator process) {
+    delete(new MavenProjectReader(), files, getExplicitProfiles(), generalSettings, process);
   }
 
   private void delete(MavenProjectReader projectReader,
                       List<VirtualFile> files,
                       Collection<String> explicitProfiles,
                       MavenGeneralSettings generalSettings,
-                      MavenProgressIndicator process,
-                      Object message) {
+                      MavenProgressIndicator process) {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
@@ -731,7 +727,7 @@ public class MavenProjectsTree {
     }
 
     updateExplicitProfiles();
-    updateContext.fireUpdatedIfNecessary(message);
+    updateContext.fireUpdatedIfNecessary();
   }
 
   private void doDelete(MavenProject aggregator, MavenProject project, UpdateContext updateContext) {
@@ -986,8 +982,7 @@ public class MavenProjectsTree {
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
-                      @NotNull MavenProgressIndicator process,
-                      @Nullable Object message) throws MavenProcessCanceledException {
+                      @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
 
@@ -1000,7 +995,7 @@ public class MavenProjectsTree {
                                                                                                new MavenProjectReader(),
                                                                                                myProjectLocator);
 
-      fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second, message);
+      fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }
     finally {
       embeddersManager.release(embedder);
@@ -1034,8 +1029,7 @@ public class MavenProjectsTree {
                              @NotNull final MavenImportingSettings importingSettings,
                              @NotNull final MavenEmbeddersManager embeddersManager,
                              @NotNull final MavenConsole console,
-                             @NotNull final MavenProgressIndicator process,
-                             @Nullable final Object message) throws MavenProcessCanceledException {
+                             @NotNull final MavenProgressIndicator process) throws MavenProcessCanceledException {
     executeWithEmbedder(mavenProject,
                         embeddersManager,
                         MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
@@ -1052,7 +1046,7 @@ public class MavenProjectsTree {
                                                                                                            new MavenProjectReader(),
                                                                                                            console);
                             if (resolveResult.first) {
-                              fireFoldersResolved(Pair.create(mavenProject, resolveResult.second), message);
+                              fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
                             }
                           }
                         });
@@ -1167,23 +1161,22 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object fromImport) {
+  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     for (Listener each : myListeners) {
       each.projectsIgnoredStateChanged(ignored, unignored, fromImport);
     }
   }
 
-  private void fireProjectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+  private void fireProjectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     for (Listener each : myListeners) {
-      each.projectsUpdated(updated, deleted, message);
+      each.projectsUpdated(updated, deleted);
     }
   }
 
   private void fireProjectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                   NativeMavenProjectHolder nativeMavenProject,
-                                   Object message) {
+                                   NativeMavenProjectHolder nativeMavenProject) {
     for (Listener each : myListeners) {
-      each.projectResolved(projectWithChanges, nativeMavenProject, message);
+      each.projectResolved(projectWithChanges, nativeMavenProject);
     }
   }
 
@@ -1193,9 +1186,9 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireFoldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
+  private void fireFoldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     for (Listener each : myListeners) {
-      each.foldersResolved(projectWithChanges, message);
+      each.foldersResolved(projectWithChanges);
     }
   }
 
@@ -1225,7 +1218,7 @@ public class MavenProjectsTree {
       }
     }
 
-    public void fireUpdatedIfNecessary(Object message) {
+    public void fireUpdatedIfNecessary() {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
                                          ? Collections.<MavenProject>emptyList()
@@ -1233,7 +1226,7 @@ public class MavenProjectsTree {
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
                                                               ? Collections.<Pair<MavenProject, MavenProjectChanges>>emptyList()
                                                               : MavenUtil.mapToList(updatedProjectsWithChanges);
-      fireProjectsUpdated(updated, mavenProjects, message);
+      fireProjectsUpdated(updated, mavenProjects);
     }
   }
 
@@ -1352,17 +1345,16 @@ public class MavenProjectsTree {
   public interface Listener extends EventListener {
     void profilesChanged();
 
-    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message);
+    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport);
 
-    void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message);
+    void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted);
 
     void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         @Nullable NativeMavenProjectHolder nativeMavenProject,
-                         Object message);
+                         @Nullable NativeMavenProjectHolder nativeMavenProject);
 
     void pluginsResolved(MavenProject project);
 
-    void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message);
+    void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges);
 
     void artifactsDownloaded(MavenProject project);
   }
@@ -1371,21 +1363,20 @@ public class MavenProjectsTree {
     public void profilesChanged() {
     }
 
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     }
 
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     }
 
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                @Nullable NativeMavenProjectHolder nativeMavenProject,
-                                Object message) {
+                                @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
     public void pluginsResolved(MavenProject project) {
     }
 
-    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
+    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     }
 
     public void artifactsDownloaded(MavenProject project) {

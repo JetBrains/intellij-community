@@ -101,6 +101,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
   private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
+  private final ProgressManager myProgressManager;
 
   private static ProjectManagerListener[] getListeners(Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
@@ -108,7 +109,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
   }
 
-  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
+  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
+    myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
     MessageBusConnection connection = messageBus.connect(app);
@@ -382,14 +384,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         startupManager.runStartupActivities();
       }
     }, ProjectBundle.message("project.load.progress"), true, project);
 
     if (!ok) {
-      closeProject(project, false);
+      closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
@@ -461,9 +463,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     final Project[] project = new Project[1];
-    boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
         try {
           if (indicator != null) {
             indicator.setText(ProjectBundle.message("loading.components.for", filePath));
@@ -850,7 +852,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           return;
         }
 
-        if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
+        if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
           application.runWriteAction(new Runnable() {
             public void run() {
               for (final IFile originalFile : original) {
@@ -874,10 +876,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   */
 
   public boolean closeProject(final Project project) {
-    return closeProject(project, true);
+    return closeProject(project, true, false);
   }
 
-  private boolean closeProject(final Project project, final boolean save) {
+  private boolean closeProject(final Project project, final boolean save, final boolean dispose) {
     if (!isProjectOpened(project)) return true;
     if (!canClose(project)) return false;
 
@@ -889,22 +891,37 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         project.save();
       }
 
-      if (ensureCouldCloseIfUnableToSave(project)) {
-        fireProjectClosing(project);
-
-        myOpenProjects.remove(project);
-        cacheOpenProjects();
-
-        myChangedProjectFiles.remove(project);
-        fireProjectClosed(project);
+      if (!ensureCouldCloseIfUnableToSave(project)) {
+        return false;
       }
-      else return false;
+
+      fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myOpenProjects.remove(project);
+          cacheOpenProjects();
+
+          myChangedProjectFiles.remove(project);
+
+          fireProjectClosed(project);
+
+          if (dispose) {
+            Disposer.dispose(project);
+          }
+        }
+      });
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());
     }
 
     return true;
+  }
+
+  @Override
+  public boolean closeAndDispose(@NotNull final Project project) {
+    return closeProject(project, true, true);
   }
 
   private void fireProjectClosing(Project project) {

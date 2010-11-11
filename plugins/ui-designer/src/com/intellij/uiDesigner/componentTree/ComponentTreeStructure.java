@@ -42,7 +42,12 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final GuiEditor myEditor;
 
   public ComponentTreeStructure(@NotNull final GuiEditor editor){
-    myRootElement=new Object();
+    myRootElement=new Object() {
+      @Override
+      public String toString() {
+        return "root of component tree structure " + ComponentTreeStructure.this.toString();
+      }
+    };
     myEditor=editor;
   }
 

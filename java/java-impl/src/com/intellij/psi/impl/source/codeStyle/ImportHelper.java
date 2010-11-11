@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -468,7 +469,7 @@ public class ImportHelper{
     return array;
   }
 
-  private static PsiClass findSingleImportByShortName(@NotNull PsiJavaFile file, @NotNull String shortClassName){
+  private static PsiClass findSingleImportByShortName(@NotNull final PsiJavaFile file, @NotNull String shortClassName){
     PsiClass[] refs = file.getSingleClassImports(true);
     for (PsiClass ref : refs) {
       String className = ref.getQualifiedName();
@@ -480,6 +481,33 @@ public class ImportHelper{
       String className = aClass.getQualifiedName();
       if (className != null && PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
         return aClass;
+      }
+    }
+
+    // there maybe a class imported implicitly from current package
+    String packageName = file.getPackageName();
+    if (!StringUtil.isEmptyOrSpaces(packageName)) {
+      String fqn = packageName + "." + shortClassName;
+      final PsiClass aClass = JavaPsiFacade.getInstance(file.getProject()).findClass(fqn, file.getResolveScope());
+      if (aClass != null) {
+        final boolean[] foundRef = {false};
+        // check if that short name referenced in the file
+        file.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (foundRef[0]) return;
+            super.visitElement(element);
+          }
+
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            if (file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
+              foundRef[0] = true;
+            }
+            super.visitReferenceElement(reference);
+          }
+        });
+        if (foundRef[0]) return aClass;
       }
     }
     return null;

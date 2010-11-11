@@ -1,1 +1,1 @@
-abcd
+abcd<caret>

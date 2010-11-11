@@ -24,6 +24,8 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -34,6 +36,14 @@ import com.intellij.openapi.editor.ex.EditorEx;
 public class SimplePasteAction extends EditorAction {
   public SimplePasteAction() {
     super(new Handler());
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(e.getPresentation().isEnabled());
+    }
   }
 
   private static class Handler extends EditorWriteActionHandler {

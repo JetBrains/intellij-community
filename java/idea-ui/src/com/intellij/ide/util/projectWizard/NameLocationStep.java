@@ -81,7 +81,6 @@ public class NameLocationStep extends ModuleWizardStep {
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
     final JLabel label = new JLabel(IdeBundle.message("label.module.file.will.be.saved.in"));
-    //label.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.HORIZONTAL, new Insets(30, 10, 0, 10), 0, 0));
 
     myTfModuleFilePath = new JTextField();

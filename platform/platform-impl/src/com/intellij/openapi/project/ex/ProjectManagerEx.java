@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -62,4 +63,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project loadAndOpenProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException;
+
+  // returns true on success
+  public abstract boolean closeAndDispose(@NotNull Project project);
 }

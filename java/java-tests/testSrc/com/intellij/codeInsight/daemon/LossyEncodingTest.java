@@ -36,8 +36,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     int end = myEditor.getCaretModel().getOffset();
 
     Collection<HighlightInfo> infos = doHighlighting();
-    assertEquals(1, infos.size());
-    HighlightInfo info = infos.iterator().next();
+    HighlightInfo info = assertOneElement(infos);
     assertEquals("Unsupported characters for the charset 'US-ASCII'", info.description);
     assertEquals(start, info.startOffset);
     assertEquals(end, info.endOffset);

@@ -69,7 +69,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     return false;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 1);
+  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 1, true);
 
   public void persistAttribute(VirtualFile fileOrDir, LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);

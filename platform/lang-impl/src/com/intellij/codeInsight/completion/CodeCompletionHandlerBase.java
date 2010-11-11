@@ -193,6 +193,23 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+
+      int offset = editor.getCaretModel().getOffset();
+
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      if (elementAt == null) {
+        elementAt = psiFile.findElementAt(offset);
+        if (elementAt == null && offset > 0) {
+          elementAt = psiFile.findElementAt(offset - 1);
+        }
+      }
+
+      Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
+
+      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+        final Boolean result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset); // TODO: Peter Lazy API
+        if (result == Boolean.TRUE) return;
+      }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
@@ -218,7 +235,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   @NotNull
   private LookupImpl obtainLookup(Editor editor, CompletionParameters parameters) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (existing != null) {
+    if (existing != null && existing.isCompletion()) {
       existing.markReused();
       if (!autopopup) {
         existing.setFocused(true);

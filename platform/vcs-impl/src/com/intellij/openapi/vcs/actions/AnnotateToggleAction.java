@@ -58,26 +58,12 @@ import java.util.List;
  * @author: lesya
  * @author Konstantin Bulenkov
  */
-public class AnnotateToggleAction extends ToggleAction implements DumbAware {
+public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
   protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
-  private final static Color[] BG_COLORS = {
-    new Color(222, 241, 229),
-    new Color(234, 255, 226),
-    new Color(208, 229, 229),
-    new Color(255, 226, 199),
-    new Color(227, 226, 223),
-    new Color(255, 213, 203),
-    new Color(220, 204, 236),
-    new Color(255, 191, 195),
-    new Color(243, 223, 243),
-    new Color(217, 228, 249),
-    new Color(255, 251, 207),
-    new Color(217, 222, 229),
-    new Color(255, 204, 238),
-    new Color(236, 236, 236)};
 
   public void update(AnActionEvent e) {
+    super.update(e);
     final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
     e.getPresentation().setEnabled(enabled);
   }

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.GitFileRevision;
+import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.config.GitExecutableValidator;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
     try {
       revisions = GitHistoryUtils.history(myProject, filePath);
     } catch (VcsException e) {
-      GitExecutableValidator.getInstance(myProject).showNotificationOrThrow(e);
+      GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
     }
     return createSession(filePath, revisions);
   }
@@ -129,16 +130,14 @@ public class GitHistoryProvider implements VcsHistoryProvider {
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList());
     partner.reportCreatedEmptySession(emptySession);
-    final GitExecutableValidator validator = GitExecutableValidator.getInstance(myProject);
+    final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
     GitHistoryUtils.history(myProject, path, new Consumer<GitFileRevision>() {
       public void consume(GitFileRevision gitFileRevision) {
         partner.acceptRevision(gitFileRevision);
       }
     }, new Consumer<VcsException>() {
       public void consume(VcsException e) {
-        if (!validator.isGitExecutableValid()) {
-          validator.showExecutableNotConfiguredNotification();
-        } else {
+        if (validator.checkExecutableAndNotifyIfNeeded()) {
           partner.reportException(e);
         }
       }

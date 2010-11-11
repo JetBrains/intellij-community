@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  */
 public class GroovyNamesUtil {
 
-  private static final Pattern PATTERN = Pattern.compile("[A-Za-z][a-z]*");
+  private static final Pattern PATTERN = Pattern.compile("[A-Za-z][a-z0-9]*");
 
   private GroovyNamesUtil() {
   }

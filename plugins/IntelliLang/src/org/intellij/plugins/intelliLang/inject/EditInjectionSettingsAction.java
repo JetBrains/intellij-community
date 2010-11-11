@@ -18,15 +18,12 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -37,9 +34,6 @@ import org.intellij.plugins.intelliLang.InjectionsSettingsUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
-
-import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
 
 /**
  * @author Gregory.Shrago
@@ -58,10 +52,11 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
-    if (host == null) return false;
-    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageUtil.getInjectedPsiFiles(host);
-    return injectedPsi != null && !injectedPsi.isEmpty();
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+    if (psiFile == null) return false;
+    final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.SETTINGS_EDITOR);
+    return support != null;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -73,13 +68,16 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
   }
 
   private static void invokeImpl(Project project, Editor editor, PsiFile file) {
-    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
+    if (psiFile == null) return;
+    final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile);
     if (host == null) return;
+    final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.SETTINGS_EDITOR);
+    if (support == null) return;
     try {
-      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-        if (support.editInjectionInPlace(host)) return;
+      if (!support.editInjectionInPlace(host)) {
+        ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getInstance()));
       }
-      ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getInstance()));
     }
     finally {
       FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);

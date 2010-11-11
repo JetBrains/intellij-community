@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,15 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
                                    Cloner<T> cloner,
                                    Equality<T> comparer,
                                    List<T> items) {
+      this(namer, factory, cloner, comparer, items, true);
+    }
+
+    protected NamedItemsListEditor(Namer<T> namer,
+                                   Factory<T> factory,
+                                   Cloner<T> cloner,
+                                   Equality<T> comparer,
+                                   List<T> items,
+                                   boolean initInConstructor) {
         myNamer = namer;
         myFactory = factory;
         myCloner = cloner;
@@ -62,9 +71,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
         myOriginalItems = items;
         myResultItems = items;
-        reset();
-
-        initTree();
+        if (initInConstructor) {
+          reset();
+          initTree();
+        }
     }
 
     public void reset() {

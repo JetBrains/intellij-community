@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
@@ -55,10 +56,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myWholePanel;
 
   private JPanel myStepsPanel;
+  private JCheckBox myShowSettingsBeforeRunCheckBox;
   private Map<Key<? extends BeforeRunTask>, BeforeRunTask> myStepsBeforeLaunch;
   private final Map<Key<? extends BeforeRunTask>, StepBeforeLaunchRow> myStepBeforeLaunchRows = new THashMap<Key<? extends BeforeRunTask>, StepBeforeLaunchRow>();
 
   private boolean myStoreProjectConfiguration;
+  private boolean myEditBeforeRun;
 
   private final ConfigurationSettingsEditor myEditor;
 
@@ -78,7 +81,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
                                                                         runConfiguration.getProject());
     myStepsPanel.removeAll();
-    if (providers.length == 0 || runConfiguration instanceof UnknownRunConfiguration) {
+    if (runConfiguration instanceof UnknownRunConfiguration) {
       myStepsPanel.setVisible(false);
     }
     else {
@@ -92,16 +95,24 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
 
-      if (!stepsRows.isEmpty()) {
-        myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
-        for (StepBeforeLaunchRow stepRow : stepsRows) {
-          myStepsPanel.add(stepRow);
-        }
-      }
-      else {
-        myStepsPanel.setVisible(false);
+      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
+      for (StepBeforeLaunchRow stepRow : stepsRows) {
+        myStepsPanel.add(stepRow);
       }
     }
+
+    myEditBeforeRun = settings.isEditBeforeRun();
+    myShowSettingsBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.edit.before.run"));
+    myShowSettingsBeforeRunCheckBox.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
+    myShowSettingsBeforeRunCheckBox.setSelected(myEditBeforeRun);
+    myShowSettingsBeforeRunCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myEditBeforeRun = myShowSettingsBeforeRunCheckBox.isSelected();
+      }
+    });
+    myShowSettingsBeforeRunCheckBox.setVisible(!settings.isTemplate());
+    myStepsPanel.add(myShowSettingsBeforeRunCheckBox);
 
     myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
     myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
@@ -111,6 +122,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
       }
     });
+
     myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
   }
 
@@ -151,6 +163,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     runManager.setBeforeRunTasks(runConfiguration, myStepsBeforeLaunch);
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
+    runManager.setEditBeforeRun(runConfiguration, myEditBeforeRun);
   }
 
   public Map<Key<? extends BeforeRunTask>, BeforeRunTask> getStepsBeforeLaunch() {

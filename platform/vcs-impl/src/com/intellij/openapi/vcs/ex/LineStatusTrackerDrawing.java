@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
@@ -208,7 +209,7 @@ public class LineStatusTrackerDrawing {
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
                                                                              HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING,
-                                                                             -1, false);
+                                                                             -1, false, new HintHint(editor, point));
   }
 
   private static String getFileName(final Document document) {

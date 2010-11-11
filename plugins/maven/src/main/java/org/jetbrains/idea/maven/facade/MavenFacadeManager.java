@@ -255,11 +255,11 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
   }
 
   public MavenEmbedderWrapper createEmbedder(final Project project) {
-    final MavenFacadeSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
     return new MavenEmbedderWrapper(this) {
       @NotNull
       @Override
       protected MavenFacadeEmbedder create() throws RemoteException {
+        final MavenFacadeSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
         return MavenFacadeManager.this.getOrCreateWrappee().createEmbedder(settings);
       }
     };

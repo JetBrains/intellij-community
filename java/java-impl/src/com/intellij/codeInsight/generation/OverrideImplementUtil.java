@@ -103,6 +103,8 @@ public class OverrideImplementUtil {
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSigs) {
       PsiMethod method = signature.getMethod();
+      LOG.assertTrue(method.isValid());
+
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;

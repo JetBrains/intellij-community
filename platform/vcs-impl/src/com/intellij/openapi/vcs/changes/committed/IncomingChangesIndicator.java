@@ -16,21 +16,22 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.wm.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class IncomingChangesIndicator implements ProjectComponent {
+public class IncomingChangesIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator");
 
   private final Project myProject;
@@ -53,7 +54,8 @@ public class IncomingChangesIndicator implements ProjectComponent {
   public IncomingChangesIndicator(Project project, CommittedChangesCache cache, MessageBus bus) {
     myProject = project;
     myCache = cache;
-    bus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+    final MessageBusConnection connection = bus.connect();
+    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -62,36 +64,45 @@ public class IncomingChangesIndicator implements ProjectComponent {
         });
       }
     });
-  }
-
-  public void projectOpened() {
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    myIndicatorComponent = new IndicatorComponent();
-
-    statusBar.addWidget(myIndicatorComponent);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        statusBar.removeWidget(myIndicatorComponent.ID());
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        updateIndicatorVisibility();
       }
     });
   }
 
-  public void projectClosed() {
+  private void updateIndicatorVisibility() {
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (needIndicator()) {
+      if (myIndicatorComponent == null) {
+        myIndicatorComponent = new IndicatorComponent();
+        statusBar.addWidget(myIndicatorComponent, myProject);
+        refreshIndicator();
+      }
+    }
+    else {
+      if (myIndicatorComponent != null) {
+        statusBar.removeWidget(myIndicatorComponent.ID());
+        myIndicatorComponent = null;
+      }
+    }
   }
 
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "IncomingChangesIndicator";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  private boolean needIndicator() {
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    for (AbstractVcs vcs : vcss) {
+      if (vcs.getCachingCommittedChangesProvider() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void refreshIndicator() {
+    if (myIndicatorComponent == null) {
+      return;
+    }
     final List<CommittedChangeList> list = myCache.getCachedIncomingChanges();
     if (list == null || list.isEmpty()) {
       debug("Refreshing indicator: no changes");
@@ -120,7 +131,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
     }
 
     void clear() {
-      update(CHANGES_NOT_AVAILABLE_ICON, null);
+      update(CHANGES_NOT_AVAILABLE_ICON, "No incoming changelists available");
     }
 
     void setChangesAvailable(@NotNull final String toolTipText) {

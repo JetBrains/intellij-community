@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,9 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
 
   private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
                                final ProjectStructureProblemDescription.Severity severity, @NotNull ArtifactProblemQuickFix... quickFixes) {
-    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes)));
+    final ArtifactEditorContext context = getContext();
+    final Place place = ProjectStructureConfigurable.getInstance(context.getProject()).createArtifactPlace(context.getArtifact());
+    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes), place));
   }
 
   public void registerWarning(@NotNull String message,

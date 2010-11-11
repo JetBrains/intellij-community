@@ -150,9 +150,9 @@ public class LocalResourceManager extends ResourceManager {
     List<String> result = new ArrayList<String>();
     Project project = myModule.getProject();
     GlobalSearchScope scope = GlobalSearchScope.projectScope(myModule.getProject());
-    for (String key : FileBasedIndex.getInstance().getAllKeys(AndroidIdIndex.ID, project)) {
+    for (String key : FileBasedIndex.getInstance().getAllKeys(AndroidIdIndex.INDEX_ID, project)) {
       if (!AndroidIdIndex.MARKER.equals(key)) {
-        if (FileBasedIndex.getInstance().getValues(AndroidIdIndex.ID, key, scope).size() > 0) {
+        if (FileBasedIndex.getInstance().getValues(AndroidIdIndex.INDEX_ID, key, scope).size() > 0) {
           result.add(key);
         }
       }

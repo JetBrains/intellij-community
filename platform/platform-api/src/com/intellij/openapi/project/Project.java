@@ -17,7 +17,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +59,6 @@ public interface Project extends ComponentManager, AreaInstance {
   String getLocation();
 
   void save();
-
-  Condition getDisposed();
 
   boolean isOpen();
 

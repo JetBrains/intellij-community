@@ -79,7 +79,7 @@ class MouseShortcutDialog extends DialogWrapper{
     myTarConflicts=new JTextArea();
     myTarConflicts.setFocusable(false);
     myTarConflicts.setEditable(false);
-    myTarConflicts.setBackground(UIUtil.getPanelBackgound());
+    myTarConflicts.setBackground(UIUtil.getPanelBackground());
     myTarConflicts.setLineWrap(true);
     myTarConflicts.setWrapStyleWord(true);
 

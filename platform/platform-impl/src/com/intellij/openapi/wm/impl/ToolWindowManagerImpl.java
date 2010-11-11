@@ -402,7 +402,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       label.setOpaque(true);
       final Color treeBg = UIManager.getColor("Tree.background");
       label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
-      final Color treeFg = UIManager.getColor("Tree.foreground");
+      final Color treeFg = UIUtil.getTreeForeground();
       label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
       final ToolWindowImpl toolWindow =
@@ -496,19 +496,29 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateEditorComponent(final boolean forced) {
+    activateEditorComponent(forced, false);
+  }
+  private void activateEditorComponent(final boolean forced, boolean now) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
         activateEditorComponentImpl(getSplittersFromFocus(), commandList, forced);
         execute(commandList);
       }
-    });
+    };
+
+    if (now) {
+      runnable.run();
+    } else {
+      getFocusManager().doWhenFocusSettlesDown(runnable);
+
+    }
   }
 
   private EditorsSplitters getSplittersFromFocus() {
@@ -1813,7 +1823,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Nullable
     public Condition getExpireCondition() {
-      return Condition.FALSE;
+      return ApplicationManager.getApplication().getDisposed();
     }
   }
 
@@ -2035,10 +2045,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
       final String activeId = getActiveToolWindowId();
       if (myEditorComponentActive || activeId == null || getToolWindow(activeId) == null) {
-        activateEditorComponent(forced);
+        activateEditorComponent(forced, true);
       }
       else {
-        activateToolWindow(activeId, forced, false);
+        activateToolWindow(activeId, forced, true);
       }
     }
     return new ActionCallback.Done();

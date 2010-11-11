@@ -3,12 +3,11 @@ package org.jetbrains.android.dom;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
-import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.IOException;
 
 /**
  * @author coyote
@@ -26,7 +25,7 @@ abstract class AndroidDomTest extends AndroidTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyFileToProject("dom/R.java", "gen/p1/p2/R.java");
-    myFixture.enableInspections(AndroidDomInspection.class, AndroidUnknownAttributeInspection.class);
+    myFixture.enableInspections(AndroidDomInspection.class/*, AndroidUnknownAttributeInspection.class*/);
   }
 
   @Override

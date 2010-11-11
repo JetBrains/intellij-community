@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -34,7 +36,7 @@ public class Timings {
     }
     for (int i = 0; i < 42; i++) {
       try {
-        final File tempFile = File.createTempFile("test", "test" + i);
+        final File tempFile = FileUtil.createTempFile("test", "test" + i);
         final FileWriter writer = new FileWriter(tempFile);
         for (int j = 0; j < 15; j++) {
           writer.write("test" + j);

@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +69,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final EdtAlarm myIdleAlarm;
-  private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
+  private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
       if (canFlushIdleRequests()) {
@@ -81,6 +80,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
   };
+  private boolean myFlushWasDelayedToFixFocus;
 
   private boolean canFlushIdleRequests() {
     return isFocusTransferReady() && !isIdleQueueEmpty();
@@ -348,6 +348,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (isFlushingIdleRequests()) {
+          SwingUtilities.invokeLater(this);
+          return;
+        }
+
         if (myRunContext != null) {
           runnable.run();
           return;
@@ -356,7 +361,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         final boolean needsRestart = isIdleQueueEmpty();
         myIdleRequests.add(runnable);
 
-        if (isFocusTransferReady()) {
+        if (canFlushIdleRequests()) {
           flushIdleRequests();
         } else {
           if (needsRestart) {
@@ -416,19 +421,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
       if (isPendingKeyEventsRedispatched()) {
-        boolean focusOk = getFocusOwner() != null;
-        boolean attemptedToFixFocus = IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+        boolean focusOk = getFocusOwner() != null || myFlushWasDelayedToFixFocus;
+        if (!focusOk) {
+          IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+          myFlushWasDelayedToFixFocus = true;
+        }
 
-        if (canFlushIdleRequests()) {
-          if (focusOk || !attemptedToFixFocus) {
-            final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
-            myIdleRequests.clear();
-            for (Runnable each : all) {
-              if (each != null) {
-                each.run();
-              }
-            }
-          }
+        if (canFlushIdleRequests() && myFlushingIdleRequestsEntryCount <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
+          myFlushWasDelayedToFixFocus = false;
+          flushNow();
         }
       }
     }
@@ -436,6 +437,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       myFlushingIdleRequestsEntryCount--;
       if (!isIdleQueueEmpty()) {
         restartIdleAlarm();
+      }
+    }
+  }
+
+  private void flushNow() {
+    final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
+    myIdleRequests.clear();
+    for (Runnable each : all) {
+      if (each != null) {
+        each.run();
       }
     }
   }
@@ -479,7 +490,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public boolean dispatch(KeyEvent e) {
     if (!Registry.is("actionSystem.fixLostTyping")) return false;
 
-    if (myFlushingIdleRequestsEntryCount > 0) return false;
+    if (isFlushingIdleRequests()) return false;
 
     if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
       for (FocusCommand each : myFocusRequests) {
@@ -500,6 +511,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     else {
       return false;
     }
+  }
+
+  private boolean isFlushingIdleRequests() {
+    return myFlushingIdleRequestsEntryCount > 0;
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {

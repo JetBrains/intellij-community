@@ -544,23 +544,26 @@ public class EditorUtil {
     return result;
   }
 
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor) {
+    return calcCaretLinesRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
+  }
+
   /**
    * Calculates the closest non-soft-wrapped logical positions for current caret position.
    *
    * @param editor    target editor to use
    * @return          pair of non-soft-wrapped logical positions closest to the caret position of the given editor
    */
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor) {
-    VisualPosition caret = editor.getCaretModel().getVisualPosition();
-    int visualLine = caret.line;
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor, VisualPosition start, VisualPosition end) {
+    int visualLine = start.line;
 
     LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
     while (lineStart.softWrapLinesOnCurrentLogicalLine > 0) {
       lineStart = editor.visualToLogicalPosition(new VisualPosition(--visualLine, 0));
     }
 
-    visualLine = caret.line + 1;
-    LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(caret.line + 1, 0));
+    visualLine = end.line + 1;
+    LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(end.line + 1, 0));
     while (nextLineStart.line == lineStart.line) {
       nextLineStart = editor.visualToLogicalPosition(new VisualPosition(++visualLine, 0));
     }

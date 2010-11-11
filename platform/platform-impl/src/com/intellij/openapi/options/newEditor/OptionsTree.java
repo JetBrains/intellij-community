@@ -349,8 +349,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
           int nestingLevel = tree.isRootVisible() ? path.getPathCount() - 1 : path.getPathCount() - 2;
 
-          final int left = UIManager.getInt("Tree.leftChildIndent");
-          final int right = UIManager.getInt("Tree.rightChildIndent");
+          final int left = UIUtil.getTreeLeftChildIndent();
+          final int right = UIUtil.getTreeRightChildIndent();
 
           final Insets treeInsets = tree.getInsets();
 

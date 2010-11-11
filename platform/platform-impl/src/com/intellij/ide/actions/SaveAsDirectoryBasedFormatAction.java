@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
-import java.util.Collection;
 
 /**
  * @author spleaner
@@ -63,7 +62,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
 
             projectStore.setProjectFilePath(baseDir.getPath());
             project.save();
-            ProjectUtil.closeProject(project);
+            ProjectUtil.closeAndDispose(project);
             ProjectUtil.openProject(baseDir.getPath(), null, false);
           }
           else {

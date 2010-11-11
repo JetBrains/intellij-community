@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -259,7 +260,7 @@ public class MavenIndicesManager {
         }
 
         try {
-          getIndicesObject().updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull) : null, indicator);
+          getIndicesObject().updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
           if (projectOrNull != null) MavenRehighlighter.rehighlight(projectOrNull);
         }
         finally {
@@ -276,8 +277,25 @@ public class MavenIndicesManager {
     }
   }
 
-  private MavenGeneralSettings getMavenSettings(Project project) {
-    return MavenProjectsManager.getInstance(project).getGeneralSettings();
+  private MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
+    throws MavenProcessCanceledException {
+    MavenGeneralSettings settings;
+
+    settings = ApplicationManager.getApplication().runReadAction(new Computable<MavenGeneralSettings>() {
+      @Override
+      public MavenGeneralSettings compute() {
+        if (project.isDisposed()) return null;
+        return MavenProjectsManager.getInstance(project).getGeneralSettings();
+      }
+    });
+
+    if (settings == null) {
+      // project was closed
+      indicator.cancel();
+      indicator.checkCanceled();
+    }
+
+    return settings;
   }
 
   public IndexUpdatingState getUpdatingState(MavenIndex index) {

@@ -140,13 +140,9 @@ public abstract class CompletionService {
 
     getVariantsFromContributors(parameters, null, new Consumer<LookupElement>() {
       public void consume(final LookupElement lookupElement) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (lookupSet.add(lookupElement)) {
-              consumer.consume(lookupElement);
-            }
-          }
-        });
+        if (lookupSet.add(lookupElement)) {
+          consumer.consume(lookupElement);
+        }
       }
     });
     return lookupSet.toArray(new LookupElement[lookupSet.size()]);

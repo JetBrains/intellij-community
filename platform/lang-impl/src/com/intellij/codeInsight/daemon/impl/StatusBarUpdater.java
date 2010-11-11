@@ -86,7 +86,7 @@ public class StatusBarUpdater implements Disposable {
     HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false);
     String text = info != null && info.description != null ? info.description : "";
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent());
     if (statusBar instanceof StatusBarEx) {
       StatusBarEx barEx = (StatusBarEx)statusBar;
       if (!text.equals(barEx.getInfo())){

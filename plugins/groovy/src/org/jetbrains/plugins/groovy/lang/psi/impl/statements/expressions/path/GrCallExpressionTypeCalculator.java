@@ -16,10 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author sergey.evdokimov
@@ -31,4 +36,23 @@ public abstract class GrCallExpressionTypeCalculator {
   @Nullable
   public abstract PsiType calculateReturnType(@NotNull GrMethodCall callExpression);
 
+  @Nullable
+  protected static PsiMethod resolveMethodCall(@NotNull GrMethodCall callExpression) {
+    GrExpression eInvokedExpression = callExpression.getInvokedExpression();
+    if (!(eInvokedExpression instanceof GrReferenceExpression)) return null;
+    return resolveMethodCall((GrMethodCall)eInvokedExpression);
+  }
+
+  @Nullable
+  protected static PsiMethod resolveMethodCall(@NotNull GrReferenceExpression invokedExpression) {
+    GroovyResolveResult[] resolveResults = invokedExpression.multiResolve(false);
+    if (resolveResults.length == 0) {
+      return null;
+    }
+
+    PsiElement eMethod = resolveResults[0].getElement();
+    if (!(eMethod instanceof PsiMethod)) return null;
+
+    return (PsiMethod)eMethod;
+  }
 }

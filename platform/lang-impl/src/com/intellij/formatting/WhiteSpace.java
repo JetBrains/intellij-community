@@ -327,10 +327,10 @@ class WhiteSpace {
       public void run() {
         if (spaceProperty != null) {
           if (getLineFeeds() == 0) {
-            if (getTotalSpaces() < spaceProperty.getMinSpaces()) {
+            if (spaceProperty.getMinSpaces() >= 0 && getTotalSpaces() < spaceProperty.getMinSpaces()) {
               setSpaces(spaceProperty.getMinSpaces(), 0);
             }
-            if (getTotalSpaces() > spaceProperty.getMaxSpaces()) {
+            if (spaceProperty.getMaxSpaces() >= 0 && getTotalSpaces() > spaceProperty.getMaxSpaces()) {
               setSpaces(spaceProperty.getMaxSpaces(), 0);
             }
           }

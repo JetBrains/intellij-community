@@ -690,7 +690,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return candidates;
   }
 
-  private char getShortcutChar(TemplateImpl template) {
+  public char getShortcutChar(TemplateImpl template) {
     char c = template.getShortcutChar();
     if (c == DEFAULT_CHAR) {
       return getDefaultShortcutChar();

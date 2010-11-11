@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
@@ -91,7 +92,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
             // ignored
           }
         }
-      }, 100);
+      }, 100, ModalityState.NON_MODAL);
     }
     else {
       myRefreshNeeded = true;

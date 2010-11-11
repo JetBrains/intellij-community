@@ -15,6 +15,7 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -42,7 +43,7 @@ public abstract class HgUtil {
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
     final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
 
-    final File tempFile = File.createTempFile(basename, extension);
+    final File tempFile = FileUtil.createTempFile(basename, extension);
     final byte[] buffer = new byte[4096];
 
     OutputStream out = null;

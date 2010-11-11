@@ -277,7 +277,7 @@ public class SelectBranchPopup {
       myUrlLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
       myDateLabel.setHorizontalAlignment(JLabel.RIGHT);
       myDateLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-      myDateLabel.setForeground(UIUtil.getTextInactiveTextColor());
+      myDateLabel.setForeground(UIUtil.getInactiveTextColor());
     }
 
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -292,7 +292,7 @@ public class SelectBranchPopup {
         setBackground(UIUtil.getListBackground());
         final Color foregroundColor = UIUtil.getListForeground();
         myUrlLabel.setForeground(foregroundColor);
-        myDateLabel.setForeground(UIUtil.getTextInactiveTextColor());
+        myDateLabel.setForeground(UIUtil.getInactiveTextColor());
         setForeground(foregroundColor);
       }
       if (value instanceof String) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -24,7 +26,7 @@ import java.awt.*;
  * A label with possible error text is placed under validated component.
  */
 public abstract class ValidatingComponent<T extends JComponent> extends NonOpaquePanel {
-  private static final Font ERROR_FONT = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10f);
+  private static final Font ERROR_FONT = UIUtil.getLabelFont().deriveFont(Font.PLAIN, 10f);
 
   private JLabel myErrorLabel;
   private T myMainComponent;

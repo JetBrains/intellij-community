@@ -35,7 +35,7 @@ public class ShowAnnotationColorsAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return PropertiesComponent.getInstance().getBoolean(KEY, true);
+    return isColorsEnabled();
   }
 
   @Override
@@ -45,5 +45,9 @@ public class ShowAnnotationColorsAction extends ToggleAction {
       gutter.setShowBg(state);
     }
     myGutter.revalidateMarkup();
+  }
+
+  public static boolean isColorsEnabled() {
+    return PropertiesComponent.getInstance().getBoolean(KEY, true);
   }
 }

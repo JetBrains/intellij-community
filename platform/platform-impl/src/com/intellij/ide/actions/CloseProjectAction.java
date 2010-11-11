@@ -32,7 +32,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     assert project != null;
 
-    ProjectUtil.closeProject(project);
+    ProjectUtil.closeAndDispose(project);
     RecentProjectsManagerBase.getInstance().updateLastProjectPath();
   }
 

@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 
 import java.beans.Introspector;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -82,8 +84,33 @@ public class GroovyPropertyUtils {
     return null;
   }
 
+  public static List<PsiMethod> getAllPropertyGetters(@NotNull PsiClass aClass, @Nullable Boolean isStatic, boolean checkSuperClasses) {
+    PsiMethod[] methods;
+    if (checkSuperClasses) {
+      methods = aClass.getAllMethods();
+    }
+    else {
+      methods = aClass.getMethods();
+    }
+
+    List<PsiMethod> res = new ArrayList<PsiMethod>(methods.length);
+
+    for (PsiMethod method : methods) {
+      if (isStatic != null && method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+
+      if (isSimplePropertyGetter(method)) {
+        res.add(method);
+      }
+    }
+
+    return res;
+  }
+
   @Nullable
-  public static PsiMethod findPropertyGetter(PsiClass aClass, String propertyName, boolean isStatic, boolean checkSuperClasses) {
+  public static PsiMethod findPropertyGetter(@Nullable PsiClass aClass,
+                                             String propertyName,
+                                             @Nullable Boolean isStatic,
+                                             boolean checkSuperClasses) {
     if (aClass == null) return null;
     PsiMethod[] methods;
     if (checkSuperClasses) {
@@ -94,7 +121,7 @@ public class GroovyPropertyUtils {
     }
 
     for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+      if (isStatic != null && method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertyGetter(method)) {
         if (propertyName.equals(getPropertyNameByGetter(method))) {

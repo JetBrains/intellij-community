@@ -42,7 +42,7 @@ public class GithubUtil {
   public static HttpMethod doREST(final String login, final String password, final String request, final boolean post) throws Exception {
     final HttpClient client = getHttpClient(login, password);
     client.getParams().setContentCharset("UTF-8");
-    final String uri = getUrl() + JDOMUtil.escapeText(request).replaceAll(" ", "%20");
+    final String uri = JDOMUtil.escapeText(getUrl() + request, true, true);
     final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     client.executeMethod(method);
     return method;

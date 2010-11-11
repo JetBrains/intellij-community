@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -53,12 +54,15 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.IdeStatusBarImpl");
 
   private InfoAndProgressPanel myInfoAndProgressPanel;
+  private IdeStatusBarImpl myMaster;
+  private IdeFrame myFrame;
 
   private enum Position {LEFT, RIGHT, CENTER}
 
   private static final String uiClassID = "IdeStatusBarUI";
 
   private final Map<String, WidgetBean> myWidgetMap = new HashMap<String, WidgetBean>();
+  private final List<String> myOrderedWidgets = new ArrayList<String>();
 
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
@@ -68,29 +72,99 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   private List<String> myCustomComponentIds = new ArrayList<String>();
 
+  private Set<IdeStatusBarImpl> myChildren = new HashSet<IdeStatusBarImpl>();
+
   private static class WidgetBean {
     JComponent component;
     Position position;
     StatusBarWidget widget;
+    String anchor;
 
-    static WidgetBean create(@NotNull final StatusBarWidget widget, @NotNull final Position position, @NotNull final JComponent component) {
+    static WidgetBean create(@NotNull final StatusBarWidget widget, @NotNull final Position position, @NotNull final JComponent component, @NotNull String anchor) {
       final WidgetBean bean = new WidgetBean();
       bean.widget = widget;
       bean.position = position;
       bean.component = component;
+      bean.anchor = anchor;
       return bean;
     }
   }
 
-  public IdeStatusBarImpl() {
+  @Override
+  public StatusBar findChild(Component c) {
+    Component eachParent = c;
+    IdeFrame frame = null;
+    while (eachParent != null) {
+      if (eachParent instanceof IdeFrame) {
+        frame = (IdeFrame)eachParent;
+      }
+      eachParent = eachParent.getParent();
+    }
+
+    return frame != null ? frame.getStatusBar() : this;
+  }
+
+  @Override
+  public void install(IdeFrame frame) {
+    myFrame = frame;
+  }
+
+  private void updateChildren(ChildAction action) {
+    for (IdeStatusBarImpl child : myChildren) {
+      action.update(child);
+    }
+  }
+
+  interface ChildAction {
+    void update(IdeStatusBarImpl child);
+  }
+
+  public StatusBar createChild() {
+    final IdeStatusBarImpl bar = new IdeStatusBarImpl(this);
+    myChildren.add(bar);
+    Disposer.register(bar, new Disposable() {
+      @Override
+      public void dispose() {
+        myChildren.remove(bar);
+      }
+    });
+
+    for (String eachId : myOrderedWidgets) {
+      WidgetBean eachBean = myWidgetMap.get(eachId);
+      if (eachBean.widget instanceof StatusBarWidget.Multiframe) {
+        StatusBarWidget copy = ((StatusBarWidget.Multiframe)eachBean.widget).copy();
+        bar.addWidget(copy, eachBean.position);
+      }
+    }
+
+    return bar;
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return this;
+  }
+
+  IdeStatusBarImpl(IdeStatusBarImpl master) {
+    myMaster = master;
+
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel();
+    myInfoAndProgressPanel = new InfoAndProgressPanel(master == null);
     addWidget(myInfoAndProgressPanel, Position.CENTER);
 
     setOpaque(true);
     updateUI();
+
+    if (master == null) {
+      Disposer.register(Disposer.get("ui"), this);
+    }
+  }
+
+
+  public IdeStatusBarImpl() {
+    this(null);
   }
 
   public void addWidget(@NotNull final StatusBarWidget widget) {
@@ -180,7 +254,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myWidgetMap.clear();
   }
 
-  private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull String anchor) {
+  private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {
+    myOrderedWidgets.add(widget.ID());
+
     JPanel panel;
     if (pos == Position.RIGHT) {
       if (myRightPanel == null) {
@@ -246,7 +322,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
                 updateBorder(ndx);
               }
 
-              installWidget(widget, pos, c);
+              installWidget(widget, pos, c, anchor);
               return;
             }
 
@@ -261,7 +337,18 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
 
     panel.add(c);
-    installWidget(widget, pos, c);
+    installWidget(widget, pos, c, anchor);
+
+    if (widget instanceof StatusBarWidget.Multiframe) {
+      final StatusBarWidget.Multiframe mfw = (StatusBarWidget.Multiframe)widget;
+      updateChildren(new ChildAction() {
+        @Override
+        public void update(IdeStatusBarImpl child) {
+          StatusBarWidget widgetCopy = mfw.copy();
+          child.addWidget(widgetCopy, pos, anchor);
+        }
+      });
+    }
   }
 
   private void updateBorder(final int ndx) {
@@ -312,13 +399,27 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myInfoAndProgressPanel.isProcessWindowOpen();
   }
 
-  public void startRefreshIndication(String tooltipText) {
+  public void startRefreshIndication(final String tooltipText) {
     myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
     myInfoAndProgressPanel.setRefreshVisible(true);
+
+    updateChildren(new ChildAction() {
+      @Override
+      public void update(IdeStatusBarImpl child) {
+        child.startRefreshIndication(tooltipText);
+      }
+    });
   }
 
   public void stopRefreshIndication() {
     myInfoAndProgressPanel.setRefreshVisible(false);
+
+    updateChildren(new ChildAction() {
+      @Override
+      public void update(IdeStatusBarImpl child) {
+        child.stopRefreshIndication();
+      }
+    });
   }
 
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
@@ -336,8 +437,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     new NotificationPopup(this, content, backgroundColor);
   }
 
-  private void installWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final JComponent c) {
-    myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c));
+  private void installWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final JComponent c, String anchor) {
+    myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
     widget.install(this);
   }
 
@@ -401,7 +502,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return (StatusBarUI)ui;
   }
 
-  public void removeWidget(@NotNull String id) {
+  public void removeWidget(@NotNull final String id) {
     final WidgetBean bean = myWidgetMap.get(id);
     if (bean != null) {
       if (Position.LEFT == bean.position) {
@@ -424,12 +525,28 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       myWidgetMap.remove(bean.widget.ID());
       Disposer.dispose(bean.widget);
     }
+
+    updateChildren(new ChildAction() {
+      @Override
+      public void update(IdeStatusBarImpl child) {
+        child.removeWidget(id);
+      }
+    });
+
+    myOrderedWidgets.remove(id);
   }
 
   public void updateWidgets() {
     for (final String s : myWidgetMap.keySet()) {
       updateWidget(s);
     }
+
+    updateChildren(new ChildAction() {
+      @Override
+      public void update(IdeStatusBarImpl child) {
+        child.updateWidgets();
+      }
+    });
   }
 
   public void updateWidget(@NotNull final String id) {
@@ -443,6 +560,13 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
           bean.component.repaint();
         }
+
+        updateChildren(new ChildAction() {
+          @Override
+          public void update(IdeStatusBarImpl child) {
+            child.updateWidget(id);
+          }
+        });
       }
     });
   }
@@ -602,5 +726,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
+  @Override
+  public IdeFrame getFrame() {
+    return myFrame;
+  }
 }
 

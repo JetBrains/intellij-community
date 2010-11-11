@@ -65,7 +65,6 @@ import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,136 +81,44 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final String NOTIFICATION_GROUP_ID = "Git";
-  /**
-   * the logger
-   */
+  public static final String NAME = "Git"; // Vcs name
+
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
-  /**
-   * Vcs name
-   */
-  @NonNls public static final String NAME = "Git";
-  /**
-   * The git vcs key
-   */
   private static final VcsKey ourKey = createKey(NAME);
-  /**
-   * change provider
-   */
+
   private final ChangeProvider myChangeProvider;
-  /**
-   * commit support
-   */
   private final CheckinEnvironment myCheckinEnvironment;
-  /**
-   * rollback support
-   */
   private final RollbackEnvironment myRollbackEnvironment;
-  /**
-   * update support
-   */
   private final GitUpdateEnvironment myUpdateEnvironment;
-  /**
-   * annotate file support
-   */
   private final GitAnnotationProvider myAnnotationProvider;
-  /**
-   * diff provider
-   */
   private final DiffProvider myDiffProvider;
-  /**
-   * history provider
-   */
   private final VcsHistoryProvider myHistoryProvider;
-  /**
-   * cached instance of vcs manager for the project
-   */
   private final ProjectLevelVcsManager myVcsManager;
-  /**
-   * project vcs settings
-   */
   private final GitVcsApplicationSettings myAppSettings;
-  /**
-   * configuration support
-   */
   private final Configurable myConfigurable;
-  /**
-   * selector for revisions
-   */
   private final RevisionSelector myRevSelector;
-  /**
-   * merge provider
-   */
   private final GitMergeProvider myMergeProvider;
-  /**
-   * reverse merge provider
-   */
   private final GitMergeProvider myReverseMergeProvider;
-  /**
-   * a VFS listener that tracks file addition, deletion, and renaming.
-   */
-  private GitVFSListener myVFSListener;
-  /**
-   * The currently detected git version or null.
-   */
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion;
-  /**
-   * Checking the version lock (used to prevent infinite recursion)
-   */
-  private final Object myCheckingVersion = new Object();
-  /**
-   * The path to executable at the time of version check
-   */
-  private String myVersionCheckExcecutable = "";
-  /**
-   * The changelist provider
-   */
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
-  /**
-   * The tracker that checks validity of git roots
-   */
-  private GitRootTracker myRootTracker;
-  /**
-   * The dispatcher object for root events
-   */
+
+  private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion; // The currently detected git version or null.
+  private final Object myCheckingVersion = new Object(); // Checking the version lock (used to prevent infinite recursion)
+  private String myVersionCheckExcecutable = ""; // The path to executable at the time of version check
+
+  private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
-  /**
-   * The dispatcher object for git configuration events
-   */
   private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
-  /**
-   * The dispatcher object for git configuration events
-   */
   private final EventDispatcher<GitReferenceListener> myReferenceListeners = EventDispatcher.create(GitReferenceListener.class);
-  /**
-   * Tracker for ignored files
-   */
   private GitIgnoreTracker myGitIgnoreTracker;
-  /**
-   * Configuration file tracker
-   */
   private GitConfigTracker myConfigTracker;
-  /**
-   * The queue that is used to schedule background task from actions
-   */
-  private final BackgroundTaskQueue myTaskQueue;
-  /**
-   * The command read/write lock
-   */
-  private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true);
-
+  private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
+  private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
-
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
-  /**
-   * The reference tracker
-   */
   private GitReferenceTracker myReferenceTracker;
-  /**
-   * If true, the vcs was activated
-   */
-  private boolean isActivated;
-  private final GitVcsSettings myProjectSettings;
-
+  private boolean isActivated; // If true, the vcs was activated
+  private GitExecutableValidator myExecutableValidator;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -230,7 +137,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     super(project, NAME);
     myVcsManager = gitVcsManager;
     myAppSettings = gitSettings;
-    myProjectSettings = gitProjectSettings;
     myChangeProvider = gitChangeProvider;
     myCheckinEnvironment = gitCheckinEnvironment;
     myAnnotationProvider = gitAnnotationProvider;
@@ -238,8 +144,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(myProjectSettings, myProject);
-    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, myProjectSettings);
+    myConfigurable = new GitVcsConfigurable(gitProjectSettings, myProject);
+    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
     myMergeProvider = new GitMergeProvider(myProject);
     myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
@@ -503,7 +409,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
-    GitExecutableValidator.getInstance(myProject).checkExecutableAndNotifyIfNeeded();
+    myExecutableValidator = new GitExecutableValidator(myProject);
+    myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -783,5 +690,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public boolean isActivated() {
     return isActivated;
+  }
+
+  public GitExecutableValidator getExecutableValidator() {
+    return myExecutableValidator;
   }
 }

@@ -108,7 +108,6 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final Sdk oldJdk = myJdksModel.getProjectSdk();
         myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
         clearCaches();
       }

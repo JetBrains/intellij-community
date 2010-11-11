@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -30,7 +31,15 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     newContent = StringUtil.escapeStringCharacters(newContent);
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(expr.getProject()).createExpressionFromText(newText);
-    return (GrLiteral)expr.replace(newExpr);
+
+    PsiElement firstChild = expr.getFirstChild();
+    assert firstChild != null && firstChild.getNextSibling() == null;
+
+    PsiElement newElement = newExpr.getFirstChild();
+    assert newElement != null;
+    firstChild.replace(newElement);
+
+    return expr;
   }
 
   public TextRange getRangeInElement(final GrLiteral element) {

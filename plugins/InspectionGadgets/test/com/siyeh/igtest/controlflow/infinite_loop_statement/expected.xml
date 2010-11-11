@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+    <problem>
+        <file>InfiniteLoopStatement.java</file>
+        <line>9</line>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Infinite loop statement</problem_class>
+        <description>&lt;code&gt;while&lt;/code&gt; statement cannot complete without throwing an exception #loc</description>
+    </problem>
+
+</problems>

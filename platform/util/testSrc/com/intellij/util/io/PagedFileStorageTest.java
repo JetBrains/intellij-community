@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -27,7 +28,7 @@ public class PagedFileStorageTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
-    f = File.createTempFile("storage", ".tmp");
+    f = FileUtil.createTempFile("storage", ".tmp");
     lock = new PagedFileStorage.StorageLock();
     s = new PagedFileStorage(f, lock);
   }

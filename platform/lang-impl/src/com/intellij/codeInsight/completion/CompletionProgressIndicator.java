@@ -88,7 +88,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private LightweightHint myHint;
   private final Semaphore myFreezeSemaphore;
-  private boolean myToRestart;
+  private Boolean myToRestart;
 
   private boolean myModifiersReleased;
 
@@ -436,6 +436,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
+    myToRestart = false;
     cancel();
 
     assert !myDisposed;
@@ -474,7 +475,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
         if (isOutdated()) return;
-        if (isCanceled() && !myToRestart) return; // otherwise
+        if (isCanceled() && myToRestart != Boolean.TRUE) return;
 
         //what if a new completion was invoked by the user before this 'later'?
         if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
@@ -528,6 +529,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void cancelByWriteAction() {
+    if (myToRestart != null) {
+      LOG.assertTrue(myToRestart == Boolean.FALSE); //explicit completionFinished was invoked before this write action
+      return;
+    }
+
     myToRestart = true;
     cancel();
 
@@ -605,7 +611,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void prefixUpdated() {
-    if (myToRestart) {
+    if (myToRestart == Boolean.TRUE) {
       scheduleRestart();
       return;
     }
@@ -616,6 +622,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
+        myRestartingPrefixConditions.clear();
         return;
       }
     }
@@ -629,6 +636,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final int offset = myEditor.getCaretModel().getOffset();
     final long stamp = myEditor.getDocument().getModificationStamp();
     final Project project = getProject();
+    final boolean wasDumb = DumbService.getInstance(project).isDumb();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -637,6 +645,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
 
         if (myEditor.isDisposed() || project.isDisposed()) {
+          return;
+        }
+
+        if (!wasDumb && DumbService.getInstance(project).isDumb()) {
           return;
         }
 

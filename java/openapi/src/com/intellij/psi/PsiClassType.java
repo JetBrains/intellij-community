@@ -86,7 +86,8 @@ public abstract class PsiClassType extends PsiType {
       return aClass == otherClass;
     }
     return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
-           (parameters.length == 0 || PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass));
+           (PsiUtil.isRawSubstitutor(aClass, result.getSubstitutor()) ||
+            PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass));
   }
 
   /**

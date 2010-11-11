@@ -112,7 +112,10 @@ public class TextRange {
     return Math.max(myStartOffset, startOffset) <= Math.min(myEndOffset, endOffset);
   }
   public boolean intersectsStrict(@NotNull TextRange textRange) {
-    return Math.max(myStartOffset, textRange.getStartOffset()) < Math.min(myEndOffset, textRange.getEndOffset());
+    return intersectsStrict(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+  public boolean intersectsStrict(int startOffset, int endOffset) {
+    return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
   @Nullable

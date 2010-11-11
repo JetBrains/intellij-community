@@ -32,7 +32,7 @@ import org.jetbrains.android.dom.resources.ResourceValue;
  * To change this template use File | Settings | File Templates.
  */
 public interface Include extends LayoutElement {
-  @Required
+  /*@Required*/
   @ResourceType("id")
   @Convert(ResourceReferenceConverter.class)
   AndroidAttributeValue<ResourceValue> getId();

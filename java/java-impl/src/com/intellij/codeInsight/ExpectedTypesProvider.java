@@ -70,10 +70,12 @@ public class ExpectedTypesProvider {
   };
   private static final PsiType[] PRIMITIVE_TYPES = {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE};
 
+  @NotNull
   public static ExpectedTypeInfo createInfo(@NotNull  PsiType type, int kind, PsiType defaultType, TailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
   }
 
+  @NotNull
   private static ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type, int kind, PsiType defaultType, TailType tailType) {
     int dims = 0;
     while (type instanceof PsiArrayType) {
@@ -85,23 +87,27 @@ public class ExpectedTypesProvider {
     return new ExpectedTypeInfoImpl(type, kind, dims, defaultType, tailType);
   }
 
+  @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion) {
     return getExpectedTypes(expr, forCompletion, false, false);
   }
 
+  @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion, final boolean voidable, boolean usedAfter) {
     return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable, usedAfter);
   }
 
+  @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr,
                                                     boolean forCompletion,
                                                     ExpectedClassProvider classProvider, boolean usedAfter) {
     return getExpectedTypes(expr, forCompletion, classProvider, false, usedAfter);
   }
 
+  @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
                                                     final boolean voidable, boolean usedAfter) {
-    if (expr == null) return null;
+    if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       expr = (PsiExpression)parent;
@@ -269,7 +275,14 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
-      final PsiType type = getAnnotationMethodType((PsiNameValuePair)initializer.getParent());
+      final PsiElement parent = initializer.getParent();
+      final PsiType type;
+      if (parent instanceof PsiNameValuePair) {
+        type = getAnnotationMethodType((PsiNameValuePair)parent);
+      }
+      else {
+        type = ((PsiAnnotationMethod)parent).getReturnType();
+      }
       if (type instanceof PsiArrayType) {
         myResult = new ExpectedTypeInfo[]{createInfoImpl(((PsiArrayType)type).getComponentType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN)};
       }

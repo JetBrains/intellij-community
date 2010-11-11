@@ -37,10 +37,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -389,7 +386,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void updateOutputRootsLayout(Project project) {
-    final TIntObjectHashMap<Pair<Integer, Integer>> map = buildOutputRootsLayout(project);
+    final TIntObjectHashMap<Pair<Integer, Integer>> map = buildOutputRootsLayout(new ProjectRef(project));
     synchronized (myProjectOutputRoots) {
       myProjectOutputRoots.put(getProjectId(project), map);
     }
@@ -467,9 +464,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(Project project) {
+  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
     final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
+    for (Module module : ModuleManager.getInstance(projRef.get()).getModules()) {
       final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
       if (manager != null) {
         final VirtualFile output = manager.getCompilerOutputPath();
@@ -905,17 +902,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   // made public for tests
-  public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
+  public void scanSourceContent(final ProjectRef projRef, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
     if (roots.size() == 0) {
       return;
     }
-    final int projectId = getProjectId(project);
+    final int projectId = getProjectId(projRef.get());
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(projRef.get()).getFileIndex();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     int processed = 0;
     for (VirtualFile srcRoot : roots) {
       if (indicator != null) {
+        projRef.get();
         indicator.setText2(srcRoot.getPresentableUrl());
         indicator.setFraction(++processed / (double)totalRootCount);
       }
@@ -929,6 +927,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   addSourceForRecompilation(projectId, file, srcInfo);
                 }
               }
+            }
+            else {
+              projRef.get();
             }
             return true;
           }
@@ -944,6 +945,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final int fileId = getFileId(file);
             if (fileId > 0 /*file is valid*/) {
               if (file.isDirectory()) {
+                projRef.get();
                 for (VirtualFile child : file.getChildren()) {
                   processFile(child);
                 }
@@ -981,8 +983,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private void markOldOutputRoots(final Project project, final TIntObjectHashMap<Pair<Integer, Integer>> currentLayout) {
-    final int projectId = getProjectId(project);
+  private void markOldOutputRoots(final ProjectRef projRef, final TIntObjectHashMap<Pair<Integer, Integer>> currentLayout) {
+    final int projectId = getProjectId(projRef.get());
 
     final TIntHashSet rootsToMark = new TIntHashSet();
     synchronized (myProjectOutputRoots) {
@@ -1043,16 +1045,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       public void run() {
         new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
           public void run(@NotNull final ProgressIndicator indicator) {
+            final ProjectRef projRef = new ProjectRef(project);
             try {
-              if (project.isDisposed()) {
-                return;
-              }
               final IntermediateOutputCompiler[] compilers =
-                  CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
+                  CompilerManager.getInstance(projRef.get()).getCompilers(IntermediateOutputCompiler.class);
 
               final Set<VirtualFile> intermediateRoots = new HashSet<VirtualFile>();
               if (compilers.length > 0) {
-                final Module[] modules = ModuleManager.getInstance(project).getModules();
+                final Module[] modules = ModuleManager.getInstance(projRef.get()).getModules();
                 for (IntermediateOutputCompiler compiler : compilers) {
                   for (Module module : modules) {
                     if (module.isDisposed()) {
@@ -1070,9 +1070,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 }
               }
 
-              final List<VirtualFile> projectRoots = Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots());
+              final List<VirtualFile> projectRoots = Arrays.asList(ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots());
               final int totalRootsCount = projectRoots.size() + intermediateRoots.size();
-              scanSourceContent(project, projectRoots, totalRootsCount, true);
+              scanSourceContent(projRef, projectRoots, totalRootsCount, true);
 
               if (!intermediateRoots.isEmpty()) {
                 final FileProcessor processor = new FileProcessor() {
@@ -1087,13 +1087,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 };
                 int processed = projectRoots.size();
                 for (VirtualFile root : intermediateRoots) {
+                  projRef.get();
                   indicator.setText2(root.getPresentableUrl());
                   indicator.setFraction(++processed / (double)totalRootsCount);
                   processRecursively(root, false, processor);
                 }
               }
-
-              markOldOutputRoots(project, buildOutputRootsLayout(project));
+              
+              markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
+            }
+            catch (ProjectRef.ProjectClosedException swallowed) {
             }
             finally {
               synchronized (myInitializationLock) {
@@ -1108,7 +1111,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     });
   }
   
-
   private class MyProjectManagerListener extends ProjectManagerAdapter {
 
     final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
@@ -1116,39 +1118,54 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public void projectOpened(final Project project) {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
+      final ProjectRef projRef = new ProjectRef(project);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
 
         public void beforeRootsChange(final ModuleRootEvent event) {
-          myRootsBefore = ProjectRootManager.getInstance(project).getContentSourceRoots();
+          try {
+            myRootsBefore = ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots();
+          }
+          catch (ProjectRef.ProjectClosedException e) {
+            myRootsBefore = null;
+          }
         }
 
         public void rootsChanged(final ModuleRootEvent event) {
-          final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(project).getContentSourceRoots();
-
-          {
-            final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
-            ContainerUtil.addAll(newRoots, rootsAfter);
-            if (myRootsBefore != null) {
-              newRoots.removeAll(Arrays.asList(myRootsBefore));
+          try {
+            try {
+              final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(projRef.get()).getContentSourceRoots();
+  
+              {
+                final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
+                ContainerUtil.addAll(newRoots, rootsAfter);
+                if (myRootsBefore != null) {
+                  newRoots.removeAll(Arrays.asList(myRootsBefore));
+                }
+                scanSourceContent(projRef, newRoots, newRoots.size(), true);
+              }
+  
+              {
+                final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
+                if (myRootsBefore != null) {
+                  ContainerUtil.addAll(oldRoots, myRootsBefore);
+                }
+                if (!oldRoots.isEmpty()) {
+                  oldRoots.removeAll(Arrays.asList(rootsAfter));
+                }
+                scanSourceContent(projRef, oldRoots, oldRoots.size(), false);
+              }
             }
-            scanSourceContent(project, newRoots, newRoots.size(), true);
+            finally {
+              myRootsBefore = null;
+            }
+
+
+            markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
           }
-
-          {
-            final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
-            if (myRootsBefore != null) {
-              ContainerUtil.addAll(oldRoots, myRootsBefore);
-            }
-            if (!oldRoots.isEmpty()) {
-              oldRoots.removeAll(Arrays.asList(rootsAfter));
-            }
-            scanSourceContent(project, oldRoots, oldRoots.size(), false);
+          catch (ProjectRef.ProjectClosedException e) {
+            LOG.info(e);
           }
-
-          myRootsBefore = null;
-
-          markOldOutputRoots(project, buildOutputRootsLayout(project));
         }
       });
 
@@ -1465,4 +1482,24 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
+  public static final class ProjectRef extends Ref<Project> {
+    static class ProjectClosedException extends RuntimeException {
+    }
+
+    public ProjectRef() {
+    }
+
+    public ProjectRef(Project project) {
+      super(project);
+    }
+
+    public Project get() {
+      final Project project = super.get();
+      if (project != null && project.isDisposed()) {
+        throw new ProjectClosedException();
+      }
+      return project;
+    }
+  }
+  
 }

@@ -51,6 +51,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     super(project, panel.getList(), panel.getModel(), treeStructure, comparator, showRoot);
 
     myList.setCellRenderer(new ColoredCommanderRenderer(panel));
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
 
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
@@ -59,7 +60,6 @@ public class ProjectListBuilder extends AbstractListBuilder {
     myCopyPasteListener = new MyCopyPasteListener();
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     buildRoot();
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
   }
 
   protected void updateParentTitle() {

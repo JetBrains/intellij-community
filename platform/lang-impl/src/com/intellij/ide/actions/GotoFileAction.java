@@ -52,7 +52,8 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, gotoFileModel, getPsiContext(e));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, gotoFileModel, getPsiContext(e),
+                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
     final ChooseByNameFilter filterUI = new GotoFileFilter(popup, gotoFileModel, project);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {

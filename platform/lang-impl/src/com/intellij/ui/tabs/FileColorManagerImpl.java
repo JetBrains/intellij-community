@@ -188,6 +188,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   @Nullable
   public Color getFileColor(@NotNull final PsiFile file) {
+    initSharedConfigurations();
+
     final String colorName = myModel.getColor(file);
     return colorName == null ? null : getColor(colorName);
   }

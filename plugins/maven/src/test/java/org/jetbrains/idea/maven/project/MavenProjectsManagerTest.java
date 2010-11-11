@@ -39,6 +39,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(true);
+    getMavenImporterSettings().setImportAutomatically(true);
   }
 
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {
@@ -266,13 +267,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProject(m1);
     assertModules("m1");
 
-    myProjectsManager.performScheduledImport(); // ensure no pending imports
+    myProjectsManager.performScheduledImportInTests(); // ensure no pending imports
 
     getMavenImporterSettings().setImportAutomatically(autoImport);
 
     myProjectsManager.addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport(false);
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("m1", "m2");
 
@@ -280,7 +281,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport(false);
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("m1");
   }
@@ -727,7 +728,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
     importProject();
-    myProjectsManager.performScheduledImport(); // ensure no pending requests
+    myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
     assertModules("project", "m");
 
     configConfirmationForYesAnswer();
@@ -740,7 +741,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     waitForReadingCompletion();
 
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
     assertModules("project");
   }
 
@@ -861,7 +862,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  NativeMavenProjectHolder nativeMavenProject, Object message) {
+                                  NativeMavenProjectHolder nativeMavenProject) {
         called[0] = true;
       }
     });
@@ -958,7 +959,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
     myProjectsManager.waitForResolvingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertSources("project", "src/main/java");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
@@ -982,8 +983,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    myProjectsManager.performScheduledImport();
-    assertFalse(myProjectsManager.hasScheduledImports());
+    myProjectsManager.performScheduledImportInTests();
+    assertFalse(myProjectsManager.hasScheduledImportsInTests());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1003,7 +1004,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "</build>");
     myProjectsManager.waitForResolvingCompletion();
 
-    assertTrue(myProjectsManager.hasScheduledImports());
+    assertTrue(myProjectsManager.hasScheduledImportsInTests());
   }
 
   public void testScheduleReimportWhenPluginConfigurationChangesInValue() throws Exception {
@@ -1024,8 +1025,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    myProjectsManager.performScheduledImport();
-    assertFalse(myProjectsManager.hasScheduledImports());
+    myProjectsManager.performScheduledImportInTests();
+    assertFalse(myProjectsManager.hasScheduledImportsInTests());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1045,6 +1046,6 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "</build>");
     myProjectsManager.waitForResolvingCompletion();
 
-    assertTrue(myProjectsManager.hasScheduledImports());
+    assertTrue(myProjectsManager.hasScheduledImportsInTests());
   }
 }

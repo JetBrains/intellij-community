@@ -89,6 +89,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
+  @Override
+  protected JTableHeader createDefaultTableHeader() {
+    return new JTableHeader(columnModel) {
+      @Override
+      public void paint(Graphics g) {
+        if (myEnableAntialiasing) {
+          UISettings.setupAntialiasing(g);
+        }
+        super.paint(g);
+      }
+    };
+  }
+
   public boolean isEmpty() {
     return getRowCount() == 0;
   }

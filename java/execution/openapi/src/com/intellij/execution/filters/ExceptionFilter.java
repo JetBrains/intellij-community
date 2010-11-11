@@ -129,7 +129,7 @@ public class ExceptionFilter implements Filter, DumbAware {
       final OpenFileHyperlinkInfo linkInfo = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
-        Color color = UIUtil.getTextInactiveTextColor();
+        Color color = UIUtil.getInactiveTextColor();
         attributes.setForegroundColor(color);
         attributes.setEffectColor(color);
       }

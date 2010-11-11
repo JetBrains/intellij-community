@@ -16,11 +16,12 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rustam Vishnyakov
@@ -35,5 +36,10 @@ public abstract class LangScriptingContextProvider {
   public abstract boolean acceptsExtension(String fileExt);
 
   public abstract ScriptingLibraryMappings getLibraryMappings(Project project);
+
+  public abstract boolean isCompact(VirtualFile file);
+
+  @Nullable
+  public abstract String getLibraryTypeName(OrderRootType rootType);
 
 }

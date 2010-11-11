@@ -124,6 +124,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
+  @NotNull
   public Condition getDisposed() {
     return new Condition() {
       public boolean value(final Object o) {

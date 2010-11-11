@@ -758,7 +758,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void dispose() {
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker rangeMarker = shred.getHostRangeMarker();
-      ((RangeMarkerEx)rangeMarker).dispose();
+      rangeMarker.dispose();
     }
   }
 

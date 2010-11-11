@@ -1207,6 +1207,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         return;
       }
 
+      if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) return;
+
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
@@ -1230,18 +1232,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
     private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
       final TimerListener[] listeners = timerListeners.toArray(new TimerListener[timerListeners.size()]);
-      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
-        public void run() {
-          for (TimerListener listener : listeners) {
-            if (timerListeners.contains(listener)) {
-              if (!notified.contains(listener)) {
-                notified.add(listener);
-                runListenerAction(listener);
-              }
-            }
+      for (TimerListener listener : listeners) {
+        if (timerListeners.contains(listener)) {
+          if (!notified.contains(listener)) {
+            notified.add(listener);
+            runListenerAction(listener);
           }
         }
-      });
+      }
     }
 
     private void runListenerAction(final TimerListener listener) {

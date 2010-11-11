@@ -356,7 +356,7 @@ public class AndroidResourceUtil {
 
   public static void collectIdDeclarations(@NotNull final String id, Module module, final List<PsiElement> targets) {
     Collection<VirtualFile> files =
-      FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.ID, id, GlobalSearchScope.projectScope(module.getProject()));
+      FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.INDEX_ID, id, GlobalSearchScope.projectScope(module.getProject()));
     PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (VirtualFile file : files) {
       PsiFile psiFile = psiManager.findFile(file);

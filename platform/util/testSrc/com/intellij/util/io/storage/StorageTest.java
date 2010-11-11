@@ -50,7 +50,7 @@ public class StorageTest extends TestCase {
 
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
-    myStorage.writeBytes(record, "Hello".getBytes());
+    myStorage.writeBytes(record, "Hello".getBytes(), false);
     assertEquals("Hello", new String(myStorage.readBytes(record)));
   }
 
@@ -67,7 +67,7 @@ public class StorageTest extends TestCase {
 
     for (int i = 0; i < count; i++) {
       final int record = myStorage.createNewRecord();
-      myStorage.writeBytes(record, hello.getBytes());
+      myStorage.writeBytes(record, hello.getBytes(), true);  // fixed size optimization is mor than 50 percents here!
       records[i] = record;
     }
 

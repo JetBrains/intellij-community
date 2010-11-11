@@ -40,6 +40,8 @@ public abstract class LanguageInjectionSupport {
   public static final ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
 
   public static Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
+  public static Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
+  public static Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
   @NonNls public static final String XML_SUPPORT_ID = "xml";
   @NonNls public static final String JAVA_SUPPORT_ID = "java";

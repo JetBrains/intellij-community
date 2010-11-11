@@ -349,7 +349,7 @@ public abstract class TestObject implements JavaCommandLine {
                                                 boolean junit4) {
     try {
       if (createTempFile) {
-        myTempFile = File.createTempFile("idea_junit", ".tmp");
+        myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
         myTempFile.deleteOnExit();
         myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
       }

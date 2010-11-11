@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class GroupByWordPrefixes implements Grouper {
+public class GroupByWordPrefixes implements Grouper, Sorter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.structureView.GroupByWordPrefixes");
   @NonNls public static final String ID = "GROUP_BY_PREFIXES";
   private String mySeparator;
@@ -73,7 +73,7 @@ public class GroupByWordPrefixes implements Grouper {
         text = ((ResourceBundlePropertyStructureViewElement)element).getValue();
       }
       if (text == null) continue;
-      LOG.assertTrue(text.startsWith(parentPrefix));
+      LOG.assertTrue(text.startsWith(parentPrefix) || text.startsWith(mySeparator));
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
@@ -156,6 +156,16 @@ public class GroupByWordPrefixes implements Grouper {
   @NotNull
   public String getName() {
     return ID;
+  }
+
+  @Override
+  public Comparator getComparator() {
+    return Sorter.ALPHA_SORTER.getComparator();
+  }
+
+  @Override
+  public boolean isVisible() {
+    return true;
   }
 
   private static class Key {

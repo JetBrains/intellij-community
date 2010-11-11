@@ -39,7 +39,7 @@ public class CompositePrintable implements Printable, Disposable {
   public void flush() {
     if (myWrapper == null) {
       try {
-        myWrapper = new PrintablesWrapper(File.createTempFile("frst", "scd"));
+        myWrapper = new PrintablesWrapper(FileUtil.createTempFile("frst", "scd"));
       }
       catch (IOException ignored) {
       }

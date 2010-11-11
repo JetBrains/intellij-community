@@ -442,7 +442,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private File createMessageFile(VirtualFile root, final String message) throws IOException {
     // filter comment lines
-    File file = File.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
+    File file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
     file.deleteOnExit();
     @NonNls String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
     Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);

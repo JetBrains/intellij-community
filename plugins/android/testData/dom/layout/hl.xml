@@ -18,8 +18,8 @@
           android:text="<error>@string/animation_1_instructions</error>"
       />
 
-  <RadioGroup android:checkedButton="<error>lunch</error>"/>
-  <RadioGroup android:checkedButton="1">
+  <RadioGroup android:checkedButton="<error>lunch</error>" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
+  <RadioGroup android:checkedButton="1" android:layout_width="fill_parent" android:layout_height="wrap_content">
     <requestFocus />
   </RadioGroup>
 

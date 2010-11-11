@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.enumeration.EmptyEnumeration;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   @Nullable
-  public XDebuggerNodeLink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     return null;
   }
 

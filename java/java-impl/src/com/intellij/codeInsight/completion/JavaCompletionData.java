@@ -137,6 +137,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   final static ElementFilter CLASS_BODY = new OrFilter(
     new AfterElementFilter(new TextFilter("{")),
     new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
+  public static final ElementPattern<PsiElement> START_FOR =
+    psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class);
 
   public JavaCompletionData(){
     declareCompletionSpaces();
@@ -538,9 +540,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     variant.addCompletion(PsiKeyword.IF, TailTypes.IF_LPARENTH);
     variant.addCompletion(PsiKeyword.TRY, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
-    variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);
+    variant.addCompletion(PsiKeyword.RETURN, TailType.NONE);
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
+    variant.addCompletion(PsiKeyword.SYNCHRONIZED, TailTypes.SYNCHRONIZED_LPARENTH);
   }
 
   @Override
@@ -591,11 +594,12 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
 
-    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
+    if (START_FOR.accepts(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
         if (!PsiKeyword.VOID.equals(primitiveType)) {
           result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
         }
+        result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
       }
     }
 

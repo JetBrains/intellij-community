@@ -50,11 +50,9 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -81,6 +79,21 @@ public class FileManagerImpl implements FileManager {
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultUseScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {
+    @Override
+    protected GlobalSearchScope create(VirtualFile key) {
+      GlobalSearchScope scope = getInherentResolveScope(key);
+      for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+        final SearchScope extra = enlarger.getAdditionalResolveScope(key, myManager.getProject());
+        if (extra != null) {
+          scope = scope.union(extra);
+        }
+      }
+
+      return scope;
+    }
+  };
+
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
@@ -106,6 +119,13 @@ public class FileManagerImpl implements FileManager {
 
       public void exitDumbMode() {
         recalcAllViewProviders();
+      }
+    });
+
+    manager.registerRunnableToRunOnChange(new Runnable() {
+      @Override
+      public void run() {
+        myDefaultUseScopesCache.clear();
       }
     });
   }
@@ -394,19 +414,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private GlobalSearchScope getDefaultResolveScope(@NotNull final Project project, @NotNull PsiFile psiFile, @NotNull final VirtualFile vFile) {
-    return CachedValuesManager.getManager(project).getCachedValue(psiFile, new CachedValueProvider<GlobalSearchScope>() {
-      @Override
-      public Result<GlobalSearchScope> compute() {
-        GlobalSearchScope scope = getInherentResolveScope(vFile);
-        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-          final SearchScope extra = enlarger.getAdditionalResolveScope(vFile, project);
-          if (extra != null) {
-            scope = scope.union(extra);
-          }
-        }
-        return Result.create(scope, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
-      }
-    });
+    return myDefaultUseScopesCache.get(vFile);
   }
 
   private GlobalSearchScope getInherentResolveScope(VirtualFile vFile) {

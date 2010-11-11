@@ -318,12 +318,12 @@ public class GuiUtils {
     if (component instanceof JPanel) {
       final Border border = ((JPanel)component).getBorder();
       if (border instanceof TitledBorder) {
-        Color color = enabled ? component.getForeground() : UIUtil.getTextInactiveTextColor();
+        Color color = enabled ? component.getForeground() : UIUtil.getInactiveTextColor();
         ((TitledBorder)border).setTitleColor(color);
       }
     }
     else if (component instanceof JLabel) {
-      Color color = UIUtil.getTextInactiveTextColor();
+      Color color = UIUtil.getInactiveTextColor();
       if (color == null) color = component.getForeground();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
       final JLabel label = (JLabel)component;

@@ -121,6 +121,9 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
+    if (myNameStorage == null) {
+      throw new IOException("SerializationManager's name storage failed to initialize");
+    }
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 

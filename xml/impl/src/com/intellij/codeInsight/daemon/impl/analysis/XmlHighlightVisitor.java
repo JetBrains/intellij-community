@@ -747,7 +747,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
-    String unquotedValue = StringUtil.stripQuotesAroundValue(value.getText());
+    String unquotedValue = value.getValue();
 
     if (tag instanceof HtmlTag) {
       unquotedValue = unquotedValue.toLowerCase();

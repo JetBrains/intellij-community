@@ -52,7 +52,7 @@ public class Android11LayoutDomTest extends AndroidDomTest {
   }
 
   public void testAttributeNameCompletion() throws Throwable {
-      doTestCompletionVariants("an1.xml", "layout_weight", "layout_width");
+    doTestCompletionVariants("an1.xml", "layout_weight", "layout_width");
   }
 
   public void testHighlighting() throws Throwable {

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableWithText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement>{
+public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement> implements NavigatableWithText {
   private static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
   private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
@@ -122,5 +123,10 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
   public boolean canNavigate() {
     return true;
+  }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    return "Open Library Settings";
   }
 }

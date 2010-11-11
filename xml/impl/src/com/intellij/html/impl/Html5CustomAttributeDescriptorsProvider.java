@@ -42,7 +42,7 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
       currentAttrs.add(attribute.getName());
     }
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.ID, new Processor<String>() {
+    FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.INDEX_ID, new Processor<String>() {
       @Override
       public boolean process(String s) {
         boolean add = true;

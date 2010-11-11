@@ -26,4 +26,10 @@ public class HgIncomingCommand extends HgChangesetsCommand {
   protected void addArguments(List<String> args) {
     args.add("--newest-first");
   }
+
+  @Override
+  protected boolean isSilentCommand() {
+    return true;
+  }
+  
 }

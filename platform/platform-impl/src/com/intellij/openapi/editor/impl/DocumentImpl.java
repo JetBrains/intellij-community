@@ -148,13 +148,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     VisualPosition visualCaret = editor == null ? null : editor.getCaretModel().getVisualPosition();
     int caretLine = editor == null ? -1 : editor.getCaretModel().getLogicalPosition().line;
+    int caretOffset = editor == null ? -1 : editor.getCaretModel().getOffset();
 
-    boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText.getCharArray();
     for (int line = 0; line < myLineSet.getLineCount(); line++) {
       if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
-      int start = -1;
+      int whiteSpaceStart = -1;
       final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
       int lineStart = myLineSet.getLineStart(line);
       for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
@@ -162,16 +162,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         if (c != ' ' && c != '\t') {
           break;
         }
-        start = offset;
+        whiteSpaceStart = offset;
       }
-      if (start == -1) continue;
-      if (!isTestMode && !isVirtualSpaceEnabled && caretLine == line) {
+      if (whiteSpaceStart == -1) continue;
+      if (!isVirtualSpaceEnabled && caretLine == line && whiteSpaceStart < caretOffset) {
         // mark this as a document that needs stripping later
         // otherwise the caret would jump madly
         markAsNeedsStrippingLater = true;
       }
       else {
-        final int finalStart = start;
+        final int finalStart = whiteSpaceStart;
         ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, editor == null ? null : editor.getProject()) {
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {

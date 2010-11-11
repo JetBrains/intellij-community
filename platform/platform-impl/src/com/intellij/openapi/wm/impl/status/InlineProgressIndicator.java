@@ -112,7 +112,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
         size = (aqua ? 8 : 10);
       }
       myProcessName.setFont(font.deriveFont(Font.PLAIN, size));
-      myProcessName.setForeground(UIManager.getColor("Panel.background").brighter().brighter());
+      myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProcessName.setDecorate(false);
 
@@ -346,7 +346,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       int arc = 8;
 
-      g.setColor(UIManager.getColor("Panel.background"));
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
       
       Color bg = getBackground().darker().darker();
@@ -360,7 +360,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
 
-      g.setColor(UIManager.getColor("Panel.background"));
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(0, getHeight() / 2, getWidth() - 1, getHeight() / 2, arc, arc);
       g.fillRect(0, (int)label.getMaxY() + 1, getWidth() - 1, getHeight() / 2);
 

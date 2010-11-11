@@ -18,6 +18,7 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -90,7 +91,7 @@ public class Main {
         List<String> args = new ArrayList<String>();
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
           File launcherFile = new File(ideaHomeDir, "bin/vistalauncher.exe");
-          File launcherCopy = File.createTempFile("vistalauncher", ".exe");
+          File launcherCopy = FileUtil.createTempFile("vistalauncher", ".exe");
           launcherCopy.deleteOnExit();
           copyFile(launcherFile, launcherCopy);
           args.add(launcherCopy.getPath());

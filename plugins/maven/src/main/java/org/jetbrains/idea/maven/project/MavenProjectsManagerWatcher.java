@@ -23,12 +23,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -45,6 +45,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
@@ -54,9 +55,13 @@ import java.io.File;
 import java.util.*;
 
 public class MavenProjectsManagerWatcher {
+  public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
+    Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
+
   private static final int DOCUMENT_SAVE_DELAY = 1000;
 
   private final Project myProject;
+  private final MavenProjectsManager myManager;
   private final MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
@@ -69,11 +74,13 @@ public class MavenProjectsManagerWatcher {
   private final MavenMergingUpdateQueue myChangedDocumentsQueue;
 
   public MavenProjectsManagerWatcher(Project project,
+                                     MavenProjectsManager manager,
                                      MavenProjectsTree projectsTree,
                                      MavenGeneralSettings generalSettings,
                                      MavenProjectsProcessor readingProcessor,
                                      MavenEmbeddersManager embeddersManager) {
     myProject = project;
+    myManager = manager;
     myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
@@ -132,10 +139,10 @@ public class MavenProjectsManagerWatcher {
         });
       }
     };
-    getDocumentEventMulticaster().addDocumentListener(myDocumentListener,myBusConnection);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
-      public void pathsChanged() {
+      public void changed() {
         updateSettingsFilePointers();
         onSettingsChange();
       }
@@ -159,21 +166,25 @@ public class MavenProjectsManagerWatcher {
   private void addFilePointer(File settingsFile) {
     if (settingsFile == null) return;
 
-    myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(settingsFile.getParentFile()), false));
+    File parentFile = settingsFile.getParentFile();
+    if (parentFile != null) {
+      myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(parentFile), false));
+    }
 
     String url = VfsUtil.pathToUrl(getNormalizedPath(settingsFile));
-    mySettingsFilesPointers.add(VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-      }
+    mySettingsFilesPointers
+      .add(VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
+        public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+        }
 
-      public void validityChanged(VirtualFilePointer[] pointers) {
-      }
-    }));
+        public void validityChanged(VirtualFilePointer[] pointers) {
+        }
+      }));
   }
 
-  private static String getNormalizedPath(File settingsFile) {
+  private static String getNormalizedPath(@NotNull File settingsFile) {
     String canonized = PathUtil.getCanonicalPath(settingsFile.getAbsolutePath());
-    // todo hook for IDEADEV-40110 
+    // todo hook for IDEADEV-40110
     assert canonized != null : "cannot normalize path for: " + settingsFile;
     return FileUtil.toSystemIndependentName(canonized);
   }
@@ -182,48 +193,61 @@ public class MavenProjectsManagerWatcher {
     Disposer.dispose(myChangedDocumentsQueue);
   }
 
-  private static EditorEventMulticaster getDocumentEventMulticaster() {
-    return EditorFactory.getInstance().getEventMulticaster();
-  }
-
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll(true);
+    scheduleUpdateAll();
   }
 
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(true);
+    scheduleUpdateAll();
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll(true);
+    scheduleUpdateAll();
   }
 
   public synchronized void setExplicitProfiles(Collection<String> profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll(true);
+    scheduleUpdateAll();
   }
 
-  private void scheduleUpdateAll(boolean forceImport) {
-    scheduleUpdateAll(false, forceImport);
+  private void scheduleUpdateAll() {
+    scheduleUpdateAll(false, true);
   }
 
-  public void scheduleUpdateAll(boolean force, boolean forceImport) {
-    Object message = forceImport ? MavenProjectsManager.FORCE_IMPORT_MESSAGE : null;
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, message));
+  public void scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
+    Runnable onCompletion = new Runnable() {
+      @Override
+      public void run() {
+        if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
+          myManager.scheduleImportAndResolve();
+        }
+      }
+    };
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
   }
 
-  public void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete, boolean force, boolean forceImport) {
-    Object message = forceImport ? MavenProjectsManager.FORCE_IMPORT_MESSAGE : null;
+  public void scheduleUpdate(List<VirtualFile> filesToUpdate,
+                             List<VirtualFile> filesToDelete,
+                             boolean force,
+                             final boolean forceImportAndResolve) {
+    Runnable onCompletion = new Runnable() {
+      @Override
+      public void run() {
+        if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
+          myManager.scheduleImportAndResolve();
+        }
+      }
+    };
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
                                                                           force,
                                                                           myProjectsTree,
                                                                           myGeneralSettings,
-                                                                          message));
+                                                                          onCompletion));
   }
 
   private void onSettingsChange() {
@@ -232,7 +256,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void onSettingsXmlChange() {
-    myGeneralSettings.localRepositoryChanged();
+    myGeneralSettings.changed();
     // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
@@ -291,6 +315,7 @@ public class MavenProjectsManagerWatcher {
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
     private boolean settingsHaveChanged;
+    private boolean forceImportAndResolve;
 
     protected boolean isRelevant(String path) {
       return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path);
@@ -310,6 +335,10 @@ public class MavenProjectsManagerWatcher {
       if (isSettingsFile(file)) {
         settingsHaveChanged = true;
         return;
+      }
+
+      if (file.getUserData(FORCE_IMPORT_AND_RESOLVE_ON_REFRESH) == Boolean.TRUE) {
+        forceImportAndResolve = true;
       }
 
       VirtualFile pom = getPomFileProfilesFile(file);
@@ -340,7 +369,7 @@ public class MavenProjectsManagerWatcher {
         }
         else {
           filesToUpdate.removeAll(filesToRemove);
-          scheduleUpdate(filesToUpdate, filesToRemove, false, false);
+          scheduleUpdate(filesToUpdate, filesToRemove, false, forceImportAndResolve);
         }
       }
 
@@ -363,6 +392,7 @@ public class MavenProjectsManagerWatcher {
       filesToUpdate = new ArrayList<VirtualFile>();
       filesToRemove = new ArrayList<VirtualFile>();
       settingsHaveChanged = false;
+      forceImportAndResolve = false;
     }
 
     private void clearLists() {
@@ -408,8 +438,8 @@ public class MavenProjectsManagerWatcher {
       if (f.isDirectory()) {
         // prevent reading directories content if not already cached.
         Iterable<VirtualFile> children = f instanceof NewVirtualFile
-                                           ? ((NewVirtualFile)f).iterInDbChildren()
-                                           : Arrays.asList(f.getChildren());
+                                         ? ((NewVirtualFile)f).iterInDbChildren()
+                                         : Arrays.asList(f.getChildren());
         for (VirtualFile each : children) {
           deleteRecursively(each);
         }

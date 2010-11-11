@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -301,7 +302,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   private AppletHtmlFile generateAppletTempPage() throws IOException {
-    final File tempFile = File.createTempFile("AppletPage", ".html");
+    final File tempFile = FileUtil.createTempFile("AppletPage", ".html");
     @NonNls final FileWriter writer = new FileWriter(tempFile);
     try {
       writer.write("<html>\n" +

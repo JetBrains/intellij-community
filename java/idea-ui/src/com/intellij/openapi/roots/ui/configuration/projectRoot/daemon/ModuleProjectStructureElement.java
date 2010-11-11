@@ -7,7 +7,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +41,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
-        problemsHolder.registerError(ProjectBundle.message("project.roots.module.duplicate.name.message"));
+        problemsHolder.registerError(ProjectBundle.message("project.roots.module.duplicate.name.message"), null, createPlace(), null);
         break;
       }
     }
@@ -50,9 +52,11 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"));
+          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, createPlace(), null);
         } else {
-          problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()));
+          problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
+                                       createPlace(),
+                                       null);
         }
       }
       //todo[nik] highlight libraries with invalid paths in ClasspathEditor
@@ -68,6 +72,10 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
       //  }
       //}
     }
+  }
+
+  private Place createPlace() {
+    return ProjectStructureConfigurable.getInstance(myContext.getProject()).createModulePlace(myModule);
   }
 
   @Override

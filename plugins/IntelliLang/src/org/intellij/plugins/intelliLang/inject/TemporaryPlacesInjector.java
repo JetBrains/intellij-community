@@ -60,6 +60,7 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
       InjectorUtils.registerInjection(
         place.language.getLanguage(),
         Collections.singletonList(Trinity.create(host, place.language, manipulator.getRangeInElement(host))), context.getContainingFile(), registrar);
+      InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, registrar);
     }
   }
 

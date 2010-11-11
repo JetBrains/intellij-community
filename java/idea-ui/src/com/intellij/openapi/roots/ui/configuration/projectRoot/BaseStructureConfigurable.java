@@ -193,7 +193,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
               final boolean invalid = level != null;
               if (unused || invalid) {
                 Color fg = unused
-                           ? UIUtil.getTextInactiveTextColor()
+                           ? UIUtil.getInactiveTextColor()
                            : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
                 textAttributes = new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN, fg,
                                                           level == ProjectStructureProblemDescription.Severity.ERROR ? Color.RED : Color.GRAY);

@@ -163,7 +163,7 @@ public class UpdateHighlightersUtil {
                                                   int startOffset,
                                                   int endOffset,
                                                   @NotNull final HighlightInfo info,
-                                                         @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
@@ -313,10 +313,10 @@ public class UpdateHighlightersUtil {
       public boolean process(HighlightInfo info) {
         if (info.group == group) {
           RangeHighlighter highlighter = info.highlighter;
-          int hiEnd = highlighter.getEndOffset();
           int hiStart = highlighter.getStartOffset();
+          int hiEnd = highlighter.getEndOffset();
           boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                                  || range.intersects(hiStart, hiEnd);
+                                  || range.intersectsStrict(hiStart, hiEnd) || range.containsRange(hiStart, hiEnd) || hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset();
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;

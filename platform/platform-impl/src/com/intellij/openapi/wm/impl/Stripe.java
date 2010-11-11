@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -333,7 +334,7 @@ final class Stripe extends JPanel{
   }
 
   public void setOverlayed(boolean overlayed) {
-    Color bg = UIManager.getColor("Panel.background");
+    Color bg = UIUtil.getPanelBackground();
     if (overlayed) {
      setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 190));
     } else {

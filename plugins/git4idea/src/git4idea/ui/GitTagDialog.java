@@ -18,6 +18,7 @@ package git4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -150,7 +151,7 @@ public class GitTagDialog extends DialogWrapper {
     final File messageFile;
     if (hasMessage) {
       try {
-        messageFile = File.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
+        messageFile = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
         messageFile.deleteOnExit();
         Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING);
         try {

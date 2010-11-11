@@ -124,7 +124,7 @@ public class LabeledIcon implements Icon {
 
       if (myMnemonic != null) {
         y -= fontMetrics.getHeight();
-        g.setColor(UIUtil.getTextInactiveTextColor());
+        g.setColor(UIUtil.getInactiveTextColor());
         int offset = getTextWidth() - fontMetrics.stringWidth(myMnemonic);
         g.drawString(myMnemonic, x + offset, y);
       }

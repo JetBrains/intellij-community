@@ -109,6 +109,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgVFSListener myVFSListener;
   private VirtualFileListener myDirStateChangeListener;
   private final HgMergeProvider myMergeProvider;
+  private HgExecutableValidator myExecutableValidator;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
@@ -282,16 +283,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    // validate hg executable
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      started = true;
-    } else {
-      HgExecutableValidator validator = new HgExecutableValidator(myProject);
-      started = validator.check(globalSettings);
+    // validate hg executable on start
+    myExecutableValidator = new HgExecutableValidator(myProject);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
     }
-    if (!started) {
-      return;
-    }
+    started = true;
 
     // status bar
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -408,4 +405,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
 
+  public synchronized HgExecutableValidator getExecutableValidator() {
+    return myExecutableValidator;
+  }
 }

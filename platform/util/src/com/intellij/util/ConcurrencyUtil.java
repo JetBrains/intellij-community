@@ -81,6 +81,8 @@ public class ConcurrencyUtil {
    */
   @NotNull
   public static <K,V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
+    V v = map.get(key);
+    if (v != null) return v;
     V prev = map.putIfAbsent(key, defaultValue);
     return prev == null ? defaultValue : prev;
   }

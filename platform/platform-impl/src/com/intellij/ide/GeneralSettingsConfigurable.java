@@ -51,7 +51,10 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     if (myComponent.myConfirmFrameToOpenCheckBox.isSelected()) {
-      settings.setConfirmOpenNewProject(-1);
+      settings.setConfirmOpenNewProject(GeneralSettings.OPEN_PROJECT_ASK);
+    }
+    else if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+      settings.setConfirmOpenNewProject(GeneralSettings.OPEN_PROJECT_NEW_WINDOW);
     }
     // AutoSave in inactive
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());

@@ -161,7 +161,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     parameters.setMainClass(GroovycRunner.class.getName());
 
     try {
-      File fileWithParameters = File.createTempFile("toCompile", "");
+      File fileWithParameters = FileUtil.createTempFile("toCompile", "");
       final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);

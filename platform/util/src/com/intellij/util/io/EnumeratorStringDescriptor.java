@@ -15,6 +15,8 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -34,7 +36,7 @@ public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
     return val1.equals(val2);
   }
 
-  public void save(final DataOutput storage, final String value) throws IOException {
+  public void save(final DataOutput storage, @NotNull final String value) throws IOException {
     IOUtil.writeUTFFast(buffer, storage, value);
   }
 

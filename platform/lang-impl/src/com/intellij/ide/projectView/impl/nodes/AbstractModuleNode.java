@@ -25,10 +25,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
+public abstract class AbstractModuleNode extends ProjectViewNode<Module> implements NavigatableWithText {
   protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
     super(project, module, viewSettings);
   }
@@ -82,6 +83,11 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
 
   public void navigate(final boolean requestFocus) {
     ProjectSettingsService.getInstance(myProject).openModuleSettings(getValue());
+  }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    return "Open Module Settings";
   }
 
   public boolean canNavigate() {

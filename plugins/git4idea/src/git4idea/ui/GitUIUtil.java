@@ -16,10 +16,8 @@
 package git4idea.ui;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -29,15 +27,12 @@ import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitExecutableValidator;
-import git4idea.config.GitVcsConfigurable;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -417,11 +412,9 @@ public class GitUIUtil {
    * If it's valid, then we don't know what could happen and just display the general error notification.
    */
   public static void checkGitExecutableAndShowNotification(final Project project, VcsException e) {
-    if (GitExecutableValidator.getInstance(project).isGitExecutableValid()) {
+    if (GitVcs.getInstance(project).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
       Notification notification = new Notification(GitVcs.NOTIFICATION_GROUP_ID, GitBundle.getString("general.error"), e.getLocalizedMessage(), NotificationType.ERROR);
       Notifications.Bus.notify(notification, project);
-    } else {
-      GitExecutableValidator.getInstance(project).showExecutableNotConfiguredNotification();
     }
   }
 }

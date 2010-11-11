@@ -256,9 +256,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     if (documentLength > 0 && context.offset >= documentLength - 1 && context.symbol != '\n') {
       // Update information about end position of the last visual line.
       CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-      cacheEntry.endLogicalColumn = context.logicalColumn + context.symbolWidthInColumns - 1; // -1 because the first context's
-                                                                                              // column already points to the symbol
-      cacheEntry.endVisualColumn = context.visualColumn + context.symbolWidthInColumns - 1;
+      cacheEntry.endLogicalColumn += context.symbolWidthInColumns;
+      cacheEntry.endVisualColumn += context.symbolWidthInColumns;
+      cacheEntry.endOffset++;
     }
   }
 
@@ -424,6 +424,20 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
     myNotAffectedByUpdateTailCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
+    
+    // There is a possible case that the change is non-line feed symbol insertion to the document's end and its previous symbol
+    // is line feed. E.g.:
+    //    line1
+    //    line2
+    //    <caret>
+    // We stored cache entry that corresponds to offset just before the previous last symbol (line feed). However, last symbol is
+    // not line feed now, hence, we need to remove corresponding virtual cache entry.
+    int textLength = myEditor.getDocument().getTextLength();
+    if (endOffset >= textLength && !myNotAffectedByUpdateTailCacheEntries.isEmpty() 
+        && myNotAffectedByUpdateTailCacheEntries.get(myNotAffectedByUpdateTailCacheEntries.size() - 1).startOffset >= textLength) 
+    {
+      myNotAffectedByUpdateTailCacheEntries.remove(myNotAffectedByUpdateTailCacheEntries.size() - 1);
+    }
     myCache.subList(myBeforeChangeState.startCacheEntryIndex + 1, myCache.size()).clear();
     for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
       entry.locked = true;

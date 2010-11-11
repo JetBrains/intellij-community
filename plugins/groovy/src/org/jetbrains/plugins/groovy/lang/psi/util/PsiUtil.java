@@ -977,4 +977,26 @@ public class PsiUtil {
 
     return null;
   }
+
+  @NotNull
+  public static PsiClass getOriginalClass(@NotNull PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    if (file == null) return aClass;
+
+    PsiFile originalFile = file.getOriginalFile();
+    if (originalFile == file) return aClass;
+
+    if (!(originalFile instanceof PsiClassOwner)) return aClass;
+
+    String name = aClass.getName();
+    if (name == null) return aClass;
+
+    for (PsiClass originalClass : ((PsiClassOwner)originalFile).getClasses()) {
+      if (name.equals(originalClass.getName())) {
+        return originalClass;
+      }
+    }
+
+    return aClass;
+  }
 }

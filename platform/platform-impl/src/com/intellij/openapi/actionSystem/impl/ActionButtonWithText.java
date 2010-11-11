@@ -56,7 +56,7 @@ public class ActionButtonWithText extends ActionButton {
     final int textHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
 
     UIUtil.applyRenderingHints(g);
-    g.setColor(isButtonEnabled() ? UIUtil.getLabelForeground() : UIUtil.getTextInactiveTextColor());
+    g.setColor(isButtonEnabled() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
     final int iconTextDifference = (int)Math.ceil((icon.getIconHeight() - textHeight) / 2);
     final int textStartX = x + icon.getIconWidth() + ICON_TEXT_SPACE;
     g.drawString(text, textStartX, y + iconTextDifference + fontMetrics.getMaxAscent());

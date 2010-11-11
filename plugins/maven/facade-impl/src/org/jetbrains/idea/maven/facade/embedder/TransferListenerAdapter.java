@@ -15,20 +15,23 @@
  */
 package org.jetbrains.idea.maven.facade.embedder;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.facade.MavenFacadeGlobalsManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeProgressIndicator;
 
+import java.rmi.RemoteException;
 import java.text.MessageFormat;
 import java.util.Map;
 
 public class TransferListenerAdapter implements TransferListener {
-  protected final MavenFacadeProgressIndicatorWrapper myIndicator;
+  protected final MavenFacadeProgressIndicator myIndicator;
   private final Map<String, DownloadData> myDownloads = new ConcurrentHashMap<String, DownloadData>();
 
-  public TransferListenerAdapter(MavenFacadeProgressIndicatorWrapper indicator) {
+  public TransferListenerAdapter(MavenFacadeProgressIndicator indicator) {
     myIndicator = indicator;
   }
 
@@ -37,7 +40,12 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   private void checkCanceled() {
-    myIndicator.checkCanceled();
+    try {
+      if (myIndicator.isCanceled()) throw new ProcessCanceledException();
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
   }
 
   public void transferStarted(TransferEvent event) {
@@ -60,7 +68,12 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   public void transferCompleted(TransferEvent event) {
-    MavenFacadeGlobalsManager.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
+    try {
+      MavenFacadeGlobalsManager.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
 
     checkCanceled();
 
@@ -101,7 +114,13 @@ public class TransferListenerAdapter implements TransferListener {
       sizeInfo = ((int)100f * data.downloaded / data.total) + "% of " + StringUtil.formatFileSize(data.total);
     }
 
-    myIndicator.setText2(MessageFormat.format(prefix + sizeInfo + " [{0}] {1}", data.repository, resourceName));
+    try {
+      myIndicator.setText2(MessageFormat.format(prefix + sizeInfo + " [{0}] {1}", data.repository, resourceName));
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
+
     downloadProgress(data.downloaded, data.total);
   }
 

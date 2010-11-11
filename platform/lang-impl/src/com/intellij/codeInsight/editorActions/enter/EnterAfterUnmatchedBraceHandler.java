@@ -135,7 +135,11 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
     if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
     }
-    for (PsiElement parent = element.getParent(); parent != null && parent.getTextOffset() == offset; parent = parent.getParent()) {
+    for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
+      ASTNode parentNode = parent.getNode();
+      if (parentNode == null || parentNode.getStartOffset() != offset) {
+        break;
+      }
       element = parent;
     }
     if (element.getTextOffset() != offset) {

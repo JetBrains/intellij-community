@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -326,7 +327,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     try {
       final ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
       javaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
-      myTempFile = File.createTempFile("idea_testng", ".tmp");
+      myTempFile = FileUtil.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
       final SearchingForTestsTask task = createSearchingForTestsTask(serverSocket, is15, config, myTempFile);

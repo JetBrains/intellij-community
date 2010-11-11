@@ -26,6 +26,7 @@ public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorO
   public WebEditorAppearanceConfigurable() {
     super(WebEditorOptions.getInstance());
     checkBox("breadcrumbsEnabled", XmlBundle.message("xml.editor.options.breadcrumbs.title"));
+    checkBox("breadcrumbsEnabledInXml", XmlBundle.message("xml.editor.options.breadcrumbs.for.xml.title"));
     checkBox("showCssColorPreviewInGutter", "Show CSS Color preview icon in gutter");
   }
 }

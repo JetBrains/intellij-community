@@ -17,6 +17,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
@@ -119,7 +121,10 @@ public class LookupManagerImpl extends LookupManager {
     final Runnable request = new Runnable() {
       public void run() {
         if (myActiveLookup == lookup) {
-          DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+          final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+          if (completion == null || !completion.isAutopopupCompletion()) {
+            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+          }
         }
       }
     };

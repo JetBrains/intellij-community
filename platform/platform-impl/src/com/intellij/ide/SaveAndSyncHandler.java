@@ -43,10 +43,13 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SaveAndSyncHandler");
   private final Runnable myIdleListener;
   private final PropertyChangeListener myGeneralSettingsListener;
+  private final ProgressManager myProgressManager;
 
   public SaveAndSyncHandler(final FrameStateManager frameStateManager,
                             final FileDocumentManager fileDocumentManager,
-                            final GeneralSettings generalSettings) {
+                            final GeneralSettings generalSettings,
+                            final ProgressManager progressManager) {
+    myProgressManager = progressManager;
 
     myIdleListener = new Runnable() {
       public void run() {
@@ -101,8 +104,8 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     IdeEventQueue.getInstance().removeIdleListener(myIdleListener);
   }
 
-  private static boolean canSyncOrSave() {
-    return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator();
+  private boolean canSyncOrSave() {
+    return !LaterInvocator.isInModalContext() && !myProgressManager.hasModalProgressIndicator();
   }
 
   // made public for tests
@@ -132,7 +135,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     }
   }
 
-  private static void refreshFiles() {
+  private void refreshFiles() {
     if (ApplicationManager.getApplication().isDisposed()) return;
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: synchronize()");

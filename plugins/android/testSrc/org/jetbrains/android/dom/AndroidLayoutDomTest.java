@@ -60,6 +60,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting("hl.xml");
   }
 
+  public void testCheckLayoutAttrs() throws Throwable {
+    doTestHighlighting("layoutAttrs.xml");
+  }
+
   public void testUnknownAttribute() throws Throwable {
     doTestHighlighting("hl1.xml");
   }
@@ -145,6 +149,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("tn4.xml", "tn4_after.xml");
   }
 
+  public void testTagNameCompletion5() throws Throwable {
+    toTestCompletion("tn5.xml", "tn5_after.xml");
+  }
+
   public void testIdCompletion1() throws Throwable {
     doTestCompletionVariants("idcompl1.xml", "@android:", "@+id/", "@id/idd1", "@id/idd2");
   }
@@ -183,6 +191,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testRequestFocus() throws Throwable {
     toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testMerge() throws Throwable {
+    doTestHighlighting("merge.xml");
   }
 
   /*public void testCustomAttrsPerformance() throws Throwable {

@@ -42,10 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -96,7 +93,7 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      PsiReference ref = element.getReference();
+      PsiReference ref = element.findReferenceAt(usage.startOffset);
       if (ref == null) continue;
 
       PsiElement resolved = ref.resolve();

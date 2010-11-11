@@ -181,25 +181,28 @@ public class MavenShortcutsManager extends SimpleProjectComponent {
       scheduleKeymapUpdate(myProjectsManager.getNonIgnoredProjects(), true);
     }
 
-    public void scheduledImportsChanged() {
+    public void projectsScheduled() {
     }
 
     @Override
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
+    public void importAndResolveScheduled() {
+    }
+
+    @Override
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
       scheduleKeymapUpdate(unignored, true);
       scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
+    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject,
-                                Object message) {
+                                NativeMavenProjectHolder nativeMavenProject) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 

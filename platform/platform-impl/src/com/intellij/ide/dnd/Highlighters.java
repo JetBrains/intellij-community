@@ -17,6 +17,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import javax.accessibility.Accessible;
 import javax.swing.*;
@@ -137,7 +138,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
         }
       };
       myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
-      myLabel.setForeground(UIManager.getColor("ToolTip.foreground"));
+      myLabel.setForeground(UIUtil.getToolTipForeground());
 
       setFocusable(false);
 
@@ -179,10 +180,10 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       Object old = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      g.setColor(UIManager.getColor("ToolTip.background"));
+      g.setColor(UIUtil.getToolTipBackground());
       g.fillRoundRect(0, 0, getSize().width - 1, getSize().height - 1, 6, 6);
 
-      g.setColor(UIManager.getColor("ToolTip.foreground"));
+      g.setColor(UIUtil.getToolTipForeground());
       g.drawRoundRect(0, 0, getSize().width - 1, getSize().height - 1, 6, 6);
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }

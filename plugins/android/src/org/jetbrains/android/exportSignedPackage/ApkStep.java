@@ -108,7 +108,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     final boolean runZipAlign = zipalign.isFile();
     File destFile = null;
     try {
-      destFile = runZipAlign ? File.createTempFile("android", ".apk") : new File(apkPath);
+      destFile = runZipAlign ? FileUtil.createTempFile("android", ".apk") : new File(apkPath);
       createApk(destFile);
     }
     catch (Exception e) {

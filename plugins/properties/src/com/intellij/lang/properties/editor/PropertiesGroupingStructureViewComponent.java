@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -67,14 +66,9 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     public final void update(AnActionEvent e) {
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
-      boolean isGroupActive = isActionActive(GroupByWordPrefixes.ID);
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
       presentation.setText(separator);
-      presentation.setEnabled(isGroupActive);
-      if (myPanel != null) {
-        GuiUtils.enableChildren(myPanel, isGroupActive);
-      }
     }
 
     private String getCurrentSeparator() {
@@ -136,6 +130,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         }
 
         ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
+        setActionActive(GroupByWordPrefixes.ID, true);
         rebuild();
       }
     }

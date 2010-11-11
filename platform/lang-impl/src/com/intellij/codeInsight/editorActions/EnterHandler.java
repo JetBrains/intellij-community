@@ -115,6 +115,10 @@ public class EnterHandler extends BaseEnterHandler {
 
     for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
       EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
+      if (caretOffsetRef.get() > document.getTextLength()) {
+        throw new AssertionError("Wrong caret offset change by " + delegate);
+      }
+
       if (result == EnterHandlerDelegate.Result.Stop) return;
       if (result != EnterHandlerDelegate.Result.Continue) {
         text = document.getCharsSequence();

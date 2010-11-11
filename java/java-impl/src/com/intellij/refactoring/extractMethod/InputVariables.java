@@ -96,11 +96,9 @@ public class InputVariables {
         if (parent instanceof PsiTypeCastExpression) {
           final PsiType currentType = casts.get(block);
           final PsiType castType = ((PsiTypeCastExpression)parent).getType();
-          casts.put(block, getBroaderType(currentType, castType));
-        } else if (!(parent instanceof PsiInstanceOfExpression)){
-          if (!casts.containsKey(block)) {
-            casts.put(block, null);
-          }
+          casts.put(block, casts.containsKey(block) && currentType == null ? null : getBroaderType(currentType, castType));
+        } else {
+          casts.put(block, null);
         }
       }
       if (!casts.containsValue(null)) {
@@ -263,6 +261,9 @@ public class InputVariables {
     if (myFoldingAvailable) {
       buffer.append(myFolding.getGeneratedCallArgument(data));
     } else {
+      if (!TypeConversionUtil.isAssignable(data.type, data.variable.getType())) {
+        buffer.append("(").append(data.variable.getType().getCanonicalText()).append(")");
+      }
       buffer.append(data.variable.getName());
     }
   }

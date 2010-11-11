@@ -29,6 +29,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -225,6 +226,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private static class MyListCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      // Fix GTK background
+      if (UIUtil.isUnderGTKLookAndFeel()){
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        UIUtil.changeBackGround(this, background);
+      }
       setIcon(textIcon);
       if (index <= 9) {
         append(String.valueOf((index + 1) % 10) + "  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);

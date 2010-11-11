@@ -59,6 +59,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     }
     else {
       final ASTNode parent = oldNode.getTreeParent();
+      assert parent != null : "old:" + oldNode + " new:" + newNode;
 
       TreeUtil.ensureParsed(oldNode);
 

@@ -266,7 +266,13 @@ public class TypedHandler implements TypedActionHandler {
     for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
-        return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+        final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+        // IDEA-52375 fix: last quote sign should be handled by outer language quote handler
+        if (injectedEditor.getCaretModel().getOffset() == injectedEditor.getDocument().getTextLength() &&
+            charTyped == editor.getDocument().getCharsSequence().charAt(offset)) {
+          return editor;
+        }
+        return injectedEditor;
       }
     }
 

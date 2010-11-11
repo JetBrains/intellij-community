@@ -25,10 +25,47 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class MavenModificationTracker implements ModificationTracker, MavenProjectsTree.Listener {
+public class MavenModificationTracker implements ModificationTracker {
   private long myCounter = 0;
+
   public MavenModificationTracker(MavenProjectsManager manager) {
-    manager.addProjectsTreeListener(this);
+    manager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
+      @Override
+      public void profilesChanged() {
+        inc();
+      }
+
+      @Override
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+        inc();
+      }
+
+      @Override
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+        inc();
+      }
+
+      @Override
+      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+        inc();
+      }
+
+      @Override
+      public void pluginsResolved(MavenProject project) {
+        inc();
+      }
+
+      @Override
+      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+        inc();
+      }
+
+      @Override
+      public void artifactsDownloaded(MavenProject project) {
+        inc();
+      }
+    });
   }
 
   private void inc() {
@@ -38,42 +75,5 @@ public class MavenModificationTracker implements ModificationTracker, MavenProje
   @Override
   public long getModificationCount() {
     return myCounter;
-  }
-
-  @Override
-  public void profilesChanged() {
-    inc();
-  }
-
-  @Override
-  public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, Object message) {
-    inc();
-  }
-
-  @Override
-  public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
-    inc();
-  }
-
-  @Override
-  public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                              @Nullable NativeMavenProjectHolder nativeMavenProject,
-                              Object message) {
-    inc();
-  }
-
-  @Override
-  public void pluginsResolved(MavenProject project) {
-    inc();
-  }
-
-  @Override
-  public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
-    inc();
-  }
-
-  @Override
-  public void artifactsDownloaded(MavenProject project) {
-    inc();
   }
 }

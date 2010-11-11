@@ -50,7 +50,7 @@ public class MacUIUtil {
       final int width1 = width - 8;
       final int height1 = height - 6;
 
-      g.setColor(UIUtil.getPanelBackgound());
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRect(x, y, width, height);
 
       g.setColor(c.getBackground());

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -90,7 +91,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final Disposable myDisposable= Disposer.newDisposable();
 
   IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
-              final Application application, final String[] commandLineArgs){
+              final Application application, final String[] commandLineArgs, IdeFrame frame){
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
@@ -100,7 +101,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
     myApplication = application;
 
-    createStatusBar();
+    createStatusBar(frame);
+
     updateStatusBarVisibility();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
@@ -216,10 +218,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return toolBar.getComponent();
   }
  
-  private void createStatusBar() {
+  private void createStatusBar(IdeFrame frame) {
     myUISettings.addUISettingsListener(this, myApplication);
 
     myStatusBar = new IdeStatusBarImpl();
+    myStatusBar.install(frame);
 
     myMemoryWidget = new MemoryUsagePanel();
     myStatusBar.addWidget(myMemoryWidget);

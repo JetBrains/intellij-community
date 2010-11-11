@@ -85,7 +85,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    return ourPersistence.contentsToByteArray(this);
+    return contentsToByteArray(true);
+  }
+
+  @NotNull
+  @Override
+  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+    return ourPersistence.contentsToByteArray(this, cacheContent);
   }
 
   @NotNull

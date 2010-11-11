@@ -61,13 +61,13 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
 
     myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p1.getPath()));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("project2");
 
     myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p2.getPath()));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("project1");
   }
@@ -89,13 +89,13 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
 
     myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p1.getPath()));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());
 
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());

@@ -50,7 +50,8 @@ public class MavenIndicesTestFixture {
       addToRepository(each);
     }
 
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setOverridenLocalRepository(myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setOverriddenLocalRepository(
+      myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
     getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);

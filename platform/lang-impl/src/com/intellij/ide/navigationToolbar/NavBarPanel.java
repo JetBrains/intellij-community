@@ -103,7 +103,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
 
-  private Container myHintContainer;
+  private JComponent myHintContainer;
   private Component myContextComponent;
   private Runnable myRunWhenListRebuilt;
 
@@ -1041,7 +1041,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
     if (myHintContainer != null) {
       final Point p = AbstractPopup.getCenterOf(myHintContainer, this);
-      p.y -= myHintContainer.getHeight() / 4;
+      p.y -= myHintContainer.getVisibleRect().height / 4;
+
       result.setDone(RelativePoint.fromScreen(p));
     }
     else {
@@ -1114,8 +1115,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
       boolean selected = myModel.getSelectedIndex() == myIndex;
 
-      setPaintFocusBorder(selected);
-      setFocusBorderAroundIcon(true);
+      setPaintFocusBorder(!focused && selected);
+      setFocusBorderAroundIcon(false);
 
       setBackground(selected && focused
                     ? UIUtil.getListSelectionBackground()

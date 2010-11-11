@@ -330,7 +330,7 @@ public class QuickListPanel {
           setForeground(getSelectionForeground(tree));
         }
         else {
-          Color foreground = used ? UIUtil.getTextInactiveTextColor() :UIUtil.getTreeForeground();
+          Color foreground = used ? UIUtil.getInactiveTextColor() :UIUtil.getTreeForeground();
           setForeground(foreground);
         }
       }

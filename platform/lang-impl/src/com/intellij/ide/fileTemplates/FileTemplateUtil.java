@@ -222,6 +222,7 @@ public class FileTemplateUtil{
       Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
       Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
       Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
+      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
       Velocity.init();
       ourVelocityInitialized = true;
     }

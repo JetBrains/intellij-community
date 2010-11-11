@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,22 +51,22 @@ public class NewMappings {
   private FileWatchRequestsManager myFileWatchRequestsManager;
 
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
-  private final EventDispatcher<VcsListener> myEventDispatcher;
+  private final MessageBus myMessageBus;
   private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
   private boolean myActivated;
 
-  public NewMappings(final Project project, final EventDispatcher<VcsListener> eventDispatcher,
+  public NewMappings(final Project project, final MessageBus messageBus,
                      final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager) {
     myProject = project;
+    myMessageBus = messageBus;
     myFileStatusManager = fileStatusManager;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
-    myEventDispatcher = eventDispatcher;
 
     final ArrayList<VcsDirectoryMapping> listStr = new ArrayList<VcsDirectoryMapping>();
     final VcsDirectoryMapping mapping = new VcsDirectoryMapping("", "");
@@ -175,7 +176,7 @@ public class NewMappings {
   }
 
   public void mappingsChanged() {
-    myEventDispatcher.getMulticaster().directoryMappingChanged();
+    myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
   }

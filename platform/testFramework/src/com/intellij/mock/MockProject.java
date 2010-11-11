@@ -50,6 +50,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return ServiceManager.getService(this, PomModel.class);
   }
 
+  @NotNull
   @Override
   public Condition getDisposed() {
     return new Condition() {

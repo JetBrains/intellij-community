@@ -87,6 +87,10 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
     doTest("Object");
   }
 
+  public void testNoCastWhenWrapped() throws Exception {
+    doTest("Object");
+  }
+
   private void doTest(String... types) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 

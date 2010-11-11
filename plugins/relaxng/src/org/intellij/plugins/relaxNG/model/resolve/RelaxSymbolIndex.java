@@ -88,7 +88,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
                   attributeHandler = new NanoXmlUtil.IXMLBuilderAdapter() {
                     @Override
                     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-                      if ("name".equals(key) && (nsURI == null || nsURI.length() == 0)) {
+                      if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
                         map.put(value, null);
                       }
                     }
@@ -112,7 +112,10 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               grammar.acceptChildren(new CommonElement.Visitor() {
                 @Override
                 public void visitDefine(Define define) {
-                  map.put(define.getName(), null);
+                  final String name = define.getName();
+                  if (name != null) {
+                    map.put(name, null);
+                  }
                 }
               });
             }

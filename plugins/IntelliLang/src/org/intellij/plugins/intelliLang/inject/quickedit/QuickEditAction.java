@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -40,10 +41,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -65,18 +63,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * "Quick Edit Language" intention action that provides a popup which shows an injected language
+ * "Quick Edit Language" intention action that provides an editor which shows an injected language
  * fragment's complete prefix and suffix in non-editable areas and allows to edit the fragment
  * without having to consider any additional escaping rules (e.g. when editing regexes in String
  * literals).
- * <p/>
- * This is a bit experimental because it doesn't play very well with some quickfixes, such as the
- * JavaScript's "Create Method/Function" one which opens another editor window. Though harmless,
- * this is quite confusing.
- * <p/>
- * I wonder if such QuickFixes should try to get an Editor from the DataContext
- * (see {@link QuickEditEditor.MyPanel#getData(java.lang.String)}) instead of using the "tactical nuke"
- * com.intellij.openapi.fileEditor.FileEditorManager#openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor, boolean).
  */
 public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
@@ -139,7 +129,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     return handler;
   }
 
-  private static class MyHandler extends DocumentAdapter {
+  private static class MyHandler extends DocumentAdapter implements Disposable {
 
     private final Project myProject;
     private final PsiFile myInjectedFile;
@@ -199,20 +189,19 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
                 closeEditor();
               }
             }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
-
           }
         }
 
         @Override
         public void editorReleased(EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
+            Disposer.dispose(MyHandler.this);
             myReleased = true;
-            event.getFactory().removeEditorFactoryListener(this);
             myOrigDocument.removeDocumentListener(MyHandler.this);
             myInjectedFile.putUserData(QUICK_EDIT_HANDLER, null);
           }
         }
-      }, project);
+      }, this);
       initMarkers(shreds);
     }
 
@@ -261,15 +250,11 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
           myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(shred.host.getTextRange().getStartOffset()));
         myMarkers.put(smartPointerManager.createSmartPsiElementPointer(shred.host), Pair.create(origMarker, rangeMarker));
       }
-      boolean first = true;
       for (Pair<RangeMarker, RangeMarker> markers : myMarkers.values()) {
-        //if (first) {
-          markers.first.setGreedyToLeft(true);
-          markers.second.setGreedyToLeft(true);
-        //}
+        markers.first.setGreedyToLeft(true);
+        markers.second.setGreedyToLeft(true);
         markers.first.setGreedyToRight(true);
         markers.second.setGreedyToRight(true);
-        first = false;
       }
       int curOffset = 0;
       for (Pair<RangeMarker, RangeMarker> markerPair : myMarkers.values()) {
@@ -345,6 +330,11 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
         assert insideHost != null;
         ElementManipulators.getManipulator(host).handleContentChange(host, insideHost, sb.toString());
       }
+    }
+
+    @Override
+    public void dispose() {
+      // noop
     }
   }
 }

@@ -41,8 +41,7 @@ import java.util.Map;
 public class AndroidIdIndex extends ScalarIndexExtension<String> {
   public static final String[] RES_TYPES_CONTAINING_ID_DECLARATIONS = {SdkConstants.FD_LAYOUT, SdkConstants.FD_MENU};
 
-  public static final ID<String, Void> ID = new ID<String, Void>("android.id.index") {
-  };
+  public static final ID<String, Void> INDEX_ID = ID.create("android.id.index");
 
   public static final String MARKER = "$";
 
@@ -96,7 +95,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public ID<String, Void> getName() {
-    return ID;
+    return INDEX_ID;
   }
 
   @Override

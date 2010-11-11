@@ -38,6 +38,7 @@ import java.util.*;
  * @author dsl
  */
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
+  private SmartTypePointer myPointer;
   private PsiType myDefaultType;
   private final PsiExpression myMainOccurence;
   private final PsiExpression[] myOccurrences;
@@ -46,6 +47,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private final boolean myIsOneSuggestion;
   private TypeSelector myTypeSelector;
   private final PsiElementFactory myFactory;
+  private final SmartTypePointerManager mySmartTypePointerManager;
   private ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
   private ExpectedTypesProvider myExpectedTypesProvider;
 
@@ -59,7 +61,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
     myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    myDefaultType = type;
+    mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
+    setDefaultType(type);
     myMainOccurence = null;
     myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
@@ -83,7 +86,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
                                  PsiExpression mainOccurence,
                                  PsiExpression[] occurrences) {
     myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    myDefaultType = type;
+    mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
+    setDefaultType(type);
     myMainOccurence = mainOccurence;
     myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
@@ -94,7 +98,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     if (containingMethod != null) {
       if (PsiUtil.resolveClassInType(type) != null) {
-        myDefaultType = checkIfTypeAccessible(type, project, containingMethod);
+        setDefaultType(checkIfTypeAccessible(type, project, containingMethod));
       }
     }
 
@@ -132,7 +136,15 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public PsiType getDefaultType() {
-    return myDefaultType;
+    if (myDefaultType.isValid()) {
+      return myDefaultType;
+    }
+    return myPointer.getType();
+  }
+
+  public void setDefaultType(PsiType defaultType) {
+    myDefaultType = defaultType;
+    myPointer = mySmartTypePointerManager.createSmartTypePointer(defaultType);
   }
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
@@ -151,7 +163,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurence, false, myOccurrenceClassProvider,
                                                                                     false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
-    RefactoringHierarchyUtil.processSuperTypes(myDefaultType, new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
@@ -193,7 +205,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
-    RefactoringHierarchyUtil.processSuperTypes(myDefaultType, new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
@@ -234,18 +246,18 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     for (int index = 0; index < result.size(); index++) {
       PsiType psiType = result.get(index);
-      if (psiType.equals(myDefaultType)) {
+      if (psiType.equals(getDefaultType())) {
         result.remove(index);
         break;
       }
     }
 
-    final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(myDefaultType);
+    final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(getDefaultType());
     if (unboxedType != null) {
       result.remove(unboxedType);
       result.add(0, unboxedType);
     }
-    result.add(0, myDefaultType);
+    result.add(0, getDefaultType());
     return result;
   }
 
@@ -292,7 +304,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private String getStatsKey() {
-    return "IntroduceVariable##" + serialize(myDefaultType);
+    return "IntroduceVariable##" + serialize(getDefaultType());
   }
 
   private String serialize(PsiType type) {

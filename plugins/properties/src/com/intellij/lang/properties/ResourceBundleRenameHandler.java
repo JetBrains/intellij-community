@@ -20,24 +20,21 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -49,8 +46,14 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     if (project == null) {
       return false;
     }
-    final ResourceBundle bundle = getResourceBundleFromDataContext(dataContext);
-    return bundle != null && bundle.getPropertiesFiles(project).size() > 1;
+    final ResourceBundle bundle = ResourceBundleUtil.getResourceBundleFromDataContext(dataContext);
+    if (bundle == null) {
+      return false;
+    }
+
+    ResourceBundleEditor editor = ResourceBundleUtil.getEditor(dataContext);
+    return (editor == null || editor.getState(FileEditorStateLevel.NAVIGATION).getPropertyName() == null /* user selected non-bundle key element */) 
+           && bundle.getPropertiesFiles(project).size() > 1;
   }
 
   public boolean isRenaming(DataContext dataContext) {
@@ -58,7 +61,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    ResourceBundle resourceBundle = getResourceBundleFromDataContext(dataContext);
+    ResourceBundle resourceBundle = ResourceBundleUtil.getResourceBundleFromDataContext(dataContext);
 
     assert resourceBundle != null;
     Messages.showInputDialog(project,
@@ -71,27 +74,6 @@ public class ResourceBundleRenameHandler implements RenameHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
-  }
-
-  @Nullable
-  private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof Property) return null; //rename property
-    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (virtualFile == null) {
-      return null;
-    }
-    if (virtualFile instanceof ResourceBundleAsVirtualFile) {
-      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
-    }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-      if (psiFile instanceof PropertiesFile) {
-        return ((PropertiesFile)psiFile).getResourceBundle();
-      }
-    }
-    return null;
   }
 
   private static class MyInputValidator implements InputValidator {
@@ -120,9 +102,12 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       String baseName = myResourceBundle.getBaseName();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();
-        final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile
-          .getExtension();
-        renameProcessor.addElement(propertiesFile,  newName);
+        if (virtualFile == null) {
+          continue;
+        }
+        final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." 
+                               + virtualFile.getExtension();
+        renameProcessor.addElement(propertiesFile, newName);
       }
       renameProcessor.setCommandName(PropertiesBundle.message("rename.resource.bundle.dialog.title"));
       renameProcessor.doRun();

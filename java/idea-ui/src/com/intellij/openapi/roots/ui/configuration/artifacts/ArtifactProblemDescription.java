@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +33,11 @@ public class ArtifactProblemDescription extends ProjectStructureProblemDescripti
   private List<ArtifactProblemQuickFix> myQuickFixes;
   private List<PackagingElement<?>> myPathToPlace;
 
-  public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity) {
-    this(message, severity, null, Collections.<ArtifactProblemQuickFix>emptyList());
-  }
-
   public ArtifactProblemDescription(@NotNull String message,
                                     @NotNull Severity severity,
                                     @Nullable List<PackagingElement<?>> pathToPlace,
-                                    @NotNull List<ArtifactProblemQuickFix> quickFixes) {
-    super(message, severity);
+                                    @NotNull List<ArtifactProblemQuickFix> quickFixes, @NotNull Place place) {
+    super(message, null, severity, place, Collections.<ConfigurationErrorQuickFix>emptyList());
     myPathToPlace = pathToPlace;
     myQuickFixes = quickFixes;
   }

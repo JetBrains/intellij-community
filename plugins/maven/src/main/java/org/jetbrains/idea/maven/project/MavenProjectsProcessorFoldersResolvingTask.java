@@ -16,24 +16,27 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsProcessorBasicTask {
-  private final MavenImportingSettings myImportingSettings;
-  private final Object myMessage;
+  @NotNull private final MavenImportingSettings myImportingSettings;
+  @Nullable private final Runnable myOnCompletion;
 
-  public MavenProjectsProcessorFoldersResolvingTask(MavenProject project,
-                                                    MavenImportingSettings importingSettings,
-                                                    MavenProjectsTree tree,
-                                                    Object message) {
+  public MavenProjectsProcessorFoldersResolvingTask(@NotNull MavenProject project,
+                                                    @NotNull MavenImportingSettings importingSettings,
+                                                    @NotNull MavenProjectsTree tree,
+                                                    @Nullable Runnable onCompletion) {
     super(project, tree);
     myImportingSettings = importingSettings;
-    myMessage = message;
+    myOnCompletion = onCompletion;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator, myMessage);
+    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    if (myOnCompletion != null) myOnCompletion.run();
   }
 }

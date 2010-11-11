@@ -23,8 +23,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
@@ -42,4 +44,9 @@ public abstract class DockManager implements ProjectComponent {
   public abstract Set<DockContainer> getContainers();
 
   public abstract IdeFrame getIdeFrame(DockContainer container);
+
+  public abstract String getDimensionKeyForFocus(@NotNull String key);
+
+  @Nullable
+  public abstract DockContainer getContainerFor(Component c);
 }

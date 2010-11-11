@@ -56,7 +56,7 @@ class CompositeDiffTool implements DiffTool {
   private static void checkDiffData(@NotNull DiffRequest data) {
     DiffContent[] contents = data.getContents();
     for (DiffContent content : contents) {
-      LOG.assertTrue(content != null);
+      LOG.assertTrue(content != null, "Null content in diff request");
     }
   }
 }

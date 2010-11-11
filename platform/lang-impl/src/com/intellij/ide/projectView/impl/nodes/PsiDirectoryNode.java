@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
@@ -47,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 
-public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
+public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -190,13 +191,36 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public void navigate(final boolean requestFocus) {
     Module module = ModuleUtil.findModuleForPsiElement(getValue());
     if (module != null) {
-      if (ProjectRootsUtil.isModuleContentRoot(getVirtualFile(), getProject())) {
+      final VirtualFile file = getVirtualFile();
+      final Project project = getProject();
+      if (ProjectRootsUtil.isModuleContentRoot(file, project)) {
         ProjectSettingsService.getInstance(myProject).openModuleSettings(module);
+      }
+      else if (ProjectRootsUtil.isLibraryRoot(file, project)) {
+        ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);
       }
       else {
         ProjectSettingsService.getInstance(myProject).openContentEntriesSettings(module);
       }
     }
+  }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    VirtualFile file = getVirtualFile();
+    Project project = getProject();
+
+    if (file != null) {
+      if (ProjectRootsUtil.isModuleContentRoot(file, project) ||
+          ProjectRootsUtil.isSourceOrTestRoot(file, project)) {
+        return "Open Module Settings";
+      }
+      if (ProjectRootsUtil.isLibraryRoot(file, project)) {
+        return "Open Library Settings";
+      }
+    }
+
+    return null;
   }
 
   public int getWeight() {

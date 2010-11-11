@@ -40,6 +40,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -250,7 +251,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       }
 
       try {
-        File sourcepathTempFile = File.createTempFile("javadoc", "args.txt");
+        File sourcepathTempFile = FileUtil.createTempFile("javadoc", "args.txt");
         sourcepathTempFile.deleteOnExit();
         parameters.add("@" + sourcepathTempFile.getCanonicalPath());
         final PrintWriter writer = new PrintWriter(new FileWriter(sourcepathTempFile));

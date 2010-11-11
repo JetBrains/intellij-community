@@ -73,8 +73,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private EmptyIcon myEmptyRefreshIcon;
 
   private String myCurrentRequestor;
+  private boolean myProgressEnabled;
 
-  public InfoAndProgressPanel() {
+  public InfoAndProgressPanel(boolean progressEnabled) {
+    myProgressEnabled = progressEnabled;
+
     setOpaque(false);
 
     myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem") {
@@ -117,6 +120,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
+
+    setRefreshVisible(false);
 
     restoreEmptyStatus();
   }
@@ -490,7 +495,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     //  wrapper.setToolTipText(s.toString());
     //  add(wrapper, BorderLayout.EAST);
     //} else {
+
+    if (myProgressEnabled) {
       add(myProgressIcon, BorderLayout.EAST);
+    }
+
     //}
 
     myProgressIcon.suspend();

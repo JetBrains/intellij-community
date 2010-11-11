@@ -16,24 +16,27 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorResolvingTask extends MavenProjectsProcessorBasicTask {
-  private final MavenGeneralSettings myGeneralSettings;
-  private final Object myMessage;
+  @NotNull private final MavenGeneralSettings myGeneralSettings;
+  @Nullable private final Runnable myOnCompletion;
 
-  public MavenProjectsProcessorResolvingTask(MavenProject project,
-                                             MavenProjectsTree tree,
-                                             MavenGeneralSettings generalSettings,
-                                             Object message) {
+  public MavenProjectsProcessorResolvingTask(@NotNull MavenProject project,
+                                             @NotNull MavenProjectsTree tree,
+                                             @NotNull MavenGeneralSettings generalSettings,
+                                             @Nullable Runnable onCompletion) {
     super(project, tree);
     myGeneralSettings = generalSettings;
-    myMessage = message;
+    myOnCompletion = onCompletion;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolve(myMavenProject, myGeneralSettings, embeddersManager, console, indicator, myMessage);
+    myTree.resolve(myMavenProject, myGeneralSettings, embeddersManager, console, indicator);
+    if (myOnCompletion != null) myOnCompletion.run();
   }
 }

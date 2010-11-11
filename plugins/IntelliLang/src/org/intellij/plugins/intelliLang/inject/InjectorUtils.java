@@ -22,10 +22,13 @@ import com.intellij.lang.LiteralEscaper;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
+import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -210,5 +213,15 @@ public class InjectorUtils {
       }
     }
     return false;
+  }
+
+  public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
+    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    if (result == null || result.isEmpty()) return;
+    final PsiFile psiFile = result.get(result.size() - 1).second;
+    psiFile.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
+    if (settingsAvailable) {
+      psiFile.putUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
+    }
   }
 }

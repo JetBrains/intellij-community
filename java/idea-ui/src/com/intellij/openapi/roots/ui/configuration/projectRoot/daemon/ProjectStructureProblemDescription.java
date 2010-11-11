@@ -15,26 +15,50 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author nik
  */
 public class ProjectStructureProblemDescription {
   private final String myMessage;
+  private final String myDescription;
   private final Severity mySeverity;
+  private final Place myPlace;
+  private final List<ConfigurationErrorQuickFix> myFixes;
 
-  public ProjectStructureProblemDescription(@NotNull String message, @NotNull Severity severity) {
+  public ProjectStructureProblemDescription(@NotNull String message, @Nullable String description, @NotNull Severity severity, @NotNull Place place,
+                                            @NotNull List<ConfigurationErrorQuickFix> fixes) {
     myMessage = message;
+    myDescription = description;
     mySeverity = severity;
+    myPlace = place;
+    myFixes = fixes;
   }
 
   public String getMessage() {
     return myMessage;
   }
 
+  @Nullable
+  public String getDescription() {
+    return myDescription;
+  }
+
+  public List<ConfigurationErrorQuickFix> getFixes() {
+    return myFixes;
+  }
+
   public Severity getSeverity() {
     return mySeverity;
+  }
+
+  public Place getPlace() {
+    return myPlace;
   }
 
   public enum Severity { ERROR, WARNING }

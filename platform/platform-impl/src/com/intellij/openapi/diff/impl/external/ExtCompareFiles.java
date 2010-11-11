@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -75,10 +76,10 @@ class ExtCompareFiles extends BaseExternalTool {
       if (name.length() <= 3) name = "___" + name;
       File tempFile;
       try {
-        tempFile = File.createTempFile(name, extension);
+        tempFile = FileUtil.createTempFile(name, extension);
       }
       catch (IOException e) {
-        tempFile = File.createTempFile(STD_PREFIX, extension);
+        tempFile = FileUtil.createTempFile(STD_PREFIX, extension);
       }
       FileOutputStream stream = null;
       try {

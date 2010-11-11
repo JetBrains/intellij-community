@@ -97,7 +97,9 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
     }
     
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-    
+    if (line >= doc.getLineCount()) {
+      return Collections.emptyList(); // the document has been changed
+    }
     final int startOffset = doc.getLineStartOffset(line);
     final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
     final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");

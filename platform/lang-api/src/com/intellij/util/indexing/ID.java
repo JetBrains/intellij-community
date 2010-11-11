@@ -130,7 +130,7 @@ public class ID<K, V> {
     return myName;
   }
 
-  public long getUniqueId() {
+  public int getUniqueId() {
     return myUniqueId;
   }
 

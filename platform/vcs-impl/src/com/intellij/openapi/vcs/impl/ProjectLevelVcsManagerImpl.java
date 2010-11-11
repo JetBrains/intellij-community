@@ -57,6 +57,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -76,6 +78,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final NewMappings myMappings;
   private final Project myProject;
+  private final MessageBus myMessageBus;
   private final MappingsToRoots myMappingsToRoots;
 
   private ContentManager myContentManager;
@@ -91,8 +94,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
-  private final EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
-  
+
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
@@ -104,8 +106,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
-  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
@@ -113,7 +116,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
     myInitialization = new VcsInitialization(myProject);
-    myMappings = new NewMappings(myProject, myEventDispatcher, this, manager);
+    myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
   }
 
@@ -503,12 +506,19 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 
+  private final Map<VcsListener, MessageBusConnection> myAdapters = new HashMap<VcsListener, MessageBusConnection>();
+
   public void addVcsListener(VcsListener listener) {
-    myEventDispatcher.addListener(listener);
+    final MessageBusConnection connection = myMessageBus.connect();
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, listener);
+    myAdapters.put(listener, connection);
   }
 
   public void removeVcsListener(VcsListener listener) {
-    myEventDispatcher.removeListener(listener);
+    final MessageBusConnection connection = myAdapters.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
+    }
   }
 
   public void startBackgroundVcsOperation() {
@@ -557,7 +567,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void notifyDirectoryMappingChanged() {
-    myEventDispatcher.getMulticaster().directoryMappingChanged();
+    myMessageBus.syncPublisher(VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }
 
   public void readDirectoryMappings(final Element element) {

@@ -87,7 +87,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   private void releaseBulkCaretMarker() {
     if (savedBeforeBulkCaretMarker != null) {
-      ((RangeMarkerEx)savedBeforeBulkCaretMarker).dispose();
+      savedBeforeBulkCaretMarker.dispose();
       savedBeforeBulkCaretMarker = null;
     }
   }

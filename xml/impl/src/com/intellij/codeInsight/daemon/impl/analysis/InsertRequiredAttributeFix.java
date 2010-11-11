@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 18-Nov-2005
  */
-public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix {
+public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   private final XmlTag myTag;
   private final String myAttrName;
   private final String[] myValues;

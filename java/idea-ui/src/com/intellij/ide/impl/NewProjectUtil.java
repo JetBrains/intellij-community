@@ -191,13 +191,13 @@ public class NewProjectUtil {
     if (openProjects.length > 0) {
       final GeneralSettings settings = GeneralSettings.getInstance();
       int exitCode = settings.getConfirmOpenNewProject();
-      if (exitCode < 0) {
+      if (exitCode == GeneralSettings.OPEN_PROJECT_ASK) {
         exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
                                            new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1, 0,
                                            Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
       }
       if (exitCode == 1) { // "No" option
-        ProjectUtil.closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
+        ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
       }
     }
   }
