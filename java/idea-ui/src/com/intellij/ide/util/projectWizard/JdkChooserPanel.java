@@ -58,7 +58,7 @@ public class JdkChooserPanel extends JPanel {
     myListModel = new DefaultListModel();
     myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ProjectJdkListRenderer());
+    myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer()));
     //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
