@@ -433,7 +433,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final byte[] content = delegate.contentsToByteArray(file);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-      if ((cacheContent && !delegate.isReadOnly() || (!application.isInternal() && !application.isUnitTestMode())) &&
+      if ((!delegate.isReadOnly() || (!application.isInternal() && !application.isUnitTestMode())) &&
           !noCaching && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
           writeContent(file, content, delegate.isReadOnly());
