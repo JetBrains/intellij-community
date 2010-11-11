@@ -419,7 +419,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (!isAndroidSdk15OrHigher()) {
       return true;
     }
-    String avdName = device.getAvdName();
+    String avdName = device.isEmulator() ? device.getAvdName() : null;
     if (myAvdName != null) {
       return myAvdName.equals(avdName);
     }
