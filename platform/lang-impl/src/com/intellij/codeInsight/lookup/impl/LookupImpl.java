@@ -698,6 +698,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int index = myList.getSelectedIndex();
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
+      LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
       return null;
     }
     Point layeredPanePoint=SwingUtilities.convertPoint(myList,itmBounds.x,itmBounds.y,getComponent());
