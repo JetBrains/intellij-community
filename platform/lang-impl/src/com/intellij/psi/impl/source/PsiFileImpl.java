@@ -624,6 +624,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   private StubTree derefStub() {
+    if (myStub == null) return  null;
+
     synchronized (myStubLock) {
       return myStub != null ? myStub.get() : null;
     }
