@@ -26,10 +26,6 @@ class TeamcityTestResult(TestResult):
             if test._testMethodName == "runTest":
                 return str(test)
             return test._testMethodName
-        elif hasattr(test, '__testMethodName'):
-            if test.__testMethodName == "runTest":
-                return str(test)
-            return test.__testMethodName
         else:
             return str(test)
 
@@ -66,8 +62,12 @@ class TeamcityTestResult(TestResult):
             self.current_suite = suite
             self.messages.testSuiteStarted(strclass(self.current_suite), location="python_uttestid://" + strclass(self.current_suite))
         setattr(test, "startTime", datetime.datetime.now())
-        self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(test.id()))
-        
+        if hasattr(test, "test"):
+            id = test.id()[:test.id().find("..") + 1] + test.test.__name__
+        else:
+            id = test.id()
+        self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(id))
+
     def stopTest(self, test):
         start = getattr(test, "startTime", datetime.datetime.now())
         d = datetime.datetime.now() - start

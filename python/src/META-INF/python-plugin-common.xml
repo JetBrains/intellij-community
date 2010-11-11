@@ -66,6 +66,9 @@
     <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
 
+    <configurationType implementation="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
+
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
@@ -278,6 +281,8 @@
     <elementDescriptionProvider implementation="com.jetbrains.django.refactoring.DjangoElementDescriptionProvider"/>
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.lang.template.DjangoUrlsCompletionContributor"/>
+
+    <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>

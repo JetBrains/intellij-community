@@ -106,7 +106,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return false;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 1);
+  private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 1, true);
 
   public void persistAttribute(VirtualFile fileOrDir, LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);

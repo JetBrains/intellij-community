@@ -3,7 +3,7 @@
 
 import sys
 import os
-
+import re
 
 version = (
   (sys.hexversion & (0xff << 24)) >> 24,
@@ -39,6 +39,20 @@ def is_binary(path, f):
       return not os.path.exists(fullname)
     return False
 
+mac_stdlib_pattern = re.compile("/System/Library/Frameworks/Python\\.framework/Versions/(.+)/lib/python\\1/(.+)")
+mac_skip_modules = ["test", "ctypes/test", "distutils/tests", "email/test",
+                    "importlib/test", "json/tests", "lib2to3/tests",
+                    "sqlite3/test", "tkinter/test", "idlelib"]
+
+def is_mac_skipped_module(path, f):
+    fullname = os.path.join(path, f)
+    m = mac_stdlib_pattern.match(fullname)
+    if not m: return 0
+    relpath = m.group(2)
+    for module in mac_skip_modules:
+        if relpath.startswith(module): return 1
+    return 0
+
 def find_binaries(paths):
   """
   Finds binaries in the given list of paths. 
@@ -66,7 +80,7 @@ def find_binaries(paths):
         prefix += '.'
       #print root, path, prefix, preprefix # XXX
       for f in files:
-        if is_binary(root, f):
+        if is_binary(root, f) and not is_mac_skipped_module(root, f):
           name = f[:f.rindex('.')]
           #print "+++ ", name
           if preprefix:
