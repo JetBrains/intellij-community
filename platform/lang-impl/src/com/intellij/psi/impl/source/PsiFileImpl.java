@@ -260,8 +260,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
 
   private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
+    final IElementType contentElementType = getContentElementType();
+    if (!(contentElementType instanceof IStubFileElementType)) {
+      throw new AssertionError("Invalid content element type: " + contentElementType + "; elementType=" + myElementType + "; file=" + getClass() + "; viewProvider=" + getViewProvider());
+    }
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      final StubBuilder builder = ((IStubFileElementType)getContentElementType()).getBuilder();
+      final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
 
       @Override
       protected void visitNode(TreeElement tree) {
