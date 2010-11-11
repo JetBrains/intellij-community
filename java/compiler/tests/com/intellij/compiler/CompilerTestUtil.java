@@ -28,6 +28,6 @@ public class CompilerTestUtil {
   public static void scanSourceRootsToRecompile(Project project) {
     // need this to emulate project opening
     final List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(project, roots, roots.size(), true);
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(project), roots, roots.size(), true);
   }
 }
