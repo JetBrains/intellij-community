@@ -100,7 +100,7 @@ public class OrderEntryCellAppearanceUtils {
     return testSource ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
   }
 
-  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
+  public static ModifiableCellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
     if (jdk == null) {
       return SimpleTextCellAppearance.invalid(NO_JDK, CellAppearanceUtils.INVALID_ICON);
     }

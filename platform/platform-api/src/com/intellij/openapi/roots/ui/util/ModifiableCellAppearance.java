@@ -17,8 +17,10 @@ package com.intellij.openapi.roots.ui.util;
 
 import javax.swing.*;
 
-// Author: dyoma
-
+/**
+ * @author dyoma
+ */
 public interface ModifiableCellAppearance extends CellAppearance {
+  Icon getIcon();
   void setIcon(Icon icon);
 }
