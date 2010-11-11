@@ -270,7 +270,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
                 CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
                 JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope), true, true, null);
             chooser.showDialog();
-            PsiClass selectedClass = chooser.getSelectedClass();
+            PsiClass selectedClass = chooser.getSelected();
             return selectedClass != null ? selectedClass.getQualifiedName() : null;
           }
         };

@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -332,7 +333,7 @@ public class ManifestFileUtil {
     final TreeClassChooser chooser =
         chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
     chooser.showDialog();
-    return chooser.getSelectedClass();
+    return chooser.getSelected();
   }
 
   public static void setupMainClassField(final Project project, final TextFieldWithBrowseButton field) {
@@ -346,7 +347,7 @@ public class ManifestFileUtil {
     });
   }
 
-  private static class MainClassFilter implements TreeClassChooser.ClassFilter {
+  private static class MainClassFilter implements ClassFilter {
     public boolean isAccepted(PsiClass aClass) {
       return PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.hasMainMethod(aClass);
     }

@@ -55,7 +55,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
       chooser.showDialog();
 
-      PsiClass aClass = chooser.getSelectedClass();
+      PsiClass aClass = chooser.getSelected();
       if (aClass == null) return null;
 
       List<PsiElement> classesToSearch = new LinkedList<PsiElement>();

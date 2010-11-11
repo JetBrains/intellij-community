@@ -20,8 +20,8 @@
  */
 package com.intellij.ui.classFilter;
 
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.util.*;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,13 +55,13 @@ public class ClassFilterEditor extends JPanel {
   protected JButton myAddPatternButton;
   private JButton myRemoveButton;
   protected Project myProject;
-  private TreeClassChooser.ClassFilter myChooserFilter;
+  private ClassFilter myChooserFilter;
 
   public ClassFilterEditor(Project project) {
     this (project, null);
   }
 
-  public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
+  public ClassFilterEditor(Project project, com.intellij.ide.util.ClassFilter classFilter) {
     super(new GridBagLayout());
     myAddClassButton = new JButton(getAddButtonText());
     myAddPatternButton = new JButton(getAddPatternButtonText());
@@ -144,11 +144,11 @@ public class ClassFilterEditor extends JPanel {
     return UIBundle.message("button.add.pattern");
   }
 
-  public void setFilters(ClassFilter[] filters) {
+  public void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {
     myTableModel.setFilters(filters);
   }
 
-  public ClassFilter[] getFilters() {
+  public com.intellij.ui.classFilter.ClassFilter[] getFilters() {
     return myTableModel.getFilters();
   }
 
@@ -170,11 +170,11 @@ public class ClassFilterEditor extends JPanel {
   }
 
   protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable{
-    private final List<ClassFilter> myFilters = new LinkedList<ClassFilter>();
+    private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<com.intellij.ui.classFilter.ClassFilter>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
 
-    public final void setFilters(ClassFilter[] filters) {
+    public final void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
         ContainerUtil.addAll(myFilters, filters);
@@ -182,26 +182,26 @@ public class ClassFilterEditor extends JPanel {
       fireTableDataChanged();
     }
 
-    public ClassFilter[] getFilters() {
-      for (Iterator<ClassFilter> it = myFilters.iterator(); it.hasNext();) {
-        ClassFilter filter = it.next();
+    public com.intellij.ui.classFilter.ClassFilter[] getFilters() {
+      for (Iterator<com.intellij.ui.classFilter.ClassFilter> it = myFilters.iterator(); it.hasNext();) {
+        com.intellij.ui.classFilter.ClassFilter filter = it.next();
         String pattern = filter.getPattern();
         if (pattern == null || "".equals(pattern)) {
           it.remove();
         }
       }
-      return myFilters.toArray(new ClassFilter[myFilters.size()]);
+      return myFilters.toArray(new com.intellij.ui.classFilter.ClassFilter[myFilters.size()]);
     }
 
-    public ClassFilter getFilterAt(int index) {
+    public com.intellij.ui.classFilter.ClassFilter getFilterAt(int index) {
       return myFilters.get(index);
     }
 
-    public int getFilterIndex(ClassFilter filter) {
+    public int getFilterIndex(com.intellij.ui.classFilter.ClassFilter filter) {
       return myFilters.indexOf(filter);
     }
 
-    public void addRow(ClassFilter filter) {
+    public void addRow(com.intellij.ui.classFilter.ClassFilter filter) {
       myFilters.add(filter);
       int row = myFilters.size() - 1;
       fireTableRowsInserted(row, row);
@@ -216,7 +216,7 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      ClassFilter filter = myFilters.get(rowIndex);
+      com.intellij.ui.classFilter.ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
         return filter;
       }
@@ -227,7 +227,7 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      ClassFilter filter = myFilters.get(rowIndex);
+      com.intellij.ui.classFilter.ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
         filter.setPattern(aValue != null? aValue.toString() : "");
       }
@@ -265,7 +265,7 @@ public class ClassFilterEditor extends JPanel {
         ((JLabel)component).setBorder(noFocusBorder);
       }
       UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
-      ClassFilter filter = (ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
+      com.intellij.ui.classFilter.ClassFilter filter = (com.intellij.ui.classFilter.ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
       component.setEnabled(ClassFilterEditor.this.isEnabled() && filter.isEnabled());
       return component;
     }
@@ -287,8 +287,8 @@ public class ClassFilterEditor extends JPanel {
   }
 
   @NotNull
-  protected ClassFilter createFilter(String pattern){
-    return new ClassFilter(pattern);
+  protected com.intellij.ui.classFilter.ClassFilter createFilter(String pattern){
+    return new com.intellij.ui.classFilter.ClassFilter(pattern);
   }
 
   protected void addPatternFilter() {
@@ -297,7 +297,7 @@ public class ClassFilterEditor extends JPanel {
     if (dialog.isOK()) {
       String pattern = dialog.getPattern();
       if (pattern != null) {
-        ClassFilter filter = createFilter(pattern);
+        com.intellij.ui.classFilter.ClassFilter filter = createFilter(pattern);
         myTableModel.addRow(filter);
         int row = myTableModel.getRowCount() - 1;
         myTable.getSelectionModel().setSelectionInterval(row, row);
@@ -312,9 +312,9 @@ public class ClassFilterEditor extends JPanel {
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
       UIBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
     chooser.showDialog();
-    PsiClass selectedClass = chooser.getSelectedClass();
+    PsiClass selectedClass = chooser.getSelected();
     if (selectedClass != null) {
-      ClassFilter filter = createFilter(getJvmClassName(selectedClass));
+      com.intellij.ui.classFilter.ClassFilter filter = createFilter(getJvmClassName(selectedClass));
       myTableModel.addRow(filter);
       int row = myTableModel.getRowCount() - 1;
       myTable.getSelectionModel().setSelectionInterval(row, row);
@@ -338,7 +338,7 @@ public class ClassFilterEditor extends JPanel {
   }
 
   public void addPattern(String pattern) {
-    ClassFilter filter = createFilter(pattern);
+    com.intellij.ui.classFilter.ClassFilter filter = createFilter(pattern);
     myTableModel.addRow(filter);
   }
 

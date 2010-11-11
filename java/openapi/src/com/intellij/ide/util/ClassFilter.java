@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,27 @@
 package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 
 /**
- * User: anna
- * Date: Jan 24, 2005
- */
-public interface TreeClassChooser extends TreeChooser<PsiClass> {
-  PsiClass getSelected();
+* @author traff
+*/
+public interface ClassFilter {
+  ClassFilter INSTANTIABLE = new ClassFilter() {
+    public boolean isAccepted(PsiClass aClass) {
+      return PsiUtil.isInstantiatable(aClass);
+    }
+  };
 
-  void select(final PsiClass aClass);
+  boolean isAccepted(PsiClass aClass);
+  ClassFilter ALL = new ClassFilter() {
+    public boolean isAccepted(PsiClass aClass) {
+      return true;
+    }
+  };
 
-  void selectDirectory(final PsiDirectory directory);
-
-  void showDialog();
-
-  void showPopup();
+  interface ClassFilterWithScope extends ClassFilter {
+    GlobalSearchScope getScope();
+  }
 }

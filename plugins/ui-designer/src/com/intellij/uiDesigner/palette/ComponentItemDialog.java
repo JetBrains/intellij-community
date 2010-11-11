@@ -371,7 +371,7 @@ public final class ComponentItemDialog extends DialogWrapper {
                                                                              GlobalSearchScope.allScope(myProject), JavaPsiFacade.getInstance(myProject).findClass(
         JComponent.class.getName(), GlobalSearchScope.allScope(myProject)), true, true, null);
       chooser.showDialog();
-      final PsiClass result = chooser.getSelectedClass();
+      final PsiClass result = chooser.getSelected();
       if (result != null) {
         setEditorText(result.getQualifiedName());
       }

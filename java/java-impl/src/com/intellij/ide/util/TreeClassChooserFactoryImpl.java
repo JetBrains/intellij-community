@@ -38,32 +38,32 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   @NotNull
   public TreeClassChooser createWithInnerClassesScopeChooser(String title,
                                                              GlobalSearchScope scope,
-                                                             final TreeClassChooser.ClassFilter classFilter,
+                                                             final ClassFilter classFilter,
                                                              PsiClass initialClass) {
-    return TreeClassChooserDialog.withInnerClasses(title, myProject, scope, classFilter, initialClass);
+    return TreeJavaClassChooserDialog.withInnerClasses(title, myProject, scope, classFilter, initialClass);
   }
 
   @NotNull
   public TreeClassChooser createNoInnerClassesScopeChooser(String title,
                                                            GlobalSearchScope scope,
-                                                           TreeClassChooser.ClassFilter classFilter,
+                                                           ClassFilter classFilter,
                                                            PsiClass initialClass) {
-    return new TreeClassChooserDialog(title, myProject, scope, classFilter, initialClass);
+    return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, initialClass);
   }
 
   @NotNull
   public TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass) {
-    return new TreeClassChooserDialog(title, myProject, initialClass);
+    return new TreeJavaClassChooserDialog(title, myProject, initialClass);
   }
 
   @NotNull
   public TreeClassChooser createProjectScopeChooser(String title) {
-    return new TreeClassChooserDialog(title, myProject);
+    return new TreeJavaClassChooserDialog(title, myProject);
   }
 
   @NotNull
   public TreeClassChooser createAllProjectScopeChooser(String title) {
-    return new TreeClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
+    return new TreeJavaClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
   }
 
   @NotNull
@@ -73,8 +73,8 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         boolean acceptsSelf,
                                                         boolean acceptInner,
                                                         Condition<? super PsiClass> additionalCondition) {
-    TreeClassChooser.ClassFilter classFilter = new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition);
-    return new TreeClassChooserDialog(title, myProject, scope, classFilter, base, null, null);
+    ClassFilter classFilter = new TreeJavaClassChooserDialog.InheritanceJavaClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition);
+    return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, null, false);
   }
 
   @NotNull
@@ -84,8 +84,8 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
-                                                        TreeClassChooser.ClassFilter classFilter) {
-    return new TreeClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, null);
+                                                        ClassFilter classFilter) {
+    return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, false);
   }
 
   @NotNull

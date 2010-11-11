@@ -17,6 +17,7 @@ package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
@@ -50,9 +51,9 @@ public class UiUtils {
     public static ActionToolbar createAddRemoveTreeClassChooserToolbar(
             ListTable table, String chooserTitle,
             @NonNls String... ancestorClasses) {
-        final TreeClassChooser.ClassFilter filter;
+        final ClassFilter filter;
         if (ancestorClasses.length == 0) {
-            filter = TreeClassChooser.ClassFilter.ALL;
+            filter = ClassFilter.ALL;
         } else {
             filter = new SubclassFilter(ancestorClasses);
         }
@@ -68,8 +69,8 @@ public class UiUtils {
 
     public static ActionToolbar createAddRemoveTreeAnnotationChooserToolbar(
             ListTable table, String chooserTitle) {
-        final TreeClassChooser.ClassFilter filter =
-                new TreeClassChooser.ClassFilter() {
+        final ClassFilter filter =
+                new ClassFilter() {
                     public boolean isAccepted(PsiClass psiClass) {
                         return psiClass.isAnnotationType();
                     }
@@ -88,16 +89,16 @@ public class UiUtils {
 
         private final ListTable table;
         private final String chooserTitle;
-        private final TreeClassChooser.ClassFilter filter;
+        private final ClassFilter myFilter;
 
         public TreeClassChooserAction(
                 @NotNull ListTable table, @NotNull String chooserTitle,
-                @NotNull TreeClassChooser.ClassFilter filter) {
+                @NotNull ClassFilter filter) {
             super(InspectionGadgetsBundle.message("button.add"), "",
                     Icons.ADD_ICON);
             this.table = table;
             this.chooserTitle = chooserTitle;
-            this.filter = filter;
+            this.myFilter = filter;
         }
 
         @Override
@@ -111,9 +112,9 @@ public class UiUtils {
                     TreeClassChooserFactory.getInstance(project);
             final TreeClassChooser classChooser =
                     chooserFactory.createWithInnerClassesScopeChooser(chooserTitle,
-                            GlobalSearchScope.allScope(project), filter, null);
+                            GlobalSearchScope.allScope(project), myFilter, null);
             classChooser.showDialog();
-            final PsiClass selectedClass = classChooser.getSelectedClass();
+            final PsiClass selectedClass = classChooser.getSelected();
             if (selectedClass == null) {
                 return;
             }
@@ -240,7 +241,7 @@ public class UiUtils {
         }
     }
 
-    private static class SubclassFilter implements TreeClassChooser.ClassFilter {
+    private static class SubclassFilter implements ClassFilter {
 
         private final String[] ancestorClasses;
 

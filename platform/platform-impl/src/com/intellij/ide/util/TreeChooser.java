@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 
-/**
- * User: anna
- * Date: Jan 24, 2005
- */
-public interface TreeClassChooser extends TreeChooser<PsiClass> {
-  PsiClass getSelected();
+public interface TreeChooser<T> {
+  T getSelected();
 
-  void select(final PsiClass aClass);
+  void select(final T aClass);
 
   void selectDirectory(final PsiDirectory directory);
 
   void showDialog();
 
   void showPopup();
+
+  interface Filter<T> {
+    boolean isAccepted(T element);
+  }
 }

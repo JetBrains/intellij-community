@@ -81,7 +81,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
           }
         }
         chooser.showDialog();
-        PsiClass selectedClass = chooser.getSelectedClass();
+        PsiClass selectedClass = chooser.getSelected();
         if (selectedClass != null) {
           myClassName.setText(selectedClass.getQualifiedName());
         }

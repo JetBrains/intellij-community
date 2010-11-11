@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.wizard;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -77,14 +78,14 @@ final class BeanStep extends StepAdapter{
           final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myData.myProject).createWithInnerClassesScopeChooser(
             UIDesignerBundle.message("title.choose.bean.class"),
             GlobalSearchScope.projectScope(myData.myProject),
-            new TreeClassChooser.ClassFilter() {
+            new ClassFilter() {
               public boolean isAccepted(final PsiClass aClass) {
                 return aClass.getParent() instanceof PsiJavaFile;
               }
             },
             null);
           chooser.showDialog();
-          final PsiClass aClass = chooser.getSelectedClass();
+          final PsiClass aClass = chooser.getSelected();
           if (aClass == null) {
             return;
           }
