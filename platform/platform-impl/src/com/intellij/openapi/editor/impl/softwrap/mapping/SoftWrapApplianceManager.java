@@ -291,16 +291,15 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       end = iterationState.getEndOffset();
       fillOffsetFonts(text, fontType, start, end);
       for (int i = start; i < end; i++) {
-        if (i >= myOffset2fontType.end || myOffset2fontType.data[i - myOffset2fontType.anchor] <= 0) {
+        if (i >= myOffset2fontType.end || (myOffset2fontType.anchor + myOffset2fontType.end <= i)) {
           fillOffsetFonts(text, fontType, i, end);
         }
         if (i > range.getEndOffset()) {
           break outer;
         }
         char c = text.charAt(i);
-        int tmpFontType = myOffset2fontType.data[i - myOffset2fontType.anchor];
-        if (tmpFontType > 0) {
-          fontType = tmpFontType;
+        if (myOffset2fontType.anchor + myOffset2fontType.end > i) {
+          fontType = myOffset2fontType.data[i - myOffset2fontType.anchor];
         }
         context.symbol = c;
 
@@ -317,7 +316,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           continue;
         }
 
-        if (myOffset2widthInPixels.end > context.offset && myOffset2widthInPixels.data[context.offset - myOffset2widthInPixels.anchor] > 0
+        if (myOffset2widthInPixels.end > context.offset && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > context.offset)
             && context.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
         {
           newX = context.x + myOffset2widthInPixels.data[context.offset - myOffset2widthInPixels.anchor];
@@ -353,7 +352,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
             revertListeners(newI, context.visualLine);
             for (int j = i - 1; j >= newI; j--) {
               int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
-              tmpFontType = myOffset2fontType.data[j - myOffset2fontType.anchor];
+              int tmpFontType = myOffset2fontType.data[j - myOffset2fontType.anchor];
               int columnsDiff = calculateWidthInColumns(text.charAt(j), pixelsDiff, fontType2spaceWidth.get(tmpFontType));
               context.offset--;
               context.logicalColumn -= columnsDiff;
@@ -882,7 +881,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     public void clear() {
       anchor = 0;
       end = 0;
-      Arrays.fill(data, 0);
+      //Arrays.fill(data, 0);
     }
   }
 }
