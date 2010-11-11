@@ -102,10 +102,10 @@ public class FilePathCompletionContributor extends CompletionContributor {
             throw new AssertionError("prefix should be some actual file string just before caret: " + prefix + "\n text=" + fragment + ";\npathString=" + set.getPathString() + ";\nelementText=" + e.getParent().getText());
           }
           
-          final List<String>[] pathPrefixParts = new List[] {null};
+          List<String> pathPrefixParts = null;
           int lastSlashIndex;
           if ((lastSlashIndex = prefix.lastIndexOf('/')) != -1) {
-            pathPrefixParts[0] = StringUtil.split(prefix.substring(0, lastSlashIndex), "/");
+            pathPrefixParts = StringUtil.split(prefix.substring(0, lastSlashIndex), "/");
             prefix = prefix.substring(lastSlashIndex + 1);
           }
 
@@ -141,7 +141,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
                     final VirtualFile virtualFile = file.getVirtualFile();
                     if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
                       if (contextHelper.isMine(project, virtualFile)) {
-                        if (pathPrefixParts[0] == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts[0])) {
+                        if (pathPrefixParts == null || fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts)) {
                           __result.addElement(new FilePathLookupItem(file, contextHelper));
                         }
                       }
