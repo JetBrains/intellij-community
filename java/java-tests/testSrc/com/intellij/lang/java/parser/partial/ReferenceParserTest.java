@@ -56,7 +56,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
     doParserTest(text, new TestParser() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false);
+        ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false, false);
       }
     });
   }
