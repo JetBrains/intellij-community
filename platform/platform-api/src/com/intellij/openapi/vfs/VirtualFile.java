@@ -517,13 +517,28 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Returns file content as an array of bytes.
+   * Has the same effect as contentsToByteArray(true).
    *
    * @return file content
    * @throws IOException if an I/O error occurs
+   * @see #contentsToByteArray(boolean)
    * @see #getInputStream()
    */
   @NotNull
   public abstract byte[] contentsToByteArray() throws IOException;
+
+  /**
+   * Returns file content as an array of bytes.
+   *
+   * @param cacheContent set true to
+   * @return file content
+   * @throws IOException if an I/O error occurs
+   * @see #contentsToByteArray()
+   */
+  @NotNull
+  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+    return contentsToByteArray();
+  }
 
 
   /**

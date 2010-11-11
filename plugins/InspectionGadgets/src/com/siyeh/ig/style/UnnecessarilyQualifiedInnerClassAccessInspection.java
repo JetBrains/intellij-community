@@ -94,7 +94,8 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             extends BaseInspectionVisitor {
 
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             final PsiElement parent = reference.getParent();
             if (parent instanceof PsiImportStatement) {
@@ -106,6 +107,12 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             }
             final PsiJavaCodeReferenceElement referenceElement =
                     (PsiJavaCodeReferenceElement) qualifier;
+            final PsiReferenceParameterList parameterList =
+                    referenceElement.getParameterList();
+            if (parameterList != null &&
+                    parameterList.getTypeParameterElements().length > 0) {
+                return;
+            }
             final PsiElement qualifierTarget = referenceElement.resolve();
             if (!(qualifierTarget instanceof PsiClass)) {
                 return;
@@ -123,24 +130,31 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
                 return;
             }
             final String shortName = aClass.getName();
-            if (!isReferenceToTargetClass(shortName, aClass, reference)) {
+            if (!isReferenceToTarget(shortName, aClass, reference)) {
                 return;
             }
             registerError(qualifier, aClass);
         }
 
-        private static boolean isReferenceToTargetClass(
-                String referenceText, PsiClass targetClass, PsiElement context) {
-            final PsiManager manager = targetClass.getManager();
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            visitReferenceElement(expression);
+        }
+
+        private static boolean isReferenceToTarget(
+                String referenceText, PsiClass target, PsiElement context) {
+            final PsiManager manager = target.getManager();
             final JavaPsiFacade facade =
                     JavaPsiFacade.getInstance(manager.getProject());
             final PsiResolveHelper resolveHelper = facade.getResolveHelper();
             final PsiClass referencedClass =
-                    resolveHelper.resolveReferencedClass(referenceText, context);
+                    resolveHelper.resolveReferencedClass(referenceText,
+                            context);
             if (referencedClass == null) {
                 return true;
             }
-            return manager.areElementsEquivalent(targetClass, referencedClass);
+            return manager.areElementsEquivalent(target, referencedClass);
         }
     }
 }

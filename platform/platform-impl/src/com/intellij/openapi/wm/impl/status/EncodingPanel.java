@@ -118,6 +118,9 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       if (charset == null) charset = file.getCharset();
       setSelectedValue(charset);
       myStatusBar.updateWidget(ID());
+    } else {
+      mySelected = "";
+      myStatusBar.updateWidget(ID());
     }
   }
 }

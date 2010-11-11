@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
@@ -169,7 +170,12 @@ public class EditorWindow {
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-          afterPublisher.fileClosed(editorManager, file);
+          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+            @Override
+            public void run() {
+              afterPublisher.fileClosed(editorManager, file);
+            }
+          });
 
           myOwner.afterFileClosed(file);
         }

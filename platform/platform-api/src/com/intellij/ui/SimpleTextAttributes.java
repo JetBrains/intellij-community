@@ -25,6 +25,7 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
+@SuppressWarnings({"PointlessBitwiseExpression"})
 public final class SimpleTextAttributes {
   public static final int STYLE_PLAIN = Font.PLAIN;
   public static final int STYLE_BOLD = Font.BOLD;
@@ -36,10 +37,6 @@ public final class SimpleTextAttributes {
   public static final int STYLE_BOLD_DOTTED_LINE = STYLE_UNDERLINE << 1;
   public static final int STYLE_SEARCH_MATCH = STYLE_BOLD_DOTTED_LINE << 1;
 
-  private final Color myBgColor;
-  private final Color myFgColor;
-  private final Color myWaveColor;
-  private final int myStyle;
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
   public static final SimpleTextAttributes REGULAR_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, null);
@@ -53,40 +50,54 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListForeground());
-  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
+  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
 
   public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, Color.blue);
   public static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE | STYLE_BOLD, Color.blue);
 
+  private final Color myBgColor;
+  private final Color myFgColor;
+  private final Color myWaveColor;
+  private final int myStyle;
+
   /**
+   * @param style   style of the text fragment.
    * @param fgColor color of the text fragment. <code>color</code> can be
-   * <code>null</code>. In that case <code>SimpleColoredComponent</code> will
-   * use its foreground to paint the text fragment.
+   *                <code>null</code>. In that case <code>SimpleColoredComponent</code> will
+   *                use its foreground to paint the text fragment.
    */
   public SimpleTextAttributes(int style, Color fgColor) {
     this(style, fgColor, null);
   }
 
+  public SimpleTextAttributes(int style, Color fgColor, Color waveColor) {
+    this(null, fgColor, waveColor, style);
+  }
+
   public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, final int style) {
-    if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED | STYLE_UNDERLINE | STYLE_BOLD_DOTTED_LINE | STYLE_SEARCH_MATCH) & style) != 0){
-      throw new IllegalArgumentException("wrong style: "+style);
+    if ((~(STYLE_PLAIN |
+           STYLE_BOLD |
+           STYLE_ITALIC |
+           STYLE_STRIKEOUT |
+           STYLE_WAVED |
+           STYLE_UNDERLINE |
+           STYLE_BOLD_DOTTED_LINE |
+           STYLE_SEARCH_MATCH) & style) != 0) {
+      throw new IllegalArgumentException("Wrong style: " + style);
     }
 
+    myBgColor = bgColor;
     myFgColor = fgColor;
     myWaveColor = waveColor;
     myStyle = style;
-    myBgColor = bgColor;
-  }
-
-  public SimpleTextAttributes(int style, Color fgColor, Color waveColor){
-    this(null, fgColor, waveColor, style);
   }
 
   /**
    * @return foreground color
    */
-  public Color getFgColor(){
+  public Color getFgColor() {
     return myFgColor;
   }
 
@@ -99,21 +110,21 @@ public final class SimpleTextAttributes {
   }
 
   /**
-   * @return wave color. The method can retun <code>null</code>. <code>null</code>
-   * means that color of wave is the same as foreground color.
+   * @return wave color. The method can return <code>null</code>. <code>null</code>
+   *         means that color of wave is the same as foreground color.
    */
-  public Color getWaveColor(){
+  public Color getWaveColor() {
     return myWaveColor;
   }
 
-  public int getStyle(){
+  public int getStyle() {
     return myStyle;
   }
 
   /**
-   * @return whether text is striked out or not
+   * @return whether text is struck out or not
    */
-  public boolean isStrikeout(){
+  public boolean isStrikeout() {
     return (myStyle & STYLE_STRIKEOUT) != 0;
   }
 
@@ -145,22 +156,21 @@ public final class SimpleTextAttributes {
     int style = attributes.getFontType();
     if (attributes.getEffectColor() != null) {
       EffectType effectType = attributes.getEffectType();
-      if (effectType == EffectType.STRIKEOUT){
+      if (effectType == EffectType.STRIKEOUT) {
         style |= STYLE_STRIKEOUT;
       }
-      else if (effectType == EffectType.WAVE_UNDERSCORE){
+      else if (effectType == EffectType.WAVE_UNDERSCORE) {
         style |= STYLE_WAVED;
       }
-      else if (effectType == EffectType.LINE_UNDERSCORE || effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        style |= STYLE_UNDERLINE;
-      }
-      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+      else if (effectType == EffectType.LINE_UNDERSCORE ||
+               effectType == EffectType.BOLD_LINE_UNDERSCORE ||
+               effectType == EffectType.BOLD_DOTTED_LINE) {
         style |= STYLE_UNDERLINE;
       }
       else if (effectType == EffectType.SEARCH_MATCH) {
         style |= STYLE_SEARCH_MATCH;
       }
-      else{
+      else {
         // not supported
       }
     }
@@ -177,7 +187,8 @@ public final class SimpleTextAttributes {
     if (isWaved()) {
       effectColor = myWaveColor;
       effectType = EffectType.WAVE_UNDERSCORE;
-    } else if (isStrikeout()) {
+    }
+    else if (isStrikeout()) {
       effectColor = myWaveColor;
       effectType = EffectType.STRIKEOUT;
     }
@@ -193,11 +204,11 @@ public final class SimpleTextAttributes {
       effectColor = myWaveColor;
       effectType = EffectType.SEARCH_MATCH;
     }
-    else{
+    else {
       effectColor = null;
       effectType = null;
     }
-    return new TextAttributes(myFgColor, null,effectColor, effectType, myStyle & FONT_MASK);
+    return new TextAttributes(myFgColor, null, effectColor, effectType, myStyle & FONT_MASK);
   }
 
   public SimpleTextAttributes derive(int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {

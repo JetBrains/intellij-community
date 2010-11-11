@@ -1375,7 +1375,7 @@ public abstract class ChooseByNameBase {
     private final ChooseByNameModel myModel;
     private final PsiProximityComparator myProximityComparator;
 
-    private PathProximityComparator(final ChooseByNameModel model, final PsiElement context) {
+    private PathProximityComparator(final ChooseByNameModel model, @Nullable final PsiElement context) {
       myModel = model;
       myProximityComparator = new PsiProximityComparator(context);
     }

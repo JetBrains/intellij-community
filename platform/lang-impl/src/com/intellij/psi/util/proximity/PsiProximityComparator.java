@@ -49,7 +49,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   };
   private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");
 
-  public PsiProximityComparator(PsiElement context) {
+  public PsiProximityComparator(@Nullable PsiElement context) {
     myContext = context;
   }
 

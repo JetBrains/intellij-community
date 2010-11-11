@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +28,7 @@ import java.util.Iterator;
 
 public class CompositeAppearance implements ModifiableCellAppearance {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
+
   private Icon myIcon;
   private final ArrayList<TextSection> mySections = new ArrayList<TextSection>();
   private int myInsertionIndex = 0;
@@ -41,7 +41,13 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     component.setIcon(myIcon);
   }
 
-  public void setIcon(Icon icon) { myIcon = icon; }
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  public void setIcon(Icon icon) {
+    myIcon = icon;
+  }
 
   public synchronized String getText() {
     StringBuilder buffer = new StringBuilder();
@@ -53,17 +59,21 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   public synchronized boolean equals(Object obj) {
     if (!(obj instanceof CompositeAppearance)) return false;
-    CompositeAppearance appearance = (CompositeAppearance) obj;
-    if (SwingUtilities.isEventDispatchThread())
+    CompositeAppearance appearance = (CompositeAppearance)obj;
+    if (SwingUtilities.isEventDispatchThread()) {
       return appearance.mySections.equals(mySections);
-    else
+    }
+    else {
       return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
+    }
   }
 
-  public int hashCode() {return getText().hashCode();}
+  public int hashCode() {
+    return getText().hashCode();
+  }
 
   protected void addSectionAt(int index, @NotNull TextSection section) {
-    synchronized(this) {
+    synchronized (this) {
       mySections.add(index, section);
       for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
         TextSection textSection = iterator.next();
@@ -111,29 +121,38 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     return appearance;
   }
 
-  @TestOnly
   public Iterator<TextSection> getSectionsIterator() {
     return mySections.iterator();
   }
 
-  protected static class TextSection {
+  public static class TextSection {
     private static final TextAttributes DEFAULT_TEXT_ATTRIBUTES = new TextAttributes(null, null, null, null, Font.PLAIN);
     private static final String DEFAULT_TEXT = "";
-    public String TEXT;
-    public TextAttributes ATTRIBUTES;
+    private String TEXT;
+    private TextAttributes ATTRIBUTES;
 
     public TextSection(String text, TextAttributes attributes) {
       ATTRIBUTES = attributes == null ? DEFAULT_TEXT_ATTRIBUTES : attributes;
       TEXT = text == null ? DEFAULT_TEXT : text;
     }
 
+    public String getText() {
+      return TEXT;
+    }
+
+    public TextAttributes getTextAttributes() {
+      return ATTRIBUTES;
+    }
+
     public boolean equals(Object obj) {
       if (!(obj instanceof TextSection)) return false;
-      TextSection section = (TextSection) obj;
+      TextSection section = (TextSection)obj;
       return section.ATTRIBUTES.equals(ATTRIBUTES) && section.TEXT.equals(TEXT);
     }
 
-    public int hashCode() {return TEXT.hashCode();}
+    public int hashCode() {
+      return TEXT.hashCode();
+    }
   }
 
   public abstract class DequeEnd {
@@ -152,8 +171,9 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     }
 
     public void addSurrounded(String text, String prefix, String suffix, SimpleTextAttributes textAttributes) {
-      if (text != null && text.trim().length() > 0)
+      if (text != null && text.trim().length() > 0) {
         addText(prefix + text + suffix, textAttributes);
+      }
     }
 
     public CompositeAppearance getAppearance() {
@@ -171,7 +191,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeBeginning extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized(CompositeAppearance.this) {
+      synchronized (CompositeAppearance.this) {
         addSectionAt(0, section);
         myInsertionIndex++;
       }
@@ -180,7 +200,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeEnding extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized(CompositeAppearance.this) {
+      synchronized (CompositeAppearance.this) {
         addSectionAt(myInsertionIndex, section);
         myInsertionIndex++;
       }
@@ -189,7 +209,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeSuffix extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized(CompositeAppearance.this) {
+      synchronized (CompositeAppearance.this) {
         addSectionAt(mySections.size(), section);
       }
     }

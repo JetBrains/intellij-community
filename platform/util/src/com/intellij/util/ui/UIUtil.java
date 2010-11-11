@@ -447,7 +447,7 @@ public class UIUtil {
   }
 
   public static Color getTextFieldBackground() {
-    return UIManager.getColor("TextField.background");
+    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIManager.getColor("TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1715,6 +1715,20 @@ public class UIUtil {
 
   public static int fixComboBoxHeight(final int height) {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
+  }
+
+  @Nullable
+  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
+    Component eachParent = c;
+    while (eachParent != null) {
+      if (cls.isAssignableFrom(eachParent.getClass())) {
+        return (T)eachParent;
+      }
+
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
   }
 
 }
