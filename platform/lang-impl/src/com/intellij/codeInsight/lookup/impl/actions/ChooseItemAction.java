@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl.actions;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -33,6 +34,7 @@ public class ChooseItemAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     public void execute(final Editor editor, final DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      assert lookup != null;
       lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
   }
@@ -41,7 +43,8 @@ public class ChooseItemAction extends EditorAction {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup != null) {
       lookup.refreshUi(); // to bring the list model up to date
-      presentation.setEnabled(!lookup.justShown() && (lookup.isFocused() || lookup.isCompletion() && !lookup.getItems().isEmpty()));
+      presentation.setEnabled(lookup.isFocused() &&
+                              !ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR));
     } else {
       presentation.setEnabled(false);
     }

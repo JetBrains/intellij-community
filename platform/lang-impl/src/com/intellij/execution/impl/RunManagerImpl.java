@@ -73,6 +73,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private List<Element> myUnloadedElements = null;
   private JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
+  private boolean myOrdered = true;
 
   private final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
 
@@ -286,7 +287,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   @Override
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
-    if (myOrder != null && !myOrder.isEmpty()) { //compatibility
+    if (!myOrdered && !myOrder.isEmpty()) { //compatibility
       final HashMap<String, RunnerAndConfigurationSettings> settings =
           new HashMap<String, RunnerAndConfigurationSettings>(myConfigurations); //sort shared and local configurations
       myConfigurations.clear();
@@ -299,7 +300,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       for (String configName : order) {
         myConfigurations.put(configName, settings.get(configName));
       }
-      myOrder = null;
+      myOrdered = true;
     }
     return myConfigurations.values();
   }
@@ -474,9 +475,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
 
-    if (myOrder != null) {
-      myOrder.readExternal(parentNode);
-    }
+    myOrder.readExternal(parentNode);
+    myOrdered = false;
 
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
     fireBeforeRunTasksUpdated();
@@ -799,7 +799,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
-    if (shareConfiguration && isTemporary(runConfiguration)) makeStable(runConfiguration);
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
   }
 

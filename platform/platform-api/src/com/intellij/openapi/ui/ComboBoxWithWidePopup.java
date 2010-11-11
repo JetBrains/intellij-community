@@ -33,7 +33,7 @@ public class ComboBoxWithWidePopup extends JComboBox {
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
-  public ComboBoxWithWidePopup(final Object items[]) {
+  public ComboBoxWithWidePopup(final Object[] items) {
     super(items);
 
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);

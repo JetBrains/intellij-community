@@ -1823,7 +1823,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Nullable
     public Condition getExpireCondition() {
-      return Condition.FALSE;
+      return ApplicationManager.getApplication().getDisposed();
     }
   }
 

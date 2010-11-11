@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -250,15 +249,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     completionData.fillCompletions(parameters, result);
 
     for (final LookupElement item : lookupSet) {
-      if (item instanceof LookupItem && ((LookupItem)item).getInsertHandler() == null) {
-        ((LookupItem)item).setInsertHandler(new InsertHandler() {
-          public void handleInsert(final InsertionContext context, final LookupElement item) {
-            analyzeItem((LookupItem)item, item.getObject(), parameters.getPosition());
-            new DefaultInsertHandler().handleInsert(context, item);
-          }
-        });
-      }
-
       result.addElement(item);
     }
 
@@ -467,54 +457,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiElement parent = element.getParent();
     if (parent == null) return false;
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
-  }
-
-  public static void analyzeItem(final LookupItem item, final Object completion, final PsiElement position) {
-    if(completion instanceof PsiKeyword){
-      if(PsiKeyword.BREAK.equals(((PsiKeyword)completion).getText())
-         || PsiKeyword.CONTINUE.equals(((PsiKeyword)completion).getText())){
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile
-              || scope instanceof PsiMethod
-              || scope instanceof PsiClassInitializer){
-            item.setTailType(TailType.SEMICOLON);
-            break;
-          }
-          else if (scope instanceof PsiLabeledStatement){
-            item.setTailType(TailType.NONE);
-            break;
-          }
-          scope = scope.getParent();
-        }
-      }
-      if(PsiKeyword.RETURN.equals(((PsiKeyword)completion).getText())){
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile
-              || scope instanceof PsiClassInitializer){
-            item.setTailType(TailType.NONE);
-            break;
-          }
-          else if (scope instanceof PsiMethod){
-            final PsiMethod method = (PsiMethod)scope;
-            if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
-              item.setTailType(TailType.SEMICOLON);
-            }
-            else item.setTailType(TailType.SPACE);
-
-            break;
-          }
-          scope = scope.getParent();
-        }
-      }
-      if(PsiKeyword.SYNCHRONIZED.equals(((PsiKeyword)completion).getText())){
-        if (PsiTreeUtil.getParentOfType(position, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock){
-          item.setTailType(TailTypes.SYNCHRONIZED_LPARENTH);
-        }
-      }
-    }
-
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

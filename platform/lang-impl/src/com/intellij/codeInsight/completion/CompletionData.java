@@ -19,10 +19,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
@@ -104,21 +102,17 @@ public class CompletionData {
   public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position, final PsiFile file,
                                 final int offset){
     final CompletionVariant[] variants = findVariants(position, file);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        boolean hasApplicableVariants = false;
-        for (CompletionVariant variant : variants) {
-          if (variant.hasReferenceFilter()) {
-            variant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
-            hasApplicableVariants = true;
-          }
-        }
-
-        if (!hasApplicableVariants) {
-          myGenericVariant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
-        }
+    boolean hasApplicableVariants = false;
+    for (CompletionVariant variant : variants) {
+      if (variant.hasReferenceFilter()) {
+        variant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
+        hasApplicableVariants = true;
       }
-    });
+    }
+
+    if (!hasApplicableVariants) {
+      myGenericVariant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
+    }
   }
 
   public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
@@ -129,11 +123,7 @@ public class CompletionData {
                                     final PrefixMatcher matcher,
                                     final PsiFile file){
     for (final CompletionVariant variant : variants) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          variant.addKeywords(set, position, matcher, file, CompletionData.this);
-        }
-      });
+      variant.addKeywords(set, position, matcher, file, CompletionData.this);
     }
   }
 
@@ -142,34 +132,30 @@ public class CompletionData {
   }
 
   public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file){
-    return ApplicationManager.getApplication().runReadAction(new Computable<CompletionVariant[]>() {
-      public CompletionVariant[] compute() {
-        final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
-        PsiElement scope = position;
-        if(scope == null){
-          scope = file;
-        }
-        while (scope != null) {
-          boolean breakFlag = false;
-          if (isScopeAcceptable(scope)){
+    final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
+      PsiElement scope = position;
+      if(scope == null){
+        scope = file;
+      }
+      while (scope != null) {
+        boolean breakFlag = false;
+        if (isScopeAcceptable(scope)){
 
-            for (final CompletionVariant variant : myCompletionVariants) {
-              if (variant.isVariantApplicable(position, scope) && !variants.contains(variant)) {
-                variants.add(variant);
-                if (variant.isScopeFinal(scope)) {
-                  breakFlag = true;
-                }
+          for (final CompletionVariant variant : myCompletionVariants) {
+            if (variant.isVariantApplicable(position, scope) && !variants.contains(variant)) {
+              variants.add(variant);
+              if (variant.isScopeFinal(scope)) {
+                breakFlag = true;
               }
             }
           }
-          if(breakFlag || isScopeFinal(scope.getClass()))
-            break;
-          scope = scope.getContext();
-          if (scope instanceof PsiDirectory) break;
         }
-        return variants.toArray(new CompletionVariant[variants.size()]);
+        if(breakFlag || isScopeFinal(scope.getClass()))
+          break;
+        scope = scope.getContext();
+        if (scope instanceof PsiDirectory) break;
       }
-    });
+      return variants.toArray(new CompletionVariant[variants.size()]);
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
@@ -207,14 +193,7 @@ public class CompletionData {
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
-    final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        if (!insertedElement.isValid()) {
-          return "";
-        }
-        return getReferencePrefix(insertedElement, offsetInFile);
-      }
-    });
+    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
     if (insertedElement instanceof PsiPlainText || insertedElement instanceof PsiComment) {

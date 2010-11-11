@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.psiView;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -357,13 +358,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     updateDialectsCombo();
     updateExtentionsCombo();
-    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
+    myDialectsComboBox.setRenderer(new ListCellRendererWrapper<Language>(myDialectsComboBox.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index,
-                                                    boolean isSelected, boolean cellHasFocus) {
-        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value == null) setText("<no dialect>");
-        return result;
+      public void customize(final JList list, final Language value, final int index, final boolean selected, final boolean hasFocus) {
+        setText(value != null ? value.getDisplayName() : "<no dialect>");
       }
     });
 

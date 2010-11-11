@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -259,19 +260,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public JComponent createComponent() {
-    myProfiles.setRenderer(new DefaultListCellRenderer(){
+    myProfiles.setRenderer(new ListCellRendererWrapper<Profile>(myProfiles.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final String profileName = ((Profile)value).getName();
+      public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
+        final String profileName = value.getName();
         setText(profileName);
         final SingleInspectionProfilePanel panel = myPanels.get(profileName);
-        if (panel != null && panel.isProfileShared()) {
-          setIcon(Profile.PROJECT_PROFILE);
-        } else {
-          setIcon(Profile.LOCAL_PROFILE);
-        }
-        return rendererComponent;
+        setIcon(panel != null && panel.isProfileShared() ? Profile.PROJECT_PROFILE : Profile.LOCAL_PROFILE);
       }
     });
     myProfiles.addActionListener(new ActionListener() {

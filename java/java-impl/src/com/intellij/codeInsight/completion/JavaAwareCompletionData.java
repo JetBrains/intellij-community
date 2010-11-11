@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.IncorrectOperationException;
@@ -32,6 +33,45 @@ import java.util.Set;
  */
 public class JavaAwareCompletionData extends CompletionData{
 
+  @NotNull
+  static TailType analyzeItem(final Object completion, final PsiElement position) {
+    if(completion instanceof PsiKeyword){
+      final String text = ((PsiKeyword)completion).getText();
+      if(PsiKeyword.BREAK.equals(text) || PsiKeyword.CONTINUE.equals(text)) {
+        PsiElement scope = position;
+        while(true){
+          if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer){
+            return TailType.SEMICOLON;
+          }
+
+          if (scope instanceof PsiLabeledStatement){
+            return TailType.NONE;
+          }
+          scope = scope.getParent();
+        }
+      }
+      if(PsiKeyword.RETURN.equals(text)){
+        PsiElement scope = position;
+        while(true){
+          if (scope instanceof PsiFile || scope instanceof PsiClassInitializer){
+            return TailType.NONE;
+          }
+
+          if (scope instanceof PsiMethod){
+            final PsiMethod method = (PsiMethod)scope;
+            if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
+              return TailType.SEMICOLON;
+            }
+
+            return TailType.SPACE;
+          }
+          scope = scope.getParent();
+        }
+      }
+    }
+    return TailType.NONE;
+  }
+
   protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
     if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
       set.add((LookupElement)completion);
@@ -44,18 +84,29 @@ public class JavaAwareCompletionData extends CompletionData{
     LookupItem ret = (LookupItem)_ret;
     final InsertHandler insertHandler = variant.getInsertHandler();
     if(insertHandler != null && ret.getInsertHandler() == null) {
-      ret.setInsertHandler(insertHandler);
-      ret.setTailType(TailType.UNKNOWN);
     }
-    else if (tailType != TailType.NONE) {
-      ret.setTailType(tailType);
-    }
+    ret.setInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        final TailType type = analyzeItem(item.getObject(), context.getFile().findElementAt(context.getStartOffset()));
+        new DefaultInsertHandler().handleInsert(context, item);
+        if (type != TailType.NONE) {
+          context.setAddCompletionChar(false);
+          type.processTail(context.getEditor(), context.getTailOffset());
+        }
+      }
+    });
 
     final Map<Object, Object> itemProperties = variant.getItemProperties();
     for (final Object key : itemProperties.keySet()) {
       ret.setAttribute(key, itemProperties.get(key));
     }
-    set.add(ret);
+
+    if ((insertHandler == null || ret.getInsertHandler() != null) && tailType != TailType.NONE) {
+      set.add(TailTypeDecorator.withTail(ret, tailType));
+    } else {
+      set.add(ret);
+    }
   }
 
   protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,

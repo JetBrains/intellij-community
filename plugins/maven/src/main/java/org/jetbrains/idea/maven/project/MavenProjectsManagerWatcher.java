@@ -142,7 +142,7 @@ public class MavenProjectsManagerWatcher {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
-      public void pathsChanged() {
+      public void changed() {
         updateSettingsFilePointers();
         onSettingsChange();
       }
@@ -256,7 +256,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void onSettingsXmlChange() {
-    myGeneralSettings.localRepositoryChanged();
+    myGeneralSettings.changed();
     // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 

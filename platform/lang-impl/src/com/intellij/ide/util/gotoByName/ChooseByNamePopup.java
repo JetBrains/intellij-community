@@ -17,7 +17,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.matchers.EntityMatcher;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -43,7 +42,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
+public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
@@ -51,17 +50,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
                             final PsiElement context, @Nullable final String predefinedText) {
     super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
-    if (oldPopup == null && predefinedText != null) {
-      setPreselectInitialText(true);
-    }
-    if (oldPopup != null) { //inherit old focus owner
-      myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
-    }
-  }
-
-  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
-                            EntityMatcher matcher,@Nullable final String predefinedText) {
-    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, matcher);
     if (oldPopup == null && predefinedText != null) {
       setPreselectInitialText(true);
     }
@@ -215,22 +203,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
     return createPopup(project, model, context, null);
   }
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, EntityMatcher matcher) {
-    return createPopup(project, model, matcher, null);
-  }
-
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, EntityMatcher matcher,
-                                              @Nullable final String predefinedText) {
-    final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
-    if (oldPopup != null) {
-      oldPopup.close(false);
-    }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, matcher, predefinedText);
-
-    project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
-    return newPopup;
-  }
-
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);

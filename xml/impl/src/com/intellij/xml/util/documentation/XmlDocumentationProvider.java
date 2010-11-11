@@ -113,7 +113,8 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       String typeName = null;
 
       if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue) {
-        String toSearch = StringUtil.stripQuotesAroundValue(originalElement.getText());
+        XmlAttributeValue value = (XmlAttributeValue)originalElement.getParent();
+        String toSearch = value.getValue();
         XmlTag enumerationTag;
         
         if (XmlUtil.ENUMERATION_TAG_NAME.equals(tag.getLocalName())) {

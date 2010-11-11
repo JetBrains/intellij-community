@@ -94,13 +94,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             extends BaseInspectionVisitor {
 
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement parent = expression.getParent();
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            final PsiElement parent = reference.getParent();
             if (parent instanceof PsiImportStatement) {
                 return;
             }
-            final PsiElement qualifier = expression.getQualifier();
+            final PsiElement qualifier = reference.getQualifier();
             if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
                 return;
             }
@@ -110,7 +110,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             if (!(qualifierTarget instanceof PsiClass)) {
                 return;
             }
-            final PsiElement target = expression.resolve();
+            final PsiElement target = reference.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
@@ -123,7 +123,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
                 return;
             }
             final String shortName = aClass.getName();
-            if (!isReferenceToTargetClass(shortName, aClass, expression)) {
+            if (!isReferenceToTargetClass(shortName, aClass, reference)) {
                 return;
             }
             registerError(qualifier, aClass);

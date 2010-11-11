@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.gotoByName.matchers;
+package com.intellij.ide.projectView.actions;
 
-import com.intellij.openapi.util.Computable;
-
-import java.util.Set;
-
-public interface EntityMatcher {
-  boolean nameMatches(String shortPattern, String shortName);
-
-  Set<Object> getElementsByPattern(String fullPattern, String shortName, boolean checkboxState, Computable<Boolean> isCancelled);
+/**
+ * @author yole
+ */
+public class MarkTestSourceRootAction extends MarkRootAction {
+  public MarkTestSourceRootAction() {
+    super(true, false);
+  }
 }

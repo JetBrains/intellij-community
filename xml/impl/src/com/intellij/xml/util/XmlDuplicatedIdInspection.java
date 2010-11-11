@@ -22,7 +22,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
@@ -73,7 +72,7 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
         if (XmlUtil.isSimpleXmlAttributeValue(idRef, value) && refHolder.isIdReferenceValue(value)) {
           boolean hasIdDeclaration = refHolder.hasIdDeclaration(idRef);
           if (!hasIdDeclaration && tag instanceof HtmlTag) {
-            hasIdDeclaration = refHolder.hasIdDeclaration(StringUtil.stripQuotesAroundValue(value.getText()));
+            hasIdDeclaration = refHolder.hasIdDeclaration(value.getValue());
           }
 
           if (!hasIdDeclaration) {

@@ -19,7 +19,6 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -31,7 +30,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -40,7 +38,7 @@ public class AntFileReferenceSet extends FileReferenceSet {
   private final XmlAttributeValue myValue;
 
   public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final PsiReferenceProvider provider) {
-    super(cutTrailingSlash(FileUtil.toSystemIndependentName(StringUtil.stripQuotesAroundValue(value.getText()))), element,
+    super(cutTrailingSlash(FileUtil.toSystemIndependentName(value.getValue())), element,
           value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, SystemInfo.isFileSystemCaseSensitive);
     myValue = value;
   }

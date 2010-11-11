@@ -253,8 +253,8 @@ public interface JavaElementType {
         return JavaParserUtil.parseFragment(chameleon,
                                             new JavaParserUtil.ParserWrapper() {
                                               public void parse(final PsiBuilder builder) {
-                                                ReferenceParser.parseType(builder);
-                                                expect(builder, JavaTokenType.ELLIPSIS);
+                                                ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+                                                expect(builder, JavaTokenType.ELLIPSIS);  // todo[r.sh] parse ellipsis and fix PsiTypeCodeFragmentImpl.getType()
                                               }
                                             });
       }

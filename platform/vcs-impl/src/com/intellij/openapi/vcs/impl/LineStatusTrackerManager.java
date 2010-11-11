@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,6 +67,7 @@ import java.util.Map;
 
 public class LineStatusTrackerManager implements ProjectComponent, LineStatusTrackerManagerI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager");
+  public final Object myLock = new Object();
 
   public static LineStatusTrackerManagerI getInstance(final Project project) {
     if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) {
@@ -116,15 +116,17 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myDisposable = new Disposable() {
       @Override
       public void dispose() {
-        final Collection<LineStatusTracker> trackers = myLineStatusTrackers.values();
-        final LineStatusTracker[] lineStatusTrackers = trackers.toArray(new LineStatusTracker[trackers.size()]);
-        for (final LineStatusTracker tracker : lineStatusTrackers) {
-          releaseTracker(tracker.getDocument());
-        }
+        synchronized (myLock) {
+          final Collection<LineStatusTracker> trackers = myLineStatusTrackers.values();
+          final LineStatusTracker[] lineStatusTrackers = trackers.toArray(new LineStatusTracker[trackers.size()]);
+          for (final LineStatusTracker tracker : lineStatusTrackers) {
+            releaseTracker(tracker.getDocument());
+          }
 
-        myLineStatusTrackers.clear();
-        assert myLineStatusUpdateAlarms.isEmpty();
-        myLineStatusUpdateAlarms.clear();
+          myLineStatusTrackers.clear();
+          assert myLineStatusUpdateAlarms.isEmpty();
+          myLineStatusUpdateAlarms.clear();
+        }
       }
     };
     Disposer.register(myProject, myDisposable);
@@ -178,12 +180,15 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @Override
   public LineStatusTracker getLineStatusTracker(final Document document) {
     myApplication.assertReadAccessAllowed();
-
     if ((! myProject.isOpen()) || myProject.isDisposed()) return null;
-    return myLineStatusTrackers.get(document);
+
+    synchronized (myLock) {
+      return myLineStatusTrackers.get(document);
+    }
   }
 
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
+    myApplication.assertReadAccessAllowed();
     if ((! myProject.isOpen()) || myProject.isDisposed()) return;
 
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
@@ -194,49 +199,43 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     log("resetting tracker for file " + virtualFile.getPath());
 
-    final LineStatusTracker tracker = myLineStatusTrackers.get(document);
     final boolean editorOpened = myFileEditorManager.isFileOpen(virtualFile);
     final boolean shouldBeInstalled = shouldBeInstalled(virtualFile) && editorOpened;
 
-    if (tracker == null && (! shouldBeInstalled)) return;
+    synchronized (myLock) {
+      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
 
-    myApplication.runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // remove ?
-        if (tracker != null) {
-          if (! shouldBeInstalled) {
-            releaseTracker(document);
-            return;
-          } else if ((LineStatusTracker.BaseLoadState.LOADING == tracker.getBaseLoaded())) {
-            return; // will be recalculated
-          } else {
-            tracker.resetForBaseRevisionLoad();
-            startAlarm(document, virtualFile);
-          }
-        } else if (shouldBeInstalled) {
-          installTracker(virtualFile, document);
+      if (tracker == null && (! shouldBeInstalled)) return;
+
+      if (tracker != null) {
+        if (! shouldBeInstalled) {
+          releaseTracker(document);
+          return;
+        } else if ((LineStatusTracker.BaseLoadState.LOADING == tracker.getBaseLoaded())) {
+          return; // will be recalculated
+        } else {
+          tracker.resetForBaseRevisionLoad();
+          startAlarm(document, virtualFile);
         }
+      } else if (shouldBeInstalled) {
+        installTracker(virtualFile, document);
       }
-    });
+    }
   }
 
   private void releaseTracker(final Document document) {
     if ((! myProject.isOpen()) || myProject.isDisposed()) return;
 
-    myApplication.runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Alarm alarm = myLineStatusUpdateAlarms.remove(document);
-        if (alarm != null) {
-          alarm.cancelAllRequests();
-        }
-        final LineStatusTracker tracker = myLineStatusTrackers.remove(document);
-        if (tracker != null) {
-          tracker.release();
-        }
+    synchronized (myLock) {
+      final Alarm alarm = myLineStatusUpdateAlarms.remove(document);
+      if (alarm != null) {
+        alarm.cancelAllRequests();
       }
-    });
+      final LineStatusTracker tracker = myLineStatusTrackers.remove(document);
+      if (tracker != null) {
+        tracker.release();
+      }
+    }
   }
 
   private boolean shouldBeInstalled(final VirtualFile virtualFile) {
@@ -261,25 +260,24 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private void installTracker(final VirtualFile virtualFile, final Document document) {
-    myApplication.runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (myLineStatusTrackers.containsKey(document)) return;
-        assert !myLineStatusUpdateAlarms.containsKey(document);
+    synchronized (myLock) {
+      if (myLineStatusTrackers.containsKey(document)) return;
+      assert !myLineStatusUpdateAlarms.containsKey(document);
 
-        final LineStatusTracker tracker = LineStatusTracker.createOn(document, myProject);
-        myLineStatusTrackers.put(document, tracker);
+      final LineStatusTracker tracker = LineStatusTracker.createOn(document, myProject);
+      myLineStatusTrackers.put(document, tracker);
 
-        startAlarm(document, virtualFile);
-      }
-    });
+      startAlarm(document, virtualFile);
+    }
   }
 
   private void startAlarm(final Document document, final VirtualFile virtualFile) {
-    myApplication.assertWriteAccessAllowed();
+    myApplication.assertReadAccessAllowed();
 
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    myLineStatusUpdateAlarms.put(document, alarm);
+    synchronized (myLock) {
+      myLineStatusUpdateAlarms.put(document, alarm);
+    }
     alarm.addRequest(new BaseRevisionLoader(alarm, document, virtualFile), 10);
   }
 
@@ -297,14 +295,12 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
-      final Boolean removed = myApplication.runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final Alarm removed = myLineStatusUpdateAlarms.remove(myDocument);
-          return removed != null;
+      synchronized (myLock) {
+        final Alarm removed = myLineStatusUpdateAlarms.remove(myDocument);
+        if (removed == null) {
+          return;
         }
-      });
-      if (! Boolean.TRUE.equals(removed)) return;
+      }
       if ((! myProject.isOpen()) || myProject.isDisposed()) return;
 
       if (! myVirtualFile.isValid()) {
@@ -323,15 +319,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
       myApplication.invokeLater(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              log("initializing tracker for file " + myVirtualFile.getPath());
-              final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
-              if (tracker != null) {
-                tracker.initialize(converted);
-              }
+          synchronized (myLock) {
+            log("initializing tracker for file " + myVirtualFile.getPath());
+            final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
+            if (tracker != null) {
+              tracker.initialize(converted);
             }
-          });
+          }
         }
       }, new Condition() {
         @Override
@@ -342,24 +336,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     }
 
     private void reportTrackerBaseLoadFailed() {
-      myApplication.invokeLater(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              log("base revision load failed for file " + myVirtualFile.getPath());
-              final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
-              if (tracker != null) {
-                tracker.baseRevisionLoadFailed();
-              }
-            }
-          });
+      synchronized (myLock) {
+        log("base revision load failed for file " + myVirtualFile.getPath());
+        final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
+        if (tracker != null) {
+          tracker.baseRevisionLoadFailed();
         }
-      }, new Condition() {
-        @Override
-        public boolean value(final Object ignore) {
-          return (! myProject.isOpen()) || myProject.isDisposed();
-        }
-      });
+      }
     }
   }
 
@@ -369,7 +352,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     final VirtualFile[] openFiles = myFileEditorManager.getOpenFiles();
     for(final VirtualFile openFile: openFiles) {
-      // write action inside is sufficient level
       resetTracker(openFile);
     }
   }

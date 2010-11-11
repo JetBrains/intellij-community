@@ -26,7 +26,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PatternFilter;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -188,14 +187,6 @@ public class CompletionVariant {
       if(ce.myCompletion instanceof ElementFilter){
         final ElementFilter filter = (ElementFilter)ce.myCompletion;
         completionData.completeReference(reference, position, set, ce.myTailType, file, filter, this);
-      }
-    }
-  }
-
-  public void processReferenceCompletions(PairConsumer<ElementFilter, TailType> consumer) {
-    for (final CompletionVariantItem ce : myCompletionsList) {
-      if(ce.myCompletion instanceof ElementFilter){
-        consumer.consume((ElementFilter)ce.myCompletion, ce.myTailType);
       }
     }
   }

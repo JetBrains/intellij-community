@@ -44,7 +44,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,12 +81,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean myOptimiseTestLoadSpeed;
   @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-
-  private final Condition myDisposedCondition = new Condition() {
-    public boolean value(final Object o) {
-      return isDisposed();
-    }
-  };
 
   private String myName;
   private String myOldName;
@@ -172,10 +165,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
-  }
-
-  public Condition getDisposed() {
-    return myDisposedCondition;
   }
 
   public boolean isInitialized() {
