@@ -30,16 +30,16 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class CompoundShelfFileProcesor {
+public class CompoundShelfFileProcessor {
   private final String mySubdirName;
   private final StreamProvider[] myServerStreamProviders;
   private static final RoamingType PER_USER = RoamingType.PER_USER;
   private final String FILE_SPEC;
   private final String myShelfPath;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcesor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcessor");
 
-  public CompoundShelfFileProcesor(final String subdirName) {
+  public CompoundShelfFileProcessor(final String subdirName) {
     mySubdirName = subdirName;
     myServerStreamProviders = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(PER_USER);
 
@@ -47,7 +47,7 @@ public class CompoundShelfFileProcesor {
     myShelfPath = PathManager.getConfigPath() + File.separator + mySubdirName;
   }
 
-  public CompoundShelfFileProcesor(final StreamProvider[] serverStreamProviders, final String shelfPath) {
+  public CompoundShelfFileProcessor(final StreamProvider[] serverStreamProviders, final String shelfPath) {
     myServerStreamProviders = serverStreamProviders;
     myShelfPath = shelfPath;
     mySubdirName = new File(myShelfPath).getName();
