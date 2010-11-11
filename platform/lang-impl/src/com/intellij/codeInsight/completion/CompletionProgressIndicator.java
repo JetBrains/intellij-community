@@ -636,6 +636,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final int offset = myEditor.getCaretModel().getOffset();
     final long stamp = myEditor.getDocument().getModificationStamp();
     final Project project = getProject();
+    final boolean wasDumb = DumbService.getInstance(project).isDumb();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -644,6 +645,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
 
         if (myEditor.isDisposed() || project.isDisposed()) {
+          return;
+        }
+
+        if (!wasDumb && DumbService.getInstance(project).isDumb()) {
           return;
         }
 
