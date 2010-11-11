@@ -538,7 +538,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     variant.addCompletion(PsiKeyword.IF, TailTypes.IF_LPARENTH);
     variant.addCompletion(PsiKeyword.TRY, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
-    variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);
+    variant.addCompletion(PsiKeyword.RETURN, TailType.NONE);
     variant.addCompletion(PsiKeyword.NEW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
     variant.addCompletion(PsiKeyword.SYNCHRONIZED, TailTypes.SYNCHRONIZED_LPARENTH);

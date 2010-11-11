@@ -684,6 +684,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSecondAnonymousClassParameter() throws Throwable { doTest(); }
 
+  public void testSpaceAfterReturn() throws Throwable {
+    configure()
+    type '\n'
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
 
