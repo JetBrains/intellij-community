@@ -101,6 +101,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
   private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
+  private final ProgressManager myProgressManager;
 
   private static ProjectManagerListener[] getListeners(Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
@@ -108,7 +109,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
   }
 
-  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
+  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
+    myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
     MessageBusConnection connection = messageBus.connect(app);
@@ -382,7 +384,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         startupManager.runStartupActivities();
       }
@@ -461,9 +463,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     final Project[] project = new Project[1];
-    boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
         try {
           if (indicator != null) {
             indicator.setText(ProjectBundle.message("loading.components.for", filePath));
