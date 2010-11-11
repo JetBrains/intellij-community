@@ -36,29 +36,29 @@ interface MappingStrategy<T> {
   T eagerMatch();
 
   /**
-   * Builds initial context to start calculation from.
+   * Builds initial position to start calculation from.
    * <p/>
    * It's assumed that we store information about 'anchor' document positions like visual line starts and calculate
    * target result starting from the nearest position.
    *
-   * @return    initial context to use for target result calculation
+   * @return    initial position to use for target result calculation
    */
   @NotNull
-  ProcessingContext buildInitialContext();
+  EditorPosition buildInitialPosition();
 
   /**
    * Notifies current strategy that there are no special symbols and regions between the document position identified
-   * by the current state of the given context and given offset. I.e. it's safe to assume that all symbols between the offset
-   * identified by the given context and given offset have occupy one visual and logical column.
+   * by the current state of the given position and given offset. I.e. it's safe to assume that all symbols between the offset
+   * identified by the given position and given offset have occupy one visual and logical column.
    *
-   * @param context   context that identifies currently processed position
-   * @param offset    nearest offset to the one identified by the given context that conforms to requirement that every symbol
+   * @param position  currently processed position
+   * @param offset    nearest offset to the one identified by the given position that conforms to requirement that every symbol
    *                  between them increments offset, visual and logical position by one
-   * @return          resulting dimension if it's located between the document position identified by the given context
+   * @return          resulting dimension if it's located between the given position
    *                  and given offset if any; <code>null</code> otherwise
    */
   @Nullable
-  T advance(ProcessingContext context, int offset);
+  T advance(EditorPosition position, int offset);
 
   /**
    * Notifies current strategy that soft wrap is encountered during the processing. There are two ways to continue the processing then:
@@ -69,12 +69,12 @@ interface MappingStrategy<T> {
    * </ul>
    * </pre>
    *
-   * @param context     current processing context
+   * @param position    current processing position
    * @param softWrap    soft wrap encountered during the processing
    * @return            target document dimension if it's located within the bounds of the given soft wrap; <code>null</code> otherwise
    */
   @Nullable
-  T processSoftWrap(ProcessingContext context, SoftWrap softWrap);
+  T processSoftWrap(EditorPosition position, SoftWrap softWrap);
 
   /**
    * Notifies current strategy that collapsed fold region is encountered during the processing. There are two ways to
@@ -86,13 +86,13 @@ interface MappingStrategy<T> {
    * </ul>
    * </pre>
    *
-   * @param context       current processing context
+   * @param position      current processing position
    * @param foldRegion    collapsed fold region encountered during the processing
    * @return              target document dimension if it's located within the bounds of the given fold region;
    *                      <code>null</code> otherwise
    */
   @Nullable
-  T processFoldRegion(ProcessingContext context, FoldRegion foldRegion);
+  T processFoldRegion(EditorPosition position, FoldRegion foldRegion);
 
   /**
    * Notifies current strategy that tabulation symbols is encountered during the processing. Tabulation symbols
@@ -105,22 +105,22 @@ interface MappingStrategy<T> {
    * </ul>
    * </pre>
    *
-   * @param context       current processing context
+   * @param position      current processing position
    * @param tabData       document position for the active tabulation symbol encountered during the processing
    * @return              target document dimension if it's located within the bounds of the given fold region;
    *                      <code>null</code> otherwise
    */
   @Nullable
-  T processTabulation(ProcessingContext context, TabData tabData);
+  T processTabulation(EditorPosition position, TabData tabData);
 
   /**
    * This method is assumed to be called when there are no special symbols between the document position identified by the
-   * given context and target dimension. E.g. this method may be called when we perform {@code visual -> logical} mapping
+   * given position and target dimension. E.g. this method may be called when we perform {@code visual -> logical} mapping
    * and there are no soft wraps, collapsed fold regions and tabulation symbols on a current visual line.
    *
-   * @param context   current processing context that identifies active document position
-   * @return          resulting dimension that is built on the basis of the given context and target anchor dimension
+   * @param position   current processing position that identifies active document position
+   * @return           resulting dimension that is built on the basis of the given position and target anchor dimension
    */
   @NotNull
-  T build(ProcessingContext context);
+  T build(EditorPosition position);
 }

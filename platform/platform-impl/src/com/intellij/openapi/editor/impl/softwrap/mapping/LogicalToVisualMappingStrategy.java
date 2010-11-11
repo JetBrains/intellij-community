@@ -90,7 +90,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(ProcessingContext context, int offset) {
+  protected VisualPosition buildIfExceeds(EditorPosition context, int offset) {
     if (context.logicalLine < myTargetLogical.line) {
        return null;
     }
@@ -106,7 +106,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
+  protected VisualPosition buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion) {
     int foldEndLine = myEditor.getDocument().getLineNumber(foldRegion.getEndOffset());
     if (myTargetLogical.line > foldEndLine) {
       return null;
@@ -132,7 +132,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
+  protected VisualPosition buildIfExceeds(EditorPosition context, TabData tabData) {
     if (context.logicalLine < myTargetLogical.line) {
       return null;
     }
@@ -149,23 +149,23 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  public VisualPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-    context.visualColumn = softWrap.getIndentInColumns();
-    context.softWrapColumnDiff += softWrap.getIndentInColumns();
+  public VisualPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+    position.visualColumn = softWrap.getIndentInColumns();
+    position.softWrapColumnDiff += softWrap.getIndentInColumns();
 
-    if (context.logicalLine < myTargetLogical.line || context.logicalColumn != myTargetLogical.column) {
+    if (position.logicalLine < myTargetLogical.line || position.logicalColumn != myTargetLogical.column) {
       return null;
     }
-    return context.buildVisualPosition();
+    return position.buildVisualPosition();
   }
 
   @NotNull
   @Override
-  public VisualPosition build(ProcessingContext context) {
-    int diff = myTargetLogical.column - context.logicalColumn;
-    context.logicalColumn += diff;
-    context.visualColumn += diff;
-    context.offset += diff;
-    return context.buildVisualPosition();
+  public VisualPosition build(EditorPosition position) {
+    int diff = myTargetLogical.column - position.logicalColumn;
+    position.logicalColumn += diff;
+    position.visualColumn += diff;
+    position.offset += diff;
+    return position.buildVisualPosition();
   }
 }

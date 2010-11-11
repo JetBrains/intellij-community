@@ -183,7 +183,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       return eagerMatch;
     }
 
-    ProcessingContext context = strategy.buildInitialContext();
+    EditorPosition position = strategy.buildInitialPosition();
 
     // Folding model doesn't return information about fold regions if their 'enabled' state is set to 'false'. Unfortunately,
     // such situation occurs not only on manual folding disabling but on internal processing as well. E.g. 'enabled' is set
@@ -196,13 +196,13 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     try {
       provider = new CompositeDataProvider(
         new SoftWrapsDataProvider(myStorage), new FoldingDataProvider(myEditor.getFoldingModel().fetchTopLevel()),
-        getTabulationDataProvider(context.visualLine)
+        getTabulationDataProvider(position.visualLine)
       );
     }
     finally {
       foldingModel.setFoldingEnabled(foldingState);
     }
-    provider.advance(context.offset);
+    provider.advance(position.offset);
 
     while (provider.hasData()) {
       Pair<SoftWrapDataProviderKeys, ?> data = provider.getData();
@@ -210,24 +210,24 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       int sortingKey = provider.getSortingKey();
 
       // There is a possible case that, say, fold region is soft wrapped. We don't want to perform unnecessary then.
-      if (context.offset <= sortingKey) {
-        result = strategy.advance(context, sortingKey);
+      if (position.offset <= sortingKey) {
+        result = strategy.advance(position, sortingKey);
         if (result != null) {
           return result;
         }
       }
 
       switch (data.first) {
-        case SOFT_WRAP: result = strategy.processSoftWrap(context, (SoftWrap)data.second); break;
-        case COLLAPSED_FOLDING: result = strategy.processFoldRegion(context, (FoldRegion)data.second); break;
-        case TABULATION: result = strategy.processTabulation(context, (TabData)data.second); break;
+        case SOFT_WRAP: result = strategy.processSoftWrap(position, (SoftWrap)data.second); break;
+        case COLLAPSED_FOLDING: result = strategy.processFoldRegion(position, (FoldRegion)data.second); break;
+        case TABULATION: result = strategy.processTabulation(position, (TabData)data.second); break;
       }
       if (result != null) {
         return result;
       }
       provider.next();
     }
-    return strategy.build(context);
+    return strategy.build(position);
   }
 
   private TabulationDataProvider getTabulationDataProvider(int visualLine) throws IllegalStateException {
@@ -245,19 +245,19 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void onProcessedSymbol(@NotNull ProcessingContext context) {
-    switch (context.symbol) {
-      case '\n': onLineFeed(context); break;
-      case '\t': onTabulation(context); break;
-      default: onNonLineFeedSymbol(context); break;
+  public void onProcessedSymbol(@NotNull EditorPosition position) {
+    switch (position.symbol) {
+      case '\n': onLineFeed(position); break;
+      case '\t': onTabulation(position); break;
+      default: onNonLineFeedSymbol(position); break;
     }
 
     int documentLength = myEditor.getDocument().getTextLength();
-    if (documentLength > 0 && context.offset >= documentLength - 1 && context.symbol != '\n') {
+    if (documentLength > 0 && position.offset >= documentLength - 1 && position.symbol != '\n') {
       // Update information about end position of the last visual line.
-      CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-      cacheEntry.endLogicalColumn += context.symbolWidthInColumns;
-      cacheEntry.endVisualColumn += context.symbolWidthInColumns;
+      CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+      cacheEntry.endLogicalColumn += position.symbolWidthInColumns;
+      cacheEntry.endVisualColumn += position.symbolWidthInColumns;
       cacheEntry.endOffset++;
     }
   }
@@ -269,15 +269,15 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void beforeSoftWrap(@NotNull ProcessingContext context) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-    cacheEntry.setLineEndPosition(context);
+  public void beforeSoftWrap(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+    cacheEntry.setLineEndPosition(position);
   }
 
   @Override
-  public void afterSoftWrapLineFeed(@NotNull ProcessingContext context) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-    cacheEntry.setLineStartPosition(context, context.visualLine);
+  public void afterSoftWrapLineFeed(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+    cacheEntry.setLineStartPosition(position, position.visualLine);
   }
 
   @Override
@@ -305,49 +305,49 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   /**
-   * Updates inner cache for the context that points to line feed symbol
+   * Updates inner cache for the position that points to line feed symbol
    *
-   * @param context    processing context that points to line feed symbol
+   * @param position    position that points to line feed symbol
    */
-  private void onLineFeed(@NotNull ProcessingContext context) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-    cacheEntry.setLineEndPosition(context);
+  private void onLineFeed(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+    cacheEntry.setLineEndPosition(position);
 
-    cacheEntry = getCacheEntryForVisualLine(context.visualLine + 1);
+    cacheEntry = getCacheEntryForVisualLine(position.visualLine + 1);
 
-    ProcessingContext newLineContext = context.clone();
-    newLineContext.onNewLine();
-    newLineContext.offset++;
-    cacheEntry.setLineStartPosition(newLineContext, context.visualLine + 1);
-    cacheEntry.setLineEndPosition(newLineContext);
+    EditorPosition newLinePosition = position.clone();
+    newLinePosition.onNewLine();
+    newLinePosition.offset++;
+    cacheEntry.setLineStartPosition(newLinePosition, position.visualLine + 1);
+    cacheEntry.setLineEndPosition(newLinePosition);
   }
 
   /**
-   * Updates inner cache for the context that points to tabulation symbol.
+   * Updates inner cache for the position that points to tabulation symbol.
    *
-   * @param context    processing context that points to tabulation symbol
+   * @param position    position that points to tabulation symbol
    */
-  private void onTabulation(@NotNull ProcessingContext context) {
-    onNonLineFeedSymbol(context);
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
-    cacheEntry.storeTabData(context);
+  private void onTabulation(@NotNull EditorPosition position) {
+    onNonLineFeedSymbol(position);
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+    cacheEntry.storeTabData(position);
   }
 
   /**
-   * Process given context in assumption that it points to non-line feed symbol.
+   * Process given position in assumption that it points to non-line feed symbol.
    *
-   * @param context   context that is assumed to point to non-line feed symbol
+   * @param position   position that is assumed to point to non-line feed symbol
    */
-  private void onNonLineFeedSymbol(@NotNull ProcessingContext context) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(context.visualLine);
+  private void onNonLineFeedSymbol(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
     Document document = myEditor.getDocument();
-    if (context.offset >= document.getTextLength() - 1) {
-      cacheEntry.setLineEndPosition(context);
+    if (position.offset >= document.getTextLength() - 1) {
+      cacheEntry.setLineEndPosition(position);
       return;
     }
 
-    if (context.offset < 0 || (context.offset > 0 && context.offset < document.getTextLength()
-                               && document.getCharsSequence().charAt(context.offset - 1) != '\n'))
+    if (position.offset < 0 || (position.offset > 0 && position.offset < document.getTextLength()
+                               && document.getCharsSequence().charAt(position.offset - 1) != '\n'))
     {
       return;
     }
@@ -355,7 +355,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     // Process first symbol on a new line.
     cacheEntry.getTabData().clear();
     cacheEntry.getFoldingData().clear();
-    cacheEntry.setLineStartPosition(context.clone(), context.visualLine);
+    cacheEntry.setLineStartPosition(position.clone(), position.visualLine);
   }
 
   private CacheEntry getCacheEntryForVisualLine(int visualLine) {

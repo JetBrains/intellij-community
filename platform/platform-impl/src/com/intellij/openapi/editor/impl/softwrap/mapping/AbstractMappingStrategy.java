@@ -74,7 +74,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
   @NotNull
   @Override
-  public ProcessingContext buildInitialContext() {
+  public EditorPosition buildInitialPosition() {
     return myCacheEntry.buildStartLineContext();
   }
 
@@ -83,27 +83,27 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   @Override
-  public T advance(ProcessingContext context, int offset) {
-    T result = buildIfExceeds(context, offset);
+  public T advance(EditorPosition position, int offset) {
+    T result = buildIfExceeds(position, offset);
     if (result != null) {
       return result;
     }
 
     // Update context state and continue processing.
-    context.logicalLine = myEditor.getDocument().getLineNumber(offset);
-    int diff = offset - context.offset;
-    context.visualColumn += diff;
-    context.logicalColumn += diff;
-    context.offset = offset;
+    position.logicalLine = myEditor.getDocument().getLineNumber(offset);
+    int diff = offset - position.offset;
+    position.visualColumn += diff;
+    position.logicalColumn += diff;
+    position.offset = offset;
     return null;
   }
 
   @Nullable
-  protected abstract T buildIfExceeds(ProcessingContext context, int offset);
+  protected abstract T buildIfExceeds(EditorPosition context, int offset);
 
   @Override
-  public T processFoldRegion(ProcessingContext context, FoldRegion foldRegion) {
-    T result = buildIfExceeds(context, foldRegion);
+  public T processFoldRegion(EditorPosition position, FoldRegion foldRegion) {
+    T result = buildIfExceeds(position, foldRegion);
     if (result != null) {
       return result;
     }
@@ -111,12 +111,12 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     Document document = myEditor.getDocument();
     int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
     int collapsedSymbolsWidthInColumns;
-    if (context.logicalLine == endOffsetLogicalLine) {
+    if (position.logicalLine == endOffsetLogicalLine) {
       // Single-line fold region.
       FoldingData foldingData = getFoldRegionData(foldRegion);
       if (foldingData == null) {
         assert false;
-        collapsedSymbolsWidthInColumns = context.visualColumn * myRepresentationHelper.textWidth(" ", 0, 1, Font.PLAIN, 0);
+        collapsedSymbolsWidthInColumns = position.visualColumn * myRepresentationHelper.textWidth(" ", 0, 1, Font.PLAIN, 0);
       }
       else {
         collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
@@ -127,31 +127,31 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
       collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
         document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
       );
-      context.softWrapColumnDiff = 0;
-      context.softWrapLinesBefore += context.softWrapLinesCurrent;
-      context.softWrapLinesCurrent = 0;
+      position.softWrapColumnDiff = 0;
+      position.softWrapLinesBefore += position.softWrapLinesCurrent;
+      position.softWrapLinesCurrent = 0;
     }
 
-    context.advance(foldRegion, collapsedSymbolsWidthInColumns);
+    position.advance(foldRegion, collapsedSymbolsWidthInColumns);
     return null;
   }
 
   @Nullable
-  protected abstract T buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion);
+  protected abstract T buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion);
 
   @Override
-  public T processTabulation(ProcessingContext context, TabData tabData) {
-    T result = buildIfExceeds(context, tabData);
+  public T processTabulation(EditorPosition position, TabData tabData) {
+    T result = buildIfExceeds(position, tabData);
     if (result != null) {
       return result;
     }
 
-    context.visualColumn += tabData.widthInColumns;
-    context.logicalColumn += tabData.widthInColumns;
-    context.offset++;
+    position.visualColumn += tabData.widthInColumns;
+    position.logicalColumn += tabData.widthInColumns;
+    position.offset++;
     return null;
   }
 
   @Nullable
-  protected abstract T buildIfExceeds(ProcessingContext context, TabData tabData);
+  protected abstract T buildIfExceeds(EditorPosition context, TabData tabData);
 }

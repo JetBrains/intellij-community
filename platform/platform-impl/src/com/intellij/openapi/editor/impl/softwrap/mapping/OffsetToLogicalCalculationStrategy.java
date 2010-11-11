@@ -76,7 +76,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, int offset) {
+  protected LogicalPosition buildIfExceeds(EditorPosition context, int offset) {
     if (myTargetOffset > offset) {
       return null;
     }
@@ -97,7 +97,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
+  protected LogicalPosition buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion) {
     if (myTargetOffset >= foldRegion.getEndOffset()) {
       return null;
     }
@@ -131,7 +131,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @Nullable
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
+  protected LogicalPosition buildIfExceeds(EditorPosition context, TabData tabData) {
     if (tabData.offset == myTargetOffset) {
       return context.buildLogicalPosition();
     }
@@ -140,26 +140,26 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @Nullable
   @Override
-  public LogicalPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-    context.visualColumn = softWrap.getIndentInColumns();
-    context.softWrapColumnDiff += softWrap.getIndentInColumns();
+  public LogicalPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+    position.visualColumn = softWrap.getIndentInColumns();
+    position.softWrapColumnDiff += softWrap.getIndentInColumns();
     if (softWrap.getStart() == myTargetOffset) {
-      return context.buildLogicalPosition();
+      return position.buildLogicalPosition();
     }
     if (softWrap.getStart() == getCacheEntry().startOffset) {
       return null;
     }
     assert false;
-    return context.buildLogicalPosition();
+    return position.buildLogicalPosition();
   }
 
   @NotNull
   @Override
-  public LogicalPosition build(ProcessingContext context) {
-    int diff = myTargetOffset - context.offset;
-    context.logicalColumn += diff;
-    context.visualColumn += diff;
-    context.offset = myTargetOffset;
-    return context.buildLogicalPosition();
+  public LogicalPosition build(EditorPosition position) {
+    int diff = myTargetOffset - position.offset;
+    position.logicalColumn += diff;
+    position.visualColumn += diff;
+    position.offset = myTargetOffset;
+    return position.buildLogicalPosition();
   }
 }

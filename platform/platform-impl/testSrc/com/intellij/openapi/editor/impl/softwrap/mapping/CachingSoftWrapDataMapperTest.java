@@ -523,7 +523,7 @@ public class CachingSoftWrapDataMapperTest {
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   private void init(final String documentText) {
-    final TestProcessingContext context = new TestProcessingContext();
+    final TestEditorPosition context = new TestEditorPosition();
     myMockery.checking(new Expectations() {{
       allowing(myDocument).getCharsSequence(); will(new CustomAction("getCharsSequence()") {
         @Override
@@ -627,7 +627,7 @@ public class CachingSoftWrapDataMapperTest {
     }
   }
 
-  private class TestProcessingContext extends ProcessingContext {
+  private class TestEditorPosition extends EditorPosition {
     private final StringBuilder mySoftWrapBuffer = new StringBuilder();
     final         StringBuilder document         = new StringBuilder();
 
@@ -643,7 +643,7 @@ public class CachingSoftWrapDataMapperTest {
     int     foldingStartVisualColumn;
     int     foldingStartX;
 
-    TestProcessingContext() {
+    TestEditorPosition() {
       super(myEditor, myRepresentationHelper);
     }
 

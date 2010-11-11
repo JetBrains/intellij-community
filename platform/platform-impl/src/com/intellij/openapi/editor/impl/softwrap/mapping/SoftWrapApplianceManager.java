@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -191,20 +190,20 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     TextAttributes attributes = iterationState.getMergedAttributes();
     int fontType = attributes.getFontType();
 
-    ProcessingContext context = new ProcessingContext(logical, start, myEditor, myRepresentationHelper);
+    EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
     Point point = myEditor.visualPositionToXY(visual);
-    context.x = point.x;
+    position.x = point.x;
     int newX;
     int spaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
 
     LogicalLineData logicalLineData = new LogicalLineData();
     logicalLineData.update(logical.line, spaceWidth, myEditor);
 
-    ProcessingContext startLineContext = context.clone();
+    EditorPosition startLinePosition = position.clone();
     JComponent contentComponent = myEditor.getContentComponent();
     TIntIntHashMap fontType2spaceWidth = new TIntIntHashMap();
     fontType2spaceWidth.put(fontType, spaceWidth);
-    int softWrapStartOffset = startLineContext.offset;
+    int softWrapStartOffset = startLinePosition.offset;
 
     int reservedWidth = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     SoftWrap delayedSoftWrap = null;
@@ -216,19 +215,19 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       if (currentFold != null) {
         if (currentFold.getEndOffset() > document.getTextLength()) {
           // There is a possible case that user just removed text that contained fold region and fold model is not updated yet
-          int startLineOffset = document.getLineStartOffset(context.logicalLine);
+          int startLineOffset = document.getLineStartOffset(position.logicalLine);
           myDirtyRegions.add(new DirtyRegion(startLineOffset, document.getTextLength() - 1));
 
           // We need to inform listeners about processing end.
-          context.offset = document.getTextLength() - 1;
-          context.symbol = document.getCharsSequence().charAt(context.offset);
-          notifyListenersOnProcessedSymbol(context);
+          position.offset = document.getTextLength() - 1;
+          position.symbol = document.getCharsSequence().charAt(position.offset);
+          notifyListenersOnProcessedSymbol(position);
           return;
         }
 
         String placeholder = currentFold.getPlaceholderText();
         FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), fontType, myEditor);
-        newX = context.x;
+        newX = position.x;
         for (int i = 0; i < placeholder.length(); i++) {
           newX += fontInfo.charWidth(placeholder.charAt(i), contentComponent);
         }
@@ -238,50 +237,50 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           assert softWrap != null; // We expect that it's always possible to wrap collapsed fold region placeholder text
           softWrapStartOffset = softWrap.getStart();
           if (softWrap.getStart() < start) {
-            revertListeners(softWrap.getStart(), context.visualLine);
+            revertListeners(softWrap.getStart(), position.visualLine);
             for (int j = currentFold.getStartOffset() - 1; j >= softWrap.getStart(); j--) {
               int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
               int tmpFontType = myOffset2fontType.data[j - myOffset2fontType.anchor];
               int columnsDiff = calculateWidthInColumns(text.charAt(j), pixelsDiff, fontType2spaceWidth.get(tmpFontType));
-              context.offset--;
-              context.logicalColumn -= columnsDiff;
-              context.visualColumn -= columnsDiff;
+              position.offset--;
+              position.logicalColumn -= columnsDiff;
+              position.visualColumn -= columnsDiff;
             }
-            notifyListenersOnBeforeSoftWrap(context);
+            notifyListenersOnBeforeSoftWrap(position);
           }
 
-          context.visualColumn = 0;
-          context.softWrapColumnDiff = context.visualColumn - context.foldingColumnDiff - context.logicalColumn;
-          context.softWrapLinesCurrent++;
-          context.visualLine++;
-          notifyListenersOnAfterSoftWrapLineFeed(context);
+          position.visualColumn = 0;
+          position.softWrapColumnDiff = position.visualColumn - position.foldingColumnDiff - position.logicalColumn;
+          position.softWrapLinesCurrent++;
+          position.visualLine++;
+          notifyListenersOnAfterSoftWrapLineFeed(position);
 
-          context.x = softWrap.getIndentInPixels();
-          context.visualColumn = softWrap.getIndentInColumns();
-          context.softWrapColumnDiff += softWrap.getIndentInColumns();
-          startLineContext.from(context);
+          position.x = softWrap.getIndentInPixels();
+          position.visualColumn = softWrap.getIndentInColumns();
+          position.softWrapColumnDiff += softWrap.getIndentInColumns();
+          startLinePosition.from(position);
 
           for (int j = softWrap.getStart(); j < start; j++) {
             fontType = myOffset2fontType.data[j - myOffset2fontType.anchor];
-            newX = calculateNewX(context, fontType, contentComponent);
-            processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+            newX = calculateNewX(position, fontType, contentComponent);
+            processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
           }
           myOffset2fontType.clear();
           myOffset2widthInPixels.clear();
           continue;
         }
         else {
-          int visualLineBefore = context.visualLine;
-          int logicalColumnBefore = context.logicalColumn;
-          context.advance(currentFold);
-          context.x = newX;
-          int collapsedFoldingWidthInColumns = context.logicalColumn;
-          if (context.visualLine <= visualLineBefore) {
+          int visualLineBefore = position.visualLine;
+          int logicalColumnBefore = position.logicalColumn;
+          position.advance(currentFold);
+          position.x = newX;
+          int collapsedFoldingWidthInColumns = position.logicalColumn;
+          if (position.visualLine <= visualLineBefore) {
             // Single-line fold region.
-            collapsedFoldingWidthInColumns = context.logicalColumn - logicalColumnBefore;
+            collapsedFoldingWidthInColumns = position.logicalColumn - logicalColumnBefore;
           }
           notifyListenersOnFoldRegion(currentFold, collapsedFoldingWidthInColumns, visualLineBefore);
-          start = context.offset;
+          start = position.offset;
           softWrapStartOffset = currentFold.getEndOffset();
         }
         myOffset2fontType.clear();
@@ -301,28 +300,28 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         if (myOffset2fontType.anchor + myOffset2fontType.end > i) {
           fontType = myOffset2fontType.data[i - myOffset2fontType.anchor];
         }
-        context.symbol = c;
+        position.symbol = c;
 
         if (delayedSoftWrap != null && delayedSoftWrap.getStart() == i) {
-          processSoftWrap(delayedSoftWrap, context);
+          processSoftWrap(delayedSoftWrap, position);
           softWrapStartOffset = delayedSoftWrap.getStart();
-          startLineContext.from(context);
+          startLinePosition.from(position);
           delayedSoftWrap = null;
         }
 
         if (c == '\n') {
-          processSymbol(context, startLineContext, logicalLineData, fontType, 0, fontType2spaceWidth);
-          softWrapStartOffset = startLineContext.offset;
+          processSymbol(position, startLinePosition, logicalLineData, fontType, 0, fontType2spaceWidth);
+          softWrapStartOffset = startLinePosition.offset;
           continue;
         }
 
-        if (myOffset2widthInPixels.end > context.offset && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > context.offset)
-            && context.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
+        if (myOffset2widthInPixels.end > position.offset && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > position.offset)
+            && position.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
         {
-          newX = context.x + myOffset2widthInPixels.data[context.offset - myOffset2widthInPixels.anchor];
+          newX = position.x + myOffset2widthInPixels.data[position.offset - myOffset2widthInPixels.anchor];
         }
         else {
-          newX = calculateNewX(context, fontType, contentComponent);
+          newX = calculateNewX(position, fontType, contentComponent);
         }
 
         if (newX + reservedWidth >= myVisibleAreaWidth && delayedSoftWrap == null) {
@@ -332,7 +331,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
             calculateSoftWrapEndOffset(softWrapStartOffset, logicalLineData.endLineOffset), spaceWidth, logicalLineData
           );
           if (softWrap == null) {
-            processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+            processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
             continue;
           }
           int newI = softWrap.getStart();
@@ -345,38 +344,38 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
           // We should process that accordingly.
           if (newI > end) {
             delayedSoftWrap = softWrap;
-            processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+            processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
             continue;
           }
           else if (newI < i) {
-            revertListeners(newI, context.visualLine);
+            revertListeners(newI, position.visualLine);
             for (int j = i - 1; j >= newI; j--) {
               int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
               int tmpFontType = myOffset2fontType.data[j - myOffset2fontType.anchor];
               int columnsDiff = calculateWidthInColumns(text.charAt(j), pixelsDiff, fontType2spaceWidth.get(tmpFontType));
-              context.offset--;
-              context.logicalColumn -= columnsDiff;
-              context.visualColumn -= columnsDiff;
+              position.offset--;
+              position.logicalColumn -= columnsDiff;
+              position.visualColumn -= columnsDiff;
             }
           }
           else if (newI > i) {
-            processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+            processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
             for (int j = i + 1; j < newI; j++) {
-              context.symbol = text.charAt(j);
-              newX = calculateNewX(context, fontType, contentComponent);
-              processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+              position.symbol = text.charAt(j);
+              newX = calculateNewX(position, fontType, contentComponent);
+              processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
             }
           }
 
-          processSoftWrap(softWrap, context);
+          processSoftWrap(softWrap, position);
           softWrapStartOffset = newI;
           i = newI - 1/* because of loop increment */;
-          startLineContext.from(context);
+          startLinePosition.from(position);
           myOffset2fontType.clear();
           myOffset2widthInPixels.clear();
         }
         else {
-          processSymbol(context, startLineContext, logicalLineData, fontType, newX, fontType2spaceWidth);
+          processSymbol(position, startLinePosition, logicalLineData, fontType, newX, fontType2spaceWidth);
         }
       }
 
@@ -453,13 +452,13 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myOffset2fontType.end = end - myOffset2fontType.anchor;
   }
 
-  private int calculateNewX(ProcessingContext context, int fontType, JComponent component) {
-    if (context.symbol == '\t') {
-      return EditorUtil.nextTabStop(context.x, myEditor);
+  private int calculateNewX(EditorPosition position, int fontType, JComponent component) {
+    if (position.symbol == '\t') {
+      return EditorUtil.nextTabStop(position.x, myEditor);
     }
     else {
-      FontInfo fontInfo = EditorUtil.fontForChar(context.symbol, fontType, myEditor);
-      return context.x + fontInfo.charWidth(context.symbol, component);
+      FontInfo fontInfo = EditorUtil.fontForChar(position.symbol, fontType, myEditor);
+      return position.x + fontInfo.charWidth(position.symbol, component);
     }
   }
 
@@ -474,7 +473,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     return end;
   }
 
-  private void processSymbol(ProcessingContext context, ProcessingContext startLineContext, LogicalLineData logicalLineData,
+  private void processSymbol(EditorPosition position, EditorPosition startLineContext, LogicalLineData logicalLineData,
                              int fontType, int newX, TIntIntHashMap fontType2spaceWidth)
   {
     int spaceWidth;
@@ -486,40 +485,40 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       fontType2spaceWidth.put(fontType, spaceWidth);
     }
 
-    if (context.symbol == '\n') {
-      context.symbolWidthInColumns = 0;
-      context.symbolWidthInPixels = 0;
-      notifyListenersOnProcessedSymbol(context);
-      context.offset++;
-      context.onNewLine();
+    if (position.symbol == '\n') {
+      position.symbolWidthInColumns = 0;
+      position.symbolWidthInPixels = 0;
+      notifyListenersOnProcessedSymbol(position);
+      position.offset++;
+      position.onNewLine();
 
       myOffset2fontType.clear();
       myOffset2widthInPixels.clear();
       //clear(offset2fontType);
       //clear(offset2widthInPixels);
-      startLineContext.from(context);
-      logicalLineData.update(context.logicalLine, spaceWidth, myEditor);
-      context.x = 0;
+      startLineContext.from(position);
+      logicalLineData.update(position.logicalLine, spaceWidth, myEditor);
+      position.x = 0;
       return;
     }
 
-    context.symbolWidthInPixels = newX - context.x;
-    context.symbolWidthInColumns = calculateWidthInColumns(context.symbol, context.symbolWidthInPixels, spaceWidth);
-    notifyListenersOnProcessedSymbol(context);
-    context.visualColumn += context.symbolWidthInColumns;
-    context.logicalColumn += context.symbolWidthInColumns;
-    context.x = newX;
+    position.symbolWidthInPixels = newX - position.x;
+    position.symbolWidthInColumns = calculateWidthInColumns(position.symbol, position.symbolWidthInPixels, spaceWidth);
+    notifyListenersOnProcessedSymbol(position);
+    position.visualColumn += position.symbolWidthInColumns;
+    position.logicalColumn += position.symbolWidthInColumns;
+    position.x = newX;
     if (myOffset2widthInPixels.anchor <= 0) {
-      myOffset2widthInPixels.anchor = context.offset;
+      myOffset2widthInPixels.anchor = position.offset;
     }
-    if (context.offset - myOffset2widthInPixels.anchor >= myOffset2widthInPixels.data.length) {
+    if (position.offset - myOffset2widthInPixels.anchor >= myOffset2widthInPixels.data.length) {
       int[] newData = new int[myOffset2widthInPixels.data.length * 2];
       System.arraycopy(myOffset2widthInPixels.data, 0, newData, 0, myOffset2widthInPixels.data.length);
       myOffset2widthInPixels.data = newData;
     }
-    myOffset2widthInPixels.data[context.offset - myOffset2widthInPixels.anchor] = context.symbolWidthInPixels;
+    myOffset2widthInPixels.data[position.offset - myOffset2widthInPixels.anchor] = position.symbolWidthInPixels;
     myOffset2widthInPixels.end++;
-    context.offset++;
+    position.offset++;
   }
 
   private static int calculateWidthInColumns(char c, int widthInPixels, int spaceWithInPixels) {
@@ -578,18 +577,18 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     return softWrap;
   }
 
-  private void processSoftWrap(SoftWrap softWrap, ProcessingContext context) {
-    notifyListenersOnBeforeSoftWrap(context);
+  private void processSoftWrap(SoftWrap softWrap, EditorPosition position) {
+    notifyListenersOnBeforeSoftWrap(position);
 
-    context.visualColumn = 0;
-    context.softWrapColumnDiff = context.visualColumn - context.foldingColumnDiff - context.logicalColumn;
-    context.softWrapLinesCurrent++;
-    context.visualLine++;
-    notifyListenersOnAfterSoftWrapLineFeed(context);
+    position.visualColumn = 0;
+    position.softWrapColumnDiff = position.visualColumn - position.foldingColumnDiff - position.logicalColumn;
+    position.softWrapLinesCurrent++;
+    position.visualLine++;
+    notifyListenersOnAfterSoftWrapLineFeed(position);
 
-    context.x = softWrap.getIndentInPixels();
-    context.visualColumn = softWrap.getIndentInColumns();
-    context.softWrapColumnDiff += softWrap.getIndentInColumns();
+    position.x = softWrap.getIndentInPixels();
+    position.visualColumn = softWrap.getIndentInColumns();
+    position.softWrapColumnDiff += softWrap.getIndentInColumns();
   }
 
   public void recalculateIfNecessary() {
@@ -667,29 +666,29 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private void notifyListenersOnProcessedSymbol(@NotNull ProcessingContext context) {
+  private void notifyListenersOnProcessedSymbol(@NotNull EditorPosition position) {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.onProcessedSymbol(context);
+      listener.onProcessedSymbol(position);
     }
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private void notifyListenersOnBeforeSoftWrap(@NotNull ProcessingContext context) {
+  private void notifyListenersOnBeforeSoftWrap(@NotNull EditorPosition position) {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.beforeSoftWrap(context);
+      listener.beforeSoftWrap(position);
     }
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private void notifyListenersOnAfterSoftWrapLineFeed(@NotNull ProcessingContext context) {
+  private void notifyListenersOnAfterSoftWrapLineFeed(@NotNull EditorPosition position) {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.afterSoftWrapLineFeed(context);
+      listener.afterSoftWrapLineFeed(position);
     }
   }
 

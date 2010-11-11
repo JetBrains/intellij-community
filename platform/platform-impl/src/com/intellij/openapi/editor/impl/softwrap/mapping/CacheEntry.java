@@ -74,7 +74,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myCache = cache;
   }
 
-  public void setLineStartPosition(@NotNull ProcessingContext context, int i) {
+  public void setLineStartPosition(@NotNull EditorPosition context, int i) {
     assert context.visualColumn == 0;
     startLogicalLine = context.logicalLine;
     startLogicalColumn = context.logicalColumn;
@@ -91,7 +91,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     }
   }
 
-  public void setLineEndPosition(@NotNull ProcessingContext context) {
+  public void setLineEndPosition(@NotNull EditorPosition context) {
     endOffset = context.offset;
     endLogicalLine = context.logicalLine;
     endLogicalColumn = context.logicalColumn;
@@ -103,8 +103,8 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     endFoldingColumnDiff = context.foldingColumnDiff;
   }
 
-  public ProcessingContext buildStartLineContext() {
-    ProcessingContext result = new ProcessingContext(myEditor, myRepresentationHelper);
+  public EditorPosition buildStartLineContext() {
+    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
     result.logicalLine = startLogicalLine;
     result.logicalColumn = startLogicalColumn;
     result.offset = startOffset;
@@ -118,8 +118,8 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return result;
   }
 
-  public ProcessingContext buildEndLineContext() {
-    ProcessingContext result = new ProcessingContext(myEditor, myRepresentationHelper);
+  public EditorPosition buildEndLineContext() {
+    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
     result.logicalLine = endLogicalLine;
     result.logicalColumn = endLogicalColumn;
     result.offset = endOffset;
@@ -152,7 +152,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return myTabPositions;
   }
 
-  public void storeTabData(ProcessingContext context) {
+  public void storeTabData(EditorPosition context) {
     storeTabData(new TabData(context));
   }
 

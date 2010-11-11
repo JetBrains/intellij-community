@@ -34,11 +34,11 @@ interface SoftWrapAwareDocumentParsingListener {
 
   /**
    * Notifies about processed symbol. Please note that given context points to the end of line (not to the start of the new line) if
-   * {@link ProcessingContext#symbol processed symbol} is line feed.
+   * {@link EditorPosition#symbol processed symbol} is line feed.
    *
-   * @param context    context that points to the {@link ProcessingContext#symbol processed symbol}
+   * @param context    context that points to the {@link EditorPosition#symbol processed symbol}
    */
-  void onProcessedSymbol(@NotNull ProcessingContext context);
+  void onProcessedSymbol(@NotNull EditorPosition context);
 
   /**
    * Notifies about processed fold region.
@@ -54,14 +54,14 @@ interface SoftWrapAwareDocumentParsingListener {
    *
    * @param context   context that points to document position just before soft wrap
    */
-  void beforeSoftWrap(@NotNull ProcessingContext context);
+  void beforeSoftWrap(@NotNull EditorPosition context);
 
   /**
    * Notifies about soft wrap-introduced line feed.
    *
    * @param context   context that points to document position just after soft wrap-introduced line feed
    */
-  void afterSoftWrapLineFeed(@NotNull ProcessingContext context);
+  void afterSoftWrapLineFeed(@NotNull EditorPosition context);
 
   /**
    * There is a possible case that document parser steps back to particular offset, i.e. it may encounter a situation
@@ -83,7 +83,7 @@ interface SoftWrapAwareDocumentParsingListener {
    * <pre>
    * <ul>
    *   <li>{@link #onRecalculationStart(int, int)};</li>
-   *   <li>number of calls like {@link #onProcessedSymbol(ProcessingContext)}, {@link #onCollapsedFoldRegion(FoldRegion, int, int)} etc;</li>
+   *   <li>number of calls like {@link #onProcessedSymbol(EditorPosition)}, {@link #onCollapsedFoldRegion(FoldRegion, int, int)} etc;</li>
    *   <li>{@link #onRecalculationEnd(int, int)};</li>
    * </ul>
    * </pre>
