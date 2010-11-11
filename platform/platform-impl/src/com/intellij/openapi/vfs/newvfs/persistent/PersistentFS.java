@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -431,7 +432,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final byte[] content = delegate.contentsToByteArray(file);
 
-      if (cacheContent && !delegate.isReadOnly() && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD && !noCaching) {
+      ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+      if ((cacheContent && !delegate.isReadOnly() || (!application.isInternal() && !application.isUnitTestMode())) &&
+          !noCaching && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
           writeContent(file, content, delegate.isReadOnly());
 
