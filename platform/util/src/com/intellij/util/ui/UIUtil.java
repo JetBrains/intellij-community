@@ -1717,5 +1717,19 @@ public class UIUtil {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
+  @Nullable
+  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
+    Component eachParent = c;
+    while (eachParent != null) {
+      if (cls.isAssignableFrom(eachParent.getClass())) {
+        return (T)eachParent;
+      }
+
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
+  }
+
 }
 

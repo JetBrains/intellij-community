@@ -163,18 +163,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
 
         Component focusOwner = async ? fm.getFocusOwner() : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
-        if (focusOwner != null) {
-          Set<EditorsSplitters> splitters = getAllSplitters();
-          for (EditorsSplitters each : splitters) {
-            if (each == focusOwner || SwingUtilities.isDescendingFrom(focusOwner, each)) {
-              result.setDone(each);
-              return;
-            }
-          }
+        DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
+        if (container instanceof DockableEditorTabbedContainer) {
+          result.setDone(((DockableEditorTabbedContainer)container).getSplitters());
+        } else {
+          result.setDone(getMainSplitters());
         }
-
-        result.setDone(getMainSplitters());
       }
     };
 
