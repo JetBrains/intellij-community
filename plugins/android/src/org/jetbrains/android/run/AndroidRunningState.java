@@ -102,7 +102,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private volatile ProcessHandler myProcessHandler;
   private final Object myLock = new Object();
 
-  private boolean myDeploy;
+  private boolean myDeploy = true;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
