@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myContentPanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="460" height="545"/>
+      <xy x="20" y="20" width="512" height="625"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -176,7 +176,7 @@
               </vspacer>
             </children>
           </grid>
-          <grid id="84519" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="84519" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="4" left="4" bottom="4" right="4"/>
             <constraints>
               <tabbedpane title="Compiler"/>
@@ -187,7 +187,7 @@
               <grid id="1f282" binding="myAaptCompilerPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="4" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
@@ -227,7 +227,7 @@
               <grid id="4c810" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="4" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
@@ -259,7 +259,7 @@
               <grid id="3e085" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="4" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
@@ -312,7 +312,7 @@
               </grid>
               <vspacer id="e716a">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <component id="63343" class="javax.swing.JCheckBox" binding="myCopyResourcesFromArtifacts">
@@ -323,6 +323,39 @@
                   <text resource-bundle="messages/AndroidBundle" key="copy.resources.from.artifacts.setting"/>
                 </properties>
               </component>
+              <grid id="50185" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.compiler.settings.manifest.title"/>
+                <children>
+                  <component id="f22e9" class="javax.swing.JRadioButton" binding="myUseCompilerManifestFromStructureRadio">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.compiler.manifest.from.structure"/>
+                    </properties>
+                  </component>
+                  <component id="39195" class="javax.swing.JRadioButton" binding="myUseCustomCompilerManifestRadio">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <selected value="false"/>
+                      <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.compiler.manifest.use.custom"/>
+                    </properties>
+                  </component>
+                  <component id="ec790" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myCustomCompilerManifestPathField">
+                    <constraints>
+                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
         </children>
@@ -341,6 +374,10 @@
     <group name="buttonGroup1">
       <member id="d83b5"/>
       <member id="df739"/>
+    </group>
+    <group name="buttonGroup2">
+      <member id="f22e9"/>
+      <member id="39195"/>
     </group>
   </buttonGroups>
 </form>
