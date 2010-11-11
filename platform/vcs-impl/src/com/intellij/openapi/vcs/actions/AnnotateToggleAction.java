@@ -78,6 +78,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     new Color(236, 236, 236)};
 
   public void update(AnActionEvent e) {
+    super.update(e);
     final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
     e.getPresentation().setEnabled(enabled);
   }
