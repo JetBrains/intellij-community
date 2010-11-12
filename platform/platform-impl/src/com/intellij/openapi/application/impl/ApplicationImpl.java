@@ -107,13 +107,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private int myRestartCode = 0;
   private volatile int myExitCode = 0;
 
-  private BusyObject.Impl myReady = new BusyObject.Impl() {
-    @Override
-    protected boolean isReady() {
-      return isActive();
-    }
-  };
-
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
     System.getProperty("dump.threads.on.long.write.action.waiting"), 0);
@@ -1024,11 +1017,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  @Override
-  public ActionCallback getActive(boolean requestor) {
-    return myReady.getReady(this);
-  }
-
   public boolean tryToApplyActivationState(boolean active, Window window) {
     final Component frame = UIUtil.findUltimateParent(window);
 
@@ -1038,7 +1026,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myActive = Boolean.valueOf(active);
         System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
         if (active) {
-          myReady.onReady();
           myDispatcher.getMulticaster().applicationActivated(ideFrame);
         }
         else {

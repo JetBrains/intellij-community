@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
@@ -328,10 +327,5 @@ public class MockApplication extends MockComponentManager implements Application
   @Override
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     return false;
-  }
-
-  @Override
-  public ActionCallback getActive(boolean requestor) {
-    return new ActionCallback.Done();
   }
 }
