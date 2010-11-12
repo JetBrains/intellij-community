@@ -23,7 +23,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
-  public static final Color POPUP_SEPARATOR_FOREGROUND = Color.gray;
+  public static final Color POPUP_SEPARATOR_FOREGROUND = Color.gray.brighter();
+  public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
   public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
 
   final static Border ourSelectedBorder = new DottedBorder(SELECTED_FRAME_FOREGROUND);
