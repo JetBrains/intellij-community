@@ -16,13 +16,19 @@ public class PyThreadInfo {
   private final String myName;
   private List<PyStackFrameInfo> myFrames;
   private State myState;
-  private final boolean myStopOnBreakpoint;  // todo: remove
+  private boolean myStopOnBreakpoint;
+  private String myLogExpressionMessage;
 
-  public PyThreadInfo(final String id, final String name, final List<PyStackFrameInfo> frames, final boolean stopOnBreakpoint) {
+  public void setStopOnBreakpoint(boolean stopOnBreakpoint) {
+    myStopOnBreakpoint = stopOnBreakpoint;
+  }
+
+  public PyThreadInfo(final String id, final String name, final List<PyStackFrameInfo> frames, final boolean stopOnBreakpoint, String logExpressionMessage) {
     myId = id;
     myName = name;
     myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
     myStopOnBreakpoint = stopOnBreakpoint;
+    myLogExpressionMessage = logExpressionMessage;
   }
 
   public String getId() {
@@ -35,6 +41,14 @@ public class PyThreadInfo {
 
   public String getName() {
     return myName;
+  }
+
+  public String getLogExpressionMessage() {
+    return myLogExpressionMessage;
+  }
+
+  public void setLogExpressionMessage(String logExpressionMessage) {
+    myLogExpressionMessage = logExpressionMessage;
   }
 
   @Nullable

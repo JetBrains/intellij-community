@@ -40,6 +40,10 @@ public class ProtocolParser {
     final String id = readString(reader, "id", null);
     final String name = readString(reader, "name", "");
     final int stopReason = readInt(reader, "stop_reason", 0);
+    String logExpression = readString(reader, "log_expression", "None");
+    if ("None".equals(logExpression)) {
+      logExpression = null;
+    }
 
     final List<PyStackFrameInfo> frames = new LinkedList<PyStackFrameInfo>();
     while (reader.hasMoreChildren()) {
@@ -48,7 +52,7 @@ public class ProtocolParser {
       reader.moveUp();
     }
 
-    return new PyThreadInfo(id, name, frames, (stopReason == AbstractCommand.SET_BREAKPOINT));
+    return new PyThreadInfo(id, name, frames, (stopReason == AbstractCommand.SET_BREAKPOINT), logExpression);
   }
 
   @NotNull

@@ -180,7 +180,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     dropFrameCaches();
     if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
-      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine(), null);
+      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine());
       myDebugger.execute(command);  // set temp. breakpoint
       resume(ResumeCommand.Mode.RESUME);
     }
@@ -189,6 +189,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   public PyDebugValue evaluate(final String expression, final boolean execute) throws PyDebuggerException {
     dropFrameCaches();
     final PyStackFrame frame = currentFrame();
+    return evaluate(expression, execute, frame);
+  }
+
+  private PyDebugValue evaluate(String expression, boolean execute, PyStackFrame frame) throws PyDebuggerException {
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute);
   }
 
@@ -263,7 +267,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (myDebugger.isConnected()) {
       final SetBreakpointCommand command =
-        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition());
+        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition(), breakpoint.getLogExpression());
       myDebugger.execute(command);
     }
   }
@@ -318,7 +322,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
         }
 
         if (breakpoint != null) {
-          if (!getSession().breakpointReached(breakpoint, suspendContext)) {
+          if (!getSession().breakpointReached(breakpoint, threadInfo.getLogExpressionMessage(), suspendContext)) {
             resume();
           }
         }

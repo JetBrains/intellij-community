@@ -587,7 +587,7 @@ class PyDB:
                     
                     #command to add some breakpoint.
                     # text is file\tline. Add to breakpoints dictionary
-                    file, line, condition = text.split('\t', 2)
+                    file, line, condition, expression = text.split('\t', 3)
                     if condition.startswith('**FUNC**'):
                         func_name, condition = condition.split('\t', 1)
                         
@@ -617,10 +617,13 @@ class PyDB:
                     else:
                         breakDict = {}
     
-                    if len(condition) <= 0 or condition == None or condition == "None":
-                        breakDict[line] = (True, None, func_name)
-                    else:
-                        breakDict[line] = (True, condition, func_name)
+                    if len(condition) <= 0 or condition is None or condition == "None":
+                        condition = None
+
+                    if len(expression) <= 0 or expression is None or expression == "None":
+                        expression = None
+
+                    breakDict[line] = (True, condition, func_name, expression)
                     
                         
                     self.breakpoints[file] = breakDict
@@ -735,7 +738,13 @@ class PyDB:
         Upon running, processes any outstanding Stepping commands.
         """
         self.processInternalCommands()
-        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason)
+
+        try:
+            log_expression = thread.log_expression
+        except:
+            log_expression = None
+
+        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, log_expression)
         self.writer.addCommand(cmd)
         
         info = thread.additionalInfo
