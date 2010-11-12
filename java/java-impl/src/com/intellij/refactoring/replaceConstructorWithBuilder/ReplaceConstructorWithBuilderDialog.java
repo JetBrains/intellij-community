@@ -230,10 +230,10 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
         final String classText = myExistentClassTF.getText();
         final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
-          chooser.selectClass(currentClass);
+          chooser.select(currentClass);
         }
         chooser.showDialog();
-        final PsiClass selectedClass = chooser.getSelectedClass();
+        final PsiClass selectedClass = chooser.getSelected();
         if (selectedClass != null) {
           myExistentClassTF.setText(selectedClass.getQualifiedName());
         }

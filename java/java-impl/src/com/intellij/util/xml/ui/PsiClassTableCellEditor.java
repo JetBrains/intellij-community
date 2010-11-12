@@ -78,7 +78,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
           .createInheritanceClassChooser(UIBundle.message("choose.class"), mySearchScope, null, true, true, Conditions.alwaysTrue());
         chooser.showDialog();
-        final PsiClass psiClass = chooser.getSelectedClass();
+        final PsiClass psiClass = chooser.getSelected();
         if (psiClass != null) {
           myEditor.setText(psiClass.getQualifiedName());
         }

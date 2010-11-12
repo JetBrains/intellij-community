@@ -170,7 +170,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
         RefactoringBundle.message("choose.destination.class"));
       chooser.selectDirectory(myContainingClass.getContainingFile().getContainingDirectory());
       chooser.showDialog();
-      PsiClass aClass = chooser.getSelectedClass();
+      PsiClass aClass = chooser.getSelected();
       if (aClass != null) {
         myTfTargetClassName.setText(aClass.getQualifiedName());
       }

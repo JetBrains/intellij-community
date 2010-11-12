@@ -192,8 +192,10 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       if (!activateDdmsIfNeccessary(facet)) {
         return null;
       }
-      if (!CHOOSE_DEVICE_MANUALLY) {
-        checkDebuggableOption(facet);
+      if (!CHOOSE_DEVICE_MANUALLY && PREFERRED_AVD.length() == 0) {
+        if (!checkDebuggableOption(facet)) {
+          return null;
+        }
       }
     }
 
@@ -217,7 +219,9 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
         IDevice[] devices = chooseDevicesManually(facet);
         if (devices.length > 0) {
           if (debug && containsRealDevice(devices)) {
-            checkDebuggableOption(facet);
+            if (!checkDebuggableOption(facet)) {
+              return null;
+            }
           }
           deviceSerialNumbers = new String[devices.length];
           for (int i = 0; i < devices.length; i++) {
@@ -243,7 +247,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return null;
   }
 
-  private static void checkDebuggableOption(@NotNull AndroidFacet facet) {
+  private static boolean checkDebuggableOption(@NotNull AndroidFacet facet) {
     Manifest manifest = facet.getManifest();
     // validated in checkConfiguration()
     assert manifest != null;
@@ -253,7 +257,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       BooleanValueConverter booleanValueConverter = BooleanValueConverter.getInstance(true);
       if (debuggable == null || !booleanValueConverter.isTrue(debuggable)) {
         Project project = facet.getModule().getProject();
-        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.manifest.debuggable.attribute.not.true.warning"),
+        int result = Messages.showYesNoCancelDialog(project, AndroidBundle.message("android.manifest.debuggable.attribute.not.true.warning"),
                                               CommonBundle.getWarningTitle(),
                                               Messages.getWarningIcon());
         if (result == 0) {
@@ -264,8 +268,10 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
             }
           });
         }
+        return result != 2;
       }
     }
+    return true;
   }
 
   private static boolean activateDdmsIfNeccessary(@NotNull AndroidFacet facet) {

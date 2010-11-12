@@ -108,7 +108,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     if (id.equals(ARTIFACT_ROOT_ELEMENT_TYPE.getId())) {
       return ARTIFACT_ROOT_ELEMENT_TYPE;
     }
-    throw new AssertionError(id + " not registered");
+    return null;
   }
 
   @NotNull

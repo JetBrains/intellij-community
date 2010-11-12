@@ -115,7 +115,7 @@ public class CompileDriver {
 
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
   private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
-  private boolean myInitialRefreshPerformed = false;
+  private static final Key<Boolean> REFRESH_DONE_KEY = Key.create("_compiler.initial.refresh.done_");
 
   private static final FileProcessingCompilerAdapterFactory FILE_PROCESSING_COMPILER_ADAPTER_FACTORY = new FileProcessingCompilerAdapterFactory() {
     public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -663,8 +663,8 @@ public class CompileDriver {
       }
 
       boolean needRecalcOutputDirs = false;
-      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH) || !myInitialRefreshPerformed) {
-        myInitialRefreshPerformed = true;
+      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH) || !Boolean.valueOf(REFRESH_DONE_KEY.get(myProject, Boolean.FALSE))) {
+        REFRESH_DONE_KEY.set(myProject, Boolean.TRUE);
         final long refreshStart = System.currentTimeMillis();
 
         //need this to make sure the VFS is built

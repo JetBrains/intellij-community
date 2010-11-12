@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.actions;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,14 +55,14 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiClass baseClass = getBaseClass(context, project, myBaseClass);
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createInheritanceClassChooser(getChooserTitle(), GlobalSearchScope.allScope(project), baseClass, null, new TreeClassChooser.ClassFilter() {
+        .createInheritanceClassChooser(getChooserTitle(), GlobalSearchScope.allScope(project), baseClass, null, new ClassFilter() {
           @Override
           public boolean isAccepted(PsiClass aClass) {
             return !aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.ABSTRACT);
           }
         });
       chooser.showDialog();
-      selectedClass = chooser.getSelectedClass();
+      selectedClass = chooser.getSelected();
     }
     else {
       selectedClass = getBaseClass(context, project, myBaseClass == null ? "java.lang.Object" : myBaseClass);

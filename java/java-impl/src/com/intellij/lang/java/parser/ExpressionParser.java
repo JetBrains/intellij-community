@@ -357,7 +357,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker copy = startMarker.precede();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false, false);
+          final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P2, -1);
@@ -661,7 +661,7 @@ public class ExpressionParser {
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER || parseAnnotations) {
-      refOrType = ReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, parseDiamonds);
+      refOrType = ReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, true, parseDiamonds);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);

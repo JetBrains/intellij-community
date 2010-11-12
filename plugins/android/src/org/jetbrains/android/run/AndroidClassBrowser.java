@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 public class AndroidClassBrowser extends BrowseModuleValueActionListener {
   private final ConfigurationModuleSelector myModuleSelector;
   private final String myBaseClassName;
-  private final TreeClassChooser.ClassFilter myAdditionalFilter;
+  private final ClassFilter myAdditionalFilter;
   private final String myDialogTitle;
   private final boolean myIncludeLibraryClasses;
 
@@ -53,7 +54,7 @@ public class AndroidClassBrowser extends BrowseModuleValueActionListener {
                              String baseClassName,
                              String dialogTitle,
                              boolean includeLibraryClasses,
-                             @Nullable TreeClassChooser.ClassFilter additionalFilter) {
+                             @Nullable ClassFilter additionalFilter) {
     super(project);
     myModuleSelector = moduleSelector;
     myBaseClassName = baseClassName;
@@ -85,7 +86,7 @@ public class AndroidClassBrowser extends BrowseModuleValueActionListener {
       myIncludeLibraryClasses ? module.getModuleWithDependenciesAndLibrariesScope(true) : module.getModuleWithDependenciesScope();
     PsiClass initialSelection = facade.findClass(getText(), scope);
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-      .createInheritanceClassChooser(myDialogTitle, scope, baseClass, initialSelection, new TreeClassChooser.ClassFilter() {
+      .createInheritanceClassChooser(myDialogTitle, scope, baseClass, initialSelection, new ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           if (aClass.getManager().areElementsEquivalent(aClass, baseClass)) {
             return false;
@@ -99,7 +100,7 @@ public class AndroidClassBrowser extends BrowseModuleValueActionListener {
         }
       });
     chooser.showDialog();
-    PsiClass selClass = chooser.getSelectedClass();
+    PsiClass selClass = chooser.getSelected();
     return selClass != null ? selClass.getQualifiedName() : null;
   }
 }

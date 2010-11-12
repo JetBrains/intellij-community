@@ -1,0 +1,58 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.packaging.impl.artifacts;
+
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.project.Project;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+
+/**
+ * @author nik
+ */
+public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescription {
+  private final Project myProject;
+  private final InvalidArtifact myArtifact;
+
+  public ArtifactLoadingErrorDescription(Project project, InvalidArtifact artifact) {
+    super(artifact.getName(), "artifact", artifact.getErrorMessage());
+    myProject = project;
+    myArtifact = artifact;
+  }
+
+  @Override
+  public void removeInvalidElement() {
+    final ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
+    model.removeArtifact(myArtifact);
+    new WriteAction() {
+      protected void run(final Result result) {
+        model.commit();
+      }
+    }.execute();
+  }
+
+  @Override
+  public String getRemoveConfirmationMessage() {
+    return "Would you like to remove artifact '" + myArtifact.getName() + "?";
+  }
+
+  @Override
+  public boolean isValid() {
+    return ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid().contains(myArtifact);
+  }
+}

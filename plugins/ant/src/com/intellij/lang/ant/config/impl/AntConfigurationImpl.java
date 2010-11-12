@@ -426,7 +426,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       });
     }
     else {
-      myStartupManager.registerPostStartupActivity(new Runnable() {
+      myStartupManager.runWhenProjectIsInitialized(new Runnable() {
         public void run() {
           runnable.run();
         }

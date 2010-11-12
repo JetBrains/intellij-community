@@ -613,6 +613,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java")
   }
 
+  public void testFinalInForLoop() throws Throwable {
+    configure()
+    checkResultByFile(getTestName(false) + ".java")
+    assertOrderedEquals myFixture.lookupElementStrings, 'final'
+  }
+
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }
@@ -683,6 +689,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSecondAnonymousClassParameter() throws Throwable { doTest(); }
+
+  public void testSpaceAfterReturn() throws Throwable {
+    configure()
+    type '\n'
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }

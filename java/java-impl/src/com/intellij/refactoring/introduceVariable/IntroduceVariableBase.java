@@ -468,6 +468,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
+        final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
+        for (PsiExpression occurrence : occurrences) {
+          occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
+        }
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -481,6 +485,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
                   editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, declarationStatement);
+                  editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
+                                     occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
                   final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
                     @Override
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
@@ -505,6 +511,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           editor.getCaretModel().moveToOffset(startOffset);
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
+                        for (RangeMarker occurrenceMarker : occurrenceMarkers) {
+                          occurrenceMarker.dispose();
+                        }
+                        editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
                         typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         exprMarker.dispose();
                       }

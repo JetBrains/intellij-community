@@ -440,7 +440,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
       chooser.showDialog();
-      PsiClass psiclass = chooser.getSelectedClass();
+      PsiClass psiclass = chooser.getSelected();
       if (psiclass == null) {
         return null;
       } else {

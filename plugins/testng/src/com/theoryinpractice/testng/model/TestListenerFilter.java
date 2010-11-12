@@ -16,7 +16,7 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.configurations.ConfigurationUtil;
-import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,7 +25,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 /**
  * @author Mark Derricutt
  */
-public class TestListenerFilter implements TreeClassChooser.ClassFilterWithScope
+public class TestListenerFilter implements ClassFilter.ClassFilterWithScope
 {
   private final GlobalSearchScope scope;
   private final Project project;

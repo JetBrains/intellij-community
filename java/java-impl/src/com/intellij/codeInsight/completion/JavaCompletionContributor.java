@@ -119,6 +119,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       return null;
     }
 
+    if (JavaCompletionData.START_FOR.accepts(position)) {
+      return ElementClassFilter.VARIABLE;
+    }
+
     if (psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTryStatement.class)).accepts(position)) {
       return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)), ElementClassFilter.PACKAGE_FILTER);
     }

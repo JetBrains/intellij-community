@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -157,7 +158,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
-          new TreeClassChooser.ClassFilter() { // we need show classes from the sources roots only
+          new ClassFilter() { // we need show classes from the sources roots only
             public boolean isAccepted(final PsiClass aClass) {
               final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
               return vFile != null && fileIndex.isInSource(vFile);
@@ -167,7 +168,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         );
         chooser.showDialog();
 
-        final PsiClass result = chooser.getSelectedClass();
+        final PsiClass result = chooser.getSelected();
         if (result != null) {
           setEditorText(result.getQualifiedName());
         }

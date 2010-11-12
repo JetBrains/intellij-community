@@ -295,8 +295,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       VirtualFile parent = file.getParent();
       if (parent == null) return;
 
-      IndexState state = myState.copy();
+      IndexState newState = myState.copy();
+      updateStateWithNewFile(file, parent, newState);
+      myState = newState;
+    }
 
+    private void updateStateWithNewFile(VirtualFile file, VirtualFile parent, IndexState state) {
       DirectoryInfo parentInfo = state.myDirToInfoMap.get(parent);
 
       // fill info for all nested roots
@@ -348,7 +352,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (!parentInfo.getOrderEntries().isEmpty()) {
         state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
       }
-      myState = state;
     }
 
     public void beforeFileDeletion(VirtualFileEvent event) {
