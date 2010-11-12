@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.intellij.ide.FrameStateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -57,16 +58,21 @@ public interface Notifications {
         return;
       }
 
-      final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-      if (EventQueue.isDispatchThread()) bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-      else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+      FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+          if (EventQueue.isDispatchThread()) bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+          else {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+              }
+            });
           }
-        });
-      }
+        }
+      });
     }
   }
 }

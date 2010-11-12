@@ -84,6 +84,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Update myUpdate = new Update("update") {
     public void run() {
       updateLookup();
+      myQueue.setMergingTimeSpan(100);
     }
   };
   private LightweightHint myHint;
@@ -136,7 +137,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();

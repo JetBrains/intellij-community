@@ -91,6 +91,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myDisposed = false;
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
+  private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   private String mySelectionInvariant = null;
   private boolean mySelectionTouched;
   private boolean myFocused = true;
@@ -186,6 +187,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   @TestOnly
   public void resort() {
     mySelectionTouched = false;
+    myFrozenItems.clear();
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
     final List<LookupElement> items = myModel.getItems();
     myModel.clearItems();
@@ -261,6 +263,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void setAdditionalPrefix(final String additionalPrefix) {
     myAdditionalPrefix = additionalPrefix;
     myInitialPrefix = null;
+    myFrozenItems.clear();
     refreshUi();
   }
 
@@ -270,6 +273,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     if (myReused) {
+      myFrozenItems.clear();
       myModel.collectGarbage();
       myReused = false;
     }
@@ -397,6 +401,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void addMostRelevantItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<List<LookupElement>> sortedItems) {
+    for (LookupElement item : myFrozenItems) {
+      if (prefixMatches(item) && firstItems.add(item)) {
+        model.addElement(item);
+      }
+    }
+
     for (final List<LookupElement> elements : sortedItems) {
       final List<LookupElement> suitable = new SmartList<LookupElement>();
       for (final LookupElement item : elements) {
@@ -409,6 +419,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       for (final LookupElement item : suitable) {
         firstItems.add(item);
         model.addElement(item);
+        myFrozenItems.add(item);
       }
     }
   }
