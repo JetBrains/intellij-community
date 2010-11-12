@@ -71,7 +71,7 @@ public abstract  class AlignmentStrategy {
    *                                      of <code>'int finish  = 1'</code> statement)
    * @return                              alignment retrieval strategy that follows the rules described above
    */
-  public static AlignmentStrategy createAlignmentPerTypeStrategy(Collection<IElementType> targetTypes, boolean allowBackwardShift) {
+  public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(Collection<IElementType> targetTypes, boolean allowBackwardShift) {
     return new AlignmentPerTypeStrategy(targetTypes, allowBackwardShift);
   }
 
@@ -102,19 +102,25 @@ public abstract  class AlignmentStrategy {
    * Alignment strategy that creates and caches alignments for target element types and returns them for elements with the
    * same types.
    */
-  private static class AlignmentPerTypeStrategy extends AlignmentStrategy {
+  public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
 
     private final Map<IElementType, Alignment> myAlignments = new HashMap<IElementType, Alignment>();
+    private final boolean myAllowBackwardShift;
 
     AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes, boolean allowBackwardShift) {
+      myAllowBackwardShift = allowBackwardShift;
       for (IElementType elementType : targetElementTypes) {
-        myAlignments.put(elementType, Alignment.createAlignment(allowBackwardShift));
+        myAlignments.put(elementType, Alignment.createAlignment(myAllowBackwardShift));
       }
     }
 
     @Override
     public Alignment getAlignment(IElementType elementType) {
       return myAlignments.get(elementType);
+    }
+
+    public void renewAlignment(IElementType elementType) {
+      myAlignments.put(elementType, Alignment.createAlignment(myAllowBackwardShift));
     }
   }
 }
