@@ -173,9 +173,7 @@ public class PyClassType implements PyType {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
         final String name = member.getName();
-        if (provider.hasUnderscoreWildCard(name)) {
-          ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
-        }
+        ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
       }
     }
 
