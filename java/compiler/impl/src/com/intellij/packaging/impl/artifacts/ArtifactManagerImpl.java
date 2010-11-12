@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.ModificationTracker;
@@ -97,26 +98,37 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return myModel.getArtifactsByType(type);
   }
 
+  @Override
+  public List<? extends Artifact> getAllArtifactsIncludingInvalid() {
+    return myModel.getAllArtifactsIncludingInvalid();
+  }
+
   public ArtifactManagerState getState() {
     final ArtifactManagerState state = new ArtifactManagerState();
-    for (Artifact artifact : getArtifacts()) {
-      final ArtifactState artifactState = new ArtifactState();
-      artifactState.setBuildOnMake(artifact.isBuildOnMake());
-      artifactState.setName(artifact.getName());
-      artifactState.setOutputPath(artifact.getOutputPath());
-      artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
-      artifactState.setArtifactType(artifact.getArtifactType().getId());
-      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-        final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
-        if (propertiesState != null) {
-          artifactState.getPropertiesList().add(propertiesState);
-        }
+    for (Artifact artifact : getAllArtifactsIncludingInvalid()) {
+      final ArtifactState artifactState;
+      if (artifact instanceof InvalidArtifact) {
+        artifactState = ((InvalidArtifact)artifact).getState();
       }
-      Collections.sort(artifactState.getPropertiesList(), new Comparator<ArtifactPropertiesState>() {
-        public int compare(ArtifactPropertiesState o1, ArtifactPropertiesState o2) {
-          return o1.getId().compareTo(o2.getId());
+      else {
+        artifactState = new ArtifactState();
+        artifactState.setBuildOnMake(artifact.isBuildOnMake());
+        artifactState.setName(artifact.getName());
+        artifactState.setOutputPath(artifact.getOutputPath());
+        artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
+        artifactState.setArtifactType(artifact.getArtifactType().getId());
+        for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
+          final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
+          if (propertiesState != null) {
+            artifactState.getPropertiesList().add(propertiesState);
+          }
         }
-      });
+        Collections.sort(artifactState.getPropertiesList(), new Comparator<ArtifactPropertiesState>() {
+          public int compare(ArtifactPropertiesState o1, ArtifactPropertiesState o2) {
+            return o1.getId().compareTo(o2.getId());
+          }
+        });
+      }
       state.getArtifacts().add(artifactState);
     }
     return state;
@@ -148,9 +160,13 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return element;
   }
 
-  private <T> PackagingElement<T> deserializeElement(Element element) {
+  private <T> PackagingElement<T> deserializeElement(Element element) throws UnknownPackagingElementTypeException {
     final String id = element.getAttributeValue(TYPE_ID_ATTRIBUTE);
     PackagingElementType<?> type = PackagingElementFactory.getInstance().findElementType(id);
+    if (type == null) {
+      throw new UnknownPackagingElementTypeException(id);
+    }
+
     PackagingElement<T> packagingElement = (PackagingElement<T>)type.createEmpty(myProject);
     T state = packagingElement.getState();
     if (state != null) {
@@ -168,31 +184,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   public void loadState(ArtifactManagerState managerState) {
     final List<ArtifactImpl> artifacts = new ArrayList<ArtifactImpl>();
     for (ArtifactState state : managerState.getArtifacts()) {
-      final Element element = state.getRootElement();
-      ArtifactType type = ArtifactType.findById(state.getArtifactType());
-      if (type == null) {
-        LOG.info("Unknown artifact type: " + state.getArtifactType());
-        continue;
-      }
-
-      final String artifactName = state.getName();
-      final CompositePackagingElement<?> rootElement;
-      if (element != null) {
-        rootElement = (CompositePackagingElement<?>)deserializeElement(element);
-      }
-      else {
-        rootElement = type.createRootElement(artifactName);
-      }
-
-      final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath());
-      final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
-      for (ArtifactPropertiesState propertiesState : propertiesList) {
-        final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
-        if (provider != null) {
-          deserializeProperties(artifact.getProperties(provider), propertiesState);
-        }
-      }
-      artifacts.add(artifact);
+      artifacts.add(loadArtifact(state));
     }
 
     if (myLoaded) {
@@ -203,6 +195,47 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myModel.setArtifactsList(artifacts);
       myLoaded = true;
     }
+  }
+
+  private ArtifactImpl loadArtifact(ArtifactState state) {
+    ArtifactType type = ArtifactType.findById(state.getArtifactType());
+    if (type == null) {
+      return createInvalidArtifact(state, "Unknown artifact type: " + state.getArtifactType());
+    }
+
+    final Element element = state.getRootElement();
+    final String artifactName = state.getName();
+    final CompositePackagingElement<?> rootElement;
+    if (element != null) {
+      try {
+        rootElement = (CompositePackagingElement<?>)deserializeElement(element);
+      }
+      catch (UnknownPackagingElementTypeException e) {
+        return createInvalidArtifact(state, "Unknown element: " + e.getTypeId());
+      }
+    }
+    else {
+      rootElement = type.createRootElement(artifactName);
+    }
+
+    final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath());
+    final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
+    for (ArtifactPropertiesState propertiesState : propertiesList) {
+      final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
+      if (provider != null) {
+        deserializeProperties(artifact.getProperties(provider), propertiesState);
+      }
+      else {
+        return createInvalidArtifact(state, "Unknown artifact properties: " + propertiesState.getId());
+      }
+    }
+    return artifact;
+  }
+
+  private InvalidArtifact createInvalidArtifact(ArtifactState state, String errorMessage) {
+    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage);
+    ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
+    return artifact;
   }
 
   private static <S> void deserializeProperties(ArtifactProperties<S> artifactProperties, ArtifactPropertiesState propertiesState) {

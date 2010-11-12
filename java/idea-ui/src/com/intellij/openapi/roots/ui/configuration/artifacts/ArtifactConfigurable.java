@@ -16,14 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,19 +29,13 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Artifact> {
-  private final Artifact myOriginalArtifact;
-  private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
+public class ArtifactConfigurable extends ArtifactConfigurableBase {
   private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
-  private final ProjectStructureElement myProjectStructureElement;
 
   public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
-    super(true, updateTree);
-    myOriginalArtifact = originalArtifact;
-    myArtifactsStructureContext = artifactsStructureContext;
+    super(originalArtifact, artifactsStructureContext, updateTree, true);
     myEditor = artifactsStructureContext.getOrCreateEditor(originalArtifact);
-    myProjectStructureElement = myArtifactsStructureContext.getOrCreateArtifactElement(myOriginalArtifact);
   }
 
   public void setDisplayName(String name) {
@@ -54,11 +44,6 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
       myArtifactsStructureContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
       myEditor.updateOutputPath(oldName, name);
     }
-  }
-
-  @Override
-  public ProjectStructureElement getProjectStructureElement() {
-    return myProjectStructureElement;
   }
 
   @Override
@@ -72,33 +57,8 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
     }
   }
 
-  private Artifact getArtifact() {
-    return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
-  }
-
-  public Artifact getEditableObject() {
-    return getArtifact();
-  }
-
-  public String getBannerSlogan() {
-    return ProjectBundle.message("banner.slogan.artifact.0", getDisplayName());
-  }
-
   public JComponent createOptionsPanel() {
     return myEditor.createMainComponent();
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return getArtifact().getName();
-  }
-
-  public Icon getIcon() {
-    return getArtifact().getArtifactType().getIcon();
-  }
-
-  public String getHelpTopic() {
-    return myEditor.getHelpTopic();
   }
 
   @Override
@@ -137,7 +97,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
   public void reset() {
   }
 
-  public void disposeUIResources() {
+  public String getHelpTopic() {
+    return myEditor.getHelpTopic();
   }
-
 }

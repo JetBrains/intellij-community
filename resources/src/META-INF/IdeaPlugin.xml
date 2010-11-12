@@ -373,6 +373,7 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
+    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>

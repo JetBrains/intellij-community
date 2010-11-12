@@ -15,9 +15,11 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,16 +30,27 @@ import java.util.*;
 public abstract class ArtifactModelBase implements ArtifactModel {
   private Map<String, Artifact> myArtifactsMap;
   private Artifact[] myArtifactsArray;
+  public static final Condition<Artifact> VALID_ARTIFACT_CONDITION = new Condition<Artifact>() {
+    @Override
+    public boolean value(Artifact artifact) {
+      return !(artifact instanceof InvalidArtifact);
+    }
+  };
 
   protected abstract List<? extends Artifact> getArtifactsList();
 
   @NotNull
   public Artifact[] getArtifacts() {
     if (myArtifactsArray == null) {
-      final List<? extends Artifact> artifacts = getArtifactsList();
-      myArtifactsArray = artifacts.toArray(new Artifact[artifacts.size()]);
+      final List<? extends Artifact> validArtifacts = ContainerUtil.findAll(getArtifactsList(), VALID_ARTIFACT_CONDITION);
+      myArtifactsArray = validArtifacts.toArray(new Artifact[validArtifacts.size()]);
     }
     return myArtifactsArray;
+  }
+
+  @Override
+  public List<? extends Artifact> getAllArtifactsIncludingInvalid() {
+    return Collections.unmodifiableList(getArtifactsList());
   }
 
   public Artifact findArtifact(@NotNull String name) {
