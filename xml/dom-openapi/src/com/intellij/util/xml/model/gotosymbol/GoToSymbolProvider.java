@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
@@ -158,6 +159,22 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
     public PsiElement getParent() {
       return myPsiElement.getParent();
+    }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myPsiElement.getProject();
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return  myPsiElement.getContainingFile();
+    }
+
+    @Override
+    public boolean isValid() {
+      return myPsiElement.isValid();
     }
 
     public boolean equals(final Object o) {

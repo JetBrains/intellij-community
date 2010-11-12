@@ -29,7 +29,7 @@ public interface Computable <T> {
     private final T myValue;
 
     public PredefinedValueComputable(T value) {
-      this.myValue = value;
+      myValue = value;
     }
 
     @Override
