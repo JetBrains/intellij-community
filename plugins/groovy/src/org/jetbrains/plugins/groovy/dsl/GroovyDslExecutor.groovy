@@ -8,9 +8,8 @@ import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
-import com.intellij.openapi.project.Project
 
-/**
+ /**
  * @author ilyas
  */
 
@@ -20,6 +19,7 @@ public class GroovyDslExecutor {
 
   private final String myFileName;
   static final String ideaVersion
+  private boolean locked = false
 
   static {
     def major = ApplicationInfo.instance.majorVersion
@@ -52,9 +52,12 @@ public class GroovyDslExecutor {
     mc.initialize()
     script.metaClass = mc
     script.run()
+
+    locked = true
   }
 
   def addClassEnhancer(List<ContextFilter> cts, Closure toDo) {
+    assert !locked : 'Contributing to GDSL is only allowed at the top-level of the *.gdsl script'
     enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 

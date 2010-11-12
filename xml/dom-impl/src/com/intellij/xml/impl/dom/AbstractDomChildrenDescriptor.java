@@ -115,6 +115,9 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         @Nullable
         public PsiElement getDeclaration() {
           final PomTarget target = ((CustomDomChildrenDescription)description).getTagNameDescriptor().findDeclaration(finalDomElement);
+          if (target == description) {
+            return childTag;
+          }
           return target == null ? null : PomService.convertToPsi(childTag.getProject(), target);
         }
 
