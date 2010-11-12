@@ -83,10 +83,6 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testTwoUnderscoresNotOne() {
-    doTest();
-  }
-
   public void testKwParamsInCodeUsage() { //PY-1002
     doTest();
   }
