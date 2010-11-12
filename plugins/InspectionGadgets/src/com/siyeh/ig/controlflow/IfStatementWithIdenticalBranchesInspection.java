@@ -151,7 +151,9 @@ public class IfStatementWithIdenticalBranchesInspection
     private static class IfStatementWithIdenticalBranchesVisitor
             extends BaseInspectionVisitor{
 
-        @Override public void visitIfStatement(
+      private static final int LIMIT_DEPTH = 20; // Dirty fix for 'squared' algorithm.
+
+      @Override public void visitIfStatement(
                 @NotNull PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
             final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -178,7 +180,9 @@ public class IfStatementWithIdenticalBranchesInspection
 
         public static PsiStatement getIdenticalElseIfStatement(
                 PsiStatement thenBranch, PsiStatement elseBranch) {
+            int depth = 0;
             while (elseBranch instanceof PsiIfStatement) {
+                if (depth++ > LIMIT_DEPTH) break;
                 final PsiIfStatement statement =
                         (PsiIfStatement) elseBranch;
                 final PsiStatement branch = statement.getThenBranch();
