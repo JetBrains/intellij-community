@@ -32,13 +32,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiSuperMethodImplUtil {
-  private static final StructureDependentNotNullLazyKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_KEY = StructureDependentNotNullLazyKey.create("SIGNATURES_KEY", new NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>() {
-    @NotNull
-    @Override
-    public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
-      return buildMethodHierarchy(dom, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
-    }
-  });
+  private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_KEY = PsiCacheKey
+    .create("SIGNATURES_KEY", new NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>() {
+      @NotNull
+      @Override
+      public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
+        return buildMethodHierarchy(dom, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
+      }
+    });
 
   private PsiSuperMethodImplUtil() {
   }
