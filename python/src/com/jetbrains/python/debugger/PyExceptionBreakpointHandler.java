@@ -27,11 +27,11 @@ public class PyExceptionBreakpointHandler extends XBreakpointHandler<XBreakpoint
 
   @Override
   public void registerBreakpoint(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
-    myDebugProcess.addExceptionBreakpoint(breakpoint.getProperties());
+    myDebugProcess.addExceptionBreakpoint(breakpoint);
   }
 
   @Override
   public void unregisterBreakpoint(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint, boolean temporary) {
-    myDebugProcess.removeExceptionBreakpoint(breakpoint.getProperties());
+    myDebugProcess.removeExceptionBreakpoint(breakpoint);
   }
 }

@@ -154,7 +154,8 @@ def excepthook(exctype, value, tb):
     frames_byid = dict([(id(frame),frame) for frame in frames])
     frame = frames[-1]
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
-    sys.exc_info = lambda : (exctype, value, traceback)
+    thread.additionalInfo.message = exctype.__name__
+    #sys.exc_info = lambda : (exctype, value, traceback)
     debugger = GetGlobalDebugger()
     debugger.force_post_mortem_stop += 1
         
@@ -740,11 +741,11 @@ class PyDB:
         self.processInternalCommands()
 
         try:
-            log_expression = thread.log_expression
+            message = thread.additionalInfo.message
         except:
-            log_expression = None
+            message = None
 
-        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, log_expression)
+        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
         
         info = thread.additionalInfo
@@ -865,7 +866,7 @@ class PyDB:
                     thread_id = GetThreadId(t)
                     used_id = pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
                     try:
-                        self.setSuspend(t, CMD_STEP_INTO)
+                        self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
                         additionalInfo.pydev_force_stop_at_exception = None

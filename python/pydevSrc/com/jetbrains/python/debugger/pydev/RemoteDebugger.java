@@ -340,8 +340,8 @@ public class RemoteDebugger {
           final PyThreadInfo thread = myThreads.get(event.getId());
           if (thread != null) {
             thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-            thread.setStopOnBreakpoint(event.isStopOnBreakpoint());
-            thread.setLogExpressionMessage(event.getLogExpressionMessage());
+            thread.setStopReason(event.getStopReason());
+            thread.setMessage(event.getMessage());
             myDebugProcess.threadSuspended(thread);
           }
           break;

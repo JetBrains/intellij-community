@@ -11,10 +11,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -28,7 +28,6 @@ import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static javax.swing.SwingUtilities.invokeLater;
@@ -48,7 +47,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
   private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<PySourcePosition, XLineBreakpoint>();
-  private final Set<PyExceptionBreakpointProperties> myRegisteredExceptionBreakpoints = new ConcurrentHashSet<PyExceptionBreakpointProperties>();
+  private final Map<String, XBreakpoint<PyExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
+    new ConcurrentHashMap<String, XBreakpoint<PyExceptionBreakpointProperties>>();
 
   private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
   private final Map<String, List<PyDebugValue>> myStackFrameCache = Maps.newHashMap();
@@ -128,7 +128,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
       addBreakpoint(entry.getKey(), entry.getValue());
     }
-    for (PyExceptionBreakpointProperties bp: myRegisteredExceptionBreakpoints) {
+    for (XBreakpoint<PyExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
     }
   }
@@ -267,7 +267,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (myDebugger.isConnected()) {
       final SetBreakpointCommand command =
-        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition(), breakpoint.getLogExpression());
+        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition(),
+                                 breakpoint.getLogExpression());
       myDebugger.execute(command);
     }
   }
@@ -280,20 +281,20 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     }
   }
 
-  public void addExceptionBreakpoint(PyExceptionBreakpointProperties properties) {
-    myRegisteredExceptionBreakpoints.add(properties);
+  public void addExceptionBreakpoint(XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (myDebugger.isConnected()) {
       final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, properties.getException());
+        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException());
       myDebugger.execute(command);
     }
   }
 
-  public void removeExceptionBreakpoint(PyExceptionBreakpointProperties properties) {
-    myRegisteredExceptionBreakpoints.remove(properties);
+  public void removeExceptionBreakpoint(XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
     if (myDebugger.isConnected()) {
       final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.removeExceptionBreakpointCommand(myDebugger, properties.getException());
+        ExceptionBreakpointCommand.removeExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException());
       myDebugger.execute(command);
     }
   }
@@ -311,7 +312,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
       if (frames != null) {
         final PySuspendContext suspendContext = new PySuspendContext(this, threadInfo);
 
-        XLineBreakpoint breakpoint = null;
+        XBreakpoint<?> breakpoint = null;
         if (threadInfo.isStopOnBreakpoint()) {
           final PySourcePosition position = frames.get(0).getPosition();
           breakpoint = myRegisteredBreakpoints.get(position);
@@ -320,9 +321,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
             myDebugger.execute(command);  // remove temp. breakpoint
           }
         }
+        else if (threadInfo.isExceptionBreak()) {
+          String exceptionName = threadInfo.getMessage();
+          threadInfo.setMessage(null);
+          if (exceptionName != null) {
+            breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
+          }
+        }
 
         if (breakpoint != null) {
-          if (!getSession().breakpointReached(breakpoint, threadInfo.getLogExpressionMessage(), suspendContext)) {
+          if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
             resume();
           }
         }
