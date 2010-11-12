@@ -39,7 +39,7 @@ public abstract class ComparisonPolicy {
     Object[] wrappers1 = getWrappers(strings1);
     Object[] wrappers2 = getWrappers(strings2);
     Diff.Change change = Diff.buildChanges(wrappers1, wrappers2);
-    return DiffFragmentBuilder.buildFragments(builder, Util.concatEquals(change, wrappers1, wrappers2));
+    return builder.buildFragments(Util.concatEquals(change, wrappers1, wrappers2));
   }
 
   public DiffFragment[] buildDiffFragmentsFromLines(String[] lines1, String[] lines2) {
@@ -47,7 +47,7 @@ public abstract class ComparisonPolicy {
     Object[] wrappers1 = getLineWrappers(lines1);
     Object[] wrappers2 = getLineWrappers(lines2);
     Diff.Change change = Diff.buildChanges(wrappers1, wrappers2);
-    return DiffFragmentBuilder.buildFragments(builder, change);
+    return builder.buildFragments(change);
   }
 
   public static final ComparisonPolicy DEFAULT = new ComparisonPolicy(CommonBundle.message("comparison.policy.default.name")) {
