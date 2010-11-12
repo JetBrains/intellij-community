@@ -664,7 +664,10 @@ public class HighlightClassUtil {
       return null;
     }
     PsiClass aClass = (PsiClass)grand;
-    if (aClass.getExtendsList() != parent || aClass instanceof PsiTypeParameter) {
+    if (aClass instanceof PsiTypeParameter) {
+      return null;
+    }
+    if (aClass.getExtendsList() != parent && aClass.getImplementsList() != parent) {
       return null;
     }
     if (!(resolved instanceof PsiClass)) {
