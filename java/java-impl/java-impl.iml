@@ -15,7 +15,7 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="lang-impl" exported="" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="jsp-spi" />
@@ -28,6 +28,8 @@
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="library" name="JUnit4" level="project" />
   </component>
   <component name="copyright">
     <Base>

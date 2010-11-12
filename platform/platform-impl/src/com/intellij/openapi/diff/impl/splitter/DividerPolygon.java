@@ -26,16 +26,15 @@ import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-class DividerPoligon {
+class DividerPolygon {
   private final Color myColor;
   private final int myStart1;
   private final int myStart2;
   private final int myEnd1;
   private final int myEnd2;
 
-  public DividerPoligon(int start1, int start2, int end1, int end2, Color color) {
+  public DividerPolygon(int start1, int start2, int end1, int end2, Color color) {
     myStart1 = advance(start1);
     myStart2 = advance(start2);
     myEnd1 = advance(end1);
@@ -60,8 +59,8 @@ class DividerPoligon {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof DividerPoligon)) return false;
-    DividerPoligon other = (DividerPoligon)obj;
+    if (!(obj instanceof DividerPolygon)) return false;
+    DividerPolygon other = (DividerPolygon)obj;
     return myStart1 == other.myStart1 &&
            myStart2 == other.myStart2 &&
            myEnd1 == other.myEnd1 &&
@@ -76,38 +75,37 @@ class DividerPoligon {
     return myColor;
   }
 
-  public static void paintPoligons(ArrayList<DividerPoligon> poligons, Graphics2D g, int width) {
+  public static void paintPolygons(ArrayList<DividerPolygon> polygons, Graphics2D g, int width) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     //Composite composite = g.getComposite();
     //g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
-    for (Iterator<DividerPoligon> iterator = poligons.iterator(); iterator.hasNext();) {
-      DividerPoligon poligon = iterator.next();
-      poligon.paint(g, width);
+    for (DividerPolygon polygon : polygons) {
+      polygon.paint(g, width);
     }
     //g.setComposite(composite);
   }
 
-  public static ArrayList<DividerPoligon> createVisiblePoligons(EditingSides sides, FragmentSide left) {
+  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left) {
     Editor editor1 = sides.getEditor(left);
     Editor editor2 = sides.getEditor(left.otherSide());
     LineBlocks lineBlocks = sides.getLineBlocks();
     Trapezium visibleArea = new Trapezium(getVisibleInterval(editor1),
                                           getVisibleInterval(editor2));
-    Interval indecies = lineBlocks.getVisibleIndecies(visibleArea);
+    Interval indices = lineBlocks.getVisibleIndices(visibleArea);
     Transformation[] transformations = new Transformation[]{getTransformation(editor1),
       getTransformation(editor2)};
-    ArrayList<DividerPoligon> poligons = new ArrayList<DividerPoligon>();
-    for (int i = indecies.getStart(); i < indecies.getEnd(); i++) {
+    ArrayList<DividerPolygon> polygons = new ArrayList<DividerPolygon>();
+    for (int i = indices.getStart(); i < indices.getEnd(); i++) {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
       final TextDiffTypeEnum diffTypeEnum = lineBlocks.getType(i);
       if (diffTypeEnum == null) continue;
       TextDiffType type = TextDiffType.create(diffTypeEnum);
       if (type == null) continue;
-      Color color = type.getPoligonColor(editor1);
-      poligons.add(createPoligon(transformations, trapezium, color, left));
+      Color color = type.getPolygonColor(editor1);
+      polygons.add(createPolygon(transformations, trapezium, color, left));
     }
-    return poligons;
+    return polygons;
   }
 
   private static Transformation getTransformation(Editor editor) {
@@ -115,7 +113,7 @@ class DividerPoligon {
     return new FoldingTransformation(editor);
   }
 
-  private static DividerPoligon createPoligon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left) {
+  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left) {
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());
     Transformation leftTransform = transformations[left.getIndex()];
@@ -124,7 +122,7 @@ class DividerPoligon {
     int end1 = leftTransform.transform(base1.getEnd());
     int start2 = rightTransform.transform(base2.getStart());
     int end2 = rightTransform.transform(base2.getEnd());
-    return new DividerPoligon(start1, start2, end1, end2, color);
+    return new DividerPolygon(start1, start2, end1, end2, color);
   }
 
   static Interval getVisibleInterval(Editor editor) {
