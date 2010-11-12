@@ -18,7 +18,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
@@ -44,7 +43,6 @@ public class RunContentDescriptor {
 
   public RunContentDescriptor(final ExecutionConsole executionConsole,
                               final ProcessHandler processHandler, final JComponent component, final String displayName, final Icon icon) {
-    LOG.assertTrue(executionConsole != null || ApplicationManager.getApplication().isUnitTestMode());
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
@@ -71,7 +69,9 @@ public class RunContentDescriptor {
   }
 
   public void dispose() {
-    Disposer.dispose(myExecutionConsole);
+    if (myExecutionConsole != null) {
+      Disposer.dispose(myExecutionConsole);
+    }
   }
 
   @Nullable
