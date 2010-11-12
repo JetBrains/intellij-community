@@ -176,14 +176,20 @@ public class ReassignVariableUtil {
   @Nullable
   static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     if (processor.size() > 0) {
-      final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
       final Shortcut[] shortcuts = keymap.getShortcuts("IntroduceVariable");
       if (shortcuts.length > 0) {
         return "Press " + shortcuts[0] + " to reassign existing variable";
       }
     }
-    return typesForAll.length > 1 ? "Press Shift Tab to change type" : null;
+    if (typesForAll.length > 1) {
+      final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
+      if  (shortcuts.length > 0) {
+        return "Press " + shortcuts[0] + " to change type";
+      }
+    }
+    return null;
   }
 
   public static Expression createExpression(final TypeExpression expression, final String defaultType) {
