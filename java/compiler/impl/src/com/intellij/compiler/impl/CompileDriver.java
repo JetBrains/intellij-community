@@ -2378,7 +2378,9 @@ public class CompileDriver {
     final boolean justCreated = file.mkdirs();
     vFile = lfs.refreshAndFindFileByIoFile(file);
 
-    assert vFile != null: "Virtual file not found for " + file.getPath() + "; mkdirs() exit code is " + justCreated;
+    if (vFile == null) {
+      assert false: "Virtual file not found for " + file.getPath() + "; mkdirs() exit code is " + justCreated + "; file exists()? " + file.exists();
+    }
 
     return vFile;
   }
