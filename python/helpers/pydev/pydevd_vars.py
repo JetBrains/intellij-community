@@ -5,6 +5,7 @@ from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from console import pydevconsole
 from code import compile_command
+from code import InteractiveInterpreter
 
 try:
     from StringIO import StringIO
@@ -255,25 +256,25 @@ def dumpFrames(thread_id):
 class AdditionalFramesContainer:
     lock = threading.Lock()
     additional_frames = {} #dict of dicts
-    
+
 
 def addAdditionalFrameById(thread_id, frames_by_id):
     AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
-        
-        
+
+
 def removeAdditionalFrameById(thread_id):
     del AdditionalFramesContainer.additional_frames[thread_id]
-        
-    
-        
+
+
+
 
 def findFrame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     if thread_id != GetThreadId(threading.currentThread()) :
         raise VariableError("findFrame: must execute on same thread")
-    
+
     lookingFor = int(frame_id)
-    
+
     if AdditionalFramesContainer.additional_frames:
         if DictContains(AdditionalFramesContainer.additional_frames, thread_id):
             frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
@@ -370,7 +371,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
 
         if doExec:
             try:
-                #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and 
+                #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
                 #it will have whatever the user actually did)
                 compiled = compile(expression, '<string>', 'eval')
             except:
@@ -398,12 +399,26 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
                         etype = value = tb = None
                 except:
                     pass
-                
+
             return result
     finally:
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
         del frame
+
+class ConsoleWriter(InteractiveInterpreter):
+    skip = 0
+    def __init__(self, locals=None):
+        InteractiveInterpreter.__init__(self, locals)
+
+    def write(self, data):
+        #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
+        if self.skip>0:
+            self.skip = self.skip - 1
+        else:
+            if data == "Traceback (most recent call last):\n":
+                self.skip = 1
+            sys.stderr.write(data)
 
 def consoleExec(thread_id, frame_id, expression):
     '''returns 'False' in case expression is partialy correct
@@ -419,14 +434,30 @@ def consoleExec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
-    try:
-        result = compile_command(expression)
-        if result is None:
-            return True
+    interpreter = ConsoleWriter()
 
-        evaluateExpression(thread_id, frame_id, expression, True)
+    try:
+        code = compile_command(expression)
+    except (OverflowError, SyntaxError, ValueError):
+        # Case 1
+        interpreter.showsyntaxerror()
+        return False
+
+    if code is None:
+        # Case 2
+        return True
+
+    # Case 3
+    try:
+        Exec(code, updated_globals, frame.f_locals)
+
+    except SystemExit:
+        raise
     except:
-        evaluateExpression(thread_id, frame_id, expression, True)
+        interpreter.showtraceback()
+
+    return False
+
 
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
@@ -445,7 +476,7 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
 #                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
 #                frame.savelocals()
 #                return
-#                
+#
 #            elif attr in frame.f_globals:
 #                frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
 #                return

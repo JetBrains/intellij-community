@@ -4,18 +4,14 @@ package com.jetbrains.python.debugger.pydev;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SetBreakpointCommand extends AbstractCommand {
-  private @NotNull final String myFile;
-  private @NotNull final int myLine;
+public class SetBreakpointCommand extends LineBreakpointCommand {
   private @Nullable final String myCondition;
 
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
                               @NotNull final String file,
                               @NotNull final int line,
                               @Nullable final String condition) {
-    super(debugger, SET_BREAKPOINT);
-    myFile = file;
-    myLine = line;
+    super(debugger, SET_BREAKPOINT, file, line);
     myCondition = condition;
   }
 

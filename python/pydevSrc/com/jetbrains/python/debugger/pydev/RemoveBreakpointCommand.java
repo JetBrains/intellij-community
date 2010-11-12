@@ -1,15 +1,10 @@
 package com.jetbrains.python.debugger.pydev;
 
 
-public class RemoveBreakpointCommand extends AbstractCommand {
-
-  private final String myFile;
-  private final int myLine;
+public class RemoveBreakpointCommand extends LineBreakpointCommand {
 
   public RemoveBreakpointCommand(final RemoteDebugger debugger, final String file, final int line) {
-    super(debugger, REMOVE_BREAKPOINT);
-    myFile = file;
-    myLine = line;
+    super(debugger, REMOVE_BREAKPOINT, file, line);
   }
 
   public String getPayload() {

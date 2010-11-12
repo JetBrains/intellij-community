@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -23,14 +24,16 @@ public abstract class AbstractCommand {
   public static final int CHANGE_VARIABLE = 117;
   public static final int GET_COMPLETIONS = 120;
   public static final int CONSOLE_EXEC = 121;
+  public static final int ADD_EXCEPTION_BREAKPOINT = 122;
+  public static final int REMOVE_EXCEPTION_BREAKPOINT = 123;
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
-  private final RemoteDebugger myDebugger;
+  @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
 
-  protected AbstractCommand(final RemoteDebugger debugger, final int commandCode) {
+  protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
     myCommandCode = commandCode;
   }
