@@ -36,7 +36,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     final PsiElement position = location.getPosition();
     if (position == null){
       return null;

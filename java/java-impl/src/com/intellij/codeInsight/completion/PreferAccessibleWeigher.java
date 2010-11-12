@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 */
 public class PreferAccessibleWeigher extends CompletionWeigher {
 
-  public MyEnum weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+  public MyEnum weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     if (location == null) {
       return null;
     }

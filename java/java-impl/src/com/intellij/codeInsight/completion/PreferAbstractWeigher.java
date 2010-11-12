@@ -18,15 +18,14 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PreferAbstractWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
-    if (location == null || location.getCompletionType() != CompletionType.SMART) {
+  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+    if (location.getCompletionType() != CompletionType.SMART) {
       return null;
     }
 
