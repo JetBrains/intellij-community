@@ -18,6 +18,7 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,4 +109,6 @@ public interface ApplicationEx extends Application {
    * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
    */
   boolean tryRunReadAction(@NotNull Runnable action);
+
+  ActionCallback getActive(boolean requestor);
 }
