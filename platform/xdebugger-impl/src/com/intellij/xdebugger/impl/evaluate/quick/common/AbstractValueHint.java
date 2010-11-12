@@ -125,6 +125,8 @@ public abstract class AbstractValueHint {
   }
 
   public boolean isKeepHint(Editor editor, Point point) {
+    if (myCurrentHint != null && myCurrentHint.canControlAutoHide()) return true;
+
     if(myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
       return false;
     }
