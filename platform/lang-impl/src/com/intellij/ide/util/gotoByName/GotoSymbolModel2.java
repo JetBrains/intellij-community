@@ -25,6 +25,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   public GotoSymbolModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
@@ -33,6 +36,13 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   @Override
   protected Language filterValueFor(NavigationItem item) {
     return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
+  }
+
+  @Override
+  protected synchronized Collection<Language> getFilterItems() {
+    final Collection<Language> items = new HashSet<Language>(super.getFilterItems());
+    items.add(Language.ANY);
+    return items;
   }
 
   public String getPromptText() {
