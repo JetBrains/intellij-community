@@ -63,8 +63,8 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     assertEquals(2, myItems.length);
-    assertEquals("AxBxCxDxEx", myItems[0].getLookupString());
-    assertEquals("AyByCyDyEy", myItems[1].getLookupString());
+    assertEquals("AxBxCxDxEx", myItems[1].getLookupString());
+    assertEquals("AyByCyDyEy", myItems[0].getLookupString());
   }
 
 }

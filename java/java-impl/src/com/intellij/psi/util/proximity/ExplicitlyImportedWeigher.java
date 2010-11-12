@@ -41,6 +41,13 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     if (position == null){
       return null;
     }
+
+    final PsiFile elementFile = element.getContainingFile();
+    final PsiFile positionFile = position.getContainingFile();
+    if (positionFile != null && elementFile != null && positionFile.getOriginalFile().equals(elementFile.getOriginalFile())) {
+      return true;
+    }
+
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
       if (qname != null) {

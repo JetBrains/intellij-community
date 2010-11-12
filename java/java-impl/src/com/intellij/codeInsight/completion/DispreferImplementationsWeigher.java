@@ -16,35 +16,25 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class PreferAbstractWeigher extends CompletionWeigher {
+public class DispreferImplementationsWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    if (location.getCompletionType() != CompletionType.SMART) {
-      return null;
-    }
-
-    final PsiElement position = location.getCompletionParameters().getPosition();
-    final PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement) ||
-        !(parent.getParent() instanceof PsiTypeElement) ||
-        !(parent.getParent().getParent() instanceof PsiInstanceOfExpression)) {
-      return null;
-    }
-
     final Object object = item.getObject();
     if (object instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)object;
-      if (aClass.isInterface()) {
-        return 2;
+      if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(location.getCompletionParameters().getPosition())) {
+        return 0;
       }
-      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return 1;
+
+      final String qname = ((PsiClass)object).getQualifiedName();
+      if (qname != null && qname.endsWith("Impl")) {
+        return -1;
       }
     }
 
