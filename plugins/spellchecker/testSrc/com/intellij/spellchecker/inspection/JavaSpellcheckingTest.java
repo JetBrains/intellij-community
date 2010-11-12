@@ -35,4 +35,10 @@ public class JavaSpellcheckingTest extends SpellcheckerInspectionTestCase {
   public void testTypoInJava() throws Throwable {
     doTest("GenericTestt.java", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
+
+  public void testVarArg() throws Throwable {
+    doTest("VarArgTest.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+  }
+
+
 }
