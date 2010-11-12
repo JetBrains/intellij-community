@@ -799,14 +799,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                                final OccurrencesChooser.ReplaceChoice replaceChoice) {
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
     final String variableName = suggestedName.names[0];
-    final Boolean generateFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
     final boolean declareFinal =
       !anyAssignmentLHS && (replaceAll &&
-                            declareFinalIfAll || generateFinals == null ?
-                            CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS :
-                            generateFinals.booleanValue());
+                            declareFinalIfAll ||
+                            CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS);
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {
       @Override
