@@ -31,12 +31,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -202,7 +204,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                                List<Pair<PsiExpression, PsiType>> arguments,
                                PsiSubstitutor substitutor,
                                ExpectedTypeInfo[] expectedTypes,
-                               @Nullable PsiElement context) {
+                               @Nullable final PsiElement context) {
 
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
 
@@ -239,7 +241,16 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
               PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
               final int offset = newEditor.getCaretModel().getOffset();
               PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
-
+              if (context instanceof PsiMethod) {
+                final PsiTypeParameter[] typeParameters = ((PsiMethod)context).getTypeParameters();
+                if (typeParameters.length > 0) {
+                  for (PsiTypeParameter typeParameter : typeParameters) {
+                    if (checkTypeParam( method, typeParameter)) {
+                      method.getTypeParameterList().add(typeParameter);
+                    }
+                  }
+                }
+              }
               if (method != null) {
                 try {
                   CreateFromUsageUtils.setupMethodBody(method);
@@ -258,6 +269,29 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     else {
       startTemplate(newEditor, template, project);
     }
+  }
+
+  private static boolean checkTypeParam(final PsiElement typeElement,
+                                        final PsiTypeParameter typeParameter) {
+    final String typeParameterName = typeParameter.getName();
+    final boolean[] found = new boolean[] {false};
+    typeElement.accept(new JavaRecursiveElementWalkingVisitor(){
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (found[0]) return;
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitTypeElement(PsiTypeElement type) {
+        super.visitTypeElement(type);
+        if (Comparing.strEqual(typeParameterName, type.getText())) {
+          found[0] = true;
+        }
+      }
+    });
+    return found[0];
   }
 
   protected boolean shouldBeAbstract(PsiClass targetClass) {
