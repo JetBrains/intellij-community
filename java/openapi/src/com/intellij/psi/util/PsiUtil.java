@@ -757,17 +757,22 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
 
-  public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) >= 0;
+  public static boolean isLanguageLevel5OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);
   }
 
-  public static boolean isLanguageLevel6OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_6) >= 0;
+  public static boolean isLanguageLevel6OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_6);
   }
 
-  public static boolean isLanguageLevel7OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_7) >= 0;
+  public static boolean isLanguageLevel7OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7);
   }
+
+  public static boolean isLanguageLevel8OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_8);
+  }
+
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
@@ -781,9 +786,9 @@ public final class PsiUtil extends PsiUtilBase {
       if (context != null) return getLanguageLevel(context);
       return LanguageLevelProjectExtension.getInstance(file.getProject()).getLanguageLevel();
     }
+
     return ((PsiJavaFile)file).getLanguageLevel();
   }
-
 
   public static boolean isInstantiatable(PsiClass clazz) {
     return !clazz.hasModifierProperty(PsiModifier.ABSTRACT) &&

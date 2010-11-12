@@ -192,7 +192,7 @@ public class ReferenceParser {
     while (builder.getTokenType() == JavaTokenType.DOT) {
       refElement.done(JavaElementType.JAVA_CODE_REFERENCE);
 
-      if (isNew && typeInfo.isParameterized) {
+      if (isNew && !diamonds && typeInfo.isParameterized) {
         return refElement;
       }
 

@@ -23,13 +23,13 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -297,8 +297,12 @@ public class Parsing  {
     return type;
   }
 
-  protected boolean areTypeAnnotationsSupported() {
+  protected boolean areDiamondsSupported() {
     return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7);
+  }
+
+  protected boolean areTypeAnnotationsSupported() {
+    return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_8);
   }
 
   private CompositeElement parseWildcardType(Lexer lexer) {
