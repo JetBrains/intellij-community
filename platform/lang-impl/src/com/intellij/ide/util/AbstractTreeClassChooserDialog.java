@@ -280,7 +280,9 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
    * @return
    */
   @Nullable
-  protected abstract BaseClassInheritorsProvider<T> getInheritorsProvider(@NotNull T baseClass);
+  protected BaseClassInheritorsProvider<T> getInheritorsProvider(@NotNull T baseClass) {
+    return null;
+  }
 
   private void handleSelectionChanged() {
     T selection = calcSelectedClass();
