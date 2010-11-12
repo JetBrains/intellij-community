@@ -52,6 +52,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -292,7 +293,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     synchronized (myList) {
       model.clear();
 
-      Set<LookupElement> firstItems = new THashSet<LookupElement>();
+      Set<LookupElement> firstItems = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
       hasExactPrefixes = addExactPrefixItems(model, firstItems, items);
       addMostRelevantItems(model, firstItems, snapshot.second);
@@ -406,6 +407,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         model.addElement(item);
       }
     }
+
+    if (firstItems.size() > MAX_PREFERRED_COUNT) return;
 
     for (final List<LookupElement> elements : sortedItems) {
       final List<LookupElement> suitable = new SmartList<LookupElement>();
