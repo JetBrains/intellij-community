@@ -393,13 +393,16 @@ public class FileUtil {
   }
 
   private static String calcCanonicalTempPath() {
-    final String prop = System.getProperty("java.io.tmpdir");
+    final File file = new File(System.getProperty("java.io.tmpdir"));
     try {
-      return new File(prop).getCanonicalPath();
+      final String canonical = file.getCanonicalPath();
+      if (!SystemInfo.isWindows || !canonical.contains(" ")) {
+        return canonical;
+      }
     }
-    catch (IOException e) {
-      return prop;
+    catch (IOException ignore) {
     }
+    return file.getAbsolutePath();
   }
 
   public static void asyncDelete(@NotNull File file) {
