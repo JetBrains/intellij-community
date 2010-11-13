@@ -91,7 +91,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private DataContext myRunContext;
 
   private Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
-  private Integer myCurrentModalityCount;
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
@@ -122,10 +121,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
               myLastFocused.remove((IdeFrame)wnd);
               myLastFocusedAtDeactivation.remove((IdeFrame)wnd);
             }
-          }
-
-          if (wnd instanceof Dialog) {
-            myCurrentModalityCount = null;
           }
         }
 
@@ -543,28 +538,25 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private int getCurrentModalityCount() {
-    if (myCurrentModalityCount == null) {
-      int modalDialogs = 0;
-      Window[] windows = Frame.getWindows();
-      for (Window each : windows) {
-        if (each instanceof Dialog) {
-          Dialog eachDialog = (Dialog)each;
-          if (eachDialog.isModal() && eachDialog.isShowing()) {
-            modalDialogs++;
-          }
-        }
-      }
-      myCurrentModalityCount = modalDialogs;
-      Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
-      while (modalityCounts.hasNext()) {
-        Integer eachModalityCount = modalityCounts.next();
-        if (eachModalityCount > myCurrentModalityCount) {
-          modalityCounts.remove();
+    int modalDialogs = 0;
+    Window[] windows = Frame.getWindows();
+    for (Window each : windows) {
+      if (each instanceof Dialog) {
+        Dialog eachDialog = (Dialog)each;
+        if (eachDialog.isModal() && eachDialog.isShowing()) {
+          modalDialogs++;
         }
       }
     }
+    Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
+    while (modalityCounts.hasNext()) {
+      Integer eachModalityCount = modalityCounts.next();
+      if (eachModalityCount > modalDialogs) {
+        modalityCounts.remove();
+      }
+    }
 
-    return myCurrentModalityCount;
+    return modalDialogs;
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
