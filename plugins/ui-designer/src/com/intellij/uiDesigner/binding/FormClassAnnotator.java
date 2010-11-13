@@ -41,7 +41,7 @@ public class FormClassAnnotator implements Annotator {
   private static final String FIELD_IS_OVERWRITTEN = JavaErrorMessages.message("uidesigned.field.is.overwritten.by.generated.code");
   private static final String BOUND_FIELD_TYPE_MISMATCH = JavaErrorMessages.message("uidesigner.bound.field.type.mismatch");
 
-  public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof PsiField) {
       PsiField field = (PsiField) psiElement;
       final PsiFile boundForm = FormReferenceProvider.getFormFile(field);
@@ -70,8 +70,8 @@ public class FormClassAnnotator implements Annotator {
       if (!fieldType.isAssignableFrom(guiComponentType)) {
         String message = MessageFormat.format(BOUND_FIELD_TYPE_MISMATCH, guiComponentType.getCanonicalText(), fieldType.getCanonicalText());
         Annotation annotation = holder.createErrorAnnotation(field.getTypeElement(), message);
-        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null, null);
-        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null, null);
+        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null);
+        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null);
       }
     }
 
