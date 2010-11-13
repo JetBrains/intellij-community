@@ -146,9 +146,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(editor.getProject()).getElementFactory();
       try {
         PsiType componentType = factory.createTypeFromText(targetItem.getClassName().replace('$', '.'), null);
-        if (!oldBoundField.getType().isAssignableFrom(componentType)) {
-          new ChangeFieldTypeFix(editor, oldBoundField, componentType).run();
-        }
+        new ChangeFieldTypeFix(editor, oldBoundField, componentType).run();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
