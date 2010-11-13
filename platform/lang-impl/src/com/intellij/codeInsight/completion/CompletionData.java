@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -192,6 +193,10 @@ public class CompletionData {
 
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
+
+    final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
+    assert document != null;
+    LOG.assertTrue(!PsiDocumentManager.getInstance(insertedElement.getProject()).isUncommited(document), "Uncommitted");
 
     final String prefix = getReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;

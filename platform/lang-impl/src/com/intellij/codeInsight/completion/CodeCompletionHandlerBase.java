@@ -384,7 +384,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionContext newContext = ref.get().getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
-    return new CompletionParameters(insertedElement, newContext.file, myCompletionType, newContext.getStartOffset(), invocationCount);
+    final int offset = newContext.getStartOffset();
+    LOG.assertTrue(insertedElement.getContainingFile().findElementAt(offset) == insertedElement, "wrong offset");
+    LOG.assertTrue(insertedElement.getContainingFile().getText().substring(insertedElement.getTextRange().getStartOffset(), insertedElement.getTextRange().getEndOffset()).equals(insertedElement.getText()), "wrong text");
+    return new CompletionParameters(insertedElement, newContext.file, myCompletionType, offset, invocationCount);
   }
 
   private AutoCompletionDecision shouldAutoComplete(
