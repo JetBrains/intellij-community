@@ -58,6 +58,7 @@
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
@@ -153,6 +154,7 @@
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyClassNameCompletionContributor"/>
+    <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.PythonCompletionWeigher" order="first"/>
     <typedHandler implementation="com.jetbrains.python.console.PydevCompletionAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="before completionAutoPopup"/>
 
@@ -314,7 +316,6 @@
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
     <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
-
   </extensions>
 
   <extensionPoints>

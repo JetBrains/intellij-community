@@ -37,7 +37,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel model = rootManager.getModifiableModel();
         boolean modelChanged = false;
-        // Just remove all old facet libraries except one, that is neccessary
+        // Just remove all old facet libraries except one, that is necessary
         final Sdk sdk = getConfiguration().getSdk();
         final String name = (sdk != null) ? getFacetLibraryName(sdk.getName()) : null;
         boolean librarySeen = false;

@@ -99,7 +99,6 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   class ImportVariantCollector {
     private final PsiFile myCurrentFile;
     private final Set<String> myNamesAlready;
-    private final Condition<String> myUnderscoreFilter;
     private final List<Object> myObjects;
 
     public ImportVariantCollector() {
@@ -107,7 +106,6 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       if (currentFile != null) currentFile = currentFile.getOriginalFile();
       myCurrentFile = currentFile;
       myNamesAlready = new HashSet<String>();
-      myUnderscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(myElement.getName()));
       myObjects = new ArrayList<Object>();
     }
 
@@ -126,7 +124,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           if (mod_candidate instanceof PyExpression) {
             addImportedNames(from_import.getImportElements()); // don't propose already imported items
             // collect what's within module file
-            final VariantsProcessor processor = new VariantsProcessor(myElement, node_filter, myUnderscoreFilter);
+            final VariantsProcessor processor = new VariantsProcessor(myElement, node_filter, null);
             processor.setPlainNamesOnly(true); // we don't want parens after functions, etc
             PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
             final List<LookupElement> names_from_module = processor.getResultList();
@@ -218,7 +216,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         PyReferenceExpression ref = ielt.getImportReference();
         if (ref != null) {
           String s = ref.getReferencedName();
-          if (s != null && myUnderscoreFilter.value(s)) myNamesAlready.add(s);
+          if (s != null) myNamesAlready.add(s);
         }
       }
     }
@@ -232,7 +230,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
               final PsiDirectory dir = (PsiDirectory)dir_item;
               if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
                 final String name = dir.getName();
-                if (PyNames.isIdentifier(name) && myUnderscoreFilter.value(name)) {
+                if (PyNames.isIdentifier(name)) {
                   myObjects.add(LookupElementBuilder
                                   .create(name)
                                   .setTypeText(getPresentablePath(dir.getParent()))
@@ -244,7 +242,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
               String filename = ((PsiFile)dir_item).getName();
               if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
                 final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
-                if (PyNames.isIdentifier(name) && myUnderscoreFilter.value(name)) {
+                if (PyNames.isIdentifier(name)) {
                   final PsiDirectory dir = ((PsiFile)dir_item).getContainingDirectory();
                   myObjects.add(LookupElementBuilder
                                   .create(name)

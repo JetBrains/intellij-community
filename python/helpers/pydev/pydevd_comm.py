@@ -102,6 +102,8 @@ CMD_RUN_TO_LINE = 118
 CMD_RELOAD_CODE = 119
 CMD_GET_COMPLETIONS = 120
 CMD_CONSOLE_EXEC = 121
+CMD_ADD_EXCEPTION_BREAK = 122
+CMD_REMOVE_EXCEPTION_BREAK = 122
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -128,6 +130,8 @@ ID_TO_MEANING = {
     '119':'CMD_RELOAD_CODE',
     '120':'CMD_GET_COMPLETIONS',
     '121':'CMD_CONSOLE_EXEC',
+    '122':'CMD_ADD_EXCEPTION_BREAK',
+    '123':'CMD_REMOVE_EXCEPTION_BREAK',
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
@@ -458,7 +462,7 @@ class NetCommandFactory:
         except:
             return self.makeErrorMessage(0, GetExceptionTracebackStr())
     
-    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason):
+    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason, message):
         
         """ <xml>
             <thread id="id" stop_reason="reason">
@@ -469,7 +473,7 @@ class NetCommandFactory:
            """
         try:
             cmdTextList = ["<xml>"]
-            cmdTextList.append('<thread id="%s" stop_reason="%s">' % (thread_id, stop_reason))
+            cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
             
             curFrame = frame
             while curFrame:
@@ -723,7 +727,7 @@ class InternalConsoleExec(InternalThreadCommand):
             sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
             dbg.writer.addCommand(cmd)
-           
+
 #=======================================================================================================================
 # InternalGetCompletions
 #=======================================================================================================================

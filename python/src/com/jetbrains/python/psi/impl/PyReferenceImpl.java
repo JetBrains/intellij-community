@@ -359,8 +359,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // include our own names
     final int underscores = PyUtil.getInitialUnderscores(myElement.getName());
-    final PyUtil.UnderscoreFilter filter = new PyUtil.UnderscoreFilter(underscores);
-    final VariantsProcessor processor = new VariantsProcessor(myElement, null, filter);
+    final VariantsProcessor processor = new VariantsProcessor(myElement);
     PyResolveUtil.treeCrawlUp(processor, realContext); // names from here
     PyResolveUtil.scanOuterContext(processor, realContext); // possible names from around us at call time
 

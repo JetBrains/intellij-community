@@ -22,6 +22,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_RELOAD_CODE, \
                          CMD_VERSION, \
                          CMD_CONSOLE_EXEC, \
+                         CMD_ADD_EXCEPTION_BREAK, \
+                         CMD_REMOVE_EXCEPTION_BREAK, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -127,6 +129,8 @@ class PyDBCommandThread(PyDBDaemonThread):
 
 _original_excepthook = None
 _handle_exceptions = None
+_exception_set = set()
+
 
 #=======================================================================================================================
 # excepthook
@@ -140,7 +144,8 @@ def excepthook(exctype, value, tb):
     _original_excepthook(exctype, value, tb)
     
     frames = []
-    
+
+    traceback = tb
     while tb:
         frames.append(tb.tb_frame)
         tb = tb.tb_next
@@ -149,6 +154,8 @@ def excepthook(exctype, value, tb):
     frames_byid = dict([(id(frame),frame) for frame in frames])
     frame = frames[-1]
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
+    thread.additionalInfo.message = exctype.__name__
+    #sys.exc_info = lambda : (exctype, value, traceback)
     debugger = GetGlobalDebugger()
     debugger.force_post_mortem_stop += 1
         
@@ -184,7 +191,29 @@ def set_pm_excepthook(handle_exceptions=None):
         
     _handle_exceptions = handle_exceptions
     sys.excepthook = excepthook
-    
+
+def restore_pm_excepthook():
+    global _original_excepthook
+    if (_original_excepthook):
+        sys.excepthook = _original_excepthook
+        _original_excepthook = None
+
+
+def update_exception_hook():
+    if len(_exception_set) >0:
+        set_pm_excepthook(tuple(_exception_set))
+    else:
+        restore_pm_excepthook()
+
+def get_class( kls ):
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    if (module == ""):
+        module = "__builtin__"
+    m = __import__( module )
+    for comp in parts[-1:]:
+        m = getattr(m, comp)
+    return m
 
 try:
     import thread
@@ -559,7 +588,7 @@ class PyDB:
                     
                     #command to add some breakpoint.
                     # text is file\tline. Add to breakpoints dictionary
-                    file, line, condition = text.split('\t', 2)
+                    file, line, condition, expression = text.split('\t', 3)
                     if condition.startswith('**FUNC**'):
                         func_name, condition = condition.split('\t', 1)
                         
@@ -589,10 +618,13 @@ class PyDB:
                     else:
                         breakDict = {}
     
-                    if len(condition) <= 0 or condition == None or condition == "None":
-                        breakDict[line] = (True, None, func_name)
-                    else:
-                        breakDict[line] = (True, condition, func_name)
+                    if len(condition) <= 0 or condition is None or condition == "None":
+                        condition = None
+
+                    if len(expression) <= 0 or expression is None or expression == "None":
+                        expression = None
+
+                    breakDict[line] = (True, condition, func_name, expression)
                     
                         
                     self.breakpoints[file] = breakDict
@@ -645,12 +677,26 @@ class PyDB:
                         cmd_id == CMD_EXEC_EXPRESSION)
                     self.postInternalCommand(int_cmd, thread_id)
 
-                elif cmd_id == CMD_CONSOLE_EXEC :
+                elif cmd_id == CMD_CONSOLE_EXEC:
                     #command to exec expression in console, in case expression is only partially valid 'False' is returned
                     #text is: thread\tstackframe\tLOCAL\texpression
                     thread_id, frame_id, scope, expression = text.split('\t', 3)
-                    int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression,                        )
+                    int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression)
                     self.postInternalCommand(int_cmd, thread_id)
+
+                elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
+                    exception = text
+                    exc_type = get_class(exception)
+                    if exc_type is not None:
+                        _exception_set.add(exc_type)
+                    update_exception_hook()
+
+                elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
+                    exception = text
+                    exc_type = get_class(exception)
+                    if exc_type is not None:
+                        _exception_set.remove(exc_type)
+                    update_exception_hook()
 
                 else:
                     #I have no idea what this is all about
@@ -693,7 +739,13 @@ class PyDB:
         Upon running, processes any outstanding Stepping commands.
         """
         self.processInternalCommands()
-        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason)
+
+        try:
+            message = thread.additionalInfo.message
+        except:
+            message = None
+
+        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
         
         info = thread.additionalInfo
@@ -814,7 +866,7 @@ class PyDB:
                     thread_id = GetThreadId(t)
                     used_id = pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
                     try:
-                        self.setSuspend(t, CMD_STEP_INTO)
+                        self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
                         additionalInfo.pydev_force_stop_at_exception = None

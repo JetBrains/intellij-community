@@ -2,6 +2,7 @@ from pydevd_comm import * #@UnusedWildImport
 from pydevd_constants import * #@UnusedWildImport
 import traceback #@Reimport
 import os.path
+import sys
 basename = os.path.basename
 
 #=======================================================================================================================
@@ -31,8 +32,7 @@ class PyDBFrame:
         mainDebugger, filename, info, thread = self._args
         
         breakpoint = mainDebugger.breakpoints.get(filename)
-        
-        
+
         if info.pydev_state == STATE_RUN:
             #we can skip if:
             #- we have no stop marked
@@ -58,7 +58,7 @@ class PyDBFrame:
             if curr_func_name in ('?', '<module>'):
                 curr_func_name = ''
                 
-            for _b, condition, func_name in breakpoint.values(): #jython does not support itervalues()
+            for _b, condition, func_name, expression in breakpoint.values(): #jython does not support itervalues()
                 #will match either global or some function
                 if func_name in ('None', curr_func_name):
                     break
@@ -74,7 +74,15 @@ class PyDBFrame:
         
         try:
             line = frame.f_lineno
-            
+
+            #if event == 'exception' and info.pydev_state != STATE_SUSPEND and breakpoint is not None:
+            #    (exception, value, traceback) = arg
+            #    print exception
+            #    curr_func_name = frame.f_code.co_name
+            #    if curr_func_name in ('?', '<module>'):
+            #        self.setSuspend(thread, CMD_SET_BREAK)
+            #        self.doWaitSuspend(thread, frame, event, arg)
+
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
             #(one for the line and the other for the return).
             if event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoint is not None \
@@ -94,7 +102,17 @@ class PyDBFrame:
                         sys.stderr.write('Error while evaluating expression\n')
                         traceback.print_exc()
                         return self.trace_dispatch
-                
+
+                expression = breakpoint[line][3]
+                if expression is not None:
+                    try:
+                        val = eval(expression, frame.f_globals, frame.f_locals)
+                    except:
+                        val = sys.exc_info()[1]
+                    finally:
+                        if val is not None:
+                            thread.log_expression = val
+
                 self.setSuspend(thread, CMD_SET_BREAK)
                 
             # if thread has a suspend flag, we suspend with a busy wait

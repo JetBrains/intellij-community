@@ -169,32 +169,27 @@ public class PyClassType implements PyType {
       namesAlready = new HashSet<String>();
     }
     List<Object> ret = new ArrayList<Object>();
-    Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(prefix));
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
         final String name = member.getName();
-        if (underscoreFilter.value(name) || provider.hasUnderscoreWildCard(name)) {
-          ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
-        }
+        ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
       }
     }
 
-    addOwnClassMembers(location, namesAlready, ret, underscoreFilter);
+    addOwnClassMembers(location, namesAlready, ret);
 
     addInheritedMembers(prefix, location, context, ret);
 
     return ret.toArray();
   }
 
-  private void addOwnClassMembers(PyExpression expressionHook,
-                                  Set<String> namesAlready,
-                                  List<Object> ret, Condition<String> underscoreFilter) {
+  private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, List<Object> ret) {
     List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(expressionHook);
     boolean withinOurClass = classList != null && classList.get(0) == this;
 
     final VariantsProcessor processor = new VariantsProcessor(
-      expressionHook, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
+      expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
     );
     processor.setNotice(myClass.getName());
     ((PyClassImpl)myClass).processClassLevelDeclarations(processor);

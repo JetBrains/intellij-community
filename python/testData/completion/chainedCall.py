@@ -5,4 +5,5 @@ class X(object):
 def g():
     return X()
 
-g().testChain().<caret>
+g().testChain().te<caret>
+
