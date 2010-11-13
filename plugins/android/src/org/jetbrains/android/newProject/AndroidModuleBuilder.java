@@ -220,6 +220,9 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                 @Override
                 public void run() {
                   try {
+                    if (project.isDisposed()) {
+                      return;
+                    }
                     if (myProjectType == ProjectType.APPLICATION) {
                       Manifest manifest = facet.getManifest();
                       if (manifest != null && myApplicationName.length() > 0) {
