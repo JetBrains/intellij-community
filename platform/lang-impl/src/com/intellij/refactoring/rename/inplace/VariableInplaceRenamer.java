@@ -465,7 +465,8 @@ public class VariableInplaceRenamer {
     }
 
     public Result calculateResult(ExpressionContext context) {
-      final TextResult insertedValue = TemplateManagerImpl.getTemplateState(myEditor).getVariableValue(PRIMARY_VARIABLE_NAME);
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+      final TextResult insertedValue = templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
       if (insertedValue != null) {
         if (!insertedValue.getText().isEmpty()) return insertedValue;
       }
