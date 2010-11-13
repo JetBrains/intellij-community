@@ -52,7 +52,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
 
   private final ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
-  private int myFlushingIdleRequestsEntryCount = 0;
 
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
 
@@ -91,6 +90,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private DataContext myRunContext;
 
+  private Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
+
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
@@ -114,8 +115,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             myLastFocused.put((IdeFrame)parent, new WeakReference<Component>(c));
           }
         } else if (e instanceof WindowEvent) {
+          Window wnd = ((WindowEvent)e).getWindow();
           if (e.getID() == WindowEvent.WINDOW_CLOSED) {
-            Window wnd = ((WindowEvent)e).getWindow();
             if (wnd instanceof IdeFrame) {
               myLastFocused.remove((IdeFrame)wnd);
               myLastFocusedAtDeactivation.remove((IdeFrame)wnd);
@@ -379,7 +380,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private void flushIdleRequests() {
     try {
-      myFlushingIdleRequestsEntryCount++;
+      incFlushingRequests(1);
 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
       if (events.length > 0) {
@@ -427,14 +428,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           myFlushWasDelayedToFixFocus = true;
         }
 
-        if (canFlushIdleRequests() && myFlushingIdleRequestsEntryCount <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
+        if (canFlushIdleRequests() && getFlushingIdleRequests() <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
           myFlushWasDelayedToFixFocus = false;
           flushNow();
         }
       }
     }
     finally {
-      myFlushingIdleRequestsEntryCount--;
+      incFlushingRequests(-1);
       if (!isIdleQueueEmpty()) {
         restartIdleAlarm();
       }
@@ -514,7 +515,48 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private boolean isFlushingIdleRequests() {
-    return myFlushingIdleRequestsEntryCount > 0;
+    return getFlushingIdleRequests() > 0;
+  }
+
+  private int getFlushingIdleRequests() {
+    int currentModalityCount = getCurrentModalityCount();
+    if (myModalityCount2FlushCount.containsKey(currentModalityCount)) {
+      return myModalityCount2FlushCount.get(currentModalityCount);
+    } else {
+      return 0;
+    }
+  }
+
+  private void incFlushingRequests(int delta) {
+    int currentModalityCount = getCurrentModalityCount();
+    if (myModalityCount2FlushCount.containsKey(currentModalityCount)) {
+      Integer requests = myModalityCount2FlushCount.get(currentModalityCount);
+      myModalityCount2FlushCount.put(currentModalityCount, requests + delta);
+    } else {
+      myModalityCount2FlushCount.put(currentModalityCount, Integer.valueOf(delta));
+    }
+  }
+
+  private int getCurrentModalityCount() {
+    int modalDialogs = 0;
+    Window[] windows = Frame.getWindows();
+    for (Window each : windows) {
+      if (each instanceof Dialog) {
+        Dialog eachDialog = (Dialog)each;
+        if (eachDialog.isModal() && eachDialog.isShowing()) {
+          modalDialogs++;
+        }
+      }
+    }
+    Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
+    while (modalityCounts.hasNext()) {
+      Integer eachModalityCount = modalityCounts.next();
+      if (eachModalityCount > modalDialogs) {
+        modalityCounts.remove();
+      }
+    }
+
+    return modalDialogs;
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {

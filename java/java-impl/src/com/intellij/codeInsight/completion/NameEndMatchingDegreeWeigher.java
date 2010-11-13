@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 */
 public class NameEndMatchingDegreeWeigher extends CompletionWeigher {
 
-  public Integer weigh(@NotNull final LookupElement element, @Nullable final CompletionLocation location) {
+  public Integer weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     if (location == null) {
       return null;
     }

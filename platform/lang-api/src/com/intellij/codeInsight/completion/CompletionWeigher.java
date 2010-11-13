@@ -24,5 +24,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CompletionWeigher extends Weigher<LookupElement, CompletionLocation> {
 
-  public abstract Comparable weigh(@NotNull final LookupElement element, final CompletionLocation location);
+  public abstract Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location);
 }

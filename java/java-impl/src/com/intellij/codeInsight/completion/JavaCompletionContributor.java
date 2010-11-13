@@ -47,6 +47,7 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -183,7 +184,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     final ASTNode node = lastElement.getNode();
     assert node != null;
-    if (node.getElementType() == JavaTokenType.DOUBLE_LITERAL) {
+    final IElementType elementType = node.getElementType();
+    if (elementType == JavaTokenType.DOUBLE_LITERAL || elementType == JavaTokenType.LONG_LITERAL || elementType == JavaTokenType.INTEGER_LITERAL || elementType == JavaTokenType.FLOAT_LITERAL) {
       return;
     }
 

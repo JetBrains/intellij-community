@@ -47,6 +47,7 @@ public abstract class FilteringGotoByModel<T> extends ContributorsBasedGotoByMod
   /**
    * @return get file types
    */
+  @Nullable
   protected synchronized Collection<T> getFilterItems() {
     // get and set method are called from different threads
     return myFilterItems;

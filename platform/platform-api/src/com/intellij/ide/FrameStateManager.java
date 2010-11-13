@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.ActionCallback;
 
 /**
  * Manager of listeners for notifications about activation and deactivation of the
@@ -47,4 +48,10 @@ public abstract class FrameStateManager {
    * @param listener the listener instance.
    */
   public abstract void removeListener(FrameStateListener listener);
+
+
+  /**
+   * @return action callback for application's active state
+   */
+  public abstract ActionCallback getApplicationActive();
 }

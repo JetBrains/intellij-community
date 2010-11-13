@@ -111,7 +111,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
         return myElement;
       }
       catch (Exception e) {
-        message = PsiBundle.message("invalid.reqular.expression.message", getCanonicalText());
+        message = PsiBundle.message("invalid.regular.expression.message", getCanonicalText());
         return null;
       }
     }

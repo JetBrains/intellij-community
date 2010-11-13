@@ -85,8 +85,7 @@ public class FileInfoManager implements Disposable {
     return null;
   }
 
-  @Nullable
-  public static Object getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
+  public static LookupElementBuilder getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
     if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
       return LookupElementBuilder.create(psiElement, encoded).setIcon(icon);
     }
@@ -94,7 +93,7 @@ public class FileInfoManager implements Disposable {
     return getFileInfoManager()._getLookupItem((PsiFile)psiElement, encoded, icon);
   }
 
-  public Object _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
+  public LookupElementBuilder _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
     LookupElementBuilder builder = LookupElementBuilder.create(file, name).setIcon(icon);
 
     final String info = _getInfo(file);

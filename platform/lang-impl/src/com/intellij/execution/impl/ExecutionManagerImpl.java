@@ -163,7 +163,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               processHandler.startNotify();
               project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), env, processHandler);
               started = true;
-              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler), project);
+              processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
           }
         }
@@ -210,11 +210,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
     @Override
     public void processTerminated(ProcessEvent event) {
+      if (myProject.isDisposed()) return;
+
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
     }
 
     @Override
     public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      if (myProject.isDisposed()) return;
+
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminating(myProfile, myProcessHandler);
     }
   }
