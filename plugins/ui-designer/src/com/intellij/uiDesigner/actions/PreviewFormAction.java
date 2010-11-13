@@ -22,6 +22,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
@@ -288,7 +290,8 @@ public final class PreviewFormAction extends AnAction{
     }
 
     try {
-      final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
+      final RunProfile profile = new MyRunProfile(module, parameters, tempPath,
+                                                  UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
       defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null, null,
@@ -306,11 +309,13 @@ public final class PreviewFormAction extends AnAction{
   private static final class MyRunProfile implements ModuleRunProfile {
     private final Module myModule;
     private final JavaParameters myParams;
+    private final String myTempPath;
     private final String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String statusbarMessage) {
+    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
       myModule = module;
       myParams = params;
+      myTempPath = tempPath;
       myStatusbarMessage = statusbarMessage;
     }
 
@@ -326,7 +331,14 @@ public final class PreviewFormAction extends AnAction{
 
         public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
           try {
-            return super.execute(executor, runner);
+            ExecutionResult executionResult = super.execute(executor, runner);
+            executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
+              @Override
+              public void processTerminated(ProcessEvent event) {
+                FileUtil.asyncDelete(new File(myTempPath));
+              }
+            });
+            return executionResult;
           }
           finally {
             final Project project = myModule.getProject();
