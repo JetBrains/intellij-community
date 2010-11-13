@@ -459,7 +459,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
-      public void pass(OccurrencesChooser.ReplaceChoice choice) {
+      public void pass(final OccurrencesChooser.ReplaceChoice choice) {
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
@@ -509,13 +509,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                             startOffset = editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(startOffset));
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
+                          typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
                         for (RangeMarker occurrenceMarker : occurrenceMarkers) {
                           occurrenceMarker.dispose();
                         }
                         editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
-                        typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         exprMarker.dispose();
                       }
                     });
