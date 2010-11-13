@@ -61,12 +61,14 @@ public class HgCheckoutProvider implements CheckoutProvider {
         clone.setRepositoryURL(dialog.getSourceRepositoryURL());
         clone.setDirectory(targetDir);
         final HgCommandResult myCloneResult = clone.execute();
-        if (myCloneResult != null && myCloneResult.getExitValue() == 0 && listener != null) {
+        if (myCloneResult != null && myCloneResult.getExitValue() == 0) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
-              listener.checkoutCompleted();
+              if (listener != null) {
+                listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
+                listener.checkoutCompleted();
+              }
             }
           });
         }
